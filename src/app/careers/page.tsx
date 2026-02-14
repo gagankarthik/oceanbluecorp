@@ -163,12 +163,6 @@ const values = [
   },
 ];
 
-const stats = [
-  { value: "2,500+", label: "Team Members", icon: Users },
-  { value: "25+", label: "Global Offices", icon: Globe },
-  { value: "4.5/5", label: "Glassdoor Rating", icon: Star },
-  { value: "92%", label: "Employee Satisfaction", icon: Heart },
-];
 
 export default function CareersPage() {
   return (
@@ -202,23 +196,6 @@ export default function CareersPage() {
               View Open Positions
               <ArrowRight className="w-5 h-5" />
             </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 bg-white border-b border-border">
-        <div className="container-custom">
-          <div className="grid md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <stat.icon className="w-6 h-6 text-primary" />
-                </div>
-                <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                <p className="text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

@@ -15,6 +15,9 @@ import {
   BarChart3,
   Settings,
   Headphones,
+  BookOpen,
+  FileText,
+  Briefcase,
 } from "lucide-react";
 
 const services = [
@@ -68,17 +71,39 @@ const services = [
   },
 ];
 
+const resources = [
+  {
+    name: "Ebook",
+    href: "/resources/ebook",
+    icon: BookOpen,
+    description: "Free guides & whitepapers",
+  },
+  {
+    name: "Blog",
+    href: "/resources/blog",
+    icon: FileText,
+    description: "Latest insights & articles",
+  },
+  {
+    name: "Case Studies",
+    href: "/resources/case-studies",
+    icon: Briefcase,
+    description: "Success stories & results",
+  },
+];
+
 const navigation = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
-  { name: "Services", href: "/services", hasDropdown: true },
+  { name: "Services", href: "/services", hasDropdown: true, dropdownType: "services" },
+  { name: "Resources", href: "/resources", hasDropdown: true, dropdownType: "resources" },
   { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -88,6 +113,10 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const getDropdownItems = (type: string) => {
+    return type === "services" ? services : resources;
+  };
 
   return (
     <header
@@ -120,8 +149,8 @@ export default function Header() {
                 <div
                   key={item.name}
                   className="relative"
-                  onMouseEnter={() => setServicesOpen(true)}
-                  onMouseLeave={() => setServicesOpen(false)}
+                  onMouseEnter={() => setActiveDropdown(item.dropdownType || null)}
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
                   <button
                     className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-all ${
@@ -133,7 +162,7 @@ export default function Header() {
                     {item.name}
                     <ChevronDown
                       className={`w-4 h-4 transition-transform ${
-                        servicesOpen ? "rotate-180" : ""
+                        activeDropdown === item.dropdownType ? "rotate-180" : ""
                       }`}
                     />
                   </button>
@@ -141,27 +170,29 @@ export default function Header() {
                   {/* Dropdown */}
                   <div
                     className={`absolute top-full left-1/2 -translate-x-1/2 pt-2 transition-all duration-200 ${
-                      servicesOpen
+                      activeDropdown === item.dropdownType
                         ? "opacity-100 visible translate-y-0"
                         : "opacity-0 invisible -translate-y-2"
                     }`}
                   >
-                    <div className="bg-white rounded-xl shadow-xl shadow-blue-900/10 border border-slate-100 p-4 w-[540px] grid grid-cols-2 gap-1">
-                      {services.map((service) => (
+                    <div className={`bg-white rounded-xl shadow-xl shadow-blue-900/10 border border-slate-100 p-4 ${
+                      item.dropdownType === "services" ? "w-[540px] grid grid-cols-2 gap-1" : "w-[320px] space-y-1"
+                    }`}>
+                      {getDropdownItems(item.dropdownType || "").map((dropItem) => (
                         <Link
-                          key={service.name}
-                          href={service.href}
+                          key={dropItem.name}
+                          href={dropItem.href}
                           className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors group"
                         >
                           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:from-blue-600 group-hover:to-blue-700 transition-colors shadow-sm">
-                            <service.icon className="w-5 h-5 text-white" />
+                            <dropItem.icon className="w-5 h-5 text-white" />
                           </div>
                           <div>
                             <p className="font-medium text-slate-800 group-hover:text-blue-700">
-                              {service.name}
+                              {dropItem.name}
                             </p>
                             <p className="text-sm text-slate-500">
-                              {service.description}
+                              {dropItem.description}
                             </p>
                           </div>
                         </Link>
@@ -221,7 +252,7 @@ export default function Header() {
         {/* Mobile menu */}
         <div
           className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            mobileMenuOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"
+            mobileMenuOpen ? "max-h-[900px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <div className="bg-white rounded-xl shadow-xl mb-4 p-4 space-y-2 border border-slate-100">
@@ -230,16 +261,16 @@ export default function Header() {
                 {item.hasDropdown ? (
                   <div className="space-y-2">
                     <p className="px-3 py-2 font-semibold text-slate-800">{item.name}</p>
-                    <div className="grid grid-cols-2 gap-1 pl-2">
-                      {services.map((service) => (
+                    <div className={`${item.dropdownType === "services" ? "grid grid-cols-2" : "flex flex-col"} gap-1 pl-2`}>
+                      {getDropdownItems(item.dropdownType || "").map((dropItem) => (
                         <Link
-                          key={service.name}
-                          href={service.href}
+                          key={dropItem.name}
+                          href={dropItem.href}
                           className="flex items-center gap-2 p-2 rounded-lg hover:bg-blue-50 text-sm text-slate-600 hover:text-blue-700"
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          <service.icon className="w-4 h-4 text-blue-600" />
-                          <span>{service.name}</span>
+                          <dropItem.icon className="w-4 h-4 text-blue-600" />
+                          <span>{dropItem.name}</span>
                         </Link>
                       ))}
                     </div>
