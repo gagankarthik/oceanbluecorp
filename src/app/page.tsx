@@ -672,7 +672,7 @@ export default function Home() {
 
       {/* Industries Section */}
       <section className="section-padding bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a192f] to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-32 " />
 
         <div className="container-custom relative z-10 pt-16">
           <FadeUp>
