@@ -20,61 +20,57 @@ const contactInfo = [
   {
     icon: Phone,
     title: "Call Us",
-    description: "Speak with our sales team",
-    value: "+1-800-OCEAN-BLU",
-    href: "tel:+18006232268",
+    description: "Speak with our hiring team",
+    value: "+1-614-844-6925",
+    href: "tel:+16148446925",
   },
   {
     icon: Mail,
     title: "Email Us",
     description: "Get a response within 24 hours",
-    value: "sales@oceanbluecorp.com",
-    href: "mailto:sales@oceanbluecorp.com",
+    value: "hr@oceanbluecorp.com",
+    href: "mailto:hr@oceanbluecorp.com",
   },
   {
     icon: MapPin,
     title: "Visit Us",
     description: "Our headquarters location",
-    value: "123 Enterprise Drive, San Francisco, CA",
+    value: "9775 Fairway Drive, Suite # C, Powell, OH - 43065",
     href: "#locations",
   },
   {
     icon: Clock,
     title: "Business Hours",
     description: "Monday - Friday",
-    value: "9:00 AM - 6:00 PM PST",
+    value: "9:00 AM - 5:00 PM EST",
     href: null,
   },
 ];
 
 const offices = [
   {
-    city: "San Francisco",
+    city: "Ohio",
     country: "United States",
-    address: "123 Enterprise Drive, Suite 500",
-    phone: "+1 (415) 555-0100",
-    type: "Headquarters",
+    address: "9775 Fairway Drive, Suite #C, Powell, OH - 43065",
+    phone: "+1 (614) 844-6925",
   },
   {
-    city: "New York",
-    country: "United States",
-    address: "456 Madison Avenue, Floor 12",
-    phone: "+1 (212) 555-0200",
-    type: "Regional Office",
+    city: "Hyderabad",
+    country: "India",
+    address: "13th Floor, Building Number 9, Raheja Mindspace, Madhapur, Hyderabad - 560081",
+    phone: "+91 814 312 4665",
+  },
+  {
+    city: "Vizianagaram",
+    country: "India",
+    address: "Plot No: 87, CMR Green Field Layout, Vizianagaram, Andhra Pradesh - 535004",
+    phone: "+91 814 294 9111",
   },
   {
     city: "London",
     country: "United Kingdom",
-    address: "78 Canary Wharf, Level 8",
-    phone: "+44 20 7555 0300",
-    type: "EMEA Headquarters",
-  },
-  {
-    city: "Singapore",
-    country: "Singapore",
-    address: "1 Raffles Place, Tower 2",
-    phone: "+65 6555 0400",
-    type: "APAC Headquarters",
+    address: "910 London Road, Thornton Heath, CR7 7PE, UK",
+    phone: "hr@oceanbluecorp.com",
   },
 ];
 
@@ -471,9 +467,6 @@ export default function ContactPage() {
                 key={office.city}
                 className="bg-card rounded-2xl border border-border p-6 card-hover"
               >
-                <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
-                  {office.type}
-                </span>
                 <h3 className="text-xl font-semibold mb-1">{office.city}</h3>
                 <p className="text-muted-foreground mb-4">{office.country}</p>
                 <div className="space-y-2 text-sm">

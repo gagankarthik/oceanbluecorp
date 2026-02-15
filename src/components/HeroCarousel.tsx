@@ -167,16 +167,6 @@ export default function HeroCarousel() {
                       transition={{ duration: 0.6, delay: 0.2 }}
                       className="space-y-5 md:space-y-6"
                     >
-                      {/* Badge */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20"
-                      >
-                        <Sparkles className="w-4 h-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-white/90">Enterprise Solutions</span>
-                      </motion.div>
 
                       {/* Title */}
                       <motion.h1
@@ -235,26 +225,7 @@ export default function HeroCarousel() {
                           <Play className="w-5 h-5" />
                           Watch Demo
                         </Link>
-                      </motion.div>
-
-                      {/* Stats Row */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.7 }}
-                        className="flex flex-wrap gap-6 md:gap-8 pt-6 md:pt-8"
-                      >
-                        {[
-                          { value: "500+", label: "Clients" },
-                          { value: "15+", label: "Years" },
-                          { value: "98%", label: "Satisfaction" },
-                        ].map((stat, i) => (
-                          <div key={stat.label} className="text-center">
-                            <p className="text-2xl md:text-3xl font-bold text-white">{stat.value}</p>
-                            <p className="text-sm text-white/60">{stat.label}</p>
-                          </div>
-                        ))}
-                      </motion.div>
+                      </motion.div>                     
                     </motion.div>
                   </div>
                 </div>
@@ -264,43 +235,53 @@ export default function HeroCarousel() {
         ))}
       </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all duration-300 group"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all duration-300 group"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
-      </button>
+      {/* Bottom Navigation */}
+      <div className="absolute bottom-6 md:bottom-10 left-0 right-0 z-20">
+        <div className="container-custom">
+          <div className="flex items-center justify-center gap-4">
+            
 
-      {/* Slide Indicators */}
-      <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`relative h-2.5 rounded-full transition-all duration-500 ${
-              index === currentSlide
-                ? "w-12 bg-gradient-to-r from-cyan-400 to-blue-400"
-                : "w-2.5 bg-white/30 hover:bg-white/50"
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          >
-            {index === currentSlide && (
-              <motion.div
-                layoutId="activeIndicator"
-                className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
-              />
-            )}
-          </button>
-        ))}
+            {/* Slide Indicators */}
+            <div className="flex items-center gap-2 md:gap-3">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`relative h-2 md:h-2.5 rounded-full transition-all duration-500 ${
+                    index === currentSlide
+                      ? "w-8 md:w-12 bg-gradient-to-r from-cyan-400 to-blue-400"
+                      : "w-2 md:w-2.5 bg-white/30 hover:bg-white/50"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                >
+                  {index === currentSlide && (
+                    <motion.div
+                      layoutId="activeIndicator"
+                      className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+            {/* Previous Button */}
+            <button
+              onClick={prevSlide}
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+
+            {/* Next Button */}
+            <button
+              onClick={nextSlide}
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Progress Bar */}

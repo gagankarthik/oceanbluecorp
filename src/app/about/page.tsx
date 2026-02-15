@@ -48,12 +48,12 @@ const values = [
 
 const milestones = [
   {
-    year: "2010",
+    year: "2013",
     title: "Foundation",
     description: "Ocean Blue Corporation founded with a vision to transform enterprise IT",
   },
   {
-    year: "2013",
+    year: "2015",
     title: "First 100 Clients",
     description: "Reached milestone of 100 enterprise clients across North America",
   },
@@ -81,20 +81,20 @@ const milestones = [
 
 const leadership = [
   {
-    name: "David Mitchell",
-    role: "CEO & Founder",
+    name: "Sarojini Gude",
+    role: "President",
     bio: "25+ years in enterprise technology. Former SVP at a Fortune 100 tech company.",
-    initials: "DM",
+    initials: "SG",
   },
   {
-    name: "Sarah Chen",
-    role: "Chief Technology Officer",
+    name: "Brent Wallace",
+    role: "SVP, Workforce Solutions",
     bio: "Cloud architecture expert with patents in distributed systems.",
     initials: "SC",
   },
   {
-    name: "Robert Williams",
-    role: "Chief Operating Officer",
+    name: "Sushma Moturu",
+    role: "Human Resource Manager",
     bio: "Operations leader with expertise in scaling global teams.",
     initials: "RW",
   },
