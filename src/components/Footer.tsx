@@ -173,7 +173,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link href="/" className="inline-block mb-5 md:mb-6">
               <Image
-                src="https://oceanbluecorp.com/images/logo-oc.png"
+                src="https://oceanbluecorp.com/images/logo.png"
                 alt="Ocean Blue Corporation"
                 width={160}
                 height={40}
