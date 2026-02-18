@@ -139,3 +139,31 @@
     - http://localhost:3000 (for local development)
     - Your production URL (e.g., https://yourdomain.com)
   7. Click Save changes
+
+  Fix: Add this CORS configuration to your S3 bucket:
+
+  1. Go to AWS Console → S3 → oceanblue-solutions bucket
+  2. Click Permissions tab → Cross-origin resource sharing (CORS)
+  3. Add this configuration:
+
+  [
+      {
+          "AllowedHeaders": ["*"],
+          "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+          "AllowedOrigins": [
+              "http://localhost:3000",
+              "https://oceanbluecorp.vercel.app"
+          ],
+          "ExposeHeaders": ["ETag"],
+          "MaxAgeSeconds": 3000
+      }
+  ]
+
+  4. Click Save changes
+
+  This allows your frontend (localhost and production) to upload files directly to S3.
+
+  ---
+  Alternative: If you'd prefer to avoid S3 CORS setup, I can modify the code to upload through your API  
+  instead of directly to S3. This routes the file through your server, which avoids CORS entirely but    
+  uses more server bandwidth. Would you like me to implement that approach instead?

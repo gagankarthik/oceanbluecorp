@@ -6,7 +6,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm install framer-motion)",
       "Bash(npm install:*)",
-      "WebFetch(domain:stitch.withgoogle.com)"
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "Bash(npx tsc:*)",
+      "Bash(npx shadcn@latest add:*)"
     ]
   }
 }

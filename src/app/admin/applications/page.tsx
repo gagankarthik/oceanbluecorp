@@ -189,6 +189,22 @@ export default function ApplicationsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleViewResume = async (resumeId: string) => {
+    try {
+      const response = await fetch(`/api/resume/${resumeId}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to get resume");
+      }
+
+      // Open the presigned download URL in a new tab
+      window.open(data.downloadUrl, "_blank");
+    } catch (err) {
+      alert("Failed to load resume. The file may have been deleted.");
+    }
+  };
+
   const stats = {
     total: applications.length,
     pending: applications.filter((a) => a.status === "pending").length,
@@ -477,7 +493,10 @@ export default function ApplicationsPage() {
                       <div className="space-y-4">
                         <h4 className="font-semibold text-gray-900">Documents</h4>
                         {app.resumeId ? (
-                          <button className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+                          <button
+                            onClick={() => handleViewResume(app.resumeId)}
+                            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                          >
                             <FileText className="w-4 h-4" />
                             View Resume
                             <ExternalLink className="w-3 h-3" />
