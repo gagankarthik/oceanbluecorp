@@ -34,7 +34,7 @@ const services = [
   {
     icon: BarChart3,
     title: "ERP Solutions",
-    description: "SAP & Oracle implementation that actually makes sense.",
+    description: "SAP, Oracle, and Microsoft ERP implementation, integration, and support.",
     href: "/services#erp",
     gradient: "from-blue-600 to-indigo-600",
     bgLight: "bg-blue-50",
@@ -43,7 +43,7 @@ const services = [
   {
     icon: Cloud,
     title: "Cloud Services",
-    description: "Migration so smooth you'll forget it happened.",
+    description: "Migration, modernization, DevOps, and cloud optimization.",
     href: "/services#cloud",
     gradient: "from-cyan-600 to-blue-600",
     bgLight: "bg-cyan-50",
@@ -52,7 +52,7 @@ const services = [
   {
     icon: Cpu,
     title: "AI & Analytics",
-    description: "From machine learning to plain English insights.",
+    description: "Practical AI, automation, and data intelligence that drive efficiency.",
     href: "/services#ai",
     gradient: "from-violet-600 to-purple-600",
     bgLight: "bg-violet-50",
@@ -61,7 +61,7 @@ const services = [
   {
     icon: Database,
     title: "Salesforce",
-    description: "CRM your team will actually want to use.",
+    description: "CRM optimization, custom development, and managed admin support.",
     href: "/services#salesforce",
     gradient: "from-sky-600 to-blue-600",
     bgLight: "bg-sky-50",
@@ -69,8 +69,8 @@ const services = [
   },
   {
     icon: Users,
-    title: "Staffing",
-    description: "Humans who happen to be great at tech.",
+    title: "IT Staffing",
+    description: "Specialized talent across cloud, cybersecurity, ERP, Salesforce, data, and more.",
     href: "/services#staffing",
     gradient: "from-teal-600 to-cyan-600",
     bgLight: "bg-teal-50",
@@ -79,7 +79,7 @@ const services = [
   {
     icon: GraduationCap,
     title: "Training",
-    description: "Learning that actually sticks. No death by PowerPoint.",
+    description: "Role‑based training that accelerates adoption and capability.",
     href: "/services#training",
     gradient: "from-amber-500 to-orange-500",
     bgLight: "bg-amber-50",
@@ -88,7 +88,7 @@ const services = [
   {
     icon: Settings,
     title: "Managed Services",
-    description: "We fix things. Sometimes before they break.",
+    description: "Proactive monitoring, support, and performance management.",
     href: "/services#managed",
     gradient: "from-rose-600 to-pink-600",
     bgLight: "bg-rose-50",
@@ -106,10 +106,10 @@ const services = [
 ];
 
 const stats = [
-  { value: "500+", label: "Enterprise clients", icon: Building2, color: "from-blue-600 to-cyan-600" },
-  { value: "15+", label: "Years of experience", icon: Award, color: "from-amber-500 to-orange-500" },
-  { value: "25+", label: "Global locations", icon: Globe, color: "from-emerald-500 to-teal-500" },
-  { value: "98%", label: "Client satisfaction", icon: Star, color: "from-purple-500 to-pink-500" },
+  { value: "10+", label: "Years of Industry", icon: Building2, color: "from-blue-600 to-cyan-600" },
+  { value: "8+", label: "Software & ERP Solutions experience", icon: Award, color: "from-amber-500 to-orange-500" },
+  { value: "10+", label: "Data Warehousing", icon: Globe, color: "from-emerald-500 to-teal-500" },
+  { value: "5+", label: "Client Engagnment", icon: Star, color: "from-purple-500 to-pink-500" },
 ];
 
 const industries = [
@@ -310,11 +310,10 @@ export default function Home() {
               viewport={{ once: true }}
               className="absolute -bottom-8 right-0 w-24 h-24 md:w-32 md:h-32 border-r-2 border-b-2 border-gray-200 rounded-br-3xl hidden sm:block"
             />
-
             <SectionHeader
               eyebrow="What we do"
-              title="Things we're"
-              highlight="ridiculously good at"
+              title="Solutions that Deliver"
+              highlight="Real Business Impact"
               highlightGradient="from-blue-600 to-cyan-600"
             />
           </div>
