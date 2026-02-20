@@ -278,8 +278,8 @@ export default function CareersPage() {
               className="flex flex-wrap justify-center gap-6 text-gray-600"
             >
               {[
-                { icon: Building2, label: "500+ Employees" },
-                { icon: Globe, label: "25+ Locations" },
+                { icon: Building2, label: "50+ Employees" },
+                { icon: Globe, label: "3 Locations" },
                 { icon: Briefcase, label: `${jobs.length} Open Positions` },
               ].map((stat, index) => (
                 <div key={stat.label} className="flex items-center gap-2">
