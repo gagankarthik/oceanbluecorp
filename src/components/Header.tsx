@@ -130,6 +130,7 @@ const aboutItems = [
 const navigation = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
+  { name: "Products", href:"/products"},
   { name: "Services", href: "/services", hasDropdown: true, dropdownType: "services" },
   { name: "Resources", href: "/resources", hasDropdown: true, dropdownType: "resources" },
   { name: "Careers", href: "/careers" },
@@ -433,7 +434,6 @@ export default function Header() {
               {/* Menu Panel */}
               <div className="lg:hidden fixed top-16 md:top-20 right-0 bottom-0 w-full sm:w-96 bg-white z-50 overflow-y-auto shadow-xl">
                 <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                  <span className="font-semibold text-gray-900">Menu</span>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);

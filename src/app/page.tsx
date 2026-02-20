@@ -25,10 +25,13 @@ import {
   Quote,
   Compass,
 } from "lucide-react";
+import Loading from "./loading";
 
 // ============================================================================
 // DATA
 // ============================================================================
+
+
 
 const services = [
   {
@@ -244,11 +247,27 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+
+useEffect (() =>{
+  const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Adjust this duration to match your animation
+
+    return () => clearTimeout(timer);
+  }, []);
+
+ 
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) return null;
+
+   if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="bg-white relative overflow-hidden">

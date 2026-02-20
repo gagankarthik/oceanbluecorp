@@ -574,3 +574,7 @@ aws dynamodb describe-table --table-name oceanblue-jobs --query "Table.TableStat
 # Delete table (if needed)
 aws dynamodb delete-table --table-name oceanblue-jobs --region us-east-2
 ```
+
+
+# DynamoDB contacts
+table name and id(String)

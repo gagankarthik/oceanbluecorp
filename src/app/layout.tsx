@@ -3,6 +3,8 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import { Suspense } from "react";
+import Loading from "./loading";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -188,8 +190,11 @@ export default function RootLayout({
         className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}
       >
         <Providers>
+          
           <LayoutWrapper>{children}</LayoutWrapper>
+         
         </Providers>
+        
       </body>
     </html>
   );
