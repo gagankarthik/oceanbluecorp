@@ -207,9 +207,9 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled 
-            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200" 
+        className={`fixed top-0 left-0 right-0 z-[9999] transition-all duration-300 ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200"
             : "bg-white shadow-sm"
         }`}
       >
@@ -425,14 +425,14 @@ export default function Header() {
             <>
               {/* Backdrop */}
               <div
-                className="lg:hidden fixed inset-0 top-16 md:top-20 bg-black/20 z-40"
+                className="lg:hidden fixed inset-0 top-16 md:top-20 bg-black/20 z-[9999]"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setMobileDropdown(null);
                 }}
               />
               {/* Menu Panel */}
-              <div className="lg:hidden fixed top-16 md:top-20 right-0 bottom-0 w-full sm:w-96 bg-white z-50 overflow-y-auto shadow-xl">
+              <div className="lg:hidden fixed top-16 md:top-20 right-0 bottom-0 w-full sm:w-96 bg-white z-[9999] overflow-y-auto shadow-xl">
                 <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
                   <button
                     onClick={() => {

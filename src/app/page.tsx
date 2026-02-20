@@ -25,7 +25,6 @@ import {
   Quote,
   Compass,
 } from "lucide-react";
-import Loading from "./loading";
 
 // ============================================================================
 // DATA
@@ -127,8 +126,7 @@ const industries = [
 const sponsors = [
   { name: "Databricks", logo: "/databricks.svg" },
   { name: "Snowflake", logo: "/snowflake.svg" },
-  { name: "AWS", logo: "/aws.svg" },
-  { name: "Blueiq", logo: "/logo_medium.webp" },
+  { name: "AWS", logo: "/aws partner.png" },
 ];
 
 const testimonials = [
@@ -247,28 +245,13 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-
-useEffect (() =>{
-  const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // Adjust this duration to match your animation
-
-    return () => clearTimeout(timer);
-  }, []);
-
- 
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) return null;
 
-   if (isLoading) {
-    return <Loading />;
-  }
-
+   
   return (
     <div className="bg-white relative overflow-hidden">
       {/* Hero */}
@@ -500,7 +483,7 @@ useEffect (() =>{
                 </h3>
               </motion.div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-3xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-8 max-w-3xl mx-auto">
                 {sponsors.map((sponsor, index) => (
                   <motion.div
                     key={sponsor.name}

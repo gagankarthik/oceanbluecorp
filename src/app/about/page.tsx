@@ -5,82 +5,90 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   Target,
-  Eye,
   Heart,
   Award,
   Globe,
   Users,
   Building2,
   TrendingUp,
-  CheckCircle2,
   Lightbulb,
   Shield,
   Zap,
   Sparkles,
-  Search,
-  Compass,
-  Rocket,
-  RefreshCw,
+  Clock,
+  Cpu,
+  MessageSquare,
+  Briefcase,
+  CheckCircle2,
 } from "lucide-react";
 
-const processSteps = [
+// How We Work - Our Approach
+const approach = [
   {
-    step: "01",
-    icon: Search,
-    title: "Discovery",
-    description: "Understanding your business, challenges, and goals through deep analysis and stakeholder engagement.",
+    icon: Target,
+    title: "Outcome-First",
+    description: "We focus on business impact, not buzzwords.",
     gradient: "from-blue-600 to-cyan-600",
   },
   {
-    step: "02",
-    icon: Compass,
-    title: "Strategy",
-    description: "Designing the optimal solution architecture with clear roadmaps, timelines, and success metrics.",
-    gradient: "from-indigo-600 to-purple-600",
+    icon: Award,
+    title: "Expert-Led Execution",
+    description: "Senior-level talent drives every engagement.",
+    gradient: "from-violet-600 to-purple-600",
   },
   {
-    step: "03",
-    icon: Rocket,
-    title: "Implementation",
-    description: "Executing with precision using agile methodologies and proven best practices for quality delivery.",
+    icon: Cpu,
+    title: "AI-Enabled by Default",
+    description: "We leverage intelligent tools and automation to accelerate results.",
     gradient: "from-amber-500 to-orange-500",
   },
   {
-    step: "04",
-    icon: RefreshCw,
-    title: "Optimization",
-    description: "Continuous improvement through monitoring, feedback loops, and iterative enhancements.",
+    icon: Shield,
+    title: "Security at the Core",
+    description: "Every solution is built with compliance and protection in mind.",
     gradient: "from-emerald-500 to-teal-500",
+  },
+  {
+    icon: MessageSquare,
+    title: "Human-Centered Delivery",
+    description: "Clear communication. Collaborative execution. No surprises.",
+    gradient: "from-rose-500 to-pink-500",
   },
 ];
 
-const values = [
+// What Sets Us Apart
+const differentiators = [
   {
-    icon: Lightbulb,
-    title: "Innovation",
-    description:
-      "We continuously push boundaries, embracing new technologies and methodologies to deliver cutting-edge solutions.",
+    icon: Users,
+    title: "Specialized Talent",
+    description: "We provide highly skilled IT professionals who integrate seamlessly into your teams.",
+    gradient: "from-blue-600 to-cyan-600",
   },
   {
-    icon: Shield,
-    title: "Integrity",
-    description:
-      "We build trust through transparency, ethical practices, and unwavering commitment to our clients' success.",
+    icon: Building2,
+    title: "Enterprise-Grade Solutions",
+    description: "From cloud to ERP to AI, we deliver technology that scales.",
+    gradient: "from-violet-600 to-purple-600",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Proven Delivery",
+    description: "We execute with precision, transparency, and accountability.",
+    gradient: "from-amber-500 to-orange-500",
+  },
+  {
+    icon: Briefcase,
+    title: "Industry Expertise",
+    description: "Healthcare, government, financial services, manufacturing, retail, and technology.",
+    gradient: "from-emerald-500 to-teal-500",
   },
   {
     icon: Heart,
-    title: "Client Focus",
-    description:
-      "Our clients' goals are our goals. We partner closely to understand needs and deliver exceptional outcomes.",
-  },
-  {
-    icon: Zap,
-    title: "Excellence",
-    description:
-      "We maintain the highest standards in everything we do, from project delivery to customer service.",
+    title: "Long-Term Partnership",
+    description: "We don't just deliver projects — we support your evolution.",
+    gradient: "from-rose-500 to-pink-500",
   },
 ];
-
 const milestones = [
   {
     year: "2013",
@@ -113,40 +121,36 @@ const milestones = [
     description: "Recognized as a leader in enterprise digital transformation",
   },
 ];
-
 const leadership = [
   {
     name: "Sarojini Gude",
     role: "President",
-    bio: "25+ years in enterprise technology. Former SVP at a Fortune 100 tech company.",
     initials: "SG",
   },
   {
     name: "Brent Wallace",
     role: "SVP, Workforce Solutions",
-    bio: "Cloud architecture expert with patents in distributed systems.",
-    initials: "SC",
+    initials: "BW",
   },
   {
     name: "Sushma Moturu",
     role: "Human Resource Manager",
-    bio: "Operations leader with expertise in scaling global teams.",
-    initials: "RW",
+    initials: "SM",
   },
   {
-    name: "Emily Torres",
-    role: "Chief Revenue Officer",
-    bio: "Enterprise sales veteran with track record of 300% growth.",
-    initials: "ET",
+    name: "Clark Cristofoli",
+    role: "Executive Recruiter",
+    initials: "CC",
   },
 ];
 
-const stats = [
+{/*const stats = [
   { value: "500+", label: "Enterprise Clients", icon: Building2, gradient: "from-blue-600 to-cyan-600" },
   { value: "2,500+", label: "Team Members", icon: Users, gradient: "from-amber-500 to-orange-500" },
   { value: "25+", label: "Global Offices", icon: Globe, gradient: "from-emerald-500 to-teal-500" },
   { value: "98%", label: "Client Retention", icon: TrendingUp, gradient: "from-violet-500 to-purple-500" },
 ];
+*/}
 
 export default function AboutPage() {
   return (
@@ -187,7 +191,7 @@ export default function AboutPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-3xl"
+            className="max-w-4xl"
           >
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -196,24 +200,22 @@ export default function AboutPage() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-6"
             >
               <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-white/90">About Us</span>
+              <span className="text-sm font-medium text-white/90">Purpose-Driven Technology. Human-Centered Delivery.</span>
             </motion.div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-6 leading-tight">
-              Transforming Enterprises Through{" "}
+              We Build Technology and Teams That{" "}
               <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent font-medium">
-                Technology
+                Move Organizations Forward
               </span>
             </h1>
             <p className="text-xl text-white/60 leading-relaxed">
-              We are a global technology company dedicated to helping enterprises
-              navigate digital transformation with confidence. Our mission is to
-              deliver innovative solutions that drive measurable business outcomes.
+              Ocean Blue is a trusted partner for IT staffing, enterprise solutions, and digital transformation — delivering clarity, expertise, and measurable results.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section *
       <section className="py-16 md:py-20 bg-white border-b border-gray-100">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
@@ -235,9 +237,9 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section*/}
 
-      {/* Mission & Vision */}
+      {/* Our Story & Our Purpose */}
       <section className="py-20 md:py-24 lg:py-32 bg-gray-50 relative overflow-hidden">
         {/* Floating orbs */}
         <motion.div
@@ -249,6 +251,7 @@ export default function AboutPage() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Our Story */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -262,21 +265,27 @@ export default function AboutPage() {
                 <div className="relative mb-6">
                   <div className="absolute -inset-2 bg-gradient-to-br from-blue-600 to-cyan-600 opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity" />
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                    <Target className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                    <Lightbulb className="w-7 h-7 md:w-8 md:h-8 text-white" />
                   </div>
                 </div>
 
+                <span className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-2 block">
+                  Our Story
+                </span>
                 <h2 className="text-2xl md:text-3xl font-light text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
-                  Our{" "}
+                  Who We{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
-                    Mission
+                    Are
                   </span>
                 </h2>
+                <p className="text-gray-500 leading-relaxed mb-4">
+                  Ocean Blue was founded on a simple belief:
+                </p>
+                <p className="text-lg font-medium text-gray-800 mb-4 italic">
+                  &ldquo;Technology should empower people, not complicate their work.&rdquo;
+                </p>
                 <p className="text-gray-500 leading-relaxed">
-                  To empower enterprises worldwide with innovative technology solutions
-                  that accelerate growth, enhance efficiency, and create lasting
-                  competitive advantages. We are committed to being the trusted partner
-                  that guides organizations through their digital transformation journey.
+                  We help organizations modernize systems, strengthen teams, and adopt the technologies that drive real business impact — all with a human-centered approach that values clarity, collaboration, and execution.
                 </p>
 
                 {/* Hover gradient overlay */}
@@ -284,6 +293,7 @@ export default function AboutPage() {
               </div>
             </motion.div>
 
+            {/* Our Purpose */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -298,21 +308,24 @@ export default function AboutPage() {
                 <div className="relative mb-6">
                   <div className="absolute -inset-2 bg-gradient-to-br from-violet-600 to-purple-600 opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity" />
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                    <Eye className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                    <Target className="w-7 h-7 md:w-8 md:h-8 text-white" />
                   </div>
                 </div>
 
+                <span className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-2 block">
+                  Our Purpose
+                </span>
                 <h2 className="text-2xl md:text-3xl font-light text-gray-900 mb-4 group-hover:text-violet-600 transition-colors">
-                  Our{" "}
+                  Why We{" "}
                   <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent font-medium">
-                    Vision
+                    Exist
                   </span>
                 </h2>
+                <p className="text-gray-500 leading-relaxed mb-4">
+                  To empower organizations with the technology, talent, and support they need to operate smarter, faster, and more securely.
+                </p>
                 <p className="text-gray-500 leading-relaxed">
-                  To be the global leader in enterprise digital transformation,
-                  recognized for our innovative solutions, exceptional talent, and
-                  unwavering commitment to client success. We envision a world where
-                  every enterprise can harness the full potential of technology.
+                  We combine deep technical expertise with a commitment to service — ensuring every engagement delivers meaningful outcomes.
                 </p>
 
                 {/* Hover gradient overlay */}
@@ -323,7 +336,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Values Section */}
+      {/* Our Approach - How We Work */}
       <section className="py-20 md:py-24 lg:py-32 bg-white relative overflow-hidden">
         {/* Floating orb backgrounds */}
         <motion.div
@@ -347,7 +360,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block"
             >
-              Our Values
+              Our Approach
             </motion.span>
 
             <motion.h2
@@ -357,92 +370,71 @@ export default function AboutPage() {
               transition={{ delay: 0.1 }}
               className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 mb-6"
             >
-              The Principles That{" "}
+              How We{" "}
               <span className="relative inline-block">
-                <span className="relative z-10 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent font-medium">
-                  Guide Us
+                <span className="relative z-10 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
+                  Work
                 </span>
                 <motion.span
                   initial={{ scaleX: 0 }}
                   whileInView={{ scaleX: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.3 }}
-                  className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-violet-200 to-purple-200 opacity-40 -z-0 rounded-full"
+                  className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-blue-200 to-cyan-200 opacity-40 -z-0 rounded-full"
                   style={{ originX: 0 }}
                 />
               </span>
             </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-500 text-lg leading-relaxed"
-            >
-              Our core values shape every interaction, decision, and solution we deliver.
-              They are the foundation of our culture and our commitment to excellence.
-            </motion.p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, index) => {
-              const gradients = [
-                "from-blue-600 to-cyan-600",
-                "from-violet-600 to-purple-600",
-                "from-amber-500 to-orange-500",
-                "from-emerald-500 to-teal-500",
-              ];
-              const gradient = gradients[index % gradients.length];
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {approach.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group"
+              >
+                <div className="relative h-full bg-white rounded-3xl p-6 md:p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center overflow-hidden">
+                  {/* Corner accent */}
+                  <div
+                    className={`absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br ${item.gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-tr-3xl`}
+                  />
 
-              return (
-                <motion.div
-                  key={value.title}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group"
-                >
-                  <div className="relative h-full bg-white rounded-3xl p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center overflow-hidden">
-                    {/* Corner accent */}
+                  {/* Icon */}
+                  <div className="relative mb-5 inline-block">
                     <div
-                      className={`absolute top-0 right-0 w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br ${gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-tr-3xl`}
+                      className={`absolute -inset-2 bg-gradient-to-br ${item.gradient} opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity`}
                     />
-
-                    {/* Icon */}
-                    <div className="relative mb-6 inline-block">
-                      <div
-                        className={`absolute -inset-2 bg-gradient-to-br ${gradient} opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity`}
-                      />
-                      <div
-                        className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
-                      >
-                        <value.icon className="w-8 h-8 text-white" />
-                      </div>
+                    <div
+                      className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
+                    >
+                      <item.icon className="w-7 h-7 text-white" />
                     </div>
-
-                    {/* Content */}
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                      {value.title}
-                    </h3>
-                    <p className="text-gray-500 leading-relaxed">
-                      {value.description}
-                    </p>
-
-                    {/* Hover gradient overlay */}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl`}
-                    />
                   </div>
-                </motion.div>
-              );
-            })}
+
+                  {/* Content */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {item.description}
+                  </p>
+
+                  {/* Hover gradient overlay */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl`}
+                  />
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Timeline Section */}
+       {/* Timeline Section */}
       <section className="py-20 md:py-24 lg:py-32 bg-gray-50 relative overflow-hidden">
         {/* Floating orb backgrounds */}
         <motion.div
@@ -565,8 +557,100 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Leadership Section - Updated */}
+      {/* What Sets Us Apart */}
       <section className="py-20 md:py-24 lg:py-32 bg-gray-50 relative overflow-hidden">
+        {/* Floating orb backgrounds */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.1, scale: 1 }}
+          transition={{ duration: 1.5 }}
+          className="absolute bottom-20 -right-20 w-[400px] h-[400px] bg-cyan-200 rounded-full blur-3xl pointer-events-none"
+        />
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block"
+            >
+              What Sets Us Apart
+            </motion.span>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 mb-6"
+            >
+              A Partner You Can{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent font-medium">
+                  Trust
+                </span>
+                <motion.span
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-violet-200 to-purple-200 opacity-40 -z-0 rounded-full"
+                  style={{ originX: 0 }}
+                />
+              </span>
+            </motion.h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {differentiators.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group"
+              >
+                <div className="relative h-full bg-white rounded-3xl p-6 md:p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center overflow-hidden">
+                  {/* Corner accent */}
+                  <div
+                    className={`absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br ${item.gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-tr-3xl`}
+                  />
+
+                  {/* Icon */}
+                  <div className="relative mb-5 inline-block">
+                    <div
+                      className={`absolute -inset-2 bg-gradient-to-br ${item.gradient} opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity`}
+                    />
+                    <div
+                      className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
+                    >
+                      <item.icon className="w-7 h-7 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {item.description}
+                  </p>
+
+                  {/* Hover gradient overlay */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl`}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Leadership Section */}
+      <section className="py-20 md:py-24 lg:py-32 bg-white relative overflow-hidden">
         {/* Floating orb backgrounds */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -596,7 +680,7 @@ export default function AboutPage() {
               Meet Our{" "}
               <span className="relative inline-block">
                 <span className="relative z-10 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
-                  Executive Team
+                  Team
                 </span>
                 <motion.span
                   initial={{ scaleX: 0 }}
@@ -608,17 +692,6 @@ export default function AboutPage() {
                 />
               </span>
             </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-500 text-lg leading-relaxed"
-            >
-              Our leadership team brings decades of combined experience in enterprise
-              technology, driving innovation and growth across the organization.
-            </motion.p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -640,7 +713,7 @@ export default function AboutPage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="group"
                 >
-                  <div className="relative h-full bg-white rounded-3xl p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center overflow-hidden">
+                  <div className="relative h-full bg-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center overflow-hidden">
                     {/* Corner accent */}
                     <div
                       className={`absolute bottom-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br ${gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-br-3xl`}
@@ -662,243 +735,13 @@ export default function AboutPage() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                       {leader.name}
                     </h3>
-                    <p className={`bg-gradient-to-r ${gradient} bg-clip-text text-transparent font-medium mb-4`}>
+                    <p className={`bg-gradient-to-r ${gradient} bg-clip-text text-transparent font-medium`}>
                       {leader.role}
                     </p>
-                    <p className="text-sm text-gray-500">{leader.bio}</p>
 
                     {/* Hover gradient overlay */}
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl`}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Global Presence */}
-      <section className="py-20 md:py-24 lg:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.3, 0.2],
-            }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute -top-20 -right-20 w-[500px] h-[500px] bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              x: [0, -20, 0],
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute -bottom-20 -left-20 w-60 h-60 md:w-80 md:h-80 bg-blue-500/15 rounded-full blur-3xl"
-          />
-        </div>
-
-        {/* Subtle grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
-          }}
-        />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block">
-                Global Presence
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-white mb-6 leading-tight">
-                Serving Enterprises{" "}
-                <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent font-medium">
-                  Worldwide
-                </span>
-              </h2>
-              <p className="text-white/50 text-lg leading-relaxed mb-10">
-                With offices across North America, Europe, and Asia Pacific, we
-                provide local expertise with global capabilities. Our distributed
-                teams work around the clock to ensure seamless service delivery.
-              </p>
-              <div className="grid grid-cols-3 gap-8">
-                {[
-                  { value: "12", label: "Americas", gradient: "from-blue-600 to-cyan-600" },
-                  { value: "8", label: "Europe", gradient: "from-violet-600 to-purple-600" },
-                  { value: "5", label: "Asia Pacific", gradient: "from-amber-500 to-orange-500" },
-                ].map((item, index) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="group"
-                  >
-                    <p className={`text-3xl md:text-4xl font-light mb-2 bg-gradient-to-r ${item.gradient} bg-clip-text text-transparent font-[family-name:var(--font-space-grotesk)]`}>{item.value}</p>
-                    <p className="text-sm md:text-base text-white/40 group-hover:text-white/60 transition-colors">{item.label}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="relative"
-            >
-              <div className="aspect-video bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 backdrop-blur-sm overflow-hidden group hover:border-white/20 transition-all duration-300">
-                {/* Animated globe glow */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition-all duration-500" />
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                  className="relative"
-                >
-                  <Globe className="w-24 h-24 md:w-32 md:h-32 text-cyan-400/30 group-hover:text-cyan-400/50 transition-colors duration-300" />
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Our Process Section */}
-      <section id="process" className="py-20 md:py-24 lg:py-32 bg-white relative overflow-hidden">
-        {/* Floating orb backgrounds */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.15, scale: 1 }}
-          transition={{ duration: 1.5 }}
-          className="absolute top-20 -left-20 w-[500px] h-[500px] bg-blue-200 rounded-full blur-3xl pointer-events-none"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.15, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.2 }}
-          className="absolute bottom-20 -right-20 w-[400px] h-[400px] bg-cyan-200 rounded-full blur-3xl pointer-events-none"
-        />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Decorative corners */}
-          <div className="relative mb-16 md:mb-20">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="absolute -top-8 left-0 w-24 h-24 md:w-32 md:h-32 border-l-2 border-t-2 border-gray-200 rounded-tl-3xl hidden sm:block"
-            />
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="absolute -bottom-8 right-0 w-24 h-24 md:w-32 md:h-32 border-r-2 border-b-2 border-gray-200 rounded-br-3xl hidden sm:block"
-            />
-
-            <div className="max-w-3xl mx-auto text-center">
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block"
-              >
-                How we work
-              </motion.span>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 mb-6"
-              >
-                Our{" "}
-                <span className="relative inline-block">
-                  <span className="relative z-10 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
-                    Process
-                  </span>
-                  <motion.span
-                    initial={{ scaleX: 0 }}
-                    whileInView={{ scaleX: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-blue-200 to-cyan-200 opacity-40 -z-0 rounded-full"
-                    style={{ originX: 0 }}
-                  />
-                </span>
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-500 text-lg leading-relaxed"
-              >
-                A proven methodology that ensures consistent, high-quality delivery across all engagements.
-              </motion.p>
-            </div>
-          </div>
-
-          {/* Process Steps Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {processSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <motion.div
-                  key={step.title}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group"
-                >
-                  <div className="relative h-full bg-white rounded-3xl p-6 md:p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
-                    {/* Corner accent */}
-                    <div
-                      className={`absolute top-0 left-0 w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br ${step.gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-tl-3xl`}
-                    />
-
-                    {/* Step number */}
-                    <div className="text-5xl font-light text-gray-100 mb-4 font-[family-name:var(--font-space-grotesk)]">
-                      {step.step}
-                    </div>
-
-                    {/* Icon */}
-                    <div className="relative mb-5 md:mb-6">
-                      <div
-                        className={`absolute -inset-2 bg-gradient-to-br ${step.gradient} opacity-10 rounded-2xl blur-xl group-hover:opacity-20 transition-opacity`}
-                      />
-                      <div
-                        className={`relative w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
-                      >
-                        <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                      {step.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm md:text-base leading-relaxed">
-                      {step.description}
-                    </p>
-
-                    {/* Hover gradient overlay */}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${step.gradient} opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl`}
                     />
                   </div>
                 </motion.div>
@@ -968,20 +811,19 @@ export default function AboutPage() {
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-8 md:mb-10 rounded-2xl md:rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-2xl"
             >
-              <Award className="w-8 h-8 md:w-10 md:h-10 text-white" />
+              <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </motion.div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white mb-5 md:mb-6 leading-tight">
-              Ready to
+              Let&apos;s Build What&apos;s Next
               <br />
               <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-cyan-300 bg-clip-text text-transparent font-medium">
-                join our journey?
+                — Together
               </span>
             </h2>
 
             <p className="text-base md:text-lg text-white/50 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed">
-              Whether you&apos;re looking for a technology partner or an exciting career
-              opportunity, we&apos;d love to connect with you.
+              Whether you&apos;re scaling your team or modernizing your technology, Ocean Blue is ready to help.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -990,7 +832,7 @@ export default function AboutPage() {
                 className="group relative px-7 md:px-8 py-3.5 md:py-4 bg-white text-gray-900 rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2 font-medium text-sm md:text-base">
-                  Partner With Us
+                  Start the Conversation
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Link>

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Github,
   Instagram,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -50,7 +51,7 @@ const footerLinks = {
 
 const socialLinks = [
   { name: "LinkedIn", href: "https://www.linkedin.com/company/ocean-blue-solutions-inc/", icon: Linkedin, color: "hover:bg-blue-600" },
-  { name: "Twitter", href: "https://twitter.com/oceanbluecorp", icon: Twitter, color: "hover:bg-sky-500" },
+  { name: "X", href: "https://x.com/OceanBlueSol", icon: X, color: "hover:bg-sky-500" },
   { name: "YouTube", href: "https://www.youtube.com/@OceanBlueSolutions", icon: Youtube, color: "hover:bg-red-600" },
   { name: "Instagram", href: "https://www.instagram.com/oceanbluesolutions", icon: Instagram, color: "hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-500" },
 ];
