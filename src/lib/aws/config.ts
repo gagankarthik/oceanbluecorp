@@ -31,9 +31,9 @@ export const dynamoDBConfig = {
 // Validate required environment variables
 export function validateAwsConfig(): { valid: boolean; missing: string[] } {
   const required = [
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
-    "AWS_S3_BUCKET_NAME",
+    "NEXT_AWS_ACCESS_KEY_ID",
+    "NEXT_AWS_SECRET_ACCESS_KEY",
+    "NEXT_AWS_S3_BUCKET_NAME",
   ];
 
   const missing = required.filter((key) => !process.env[key]);
