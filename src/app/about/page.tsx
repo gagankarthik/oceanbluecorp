@@ -97,28 +97,28 @@ const milestones = [
   },
   {
     year: "2015",
-    title: "First 100 Clients",
-    description: "Reached milestone of 100 enterprise clients across North America",
+    title: "MSA with First Prime Vendor",
+    description: "Established first Master Service Agreement with a prime vendor, expanding service delivery capabilities",
   },
   {
-    year: "2016",
-    title: "Global Expansion",
-    description: "Opened offices in Europe and Asia Pacific regions",
-  },
-  {
-    year: "2019",
-    title: "AI Practice Launch",
-    description: "Established dedicated AI and Machine Learning practice",
+    year: "2021",
+    title: "MSA with Major Client",
+    description: "Secured Master Service Agreement with a Fortune 500 enterprise client, marking significant growth",
   },
   {
     year: "2022",
-    title: "500+ Clients",
-    description: "Serving over 500 enterprise clients globally",
+    title: "Global Expansion to India",
+    description: "Strategic expansion into Indian market with new delivery center and local operations",
   },
   {
     year: "2024",
-    title: "Industry Leadership",
-    description: "Recognized as a leader in enterprise digital transformation",
+    title: "Offices in UK",
+    description: "Opened new offices in United Kingdom to strengthen European presence and client services",
+  },
+  {
+    year: "2025",
+    title: "AI Practice Launch",
+    description: "Launched dedicated AI practice to deliver cutting-edge artificial intelligence solutions",
   },
 ];
 const leadership = [
