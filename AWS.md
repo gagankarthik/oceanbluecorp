@@ -39,9 +39,14 @@
   [
     {
       "AllowedHeaders": ["*"],
-      "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
-      "AllowedOrigins": ["https://d84l1y8p4kdic.cloudfront.net", "http://localhost:3000"],
-      "ExposeHeaders": ["ETag"]
+      "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+      "AllowedOrigins": [
+        "http://localhost:3000",
+        "https://oceanbluecorp.vercel.app",
+        "https://main.d3dliwgutz7tdq.amplifyapp.com"
+      ],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 3000
     }
   ]
 
@@ -119,10 +124,12 @@
 
   Allowed callback URLs:
   https://oceanbluecorp.vercel.app/auth/callback
+  https://main.d3dliwgutz7tdq.amplifyapp.com/auth/callback
   http://localhost:3000/auth/callback
 
   Allowed sign-out URLs:
   https://oceanbluecorp.vercel.app
+  https://main.d3dliwgutz7tdq.amplifyapp.com
   http://localhost:3000
 
   Step 3: Enable OAuth Flows
@@ -149,10 +156,11 @@
   [
       {
           "AllowedHeaders": ["*"],
-          "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+          "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
           "AllowedOrigins": [
               "http://localhost:3000",
-              "https://oceanbluecorp.vercel.app"
+              "https://oceanbluecorp.vercel.app",
+              "https://main.d3dliwgutz7tdq.amplifyapp.com"
           ],
           "ExposeHeaders": ["ETag"],
           "MaxAgeSeconds": 3000

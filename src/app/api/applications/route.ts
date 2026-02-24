@@ -8,6 +8,11 @@ import {
   getJob,
   updateJob,
 } from "@/lib/aws/dynamodb";
+import {
+  sendApplicationConfirmation,
+  sendNewApplicationNotification,
+} from "@/lib/aws/ses";
+import { listCognitoUsers } from "@/lib/aws/cognito";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/applications - Get applications (with optional filters)
@@ -108,6 +113,66 @@ export async function POST(request: NextRequest) {
     // Increment applications count on the job
     const currentCount = jobResult.data.applicationsCount || 0;
     await updateJob(body.jobId, { applicationsCount: currentCount + 1 });
+
+    const job = jobResult.data;
+
+    // Send email notifications (don't block the response)
+    // 1. Send confirmation email to candidate
+    sendApplicationConfirmation({
+      candidateName: body.name,
+      candidateEmail: body.email,
+      jobTitle: job.title,
+      jobDepartment: job.department,
+      jobLocation: job.location,
+    }).catch((err) => console.error("Failed to send candidate confirmation:", err));
+
+    // 2. Send notification to recruiter who posted the job
+    if (job.postedByEmail && job.postedByName) {
+      sendNewApplicationNotification({
+        recruiterName: job.postedByName,
+        recruiterEmail: job.postedByEmail,
+        candidateName: body.name,
+        candidateEmail: body.email,
+        candidatePhone: body.phone,
+        jobTitle: job.title,
+        jobId: job.id,
+        applicationId: application.id,
+        appliedAt: application.appliedAt,
+      }).catch((err) => console.error("Failed to send recruiter notification:", err));
+    }
+
+    // 3. Send notifications to HR/Admin users if configured
+    if (job.notifyHROnApplication || job.notifyAdminOnApplication) {
+      listCognitoUsers()
+        .then((usersResult) => {
+          if (!usersResult.success || !usersResult.users) return;
+
+          const recipients = usersResult.users.filter((user) => {
+            const groups = user.groups || [];
+            if (job.notifyHROnApplication && groups.includes("hr")) return true;
+            if (job.notifyAdminOnApplication && groups.includes("admin")) return true;
+            return false;
+          });
+
+          // Send email to each HR/Admin (excluding the job poster who already got notified)
+          for (const recipient of recipients) {
+            if (recipient.email === job.postedByEmail) continue;
+
+            sendNewApplicationNotification({
+              recruiterName: recipient.name || recipient.email.split("@")[0],
+              recruiterEmail: recipient.email,
+              candidateName: body.name,
+              candidateEmail: body.email,
+              candidatePhone: body.phone,
+              jobTitle: job.title,
+              jobId: job.id,
+              applicationId: application.id,
+              appliedAt: application.appliedAt,
+            }).catch((err) => console.error(`Failed to send notification to ${recipient.email}:`, err));
+          }
+        })
+        .catch((err) => console.error("Failed to fetch users for notifications:", err));
+    }
 
     return NextResponse.json({ application }, { status: 201 });
   } catch (error) {

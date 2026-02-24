@@ -23,6 +23,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   MessageSquare,
+  UserCheck,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -33,6 +34,7 @@ const navigation = [
   { name: "Users", href: "/admin/users", icon: UserCog, roles: [UserRole.ADMIN] },
   { name: "Content", href: "/admin/content", icon: FileText, roles: [UserRole.ADMIN] },
   { name: "Job Postings", href: "/admin/jobs", icon: Briefcase, roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Candidates", href: "/admin/candidates", icon: UserCheck, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Applications", href: "/admin/applications", icon: Users, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Settings", href: "/admin/settings", icon: Settings, roles: [UserRole.ADMIN] },
@@ -248,13 +250,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <div className="mt-2 py-1 rounded-xl bg-white border border-slate-200 shadow-lg">
                 <p className="px-3 py-1.5 text-xs text-slate-500 truncate">{user?.email}</p>
                 <div className="my-1 border-t border-slate-100" />
-                <Link
-                  href="/admin/settings"
-                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-slate-400" />
-                  Settings
-                </Link>
                 <button
                   onClick={signOut}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

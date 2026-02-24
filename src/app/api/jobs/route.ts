@@ -63,9 +63,15 @@ export async function POST(request: NextRequest) {
       responsibilities: body.responsibilities || [],
       salary: body.salary,
       status: body.status || "draft",
+      submissionDueDate: body.submissionDueDate,
       createdAt: new Date().toISOString(),
       createdBy: body.createdBy || "system",
+      postedByName: body.postedByName,
+      postedByEmail: body.postedByEmail,
+      postedByRole: body.postedByRole,
       applicationsCount: 0,
+      notifyHROnApplication: body.notifyHROnApplication || false,
+      notifyAdminOnApplication: body.notifyAdminOnApplication || false,
     };
 
     const result = await createJob(job);

@@ -100,7 +100,7 @@ export default function ConsultingShowcase() {
   return (
     <section
       ref={containerRef}
-      className="relative py-20 md:py-24 lg:py-32 bg-white overflow-hidden"
+      className="relative py-20 md:py-24 lg:py-32 bg-[#f4f6f4] overflow-hidden"
     >
       {/* Elegant background */}
       <div className="absolute inset-0">
@@ -180,7 +180,7 @@ export default function ConsultingShowcase() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group"
               >
-                <div className="relative bg-white rounded-2xl p-6 md:p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 card-lift h-full">
+                <div className="relative bg-[#f2f2f2] rounded-2xl p-6 md:p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 card-lift h-full">
                   {/* Step number */}
                   <div className="absolute top-5 right-5 md:top-6 md:right-6">
                     <span className="text-2xl md:text-3xl font-light text-gray-200 font-[family-name:var(--font-space-grotesk)]">
@@ -290,11 +290,11 @@ export default function ConsultingShowcase() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative bg-transparent rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden"
+          className="relative p-8 md:p-12 lg:p-16 overflow-hidden bg-white border-radius rounded-2xl"
         >
          
 
-          <div className="relative z-10">
+          <div className="relative z-10 ">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -305,7 +305,7 @@ export default function ConsultingShowcase() {
               <span className="text-xs sm:text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-3 block">
                 Trusted & Certified
               </span>
-              <h3 className="text-2xl md:text-3xl font-light text-white font-[family-name:var(--font-space-grotesk)]">
+              <h3 className="text-2xl md:text-3xl font-light text-black font-[family-name:var(--font-space-grotesk)]">
                 Our{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent font-medium">
                   Certifications
@@ -313,7 +313,7 @@ export default function ConsultingShowcase() {
               </h3>
             </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-4xl mx-auto ">
               {certifications.map((cert, index) => (
                 <motion.div
                   key={cert.name}

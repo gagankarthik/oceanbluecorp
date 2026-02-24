@@ -65,7 +65,10 @@ export async function PUT(
     if (body.responsibilities !== undefined) updates.responsibilities = body.responsibilities;
     if (body.salary !== undefined) updates.salary = body.salary;
     if (body.status !== undefined) updates.status = body.status;
+    if (body.submissionDueDate !== undefined) updates.submissionDueDate = body.submissionDueDate;
     if (body.applicationsCount !== undefined) updates.applicationsCount = body.applicationsCount;
+    if (body.notifyHROnApplication !== undefined) updates.notifyHROnApplication = body.notifyHROnApplication;
+    if (body.notifyAdminOnApplication !== undefined) updates.notifyAdminOnApplication = body.notifyAdminOnApplication;
 
     const result = await updateJob(id, updates);
 

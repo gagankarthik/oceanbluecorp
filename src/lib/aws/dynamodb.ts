@@ -147,7 +147,13 @@ export interface Job {
   createdAt: string;
   updatedAt?: string;
   createdBy: string;
+  postedByName?: string; // Name of admin/HR who posted
+  postedByEmail?: string; // Email of admin/HR who posted
+  postedByRole?: string; // Role of poster (admin/hr)
   applicationsCount?: number;
+  // Email notification settings
+  notifyHROnApplication?: boolean; // Notify all HR users when someone applies
+  notifyAdminOnApplication?: boolean; // Notify all Admin users when someone applies
 }
 
 export interface Contact {

@@ -175,15 +175,14 @@ export default function Footer() {
               <Image
                 src="https://oceanbluecorp.com/images/logo.png"
                 alt="Ocean Blue Corporation"
-                width={160}
+                width={180}
                 height={40}
                 className="h-7 md:h-8 w-auto"
               />
             </Link>
-            <p className="text-gray-500 mb-5 md:mb-6 leading-relaxed text-sm max-w-sm">
-              Making enterprise tech less painful since 2009.
-              ERP, cloud, AI — we speak human.
-            </p>
+            {/*<p className="text-gray-500 mb-5 md:mb-6 leading-relaxed text-sm max-w-sm">
+              Making enterprise tech less painful.
+            </p>*/}
             <div className="space-y-2.5 md:space-y-3">
               <a
                 href="mailto:hr@oceanbluecorp.com"
@@ -208,7 +207,7 @@ export default function Footer() {
                   <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </div>
                 <span className="leading-relaxed">
-                  9775 Fairway Drive, Suite C<br />
+                  9775 Fairway Drive, Suite #C<br />
                   Powell, OH 43065
                 </span>
               </div>

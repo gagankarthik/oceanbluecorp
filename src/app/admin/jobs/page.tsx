@@ -19,8 +19,10 @@ import {
   X,
   Download,
   Calendar,
+  User,
 } from "lucide-react";
 import { Job } from "@/lib/aws/dynamodb";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const statusConfig = {
   active: {
@@ -49,6 +51,7 @@ const departments = [
 ];
 
 export default function JobsPage() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +75,8 @@ export default function JobsPage() {
     salaryMax: "",
     status: "draft" as Job["status"],
     submissionDueDate: "",
+    notifyHROnApplication: false,
+    notifyAdminOnApplication: false,
   });
 
   // Export jobs to Excel/CSV
@@ -192,6 +197,14 @@ export default function JobsPage() {
         } : undefined,
         status: formData.status,
         submissionDueDate: formData.submissionDueDate || undefined,
+        notifyHROnApplication: formData.notifyHROnApplication,
+        notifyAdminOnApplication: formData.notifyAdminOnApplication,
+        // Add posted by info for new jobs
+        ...(!editingJob && {
+          postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
+          postedByEmail: user?.email || "",
+          postedByRole: user?.role || "admin",
+        }),
       };
 
       const url = editingJob ? `/api/jobs/${editingJob.id}` : "/api/jobs";
@@ -230,6 +243,8 @@ export default function JobsPage() {
       salaryMax: "",
       status: "draft",
       submissionDueDate: "",
+      notifyHROnApplication: false,
+      notifyAdminOnApplication: false,
     });
     setShowCreateModal(false);
     setEditingJob(null);
@@ -249,6 +264,8 @@ export default function JobsPage() {
       salaryMax: job.salary?.max?.toString() || "",
       status: job.status,
       submissionDueDate: job.submissionDueDate?.split("T")[0] || "",
+      notifyHROnApplication: job.notifyHROnApplication || false,
+      notifyAdminOnApplication: job.notifyAdminOnApplication || false,
     });
     setShowCreateModal(true);
   };
@@ -267,6 +284,8 @@ export default function JobsPage() {
       salaryMax: job.salary?.max?.toString() || "",
       status: "draft",
       submissionDueDate: "",
+      notifyHROnApplication: job.notifyHROnApplication || false,
+      notifyAdminOnApplication: job.notifyAdminOnApplication || false,
     });
     setShowCreateModal(true);
   };
@@ -423,6 +442,9 @@ export default function JobsPage() {
                   Applicants
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                  Posted By
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
                   Status
                 </th>
                 <th className="text-right px-6 py-4 text-sm font-semibold text-gray-900">
@@ -453,6 +475,21 @@ export default function JobsPage() {
                         <Users className="w-4 h-4" />
                         {job.applicationsCount || 0}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {job.postedByName ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                            <User className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">{job.postedByName}</p>
+                            <p className="text-xs text-gray-500 capitalize">{job.postedByRole || "HR"}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <select
@@ -691,6 +728,39 @@ export default function JobsPage() {
                   placeholder="Lead technical projects&#10;Mentor junior developers&#10;Collaborate with product team"
                 />
               </div>
+
+              {/* Email Notification Settings */}
+              <div className="pt-4 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Email Notifications
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Send email notifications when someone applies for this job
+                </p>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.notifyHROnApplication}
+                      onChange={(e) => setFormData({ ...formData, notifyHROnApplication: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Notify HR team</span>
+                    <span className="text-xs text-gray-400">(All users with HR role)</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.notifyAdminOnApplication}
+                      onChange={(e) => setFormData({ ...formData, notifyAdminOnApplication: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Notify Administrators</span>
+                    <span className="text-xs text-gray-400">(All users with Admin role)</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"

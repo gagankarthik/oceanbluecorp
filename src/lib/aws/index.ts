@@ -36,3 +36,37 @@ export {
   updateJob,
   deleteJob,
 } from "./dynamodb";
+
+// Cognito Operations
+export type { CognitoUser } from "./cognito";
+export {
+  listCognitoUsers,
+  getCognitoUser,
+  getUserGroups,
+  addUserToGroup,
+  removeUserFromGroup,
+  updateUserRole,
+  enableUser,
+  disableUser,
+  deleteUser,
+  listGroups,
+} from "./cognito";
+
+// SES Email Operations
+export type {
+  ApplicationConfirmationEmail,
+  NewApplicationNotificationEmail,
+  JobPostedNotificationEmail,
+  InterviewInviteEmail,
+  StatusUpdateEmail,
+  CustomEmail,
+} from "./ses";
+export {
+  sendApplicationConfirmation,
+  sendNewApplicationNotification,
+  sendJobPostedNotification,
+  sendJobPostedNotifications,
+  sendInterviewInvite,
+  sendStatusUpdate,
+  sendCustomEmail,
+} from "./ses";
