@@ -25,6 +25,7 @@ import {
   UsersRound,
   Building,
   UserStar,
+  Boxes,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -57,6 +58,7 @@ const navigation = [
   { name: "Job Postings", href: "/admin/jobs", icon: Briefcase, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Candidates", href: "/admin/candidates", icon: UserStar, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Applications", href: "/admin/applications", icon: Users, roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Talent Bench", href: "/admin/bench", icon: Boxes, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Clients", href: "/admin/clients", icon: Building, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Vendors", href: "/admin/vendors", icon: UsersRound, roles: [UserRole.ADMIN, UserRole.HR] },

@@ -569,6 +569,121 @@ Ocean Blue Corporation
   return sendEmail(data.recipientEmail, data.subject, htmlBody, textBody);
 }
 
+// Send job posting notification to HR team
+export async function sendJobPostingNotificationToHR(
+  jobPosting: {
+    title: string;
+    postingId: string;
+    clientName: string;
+    location: string;
+    payRate: number;
+    description: string;
+  },
+  hrEmails: string[],
+  excludedDepartments?: string[]
+): Promise<{ success: boolean; sent: number; failed: number; error?: string }> {
+  if (!hrEmails || hrEmails.length === 0) {
+    return { success: true, sent: 0, failed: 0 };
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  const subject = `New Job Posting - ${jobPosting.title} (${jobPosting.postingId})`;
+
+  const excludedText = excludedDepartments && excludedDepartments.length > 0
+    ? `<p style="color: #64748b; font-size: 12px; margin-top: 20px;">
+        <strong>Note:</strong> This posting excludes the following departments: ${excludedDepartments.join(", ")}
+       </p>`
+    : "";
+
+  const htmlBody = `
+    ${getEmailHeader()}
+    <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
+      New Job Posting Available
+    </h2>
+    <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
+      A new job posting has been created and requires your attention.
+    </p>
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
+        Job Details
+      </h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job ID:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.postingId}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Title:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.title}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.clientName}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.location}</td>
+        </tr>
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Pay Rate:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">$${jobPosting.payRate.toLocaleString()}</td>
+        </tr>
+      </table>
+    </div>
+    <div style="margin: 20px 0;">
+      <h4 style="color: #1e293b; margin: 0 0 10px; font-size: 14px; font-weight: 600;">Description:</h4>
+      <p style="color: #475569; line-height: 1.6; margin: 0; white-space: pre-wrap;">${jobPosting.description.slice(0, 500)}${jobPosting.description.length > 500 ? "..." : ""}</p>
+    </div>
+    ${excludedText}
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs"
+         style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+        View Job Posting
+      </a>
+    </div>
+    ${getEmailFooter()}
+  `;
+
+  const textBody = `
+New Job Posting Available
+
+A new job posting has been created and requires your attention.
+
+Job Details:
+- Job ID: ${jobPosting.postingId}
+- Title: ${jobPosting.title}
+- Client: ${jobPosting.clientName}
+- Location: ${jobPosting.location}
+- Pay Rate: $${jobPosting.payRate.toLocaleString()}
+
+Description:
+${jobPosting.description.slice(0, 500)}${jobPosting.description.length > 500 ? "..." : ""}
+
+${excludedDepartments && excludedDepartments.length > 0 ? `Note: This posting excludes: ${excludedDepartments.join(", ")}` : ""}
+
+View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs
+  `;
+
+  for (const email of hrEmails) {
+    const result = await sendEmail(email, subject, htmlBody, textBody);
+    if (result.success) {
+      sent++;
+    } else {
+      failed++;
+      console.error(`Failed to send job notification to ${email}:`, result.error);
+    }
+  }
+
+  return {
+    success: failed === 0,
+    sent,
+    failed,
+    error: failed > 0 ? `Failed to send to ${failed} recipient(s)` : undefined,
+  };
+}
+
 // Send to multiple recipients
 export async function sendJobPostedNotifications(
   recipients: Array<{ name: string; email: string }>,

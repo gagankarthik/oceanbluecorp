@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllJobs, createJob, createNotification, Job } from "@/lib/aws/dynamodb";
+import { getAllJobs, createJob, createNotification, getNextPostingId, Job } from "@/lib/aws/dynamodb";
+import { sendJobPostingNotificationToHR } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -52,6 +53,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Generate OB-ID (posting ID)
+    const postingIdResult = await getNextPostingId();
+    if (!postingIdResult.success || !postingIdResult.postingId) {
+      console.error("Failed to generate posting ID:", postingIdResult.error);
+      // Continue without posting ID if generation fails
+    }
+
     const job: Job = {
       id: uuidv4(),
       title: body.title,
@@ -72,6 +80,20 @@ export async function POST(request: NextRequest) {
       applicationsCount: 0,
       notifyHROnApplication: body.notifyHROnApplication || false,
       notifyAdminOnApplication: body.notifyAdminOnApplication || false,
+      // New fields
+      postingId: postingIdResult.postingId,
+      clientId: body.clientId,
+      clientName: body.clientName,
+      state: body.state,
+      clientBillRate: body.clientBillRate,
+      payRate: body.payRate,
+      recruitmentManagerId: body.recruitmentManagerId,
+      recruitmentManagerName: body.recruitmentManagerName,
+      recruitmentManagerEmail: body.recruitmentManagerEmail,
+      assignedToId: body.assignedToId,
+      assignedToName: body.assignedToName,
+      sendEmailNotification: body.sendEmailNotification || false,
+      excludedDepartments: body.excludedDepartments || [],
     };
 
     const result = await createJob(job);
@@ -83,8 +105,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create in-app notification for admin panel (only for active jobs)
-    if (job.status === "active") {
+    // Create in-app notification for admin panel (only for active/open jobs)
+    if (job.status === "active" || job.status === "open") {
       createNotification({
         id: uuidv4(),
         type: "job_posted",
@@ -95,6 +117,22 @@ export async function POST(request: NextRequest) {
         isRead: false,
         createdAt: new Date().toISOString(),
       }).catch((err) => console.error("Failed to create notification:", err));
+    }
+
+    // Send email notification to HR if enabled
+    if (job.sendEmailNotification && job.recruitmentManagerEmail) {
+      sendJobPostingNotificationToHR(
+        {
+          title: job.title,
+          postingId: job.postingId || job.id,
+          clientName: job.clientName || "N/A",
+          location: job.location,
+          payRate: job.payRate || 0,
+          description: job.description,
+        },
+        [job.recruitmentManagerEmail],
+        job.excludedDepartments
+      ).catch((err) => console.error("Failed to send HR email notification:", err));
     }
 
     return NextResponse.json({ job }, { status: 201 });

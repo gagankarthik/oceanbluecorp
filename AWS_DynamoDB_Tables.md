@@ -605,3 +605,5 @@ table name and id(String)
     --key-schema AttributeName=id,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST \
     --region us-east-2
+You may need to create the oceanblue-counters DynamoDB table in AWS for the OB-ID auto-generation feature to work. The table should have:                                                           - Partition key: id (String)
+  - No sort key required   

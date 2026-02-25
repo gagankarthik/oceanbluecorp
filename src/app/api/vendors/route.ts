@@ -6,9 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const vendorLead = searchParams.get("vendorLead") as Vendor["vendorLead"] | null;
+    const vendorLeadRole = searchParams.get("vendorLeadRole") as "hr" | "admin" | null;
 
-    const result = await getAllVendors(vendorLead || undefined);
+    const result = await getAllVendors(vendorLeadRole || undefined);
 
     if (!result.success) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate required fields
-    const requiredFields = ["name", "vendorLead"];
+    const requiredFields = ["name", "vendorLeadId", "vendorLeadName", "vendorLeadRole"];
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate vendorLead
-    if (!["hr", "admin"].includes(body.vendorLead)) {
+    // Validate vendorLeadRole
+    if (!["hr", "admin"].includes(body.vendorLeadRole)) {
       return NextResponse.json(
-        { error: "Vendor Lead must be 'hr' or 'admin'" },
+        { error: "Vendor Lead Role must be 'hr' or 'admin'" },
         { status: 400 }
       );
     }
@@ -74,7 +74,9 @@ export async function POST(request: NextRequest) {
       email: body.email?.trim() || undefined,
       zipCode: body.zipCode?.trim() || undefined,
       state: body.state?.trim() || undefined,
-      vendorLead: body.vendorLead,
+      vendorLeadId: body.vendorLeadId,
+      vendorLeadName: body.vendorLeadName,
+      vendorLeadRole: body.vendorLeadRole,
       createdAt: new Date().toISOString(),
     };
 

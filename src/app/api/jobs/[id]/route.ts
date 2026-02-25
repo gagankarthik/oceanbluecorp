@@ -53,8 +53,8 @@ export async function PUT(
       );
     }
 
-    // Prepare updates (exclude id, createdAt, createdBy)
-    const updates: Partial<Omit<Job, "id" | "createdAt" | "createdBy">> = {};
+    // Prepare updates (exclude id, createdAt, createdBy, postingId)
+    const updates: Partial<Omit<Job, "id" | "createdAt" | "createdBy" | "postingId">> = {};
 
     if (body.title !== undefined) updates.title = body.title;
     if (body.department !== undefined) updates.department = body.department;
@@ -69,6 +69,19 @@ export async function PUT(
     if (body.applicationsCount !== undefined) updates.applicationsCount = body.applicationsCount;
     if (body.notifyHROnApplication !== undefined) updates.notifyHROnApplication = body.notifyHROnApplication;
     if (body.notifyAdminOnApplication !== undefined) updates.notifyAdminOnApplication = body.notifyAdminOnApplication;
+    // New fields
+    if (body.clientId !== undefined) updates.clientId = body.clientId;
+    if (body.clientName !== undefined) updates.clientName = body.clientName;
+    if (body.state !== undefined) updates.state = body.state;
+    if (body.clientBillRate !== undefined) updates.clientBillRate = body.clientBillRate;
+    if (body.payRate !== undefined) updates.payRate = body.payRate;
+    if (body.recruitmentManagerId !== undefined) updates.recruitmentManagerId = body.recruitmentManagerId;
+    if (body.recruitmentManagerName !== undefined) updates.recruitmentManagerName = body.recruitmentManagerName;
+    if (body.recruitmentManagerEmail !== undefined) updates.recruitmentManagerEmail = body.recruitmentManagerEmail;
+    if (body.assignedToId !== undefined) updates.assignedToId = body.assignedToId;
+    if (body.assignedToName !== undefined) updates.assignedToName = body.assignedToName;
+    if (body.sendEmailNotification !== undefined) updates.sendEmailNotification = body.sendEmailNotification;
+    if (body.excludedDepartments !== undefined) updates.excludedDepartments = body.excludedDepartments;
 
     const result = await updateJob(id, updates);
 

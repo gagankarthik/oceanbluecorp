@@ -35,13 +35,23 @@ const vendorLeadConfig = {
   },
 };
 
+interface CognitoUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  status: string;
+}
+
 interface FormData {
   name: string;
   contactPerson: string;
   email: string;
   zipCode: string;
   state: string;
-  vendorLead: "hr" | "admin";
+  vendorLeadId: string;
+  vendorLeadName: string;
+  vendorLeadRole: "hr" | "admin";
 }
 
 const initialFormData: FormData = {
@@ -50,7 +60,9 @@ const initialFormData: FormData = {
   email: "",
   zipCode: "",
   state: "",
-  vendorLead: "hr",
+  vendorLeadId: "",
+  vendorLeadName: "",
+  vendorLeadRole: "hr",
 };
 
 interface FormErrors {
@@ -61,6 +73,7 @@ interface FormErrors {
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +87,22 @@ export default function VendorsPage() {
 
   useEffect(() => {
     fetchVendors();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/users");
+      const data = await response.json();
+      if (response.ok) {
+        // Filter HR and Admin users
+        const users = data.users || [];
+        setHrUsers(users.filter((u: CognitoUser) => u.role === "hr" || u.role === "admin"));
+      }
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  };
 
   const fetchVendors = async () => {
     try {
@@ -99,8 +127,9 @@ export default function VendorsPage() {
       vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vendor.contactPerson?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vendor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vendor.state?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesVendorLead = vendorLeadFilter === "all" || vendor.vendorLead === vendorLeadFilter;
+      vendor.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.vendorLeadName?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesVendorLead = vendorLeadFilter === "all" || vendor.vendorLeadRole === vendorLeadFilter;
     return matchesSearch && matchesVendorLead;
   });
 
@@ -111,7 +140,7 @@ export default function VendorsPage() {
       errors.name = "Vendor name is required";
     }
 
-    if (!formData.vendorLead) {
+    if (!formData.vendorLeadId) {
       errors.vendorLead = "Vendor Lead is required";
     }
 
@@ -121,6 +150,18 @@ export default function VendorsPage() {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleVendorLeadSelect = (userId: string) => {
+    const selectedUser = hrUsers.find((u) => u.id === userId);
+    if (selectedUser) {
+      setFormData({
+        ...formData,
+        vendorLeadId: userId,
+        vendorLeadName: selectedUser.name || selectedUser.email,
+        vendorLeadRole: selectedUser.role as "hr" | "admin",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,10 +175,21 @@ export default function VendorsPage() {
       const url = editingVendor ? `/api/vendors/${editingVendor.id}` : "/api/vendors";
       const method = editingVendor ? "PATCH" : "POST";
 
+      const vendorData = {
+        name: formData.name,
+        contactPerson: formData.contactPerson,
+        email: formData.email,
+        zipCode: formData.zipCode,
+        state: formData.state,
+        vendorLeadId: formData.vendorLeadId,
+        vendorLeadName: formData.vendorLeadName,
+        vendorLeadRole: formData.vendorLeadRole,
+      };
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(vendorData),
       });
 
       if (!response.ok) {
@@ -165,7 +217,9 @@ export default function VendorsPage() {
       email: vendor.email || "",
       zipCode: vendor.zipCode || "",
       state: vendor.state || "",
-      vendorLead: vendor.vendorLead,
+      vendorLeadId: vendor.vendorLeadId || "",
+      vendorLeadName: vendor.vendorLeadName || "",
+      vendorLeadRole: vendor.vendorLeadRole || "hr",
     });
     setFormErrors({});
     setShowForm(true);
@@ -190,14 +244,15 @@ export default function VendorsPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["Name", "Contact Person", "Email", "State", "ZIP Code", "Vendor Lead", "Created At"];
+    const headers = ["Name", "Contact Person", "Email", "State", "ZIP Code", "Vendor Lead", "Vendor Lead Role", "Created At"];
     const rows = filteredVendors.map((vendor) => [
       `"${vendor.name}"`,
       `"${vendor.contactPerson || ""}"`,
       `"${vendor.email || ""}"`,
       `"${vendor.state || ""}"`,
       `"${vendor.zipCode || ""}"`,
-      `"${vendor.vendorLead.toUpperCase()}"`,
+      `"${vendor.vendorLeadName || ""}"`,
+      `"${(vendor.vendorLeadRole || "").toUpperCase()}"`,
       `"${new Date(vendor.createdAt).toLocaleDateString()}"`,
     ]);
 
@@ -213,8 +268,8 @@ export default function VendorsPage() {
 
   const stats = {
     total: vendors.length,
-    hr: vendors.filter((v) => v.vendorLead === "hr").length,
-    admin: vendors.filter((v) => v.vendorLead === "admin").length,
+    hr: vendors.filter((v) => v.vendorLeadRole === "hr").length,
+    admin: vendors.filter((v) => v.vendorLeadRole === "admin").length,
   };
 
   if (loading) {
@@ -395,7 +450,7 @@ export default function VendorsPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredVendors.length > 0 ? (
                 filteredVendors.map((vendor) => {
-                  const lead = vendorLeadConfig[vendor.vendorLead];
+                  const lead = vendorLeadConfig[vendor.vendorLeadRole] || vendorLeadConfig.hr;
                   const LeadIcon = lead.icon;
 
                   return (
@@ -442,10 +497,15 @@ export default function VendorsPage() {
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${lead.color}`}>
-                          <LeadIcon className="w-3 h-3" />
-                          {lead.label}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border ${lead.color}`}>
+                            <LeadIcon className="w-3 h-3" />
+                            {lead.label}
+                          </span>
+                          {vendor.vendorLeadName && (
+                            <span className="text-sm text-gray-700">{vendor.vendorLeadName}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -546,14 +606,18 @@ export default function VendorsPage() {
                         Vendor Lead <span className="text-red-500">*</span>
                       </label>
                       <select
-                        value={formData.vendorLead}
-                        onChange={(e) => setFormData({ ...formData, vendorLead: e.target.value as "hr" | "admin" })}
+                        value={formData.vendorLeadId}
+                        onChange={(e) => handleVendorLeadSelect(e.target.value)}
                         className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white ${
                           formErrors.vendorLead ? "border-red-300 bg-red-50" : "border-gray-200"
                         }`}
                       >
-                        <option value="hr">HR</option>
-                        <option value="admin">Admin</option>
+                        <option value="">Select a vendor lead...</option>
+                        {hrUsers.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.name || user.email} ({user.role.toUpperCase()})
+                          </option>
+                        ))}
                       </select>
                       {formErrors.vendorLead && (
                         <p className="mt-1.5 text-sm text-red-600">{formErrors.vendorLead}</p>

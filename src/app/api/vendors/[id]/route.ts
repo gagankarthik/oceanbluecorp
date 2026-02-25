@@ -52,10 +52,10 @@ export async function PATCH(
       );
     }
 
-    // Validate vendorLead if provided
-    if (body.vendorLead && !["hr", "admin"].includes(body.vendorLead)) {
+    // Validate vendorLeadRole if provided
+    if (body.vendorLeadRole && !["hr", "admin"].includes(body.vendorLeadRole)) {
       return NextResponse.json(
-        { error: "Vendor Lead must be 'hr' or 'admin'" },
+        { error: "Vendor Lead Role must be 'hr' or 'admin'" },
         { status: 400 }
       );
     }
@@ -78,7 +78,9 @@ export async function PATCH(
     if (body.email !== undefined) updates.email = body.email?.trim() || undefined;
     if (body.zipCode !== undefined) updates.zipCode = body.zipCode?.trim() || undefined;
     if (body.state !== undefined) updates.state = body.state?.trim() || undefined;
-    if (body.vendorLead !== undefined) updates.vendorLead = body.vendorLead;
+    if (body.vendorLeadId !== undefined) updates.vendorLeadId = body.vendorLeadId;
+    if (body.vendorLeadName !== undefined) updates.vendorLeadName = body.vendorLeadName;
+    if (body.vendorLeadRole !== undefined) updates.vendorLeadRole = body.vendorLeadRole;
 
     const result = await updateVendor(id, updates);
 

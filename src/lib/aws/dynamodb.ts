@@ -30,6 +30,7 @@ const getEnvConfig = () => {
       notifications: process.env.NEXT_AWS_DYNAMODB_TABLE_NOTIFICATIONS || "oceanblue-notifications",
       clients: process.env.NEXT_AWS_DYNAMODB_TABLE_CLIENTS || "oceanblue-clients",
       vendors: process.env.NEXT_AWS_DYNAMODB_TABLE_VENDORS || "oceanblue-vendors",
+      counters: process.env.NEXT_AWS_DYNAMODB_TABLE_COUNTERS || "oceanblue-counters",
     },
   };
 };
@@ -145,7 +146,7 @@ export interface Job {
     max: number;
     currency: string;
   };
-  status: "active" | "paused" | "closed" | "draft";
+  status: "active" | "paused" | "closed" | "draft" | "open" | "on-hold";
   submissionDueDate?: string; // ISO date string for application deadline
   createdAt: string;
   updatedAt?: string;
@@ -157,6 +158,32 @@ export interface Job {
   // Email notification settings
   notifyHROnApplication?: boolean; // Notify all HR users when someone applies
   notifyAdminOnApplication?: boolean; // Notify all Admin users when someone applies
+
+  // Job Posting ID (auto-generated OB-YYYY-XXXX format)
+  postingId?: string;
+
+  // Client Information
+  clientId?: string; // FK to oceanblue-clients
+  clientName?: string; // Denormalized for display
+
+  // State (separate from location)
+  state?: string;
+
+  // Rates
+  clientBillRate?: number; // Client Bill Rate ($)
+  payRate?: number; // Pay Rate ($)
+
+  // Assignments
+  recruitmentManagerId?: string; // HR user ID
+  recruitmentManagerName?: string; // HR user name
+  recruitmentManagerEmail?: string; // HR email for notifications
+  assignedToId?: string; // Team member ID
+  assignedToName?: string; // Team member name
+
+  // Email Notification Settings for job posting
+  sendEmailNotification?: boolean;
+  excludedDepartments?: string[];
+  notificationSentAt?: string;
 }
 
 export interface Contact {
@@ -211,7 +238,9 @@ export interface Vendor {
   email?: string; // Email
   zipCode?: string; // ZIP Code
   state?: string; // State
-  vendorLead: "hr" | "admin"; // Vendor Lead (mandatory dropdown)
+  vendorLeadId: string; // Vendor Lead user ID (mandatory)
+  vendorLeadName: string; // Vendor Lead user name for display
+  vendorLeadRole: "admin" | "hr"; // Role of the vendor lead
   createdAt: string;
   updatedAt?: string;
 }
@@ -524,6 +553,50 @@ export async function deleteApplication(id: string): Promise<{ success: boolean;
 // ===========================================
 // Job Operations
 // ===========================================
+
+/**
+ * Get next posting ID with atomic increment
+ * Returns OB-YYYY-XXXX format (e.g., OB-2026-0001)
+ */
+export async function getNextPostingId(): Promise<{ success: boolean; postingId?: string; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) {
+    return { success: false, error: dbCheck.error };
+  }
+
+  const currentYear = new Date().getFullYear();
+  const counterId = `job-posting-${currentYear}`;
+
+  try {
+    // Use atomic increment to get the next sequence number
+    const result = await dbCheck.client!.send(
+      new UpdateCommand({
+        TableName: getTables().counters,
+        Key: { id: counterId },
+        UpdateExpression: "SET #counter = if_not_exists(#counter, :start) + :inc",
+        ExpressionAttributeNames: {
+          "#counter": "counter",
+        },
+        ExpressionAttributeValues: {
+          ":start": 0,
+          ":inc": 1,
+        },
+        ReturnValues: "UPDATED_NEW",
+      })
+    );
+
+    const counter = (result.Attributes?.counter as number) || 1;
+    const postingId = `OB-${currentYear}-${counter.toString().padStart(4, "0")}`;
+
+    return { success: true, postingId };
+  } catch (error) {
+    console.error("Error getting next posting ID:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to generate posting ID",
+    };
+  }
+}
 
 export async function createJob(job: Job): Promise<{ success: boolean; error?: string }> {
   const dbCheck = checkDbAvailable();
@@ -1221,7 +1294,7 @@ export async function getVendor(id: string): Promise<{ success: boolean; data?: 
   }
 }
 
-export async function getAllVendors(vendorLead?: Vendor["vendorLead"]): Promise<{ success: boolean; data?: Vendor[]; error?: string }> {
+export async function getAllVendors(vendorLeadRole?: Vendor["vendorLeadRole"]): Promise<{ success: boolean; data?: Vendor[]; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
     console.warn("DynamoDB not available:", dbCheck.error);
@@ -1231,13 +1304,13 @@ export async function getAllVendors(vendorLead?: Vendor["vendorLead"]): Promise<
   try {
     let result;
 
-    if (vendorLead) {
+    if (vendorLeadRole) {
       result = await dbCheck.client!.send(
         new ScanCommand({
           TableName: getTables().vendors,
-          FilterExpression: "vendorLead = :vendorLead",
+          FilterExpression: "vendorLeadRole = :vendorLeadRole",
           ExpressionAttributeValues: {
-            ":vendorLead": vendorLead,
+            ":vendorLeadRole": vendorLeadRole,
           },
         })
       );

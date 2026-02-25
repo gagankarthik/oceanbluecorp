@@ -14,16 +14,13 @@ import {
   Copy,
   Loader2,
   DollarSign,
-  X,
   Download,
-  Calendar,
   Eye,
   MoreHorizontal,
+  Building2,
 } from "lucide-react";
 import { Job } from "@/lib/aws/dynamodb";
-import { useAuth } from "@/lib/auth/AuthContext";
 
-// shadcn/ui components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -51,8 +48,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
 const statusConfig = {
@@ -60,8 +55,16 @@ const statusConfig = {
     label: "Active",
     className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/10",
   },
+  open: {
+    label: "Open",
+    className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/10",
+  },
   paused: {
     label: "Paused",
+    className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/10",
+  },
+  "on-hold": {
+    label: "On Hold",
     className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/10",
   },
   draft: {
@@ -74,57 +77,29 @@ const statusConfig = {
   },
 };
 
-const departments = [
-  "ERP Solutions",
-  "Cloud Services",
-  "Data & AI",
-  "Salesforce",
-  "IT Staffing",
-  "Training",
-  "PMO",
-  "Operations",
-];
-
 export default function JobsPage() {
-  const { user } = useAuth();
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    department: "ERP Solutions",
-    location: "",
-    type: "full-time" as Job["type"],
-    description: "",
-    requirements: "",
-    responsibilities: "",
-    salaryMin: "",
-    salaryMax: "",
-    status: "draft" as Job["status"],
-    submissionDueDate: "",
-    notifyHROnApplication: false,
-    notifyAdminOnApplication: false,
-  });
+  const [duplicating, setDuplicating] = useState<string | null>(null);
 
   const exportJobsToExcel = () => {
-    const headers = ["Title", "Department", "Location", "Type", "Status", "Due Date", "Applicants", "Salary Range", "Created At"];
+    const headers = ["OB-ID", "Title", "Client", "Department", "Location", "Type", "Status", "Pay Rate", "Due Date", "Applicants", "Created At"];
     const rows = filteredJobs.map(job => [
+      job.postingId || "",
       job.title,
+      job.clientName || "",
       job.department,
       job.location,
       job.type,
       job.status,
+      job.payRate ? `$${job.payRate}` : "",
       job.submissionDueDate ? new Date(job.submissionDueDate).toLocaleDateString() : "N/A",
       job.applicationsCount || 0,
-      job.salary ? `$${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}` : "N/A",
       new Date(job.createdAt).toLocaleDateString()
     ]);
 
@@ -162,7 +137,9 @@ export default function JobsPage() {
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchQuery.toLowerCase());
+      job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.postingId?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || job.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -192,121 +169,29 @@ export default function JobsPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-
+  const handleDuplicate = async (job: Job) => {
+    setDuplicating(job.id);
     try {
-      const jobData = {
-        title: formData.title,
-        department: formData.department,
-        location: formData.location,
-        type: formData.type,
-        description: formData.description,
-        requirements: formData.requirements.split("\n").filter(Boolean),
-        responsibilities: formData.responsibilities.split("\n").filter(Boolean),
-        salary: formData.salaryMin && formData.salaryMax ? {
-          min: parseInt(formData.salaryMin),
-          max: parseInt(formData.salaryMax),
-          currency: "$",
-        } : undefined,
-        status: formData.status,
-        submissionDueDate: formData.submissionDueDate || undefined,
-        notifyHROnApplication: formData.notifyHROnApplication,
-        notifyAdminOnApplication: formData.notifyAdminOnApplication,
-        ...(!editingJob && {
-          postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
-          postedByEmail: user?.email || "",
-          postedByRole: user?.role || "admin",
-        }),
-      };
-
-      const url = editingJob ? `/api/jobs/${editingJob.id}` : "/api/jobs";
-      const method = editingJob ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(jobData),
+      const response = await fetch(`/api/jobs/${job.id}/duplicate`, {
+        method: "POST",
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to save job");
+        throw new Error(data.error || "Failed to duplicate job");
       }
 
       await fetchJobs();
-      resetForm();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save job");
+      alert(err instanceof Error ? err.message : "Failed to duplicate job");
     } finally {
-      setSubmitting(false);
+      setDuplicating(null);
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      department: "ERP Solutions",
-      location: "",
-      type: "full-time",
-      description: "",
-      requirements: "",
-      responsibilities: "",
-      salaryMin: "",
-      salaryMax: "",
-      status: "draft",
-      submissionDueDate: "",
-      notifyHROnApplication: false,
-      notifyAdminOnApplication: false,
-    });
-    setShowCreateModal(false);
-    setEditingJob(null);
-  };
-
-  const handleEdit = (job: Job) => {
-    setEditingJob(job);
-    setFormData({
-      title: job.title,
-      department: job.department,
-      location: job.location,
-      type: job.type,
-      description: job.description,
-      requirements: job.requirements?.join("\n") || "",
-      responsibilities: job.responsibilities?.join("\n") || "",
-      salaryMin: job.salary?.min?.toString() || "",
-      salaryMax: job.salary?.max?.toString() || "",
-      status: job.status,
-      submissionDueDate: job.submissionDueDate?.split("T")[0] || "",
-      notifyHROnApplication: job.notifyHROnApplication || false,
-      notifyAdminOnApplication: job.notifyAdminOnApplication || false,
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleDuplicate = (job: Job) => {
-    setEditingJob(null);
-    setFormData({
-      title: `${job.title} (Copy)`,
-      department: job.department,
-      location: job.location,
-      type: job.type,
-      description: job.description,
-      requirements: job.requirements?.join("\n") || "",
-      responsibilities: job.responsibilities?.join("\n") || "",
-      salaryMin: job.salary?.min?.toString() || "",
-      salaryMax: job.salary?.max?.toString() || "",
-      status: "draft",
-      submissionDueDate: "",
-      notifyHROnApplication: job.notifyHROnApplication || false,
-      notifyAdminOnApplication: job.notifyAdminOnApplication || false,
-    });
-    setShowCreateModal(true);
   };
 
   const stats = {
     total: jobs.length,
-    active: jobs.filter((j) => j.status === "active").length,
+    active: jobs.filter((j) => j.status === "active" || j.status === "open").length,
     totalApplicants: jobs.reduce((sum, j) => sum + (j.applicationsCount || 0), 0),
   };
 
@@ -345,7 +230,7 @@ export default function JobsPage() {
             <Download className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button size="sm" onClick={() => { resetForm(); setShowCreateModal(true); }}>
+          <Button size="sm" onClick={() => router.push("/admin/jobs/new")}>
             <Plus className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Add Job</span>
           </Button>
@@ -375,7 +260,7 @@ export default function JobsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.active}</p>
-                <p className="text-xs text-muted-foreground">Active</p>
+                <p className="text-xs text-muted-foreground">Active/Open</p>
               </div>
             </div>
           </CardContent>
@@ -414,7 +299,9 @@ export default function JobsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="on-hold">On Hold</SelectItem>
                 <SelectItem value="paused">Paused</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
@@ -428,12 +315,15 @@ export default function JobsPage() {
       <div className="grid gap-3 lg:hidden">
         {filteredJobs.length > 0 ? (
           filteredJobs.map((job) => {
-            const status = statusConfig[job.status as keyof typeof statusConfig];
+            const status = statusConfig[job.status as keyof typeof statusConfig] || statusConfig.draft;
             return (
               <Card key={job.id} className="py-4">
                 <CardContent className="px-4 py-0">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0 flex-1">
+                      {job.postingId && (
+                        <span className="font-mono text-xs text-primary">{job.postingId}</span>
+                      )}
                       <button
                         onClick={() => router.push(`/admin/jobs/${job.id}`)}
                         className="font-medium text-foreground hover:text-primary transition-colors text-left truncate block"
@@ -446,14 +336,22 @@ export default function JobsPage() {
                   </div>
 
                   <div className="space-y-1.5 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-3.5 w-3.5" />
-                      <span>{job.department}</span>
-                    </div>
+                    {job.clientName && (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5" />
+                        <span>{job.clientName}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3.5 w-3.5" />
-                      <span>{job.location}</span>
+                      <span>{job.location}{job.state ? `, ${job.state}` : ""}</span>
                     </div>
+                    {job.payRate && (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-3.5 w-3.5" />
+                        <span>${job.payRate.toLocaleString()} / hr</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Users className="h-3.5 w-3.5" />
                       <span>{job.applicationsCount || 0} applicants</span>
@@ -463,22 +361,34 @@ export default function JobsPage() {
                   <Separator className="mb-3" />
 
                   <div className="flex items-center justify-between">
-                    {job.postedByName ? (
+                    {job.recruitmentManagerName ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                            {job.postedByName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            {job.recruitmentManagerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-xs text-muted-foreground">{job.postedByName}</span>
+                        <span className="text-xs text-muted-foreground">{job.recruitmentManagerName}</span>
                       </div>
                     ) : <div />}
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(job)}>
+                      <Button variant="ghost" size="icon-sm" onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
                         <Edit3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDuplicate(job)}
+                        disabled={duplicating === job.id}
+                      >
+                        {duplicating === job.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button variant="ghost" size="icon-sm" onClick={() => setShowDeleteConfirm(job.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -504,20 +414,26 @@ export default function JobsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>OB-ID</TableHead>
               <TableHead>Job</TableHead>
-              <TableHead>Department</TableHead>
+              <TableHead>Client</TableHead>
               <TableHead>Location</TableHead>
-              <TableHead>Applicants</TableHead>
-              <TableHead>Posted By</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Recruitment Manager</TableHead>
+              <TableHead>Pay Rate</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredJobs.map((job) => {
-              const status = statusConfig[job.status as keyof typeof statusConfig];
+              const status = statusConfig[job.status as keyof typeof statusConfig] || statusConfig.draft;
               return (
                 <TableRow key={job.id}>
+                  <TableCell>
+                    <span className="font-mono text-sm text-primary font-medium">
+                      {job.postingId || "-"}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <div>
                       <button
@@ -529,38 +445,22 @@ export default function JobsPage() {
                       <p className="text-xs text-muted-foreground capitalize">{job.type}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{job.department}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {job.location}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <Users className="h-3.5 w-3.5" />
-                      {job.applicationsCount || 0}
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    {job.postedByName ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                            {job.postedByName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-xs font-medium">{job.postedByName}</p>
-                          <p className="text-[10px] text-muted-foreground capitalize">{job.postedByRole || "HR"}</p>
-                        </div>
+                    {job.clientName ? (
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm">{job.clientName}</span>
                       </div>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{job.location}</span>
+                      {job.state && <span className="text-xs">({job.state})</span>}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Select value={job.status} onValueChange={(value) => handleStatusChange(job.id, value as Job["status"])}>
@@ -568,12 +468,35 @@ export default function JobsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="on-hold">On Hold</SelectItem>
                         <SelectItem value="paused">Paused</SelectItem>
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="closed">Closed</SelectItem>
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    {job.recruitmentManagerName ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            {job.recruitmentManagerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{job.recruitmentManagerName}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {job.payRate ? (
+                      <span className="text-sm font-medium">${job.payRate.toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -587,12 +510,16 @@ export default function JobsPage() {
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(job)}>
+                        <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
                           <Edit3 className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicate(job)}>
-                          <Copy className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id}>
+                          {duplicating === job.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Copy className="h-4 w-4 mr-2" />
+                          )}
                           Duplicate
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -613,210 +540,12 @@ export default function JobsPage() {
           <div className="text-center py-12">
             <Briefcase className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
             <p className="text-muted-foreground text-sm mb-4">No jobs found</p>
-            <Button onClick={() => { resetForm(); setShowCreateModal(true); }}>
+            <Button onClick={() => router.push("/admin/jobs/new")}>
               Create your first job
             </Button>
           </div>
         )}
       </Card>
-
-      {/* Create/Edit Job Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto py-0">
-            <div className="sticky top-0 bg-card z-10 px-6 py-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{editingJob ? "Edit Job" : "New Job Posting"}</h2>
-              <Button variant="ghost" size="icon-sm" onClick={resetForm}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <CardContent className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Job Title *</Label>
-                  <Input
-                    id="title"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Senior Software Engineer"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Department *</Label>
-                    <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Job Type *</Label>
-                    <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as Job["type"] })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="full-time">Full-time</SelectItem>
-                        <SelectItem value="part-time">Part-time</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                        <SelectItem value="contract-to-hire">Contract-to-Hire</SelectItem>
-                        <SelectItem value="direct-hire">Direct Hire</SelectItem>
-                        <SelectItem value="managed-teams">Managed Teams</SelectItem>
-                        <SelectItem value="remote">Remote</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location *</Label>
-                    <Input
-                      id="location"
-                      required
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="e.g. Remote, New York, NY"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Job["status"] })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="paused">Paused</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="deadline">Application Deadline</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="deadline"
-                      type="date"
-                      value={formData.submissionDueDate}
-                      onChange={(e) => setFormData({ ...formData, submissionDueDate: e.target.value })}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="salaryMin">Min Salary</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="salaryMin"
-                        type="number"
-                        value={formData.salaryMin}
-                        onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-                        placeholder="80000"
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="salaryMax">Max Salary</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="salaryMax"
-                        type="number"
-                        value={formData.salaryMax}
-                        onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-                        placeholder="120000"
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
-                  <textarea
-                    id="description"
-                    required
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
-                    placeholder="Describe the role..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="requirements">Requirements (one per line)</Label>
-                  <textarea
-                    id="requirements"
-                    value={formData.requirements}
-                    onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
-                    placeholder="5+ years experience&#10;Bachelor's degree..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="responsibilities">Responsibilities (one per line)</Label>
-                  <textarea
-                    id="responsibilities"
-                    value={formData.responsibilities}
-                    onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
-                    placeholder="Lead technical projects&#10;Mentor junior developers..."
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <Label>Email Notifications</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="notifyHR"
-                        checked={formData.notifyHROnApplication}
-                        onCheckedChange={(checked) => setFormData({ ...formData, notifyHROnApplication: checked as boolean })}
-                      />
-                      <Label htmlFor="notifyHR" className="text-sm font-normal cursor-pointer">
-                        Notify HR team on new applications
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="notifyAdmin"
-                        checked={formData.notifyAdminOnApplication}
-                        onCheckedChange={(checked) => setFormData({ ...formData, notifyAdminOnApplication: checked as boolean })}
-                      />
-                      <Label htmlFor="notifyAdmin" className="text-sm font-normal cursor-pointer">
-                        Notify Administrators on new applications
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    {editingJob ? "Save Changes" : "Create Job"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
