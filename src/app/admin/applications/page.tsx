@@ -26,6 +26,7 @@ import {
   User,
   X,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 
@@ -304,6 +305,27 @@ export default function ApplicationsPage() {
       window.open(data.downloadUrl, "_blank");
     } catch (err) {
       alert("Failed to load resume. The file may have been deleted.");
+    }
+  };
+
+  const handleDeleteApplication = async (appId: string, appName: string) => {
+    if (!confirm(`Are you sure you want to delete the application from ${appName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/applications/${appId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete application");
+      }
+
+      setApplications((prev) => prev.filter((app) => app.id !== appId));
+      setExpandedId(null);
+    } catch (err) {
+      alert("Failed to delete application");
     }
   };
 
@@ -1037,6 +1059,16 @@ export default function ApplicationsPage() {
                           >
                             Send Email
                           </a>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteApplication(app.id, app.name);
+                            }}
+                            className="w-full px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete Application
+                          </button>
                         </div>
                       </div>
                     </div>

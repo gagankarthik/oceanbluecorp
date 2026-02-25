@@ -36,6 +36,8 @@ This document provides step-by-step instructions for setting up the required Dyn
 | `oceanblue-applications`| `id` (S)    | `userId-index`, `jobId-index`| Job applications     |
 | `oceanblue-resumes`     | `id` (S)    | `userId-index`               | Resume metadata      |
 | `oceanblue-candidates`  | `id` (S)    | `email-index`, `userId-index`| Candidate profiles   |
+| `oceanblue-contacts`    | `id` (S)    | -                            | Contact submissions  |
+| `oceanblue-notifications`| `id` (S)   | -                            | Admin notifications  |
 
 ---
 

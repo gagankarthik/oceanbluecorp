@@ -31,6 +31,7 @@ import {
   MoreHorizontal,
   Briefcase,
   MapPin,
+  Trash2,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 
@@ -258,6 +259,27 @@ export default function CandidatesPage() {
       }
     } catch (err) {
       alert("Failed to load resume");
+    }
+  };
+
+  const handleDeleteCandidate = async (candidateId: string, candidateName: string) => {
+    if (!confirm(`Are you sure you want to delete ${candidateName}'s application? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete candidate");
+      }
+
+      setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+      setSelectedCandidate(null);
+    } catch (err) {
+      alert("Failed to delete candidate");
     }
   };
 
@@ -834,6 +856,13 @@ export default function CandidatesPage() {
                       <button className="flex items-center gap-3 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors w-full">
                         <CalendarPlus className="w-4 h-4 text-purple-600" />
                         <span className="text-sm font-medium">Schedule Interview</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCandidate(selectedCandidate.id, selectedCandidate.name)}
+                        className="flex items-center gap-3 px-4 py-2.5 border border-red-200 rounded-xl hover:bg-red-50 transition-colors w-full text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-sm font-medium">Delete Candidate</span>
                       </button>
                     </div>
                   </div>

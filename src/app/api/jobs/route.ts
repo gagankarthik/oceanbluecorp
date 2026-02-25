@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllJobs, createJob, Job } from "@/lib/aws/dynamodb";
+import { getAllJobs, createJob, createNotification, Job } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -81,6 +81,20 @@ export async function POST(request: NextRequest) {
         { error: result.error || "Failed to create job" },
         { status: 500 }
       );
+    }
+
+    // Create in-app notification for admin panel (only for active jobs)
+    if (job.status === "active") {
+      createNotification({
+        id: uuidv4(),
+        type: "job_posted",
+        title: "New Job Posted",
+        message: `${job.title} in ${job.department} - ${job.location}`,
+        link: `/admin/jobs`,
+        relatedId: job.id,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }).catch((err) => console.error("Failed to create notification:", err));
     }
 
     return NextResponse.json({ job }, { status: 201 });

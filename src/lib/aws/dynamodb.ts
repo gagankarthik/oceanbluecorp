@@ -469,6 +469,29 @@ export async function updateApplicationStatus(
   }
 }
 
+export async function deleteApplication(id: string): Promise<{ success: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) {
+    return { success: false, error: dbCheck.error };
+  }
+
+  try {
+    await dbCheck.client!.send(
+      new DeleteCommand({
+        TableName: getTables().applications,
+        Key: { id },
+      })
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting application:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete application",
+    };
+  }
+}
+
 // ===========================================
 // Job Operations
 // ===========================================

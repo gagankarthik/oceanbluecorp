@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getApplication,
   updateApplicationStatus,
+  deleteApplication,
   Application,
 } from "@/lib/aws/dynamodb";
 
@@ -94,6 +95,42 @@ export async function PUT(
     return NextResponse.json({ application: updatedApp.data });
   } catch (error) {
     console.error("Error updating application:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/applications/[id] - Delete an application
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Check if application exists
+    const existingApp = await getApplication(id);
+    if (!existingApp.success || !existingApp.data) {
+      return NextResponse.json(
+        { error: "Application not found" },
+        { status: 404 }
+      );
+    }
+
+    const result = await deleteApplication(id);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to delete application" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ message: "Application deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting application:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

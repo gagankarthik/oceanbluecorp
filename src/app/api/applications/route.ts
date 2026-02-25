@@ -4,6 +4,7 @@ import {
   getApplicationsByJob,
   getApplicationsByUser,
   createApplication,
+  createNotification,
   Application,
   getJob,
   updateJob,
@@ -115,6 +116,18 @@ export async function POST(request: NextRequest) {
     await updateJob(body.jobId, { applicationsCount: currentCount + 1 });
 
     const job = jobResult.data;
+
+    // Create in-app notification for admin panel
+    createNotification({
+      id: uuidv4(),
+      type: "application_received",
+      title: "New Application Received",
+      message: `${body.name} applied for ${job.title}`,
+      link: `/admin/applications`,
+      relatedId: application.id,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    }).catch((err) => console.error("Failed to create notification:", err));
 
     // Send email notifications (don't block the response)
     // 1. Send confirmation email to candidate

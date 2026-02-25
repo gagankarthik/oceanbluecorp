@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllContacts, createContact, Contact } from "@/lib/aws/dynamodb";
+import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/contacts - Get all contacts (admin only)
@@ -79,6 +79,18 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Create in-app notification for admin panel
+    createNotification({
+      id: uuidv4(),
+      type: "contact_received",
+      title: "New Contact Submission",
+      message: `${body.firstName} ${body.lastName} from ${body.company} - ${body.inquiryType}`,
+      link: `/admin/contacts`,
+      relatedId: contact.id,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    }).catch((err) => console.error("Failed to create notification:", err));
 
     return NextResponse.json(
       { message: "Contact form submitted successfully", contact },
