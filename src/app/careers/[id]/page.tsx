@@ -248,6 +248,7 @@ export default function JobDetailsPage() {
       <div className="border-b border-gray-100 bg-gray-50/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-2 text-sm">
+            
             <Link href="/careers" className="text-gray-500 hover:text-blue-600 transition-colors">
               Jobs
             </Link>
@@ -261,6 +262,14 @@ export default function JobDetailsPage() {
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+             {/* Back Link */}
+              <Link
+                href="/careers"
+                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                View all open positions
+              </Link>
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -476,7 +485,7 @@ export default function JobDetailsPage() {
                 </p>
 
                 <Link
-                  href="/about"
+                  href="https://oceanbluecorp.com/"
                   className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
                 >
                   Learn more about us
@@ -486,7 +495,7 @@ export default function JobDetailsPage() {
                 <div className="border-t border-gray-100 mt-6 pt-6 space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Company size</span>
-                    <span className="font-medium text-gray-900">50-200 employees</span>
+                    <span className="font-medium text-gray-900">50+ employees</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Industry</span>
@@ -539,14 +548,7 @@ export default function JobDetailsPage() {
                 </div>
               </motion.div>
 
-              {/* Back Link */}
-              <Link
-                href="/careers"
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                View all open positions
-              </Link>
+             
             </div>
           </div>
         </div>
