@@ -428,22 +428,25 @@ export async function updateApplicationStatus(
   }
 
   try {
-    const updateExpressions: string[] = ["#status = :status", "updatedAt = :updatedAt"];
+    const updateExpressions: string[] = ["#status = :status", "#updatedAt = :updatedAt"];
     const expressionAttributeValues: Record<string, unknown> = {
       ":status": status,
       ":updatedAt": new Date().toISOString(),
     };
     const expressionAttributeNames: Record<string, string> = {
       "#status": "status",
+      "#updatedAt": "updatedAt",
     };
 
     if (notes !== undefined) {
-      updateExpressions.push("notes = :notes");
+      updateExpressions.push("#notes = :notes");
+      expressionAttributeNames["#notes"] = "notes";
       expressionAttributeValues[":notes"] = notes;
     }
 
     if (rating !== undefined) {
-      updateExpressions.push("rating = :rating");
+      updateExpressions.push("#rating = :rating");
+      expressionAttributeNames["#rating"] = "rating";
       expressionAttributeValues[":rating"] = rating;
     }
 
@@ -569,21 +572,20 @@ export async function updateJob(
   }
 
   try {
-    const updateExpressions: string[] = ["updatedAt = :updatedAt"];
+    const updateExpressions: string[] = ["#updatedAt = :updatedAt"];
     const expressionAttributeValues: Record<string, unknown> = {
       ":updatedAt": new Date().toISOString(),
     };
-    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeNames: Record<string, string> = {
+      "#updatedAt": "updatedAt",
+    };
 
+    // Use expression attribute names for all keys to avoid reserved keyword issues
+    // (location, status, name, type, etc. are DynamoDB reserved words)
     Object.entries(updates).forEach(([key, value]) => {
       if (value !== undefined) {
-        // Handle reserved words
-        if (key === "status") {
-          expressionAttributeNames["#status"] = "status";
-          updateExpressions.push("#status = :status");
-        } else {
-          updateExpressions.push(`${key} = :${key}`);
-        }
+        expressionAttributeNames[`#${key}`] = key;
+        updateExpressions.push(`#${key} = :${key}`);
         expressionAttributeValues[`:${key}`] = value;
       }
     });
@@ -593,9 +595,7 @@ export async function updateJob(
         TableName: getTables().jobs,
         Key: { id },
         UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-        ...(Object.keys(expressionAttributeNames).length > 0 && {
-          ExpressionAttributeNames: expressionAttributeNames,
-        }),
+        ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: expressionAttributeValues,
       })
     );
@@ -735,17 +735,19 @@ export async function updateContactStatus(
   }
 
   try {
-    const updateExpressions: string[] = ["#status = :status", "updatedAt = :updatedAt"];
+    const updateExpressions: string[] = ["#status = :status", "#updatedAt = :updatedAt"];
     const expressionAttributeValues: Record<string, unknown> = {
       ":status": status,
       ":updatedAt": new Date().toISOString(),
     };
     const expressionAttributeNames: Record<string, string> = {
       "#status": "status",
+      "#updatedAt": "updatedAt",
     };
 
     if (notes !== undefined) {
-      updateExpressions.push("notes = :notes");
+      updateExpressions.push("#notes = :notes");
+      expressionAttributeNames["#notes"] = "notes";
       expressionAttributeValues[":notes"] = notes;
     }
 
