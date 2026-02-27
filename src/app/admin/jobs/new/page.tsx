@@ -18,6 +18,7 @@ import {
   Bell,
   Users,
   Truck,
+  Search,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -65,6 +66,8 @@ export default function NewJobPage() {
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [notificationSearch, setNotificationSearch] = useState("");
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -274,6 +277,18 @@ export default function NewJobPage() {
 
   // Compute available additional HR/admins (exclude current user since they're already the default recipient)
   const additionalRecipients = hrUsers.filter((u) => u.email !== user?.email);
+
+  // Filtered list for the notification search dropdown (exclude already-selected)
+  const filteredRecipients = additionalRecipients.filter((u) => {
+    if (formData.sendEmailNotification.includes(u.email)) return false;
+    if (!notificationSearch.trim()) return true;
+    const q = notificationSearch.toLowerCase();
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -655,27 +670,41 @@ export default function NewJobPage() {
                 <Label className="text-sm font-medium">Additional Individual Recipients</Label>
               </div>
               <p className="text-xs text-muted-foreground">
-                Select specific HR/Admin members to also receive job posting notifications.
+                Search and add specific HR/Admin members to also receive job posting notifications.
               </p>
 
-              {additionalRecipients.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No other HR/Admin users found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {additionalRecipients.map((u) => {
-                    const isSelected = formData.sendEmailNotification.includes(u.email);
-                    return (
+              {/* Search input + dropdown */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search by name, email or role…"
+                  value={notificationSearch}
+                  onChange={(e) => {
+                    setNotificationSearch(e.target.value);
+                    setShowNotificationDropdown(true);
+                  }}
+                  onFocus={() => setShowNotificationDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowNotificationDropdown(false), 150)}
+                  className="pl-9"
+                  autoComplete="off"
+                />
+
+                {/* Dropdown list */}
+                {showNotificationDropdown && filteredRecipients.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
+                    {filteredRecipients.map((u) => (
                       <button
                         key={u.id}
                         type="button"
-                        onClick={() => toggleEmailNotification(u.email)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
-                          isSelected
-                            ? "bg-primary/5 border-primary/30 text-primary"
-                            : "border-border hover:bg-muted/50"
-                        }`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          toggleEmailNotification(u.email);
+                          setNotificationSearch("");
+                          setShowNotificationDropdown(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0"
                       >
-                        <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
                           {(u.name || u.email)[0].toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -685,33 +714,45 @@ export default function NewJobPage() {
                         <Badge variant="outline" className="text-xs capitalize flex-shrink-0">
                           {u.role}
                         </Badge>
-                        {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
                       </button>
-                    );
-                  })}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
+                {/* No results message */}
+                {showNotificationDropdown && notificationSearch.trim() && filteredRecipients.length === 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-muted-foreground text-center">
+                    No matching HR/Admin members found.
+                  </div>
+                )}
+              </div>
+
+              {/* Selected recipients as tags */}
               {formData.sendEmailNotification.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {formData.sendEmailNotification.map((email) => (
-                    <Badge key={email} variant="secondary" className="gap-1 pr-1">
-                      {email}
-                      <button
-                        type="button"
-                        onClick={() => toggleEmailNotification(email)}
-                        className="ml-1 hover:text-destructive"
+                  {formData.sendEmailNotification.map((email) => {
+                    const u = additionalRecipients.find((r) => r.email === email);
+                    return (
+                      <div
+                        key={email}
+                        className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 bg-primary/5 border border-primary/20 rounded-full"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                          {(u?.name || email)[0].toUpperCase()}
+                        </div>
+                        <span className="text-xs font-medium text-foreground">
+                          {u?.name || email}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleEmailNotification(email)}
+                          className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
