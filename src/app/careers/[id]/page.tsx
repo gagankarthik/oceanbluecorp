@@ -189,7 +189,7 @@ export default function JobDetailsPage() {
       try {
         await navigator.share({
           title: job?.title,
-          text: `Check out this job opening: ${job?.title} at Ocean Blue Corporation`,
+          text: `Check out this job opening: ${job?.title} at Ocean Blue Solutions`,
           url: window.location.href,
         });
       } catch (err) {
@@ -470,11 +470,11 @@ export default function JobDetailsPage() {
                 className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
               >
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
-                    <Building2 className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 rounded-2xl bg-transparent flex items-center justify-center">
+                    <Image src='/favicon.png' width={48} height={48} alt="Logo" className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Ocean Blue Corporation</h3>
+                    <h3 className="font-bold text-gray-900 text-lg">Ocean Blue Solution</h3>
                     <p className="text-gray-500 text-sm">Enterprise IT Solutions</p>
                   </div>
                 </div>

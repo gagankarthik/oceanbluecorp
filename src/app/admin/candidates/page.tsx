@@ -107,7 +107,7 @@ export default function CandidatesPage() {
         );
 
         const candidatesWithJobs = (appsData.applications || []).map((app: Application) => {
-          const job = jobsMap.get(app.jobId);
+          const job = app.jobId ? jobsMap.get(app.jobId) : undefined;
           return {
             ...app,
             jobTitle: job?.title || "Unknown Position",
@@ -658,7 +658,7 @@ export default function CandidatesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleViewResume(candidate.resumeId);
+                            if (candidate.resumeId) handleViewResume(candidate.resumeId);
                           }}
                           className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg"
                         >
@@ -733,7 +733,9 @@ export default function CandidatesPage() {
                     <h3 className="font-semibold text-slate-900 mb-4">Documents</h3>
                     {selectedCandidate.resumeId ? (
                       <button
-                        onClick={() => handleViewResume(selectedCandidate.resumeId)}
+                        onClick={() => {
+                          if (selectedCandidate.resumeId) handleViewResume(selectedCandidate.resumeId);
+                        }}
                         className="flex items-center gap-2 px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-lg hover:bg-cyan-100 transition-colors w-full"
                       >
                         <FileText className="w-4 h-4" />

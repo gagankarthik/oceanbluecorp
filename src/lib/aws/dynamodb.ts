@@ -121,6 +121,8 @@ export interface Application {
   jobId?: string; // Job ID (GSI)
   jobTitle?: string; // Auto-populated from Job ID
   resumeId?: string; // S3 resume reference
+  resumeFileName?: string; // Original resume file name
+  resumeFileKey?: string; // S3 file key for direct access
 
   // Status - unified status values
   status: "pending" | "reviewing" | "interview" | "offered" | "hired" | "rejected" | "active" | "inactive";

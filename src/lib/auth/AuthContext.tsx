@@ -169,7 +169,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await userManager.removeUser();
       setUser(null);
 
-      // Redirect to Cognito logout
+      // Clear all oidc related items from localStorage
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("oidc.")) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      // For localhost, skip Cognito logout (it requires logout_uri to be registered)
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+      if (isLocalhost) {
+        window.location.href = "/";
+        return;
+      }
+
+      // For production, redirect to Cognito logout
       const logoutUrl = `${process.env.NEXT_PUBLIC_COGNITO_DOMAIN}/logout?client_id=${process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(window.location.origin)}`;
       window.location.href = logoutUrl;
     } catch (err) {

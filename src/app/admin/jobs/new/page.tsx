@@ -84,8 +84,7 @@ export default function NewJobPage() {
     recruitmentManagerEmail: "",
     assignedToId: "",
     assignedToName: "",
-    sendEmailNotification: false,
-    excludedDepartments: [] as string[],
+    sendEmailNotification: [] as string[],
   });
 
   const [clientFormData, setClientFormData] = useState({
@@ -162,7 +161,6 @@ export default function NewJobPage() {
         assignedToId: formData.assignedToId || undefined,
         assignedToName: formData.assignedToName || undefined,
         sendEmailNotification: formData.sendEmailNotification,
-        excludedDepartments: formData.excludedDepartments,
         postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
         postedByEmail: user?.email || "",
         postedByRole: user?.role || "admin",
@@ -297,7 +295,7 @@ export default function NewJobPage() {
                 </Label>
                 <Select value={formData.clientId} onValueChange={handleClientSelect}>
                   <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="add-new">
                       <span className="flex items-center gap-2 text-primary">
                         <Plus className="h-4 w-4" />
@@ -328,7 +326,7 @@ export default function NewJobPage() {
                   <Label>Job Type *</Label>
                   <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as Job["type"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="full-time">Full-time</SelectItem>
                       <SelectItem value="part-time">Part-time</SelectItem>
                       <SelectItem value="contract">Contract</SelectItem>
@@ -356,7 +354,7 @@ export default function NewJobPage() {
                   <Label>State</Label>
                   <Select value={formData.state} onValueChange={(v) => setFormData({ ...formData, state: v })}>
                     <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {US_STATES.map((state) => (
                         <SelectItem key={state} value={state}>{state}</SelectItem>
                       ))}
@@ -370,7 +368,7 @@ export default function NewJobPage() {
                   <Label>Status *</Label>
                   <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Job["status"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
@@ -480,7 +478,7 @@ export default function NewJobPage() {
                   <Label>Recruitment Manager</Label>
                   <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
                     <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {hrUsers.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
                           {u.name || u.email} ({u.role})
@@ -493,10 +491,10 @@ export default function NewJobPage() {
                   <Label>Assigned To</Label>
                   <Select value={formData.assignedToId} onValueChange={handleAssignedToSelect}>
                     <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {allUsers.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
-                          {u.name || u.email}
+                          {u.name || u.email}({u.role})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -552,13 +550,18 @@ export default function NewJobPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Email Notifications</h3>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="sendEmailNotification"
-                    checked={formData.sendEmailNotification}
-                    onCheckedChange={(checked) => setFormData({ ...formData, sendEmailNotification: checked as boolean })}
-                  />
+                 <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
+                    <SelectTrigger><SelectValue placeholder="Additional Notifications" /></SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {hrUsers.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name || u.email} ({u.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Label htmlFor="sendEmailNotification" className="text-sm font-normal cursor-pointer">
                     Send email notification to selected HR candidates
                   </Label>

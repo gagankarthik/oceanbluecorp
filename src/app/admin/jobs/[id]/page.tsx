@@ -788,7 +788,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                         <div className="flex items-center justify-end gap-2">
                           {app.resumeId && (
                             <button
-                              onClick={() => handleViewResume(app.resumeId)}
+                              onClick={() => {
+                                if (app.resumeId) handleViewResume(app.resumeId);
+                              }}
                               className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
                               title="View Resume"
                             >
@@ -940,7 +942,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                           <h4 className="font-semibold text-slate-900">Documents</h4>
                           {app.resumeId ? (
                             <button
-                              onClick={() => handleViewResume(app.resumeId)}
+                              onClick={() => {
+                                if (app.resumeId) handleViewResume(app.resumeId);
+                              }}
                               className="flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-700"
                             >
                               <FileText className="w-4 h-4" />

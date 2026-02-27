@@ -35,6 +35,9 @@ import {
   History,
   Copy,
   ArrowLeft,
+  Upload,
+  File,
+  AlertCircle,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
