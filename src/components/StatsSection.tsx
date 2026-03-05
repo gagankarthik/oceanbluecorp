@@ -1,97 +1,47 @@
-"use client";
+import Image from 'next/image'
 
-import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { Building2, Briefcase, TrendingUp, Users } from "lucide-react";
+export default function StatsSections() {
+    return (
+        <section className="bg-neutral-50 @container relative border-b pt-24 sm:pb-24">
+            <div className="@2xl:grid-cols-2 mx-auto grid max-w-2xl px-6">
+                <div>
+                    <div className="space-y-4">
+                        <h2 className="text-balance font-serif text-4xl font-medium text-neutral-900">Track record of Excellence</h2>
+                        <p className="text-neutral-600 text-balance">We delivers measurable results that help businesses scale faster.</p>
+                    </div>
+                    <div className="mt-12 grid text-sm">
+                        <div className="border-t border-neutral-200 py-6">
+                            <p className="text-neutral-600 text-xl">
+                                <span className="text-neutral-900 font-medium">10+</span> Years of Industry .
+                            </p>
+                        </div>
 
-const stats = [
-  { value: 10, suffix: "+", label: "Years of Industry", icon: Building2, color: "from-blue-500 to-cyan-500" },
-  { value: 8, suffix: "+", label: "Software & ERP Solutions", icon: Briefcase, color: "from-cyan-500 to-teal-500" },
-  { value: 10, suffix: "+", label: "Data Warehousing", icon: TrendingUp, color: "from-emerald-500 to-teal-500" },
-  { value: 5, suffix: "+", label: "Enterprise Clients", icon: Users, color: "from-violet-500 to-purple-500" },
-];
+                        <div className="border-t border-neutral-200 py-6">
+                            <p className="text-neutral-600 text-xl">
+                                <span className="text-neutral-900 font-medium">8+</span> Software & ERP Solutions
+                            </p>
+                        </div>
 
-function useCounter(end: number, duration: number = 2000, startCounting: boolean) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!startCounting) return;
-    let startTime: number;
-    let animationFrame: number;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setCount(Math.floor(easeOutQuart * end));
-      if (progress < 1) animationFrame = requestAnimationFrame(animate);
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [end, duration, startCounting]);
-
-  return count;
-}
-
-function StatCard({ stat, index, isInView }: { stat: typeof stats[0], index: number, isInView: boolean }) {
-  const count = useCounter(stat.value, 2000, isInView);
-  const Icon = stat.icon;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: 0.1 + index * 0.1 }}
-      className="text-center"
-    >
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}>
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-      <div className="text-3xl md:text-4xl font-light text-white mb-1 font-[family-name:var(--font-space-grotesk)]">
-        {count}{stat.suffix}
-      </div>
-      <div className="text-sm text-gray-400">{stat.label}</div>
-    </motion.div>
-  );
-}
-
-export default function StatsSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
-
-  return (
-    <section ref={sectionRef} className="relative py-16 md:py-20 overflow-hidden bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }} />
-      </div>
-
-      {/* Glowing orbs */}
-      <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl" />
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-10"
-        >
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-[0.2em] mb-2 block">By the numbers</span>
-          <h2 className="text-2xl md:text-3xl font-light text-white font-[family-name:var(--font-space-grotesk)]">
-            Track record of <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent font-medium">excellence</span>
-          </h2>
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-          {stats.map((stat, index) => (
-            <StatCard key={stat.label} stat={stat} index={index} isInView={isInView} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+                        <div className="border-t border-neutral-200 py-6">
+                            <p className="text-neutral-600 text-xl">
+                                <span className="text-neutral-900 font-medium">5+</span> Enterprise clients.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div
+                aria-hidden
+                className="mask-radial-from-65% mask-radial-at-bottom mask-radial-[50%_100%] sm:min-w-6xl pointer-events-none relative sm:absolute sm:bottom-0 sm:left-1/2 sm:right-0 dark:opacity-50">
+                <div className="bg-blue-500/10 absolute inset-0 z-10 mix-blend-overlay" />
+                <Image
+                    src="https://images.unsplash.com/photo-1723307060937-b003478a2c03?q=80&w=2928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="globe with world map"
+                    className="dark:invert"
+                    width={2928}
+                    height={1464}
+                />
+            </div>
+        </section>
+    )
 }

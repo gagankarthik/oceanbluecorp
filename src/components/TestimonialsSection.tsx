@@ -24,7 +24,7 @@ const testimonials = [
   {
     id: 3,
     quote: "I have partnered with Ocean Blue for many years. They are trustworthy, honest, motivated and display a high degree of work ethic.",
-    author: "Ken Hamilton",
+    author: "Ken H.",
     role: "Senior Account Executive",
     company: "Mapsys, Inc.",
     gradient: "from-blue-600 to-cyan-600",

@@ -1,16 +1,2 @@
-# Ocean Blue Corporation - robots.txt
-# https://oceanbluecorp.com
-
 User-agent: *
-Allow: /
-
-# Sitemaps
-Sitemap: https://oceanbluecorp.com/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1
-
-# Disallow admin and internal paths
-Disallow: /api/
-Disallow: /_next/
-Disallow: /admin/
+Disallow:
