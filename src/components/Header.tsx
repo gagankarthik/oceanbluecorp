@@ -224,7 +224,7 @@ export default function Header() {
             {/* Logo - Always visible with proper contrast */}
             <Link href="/" className="flex items-center">
               <Image
-                src="https://oceanbluecorp.com/images/logo.png"
+                src="/logo.png"
                 alt="Ocean Blue Corporation"
                 width={140}
                 height={40}
