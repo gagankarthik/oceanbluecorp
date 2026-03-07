@@ -75,7 +75,7 @@ export const metadata: Metadata = {
       "Transform your business with Ocean Blue Corporation's enterprise IT solutions. Expert services in ERP, Cloud, AI, Salesforce, Staffing & Training.",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/logo.ico",
         width: 1200,
         height: 630,
         alt: "Ocean Blue Corporation - Enterprise IT Solutions",
@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
       "Transform your business with enterprise IT solutions. Expert services in ERP, Cloud, AI, Salesforce & more.",
-    images: ["/og-image.jpg"],
+    images: ["/logo.png"],
     creator: "@oceanbluecorp",
   },
   alternates: {
@@ -103,36 +103,36 @@ const jsonLd = {
   name: "Ocean Blue Corporation",
   alternateName: "OceanBlueCorp",
   url: "https://oceanbluecorp.com",
-  logo: "https://oceanbluecorp.com/logo.png",
+  logo: "/logo.png",
   description:
     "Enterprise IT solutions provider specializing in ERP, Cloud, AI, Salesforce, IT Staffing, and Corporate Training.",
   foundingDate: "2010",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "123 Enterprise Drive, Suite 500",
-    addressLocality: "San Francisco",
-    addressRegion: "CA",
-    postalCode: "94105",
+    streetAddress: "9775 Fairway Drive, Suite C",
+    addressLocality: "Powell",
+    addressRegion: "OH",
+    postalCode: "43065",
     addressCountry: "US",
   },
   contactPoint: [
     {
       "@type": "ContactPoint",
-      telephone: "+1-800-OCEAN-BLU",
+      telephone: "+1-614-844-6925",
       contactType: "customer service",
       availableLanguage: ["English"],
     },
     {
-      "@type": "ContactPoint",
-      telephone: "+1-800-OCEAN-BLU",
-      contactType: "sales",
+       "@type": "ContactPoint",
+      telephone: "+1-614-844-6925",
+      contactType: "Human Resource",
       availableLanguage: ["English"],
     },
   ],
   sameAs: [
-    "https://www.linkedin.com/company/oceanbluecorp",
-    "https://twitter.com/oceanbluecorp",
-    "https://www.facebook.com/oceanbluecorp",
+    "https://www.linkedin.com/company/ocean-blue-solutions-inc/",
+    "https://x.com/OceanBlueSol",
+    "https://www.instagram.com/oceanbluesolutions",
   ],
   service: [
     {

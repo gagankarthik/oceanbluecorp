@@ -196,52 +196,9 @@ export default function HeroSection() {
               className="relative hidden lg:block h-[550px]"
             >
               {/* Globe container */}
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 hover:cursor-grab">
                 <ThreeGlobe />
               </div>
-
-              {/* Floating labels */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.2 }}
-                className="absolute top-1/4 right-4 px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <p className="text-xs text-cyan-400 font-semibold">Global Reach</p>
-                </div>
-                <p className="text-sm text-white font-medium">50+ Countries</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Worldwide Presence</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.4 }}
-                className="absolute bottom-1/3 left-4 px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <p className="text-xs text-blue-400 font-semibold">24/7 Support</p>
-                </div>
-                <p className="text-sm text-white font-medium">Always Online</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Round-the-clock service</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.6 }}
-                className="absolute bottom-16 right-1/4 px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <p className="text-xs text-emerald-400 font-semibold">Enterprise Ready</p>
-                </div>
-                <p className="text-sm text-white font-medium">500+ Clients</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Trusted partnerships</p>
-              </motion.div>
             </motion.div>
           </div>
         </div>

@@ -32,11 +32,6 @@ export default function SignInPage() {
         <FloatingOrb className="top-20 -left-20 w-[400px] h-[400px] bg-blue-200" delay={0} />
         <FloatingOrb className="bottom-20 -right-20 w-[300px] h-[300px] bg-cyan-200" delay={0.2} />
         <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="mx-auto mb-4 h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600"
-          />
           <p className="text-gray-500">Loading...</p>
         </div>
       </div>
@@ -107,32 +102,18 @@ export default function SignInPage() {
           className="rounded-3xl bg-white p-8 md:p-10 shadow-xl border border-gray-100"
         >
           {/* Logo */}
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-            className="mb-8 text-center"
+          <div className="mb-8 text-center"
           >
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 shadow-lg">
-              <LogIn className="h-8 w-8 text-white" />
-            </div>
             <h1 className="heading-subsection text-gray-900 mb-2">
               Welcome{" "}
               <span className="relative inline-block">
                 <span className="relative z-10 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
                   Back
                 </span>
-                <motion.span
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-200 to-cyan-200 opacity-50 -z-0 rounded-full"
-                  style={{ originX: 0 }}
-                />
               </span>
             </h1>
             <p className="text-gray-500">Sign in to your Ocean Blue account</p>
-          </motion.div>
+          </div>
 
           {/* Features */}
           <motion.div

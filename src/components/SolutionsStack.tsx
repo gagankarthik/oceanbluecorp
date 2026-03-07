@@ -85,7 +85,7 @@ const cardVariants = {
 
 export default function SolutionsStack() {
   return (
-    <section className="relative py-20 md:py-28 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden">
+    <section className="relative py-20 md:py-28 bg-[#FBFBF9] overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl" />

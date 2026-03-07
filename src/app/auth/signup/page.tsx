@@ -108,32 +108,22 @@ export default function SignUpPage() {
           className="rounded-3xl bg-white p-8 md:p-10 shadow-xl border border-gray-100"
         >
           {/* Logo */}
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+          <div
+           
             className="mb-8 text-center"
           >
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-600 shadow-lg">
-              <UserPlus className="h-8 w-8 text-white" />
-            </div>
+          
             <h1 className="heading-subsection text-gray-900 mb-2">
               Create{" "}
               <span className="relative inline-block">
                 <span className="relative z-10 bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent font-medium">
                   Account
                 </span>
-                <motion.span
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-cyan-200 to-blue-200 opacity-50 -z-0 rounded-full"
-                  style={{ originX: 0 }}
-                />
+               
               </span>
             </h1>
             <p className="text-gray-500">Join Ocean Blue Corporation</p>
-          </motion.div>
+          </div>
 
           {/* Features List */}
           <motion.div

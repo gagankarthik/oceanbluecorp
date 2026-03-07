@@ -311,7 +311,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
               ) : (
                 <Image
-                  src="https://www.oceanbluecorp.com/images/logo.png"
+                  src="/logo.png"
                   alt="Ocean Blue Corporation"
                   width={130}
                   height={36}

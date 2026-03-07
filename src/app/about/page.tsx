@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Briefcase,
   CheckCircle2,
+  Linkedin,
 } from "lucide-react";
 
 // How We Work - Our Approach
@@ -126,21 +127,25 @@ const leadership = [
     name: "Sarojini Gude",
     role: "President",
     initials: "SG",
+    linkedin:"",
   },
   {
     name: "Brent Wallace",
     role: "SVP, Workforce Solutions",
     initials: "BW",
+    linkedin:"https://www.linkedin.com/in/brentwallace1/",
   },
   {
     name: "Sushma Moturu",
     role: "Human Resource Manager",
     initials: "SM",
+    linkedin:"https://www.linkedin.com/in/sushma-moturu-4ba752236/",
   },
   {
     name: "Clark Cristofoli",
     role: "Executive Recruiter",
     initials: "CC",
+    linkedin:"https://www.linkedin.com/in/clark-cristofoli-0402b988/",
   },
 ];
 
@@ -717,6 +722,7 @@ export default function AboutPage() {
                     {/* Corner accent */}
                     <div
                       className={`absolute bottom-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br ${gradient} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity rounded-br-3xl`}
+                      
                     />
 
                     {/* Avatar */}
@@ -726,8 +732,11 @@ export default function AboutPage() {
                       />
                       <div
                         className={`relative w-24 h-24 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 text-white text-2xl font-bold`}
-                      >
-                        {leader.initials}
+                       >
+                        <a href={leader.linkedin}>
+                          {leader.initials}
+                        </a>
+                        
                       </div>
                     </div>
 

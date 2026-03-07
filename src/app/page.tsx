@@ -36,8 +36,7 @@ export default function Home() {
       {/* Statistics */}
       <StatsSection />
 
-      {/* Industries with 3D background */}
-      <IndustriesSection />
+      
 
       {/* Testimonials - compact */}
       <TestimonialsSection />

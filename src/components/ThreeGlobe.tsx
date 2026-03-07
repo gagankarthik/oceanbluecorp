@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
-
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 interface GlobeProps {
   className?: string;
 }
 
 export default function ThreeGlobe({ className = "" }: GlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const globeRef = useRef<THREE.Group | null>(null);
-  const animationRef = useRef<number>(0);
-  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -24,414 +17,204 @@ export default function ThreeGlobe({ className = "" }: GlobeProps) {
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    // Scene setup
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
 
-    // Camera setup
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.z = 4;
-    cameraRef.current = camera;
 
-    // Renderer setup
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      powerPreference: "high-performance",
     });
+
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
 
-    // Globe group
-    const globeGroup = new THREE.Group();
-    globeRef.current = globeGroup;
-    scene.add(globeGroup);
+    // Controls (drag rotate)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableZoom = true;
+    controls.enablePan = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
 
-    // Create sphere geometry for the globe
-    const sphereGeometry = new THREE.SphereGeometry(1.5, 64, 64);
+    // Lighting
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambient);
 
-    // Main globe material with gradient
-    const globeMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-      },
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = position;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        uniform float time;
-        void main() {
-          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-          vec3 atmosphere = vec3(0.3, 0.6, 1.0) * intensity;
+    const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+    sun.position.set(5, 3, 5);
+    scene.add(sun);
 
-          // Base color gradient
-          vec3 baseColor = mix(
-            vec3(0.05, 0.1, 0.2),
-            vec3(0.1, 0.15, 0.25),
-            vPosition.y * 0.5 + 0.5
-          );
+    const loader = new THREE.TextureLoader();
 
-          gl_FragColor = vec4(baseColor + atmosphere * 0.5, 0.95);
-        }
-      `,
-      transparent: true,
-      side: THREE.FrontSide,
-    });
+    const earthTexture = loader.load(
+      "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg"
+    );
 
-    const globe = new THREE.Mesh(sphereGeometry, globeMaterial);
-    globeGroup.add(globe);
+    const normalTexture = loader.load(
+      "https://threejs.org/examples/textures/planets/earth_normal_2048.jpg"
+    );
 
-    // Outer glow
-    const glowGeometry = new THREE.SphereGeometry(1.6, 32, 32);
-    const glowMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-      },
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        uniform float time;
-        void main() {
-          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-          vec3 glowColor = vec3(0.2, 0.5, 1.0);
-          gl_FragColor = vec4(glowColor, intensity * 0.4);
-        }
-      `,
-      transparent: true,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
-    });
+    const specularTexture = loader.load(
+      "https://threejs.org/examples/textures/planets/earth_specular_2048.jpg"
+    );
 
-    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-    globeGroup.add(glow);
+    const cloudTexture = loader.load(
+      "https://threejs.org/examples/textures/planets/earth_clouds_1024.png"
+    );
 
-    // Grid lines (latitude and longitude)
-    const createGridLines = () => {
-      const gridGroup = new THREE.Group();
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x3b82f6,
-        transparent: true,
-        opacity: 0.15,
-      });
+    // Earth
+    const earth = new THREE.Mesh(
+      new THREE.SphereGeometry(1.5, 64, 64),
+      new THREE.MeshPhongMaterial({
+        map: earthTexture,
+        normalMap: normalTexture,
+        specularMap: specularTexture,
+        shininess: 20,
+      })
+    );
 
-      // Latitude lines
-      for (let lat = -60; lat <= 60; lat += 30) {
-        const latRad = (lat * Math.PI) / 180;
-        const radius = Math.cos(latRad) * 1.502;
-        const y = Math.sin(latRad) * 1.502;
+    scene.add(earth);
 
-        const points: THREE.Vector3[] = [];
-        for (let lng = 0; lng <= 360; lng += 5) {
-          const lngRad = (lng * Math.PI) / 180;
-          points.push(new THREE.Vector3(
-            Math.cos(lngRad) * radius,
-            y,
-            Math.sin(lngRad) * radius
-          ));
-        }
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, lineMaterial);
-        gridGroup.add(line);
-      }
-
-      // Longitude lines
-      for (let lng = 0; lng < 360; lng += 30) {
-        const lngRad = (lng * Math.PI) / 180;
-        const points: THREE.Vector3[] = [];
-
-        for (let lat = -90; lat <= 90; lat += 5) {
-          const latRad = (lat * Math.PI) / 180;
-          const radius = Math.cos(latRad) * 1.502;
-          const y = Math.sin(latRad) * 1.502;
-          points.push(new THREE.Vector3(
-            Math.cos(lngRad) * radius,
-            y,
-            Math.sin(lngRad) * radius
-          ));
-        }
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, lineMaterial);
-        gridGroup.add(line);
-      }
-
-      return gridGroup;
-    };
-
-    globeGroup.add(createGridLines());
-
-    // Data points (cities/locations)
-    const createDataPoints = () => {
-      const pointsGroup = new THREE.Group();
-
-      const locations = [
-        { lat: 40.7128, lng: -74.006, name: "New York" },
-        { lat: 51.5074, lng: -0.1278, name: "London" },
-        { lat: 35.6762, lng: 139.6503, name: "Tokyo" },
-        { lat: 22.3193, lng: 114.1694, name: "Hong Kong" },
-        { lat: 1.3521, lng: 103.8198, name: "Singapore" },
-        { lat: -33.8688, lng: 151.2093, name: "Sydney" },
-        { lat: 48.8566, lng: 2.3522, name: "Paris" },
-        { lat: 55.7558, lng: 37.6173, name: "Moscow" },
-        { lat: 19.4326, lng: -99.1332, name: "Mexico City" },
-        { lat: -23.5505, lng: -46.6333, name: "Sao Paulo" },
-        { lat: 25.2048, lng: 55.2708, name: "Dubai" },
-        { lat: 28.6139, lng: 77.209, name: "Delhi" },
-      ];
-
-      const pointGeometry = new THREE.SphereGeometry(0.02, 16, 16);
-      const pulseGeometry = new THREE.SphereGeometry(0.04, 16, 16);
-
-      locations.forEach((loc, index) => {
-        const latRad = (loc.lat * Math.PI) / 180;
-        const lngRad = ((loc.lng - 90) * Math.PI) / 180;
-
-        const x = 1.51 * Math.cos(latRad) * Math.cos(lngRad);
-        const y = 1.51 * Math.sin(latRad);
-        const z = 1.51 * Math.cos(latRad) * Math.sin(lngRad);
-
-        // Point
-        const pointMaterial = new THREE.MeshBasicMaterial({
-          color: 0x22d3ee,
-          transparent: true,
-          opacity: 0.9,
-        });
-        const point = new THREE.Mesh(pointGeometry, pointMaterial);
-        point.position.set(x, y, z);
-        pointsGroup.add(point);
-
-        // Pulse ring
-        const pulseMaterial = new THREE.MeshBasicMaterial({
-          color: 0x06b6d4,
-          transparent: true,
-          opacity: 0.3,
-        });
-        const pulse = new THREE.Mesh(pulseGeometry, pulseMaterial);
-        pulse.position.set(x, y, z);
-        pulse.userData = { baseScale: 1, phase: index * 0.5 };
-        pointsGroup.add(pulse);
-      });
-
-      return pointsGroup;
-    };
-
-    const dataPoints = createDataPoints();
-    globeGroup.add(dataPoints);
-
-    // Connection arcs
-    const createConnectionArcs = () => {
-      const arcsGroup = new THREE.Group();
-
-      const connections = [
-        { from: { lat: 40.7128, lng: -74.006 }, to: { lat: 51.5074, lng: -0.1278 } },
-        { from: { lat: 35.6762, lng: 139.6503 }, to: { lat: 22.3193, lng: 114.1694 } },
-        { from: { lat: 1.3521, lng: 103.8198 }, to: { lat: -33.8688, lng: 151.2093 } },
-        { from: { lat: 40.7128, lng: -74.006 }, to: { lat: 19.4326, lng: -99.1332 } },
-        { from: { lat: 51.5074, lng: -0.1278 }, to: { lat: 25.2048, lng: 55.2708 } },
-      ];
-
-      const latLngToVector = (lat: number, lng: number, height: number = 1.51) => {
-        const latRad = (lat * Math.PI) / 180;
-        const lngRad = ((lng - 90) * Math.PI) / 180;
-        return new THREE.Vector3(
-          height * Math.cos(latRad) * Math.cos(lngRad),
-          height * Math.sin(latRad),
-          height * Math.cos(latRad) * Math.sin(lngRad)
-        );
-      };
-
-      connections.forEach((conn, index) => {
-        const start = latLngToVector(conn.from.lat, conn.from.lng);
-        const end = latLngToVector(conn.to.lat, conn.to.lng);
-
-        // Create curved arc
-        const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-        const distance = start.distanceTo(end);
-        midPoint.normalize().multiplyScalar(1.51 + distance * 0.3);
-
-        const curve = new THREE.QuadraticBezierCurve3(start, midPoint, end);
-        const points = curve.getPoints(50);
-
-        const arcGeometry = new THREE.BufferGeometry().setFromPoints(points);
-        const arcMaterial = new THREE.LineBasicMaterial({
-          color: 0x06b6d4,
-          transparent: true,
-          opacity: 0.5,
-        });
-
-        const arc = new THREE.Line(arcGeometry, arcMaterial);
-        arc.userData = { phase: index * 0.8, curve, points };
-        arcsGroup.add(arc);
-      });
-
-      return arcsGroup;
-    };
-
-    const connectionArcs = createConnectionArcs();
-    globeGroup.add(connectionArcs);
-
-    // Traveling points on arcs
-    const travelingPoints: THREE.Mesh[] = [];
-    connectionArcs.children.forEach((arc) => {
-      const travelGeometry = new THREE.SphereGeometry(0.025, 8, 8);
-      const travelMaterial = new THREE.MeshBasicMaterial({
-        color: 0x22d3ee,
-        transparent: true,
-        opacity: 0.9,
-      });
-      const travelPoint = new THREE.Mesh(travelGeometry, travelMaterial);
-      travelPoint.userData = { arc, progress: Math.random() };
-      globeGroup.add(travelPoint);
-      travelingPoints.push(travelPoint);
-    });
-
-    // Particle field
-    const createParticleField = () => {
-      const particleCount = 200;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(particleCount * 3);
-
-      for (let i = 0; i < particleCount; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        const r = 1.8 + Math.random() * 0.8;
-
-        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-        positions[i * 3 + 2] = r * Math.cos(phi);
-      }
-
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-
-      const material = new THREE.PointsMaterial({
-        color: 0x60a5fa,
-        size: 0.015,
+    // Clouds
+    const clouds = new THREE.Mesh(
+      new THREE.SphereGeometry(1.52, 64, 64),
+      new THREE.MeshLambertMaterial({
+        map: cloudTexture,
         transparent: true,
         opacity: 0.4,
-        sizeAttenuation: true,
-      });
+      })
+    );
 
-      return new THREE.Points(geometry, material);
-    };
+    scene.add(clouds);
 
-    const particles = createParticleField();
-    scene.add(particles);
+    // Atmosphere glow
+    const atmosphereMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+      varying vec3 vNormal;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }
+      `,
+      fragmentShader: `
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(0.6 - dot(vNormal, vec3(0,0,1)), 2.0);
+        gl_FragColor = vec4(0.3,0.6,1.0,1.0) * intensity;
+      }
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+    });
 
-    // Mouse interaction
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      mouseRef.current.targetX = ((e.clientX - rect.left) / width - 0.5) * 0.5;
-      mouseRef.current.targetY = ((e.clientY - rect.top) / height - 0.5) * 0.3;
-    };
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1.6, 64, 64),
+      atmosphereMaterial
+    );
 
-    container.addEventListener("mousemove", handleMouseMove);
+    scene.add(atmosphere);
+
+    // ⭐ Star field
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 3000;
+    const starVertices = [];
+
+    for (let i = 0; i < starCount; i++) {
+      const x = (Math.random() - 0.5) * 200;
+      const y = (Math.random() - 0.5) * 200;
+      const z = (Math.random() - 0.5) * 200;
+      starVertices.push(x, y, z);
+    }
+
+    starGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(starVertices, 3)
+    );
+
+    const stars = new THREE.Points(
+      starGeometry,
+      new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.5,
+      })
+    );
+
+    scene.add(stars);
+
+    // 🌍 City markers
+    const cities = [
+      { lat: 40.7128, lng: -74.006 }, // New York
+      { lat: 51.5074, lng: -0.1278 }, // London
+      { lat: 35.6762, lng: 139.6503 }, // Tokyo
+      { lat: 28.6139, lng: 77.209 }, // Delhi
+    ];
+
+    const markers: THREE.Mesh[] = [];
+
+    cities.forEach((c) => {
+      const lat = (c.lat * Math.PI) / 180;
+      const lng = (c.lng * Math.PI) / 180;
+
+      const x = 1.52 * Math.cos(lat) * Math.cos(lng);
+      const y = 1.52 * Math.sin(lat);
+      const z = 1.52 * Math.cos(lat) * Math.sin(lng);
+
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.03, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+      );
+
+      marker.position.set(x, y, z);
+
+      scene.add(marker);
+      markers.push(marker);
+    });
 
     // Animation
     let time = 0;
+
     const animate = () => {
+      requestAnimationFrame(animate);
+
       time += 0.01;
 
-      // Smooth mouse following
-      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05;
-      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05;
+      earth.rotation.y += 0.0015;
+      clouds.rotation.y += 0.002;
 
-      // Rotate globe
-      if (globeRef.current) {
-        globeRef.current.rotation.y = time * 0.15 + mouseRef.current.x * 2;
-        globeRef.current.rotation.x = mouseRef.current.y;
-      }
+      stars.rotation.y += 0.0003;
 
-      // Rotate particles
-      particles.rotation.y = time * 0.02;
-      particles.rotation.x = Math.sin(time * 0.1) * 0.1;
-
-      // Update shader uniforms
-      (globe.material as THREE.ShaderMaterial).uniforms.time.value = time;
-      (glow.material as THREE.ShaderMaterial).uniforms.time.value = time;
-
-      // Animate pulse rings
-      dataPoints.children.forEach((child) => {
-        if (child.userData && child.userData.phase !== undefined) {
-          const scale = 1 + Math.sin(time * 2 + child.userData.phase) * 0.3;
-          child.scale.setScalar(scale);
-          (child as THREE.Mesh).material = new THREE.MeshBasicMaterial({
-            color: 0x06b6d4,
-            transparent: true,
-            opacity: 0.3 * (1 - Math.abs(Math.sin(time * 2 + child.userData.phase))),
-          });
-        }
+      // Pulsing city markers
+      markers.forEach((m, i) => {
+        const scale = 1 + Math.sin(time * 3 + i) * 0.4;
+        m.scale.set(scale, scale, scale);
       });
 
-      // Animate traveling points
-      travelingPoints.forEach((point) => {
-        const arc = point.userData.arc;
-        if (arc && arc.userData.curve) {
-          point.userData.progress = (point.userData.progress + 0.005) % 1;
-          const pos = arc.userData.curve.getPoint(point.userData.progress);
-          point.position.copy(pos);
-        }
-      });
-
+      controls.update();
       renderer.render(scene, camera);
-      animationRef.current = requestAnimationFrame(animate);
     };
 
-    // Handle resize
-    const handleResize = () => {
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
-
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    // Start animation
     animate();
-    setIsLoaded(true);
 
-    // Cleanup
+    // Resize
+    const resize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+
+    window.addEventListener("resize", resize);
+
     return () => {
-      window.removeEventListener("resize", handleResize);
-      container.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationRef.current);
-
-      if (rendererRef.current) {
-        container.removeChild(rendererRef.current.domElement);
-        rendererRef.current.dispose();
-      }
-
-      // Dispose geometries and materials
-      scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          if (Array.isArray(object.material)) {
-            object.material.forEach((m) => m.dispose());
-          } else {
-            object.material.dispose();
-          }
-        }
-      });
+      window.removeEventListener("resize", resize);
+      container.removeChild(renderer.domElement);
+      renderer.dispose();
     };
   }, []);
 
@@ -439,11 +222,7 @@ export default function ThreeGlobe({ className = "" }: GlobeProps) {
     <div
       ref={containerRef}
       className={`w-full h-full ${className}`}
-      style={{
-        minHeight: "400px",
-        opacity: isLoaded ? 1 : 0,
-        transition: "opacity 0.5s ease-in-out",
-      }}
+      style={{ minHeight: "500px" }}
     />
   );
 }
