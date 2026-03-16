@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllJobs, createJob, createNotification, getNextPostingId, Job } from "@/lib/aws/dynamodb";
-import { sendJobPostingNotificationToHR } from "@/lib/aws/ses";
+import { sendJobPostedNotification, sendJobPostingNotificationToHR } from "@/lib/aws/ses";
+import { listCognitoUsers } from "@/lib/aws/cognito";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -119,20 +120,76 @@ export async function POST(request: NextRequest) {
       }).catch((err) => console.error("Failed to create notification:", err));
     }
 
-    // Send email notification to HR if enabled
-    if (job.sendEmailNotification && job.recruitmentManagerEmail) {
-      sendJobPostingNotificationToHR(
-        {
-          title: job.title,
-          postingId: job.postingId || job.id,
-          clientName: job.clientName || "N/A",
-          location: job.location,
-          payRate: job.payRate || 0,
-          description: job.description,
-        },
-        [job.recruitmentManagerEmail],
-        job.excludedDepartments
-      ).catch((err) => console.error("Failed to send HR email notification:", err));
+    // Send email notifications for new job posting (only for active/open jobs)
+    if (job.status === "active" || job.status === "open") {
+      const emailRecipients: Array<{ name: string; email: string }> = [];
+      const notifiedEmails = new Set<string>();
+
+      // 1. Add recruitment manager
+      if (job.recruitmentManagerEmail) {
+        emailRecipients.push({
+          name: job.recruitmentManagerName || job.recruitmentManagerEmail.split("@")[0],
+          email: job.recruitmentManagerEmail,
+        });
+        notifiedEmails.add(job.recruitmentManagerEmail.toLowerCase());
+      }
+
+      // 2. Add specifically selected HR/Admin members from sendEmailNotification array
+      if (job.sendEmailNotification && Array.isArray(job.sendEmailNotification) && job.sendEmailNotification.length > 0) {
+        for (const email of job.sendEmailNotification) {
+          if (email && !notifiedEmails.has(email.toLowerCase())) {
+            emailRecipients.push({
+              name: email.split("@")[0],
+              email,
+            });
+            notifiedEmails.add(email.toLowerCase());
+          }
+        }
+      }
+
+      // 3. If notifyHROnApplication or notifyAdminOnApplication is enabled, also notify all HR/Admin users
+      if (job.notifyHROnApplication || job.notifyAdminOnApplication) {
+        try {
+          const usersResult = await listCognitoUsers();
+          if (usersResult.success && usersResult.users) {
+            for (const user of usersResult.users) {
+              if (!user.email || notifiedEmails.has(user.email.toLowerCase())) continue;
+
+              const groups = user.groups || [];
+              const shouldNotify =
+                (job.notifyHROnApplication && groups.includes("hr")) ||
+                (job.notifyAdminOnApplication && groups.includes("admin"));
+
+              if (shouldNotify) {
+                emailRecipients.push({
+                  name: user.name || user.email.split("@")[0],
+                  email: user.email,
+                });
+                notifiedEmails.add(user.email.toLowerCase());
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch users for job notifications:", err);
+        }
+      }
+
+      // Send notifications to all recipients
+      if (emailRecipients.length > 0) {
+        for (const recipient of emailRecipients) {
+          sendJobPostedNotification({
+            recipientName: recipient.name,
+            recipientEmail: recipient.email,
+            jobTitle: job.title,
+            jobDepartment: job.department,
+            jobLocation: job.location,
+            jobType: job.type,
+            postedByName: job.postedByName || "Admin",
+            jobId: job.id,
+          }).catch((err) => console.error(`Failed to send job notification to ${recipient.email}:`, err));
+        }
+        console.log(`Sent job posting notifications to ${emailRecipients.length} recipient(s)`);
+      }
     }
 
     return NextResponse.json({ job }, { status: 201 });

@@ -12,8 +12,9 @@ import {
   Globe,
   Plus,
   X,
+  Truck,
 } from "lucide-react";
-import { Job, Client } from "@/lib/aws/dynamodb";
+import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +97,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     assignedToId: "",
     assignedToName: "",
     sendEmailNotification: false,
-    excludedDepartments: [] as string[],
+    vendorId: "",
+    vendorName: "",
   });
 
   const [clientFormData, setClientFormData] = useState({
@@ -110,6 +113,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     fetchJob();
     fetchClients();
+    fetchVendors();
     fetchUsers();
   }, [id]);
 
@@ -151,7 +155,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         assignedToId: jobData.assignedToId || "",
         assignedToName: jobData.assignedToName || "",
         sendEmailNotification: jobData.sendEmailNotification || false,
-        excludedDepartments: jobData.excludedDepartments || [],
+        vendorId: jobData.vendorId || "",
+        vendorName: jobData.vendorName || "",
       });
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to fetch job");
@@ -170,6 +175,18 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       }
     } catch (err) {
       console.error("Failed to fetch clients:", err);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch("/api/vendors");
+      const data = await response.json();
+      if (response.ok) {
+        setVendors(data.vendors || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch vendors:", err);
     }
   };
 
@@ -220,7 +237,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         assignedToId: formData.assignedToId || undefined,
         assignedToName: formData.assignedToName || undefined,
         sendEmailNotification: formData.sendEmailNotification,
-        excludedDepartments: formData.excludedDepartments,
+        vendorId: formData.vendorId || undefined,
+        vendorName: formData.vendorName || undefined,
       };
 
       const response = await fetch(`/api/jobs/${id}`, {
@@ -291,6 +309,19 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       ...formData,
       clientId: clientId,
       clientName: client?.name || "",
+    });
+  };
+
+  const handleVendorSelect = (vendorId: string) => {
+    if (vendorId === "none") {
+      setFormData({ ...formData, vendorId: "", vendorName: "" });
+      return;
+    }
+    const vendor = vendors.find((v) => v.id === vendorId);
+    setFormData({
+      ...formData,
+      vendorId: vendorId,
+      vendorName: vendor?.name || "",
     });
   };
 
@@ -367,25 +398,42 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Client
-                </Label>
-                <Select value={formData.clientId} onValueChange={handleClientSelect}>
-                  <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="add-new">
-                      <span className="flex items-center gap-2 text-primary">
-                        <Plus className="h-4 w-4" />
-                        Add New Client
-                      </span>
-                    </SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Client
+                  </Label>
+                  <Select value={formData.clientId} onValueChange={handleClientSelect}>
+                    <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="add-new">
+                        <span className="flex items-center gap-2 text-primary">
+                          <Plus className="h-4 w-4" />
+                          Add New Client
+                        </span>
+                      </SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Truck className="h-4 w-4" />
+                    Vendor
+                  </Label>
+                  <Select value={formData.vendorId || "none"} onValueChange={handleVendorSelect}>
+                    <SelectTrigger><SelectValue placeholder="Select a vendor (optional)" /></SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="none">No vendor</SelectItem>
+                      {vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.id}>{vendor.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -393,7 +441,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Department *</Label>
                   <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {departments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -404,7 +452,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Job Type *</Label>
                   <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as Job["type"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="full-time">Full-time</SelectItem>
                       <SelectItem value="part-time">Part-time</SelectItem>
                       <SelectItem value="contract">Contract</SelectItem>
@@ -432,7 +480,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>State</Label>
                   <Select value={formData.state} onValueChange={(v) => setFormData({ ...formData, state: v })}>
                     <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {US_STATES.map((state) => (
                         <SelectItem key={state} value={state}>{state}</SelectItem>
                       ))}
@@ -446,7 +494,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Status</Label>
                   <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Job["status"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
@@ -557,7 +605,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Recruitment Manager</Label>
                   <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
                     <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {hrUsers.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
                           {u.name || u.email} ({u.role})
@@ -570,7 +618,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Assigned To</Label>
                   <Select value={formData.assignedToId} onValueChange={handleAssignedToSelect}>
                     <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {allUsers.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
                           {u.name || u.email}
@@ -660,29 +708,6 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     Notify Administrators on new applications
                   </Label>
                 </div>
-
-                {formData.sendEmailNotification && (
-                  <div className="space-y-2 pl-6 pt-2">
-                    <Label className="text-sm text-muted-foreground">Exclude Departments</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {departments.map((dept) => (
-                        <label key={dept} className="flex items-center gap-1.5 text-sm">
-                          <Checkbox
-                            checked={formData.excludedDepartments.includes(dept)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({ ...formData, excludedDepartments: [...formData.excludedDepartments, dept] });
-                              } else {
-                                setFormData({ ...formData, excludedDepartments: formData.excludedDepartments.filter((d) => d !== dept) });
-                              }
-                            }}
-                          />
-                          {dept}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -771,7 +796,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <Label>Status</Label>
                   <Select value={clientFormData.status} onValueChange={(v) => setClientFormData({ ...clientFormData, status: v as "active" | "inactive" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
