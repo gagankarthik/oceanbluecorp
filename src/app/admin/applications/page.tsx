@@ -327,7 +327,7 @@ export default function ApplicationsPage() {
         body: JSON.stringify({
           status: newStatus,
           changedBy: user?.id,
-          changedByName: user?.name,
+          changedByName: user?.name || user?.email || "Admin",
         }),
       });
 

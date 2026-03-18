@@ -685,6 +685,65 @@ View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanblue
 }
 
 // Send to multiple recipients
+// Send contact submission notification to admin
+export async function sendContactNotificationEmail(data: {
+  adminEmail: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  company: string;
+  jobTitle?: string;
+  inquiryType: string;
+  message: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const htmlBody = `
+    ${getEmailHeader()}
+    <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
+      New Contact Form Submission
+    </h2>
+    <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
+      A new inquiry has been submitted via the Ocean Blue Corporation website.
+    </p>
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">Contact Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 40%;">Name:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.firstName} ${data.lastName}</td></tr>
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Email:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.email}</td></tr>
+        ${data.phone ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Phone:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.phone}</td></tr>` : ""}
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Company:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.company}</td></tr>
+        ${data.jobTitle ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job Title:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobTitle}</td></tr>` : ""}
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Inquiry Type:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.inquiryType}</td></tr>
+      </table>
+    </div>
+    <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 4px; padding: 16px; margin: 20px 0;">
+      <h4 style="color: #0369a1; margin: 0 0 8px; font-size: 14px; font-weight: 600;">Message</h4>
+      <p style="color: #1e293b; margin: 0; line-height: 1.6; font-size: 14px;">${data.message.replace(/\n/g, "<br>")}</p>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts"
+         style="background-color: #0ea5e9; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+        View in Admin Panel
+      </a>
+    </div>
+    ${getEmailFooter()}
+  `;
+
+  const textBody = `New Contact Form Submission
+
+Name: ${data.firstName} ${data.lastName}
+Email: ${data.email}
+${data.phone ? `Phone: ${data.phone}\n` : ""}Company: ${data.company}
+${data.jobTitle ? `Job Title: ${data.jobTitle}\n` : ""}Inquiry Type: ${data.inquiryType}
+
+Message:
+${data.message}
+
+View in Admin: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts`;
+
+  return sendEmail(data.adminEmail, `New Contact: ${data.firstName} ${data.lastName} - ${data.inquiryType}`, htmlBody, textBody);
+}
+
 export async function sendJobPostedNotifications(
   recipients: Array<{ name: string; email: string }>,
   jobData: {

@@ -17,7 +17,6 @@ import {
   FileText,
   Truck,
   Search,
-  Bell,
   Users,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
@@ -35,8 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -96,10 +93,6 @@ export default function NewJobPage() {
     assignedToIds: [] as string[],
     assignedToNames: [] as string[],
     assignedToEmails: [] as string[],
-    // Email notification settings
-    notifyHROnApplication: false,
-    notifyAdminOnApplication: false,
-    sendEmailNotification: [] as string[],
   });
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
@@ -188,7 +181,6 @@ export default function NewJobPage() {
         assignedToIds: formData.assignedToIds.length > 0 ? formData.assignedToIds : undefined,
         assignedToNames: formData.assignedToNames.length > 0 ? formData.assignedToNames : undefined,
         assignedToEmails: formData.assignedToEmails.length > 0 ? formData.assignedToEmails : undefined,
-        sendEmailNotification: formData.sendEmailNotification.length > 0 ? formData.sendEmailNotification : undefined,
         postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
         postedByEmail: user?.email || "",
         postedByRole: user?.role || "admin",
@@ -296,19 +288,6 @@ export default function NewJobPage() {
       (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q))
     );
   });
-
-  const toggleEmailNotification = (email: string) => {
-    const list = formData.sendEmailNotification;
-    setFormData({
-      ...formData,
-      sendEmailNotification: list.includes(email)
-        ? list.filter((e) => e !== email)
-        : [...list, email],
-    });
-  };
-
-  // Compute available additional HR/admins (exclude current user since they're already the default recipient)
-  const additionalRecipients = hrUsers.filter((u) => u.email !== user?.email);
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -717,124 +696,6 @@ export default function NewJobPage() {
                   placeholder={"Lead technical projects\nMentor junior developers..."}
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Block 7: Email Notifications ── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bell className="h-4 w-4 text-primary" />
-              Email Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Default recipient notice */}
-            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <Bell className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-blue-800">Default Recipient</p>
-                <p className="text-sm text-blue-700">
-                  Notifications will automatically be sent to{" "}
-                  <span className="font-semibold">{user?.name || user?.email}</span>{" "}
-                  ({user?.email}) — the job creator.
-                </p>
-              </div>
-            </div>
-
-            {/* Additional notify options */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="notifyHR"
-                  checked={formData.notifyHROnApplication}
-                  onCheckedChange={(checked) => setFormData({ ...formData, notifyHROnApplication: checked as boolean })}
-                />
-                <Label htmlFor="notifyHR" className="text-sm font-normal cursor-pointer">
-                  Notify <span className="font-medium">all HR team</span> on new applications
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="notifyAdmin"
-                  checked={formData.notifyAdminOnApplication}
-                  onCheckedChange={(checked) => setFormData({ ...formData, notifyAdminOnApplication: checked as boolean })}
-                />
-                <Label htmlFor="notifyAdmin" className="text-sm font-normal cursor-pointer">
-                  Notify <span className="font-medium">all Administrators</span> on new applications
-                </Label>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Additional individual HR/Admin recipients */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-medium">Additional Individual Recipients</Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Select specific HR/Admin members to also receive job posting notifications.
-              </p>
-
-              {additionalRecipients.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No other HR/Admin users found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {additionalRecipients.map((u) => {
-                    const isSelected = formData.sendEmailNotification.includes(u.email);
-                    return (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => toggleEmailNotification(u.email)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
-                          isSelected
-                            ? "bg-primary/5 border-primary/30 text-primary"
-                            : "border-border hover:bg-muted/50"
-                        }`}
-                      >
-                        <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium flex-shrink-0">
-                          {(u.name || u.email)[0].toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{u.name || u.email}</p>
-                          <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs capitalize flex-shrink-0">
-                          {u.role}
-                        </Badge>
-                        {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {formData.sendEmailNotification.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {formData.sendEmailNotification.map((email) => (
-                    <Badge key={email} variant="secondary" className="gap-1 pr-1">
-                      {email}
-                      <button
-                        type="button"
-                        onClick={() => toggleEmailNotification(email)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

@@ -163,8 +163,8 @@ export async function POST(request: NextRequest) {
       statusHistory: [{
         status: body.status || "pending",
         changedAt: now,
-        changedBy: body.createdBy,
-        changedByName: body.createdByName,
+        changedBy: body.createdBy || "system",
+        changedByName: body.createdByName || (isPortalApplication ? "Career Portal" : "System"),
         notes: "Application created",
       }],
     };
