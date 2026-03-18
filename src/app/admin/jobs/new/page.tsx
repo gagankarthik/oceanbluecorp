@@ -17,6 +17,8 @@ import {
   FileText,
   Truck,
   Search,
+  Bell,
+  Users,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -33,6 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -92,6 +96,10 @@ export default function NewJobPage() {
     assignedToIds: [] as string[],
     assignedToNames: [] as string[],
     assignedToEmails: [] as string[],
+    // Email notification settings
+    notifyHROnApplication: false,
+    notifyAdminOnApplication: false,
+    sendEmailNotification: [] as string[],
   });
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
@@ -180,6 +188,7 @@ export default function NewJobPage() {
         assignedToIds: formData.assignedToIds.length > 0 ? formData.assignedToIds : undefined,
         assignedToNames: formData.assignedToNames.length > 0 ? formData.assignedToNames : undefined,
         assignedToEmails: formData.assignedToEmails.length > 0 ? formData.assignedToEmails : undefined,
+        sendEmailNotification: formData.sendEmailNotification.length > 0 ? formData.sendEmailNotification : undefined,
         postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
         postedByEmail: user?.email || "",
         postedByRole: user?.role || "admin",
@@ -277,6 +286,25 @@ export default function NewJobPage() {
         assignedToEmails: [...assignedToEmails, user.email],
       });
     }
+  };
+
+  // Compute filtered assignees for the dropdown
+  const filteredAssignees = hrUsers.filter((u) => {
+    const q = assigneeSearch.toLowerCase();
+    return (
+      !formData.assignedToIds.includes(u.id) &&
+      (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q))
+    );
+  });
+
+  const toggleEmailNotification = (email: string) => {
+    const list = formData.sendEmailNotification;
+    setFormData({
+      ...formData,
+      sendEmailNotification: list.includes(email)
+        ? list.filter((e) => e !== email)
+        : [...list, email],
+    });
   };
 
   // Compute available additional HR/admins (exclude current user since they're already the default recipient)
