@@ -27,20 +27,12 @@ export default function SignOutPage() {
     try {
       const userManager = getUserManager();
 
-      // Get the current user before removing them (to get the id_token)
-      const user = await userManager.getUser();
-      const idToken = user?.id_token;
-
-      // Remove user from local storage
+      // Clear local OIDC session only — Cognito session is already cleared
+      // when AuthContext.signOut() redirected through the Cognito /logout endpoint.
+      // Do NOT call Cognito /logout again here or it will loop / return "Invalid request".
       await userManager.removeUser();
 
-      // Clear any additional storage
-      localStorage.removeItem("oidc.user:" +
-        `https://cognito-idp.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID}:` +
-        process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
-      );
-
-      // Clear all oidc related items from localStorage
+      // Clear all oidc-related keys from localStorage
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -50,28 +42,7 @@ export default function SignOutPage() {
       }
       keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-      // For production, redirect to Cognito logout endpoint
-      const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
-      const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
-      
-      // IMPORTANT: This must match EXACTLY what's registered in Cognito
-      // You registered: https://oceanbluecorp.com/auth/signout
-      const logoutUri = encodeURIComponent("https://oceanbluecorp.com/auth/signout");
-
-      if (cognitoDomain && clientId) {
-        let logoutUrl = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${logoutUri}`;
-        
-        // Add id_token_hint if available for a cleaner logout
-        if (idToken) {
-          logoutUrl += `&id_token_hint=${encodeURIComponent(idToken)}`;
-        }
-        
-        // Redirect to Cognito hosted UI logout
-        window.location.href = logoutUrl;
-      } else {
-        // If Cognito domain is not configured, just redirect to home
-        router.push("/");
-      }
+      router.push("/auth/signin");
     } catch (err) {
       console.error("Sign out error:", err);
       setError(err instanceof Error ? err.message : "Failed to sign out");

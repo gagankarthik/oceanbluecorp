@@ -237,6 +237,8 @@ export default function AdminDashboard() {
   });
   const [jobSearch, setJobSearch] = useState("");
   const [jobStatusFilter, setJobStatusFilter] = useState("all");
+  const [chartPeriod, setChartPeriod] = useState("30d");
+  const [pipelinePeriod, setPipelinePeriod] = useState("all");
   const [jobPeriodFilter, setJobPeriodFilter] = useState("all");
   const [jobSelectedMonth, setJobSelectedMonth] = useState<string>(() => {
     const now = new Date();
@@ -418,27 +420,88 @@ export default function AdminDashboard() {
 
   if (!stats) return null;
 
-  const chartData =
-    stats.monthlyApplications && stats.monthlyApplications.length > 0
-      ? stats.monthlyApplications.map((m) => ({
-          date: m.month,
-          applications: m.applications,
-          hired: 0,
-        }))
-      : generateChartData(stats.totalApplications);
+  // ── Chart data (Application Trends) ──────────────────────────────
+  const chartPeriodLabels: Record<string, string> = {
+    "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days",
+    "ytd": "Year to date", "1y": "Last 12 months", "all": "All time",
+  };
 
-  const conversionRate =
-    stats.totalApplications > 0
-      ? ((stats.hiredApplications / stats.totalApplications) * 100).toFixed(1)
-      : "0";
+  const chartData = (() => {
+    if (allApps.length === 0) {
+      return stats.monthlyApplications && stats.monthlyApplications.length > 0
+        ? stats.monthlyApplications.map((m) => ({ date: m.month, applications: m.applications }))
+        : generateChartData(stats.totalApplications);
+    }
+    const now = new Date();
+    let startDate: Date;
+    let groupBy: "day" | "week" | "month";
+    if (chartPeriod === "7d")  { startDate = new Date(now); startDate.setDate(now.getDate() - 7);   groupBy = "day"; }
+    else if (chartPeriod === "30d") { startDate = new Date(now); startDate.setDate(now.getDate() - 30);  groupBy = "day"; }
+    else if (chartPeriod === "90d") { startDate = new Date(now); startDate.setDate(now.getDate() - 90);  groupBy = "week"; }
+    else if (chartPeriod === "ytd") { startDate = new Date(now.getFullYear(), 0, 1);                      groupBy = "month"; }
+    else if (chartPeriod === "1y")  { startDate = new Date(now); startDate.setFullYear(now.getFullYear() - 1); groupBy = "month"; }
+    else                            { startDate = new Date(0);                                             groupBy = "month"; }
 
-  // Prepare pie chart data
-  const pieData = Object.entries(stats.applicationsByStatus)
-    .filter(([, count]) => count > 0)
-    .map(([status, count]) => ({
-      name: status.charAt(0).toUpperCase() + status.slice(1),
-      value: count,
-    }));
+    const filtered = allApps.filter((a) => new Date(a.appliedAt) >= startDate);
+    const buckets: Record<string, number> = {};
+
+    if (groupBy === "day") {
+      const d = new Date(startDate);
+      while (d <= now) { buckets[d.toISOString().split("T")[0]] = 0; d.setDate(d.getDate() + 1); }
+      filtered.forEach((a) => { const k = new Date(a.appliedAt).toISOString().split("T")[0]; if (k in buckets) buckets[k]++; });
+    } else if (groupBy === "week") {
+      const d = new Date(startDate); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      while (d <= now) { buckets[d.toISOString().split("T")[0]] = 0; d.setDate(d.getDate() + 7); }
+      filtered.forEach((a) => {
+        const ad = new Date(a.appliedAt); const mon = new Date(ad); mon.setDate(ad.getDate() - ((ad.getDay() + 6) % 7));
+        const k = mon.toISOString().split("T")[0]; if (k in buckets) buckets[k]++;
+      });
+    } else {
+      filtered.forEach((a) => { const d = new Date(a.appliedAt); const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; buckets[k] = (buckets[k]||0)+1; });
+    }
+    return Object.entries(buckets).sort(([a],[b])=>a.localeCompare(b)).map(([date,applications])=>({date,applications}));
+  })();
+
+  // ── Pipeline data (Pipeline Summary) ─────────────────────────────
+  const pipelinePeriodLabels: Record<string, string> = {
+    "all": "All time", "today": "Today", "7d": "Last 7 days",
+    "30d": "Last 30 days", "90d": "Last 90 days", "ytd": "Year to date",
+  };
+
+  const pipelineData = (() => {
+    const now = new Date();
+    let startDate: Date;
+    if (pipelinePeriod === "today")    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    else if (pipelinePeriod === "7d")  { startDate = new Date(now); startDate.setDate(now.getDate() - 7); }
+    else if (pipelinePeriod === "30d") { startDate = new Date(now); startDate.setDate(now.getDate() - 30); }
+    else if (pipelinePeriod === "90d") { startDate = new Date(now); startDate.setDate(now.getDate() - 90); }
+    else if (pipelinePeriod === "ytd") startDate = new Date(now.getFullYear(), 0, 1);
+    else                               startDate = new Date(0);
+
+    if (allApps.length > 0) {
+      const filtered = allApps.filter((a) => new Date(a.appliedAt) >= startDate);
+      const byStatus: Record<string, number> = {};
+      filtered.forEach((a) => { byStatus[a.status] = (byStatus[a.status]||0)+1; });
+      const total = filtered.length;
+      const hired = byStatus["hired"] || 0;
+      return {
+        pieData: Object.entries(byStatus).filter(([,c])=>c>0).map(([s,c])=>({ name: s.charAt(0).toUpperCase()+s.slice(1), value: c })),
+        byStatus, total,
+        conversionRate: total > 0 ? ((hired/total)*100).toFixed(1) : "0",
+      };
+    }
+    // Fall back to stats
+    const total = stats.totalApplications;
+    const hired = stats.hiredApplications;
+    return {
+      pieData: Object.entries(stats.applicationsByStatus).filter(([,c])=>c>0).map(([s,c])=>({ name: s.charAt(0).toUpperCase()+s.slice(1), value: c })),
+      byStatus: stats.applicationsByStatus, total,
+      conversionRate: total > 0 ? ((hired/total)*100).toFixed(1) : "0",
+    };
+  })();
+
+  const pieData = pipelineData.pieData;
+  const conversionRate = pipelineData.conversionRate;
 
   // Prepare department data for bar chart
   const departmentData = Object.entries(stats.jobsByDepartment || {})
@@ -531,15 +594,28 @@ export default function AdminDashboard() {
         {/* Applications Chart */}
         <Card className="lg:col-span-2 border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold">Application Trends</CardTitle>
-                <CardDescription>Applications received over the last 30 days</CardDescription>
+                <CardDescription>{chartPeriodLabels[chartPeriod]} · {chartData.reduce((s,d)=>s+d.applications,0)} applications</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-xs text-gray-500">Applications</span>
+              <div className="flex flex-wrap items-center gap-1">
+                {(["7d","30d","90d","ytd","1y","all"] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setChartPeriod(p)}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                      chartPeriod === p
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                    }`}
+                  >
+                    {p === "ytd" ? "YTD" : p === "1y" ? "1Y" : p === "all" ? "All" : p.toUpperCase()}
+                  </button>
+                ))}
+                <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-gray-200">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <span className="text-xs text-gray-400">Applications</span>
                 </div>
               </div>
             </div>
@@ -563,10 +639,13 @@ export default function AdminDashboard() {
                   tick={{ fontSize: 12, fill: "#9ca3af" }}
                   tickFormatter={(value) => {
                     const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
+                    if (chartPeriod === "ytd" || chartPeriod === "1y" || chartPeriod === "all") {
+                      return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+                    }
+                    if (chartPeriod === "90d") {
+                      return `Wk ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+                    }
+                    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   }}
                 />
                 <YAxis
@@ -605,11 +684,30 @@ export default function AdminDashboard() {
         {/* Pipeline Summary */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-gray-400" />
-              Pipeline Summary
-            </CardTitle>
-            <CardDescription>Current status breakdown</CardDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <PieChart className="w-5 h-5 text-gray-400" />
+                  Pipeline Summary
+                </CardTitle>
+                <CardDescription>{pipelinePeriodLabels[pipelinePeriod]} · {pipelineData.total} total</CardDescription>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1 pt-1">
+              {(["all","today","7d","30d","90d","ytd"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPipelinePeriod(p)}
+                  className={`px-2 py-1 text-[11px] font-semibold rounded-lg border transition-all ${
+                    pipelinePeriod === p
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                  }`}
+                >
+                  {p === "all" ? "All" : p === "today" ? "Today" : p === "ytd" ? "YTD" : p.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent>
             {/* Mini Pie Chart */}
@@ -644,12 +742,12 @@ export default function AdminDashboard() {
 
             {/* Status List */}
             <div className="space-y-2.5">
-              {Object.entries(stats.applicationsByStatus).map(([status, count], index) => {
+              {Object.entries(pipelineData.byStatus).map(([status, count], index) => {
                 const config = statusConfig[status as keyof typeof statusConfig];
                 const Icon = config?.icon || Clock;
                 const percentage =
-                  stats.totalApplications > 0
-                    ? ((count / stats.totalApplications) * 100).toFixed(0)
+                  pipelineData.total > 0
+                    ? ((count / pipelineData.total) * 100).toFixed(0)
                     : 0;
                 return (
                   <div key={status} className="flex items-center justify-between group">
@@ -679,10 +777,10 @@ export default function AdminDashboard() {
                   <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
-                      style={{ width: `${Math.min(parseFloat(conversionRate) * 5, 100)}%` }}
+                      style={{ width: `${Math.min(parseFloat(pipelineData.conversionRate) * 5, 100)}%` }}
                     />
                   </div>
-                  <span className="text-lg font-bold text-emerald-600">{conversionRate}%</span>
+                  <span className="text-lg font-bold text-emerald-600">{pipelineData.conversionRate}%</span>
                 </div>
               </div>
             </div>

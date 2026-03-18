@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
-  Filter,
   LayoutGrid,
   LayoutList,
   Kanban,
@@ -12,28 +11,22 @@ import {
   Phone,
   Calendar,
   FileText,
-  User,
   Star,
-  Clock,
-  CheckCircle2,
-  XCircle,
   Eye,
   MessageSquare,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   StickyNote,
   GripVertical,
   X,
-  Send,
-  CalendarPlus,
-  History,
   Download,
   MoreHorizontal,
   Briefcase,
   MapPin,
   Trash2,
   Plus,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -55,24 +48,45 @@ interface ActivityItem {
 }
 
 const pipelineStages = [
-  { id: "pending", label: "New", color: "bg-slate-100 border-slate-300", dotColor: "bg-slate-500" },
-  { id: "reviewing", label: "Screening", color: "bg-blue-50 border-blue-200", dotColor: "bg-blue-500" },
-  { id: "interview", label: "Interview", color: "bg-purple-50 border-purple-200", dotColor: "bg-purple-500" },
-  { id: "offered", label: "Offer", color: "bg-amber-50 border-amber-200", dotColor: "bg-amber-500" },
-  { id: "hired", label: "Hired", color: "bg-green-50 border-green-200", dotColor: "bg-green-500" },
-  { id: "rejected", label: "Rejected", color: "bg-red-50 border-red-200", dotColor: "bg-red-500" },
+  { id: "pending", label: "New", headerBg: "bg-gray-50 border-gray-200", dotColor: "bg-gray-400", colBg: "bg-gray-50/50" },
+  { id: "reviewing", label: "Screening", headerBg: "bg-blue-50 border-blue-200", dotColor: "bg-blue-500", colBg: "bg-blue-50/30" },
+  { id: "interview", label: "Interview", headerBg: "bg-purple-50 border-purple-200", dotColor: "bg-purple-500", colBg: "bg-purple-50/30" },
+  { id: "offered", label: "Offered", headerBg: "bg-amber-50 border-amber-200", dotColor: "bg-amber-500", colBg: "bg-amber-50/30" },
+  { id: "hired", label: "Hired", headerBg: "bg-emerald-50 border-emerald-200", dotColor: "bg-emerald-500", colBg: "bg-emerald-50/30" },
+  { id: "rejected", label: "Rejected", headerBg: "bg-rose-50 border-rose-200", dotColor: "bg-rose-500", colBg: "bg-rose-50/30" },
 ];
 
-const statusConfig: Record<string, { label: string; color: string; dotColor: string }> = {
-  pending: { label: "New", color: "bg-slate-100 text-slate-700 border-slate-300", dotColor: "bg-slate-500" },
-  reviewing: { label: "Screening", color: "bg-blue-50 text-blue-700 border-blue-200", dotColor: "bg-blue-500" },
-  interview: { label: "Interview", color: "bg-purple-50 text-purple-700 border-purple-200", dotColor: "bg-purple-500" },
-  offered: { label: "Offer Sent", color: "bg-amber-50 text-amber-700 border-amber-200", dotColor: "bg-amber-500" },
-  hired: { label: "Hired", color: "bg-green-50 text-green-700 border-green-200", dotColor: "bg-green-500" },
-  rejected: { label: "Rejected", color: "bg-red-50 text-red-700 border-red-200", dotColor: "bg-red-500" },
+const statusConfig: Record<string, { label: string; bg: string; dot: string }> = {
+  pending: { label: "New", bg: "bg-gray-100 text-gray-700", dot: "bg-gray-400" },
+  reviewing: { label: "Screening", bg: "bg-blue-100 text-blue-800", dot: "bg-blue-500" },
+  interview: { label: "Interview", bg: "bg-purple-100 text-purple-800", dot: "bg-purple-500" },
+  offered: { label: "Offered", bg: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
+  hired: { label: "Hired", bg: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
+  rejected: { label: "Rejected", bg: "bg-rose-100 text-rose-800", dot: "bg-rose-500" },
 };
 
 type ViewMode = "list" | "cards" | "kanban";
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = statusConfig[status] || statusConfig.pending;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
+function CandidateAvatar({ name }: { name: string }) {
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+      {initials}
+    </div>
+  );
+}
+
+const US_STATES = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
 
 export default function CandidatesPage() {
   const router = useRouter();
@@ -89,24 +103,15 @@ export default function CandidatesPage() {
   const [noteText, setNoteText] = useState("");
   const [draggedCandidate, setDraggedCandidate] = useState<CandidateWithJob | null>(null);
   const [activityLog, setActivityLog] = useState<Record<string, ActivityItem[]>>({});
+  const [detailTab, setDetailTab] = useState<"overview" | "skills" | "notes" | "history">("overview");
   const [showNewCandidateModal, setShowNewCandidateModal] = useState(false);
   const [creatingCandidate, setCreatingCandidate] = useState(false);
   const [newCandidateForm, setNewCandidateForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    skills: "",
-    experience: "",
+    firstName: "", lastName: "", email: "", phone: "", address: "", city: "",
+    state: "", zipCode: "", skills: "", experience: "",
     workAuthorization: "" as "" | "US Citizen" | "Green Card" | "H1-B" | "OPT/CPT" | "TN Visa" | "Other",
     source: "Other" as "LinkedIn" | "Indeed" | "Company Website" | "Referral" | "Agency" | "Career Portal" | "Other",
-    notes: "",
-    jobId: "",
-    addToTalentBench: true,
+    notes: "", jobId: "", addToTalentBench: true,
     status: "pending" as Application["status"],
   });
 
@@ -114,46 +119,20 @@ export default function CandidatesPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [appsRes, jobsRes] = await Promise.all([
-          fetch("/api/applications"),
-          fetch("/api/jobs"),
-        ]);
-
+        const [appsRes, jobsRes] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs")]);
         const appsData = await appsRes.json();
         const jobsData = await jobsRes.json();
-
         const fetchedJobs = jobsData.jobs || [];
         setJobs(fetchedJobs);
-
-        const jobsMap = new Map<string, Job>(
-          (jobsData.jobs || []).map((job: Job) => [job.id, job])
-        );
-
+        const jobsMap = new Map<string, Job>((jobsData.jobs || []).map((job: Job) => [job.id, job]));
         const candidatesWithJobs = (appsData.applications || []).map((app: Application) => {
           const job = app.jobId ? jobsMap.get(app.jobId) : undefined;
-          return {
-            ...app,
-            jobTitle: job?.title || "Unknown Position",
-            jobDepartment: job?.department || "",
-            jobLocation: job?.location || "",
-            postedByName: job?.postedByName,
-            postedByEmail: job?.postedByEmail,
-          };
+          return { ...app, jobTitle: job?.title || "Unknown Position", jobDepartment: job?.department || "", jobLocation: job?.location || "", postedByName: job?.postedByName, postedByEmail: job?.postedByEmail };
         });
-
         setCandidates(candidatesWithJobs);
-
-        // Generate mock activity log
         const activities: Record<string, ActivityItem[]> = {};
         candidatesWithJobs.forEach((c: CandidateWithJob) => {
-          activities[c.id] = [
-            {
-              id: `${c.id}-1`,
-              type: "application_received",
-              message: `Application received for ${c.jobTitle}`,
-              timestamp: c.appliedAt,
-            },
-          ];
+          activities[c.id] = [{ id: `${c.id}-1`, type: "application_received", message: `Application received for ${c.jobTitle}`, timestamp: c.appliedAt }];
         });
         setActivityLog(activities);
       } catch (err) {
@@ -162,18 +141,15 @@ export default function CandidatesPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  const positions = [...new Set(candidates.map((c) => c.jobTitle).filter(Boolean))];
+  const positions = [...new Set(candidates.map(c => c.jobTitle).filter(Boolean))];
 
-  const filteredCandidates = candidates.filter((c) => {
-    const candidateName = c.name || "";
-    const candidateEmail = c.email || "";
-    const matchesSearch =
-      candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidateEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredCandidates = candidates.filter(c => {
+    const name = c.name || "";
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesPosition = positionFilter === "all" || c.jobTitle === positionFilter;
@@ -181,42 +157,23 @@ export default function CandidatesPage() {
   });
 
   const candidatesByStage = pipelineStages.reduce((acc, stage) => {
-    acc[stage.id] = filteredCandidates.filter((c) => c.status === stage.id);
+    acc[stage.id] = filteredCandidates.filter(c => c.status === stage.id);
     return acc;
   }, {} as Record<string, CandidateWithJob[]>);
 
   const handleStatusChange = async (candidateId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/applications/${candidateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-
       if (!response.ok) throw new Error("Failed to update status");
-
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === candidateId ? { ...c, status: newStatus as Application["status"] } : c))
-      );
-
-      // Add to activity log
-      const candidate = candidates.find((c) => c.id === candidateId);
-      if (candidate) {
-        setActivityLog((prev) => ({
-          ...prev,
-          [candidateId]: [
-            {
-              id: `${candidateId}-${Date.now()}`,
-              type: "status_change",
-              message: `Status changed to ${statusConfig[newStatus]?.label || newStatus}`,
-              timestamp: new Date().toISOString(),
-              user: "You",
-            },
-            ...(prev[candidateId] || []),
-          ],
-        }));
-      }
-    } catch (err) {
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, status: newStatus as Application["status"] } : c));
+      setActivityLog(prev => ({
+        ...prev,
+        [candidateId]: [{ id: `${candidateId}-${Date.now()}`, type: "status_change", message: `Status changed to ${statusConfig[newStatus]?.label || newStatus}`, timestamp: new Date().toISOString(), user: "You" }, ...(prev[candidateId] || [])],
+      }));
+    } catch {
       alert("Failed to update status");
     }
   };
@@ -231,49 +188,24 @@ export default function CandidatesPage() {
 
   const handleRatingChange = async (candidateId: string, rating: number) => {
     try {
-      await fetch(`/api/applications/${candidateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating }),
-      });
-
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === candidateId ? { ...c, rating } : c))
-      );
-    } catch (err) {
+      await fetch(`/api/applications/${candidateId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating }) });
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, rating } : c));
+    } catch {
       console.error("Failed to update rating");
     }
   };
 
   const handleNotesSave = async (candidateId: string) => {
     try {
-      await fetch(`/api/applications/${candidateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: noteText }),
-      });
-
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === candidateId ? { ...c, notes: noteText } : c))
-      );
-
-      setActivityLog((prev) => ({
+      await fetch(`/api/applications/${candidateId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: noteText }) });
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, notes: noteText } : c));
+      setActivityLog(prev => ({
         ...prev,
-        [candidateId]: [
-          {
-            id: `${candidateId}-${Date.now()}`,
-            type: "note_added",
-            message: "Note added",
-            timestamp: new Date().toISOString(),
-            user: "You",
-          },
-          ...(prev[candidateId] || []),
-        ],
+        [candidateId]: [{ id: `${candidateId}-${Date.now()}`, type: "note_added", message: "Note added", timestamp: new Date().toISOString(), user: "You" }, ...(prev[candidateId] || [])],
       }));
-
       setEditingNoteId(null);
       setNoteText("");
-    } catch (err) {
+    } catch {
       alert("Failed to save notes");
     }
   };
@@ -282,31 +214,20 @@ export default function CandidatesPage() {
     try {
       const response = await fetch(`/api/resume/${resumeId}`);
       const data = await response.json();
-      if (data.success && data.downloadUrl) {
-        window.open(data.downloadUrl, "_blank");
-      }
-    } catch (err) {
+      if (data.success && data.downloadUrl) window.open(data.downloadUrl, "_blank");
+    } catch {
       alert("Failed to load resume");
     }
   };
 
   const handleDeleteCandidate = async (candidateId: string, candidateName: string) => {
-    if (!confirm(`Are you sure you want to delete ${candidateName}'s application? This action cannot be undone.`)) {
-      return;
-    }
-
+    if (!confirm(`Delete ${candidateName}'s application? This cannot be undone.`)) return;
     try {
-      const response = await fetch(`/api/applications/${candidateId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete candidate");
-      }
-
-      setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+      const response = await fetch(`/api/applications/${candidateId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete");
+      setCandidates(prev => prev.filter(c => c.id !== candidateId));
       setSelectedCandidate(null);
-    } catch (err) {
+    } catch {
       alert("Failed to delete candidate");
     }
   };
@@ -315,7 +236,7 @@ export default function CandidatesPage() {
     e.preventDefault();
     setCreatingCandidate(true);
     try {
-      const selectedJob = jobs.find((j) => j.id === newCandidateForm.jobId);
+      const selectedJob = jobs.find(j => j.id === newCandidateForm.jobId);
       const payload = {
         firstName: newCandidateForm.firstName,
         lastName: newCandidateForm.lastName,
@@ -326,7 +247,7 @@ export default function CandidatesPage() {
         city: newCandidateForm.city || undefined,
         state: newCandidateForm.state || undefined,
         zipCode: newCandidateForm.zipCode || undefined,
-        skills: newCandidateForm.skills ? newCandidateForm.skills.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+        skills: newCandidateForm.skills ? newCandidateForm.skills.split(",").map(s => s.trim()).filter(Boolean) : undefined,
         experience: newCandidateForm.experience || undefined,
         workAuthorization: newCandidateForm.workAuthorization || undefined,
         source: newCandidateForm.source,
@@ -339,35 +260,16 @@ export default function CandidatesPage() {
         createdByName: user?.name || user?.email,
         userId: "manual-entry",
       };
-
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
+      const response = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to create candidate");
       }
-
       const data = await response.json();
-      const job = newCandidateForm.jobId ? jobs.find((j) => j.id === newCandidateForm.jobId) : undefined;
-      const newCandidate: CandidateWithJob = {
-        ...data.application,
-        jobTitle: job?.title || "No Position",
-        jobDepartment: job?.department || "",
-        jobLocation: job?.location || "",
-      };
-      setCandidates((prev) => [newCandidate, ...prev]);
-
-      // Reset form
-      setNewCandidateForm({
-        firstName: "", lastName: "", email: "", phone: "", address: "", city: "",
-        state: "", zipCode: "", skills: "", experience: "",
-        workAuthorization: "", source: "Other", notes: "", jobId: "",
-        addToTalentBench: true, status: "pending",
-      });
+      const job = newCandidateForm.jobId ? jobs.find(j => j.id === newCandidateForm.jobId) : undefined;
+      const newCandidate: CandidateWithJob = { ...data.application, jobTitle: job?.title || "No Position", jobDepartment: job?.department || "", jobLocation: job?.location || "" };
+      setCandidates(prev => [newCandidate, ...prev]);
+      setNewCandidateForm({ firstName: "", lastName: "", email: "", phone: "", address: "", city: "", state: "", zipCode: "", skills: "", experience: "", workAuthorization: "", source: "Other", notes: "", jobId: "", addToTalentBench: true, status: "pending" });
       setShowNewCandidateModal(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to create candidate");
@@ -377,38 +279,21 @@ export default function CandidatesPage() {
   };
 
   const formatTimeAgo = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString();
   };
 
   const handleExportCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Position", "Department", "Status", "Rating", "Applied Date"];
-    const rows = filteredCandidates.map((c) => [
-      c.name,
-      c.email,
-      c.phone || "",
-      c.jobTitle || "",
-      c.jobDepartment || "",
-      statusConfig[c.status]?.label || c.status,
-      c.rating?.toString() || "",
-      new Date(c.appliedAt).toLocaleDateString(),
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((r) => r.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
-
+    const headers = ["Name","Email","Phone","Position","Department","Status","Rating","Applied Date"];
+    const rows = filteredCandidates.map(c => [c.name, c.email, c.phone || "", c.jobTitle || "", c.jobDepartment || "", statusConfig[c.status]?.label || c.status, c.rating?.toString() || "", new Date(c.appliedAt).toLocaleDateString()]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -421,9 +306,9 @@ export default function CandidatesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-cyan-600 mx-auto mb-4 animate-spin" />
-          <p className="text-slate-500">Loading candidates...</p>
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 text-blue-600 mx-auto animate-spin" />
+          <p className="text-gray-500 text-sm">Loading candidates...</p>
         </div>
       </div>
     );
@@ -434,178 +319,87 @@ export default function CandidatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Candidates</h1>
-          <p className="text-slate-600 mt-1">
-            Manage your recruitment pipeline - {filteredCandidates.length} candidates
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("kanban")}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === "kanban"
-                  ? "bg-white shadow-sm text-cyan-600"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-              title="Kanban view"
-            >
-              <Kanban className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("cards")}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === "cards"
-                  ? "bg-white shadow-sm text-cyan-600"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-              title="Card view"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === "list"
-                  ? "bg-white shadow-sm text-cyan-600"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-              title="List view"
-            >
-              <LayoutList className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">Candidates</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">{filteredCandidates.length}</span>
           </div>
-          <button
-            onClick={handleExportCSV}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export
+          <p className="text-gray-500 text-sm mt-0.5">Manage your recruitment pipeline</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            {([["kanban", Kanban], ["cards", LayoutGrid], ["list", LayoutList]] as [ViewMode, React.ElementType][]).map(([mode, Icon]) => (
+              <button key={mode} onClick={() => setViewMode(mode)} title={`${mode} view`}
+                className={`p-2 transition-colors ${viewMode === mode ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-50"} ${mode !== "kanban" ? "border-l border-gray-200" : ""}`}>
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
+          </div>
+          <button onClick={handleExportCSV} className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
           </button>
-          <button
-            onClick={() => setShowNewCandidateModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Candidate
-          </button>
-          <button
-            onClick={() => router.push("/admin/candidate-applications/new")}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Application
+          <button onClick={() => setShowNewCandidateModal(true)} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Candidate</span>
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or position..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
-            />
+      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-4">
+        <div className="flex flex-wrap gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input type="text" placeholder="Search by name, email, or position..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white"
-            >
-              <option value="all">All Stages</option>
-              {pipelineStages.map((stage) => (
-                <option key={stage.id} value={stage.id}>
-                  {stage.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={positionFilter}
-              onChange={(e) => setPositionFilter(e.target.value)}
-              className="px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white"
-            >
-              <option value="all">All Positions</option>
-              {positions.map((pos) => (
-                <option key={pos} value={pos}>
-                  {pos}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700">
+            <option value="all">All Stages</option>
+            {pipelineStages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+          <select value={positionFilter} onChange={e => setPositionFilter(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700">
+            <option value="all">All Positions</option>
+            {positions.map(p => <option key={p} value={p!}>{p}</option>)}
+          </select>
         </div>
       </div>
 
       {/* Kanban View */}
       {viewMode === "kanban" && (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {pipelineStages.map((stage) => (
-            <div
-              key={stage.id}
-              className="flex-shrink-0 w-80"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => handleDrop(e, stage.id)}
-            >
-              <div className={`rounded-t-xl px-4 py-3 border ${stage.color}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${stage.dotColor}`} />
-                    <span className="font-semibold text-slate-800">{stage.label}</span>
-                  </div>
-                  <span className="text-sm font-medium text-slate-600 bg-white/50 px-2 py-0.5 rounded-full">
-                    {candidatesByStage[stage.id]?.length || 0}
-                  </span>
+          {pipelineStages.map(stage => (
+            <div key={stage.id} className="flex-shrink-0 w-72" onDragOver={e => e.preventDefault()} onDrop={e => handleDrop(e, stage.id)}>
+              {/* Column Header */}
+              <div className={`rounded-t-xl px-4 py-3 border ${stage.headerBg} flex items-center justify-between`}>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${stage.dotColor}`} />
+                  <span className="text-sm font-semibold text-gray-800">{stage.label}</span>
                 </div>
+                <span className="text-xs font-bold text-gray-500 bg-white/70 px-2 py-0.5 rounded-full">{candidatesByStage[stage.id]?.length || 0}</span>
               </div>
-              <div className="bg-slate-50 rounded-b-xl border border-t-0 border-slate-200 p-3 min-h-[500px] space-y-3">
-                {candidatesByStage[stage.id]?.map((candidate) => (
-                  <div
-                    key={candidate.id}
-                    draggable
-                    onDragStart={() => setDraggedCandidate(candidate)}
-                    onDragEnd={() => setDraggedCandidate(null)}
-                    onClick={() => setSelectedCandidate(candidate)}
-                    className={`bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:shadow-md transition-all ${
-                      draggedCandidate?.id === candidate.id ? "opacity-50" : ""
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                        {(candidate.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              {/* Column Body */}
+              <div className={`${stage.colBg} rounded-b-xl border border-t-0 border-gray-200 p-3 min-h-[480px] space-y-2.5`}>
+                {candidatesByStage[stage.id]?.map(candidate => (
+                  <div key={candidate.id} draggable onDragStart={() => setDraggedCandidate(candidate)} onDragEnd={() => setDraggedCandidate(null)} onClick={() => setSelectedCandidate(candidate)}
+                    className={`bg-white rounded-xl border border-gray-200 p-3.5 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all ${draggedCandidate?.id === candidate.id ? "opacity-50 rotate-1" : ""}`}>
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                        {(candidate.name || "NA").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-slate-900 truncate">{candidate.name || "Unknown"}</h4>
-                        <p className="text-sm text-slate-500 truncate">{candidate.jobTitle}</p>
-                        <div className="flex items-center gap-2 mt-2">
+                        <h4 className="text-sm font-semibold text-gray-900 truncate">{candidate.name || "Unknown"}</h4>
+                        <p className="text-xs text-gray-500 truncate">{candidate.jobTitle}</p>
+                        <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`w-3 h-3 ${
-                                  star <= (candidate.rating || 0)
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-slate-300"
-                                }`}
-                              />
-                            ))}
+                            {[1,2,3,4,5].map(s => <Star key={s} className={`w-3 h-3 ${s <= (candidate.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />)}
                           </div>
-                          <span className="text-xs text-slate-400">{formatTimeAgo(candidate.appliedAt)}</span>
+                          <span className="text-[10px] text-gray-400">{formatTimeAgo(candidate.appliedAt)}</span>
                         </div>
                       </div>
-                      <GripVertical className="w-4 h-4 text-slate-300" />
+                      <GripVertical className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
                     </div>
                   </div>
                 ))}
                 {candidatesByStage[stage.id]?.length === 0 && (
-                  <div className="text-center py-8 text-slate-400 text-sm">
-                    No candidates
-                  </div>
+                  <div className="flex items-center justify-center h-32 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">Drop candidates here</div>
                 )}
               </div>
             </div>
@@ -616,674 +410,501 @@ export default function CandidatesPage() {
       {/* Cards View */}
       {viewMode === "cards" && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCandidates.map((candidate) => (
-            <div
-              key={candidate.id}
-              onClick={() => setSelectedCandidate(candidate)}
-              className="bg-white rounded-xl border border-slate-200 p-5 cursor-pointer hover:shadow-lg transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                  {(candidate.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
+          {filteredCandidates.length > 0 ? filteredCandidates.map(candidate => (
+            <div key={candidate.id} onClick={() => setSelectedCandidate(candidate)} className="border border-gray-200 rounded-xl bg-white shadow-sm p-5 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                  {(candidate.name || "NA").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-slate-900">{candidate.name || "Unknown"}</h4>
-                  <p className="text-sm text-slate-500 truncate">{candidate.email}</p>
+                  <h4 className="font-semibold text-gray-900 truncate">{candidate.name || "Unknown"}</h4>
+                  <p className="text-xs text-gray-400 truncate">{candidate.email}</p>
                 </div>
+                <StatusBadge status={candidate.status} />
               </div>
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="truncate">{candidate.jobTitle}</span>
-                </div>
-                {candidate.jobLocation && (
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <MapPin className="w-4 h-4" />
-                    <span className="truncate">{candidate.jobLocation}</span>
-                  </div>
-                )}
+              <div className="space-y-1.5 mb-4">
+                {candidate.jobTitle && <div className="flex items-center gap-2 text-xs text-gray-600"><Briefcase className="w-3.5 h-3.5 text-gray-400" />{candidate.jobTitle}</div>}
+                {candidate.jobLocation && <div className="flex items-center gap-2 text-xs text-gray-500"><MapPin className="w-3.5 h-3.5 text-gray-400" />{candidate.jobLocation}</div>}
               </div>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                <div className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${statusConfig[candidate.status]?.color}`}>
-                  {statusConfig[candidate.status]?.label}
-                </div>
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRatingChange(candidate.id, star);
-                      }}
-                    >
-                      <Star
-                        className={`w-4 h-4 ${
-                          star <= (candidate.rating || 0)
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-slate-300 hover:text-amber-300"
-                        }`}
-                      />
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} onClick={e => { e.stopPropagation(); handleRatingChange(candidate.id, s); }}>
+                      <Star className={`w-4 h-4 ${s <= (candidate.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200 hover:text-amber-300"}`} />
                     </button>
                   ))}
                 </div>
+                <span className="text-xs text-gray-400">{formatTimeAgo(candidate.appliedAt)}</span>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="col-span-full py-16 text-center border border-gray-200 rounded-xl bg-white">
+              <Briefcase className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <h3 className="text-base font-semibold text-gray-900 mb-1">No candidates found</h3>
+              <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* List View */}
       {viewMode === "list" && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Candidate</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Position</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Stage</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Rating</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Applied</th>
-                <th className="text-right px-6 py-4 text-sm font-semibold text-slate-900">Actions</th>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Candidate</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Position</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Stage</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Rating</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Applied</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredCandidates.map((candidate) => (
-                <tr
-                  key={candidate.id}
-                  onClick={() => setSelectedCandidate(candidate)}
-                  className="hover:bg-slate-50 cursor-pointer transition-colors"
-                >
-                  <td className="px-6 py-4">
+            <tbody className="divide-y divide-gray-100">
+              {filteredCandidates.length > 0 ? filteredCandidates.map(candidate => (
+                <tr key={candidate.id} onClick={() => setSelectedCandidate(candidate)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                        {(candidate.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                        {(candidate.name || "NA").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{candidate.name || "Unknown"}</p>
-                        <p className="text-sm text-slate-500">{candidate.email}</p>
+                        <p className="text-sm font-medium text-gray-900">{candidate.name || "Unknown"}</p>
+                        <p className="text-xs text-gray-400">{candidate.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900">{candidate.jobTitle}</p>
-                    <p className="text-sm text-slate-500">{candidate.jobDepartment}</p>
+                  <td className="px-4 py-3.5 hidden md:table-cell">
+                    <p className="text-sm text-gray-900">{candidate.jobTitle}</p>
+                    {candidate.jobDepartment && <p className="text-xs text-gray-400">{candidate.jobDepartment}</p>}
                   </td>
-                  <td className="px-6 py-4">
-                    <select
-                      value={candidate.status}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleStatusChange(candidate.id, e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${statusConfig[candidate.status]?.color} cursor-pointer`}
-                    >
-                      {pipelineStages.map((stage) => (
-                        <option key={stage.id} value={stage.id}>
-                          {stage.label}
-                        </option>
-                      ))}
+                  <td className="px-4 py-3.5">
+                    <select value={candidate.status} onChange={e => { e.stopPropagation(); handleStatusChange(candidate.id, e.target.value); }} onClick={e => e.stopPropagation()}
+                      className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-700">
+                      {pipelineStages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                     </select>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3.5 hidden lg:table-cell">
                     <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRatingChange(candidate.id, star);
-                          }}
-                        >
-                          <Star
-                            className={`w-4 h-4 ${
-                              star <= (candidate.rating || 0)
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-slate-300 hover:text-amber-300"
-                            }`}
-                          />
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} onClick={e => { e.stopPropagation(); handleRatingChange(candidate.id, s); }}>
+                          <Star className={`w-3.5 h-3.5 ${s <= (candidate.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200 hover:text-amber-300"}`} />
                         </button>
                       ))}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{formatTimeAgo(candidate.appliedAt)}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-4 py-3.5 hidden lg:table-cell text-xs text-gray-500">{formatTimeAgo(candidate.appliedAt)}</td>
+                  <td className="px-4 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1">
                       {candidate.resumeId && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (candidate.resumeId) handleViewResume(candidate.resumeId);
-                          }}
-                          className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg"
-                        >
+                        <button onClick={e => { e.stopPropagation(); if (candidate.resumeId) handleViewResume(candidate.resumeId); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                           <FileText className="w-4 h-4" />
                         </button>
                       )}
-                      <a
-                        href={`mailto:${candidate.email}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg"
-                      >
+                      <a href={`mailto:${candidate.email}`} onClick={e => e.stopPropagation()} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                         <Mail className="w-4 h-4" />
                       </a>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={6} className="py-16 text-center">
+                  <Briefcase className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">No candidates found</h3>
+                  <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
+                </td></tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Candidate Detail Modal */}
-      {selectedCandidate && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
-                  {(selectedCandidate.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
+      {/* Candidate Detail Panel */}
+      {selectedCandidate && (() => {
+        const progressStages = pipelineStages.filter(s => s.id !== "rejected");
+        const currentStageIdx = progressStages.findIndex(s => s.id === selectedCandidate.status);
+        const isRejected = selectedCandidate.status === "rejected";
+        const initials = (selectedCandidate.name || "NA").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCandidate(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+
+              {/* Gradient Header */}
+              <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 px-8 py-6 text-white flex-shrink-0">
+                <button onClick={() => setSelectedCandidate(null)} className="absolute top-4 right-4 p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h2 className="text-xl font-bold">{selectedCandidate.name || "Unknown"}</h2>
+                      {isRejected ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/30 text-rose-100 border border-rose-400/30">Rejected</span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30">{statusConfig[selectedCandidate.status]?.label || selectedCandidate.status}</span>
+                      )}
+                    </div>
+                    <p className="text-blue-100 text-sm mt-0.5">{selectedCandidate.jobTitle || "General Application"}</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-blue-200 flex-wrap">
+                      <span>ID: {selectedCandidate.id.slice(-8).toUpperCase()}</span>
+                      {selectedCandidate.jobDepartment && <span>· {selectedCandidate.jobDepartment}</span>}
+                      <span>· Applied {new Date(selectedCandidate.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedCandidate.name || "Unknown"}</h2>
-                  <p className="text-slate-500">{selectedCandidate.jobTitle}</p>
+
+                {/* Pipeline Stepper */}
+                <div className="mt-5">
+                  <div className="flex items-center gap-0">
+                    {progressStages.map((stage, idx) => {
+                      const isActive = selectedCandidate.status === stage.id;
+                      const isPast = !isRejected && currentStageIdx > idx;
+                      const isFuture = isRejected || currentStageIdx < idx;
+                      return (
+                        <div key={stage.id} className="flex items-center flex-1 min-w-0">
+                          <button
+                            onClick={() => { handleStatusChange(selectedCandidate.id, stage.id); setSelectedCandidate({ ...selectedCandidate, status: stage.id as Application["status"] }); }}
+                            className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-all ${isActive ? "bg-white/20" : "hover:bg-white/10"}`}
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${isActive ? "bg-white text-blue-700 border-white" : isPast ? "bg-white/80 text-blue-700 border-white/80" : "bg-transparent border-white/40 text-white/50"}`}>
+                              {isPast ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
+                            </div>
+                            <span className={`text-[10px] font-medium whitespace-nowrap ${isActive ? "text-white" : isPast ? "text-blue-100" : "text-white/50"}`}>{stage.label}</span>
+                          </button>
+                          {idx < progressStages.length - 1 && (
+                            <div className={`h-0.5 w-4 flex-shrink-0 mx-0.5 ${isPast || isActive ? "bg-white/60" : "bg-white/20"}`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                    {/* Rejected off-track indicator */}
+                    <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                      <div className={`h-0.5 w-3 ${isRejected ? "bg-rose-300" : "bg-white/20"}`} />
+                      <button
+                        onClick={() => { handleStatusChange(selectedCandidate.id, "rejected"); setSelectedCandidate({ ...selectedCandidate, status: "rejected" as Application["status"] }); }}
+                        className={`flex flex-col items-center gap-1 py-2 px-2 rounded-lg transition-all ${isRejected ? "bg-rose-500/30" : "hover:bg-white/10"}`}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isRejected ? "bg-rose-400 border-rose-300 text-white" : "border-white/30 text-white/40"}`}>
+                          <XCircle className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[10px] font-medium ${isRejected ? "text-rose-200" : "text-white/40"}`}>Rejected</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedCandidate(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Contact & Info */}
-                <div className="space-y-6">
+              {/* Body */}
+              <div className="flex-1 overflow-hidden flex">
+                {/* Left Sidebar */}
+                <div className="w-64 flex-shrink-0 border-r border-gray-100 overflow-y-auto p-5 space-y-5 bg-gray-50/50">
+                  {/* Contact Info */}
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-4">Contact Information</h3>
-                    <div className="space-y-3">
-                      <a href={`mailto:${selectedCandidate.email}`} className="flex items-center gap-3 text-sm text-slate-600 hover:text-cyan-600">
-                        <Mail className="w-4 h-4" />
-                        {selectedCandidate.email}
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Contact</h3>
+                    <div className="space-y-2.5">
+                      <a href={`mailto:${selectedCandidate.email}`} className="flex items-start gap-2.5 text-sm text-gray-700 hover:text-blue-600 transition-colors group">
+                        <Mail className="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0 mt-0.5" />
+                        <span className="break-all leading-tight">{selectedCandidate.email}</span>
                       </a>
                       {selectedCandidate.phone && (
-                        <a href={`tel:${selectedCandidate.phone}`} className="flex items-center gap-3 text-sm text-slate-600 hover:text-cyan-600">
-                          <Phone className="w-4 h-4" />
+                        <a href={`tel:${selectedCandidate.phone}`} className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-blue-600 transition-colors group">
+                          <Phone className="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0" />
                           {selectedCandidate.phone}
                         </a>
                       )}
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <Calendar className="w-4 h-4" />
-                        Applied {new Date(selectedCandidate.appliedAt).toLocaleDateString()}
-                      </div>
+                      {selectedCandidate.address && (
+                        <div className="flex items-start gap-2.5 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <span className="leading-tight">{[selectedCandidate.address, selectedCandidate.city, selectedCandidate.state].filter(Boolean).join(", ")}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
+                  {/* Job Info */}
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-4">Documents</h3>
-                    {selectedCandidate.resumeId ? (
-                      <button
-                        onClick={() => {
-                          if (selectedCandidate.resumeId) handleViewResume(selectedCandidate.resumeId);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-lg hover:bg-cyan-100 transition-colors w-full"
-                      >
-                        <FileText className="w-4 h-4" />
-                        View Resume
-                      </button>
-                    ) : (
-                      <p className="text-sm text-slate-400">No resume uploaded</p>
-                    )}
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Position</h3>
+                    <div className="space-y-2">
+                      {selectedCandidate.jobTitle && <div className="flex items-center gap-2 text-sm text-gray-700"><Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />{selectedCandidate.jobTitle}</div>}
+                      {selectedCandidate.jobDepartment && <div className="flex items-center gap-2 text-sm text-gray-600"><span className="w-4 h-4 flex-shrink-0 inline-flex items-center justify-center"><span className="w-1.5 h-1.5 rounded-full bg-gray-400" /></span>{selectedCandidate.jobDepartment}</div>}
+                      {selectedCandidate.source && <div className="flex items-center gap-2 text-sm text-gray-600"><span className="w-4 h-4 flex-shrink-0 inline-flex items-center justify-center"><span className="w-1.5 h-1.5 rounded-full bg-gray-400" /></span>via {selectedCandidate.source}</div>}
+                      {selectedCandidate.workAuthorization && <div className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />{selectedCandidate.workAuthorization}</div>}
+                    </div>
                   </div>
 
+                  {/* Rating */}
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-4">Rating</h3>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleRatingChange(selectedCandidate.id, star)}
-                          className="p-1"
-                        >
-                          <Star
-                            className={`w-6 h-6 transition-colors ${
-                              star <= (selectedCandidate.rating || 0)
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-slate-300 hover:text-amber-300"
-                            }`}
-                          />
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rating</h3>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} onClick={() => { handleRatingChange(selectedCandidate.id, s); setSelectedCandidate({ ...selectedCandidate, rating: s }); }} className="p-0.5 transition-transform hover:scale-110">
+                          <Star className={`w-5 h-5 transition-colors ${s <= (selectedCandidate.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200 hover:text-amber-300"}`} />
                         </button>
                       ))}
                     </div>
                   </div>
 
+                  {/* Resume */}
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-4">Pipeline Stage</h3>
-                    <select
-                      value={selectedCandidate.status}
-                      onChange={(e) => {
-                        handleStatusChange(selectedCandidate.id, e.target.value);
-                        setSelectedCandidate({ ...selectedCandidate, status: e.target.value as Application["status"] });
-                      }}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none"
-                    >
-                      {pipelineStages.map((stage) => (
-                        <option key={stage.id} value={stage.id}>
-                          {stage.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Cover Letter & Notes */}
-                <div className="space-y-6">
-                  {selectedCandidate.coverLetter && (
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-4">Cover Letter</h3>
-                      <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 leading-relaxed max-h-40 overflow-y-auto">
-                        {selectedCandidate.coverLetter}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                      <StickyNote className="w-4 h-4" />
-                      Internal Notes
-                    </h3>
-                    {editingNoteId === selectedCandidate.id ? (
-                      <div className="space-y-3">
-                        <textarea
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none"
-                          rows={4}
-                          placeholder="Add notes about this candidate..."
-                        />
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleNotesSave(selectedCandidate.id)}
-                            className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm hover:bg-cyan-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingNoteId(null);
-                              setNoteText("");
-                            }}
-                            className="px-4 py-2 border border-slate-300 rounded-lg text-sm hover:bg-slate-50"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Resume</h3>
+                    {selectedCandidate.resumeId ? (
+                      <button onClick={() => { if (selectedCandidate.resumeId) handleViewResume(selectedCandidate.resumeId); }} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors border border-blue-100">
+                        <FileText className="w-4 h-4" /> View Resume
+                      </button>
                     ) : (
-                      <div>
-                        {selectedCandidate.notes ? (
-                          <div
-                            onClick={() => {
-                              setEditingNoteId(selectedCandidate.id);
-                              setNoteText(selectedCandidate.notes || "");
-                            }}
-                            className="bg-amber-50 p-4 rounded-xl text-sm text-slate-700 cursor-pointer hover:bg-amber-100 transition-colors"
-                          >
-                            {selectedCandidate.notes}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingNoteId(selectedCandidate.id);
-                              setNoteText("");
-                            }}
-                            className="text-sm text-cyan-600 hover:text-cyan-700"
-                          >
-                            + Add notes
-                          </button>
-                        )}
-                      </div>
+                      <p className="text-xs text-gray-400 italic">No resume uploaded</p>
                     )}
                   </div>
 
-                  {/* Quick Actions */}
-                  <div>
-                    <h3 className="font-semibold text-slate-900 mb-4">Quick Actions</h3>
-                    <div className="space-y-2">
-                      <a
-                        href={`mailto:${selectedCandidate.email}`}
-                        className="flex items-center gap-3 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors w-full"
-                      >
-                        <Send className="w-4 h-4 text-cyan-600" />
-                        <span className="text-sm font-medium">Send Email</span>
-                      </a>
-                      <button className="flex items-center gap-3 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors w-full">
-                        <CalendarPlus className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-medium">Schedule Interview</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCandidate(selectedCandidate.id, selectedCandidate.name || "this candidate")}
-                        className="flex items-center gap-3 px-4 py-2.5 border border-red-200 rounded-xl hover:bg-red-50 transition-colors w-full text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span className="text-sm font-medium">Delete Candidate</span>
-                      </button>
-                    </div>
+                  {/* Delete */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <button onClick={() => handleDeleteCandidate(selectedCandidate.id, selectedCandidate.name || "candidate")} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg text-sm transition-colors border border-transparent hover:border-rose-100">
+                      <Trash2 className="w-4 h-4" /> Delete Application
+                    </button>
                   </div>
                 </div>
 
-                {/* Activity Timeline */}
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <History className="w-4 h-4" />
-                    Activity Timeline
-                  </h3>
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {(activityLog[selectedCandidate.id] || []).map((activity) => (
-                      <div key={activity.id} className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          {activity.type === "status_change" && <CheckCircle2 className="w-4 h-4 text-blue-500" />}
-                          {activity.type === "note_added" && <StickyNote className="w-4 h-4 text-amber-500" />}
-                          {activity.type === "email_sent" && <Mail className="w-4 h-4 text-green-500" />}
-                          {activity.type === "interview_scheduled" && <Calendar className="w-4 h-4 text-purple-500" />}
-                          {activity.type === "application_received" && <FileText className="w-4 h-4 text-cyan-500" />}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-slate-700">{activity.message}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {formatTimeAgo(activity.timestamp)}
-                            {activity.user && ` by ${activity.user}`}
-                          </p>
-                        </div>
-                      </div>
+                {/* Right Panel with Tabs */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Tab Bar */}
+                  <div className="flex items-center gap-1 px-6 pt-4 pb-0 border-b border-gray-100 bg-white flex-shrink-0">
+                    {(["overview", "skills", "notes", "history"] as const).map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setDetailTab(tab)}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors capitalize ${detailTab === tab ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
+                      >
+                        {tab}
+                      </button>
                     ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {/* Overview Tab */}
+                    {detailTab === "overview" && (
+                      <div className="space-y-5">
+                        {selectedCandidate.experience && (
+                          <div>
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Experience</h3>
+                            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">{selectedCandidate.experience}</div>
+                          </div>
+                        )}
+                        {selectedCandidate.coverLetter && (
+                          <div>
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Cover Letter</h3>
+                            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">{selectedCandidate.coverLetter}</div>
+                          </div>
+                        )}
+                        {!selectedCandidate.experience && !selectedCandidate.coverLetter && (
+                          <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <MessageSquare className="w-10 h-10 text-gray-200 mb-3" />
+                            <p className="text-sm text-gray-400">No overview information available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Skills Tab */}
+                    {detailTab === "skills" && (
+                      <div>
+                        {selectedCandidate.skills && selectedCandidate.skills.length > 0 ? (
+                          <div>
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Skills & Expertise</h3>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedCandidate.skills.map((s: string) => (
+                                <span key={s} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors">{s}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <Star className="w-10 h-10 text-gray-200 mb-3" />
+                            <p className="text-sm text-gray-400">No skills listed</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notes Tab */}
+                    {detailTab === "notes" && (
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Notes</h3>
+                        {editingNoteId === selectedCandidate.id ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={noteText}
+                              onChange={e => setNoteText(e.target.value)}
+                              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[160px]"
+                              placeholder="Add internal notes about this candidate..."
+                            />
+                            <div className="flex gap-2">
+                              <button onClick={() => handleNotesSave(selectedCandidate.id)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium">Save Note</button>
+                              <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            {selectedCandidate.notes ? (
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mb-3">{selectedCandidate.notes}</div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl mb-3">
+                                <StickyNote className="w-8 h-8 text-gray-200 mb-2" />
+                                <p className="text-sm text-gray-400">No notes yet</p>
+                              </div>
+                            )}
+                            <button
+                              onClick={() => { setEditingNoteId(selectedCandidate.id); setNoteText(selectedCandidate.notes || ""); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-colors"
+                            >
+                              <StickyNote className="w-4 h-4" />{selectedCandidate.notes ? "Edit Note" : "Add Note"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* History Tab */}
+                    {detailTab === "history" && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Status History</h3>
+                        {selectedCandidate.statusHistory && selectedCandidate.statusHistory.length > 0 ? (
+                          <div className="space-y-0">
+                            {[...selectedCandidate.statusHistory].reverse().map((entry: { status: string; changedAt: string; changedByName?: string; changedByEmail?: string; note?: string }, idx: number) => {
+                              const cfg = statusConfig[entry.status] || statusConfig.pending;
+                              const isLast = idx === selectedCandidate.statusHistory!.length - 1;
+                              return (
+                                <div key={idx} className="flex gap-4">
+                                  <div className="flex flex-col items-center">
+                                    <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 border-2 border-white shadow ${cfg.dot}`} />
+                                    {!isLast && <div className="w-0.5 bg-gray-200 flex-1 my-1" />}
+                                  </div>
+                                  <div className={`pb-5 ${isLast ? "" : ""}`}>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.bg}`}>
+                                        <span className={`w-1 h-1 rounded-full ${cfg.dot}`} />{cfg.label}
+                                      </span>
+                                      <span className="text-xs text-gray-500">{new Date(entry.changedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {entry.changedByName || entry.changedByEmail || "System"}
+                                    </p>
+                                    {entry.note && <p className="text-xs text-gray-600 mt-1 italic">&ldquo;{entry.note}&rdquo;</p>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <Clock className="w-10 h-10 text-gray-200 mb-3" />
+                            <p className="text-sm text-gray-400">No status history yet</p>
+                          </div>
+                        )}
+
+                        {/* Activity log */}
+                        {(activityLog[selectedCandidate.id] || []).length > 0 && (
+                          <div className="mt-6 pt-5 border-t border-gray-100">
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Activity</h3>
+                            <div className="space-y-3">
+                              {(activityLog[selectedCandidate.id] || []).map(activity => (
+                                <div key={activity.id} className="flex items-start gap-3">
+                                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-sm text-gray-700">{activity.message}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">{formatTimeAgo(activity.timestamp)}{activity.user ? ` · ${activity.user}` : ""}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {filteredCandidates.length === 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <User className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500">
-            {candidates.length === 0 ? "No candidates yet" : "No candidates match your filters"}
-          </p>
-          {candidates.length === 0 && (
-            <button
-              onClick={() => setShowNewCandidateModal(true)}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add First Candidate
-            </button>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* New Candidate Modal */}
       {showNewCandidateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">New Candidate</h2>
-                <p className="text-sm text-slate-500">Manually add a candidate to the talent pipeline</p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowNewCandidateModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">New Candidate</h2>
+              <button onClick={() => setShowNewCandidateModal(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCreateCandidate} className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">First Name <span className="text-rose-500">*</span></label>
+                    <input required value={newCandidateForm.firstName} onChange={e => setNewCandidateForm({ ...newCandidateForm, firstName: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="First name" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Last Name <span className="text-rose-500">*</span></label>
+                    <input required value={newCandidateForm.lastName} onChange={e => setNewCandidateForm({ ...newCandidateForm, lastName: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Last name" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Email <span className="text-rose-500">*</span></label>
+                    <input required type="email" value={newCandidateForm.email} onChange={e => setNewCandidateForm({ ...newCandidateForm, email: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="email@example.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Phone</label>
+                    <input type="tel" value={newCandidateForm.phone} onChange={e => setNewCandidateForm({ ...newCandidateForm, phone: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="(555) 123-4567" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Job Position</label>
+                    <select value={newCandidateForm.jobId} onChange={e => setNewCandidateForm({ ...newCandidateForm, jobId: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                      <option value="">No specific position</option>
+                      {jobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Source</label>
+                    <select value={newCandidateForm.source} onChange={e => setNewCandidateForm({ ...newCandidateForm, source: e.target.value as typeof newCandidateForm.source })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                      {["LinkedIn","Indeed","Company Website","Referral","Agency","Career Portal","Other"].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Work Authorization</label>
+                    <select value={newCandidateForm.workAuthorization} onChange={e => setNewCandidateForm({ ...newCandidateForm, workAuthorization: e.target.value as typeof newCandidateForm.workAuthorization })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                      <option value="">Select authorization</option>
+                      {["US Citizen","Green Card","H1-B","OPT/CPT","TN Visa","Other"].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Initial Status</label>
+                    <select value={newCandidateForm.status} onChange={e => setNewCandidateForm({ ...newCandidateForm, status: e.target.value as Application["status"] })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                      {pipelineStages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Skills (comma separated)</label>
+                  <input value={newCandidateForm.skills} onChange={e => setNewCandidateForm({ ...newCandidateForm, skills: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="React, Node.js, Python..." />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <textarea value={newCandidateForm.notes} onChange={e => setNewCandidateForm({ ...newCandidateForm, notes: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[80px]" placeholder="Internal notes..." />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="talentBench" checked={newCandidateForm.addToTalentBench} onChange={e => setNewCandidateForm({ ...newCandidateForm, addToTalentBench: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <label htmlFor="talentBench" className="text-sm text-gray-600 cursor-pointer">Add to talent bench for future opportunities</label>
+                </div>
               </div>
-              <button
-                onClick={() => setShowNewCandidateModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <form id="new-candidate-form" onSubmit={handleCreateCandidate} className="p-6 space-y-5">
-                {/* Name */}
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 mb-3">Personal Information</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">First Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newCandidateForm.firstName}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, firstName: e.target.value })}
-                        placeholder="John"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Last Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newCandidateForm.lastName}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, lastName: e.target.value })}
-                        placeholder="Smith"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={newCandidateForm.email}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, email: e.target.value })}
-                      placeholder="john@example.com"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={newCandidateForm.phone}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, phone: e.target.value })}
-                      placeholder="+1 (555) 000-0000"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                    <input
-                      type="text"
-                      value={newCandidateForm.city}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, city: e.target.value })}
-                      placeholder="Columbus"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
-                    <input
-                      type="text"
-                      value={newCandidateForm.state}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, state: e.target.value })}
-                      placeholder="OH"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Zip Code</label>
-                    <input
-                      type="text"
-                      value={newCandidateForm.zipCode}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, zipCode: e.target.value })}
-                      placeholder="43065"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Professional */}
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 mb-3">Professional Details</p>
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Work Authorization</label>
-                      <select
-                        value={newCandidateForm.workAuthorization}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, workAuthorization: e.target.value as typeof newCandidateForm.workAuthorization })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white text-sm"
-                      >
-                        <option value="">Not specified</option>
-                        <option value="US Citizen">US Citizen</option>
-                        <option value="Green Card">Green Card</option>
-                        <option value="H1-B">H1-B</option>
-                        <option value="OPT/CPT">OPT/CPT</option>
-                        <option value="TN Visa">TN Visa</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Source</label>
-                      <select
-                        value={newCandidateForm.source}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, source: e.target.value as typeof newCandidateForm.source })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white text-sm"
-                      >
-                        <option value="LinkedIn">LinkedIn</option>
-                        <option value="Indeed">Indeed</option>
-                        <option value="Company Website">Company Website</option>
-                        <option value="Referral">Referral</option>
-                        <option value="Agency">Agency</option>
-                        <option value="Career Portal">Career Portal</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Skills</label>
-                    <input
-                      type="text"
-                      value={newCandidateForm.skills}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, skills: e.target.value })}
-                      placeholder="React, Node.js, AWS (comma separated)"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Experience Summary</label>
-                    <textarea
-                      value={newCandidateForm.experience}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, experience: e.target.value })}
-                      rows={2}
-                      placeholder="Brief experience summary..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Job & Pipeline */}
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 mb-3">Pipeline & Assignment</p>
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Link to Job Posting</label>
-                      <select
-                        value={newCandidateForm.jobId}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, jobId: e.target.value })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white text-sm"
-                      >
-                        <option value="">No specific job</option>
-                        {jobs.filter((j) => j.status === "open" || j.status === "active").map((j) => (
-                          <option key={j.id} value={j.id}>{j.title}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Initial Stage</label>
-                      <select
-                        value={newCandidateForm.status}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, status: e.target.value as Application["status"] })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white text-sm"
-                      >
-                        {pipelineStages.map((stage) => (
-                          <option key={stage.id} value={stage.id}>{stage.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Internal Notes</label>
-                    <textarea
-                      value={newCandidateForm.notes}
-                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, notes: e.target.value })}
-                      rows={2}
-                      placeholder="Internal notes about this candidate..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Talent Bench */}
-                <div className="flex items-center gap-3 p-3 bg-cyan-50 rounded-lg border border-cyan-100">
-                  <input
-                    type="checkbox"
-                    id="addToTalentBench"
-                    checked={newCandidateForm.addToTalentBench}
-                    onChange={(e) => setNewCandidateForm({ ...newCandidateForm, addToTalentBench: e.target.checked })}
-                    className="w-4 h-4 accent-cyan-600"
-                  />
-                  <label htmlFor="addToTalentBench" className="text-sm font-medium text-cyan-800 cursor-pointer">
-                    Add to Talent Bench
-                    <span className="block text-xs text-cyan-600 font-normal">This candidate will also appear in the talent bench for future opportunities</span>
-                  </label>
-                </div>
-              </form>
-            </div>
-
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowNewCandidateModal(false)}
-                className="px-4 py-2 border border-slate-300 rounded-lg text-sm hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="new-candidate-form"
-                disabled={creatingCandidate}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors disabled:opacity-50 text-sm"
-              >
-                {creatingCandidate ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    Create Candidate
-                  </>
-                )}
-              </button>
-            </div>
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setShowNewCandidateModal(false)} className="px-4 py-2 text-sm font-medium border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={creatingCandidate} className="px-6 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+                  {creatingCandidate && <Loader2 className="w-4 h-4 animate-spin" />}Create Candidate
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -13,7 +13,9 @@
       "WebFetch(domain:dribbble.com)",
       "Bash(find:*)",
       "Bash(npm i:*)",
-      "Bash(del \"C:\\\\Users\\\\gagan\\\\Desktop\\\\oceanbluecorp\\\\src\\\\components\\\\ScrollStack.tsx\")"
+      "Bash(del \"C:\\\\Users\\\\gagan\\\\Desktop\\\\oceanbluecorp\\\\src\\\\components\\\\ScrollStack.tsx\")",
+      "Bash(grep -n \"body.rating\\\\|rating.*undefined\\\\|updates.rating\" src/app/api/applications/[id]/route.ts)",
+      "Bash(ls .env*)"
     ]
   }
 }

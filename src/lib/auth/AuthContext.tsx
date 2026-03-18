@@ -187,8 +187,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // For production, redirect to Cognito logout
-      const logoutUrl = `${process.env.NEXT_PUBLIC_COGNITO_DOMAIN}/logout?client_id=${process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(window.location.origin + "/auth/signout")}`;
+      // For production, redirect to Cognito logout.
+      // logout_uri MUST exactly match an "Allowed sign-out URL" registered in the Cognito App Client.
+      // Set NEXT_PUBLIC_COGNITO_LOGOUT_URI in your env to that exact URL.
+      // If not set, falls back to the bare origin (e.g. https://oceanbluecorp.com).
+      const logoutUri = process.env.NEXT_PUBLIC_COGNITO_LOGOUT_URI || window.location.origin;
+      const logoutUrl = `${process.env.NEXT_PUBLIC_COGNITO_DOMAIN}/logout?client_id=${process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(logoutUri)}`;
       window.location.href = logoutUrl;
     } catch (err) {
       console.error("Sign out error:", err);
