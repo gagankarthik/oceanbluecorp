@@ -67,8 +67,6 @@ export async function PUT(
     if (body.status !== undefined) updates.status = body.status;
     if (body.submissionDueDate !== undefined) updates.submissionDueDate = body.submissionDueDate;
     if (body.applicationsCount !== undefined) updates.applicationsCount = body.applicationsCount;
-    if (body.notifyHROnApplication !== undefined) updates.notifyHROnApplication = body.notifyHROnApplication;
-    if (body.notifyAdminOnApplication !== undefined) updates.notifyAdminOnApplication = body.notifyAdminOnApplication;
     // New fields
     if (body.clientId !== undefined) updates.clientId = body.clientId;
     if (body.clientName !== undefined) updates.clientName = body.clientName;
@@ -78,9 +76,10 @@ export async function PUT(
     if (body.recruitmentManagerId !== undefined) updates.recruitmentManagerId = body.recruitmentManagerId;
     if (body.recruitmentManagerName !== undefined) updates.recruitmentManagerName = body.recruitmentManagerName;
     if (body.recruitmentManagerEmail !== undefined) updates.recruitmentManagerEmail = body.recruitmentManagerEmail;
-    if (body.assignedToId !== undefined) updates.assignedToId = body.assignedToId;
-    if (body.assignedToName !== undefined) updates.assignedToName = body.assignedToName;
-    if (body.sendEmailNotification !== undefined) updates.sendEmailNotification = body.sendEmailNotification;
+    // Multi-select assignees
+    if (body.assignedToIds !== undefined) updates.assignedToIds = body.assignedToIds;
+    if (body.assignedToNames !== undefined) updates.assignedToNames = body.assignedToNames;
+    if (body.assignedToEmails !== undefined) updates.assignedToEmails = body.assignedToEmails;
     if (body.excludedDepartments !== undefined) updates.excludedDepartments = body.excludedDepartments;
 
     const result = await updateJob(id, updates);

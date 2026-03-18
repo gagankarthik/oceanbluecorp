@@ -15,8 +15,6 @@ import {
   MapPin,
   Briefcase,
   FileText,
-  Bell,
-  Users,
   Truck,
   Search,
 } from "lucide-react";
@@ -34,8 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 const US_STATES = [
@@ -66,8 +62,6 @@ export default function NewJobPage() {
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
-  const [notificationSearch, setNotificationSearch] = useState("");
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -84,8 +78,6 @@ export default function NewJobPage() {
     payRate: "",
     status: "draft" as Job["status"],
     submissionDueDate: "",
-    notifyHROnApplication: false,
-    notifyAdminOnApplication: false,
     clientId: "",
     clientName: "",
     clientNotes: "",
@@ -94,10 +86,13 @@ export default function NewJobPage() {
     recruitmentManagerId: "",
     recruitmentManagerName: "",
     recruitmentManagerEmail: "",
-    assignedToId: "",
-    assignedToName: "",
-    sendEmailNotification: [] as string[], // Additional HR/admin emails
+    // Multi-select assignees (HR/Admin only)
+    assignedToIds: [] as string[],
+    assignedToNames: [] as string[],
+    assignedToEmails: [] as string[],
   });
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
 
   const [clientFormData, setClientFormData] = useState({
     name: "",
@@ -171,8 +166,6 @@ export default function NewJobPage() {
         payRate: formData.payRate ? parseFloat(formData.payRate) : undefined,
         status: formData.status,
         submissionDueDate: formData.submissionDueDate || undefined,
-        notifyHROnApplication: formData.notifyHROnApplication,
-        notifyAdminOnApplication: formData.notifyAdminOnApplication,
         clientId: formData.clientId || undefined,
         clientName: formData.clientName || undefined,
         clientNotes: formData.clientNotes || undefined,
@@ -181,9 +174,10 @@ export default function NewJobPage() {
         recruitmentManagerId: formData.recruitmentManagerId || undefined,
         recruitmentManagerName: formData.recruitmentManagerName || undefined,
         recruitmentManagerEmail: formData.recruitmentManagerEmail || undefined,
-        assignedToId: formData.assignedToId || undefined,
-        assignedToName: formData.assignedToName || undefined,
-        sendEmailNotification: formData.sendEmailNotification,
+        // Multi-select assignees
+        assignedToIds: formData.assignedToIds.length > 0 ? formData.assignedToIds : undefined,
+        assignedToNames: formData.assignedToNames.length > 0 ? formData.assignedToNames : undefined,
+        assignedToEmails: formData.assignedToEmails.length > 0 ? formData.assignedToEmails : undefined,
         postedByName: user?.name || user?.email?.split("@")[0] || "Admin",
         postedByEmail: user?.email || "",
         postedByRole: user?.role || "admin",
@@ -261,28 +255,33 @@ export default function NewJobPage() {
     });
   };
 
-  const handleAssignedToSelect = (userId: string) => {
-    const selectedUser = allUsers.find((u) => u.id === userId);
-    setFormData({ ...formData, assignedToId: userId, assignedToName: selectedUser?.name || selectedUser?.email || "" });
-  };
-
-  const toggleEmailNotification = (email: string) => {
-    const current = formData.sendEmailNotification;
-    if (current.includes(email)) {
-      setFormData({ ...formData, sendEmailNotification: current.filter((e) => e !== email) });
+  const toggleAssignee = (user: CognitoUser) => {
+    const { assignedToIds, assignedToNames, assignedToEmails } = formData;
+    if (assignedToIds.includes(user.id)) {
+      // Remove
+      const idx = assignedToIds.indexOf(user.id);
+      setFormData({
+        ...formData,
+        assignedToIds: assignedToIds.filter((_, i) => i !== idx),
+        assignedToNames: assignedToNames.filter((_, i) => i !== idx),
+        assignedToEmails: assignedToEmails.filter((_, i) => i !== idx),
+      });
     } else {
-      setFormData({ ...formData, sendEmailNotification: [...current, email] });
+      // Add
+      setFormData({
+        ...formData,
+        assignedToIds: [...assignedToIds, user.id],
+        assignedToNames: [...assignedToNames, user.name || user.email],
+        assignedToEmails: [...assignedToEmails, user.email],
+      });
     }
   };
 
-  // Compute available additional HR/admins (exclude current user since they're already the default recipient)
-  const additionalRecipients = hrUsers.filter((u) => u.email !== user?.email);
-
-  // Filtered list for the notification search dropdown (exclude already-selected)
-  const filteredRecipients = additionalRecipients.filter((u) => {
-    if (formData.sendEmailNotification.includes(u.email)) return false;
-    if (!notificationSearch.trim()) return true;
-    const q = notificationSearch.toLowerCase();
+  // Filter assignees for search (only HR/Admin, exclude already selected)
+  const filteredAssignees = hrUsers.filter((u) => {
+    if (formData.assignedToIds.includes(u.id)) return false;
+    if (!assigneeSearch.trim()) return true;
+    const q = assigneeSearch.toLowerCase();
     return (
       u.name?.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
@@ -536,8 +535,12 @@ export default function NewJobPage() {
               <UserCheck className="h-4 w-4 text-primary" />
               Team Assignments
             </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Notifications for new job postings and applications will be sent to the recruitment manager and assigned team members.
+            </p>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-4">
+            {/* Recruitment Manager - Single Select */}
             <div className="space-y-2">
               <Label>Recruitment Manager</Label>
               <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
@@ -551,18 +554,100 @@ export default function NewJobPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Assigned To - Multi-select with Search */}
             <div className="space-y-2">
-              <Label>Assigned To</Label>
-              <Select value={formData.assignedToId} onValueChange={handleAssignedToSelect}>
-                <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
-                <SelectContent className="bg-white">
-                  {allUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.name || u.email} ({u.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Assigned To (HR/Admin)</Label>
+              <p className="text-xs text-muted-foreground">
+                Search and add multiple team members to receive notifications.
+              </p>
+
+              {/* Search input + dropdown */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search by name, email or role…"
+                  value={assigneeSearch}
+                  onChange={(e) => {
+                    setAssigneeSearch(e.target.value);
+                    setShowAssigneeDropdown(true);
+                  }}
+                  onFocus={() => setShowAssigneeDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowAssigneeDropdown(false), 150)}
+                  className="pl-9"
+                  autoComplete="off"
+                />
+
+                {/* Dropdown list */}
+                {showAssigneeDropdown && filteredAssignees.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
+                    {filteredAssignees.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          toggleAssignee(u);
+                          setAssigneeSearch("");
+                          setShowAssigneeDropdown(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                          {(u.name || u.email)[0].toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{u.name || u.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs capitalize flex-shrink-0">
+                          {u.role}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* No results message */}
+                {showAssigneeDropdown && assigneeSearch.trim() && filteredAssignees.length === 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-muted-foreground text-center">
+                    No matching HR/Admin members found.
+                  </div>
+                )}
+              </div>
+
+              {/* Selected assignees as tags */}
+              {formData.assignedToIds.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {formData.assignedToIds.map((id, idx) => {
+                    const u = hrUsers.find((r) => r.id === id);
+                    const name = formData.assignedToNames[idx] || u?.name || u?.email || id;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 bg-primary/5 border border-primary/20 rounded-full"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                          {name[0].toUpperCase()}
+                        </div>
+                        <span className="text-xs font-medium text-foreground">
+                          {name}
+                        </span>
+                        <Badge variant="outline" className="text-[10px] capitalize px-1 py-0">
+                          {u?.role || "user"}
+                        </Badge>
+                        <button
+                          type="button"
+                          onClick={() => u && toggleAssignee(u)}
+                          className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -611,150 +696,6 @@ export default function NewJobPage() {
                   placeholder={"Lead technical projects\nMentor junior developers..."}
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Block 7: Email Notifications ── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bell className="h-4 w-4 text-primary" />
-              Email Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Default recipient notice */}
-            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <Bell className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-blue-800">Default Recipient</p>
-                <p className="text-sm text-blue-700">
-                  Notifications will automatically be sent to{" "}
-                  <span className="font-semibold">{user?.name || user?.email}</span>{" "}
-                  ({user?.email}) — the job creator.
-                </p>
-              </div>
-            </div>
-
-            {/* Additional notify options */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="notifyHR"
-                  checked={formData.notifyHROnApplication}
-                  onCheckedChange={(checked) => setFormData({ ...formData, notifyHROnApplication: checked as boolean })}
-                />
-                <Label htmlFor="notifyHR" className="text-sm font-normal cursor-pointer">
-                  Notify <span className="font-medium">all HR team</span> on new applications
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="notifyAdmin"
-                  checked={formData.notifyAdminOnApplication}
-                  onCheckedChange={(checked) => setFormData({ ...formData, notifyAdminOnApplication: checked as boolean })}
-                />
-                <Label htmlFor="notifyAdmin" className="text-sm font-normal cursor-pointer">
-                  Notify <span className="font-medium">all Administrators</span> on new applications
-                </Label>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Additional individual HR/Admin recipients */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-medium">Additional Individual Recipients</Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Search and add specific HR/Admin members to also receive job posting notifications.
-              </p>
-
-              {/* Search input + dropdown */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder="Search by name, email or role…"
-                  value={notificationSearch}
-                  onChange={(e) => {
-                    setNotificationSearch(e.target.value);
-                    setShowNotificationDropdown(true);
-                  }}
-                  onFocus={() => setShowNotificationDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowNotificationDropdown(false), 150)}
-                  className="pl-9"
-                  autoComplete="off"
-                />
-
-                {/* Dropdown list */}
-                {showNotificationDropdown && filteredRecipients.length > 0 && (
-                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
-                    {filteredRecipients.map((u) => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          toggleEmailNotification(u.email);
-                          setNotificationSearch("");
-                          setShowNotificationDropdown(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
-                          {(u.name || u.email)[0].toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{u.name || u.email}</p>
-                          <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs capitalize flex-shrink-0">
-                          {u.role}
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* No results message */}
-                {showNotificationDropdown && notificationSearch.trim() && filteredRecipients.length === 0 && (
-                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-muted-foreground text-center">
-                    No matching HR/Admin members found.
-                  </div>
-                )}
-              </div>
-
-              {/* Selected recipients as tags */}
-              {formData.sendEmailNotification.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {formData.sendEmailNotification.map((email) => {
-                    const u = additionalRecipients.find((r) => r.email === email);
-                    return (
-                      <div
-                        key={email}
-                        className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 bg-primary/5 border border-primary/20 rounded-full"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
-                          {(u?.name || email)[0].toUpperCase()}
-                        </div>
-                        <span className="text-xs font-medium text-foreground">
-                          {u?.name || email}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => toggleEmailNotification(email)}
-                          className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

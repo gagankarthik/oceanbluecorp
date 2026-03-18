@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllJobs, createJob, createNotification, getNextPostingId, Job } from "@/lib/aws/dynamodb";
-import { sendJobPostedNotification, sendJobPostingNotificationToHR } from "@/lib/aws/ses";
-import { listCognitoUsers } from "@/lib/aws/cognito";
+import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -79,8 +78,6 @@ export async function POST(request: NextRequest) {
       postedByEmail: body.postedByEmail,
       postedByRole: body.postedByRole,
       applicationsCount: 0,
-      notifyHROnApplication: body.notifyHROnApplication || false,
-      notifyAdminOnApplication: body.notifyAdminOnApplication || false,
       // New fields
       postingId: postingIdResult.postingId,
       clientId: body.clientId,
@@ -91,9 +88,10 @@ export async function POST(request: NextRequest) {
       recruitmentManagerId: body.recruitmentManagerId,
       recruitmentManagerName: body.recruitmentManagerName,
       recruitmentManagerEmail: body.recruitmentManagerEmail,
-      assignedToId: body.assignedToId,
-      assignedToName: body.assignedToName,
-      sendEmailNotification: body.sendEmailNotification || false,
+      // Multi-select assignees
+      assignedToIds: body.assignedToIds || [],
+      assignedToNames: body.assignedToNames || [],
+      assignedToEmails: body.assignedToEmails || [],
       excludedDepartments: body.excludedDepartments || [],
     };
 
@@ -121,6 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email notifications for new job posting (only for active/open jobs)
+    // Notifications go to: Recruitment Manager + Assigned team members only
     if (job.status === "active" || job.status === "open") {
       const emailRecipients: Array<{ name: string; email: string }> = [];
       const notifiedEmails = new Set<string>();
@@ -134,43 +133,15 @@ export async function POST(request: NextRequest) {
         notifiedEmails.add(job.recruitmentManagerEmail.toLowerCase());
       }
 
-      // 2. Add specifically selected HR/Admin members from sendEmailNotification array
-      if (job.sendEmailNotification && Array.isArray(job.sendEmailNotification) && job.sendEmailNotification.length > 0) {
-        for (const email of job.sendEmailNotification) {
+      // 2. Add assigned team members (from assignedToEmails array)
+      if (job.assignedToEmails && Array.isArray(job.assignedToEmails) && job.assignedToEmails.length > 0) {
+        for (let i = 0; i < job.assignedToEmails.length; i++) {
+          const email = job.assignedToEmails[i];
+          const name = job.assignedToNames?.[i] || email.split("@")[0];
           if (email && !notifiedEmails.has(email.toLowerCase())) {
-            emailRecipients.push({
-              name: email.split("@")[0],
-              email,
-            });
+            emailRecipients.push({ name, email });
             notifiedEmails.add(email.toLowerCase());
           }
-        }
-      }
-
-      // 3. If notifyHROnApplication or notifyAdminOnApplication is enabled, also notify all HR/Admin users
-      if (job.notifyHROnApplication || job.notifyAdminOnApplication) {
-        try {
-          const usersResult = await listCognitoUsers();
-          if (usersResult.success && usersResult.users) {
-            for (const user of usersResult.users) {
-              if (!user.email || notifiedEmails.has(user.email.toLowerCase())) continue;
-
-              const groups = user.groups || [];
-              const shouldNotify =
-                (job.notifyHROnApplication && groups.includes("hr")) ||
-                (job.notifyAdminOnApplication && groups.includes("admin"));
-
-              if (shouldNotify) {
-                emailRecipients.push({
-                  name: user.name || user.email.split("@")[0],
-                  email: user.email,
-                });
-                notifiedEmails.add(user.email.toLowerCase());
-              }
-            }
-          }
-        } catch (err) {
-          console.error("Failed to fetch users for job notifications:", err);
         }
       }
 

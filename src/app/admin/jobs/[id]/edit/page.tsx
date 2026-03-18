@@ -13,6 +13,7 @@ import {
   Plus,
   X,
   Truck,
+  Search,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 
@@ -27,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 const US_STATES = [
@@ -87,19 +88,20 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     payRate: "",
     status: "draft" as Job["status"],
     submissionDueDate: "",
-    notifyHROnApplication: false,
-    notifyAdminOnApplication: false,
     clientId: "",
     clientName: "",
     recruitmentManagerId: "",
     recruitmentManagerName: "",
     recruitmentManagerEmail: "",
-    assignedToId: "",
-    assignedToName: "",
-    sendEmailNotification: false,
+    // Multi-select assignees
+    assignedToIds: [] as string[],
+    assignedToNames: [] as string[],
+    assignedToEmails: [] as string[],
     vendorId: "",
     vendorName: "",
   });
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
 
   const [clientFormData, setClientFormData] = useState({
     name: "",
@@ -145,16 +147,15 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         payRate: jobData.payRate?.toString() || "",
         status: jobData.status || "draft",
         submissionDueDate: jobData.submissionDueDate?.split("T")[0] || "",
-        notifyHROnApplication: jobData.notifyHROnApplication || false,
-        notifyAdminOnApplication: jobData.notifyAdminOnApplication || false,
         clientId: jobData.clientId || "",
         clientName: jobData.clientName || "",
         recruitmentManagerId: jobData.recruitmentManagerId || "",
         recruitmentManagerName: jobData.recruitmentManagerName || "",
         recruitmentManagerEmail: jobData.recruitmentManagerEmail || "",
-        assignedToId: jobData.assignedToId || "",
-        assignedToName: jobData.assignedToName || "",
-        sendEmailNotification: jobData.sendEmailNotification || false,
+        // Multi-select assignees - handle both old single format and new array format
+        assignedToIds: jobData.assignedToIds || (jobData.assignedToId ? [jobData.assignedToId] : []),
+        assignedToNames: jobData.assignedToNames || (jobData.assignedToName ? [jobData.assignedToName] : []),
+        assignedToEmails: jobData.assignedToEmails || [],
         vendorId: jobData.vendorId || "",
         vendorName: jobData.vendorName || "",
       });
@@ -227,16 +228,15 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         payRate: formData.payRate ? parseFloat(formData.payRate) : undefined,
         status: formData.status,
         submissionDueDate: formData.submissionDueDate || undefined,
-        notifyHROnApplication: formData.notifyHROnApplication,
-        notifyAdminOnApplication: formData.notifyAdminOnApplication,
         clientId: formData.clientId || undefined,
         clientName: formData.clientName || undefined,
         recruitmentManagerId: formData.recruitmentManagerId || undefined,
         recruitmentManagerName: formData.recruitmentManagerName || undefined,
         recruitmentManagerEmail: formData.recruitmentManagerEmail || undefined,
-        assignedToId: formData.assignedToId || undefined,
-        assignedToName: formData.assignedToName || undefined,
-        sendEmailNotification: formData.sendEmailNotification,
+        // Multi-select assignees
+        assignedToIds: formData.assignedToIds.length > 0 ? formData.assignedToIds : undefined,
+        assignedToNames: formData.assignedToNames.length > 0 ? formData.assignedToNames : undefined,
+        assignedToEmails: formData.assignedToEmails.length > 0 ? formData.assignedToEmails : undefined,
         vendorId: formData.vendorId || undefined,
         vendorName: formData.vendorName || undefined,
       };
@@ -335,14 +335,39 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     });
   };
 
-  const handleAssignedToSelect = (userId: string) => {
-    const selectedUser = allUsers.find((u) => u.id === userId);
-    setFormData({
-      ...formData,
-      assignedToId: userId,
-      assignedToName: selectedUser?.name || selectedUser?.email || "",
-    });
+  const toggleAssignee = (user: CognitoUser) => {
+    const { assignedToIds, assignedToNames, assignedToEmails } = formData;
+    if (assignedToIds.includes(user.id)) {
+      // Remove
+      const idx = assignedToIds.indexOf(user.id);
+      setFormData({
+        ...formData,
+        assignedToIds: assignedToIds.filter((_, i) => i !== idx),
+        assignedToNames: assignedToNames.filter((_, i) => i !== idx),
+        assignedToEmails: assignedToEmails.filter((_, i) => i !== idx),
+      });
+    } else {
+      // Add
+      setFormData({
+        ...formData,
+        assignedToIds: [...assignedToIds, user.id],
+        assignedToNames: [...assignedToNames, user.name || user.email],
+        assignedToEmails: [...assignedToEmails, user.email],
+      });
+    }
   };
+
+  // Filter assignees for search (only HR/Admin, exclude already selected)
+  const filteredAssignees = hrUsers.filter((u) => {
+    if (formData.assignedToIds.includes(u.id)) return false;
+    if (!assigneeSearch.trim()) return true;
+    const q = assigneeSearch.toLowerCase();
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q)
+    );
+  });
 
   if (loading) {
     return (
@@ -597,40 +622,122 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <UserCheck className="h-5 w-5" />
-                Assignments
+                Team Assignments
               </h3>
+              <p className="text-xs text-muted-foreground">
+                Notifications for new job postings and applications will be sent to the recruitment manager and assigned team members.
+              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Recruitment Manager</Label>
-                  <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
-                    <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {hrUsers.map((u) => (
-                        <SelectItem key={u.id} value={u.id}>
-                          {u.name || u.email} ({u.role})
-                        </SelectItem>
+              {/* Recruitment Manager - Single Select */}
+              <div className="space-y-2">
+                <Label>Recruitment Manager</Label>
+                <Select value={formData.recruitmentManagerId} onValueChange={handleRecruitmentManagerSelect}>
+                  <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {hrUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name || u.email} ({u.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Assigned To - Multi-select with Search */}
+              <div className="space-y-2">
+                <Label>Assigned To (HR/Admin)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Search and add multiple team members to receive notifications.
+                </p>
+
+                {/* Search input + dropdown */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Search by name, email or role…"
+                    value={assigneeSearch}
+                    onChange={(e) => {
+                      setAssigneeSearch(e.target.value);
+                      setShowAssigneeDropdown(true);
+                    }}
+                    onFocus={() => setShowAssigneeDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowAssigneeDropdown(false), 150)}
+                    className="pl-9"
+                    autoComplete="off"
+                  />
+
+                  {/* Dropdown list */}
+                  {showAssigneeDropdown && filteredAssignees.length > 0 && (
+                    <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
+                      {filteredAssignees.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            toggleAssignee(u);
+                            setAssigneeSearch("");
+                            setShowAssigneeDropdown(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                            {(u.name || u.email)[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{u.name || u.email}</p>
+                            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs capitalize flex-shrink-0">
+                            {u.role}
+                          </Badge>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
+
+                  {/* No results message */}
+                  {showAssigneeDropdown && assigneeSearch.trim() && filteredAssignees.length === 0 && (
+                    <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-muted-foreground text-center">
+                      No matching HR/Admin members found.
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Assigned To</Label>
-                  <Select value={formData.assignedToId} onValueChange={handleAssignedToSelect}>
-                    <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {allUsers.map((u) => (
-                        <SelectItem key={u.id} value={u.id}>
-                          {u.name || u.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                {/* Selected assignees as tags */}
+                {formData.assignedToIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {formData.assignedToIds.map((id, idx) => {
+                      const u = hrUsers.find((r) => r.id === id);
+                      const name = formData.assignedToNames[idx] || u?.name || u?.email || id;
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 bg-primary/5 border border-primary/20 rounded-full"
+                        >
+                          <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                            {name[0].toUpperCase()}
+                          </div>
+                          <span className="text-xs font-medium text-foreground">
+                            {name}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] capitalize px-1 py-0">
+                            {u?.role || "user"}
+                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => u && toggleAssignee(u)}
+                            className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
-
-            <Separator />
 
             {/* Job Details */}
             <div className="space-y-4">
@@ -670,48 +777,6 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 />
               </div>
             </div>
-
-            <Separator />
-
-            {/* Notifications */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Email Notifications</h3>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="sendEmailNotification"
-                    checked={formData.sendEmailNotification}
-                    onCheckedChange={(checked) => setFormData({ ...formData, sendEmailNotification: checked as boolean })}
-                  />
-                  <Label htmlFor="sendEmailNotification" className="text-sm font-normal cursor-pointer">
-                    Send job posting notification to Recruitment Manager
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="notifyHR"
-                    checked={formData.notifyHROnApplication}
-                    onCheckedChange={(checked) => setFormData({ ...formData, notifyHROnApplication: checked as boolean })}
-                  />
-                  <Label htmlFor="notifyHR" className="text-sm font-normal cursor-pointer">
-                    Notify HR team on new applications
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="notifyAdmin"
-                    checked={formData.notifyAdminOnApplication}
-                    onCheckedChange={(checked) => setFormData({ ...formData, notifyAdminOnApplication: checked as boolean })}
-                  />
-                  <Label htmlFor="notifyAdmin" className="text-sm font-normal cursor-pointer">
-                    Notify Administrators on new applications
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
 
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-3">

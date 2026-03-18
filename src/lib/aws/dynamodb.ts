@@ -200,9 +200,6 @@ export interface Job {
   postedByEmail?: string; // Email of admin/HR who posted
   postedByRole?: string; // Role of poster (admin/hr)
   applicationsCount?: number;
-  // Email notification settings
-  notifyHROnApplication?: boolean; // Notify all HR users when someone applies
-  notifyAdminOnApplication?: boolean; // Notify all Admin users when someone applies
 
   // Job Posting ID (auto-generated OB-YYYY-XXXX format)
   postingId?: string;
@@ -219,19 +216,24 @@ export interface Job {
   clientBillRate?: number; // Client Bill Rate ($)
   payRate?: number; // Pay Rate ($)
 
-  // Assignments
+  // Assignments - Recruitment Manager
   recruitmentManagerId?: string; // HR user ID
   recruitmentManagerName?: string; // HR user name
   recruitmentManagerEmail?: string; // HR email for notifications
-  assignedToId?: string; // Team member ID
-  assignedToName?: string; // Team member name
+
+  // Assignments - Multi-select assignees (HR/Admin)
+  assignedToIds?: string[]; // Array of team member IDs
+  assignedToNames?: string[]; // Array of team member names
+  assignedToEmails?: string[]; // Array of team member emails for notifications
+
+  // Legacy single assignee fields (for backward compatibility)
+  assignedToId?: string;
+  assignedToName?: string;
 
   // Vendor Information
   vendorId?: string; // FK to oceanblue-vendors
   vendorName?: string; // Denormalized for display
 
-  // Email Notification Settings for job posting
-  sendEmailNotification?: string[]; // Array of user IDs/emails to notify
   excludedDepartments?: string[];
   notificationSentAt?: string;
 }

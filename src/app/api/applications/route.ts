@@ -14,7 +14,6 @@ import {
   sendApplicationConfirmation,
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
-import { listCognitoUsers } from "@/lib/aws/cognito";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/applications - Get applications (with optional filters)
@@ -206,11 +205,15 @@ export async function POST(request: NextRequest) {
         jobLocation: job.location,
       }).catch((err) => console.error("Failed to send candidate confirmation:", err));
 
-      // 2. Send notification to recruiter who posted the job
-      if (job.postedByEmail && job.postedByName) {
+      // 2. Send notifications to recruitment manager and assigned team members
+      const notifiedEmails = new Set<string>();
+
+      // 2a. Notify recruitment manager
+      if (job.recruitmentManagerEmail) {
+        notifiedEmails.add(job.recruitmentManagerEmail.toLowerCase());
         sendNewApplicationNotification({
-          recruiterName: job.postedByName,
-          recruiterEmail: job.postedByEmail,
+          recruiterName: job.recruitmentManagerName || job.recruitmentManagerEmail.split("@")[0],
+          recruiterEmail: job.recruitmentManagerEmail,
           candidateName: name,
           candidateEmail: body.email,
           candidatePhone: body.phone,
@@ -218,40 +221,31 @@ export async function POST(request: NextRequest) {
           jobId: job.id,
           applicationId: application.applicationId || application.id,
           appliedAt: application.appliedAt,
-        }).catch((err) => console.error("Failed to send recruiter notification:", err));
+        }).catch((err) => console.error("Failed to send notification to recruitment manager:", err));
       }
 
-      // 3. Send notifications to HR/Admin users if configured
-      if (job.notifyHROnApplication || job.notifyAdminOnApplication) {
-        listCognitoUsers()
-          .then((usersResult) => {
-            if (!usersResult.success || !usersResult.users) return;
+      // 2b. Notify assigned team members
+      if (job.assignedToEmails && Array.isArray(job.assignedToEmails) && job.assignedToEmails.length > 0) {
+        for (let i = 0; i < job.assignedToEmails.length; i++) {
+          const email = job.assignedToEmails[i];
+          const recipientName = job.assignedToNames?.[i] || email.split("@")[0];
 
-            const recipients = usersResult.users.filter((user) => {
-              const groups = user.groups || [];
-              if (job.notifyHROnApplication && groups.includes("hr")) return true;
-              if (job.notifyAdminOnApplication && groups.includes("admin")) return true;
-              return false;
-            });
-
-            // Send email to each HR/Admin (excluding the job poster who already got notified)
-            for (const recipient of recipients) {
-              if (recipient.email === job.postedByEmail) continue;
-
-              sendNewApplicationNotification({
-                recruiterName: recipient.name || recipient.email.split("@")[0],
-                recruiterEmail: recipient.email,
-                candidateName: name,
-                candidateEmail: body.email,
-                candidatePhone: body.phone,
-                jobTitle: job.title,
-                jobId: job.id,
-                applicationId: application.applicationId || application.id,
-                appliedAt: application.appliedAt,
-              }).catch((err) => console.error(`Failed to send notification to ${recipient.email}:`, err));
-            }
-          })
-          .catch((err) => console.error("Failed to fetch users for notifications:", err));
+          // Skip if already notified
+          if (email && !notifiedEmails.has(email.toLowerCase())) {
+            notifiedEmails.add(email.toLowerCase());
+            sendNewApplicationNotification({
+              recruiterName: recipientName,
+              recruiterEmail: email,
+              candidateName: name,
+              candidateEmail: body.email,
+              candidatePhone: body.phone,
+              jobTitle: job.title,
+              jobId: job.id,
+              applicationId: application.applicationId || application.id,
+              appliedAt: application.appliedAt,
+            }).catch((err) => console.error(`Failed to send notification to ${email}:`, err));
+          }
+        }
       }
     }
 
