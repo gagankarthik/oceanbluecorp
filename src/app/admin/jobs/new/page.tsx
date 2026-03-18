@@ -17,6 +17,7 @@ import {
   FileText,
   Truck,
   Search,
+  Users,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -62,6 +63,8 @@ export default function NewJobPage() {
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [notificationSearch, setNotificationSearch] = useState("");
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -277,15 +280,12 @@ export default function NewJobPage() {
     }
   };
 
-  // Filter assignees for search (only HR/Admin, exclude already selected)
+  // Compute filtered assignees for the dropdown
   const filteredAssignees = hrUsers.filter((u) => {
-    if (formData.assignedToIds.includes(u.id)) return false;
-    if (!assigneeSearch.trim()) return true;
     const q = assigneeSearch.toLowerCase();
     return (
-      u.name?.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.role.toLowerCase().includes(q)
+      !formData.assignedToIds.includes(u.id) &&
+      (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q))
     );
   });
 

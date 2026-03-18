@@ -54,7 +54,7 @@ const formatDueDate = (dueDate: string | undefined): { text: string; isUrgent: b
   return { text: `Due ${due.toLocaleDateString()}`, isUrgent: false };
 };
 
-const ITEMS_PER_PAGE = 6;
+const PER_PAGE_OPTIONS = [6, 12, 24] as const;
 
 interface JobWithUI extends Job {
   postedAgo?: string;
@@ -73,6 +73,7 @@ export default function CareersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [itemsPerPage, setItemsPerPage] = useState<number>(6);
 
   // Get unique locations from jobs
   const locations = useMemo(() => {
@@ -178,8 +179,8 @@ export default function CareersPage() {
   }, [jobs, searchQuery, selectedDepartment, selectedType, selectedLocation, remoteOnly]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
-  const paginatedJobs = filteredJobs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const paginatedJobs = filteredJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -479,12 +480,13 @@ export default function CareersPage() {
                     ))}
                   </div>
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-                      <p className="text-sm text-gray-500">
-                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredJobs.length)} of {filteredJobs.length}
-                      </p>
+                  {/* Pagination + Per-page */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+                    <p className="text-sm text-gray-500">
+                      Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredJobs.length)}–{Math.min(currentPage * itemsPerPage, filteredJobs.length)} of {filteredJobs.length} positions
+                    </p>
+
+                    {totalPages > 1 && (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -493,17 +495,18 @@ export default function CareersPage() {
                         >
                           <ChevronLeft className="w-5 h-5" />
                         </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-10 h-10 rounded-lg font-medium ${
-                              currentPage === page ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const page = totalPages <= 5 ? i + 1 : currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-10 h-10 rounded-lg font-medium ${currentPage === page ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
                         <button
                           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                           disabled={currentPage === totalPages}
@@ -512,8 +515,30 @@ export default function CareersPage() {
                           <ChevronRight className="w-5 h-5" />
                         </button>
                       </div>
+                    )}
+
+                    {/* Per-page selector */}
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>Jobs per page:</span>
+                      <div className="flex items-center gap-1">
+                        {PER_PAGE_OPTIONS.map((n) => (
+                          <button
+                            key={n}
+                            onClick={() => { setItemsPerPage(n); setCurrentPage(1); }}
+                            className={`w-9 h-9 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => { setItemsPerPage(filteredJobs.length || 999); setCurrentPage(1); }}
+                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                        >
+                          All
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </>
               ) : (
                 <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">

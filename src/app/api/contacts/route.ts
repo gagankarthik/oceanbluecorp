@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
+import { sendContactNotificationEmail } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/contacts - Get all contacts (admin only)
@@ -91,6 +92,20 @@ export async function POST(request: NextRequest) {
       isRead: false,
       createdAt: new Date().toISOString(),
     }).catch((err) => console.error("Failed to create notification:", err));
+
+    // Send email notification to admin
+    const adminEmail = process.env.NEXT_AWS_SES_FROM_EMAIL || "hiring@oceanbluecorp.com";
+    sendContactNotificationEmail({
+      adminEmail,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      email: contact.email,
+      phone: contact.phone,
+      company: contact.company,
+      jobTitle: contact.jobTitle,
+      inquiryType: contact.inquiryType,
+      message: contact.message,
+    }).catch((err) => console.error("Failed to send contact notification email:", err));
 
     return NextResponse.json(
       { message: "Contact form submitted successfully", contact },

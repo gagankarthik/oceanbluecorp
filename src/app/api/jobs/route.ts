@@ -124,8 +124,17 @@ export async function POST(request: NextRequest) {
       const emailRecipients: Array<{ name: string; email: string }> = [];
       const notifiedEmails = new Set<string>();
 
-      // 1. Add recruitment manager
-      if (job.recruitmentManagerEmail) {
+      // 1. Add job creator (posted by)
+      if (job.postedByEmail) {
+        emailRecipients.push({
+          name: job.postedByName || job.postedByEmail.split("@")[0],
+          email: job.postedByEmail,
+        });
+        notifiedEmails.add(job.postedByEmail.toLowerCase());
+      }
+
+      // 2. Add recruitment manager
+      if (job.recruitmentManagerEmail && !notifiedEmails.has(job.recruitmentManagerEmail.toLowerCase())) {
         emailRecipients.push({
           name: job.recruitmentManagerName || job.recruitmentManagerEmail.split("@")[0],
           email: job.recruitmentManagerEmail,
@@ -133,13 +142,23 @@ export async function POST(request: NextRequest) {
         notifiedEmails.add(job.recruitmentManagerEmail.toLowerCase());
       }
 
-      // 2. Add assigned team members (from assignedToEmails array)
+      // 3. Add assigned team members (from assignedToEmails array)
       if (job.assignedToEmails && Array.isArray(job.assignedToEmails) && job.assignedToEmails.length > 0) {
         for (let i = 0; i < job.assignedToEmails.length; i++) {
           const email = job.assignedToEmails[i];
           const name = job.assignedToNames?.[i] || email.split("@")[0];
           if (email && !notifiedEmails.has(email.toLowerCase())) {
             emailRecipients.push({ name, email });
+            notifiedEmails.add(email.toLowerCase());
+          }
+        }
+      }
+
+      // 4. Add sendEmailNotification recipients (individually selected)
+      if (body.sendEmailNotification && Array.isArray(body.sendEmailNotification)) {
+        for (const email of body.sendEmailNotification) {
+          if (email && !notifiedEmails.has(email.toLowerCase())) {
+            emailRecipients.push({ name: email.split("@")[0], email });
             notifiedEmails.add(email.toLowerCase());
           }
         }

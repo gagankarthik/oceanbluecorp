@@ -6,8 +6,8 @@ export const cognitoAuthConfig = {
     ? `${window.location.origin}/auth/callback`
     : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
   post_logout_redirect_uri: typeof window !== "undefined"
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_APP_URL || "",
+    ? `${window.location.origin}/auth/signout`
+    : `${process.env.NEXT_PUBLIC_APP_URL || ""}/auth/signout`,
   response_type: "code",
   scope: "phone openid email",
   automaticSilentRenew: true,

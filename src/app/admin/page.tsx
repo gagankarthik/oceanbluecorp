@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Briefcase,
   Users,
@@ -22,6 +22,11 @@ import {
   Target,
   Zap,
   Calendar,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -217,6 +222,138 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ATS filter state
+  const [allApps, setAllApps] = useState<any[]>([]);
+  const [allJobs, setAllJobs] = useState<any[]>([]);
+  const [appSearch, setAppSearch] = useState("");
+  const [appStatusFilter, setAppStatusFilter] = useState("all");
+  const [appPage, setAppPage] = useState(1);
+  const [appPerPage, setAppPerPage] = useState(10);
+  const [appSort, setAppSort] = useState("date-desc");
+  const [periodFilter, setPeriodFilter] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [jobSearch, setJobSearch] = useState("");
+  const [jobStatusFilter, setJobStatusFilter] = useState("all");
+  const [jobPeriodFilter, setJobPeriodFilter] = useState("all");
+  const [jobSelectedMonth, setJobSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  useEffect(() => {
+    fetch("/api/applications")
+      .then((r) => r.json())
+      .then((d) => setAllApps(d.applications || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/jobs")
+      .then((r) => r.json())
+      .then((d) => setAllJobs(d.jobs || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { setAppPage(1); }, [appSearch, appStatusFilter, appSort, periodFilter, selectedMonth, appPerPage]);
+
+  const appStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: allApps.length };
+    ["pending", "reviewing", "interview", "offered", "hired", "rejected"].forEach((s) => {
+      counts[s] = allApps.filter((a) => a.status === s).length;
+    });
+    return counts;
+  }, [allApps]);
+
+  const filteredApps = useMemo(() => {
+    let apps = [...allApps];
+    const now = new Date();
+    if (periodFilter === "today") {
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      apps = apps.filter((a) => new Date(a.appliedAt) >= todayStart);
+    } else if (periodFilter === "week") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 7);
+      apps = apps.filter((a) => new Date(a.appliedAt) >= cutoff);
+    } else if (periodFilter === "this-month") {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      apps = apps.filter((a) => new Date(a.appliedAt) >= monthStart);
+    } else if (periodFilter === "ytd") {
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      apps = apps.filter((a) => new Date(a.appliedAt) >= yearStart);
+    } else if (periodFilter === "by-month" && selectedMonth) {
+      const [yr, mo] = selectedMonth.split("-").map(Number);
+      const start = new Date(yr, mo - 1, 1);
+      const end = new Date(yr, mo, 1);
+      apps = apps.filter((a) => { const d = new Date(a.appliedAt); return d >= start && d < end; });
+    } else if (periodFilter === "last-30") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
+      apps = apps.filter((a) => new Date(a.appliedAt) >= cutoff);
+    } else if (periodFilter === "last-90") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 90);
+      apps = apps.filter((a) => new Date(a.appliedAt) >= cutoff);
+    }
+    if (appStatusFilter !== "all") apps = apps.filter((a) => a.status === appStatusFilter);
+    if (appSearch) {
+      const q = appSearch.toLowerCase();
+      apps = apps.filter(
+        (a) => a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q) || a.jobTitle?.toLowerCase().includes(q)
+      );
+    }
+    apps.sort((a, b) => {
+      if (appSort === "date-asc") return new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime();
+      if (appSort === "name-asc") return (a.name || "").localeCompare(b.name || "");
+      if (appSort === "name-desc") return (b.name || "").localeCompare(a.name || "");
+      if (appSort === "status") return (a.status || "").localeCompare(b.status || "");
+      return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+    });
+    return apps;
+  }, [allApps, appSearch, appStatusFilter, appSort, periodFilter, selectedMonth]);
+
+  const appTotalPages = Math.ceil(filteredApps.length / appPerPage);
+  const paginatedApps = useMemo(() => {
+    const start = (appPage - 1) * appPerPage;
+    return filteredApps.slice(start, start + appPerPage);
+  }, [filteredApps, appPage, appPerPage]);
+
+  const filteredJobs = useMemo(() => {
+    let jobs = [...allJobs];
+    const now = new Date();
+    if (jobPeriodFilter === "today") {
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= todayStart);
+    } else if (jobPeriodFilter === "week") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 7);
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= cutoff);
+    } else if (jobPeriodFilter === "this-month") {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= monthStart);
+    } else if (jobPeriodFilter === "ytd") {
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= yearStart);
+    } else if (jobPeriodFilter === "by-month" && jobSelectedMonth) {
+      const [yr, mo] = jobSelectedMonth.split("-").map(Number);
+      const start = new Date(yr, mo - 1, 1);
+      const end = new Date(yr, mo, 1);
+      jobs = jobs.filter((j) => { const d = new Date(j.createdAt); return d >= start && d < end; });
+    } else if (jobPeriodFilter === "last-30") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= cutoff);
+    } else if (jobPeriodFilter === "last-90") {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 90);
+      jobs = jobs.filter((j) => new Date(j.createdAt) >= cutoff);
+    }
+    if (jobStatusFilter !== "all") jobs = jobs.filter((j) => j.status === jobStatusFilter);
+    if (jobSearch) {
+      const q = jobSearch.toLowerCase();
+      jobs = jobs.filter(
+        (j) => j.title?.toLowerCase().includes(q) || j.department?.toLowerCase().includes(q) || j.location?.toLowerCase().includes(q)
+      );
+    }
+    return jobs;
+  }, [allJobs, jobSearch, jobStatusFilter, jobPeriodFilter, jobSelectedMonth]);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -281,7 +418,15 @@ export default function AdminDashboard() {
 
   if (!stats) return null;
 
-  const chartData = generateChartData(stats.totalApplications);
+  const chartData =
+    stats.monthlyApplications && stats.monthlyApplications.length > 0
+      ? stats.monthlyApplications.map((m) => ({
+          date: m.month,
+          applications: m.applications,
+          hired: 0,
+        }))
+      : generateChartData(stats.totalApplications);
+
   const conversionRate =
     stats.totalApplications > 0
       ? ((stats.hiredApplications / stats.totalApplications) * 100).toFixed(1)
@@ -647,67 +792,162 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Recent Activity Tables */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        {/* Recent Applications */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+      {/* ATS Application Pipeline */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-lg font-semibold">Recent Applications</CardTitle>
-              <CardDescription>Latest candidates in the pipeline</CardDescription>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-blue-500" />
+                Application Pipeline
+              </CardTitle>
+              <CardDescription>
+                {filteredApps.length} of {allApps.length} applications
+              </CardDescription>
             </div>
             <Link
               href="/admin/applications"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
             >
-              View all
-              <ArrowRight className="w-4 h-4" />
+              Full ATS view <ArrowRight className="w-4 h-4" />
             </Link>
-          </CardHeader>
-          <CardContent>
-            {stats.recentApplications.length > 0 ? (
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={appSearch}
+                onChange={(e) => setAppSearch(e.target.value)}
+                placeholder="Search name, email, position…"
+                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+              {appSearch && (
+                <button onClick={() => setAppSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {/* Date range quick filters */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {([
+                { value: "all", label: "All" },
+                { value: "today", label: "Today" },
+                { value: "week", label: "7d" },
+                { value: "this-month", label: "This Month" },
+                { value: "ytd", label: "YTD" },
+                { value: "last-30", label: "30d" },
+                { value: "last-90", label: "90d" },
+                { value: "by-month", label: "By Month" },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setPeriodFilter(value)}
+                  className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap ${
+                    periodFilter === value
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {periodFilter === "by-month" && (
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-blue-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+            <select
+              value={appSort}
+              onChange={(e) => setAppSort(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
+              <option value="status">By status</option>
+            </select>
+            <select
+              value={appPerPage}
+              onChange={(e) => setAppPerPage(Number(e.target.value))}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={5}>5 / page</option>
+              <option value={10}>10 / page</option>
+              <option value={25}>25 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
+          </div>
+
+          {/* Status Tabs */}
+          <div className="flex gap-1 flex-wrap pt-1">
+            {(["all", "pending", "reviewing", "interview", "offered", "hired", "rejected"] as const).map((s) => {
+              const cfg = s === "all" ? null : statusConfig[s as keyof typeof statusConfig];
+              return (
+                <button
+                  key={s}
+                  onClick={() => setAppStatusFilter(s)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                    appStatusFilter === s
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  <span className="capitalize">{s === "all" ? "All" : s}</span>
+                  <span className={`rounded-full px-1.5 py-0 text-[10px] font-bold ${appStatusFilter === s ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>
+                    {appStatusCounts[s] ?? 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {paginatedApps.length > 0 ? (
+            <>
               <Table>
                 <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase">Candidate</TableHead>
+                  <TableRow className="hover:bg-transparent border-gray-100">
+                    <TableHead className="text-xs font-semibold text-gray-500 uppercase pl-6">Candidate</TableHead>
                     <TableHead className="text-xs font-semibold text-gray-500 uppercase">Position</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Source</TableHead>
                     <TableHead className="text-xs font-semibold text-gray-500 uppercase">Status</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase text-right">Applied</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500 uppercase text-right pr-6">Applied</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stats.recentApplications.map((app) => {
-                    const config =
-                      statusConfig[app.status as keyof typeof statusConfig] ||
-                      statusConfig.pending;
+                  {paginatedApps.map((app) => {
+                    const config = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
                     return (
-                      <TableRow key={app.id} className="hover:bg-gray-50/50">
-                        <TableCell>
+                      <TableRow key={app.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => window.location.href = "/admin/applications"}>
+                        <TableCell className="pl-6">
                           <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                              {(app.name || "NA")
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .slice(0, 2)
-                                .toUpperCase()}
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-sm shrink-0">
+                              {(app.name || "NA").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{app.name || "Unknown"}</div>
+                              <div className="font-medium text-gray-900 text-sm">{app.name || "Unknown"}</div>
                               <div className="text-xs text-gray-500">{app.email || "No email"}</div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600 font-medium">{app.position}</TableCell>
+                        <TableCell className="text-sm text-gray-700 font-medium max-w-[160px] truncate">{app.jobTitle || "—"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{app.source || "Portal"}</span>
+                        </TableCell>
                         <TableCell>
-                          <Badge
-                            className={`${config.bg} ${config.color} border-0 font-medium capitalize`}
-                          >
+                          <Badge className={`${config.bg} ${config.color} border-0 font-medium capitalize text-xs`}>
                             {app.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <span className="text-sm text-gray-500 flex items-center justify-end gap-1">
+                        <TableCell className="text-right pr-6">
+                          <span className="text-xs text-gray-500 flex items-center justify-end gap-1">
                             <Calendar className="w-3 h-3" />
                             {getTimeAgo(app.appliedAt)}
                           </span>
@@ -717,97 +957,260 @@ export default function AdminDashboard() {
                   })}
                 </TableBody>
               </Table>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                  <Users className="w-6 h-6 text-gray-400" />
+              {/* Pagination */}
+              {appTotalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">
+                    Showing {(appPage - 1) * appPerPage + 1}–{Math.min(appPage * appPerPage, filteredApps.length)} of {filteredApps.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setAppPage((p) => Math.max(1, p - 1))}
+                      disabled={appPage === 1}
+                      className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: Math.min(5, appTotalPages) }, (_, i) => {
+                      const page = appTotalPages <= 5 ? i + 1 : appPage <= 3 ? i + 1 : appPage >= appTotalPages - 2 ? appTotalPages - 4 + i : appPage - 2 + i;
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setAppPage(page)}
+                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${appPage === page ? "bg-blue-600 text-white" : "border border-gray-200 hover:bg-gray-50 text-gray-700"}`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setAppPage((p) => Math.min(appTotalPages, p + 1))}
+                      disabled={appPage === appTotalPages}
+                      className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-600">No applications yet</p>
-                <p className="text-xs text-gray-400 mt-1">Applications will appear here</p>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <Users className="w-6 h-6 text-gray-400" />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Active Jobs */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="text-lg font-semibold">Active Job Postings</CardTitle>
-              <CardDescription>Current open positions</CardDescription>
+              <p className="text-sm font-medium text-gray-600">No applications match your filters</p>
+              <button onClick={() => { setAppSearch(""); setAppStatusFilter("all"); setPeriodFilter("all"); }} className="text-xs text-blue-600 hover:underline mt-1">
+                Clear filters
+              </button>
             </div>
-            <Link
-              href="/admin/jobs"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-            >
-              View all
-              <ArrowRight className="w-4 h-4" />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ATS Job Postings */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-emerald-500" />
+                Job Postings
+              </CardTitle>
+              <CardDescription>{filteredJobs.length} of {allJobs.length} positions</CardDescription>
+            </div>
+            <Link href="/admin/jobs" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+              Manage jobs <ArrowRight className="w-4 h-4" />
             </Link>
-          </CardHeader>
-          <CardContent>
-            {stats.recentJobs.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase">Position</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase">Department</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase">Applicants</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 uppercase text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats.recentJobs.map((job) => {
-                    const config =
-                      statusConfig[job.status as keyof typeof statusConfig] ||
-                      statusConfig.active;
-                    return (
-                      <TableRow key={job.id} className="hover:bg-gray-50/50">
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900">{job.title}</div>
-                            <div className="text-xs text-gray-500">{job.location}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600 font-medium">{job.department}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="flex -space-x-1.5">
-                              {[...Array(Math.min(3, job.applicants))].map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white"
-                                />
-                              ))}
-                            </div>
-                            <span className="text-sm font-semibold text-gray-900">
-                              {job.applicants}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge
-                            className={`${config.bg} ${config.color} border-0 font-medium capitalize`}
-                          >
-                            {job.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                  <Briefcase className="w-6 h-6 text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-600">No jobs posted yet</p>
-                <p className="text-xs text-gray-400 mt-1">Create your first job posting</p>
-              </div>
+          </div>
+
+          {/* Job Filter Bar */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={jobSearch}
+                onChange={(e) => setJobSearch(e.target.value)}
+                placeholder="Search title, department, location…"
+                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+              {jobSearch && (
+                <button onClick={() => setJobSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {/* Date range quick filters */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {([
+                { value: "all", label: "All" },
+                { value: "today", label: "Today" },
+                { value: "week", label: "7d" },
+                { value: "this-month", label: "This Month" },
+                { value: "ytd", label: "YTD" },
+                { value: "last-30", label: "30d" },
+                { value: "last-90", label: "90d" },
+                { value: "by-month", label: "By Month" },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setJobPeriodFilter(value)}
+                  className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap ${
+                    jobPeriodFilter === value
+                      ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {jobPeriodFilter === "by-month" && (
+              <input
+                type="month"
+                value={jobSelectedMonth}
+                onChange={(e) => setJobSelectedMonth(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          {/* Job Status Tabs */}
+          <div className="flex gap-1 flex-wrap pt-1">
+            {(["all", "active", "paused", "draft", "closed"] as const).map((s) => {
+              const count = s === "all" ? allJobs.length : allJobs.filter((j) => j.status === s).length;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setJobStatusFilter(s)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                    jobStatusFilter === s
+                      ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50"
+                  }`}
+                >
+                  <span className="capitalize">{s === "all" ? "All" : s}</span>
+                  <span className={`rounded-full px-1.5 text-[10px] font-bold ${jobStatusFilter === s ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {filteredJobs.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-gray-100">
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase pl-6">Position</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Department</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Location</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase">Applicants</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase text-right pr-6">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredJobs.slice(0, 10).map((job) => {
+                  const config = statusConfig[job.status as keyof typeof statusConfig] || statusConfig.active;
+                  return (
+                    <TableRow
+                      key={job.id}
+                      className="hover:bg-gray-50/50 cursor-pointer"
+                      onClick={() => window.location.href = `/admin/jobs`}
+                    >
+                      <TableCell className="pl-6">
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">{job.title}</div>
+                          <div className="text-xs text-gray-500 sm:hidden">{job.department}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600 hidden sm:table-cell">{job.department}</TableCell>
+                      <TableCell className="text-sm text-gray-500 hidden md:table-cell">{job.location}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-1">
+                            {[...Array(Math.min(3, job.applicationsCount || 0))].map((_, i) => (
+                              <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white" />
+                            ))}
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900">{job.applicationsCount || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <Badge className={`${config.bg} ${config.color} border-0 font-medium capitalize text-xs`}>
+                          {job.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <Briefcase className="w-6 h-6 text-gray-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-600">No jobs match your filters</p>
+              <button onClick={() => { setJobSearch(""); setJobStatusFilter("all"); }} className="text-xs text-blue-600 hover:underline mt-1">
+                Clear filters
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Hiring Funnel */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg font-semibold">Hiring Funnel</CardTitle>
+              <CardDescription>Application-to-hire conversion stages</CardDescription>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Conversion rate</p>
+              <p className="text-2xl font-bold text-emerald-600">{conversionRate}%</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { label: "Applied", count: stats.totalApplications, color: "bg-blue-500", light: "bg-blue-50", text: "text-blue-700" },
+              { label: "Reviewing", count: stats.reviewingApplications, color: "bg-purple-500", light: "bg-purple-50", text: "text-purple-700" },
+              { label: "Interview", count: stats.interviewApplications, color: "bg-cyan-500", light: "bg-cyan-50", text: "text-cyan-700" },
+              { label: "Offered", count: stats.offeredApplications, color: "bg-amber-500", light: "bg-amber-50", text: "text-amber-700" },
+              { label: "Hired", count: stats.hiredApplications, color: "bg-emerald-500", light: "bg-emerald-50", text: "text-emerald-700" },
+            ].map((stage) => {
+              const pct = stats.totalApplications > 0
+                ? Math.round((stage.count / stats.totalApplications) * 100)
+                : 0;
+              return (
+                <div key={stage.label} className="flex items-center gap-3">
+                  <div className="w-24 text-right">
+                    <span className="text-sm font-medium text-gray-600">{stage.label}</span>
+                  </div>
+                  <div className="flex-1 h-7 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${stage.color} rounded-full transition-all duration-700 flex items-center justify-end pr-3`}
+                      style={{ width: `${Math.max(pct, pct > 0 ? 6 : 0)}%` }}
+                    >
+                      {pct >= 8 && (
+                        <span className="text-xs font-semibold text-white">{pct}%</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`w-12 text-center px-2 py-0.5 rounded-full text-xs font-bold ${stage.light} ${stage.text}`}>
+                    {stage.count}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card className="border-0 shadow-sm">
