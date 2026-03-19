@@ -83,22 +83,10 @@ export default function Footer() {
         />
       </div>
 
-      {/* Newsletter Section */}
+      {/* Newsletter Section 
       <div className="relative border-b border-gray-100 bg-gradient-to-b from-gray-50/50 to-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
           <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mb-4 md:mb-6"
-            >
-              <span className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-400">
-                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                Stay in the loop
-              </span>
-            </motion.div>
-
             <motion.h3
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -165,6 +153,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      */}
 
       {/* Main Footer Grid */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">

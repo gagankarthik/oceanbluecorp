@@ -243,52 +243,42 @@ export default function Header() {
                       }`} />
                     </button>
 
-                    {/* Dropdown */}
+                    {/* Dropdown - Dark Flyout Style */}
                     <AnimatePresence>
                       {activeDropdown === item.dropdownType && (
                         <motion.div
-                          initial={{ opacity: 0, y: -10 }}
+                          initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 pt-4"
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 pt-5"
                         >
-                          <div className={`bg-white rounded-2xl shadow-xl border border-gray-200 p-3 ${
-                            item.dropdownType === "services" ? "w-[600px] grid grid-cols-2 gap-1" : "w-[300px]"
+                          <div className={`overflow-hidden rounded-3xl bg-white text-sm shadow-lg outline-1 outline-gray-900/5 ${
+                            item.dropdownType === "services" ? "w-[580px]" : "w-[320px]"
                           }`}>
-                            {getDropdownItems(item.dropdownType || "").map((dropItem) => (
-                              <Link
-                                key={dropItem.name}
-                                href={dropItem.href}
-                                className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all group"
-                              >
-                                <div className={`w-10 h-10 flex items-center rounded justify-center shadow-sm group-hover:shadow transition-shadow flex-shrink-0`}>
-                                  <dropItem.icon className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900 group-hover:text-gray-900 transition-colors text-sm">
-                                    {dropItem.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate">
-                                    {dropItem.description}
-                                  </p>
-                                </div>
-                               
-                              </Link>
-                            ))}
-                            
-                            {/* View all link - only for services and resources */}
-                            {item.dropdownType !== "about" && (
-                              <Link
-                                href={item.dropdownType === "services" ? "/services" : "/resources"}
-                                className="col-span-2 mt-1 flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all group"
-                              >
-                                <span className="text-sm font-medium text-gray-900">
-                                  View all {item.dropdownType}
-                                </span>
-                                <ArrowRight className="w-4 h-4 text-gray-500 group-hover:translate-x-0.5 transition-transform" />
-                              </Link>
-                            )}
+                            {/* Menu Items */}
+                            <div className={`p-4 ${item.dropdownType === "services" ? "grid grid-cols-2 gap-1" : ""}`}>
+                              {getDropdownItems(item.dropdownType || "").map((dropItem) => (
+                                <Link
+                                  key={dropItem.name}
+                                  href={dropItem.href}
+                                  className="group relative flex items-start gap-4 rounded-xl p-3"
+                                >
+                                  <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
+                                    <dropItem.icon aria-hidden="true" className="w-5 h-5 size-6 text-gray-600 group-hover:text-indigo-600" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-gray-900">
+                                      {dropItem.name}
+                                      <span className="absolute inset-0" />
+                                    </p>
+                                    <p className="mt-1 text-gray-600 text-xs leading-relaxed">
+                                      {dropItem.description}
+                                    </p>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -327,49 +317,67 @@ export default function Header() {
                       }`} />
                     </button>
 
-                    {/* User Dropdown */}
+                    {/* User Dropdown - Dark Flyout Style */}
                     <AnimatePresence>
                       {userMenuOpen && (
                         <motion.div
-                          initial={{ opacity: 0, y: -10 }}
+                          initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute top-full right-0 pt-4"
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute top-full right-0 pt-5"
                         >
-                          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 py-2 w-64">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                              <p className="font-medium text-gray-900 text-sm">{user?.name}</p>
-                              <p className="text-xs text-gray-500 mt-0.5 truncate">{user?.email}</p>
-                              <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 capitalize">
+                          <div className="overflow-hidden rounded-3xl bg-slate-900 text-sm shadow-2xl ring-1 ring-white/10 w-72">
+                            {/* User Info */}
+                            <div className="p-4 border-b border-white/10">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
+                                  {getUserInitials()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-white truncate">{user?.name}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5 truncate">{user?.email}</p>
+                                </div>
+                              </div>
+                              <span className="inline-block mt-3 px-3 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 capitalize">
                                 {user?.role}
                               </span>
                             </div>
-                            <Link
-                              href={getDashboardLink()}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              onClick={() => setUserMenuOpen(false)}
-                            >
-                              <LayoutDashboard className="w-4 h-4" />
-                              Dashboard
-                            </Link>
-                            <Link
-                              href="/dashboard/settings"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              onClick={() => setUserMenuOpen(false)}
-                            >
-                              <Settings className="w-4 h-4" />
-                              Settings
-                            </Link>
-                            <div className="border-t border-gray-100 mt-1 pt-1">
+
+                            {/* Menu Items */}
+                            <div className="p-2">
+                              <Link
+                                href={getDashboardLink()}
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-white hover:bg-white/5 transition-colors"
+                                onClick={() => setUserMenuOpen(false)}
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
+                                  <LayoutDashboard className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                                </div>
+                                <span className="font-medium">Dashboard</span>
+                              </Link>
+                              <Link
+                                href="/dashboard/settings"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-white hover:bg-white/5 transition-colors"
+                                onClick={() => setUserMenuOpen(false)}
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
+                                  <Settings className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                                </div>
+                                <span className="font-medium">Settings</span>
+                              </Link>
+                            </div>
+
+                            {/* Sign Out */}
+                            <div className="border-t border-white/10">
                               <button
                                 onClick={() => {
                                   setUserMenuOpen(false);
                                   signOut();
                                 }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                className="w-full flex items-center justify-center gap-2 p-4 font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
                               >
-                                <LogOut className="w-4 h-4" />
+                                <LogOut className="w-5 h-5" />
                                 Sign Out
                               </button>
                             </div>
