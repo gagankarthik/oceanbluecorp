@@ -5,7 +5,9 @@ import {
   updateApplication,
   deleteApplication,
   Application,
+  NoteEntry,
 } from "@/lib/aws/dynamodb";
+import { v4 as uuidv4 } from "uuid";
 
 // GET /api/applications/[id] - Get a specific application
 export async function GET(
@@ -78,6 +80,58 @@ export async function PUT(
       );
     }
 
+    // Handle addNote payload - append to notesHistory array
+    if (body.addNote) {
+      const { text, addedBy, addedByName } = body.addNote;
+      if (!text || !addedBy || !addedByName) {
+        return NextResponse.json(
+          { error: "addNote requires text, addedBy, and addedByName" },
+          { status: 400 }
+        );
+      }
+
+      // Get existing notes history, or start with empty array
+      let notesHistory: NoteEntry[] = existingApp.data.notesHistory || [];
+
+      // Migrate legacy string notes if present and notesHistory is empty
+      if (!notesHistory.length && existingApp.data.notes && typeof existingApp.data.notes === "string") {
+        notesHistory.push({
+          id: "legacy",
+          text: existingApp.data.notes,
+          addedAt: existingApp.data.appliedAt || existingApp.data.createdAt || new Date().toISOString(),
+          addedBy: "system",
+          addedByName: "Legacy Note",
+        });
+      }
+
+      // Add new note
+      const newNote: NoteEntry = {
+        id: uuidv4(),
+        text,
+        addedAt: new Date().toISOString(),
+        addedBy,
+        addedByName,
+      };
+      notesHistory.push(newNote);
+
+      // Update with new notes history and clear legacy notes field
+      const result = await updateApplication(id, {
+        notesHistory,
+        notes: "", // Clear legacy notes after migration
+      });
+
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || "Failed to add note" },
+          { status: 500 }
+        );
+      }
+
+      // Fetch updated application
+      const updatedApp = await getApplication(id);
+      return NextResponse.json({ application: updatedApp.data });
+    }
+
     // Check if this is a status change or a full update
     const isStatusChange = body.status && body.status !== existingApp.data.status;
     const hasFullUpdateFields = body.firstName || body.lastName || body.address ||
@@ -114,7 +168,15 @@ export async function PUT(
       if (body.jobTitle !== undefined) updates.jobTitle = body.jobTitle;
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;
-      if (body.ownership !== undefined) updates.ownership = body.ownership;
+      if (body.ownership !== undefined) {
+        updates.ownership = body.ownership;
+        // Set ownershipClaimedAt when ownership is claimed, clear when released
+        if (body.ownership) {
+          updates.ownershipClaimedAt = new Date().toISOString();
+        } else {
+          updates.ownershipClaimedAt = "";
+        }
+      }
       if (body.ownershipName !== undefined) updates.ownershipName = body.ownershipName;
 
       // Skills & experience
@@ -124,6 +186,7 @@ export async function PUT(
 
       // Notes & rating
       if (body.notes !== undefined) updates.notes = body.notes;
+      if (body.notesHistory !== undefined) updates.notesHistory = body.notesHistory;
       if (body.rating !== undefined) updates.rating = body.rating;
 
       // Talent bench flag

@@ -215,7 +215,6 @@ export default function JobsPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">Job Postings</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">{jobs.length}</span>
           </div>
           <p className="text-gray-500 text-sm mt-0.5">Manage job listings and track applications</p>
         </div>

@@ -102,6 +102,14 @@ const getTables = () => getEnvConfig().tables;
 // Types
 // ===========================================
 
+export interface NoteEntry {
+  id: string;           // UUID for each note
+  text: string;         // Note content
+  addedAt: string;      // ISO timestamp
+  addedBy: string;      // User ID
+  addedByName: string;  // User display name
+}
+
 export interface Resume {
   id: string; // PK
   userId: string; // User ID (GSI)
@@ -134,6 +142,7 @@ export interface Application {
 
   // Notes & Rating
   notes?: string;
+  notesHistory?: NoteEntry[];  // New structured notes array
   rating?: number; // 1-5 star rating
 
   // Applicant info - core fields
@@ -159,6 +168,7 @@ export interface Application {
   workAuthorization?: "US Citizen" | "Green Card" | "H1-B" | "OPT/CPT" | "TN Visa" | "Other";
   ownership?: string; // HR user ID assigned
   ownershipName?: string; // HR user name for display
+  ownershipClaimedAt?: string; // When ownership was claimed
 
   // Creator info
   createdBy?: string; // User ID who created (for HR-created)
@@ -315,6 +325,7 @@ export interface CandidateApplication {
   jobTitle?: string; // Auto-populated from Job ID
   ownership?: string; // HR user assigned
   ownershipName?: string; // HR user name for display
+  ownershipClaimedAt?: string; // When ownership was claimed
   workAuthorization: "US Citizen" | "Green Card" | "H1-B" | "OPT/CPT" | "TN Visa" | "Other";
   createdBy: string; // Auto-populate with current user
   createdByName?: string;
@@ -323,6 +334,7 @@ export interface CandidateApplication {
   updatedAt?: string;
   rating?: number; // 1-5 star rating
   notes?: string; // Text area for additional comments
+  notesHistory?: NoteEntry[]; // New structured notes array
   addToTalentBench?: boolean; // Add to talent bench for future opportunities
 }
 

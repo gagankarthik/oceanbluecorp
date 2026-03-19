@@ -27,8 +27,9 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  User,
 } from "lucide-react";
-import { Application, Job } from "@/lib/aws/dynamodb";
+import { Application, Job, NoteEntry } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 interface CandidateWithJob extends Application {
@@ -37,6 +38,9 @@ interface CandidateWithJob extends Application {
   jobLocation?: string;
   postedByName?: string;
   postedByEmail?: string;
+  notesHistory?: NoteEntry[];
+  ownershipClaimedAt?: string;
+  createdAt?: string;
 }
 
 interface ActivityItem {
@@ -97,6 +101,9 @@ export default function CandidatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [newNoteText, setNewNoteText] = useState("");
+  const [addingNoteForId, setAddingNoteForId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateWithJob | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -153,7 +160,16 @@ export default function CandidatesPage() {
       (c.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesPosition = positionFilter === "all" || c.jobTitle === positionFilter;
-    return matchesSearch && matchesStatus && matchesPosition;
+    // Owner filter logic
+    let matchesOwner = true;
+    if (ownerFilter === "unassigned") {
+      matchesOwner = !c.ownership;
+    } else if (ownerFilter === "mine") {
+      matchesOwner = c.ownership === user?.id;
+    } else if (ownerFilter !== "all") {
+      matchesOwner = c.ownershipName === ownerFilter;
+    }
+    return matchesSearch && matchesStatus && matchesPosition && matchesOwner;
   });
 
   const candidatesByStage = pipelineStages.reduce((acc, stage) => {
@@ -290,6 +306,103 @@ export default function CandidatesPage() {
     return new Date(dateStr).toLocaleDateString();
   };
 
+  // Helper to get notes in array format (handles legacy string notes)
+  const getNotes = (candidate: CandidateWithJob): NoteEntry[] => {
+    if (Array.isArray(candidate.notesHistory) && candidate.notesHistory.length > 0) {
+      return candidate.notesHistory;
+    }
+    if (typeof candidate.notes === "string" && candidate.notes) {
+      return [{
+        id: "legacy",
+        text: candidate.notes,
+        addedAt: candidate.appliedAt || candidate.createdAt || new Date().toISOString(),
+        addedBy: "system",
+        addedByName: "Legacy Note",
+      }];
+    }
+    return [];
+  };
+
+  // Get unique owners for filter dropdown
+  const uniqueOwners = [...new Set(candidates.filter(c => c.ownershipName).map(c => c.ownershipName))];
+
+  // Handle claiming ownership
+  const handleClaimOwnership = async (candidateId: string) => {
+    if (!user) return;
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownership: user.id,
+          ownershipName: user.name || user.email,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to claim ownership");
+      const data = await response.json();
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, ...data.application } : c));
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate({ ...selectedCandidate, ...data.application });
+      }
+    } catch {
+      alert("Failed to claim ownership");
+    }
+  };
+
+  // Handle releasing ownership
+  const handleReleaseOwnership = async (candidateId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownership: "",
+          ownershipName: "",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to release ownership");
+      const data = await response.json();
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, ...data.application } : c));
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate({ ...selectedCandidate, ...data.application });
+      }
+    } catch {
+      alert("Failed to release ownership");
+    }
+  };
+
+  // Handle adding a timestamped note
+  const handleAddNote = async (candidateId: string) => {
+    if (!user || !newNoteText.trim()) return;
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addNote: {
+            text: newNoteText.trim(),
+            addedBy: user.id,
+            addedByName: user.name || user.email,
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add note");
+      const data = await response.json();
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, ...data.application } : c));
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate({ ...selectedCandidate, ...data.application });
+      }
+      setNewNoteText("");
+      setAddingNoteForId(null);
+      setActivityLog(prev => ({
+        ...prev,
+        [candidateId]: [{ id: `${candidateId}-${Date.now()}`, type: "note_added", message: "Note added", timestamp: new Date().toISOString(), user: user.name || user.email || "You" }, ...(prev[candidateId] || [])],
+      }));
+    } catch {
+      alert("Failed to add note");
+    }
+  };
+
   const handleExportCSV = () => {
     const headers = ["Name","Email","Phone","Position","Department","Status","Rating","Applied Date"];
     const rows = filteredCandidates.map(c => [c.name, c.email, c.phone || "", c.jobTitle || "", c.jobDepartment || "", statusConfig[c.status]?.label || c.status, c.rating?.toString() || "", new Date(c.appliedAt).toLocaleDateString()]);
@@ -359,6 +472,12 @@ export default function CandidatesPage() {
             <option value="all">All Positions</option>
             {positions.map(p => <option key={p} value={p!}>{p}</option>)}
           </select>
+          <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700">
+            <option value="all">All Owners</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="mine">My Candidates</option>
+            {uniqueOwners.map(o => <option key={o} value={o!}>{o}</option>)}
+          </select>
         </div>
       </div>
 
@@ -387,7 +506,22 @@ export default function CandidatesPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-gray-900 truncate">{candidate.name || "Unknown"}</h4>
                         <p className="text-xs text-gray-500 truncate">{candidate.jobTitle}</p>
-                        <div className="flex items-center justify-between mt-2">
+                        {/* Owner display or claim button */}
+                        <div className="mt-1.5">
+                          {candidate.ownershipName ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                              <User className="w-2.5 h-2.5" />{candidate.ownershipName}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleClaimOwnership(candidate.id); }}
+                              className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-1.5 py-0.5 rounded-full transition-colors"
+                            >
+                              <User className="w-2.5 h-2.5" />Claim
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-1.5">
                           <div className="flex items-center gap-0.5">
                             {[1,2,3,4,5].map(s => <Star key={s} className={`w-3 h-3 ${s <= (candidate.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />)}
                           </div>
@@ -425,6 +559,20 @@ export default function CandidatesPage() {
               <div className="space-y-1.5 mb-4">
                 {candidate.jobTitle && <div className="flex items-center gap-2 text-xs text-gray-600"><Briefcase className="w-3.5 h-3.5 text-gray-400" />{candidate.jobTitle}</div>}
                 {candidate.jobLocation && <div className="flex items-center gap-2 text-xs text-gray-500"><MapPin className="w-3.5 h-3.5 text-gray-400" />{candidate.jobLocation}</div>}
+                {/* Owner display or claim button */}
+                <div className="flex items-center gap-2 text-xs">
+                  <User className="w-3.5 h-3.5 text-gray-400" />
+                  {candidate.ownershipName ? (
+                    <span className="text-emerald-600 font-medium">{candidate.ownershipName}</span>
+                  ) : (
+                    <button
+                      onClick={e => { e.stopPropagation(); handleClaimOwnership(candidate.id); }}
+                      className="text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Claim ownership
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-0.5">
@@ -456,6 +604,7 @@ export default function CandidatesPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Candidate</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Position</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Stage</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Owner</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Rating</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Applied</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
@@ -486,6 +635,20 @@ export default function CandidatesPage() {
                     </select>
                   </td>
                   <td className="px-4 py-3.5 hidden lg:table-cell">
+                    {candidate.ownershipName ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <User className="w-3 h-3" />{candidate.ownershipName}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); handleClaimOwnership(candidate.id); }}
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-full transition-colors"
+                      >
+                        <User className="w-3 h-3" />Claim
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 hidden lg:table-cell">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => (
                         <button key={s} onClick={e => { e.stopPropagation(); handleRatingChange(candidate.id, s); }}>
@@ -509,7 +672,7 @@ export default function CandidatesPage() {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan={6} className="py-16 text-center">
+                <tr><td colSpan={7} className="py-16 text-center">
                   <Briefcase className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                   <h3 className="text-base font-semibold text-gray-900 mb-1">No candidates found</h3>
                   <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
@@ -634,6 +797,39 @@ export default function CandidatesPage() {
                     </div>
                   </div>
 
+                  {/* Ownership */}
+                  <div>
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Ownership</h3>
+                    {selectedCandidate.ownershipName ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-emerald-700">
+                          <User className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-medium">{selectedCandidate.ownershipName}</span>
+                        </div>
+                        {selectedCandidate.ownershipClaimedAt && (
+                          <p className="text-xs text-gray-500 pl-6">
+                            Claimed {new Date(selectedCandidate.ownershipClaimedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                        )}
+                        {selectedCandidate.ownership === user?.id && (
+                          <button
+                            onClick={() => handleReleaseOwnership(selectedCandidate.id)}
+                            className="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                          >
+                            Release Ownership
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleClaimOwnership(selectedCandidate.id)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors border border-blue-100"
+                      >
+                        <User className="w-4 h-4" /> Claim Ownership
+                      </button>
+                    )}
+                  </div>
+
                   {/* Rating */}
                   <div>
                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rating</h3>
@@ -731,38 +927,74 @@ export default function CandidatesPage() {
                     {/* Notes Tab */}
                     {detailTab === "notes" && (
                       <div className="space-y-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Notes</h3>
-                        {editingNoteId === selectedCandidate.id ? (
-                          <div className="space-y-3">
-                            <textarea
-                              value={noteText}
-                              onChange={e => setNoteText(e.target.value)}
-                              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[160px]"
-                              placeholder="Add internal notes about this candidate..."
-                            />
-                            <div className="flex gap-2">
-                              <button onClick={() => handleNotesSave(selectedCandidate.id)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium">Save Note</button>
-                              <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            {selectedCandidate.notes ? (
-                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mb-3">{selectedCandidate.notes}</div>
-                            ) : (
-                              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl mb-3">
-                                <StickyNote className="w-8 h-8 text-gray-200 mb-2" />
-                                <p className="text-sm text-gray-400">No notes yet</p>
-                              </div>
-                            )}
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Notes</h3>
+                          {addingNoteForId !== selectedCandidate.id && (
                             <button
-                              onClick={() => { setEditingNoteId(selectedCandidate.id); setNoteText(selectedCandidate.notes || ""); }}
+                              onClick={() => { setAddingNoteForId(selectedCandidate.id); setNewNoteText(""); }}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-colors"
                             >
-                              <StickyNote className="w-4 h-4" />{selectedCandidate.notes ? "Edit Note" : "Add Note"}
+                              <Plus className="w-4 h-4" /> Add Note
                             </button>
+                          )}
+                        </div>
+
+                        {/* Add note form */}
+                        {addingNoteForId === selectedCandidate.id && (
+                          <div className="space-y-3 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <textarea
+                              value={newNoteText}
+                              onChange={e => setNewNoteText(e.target.value)}
+                              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[100px] bg-white"
+                              placeholder="Add a note about this candidate..."
+                              autoFocus
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleAddNote(selectedCandidate.id)}
+                                disabled={!newNoteText.trim()}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Save Note
+                              </button>
+                              <button
+                                onClick={() => { setAddingNoteForId(null); setNewNoteText(""); }}
+                                className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
                         )}
+
+                        {/* Notes list */}
+                        {(() => {
+                          const notes = getNotes(selectedCandidate);
+                          if (notes.length === 0 && addingNoteForId !== selectedCandidate.id) {
+                            return (
+                              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                                <StickyNote className="w-8 h-8 text-gray-200 mb-2" />
+                                <p className="text-sm text-gray-400">No notes yet</p>
+                                <p className="text-xs text-gray-400 mt-1">Click "Add Note" to add your first note</p>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="space-y-3">
+                              {notes.slice().reverse().map((note: NoteEntry) => (
+                                <div key={note.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-amber-800">{note.addedByName}</span>
+                                    <span className="text-[10px] text-amber-600">
+                                      {new Date(note.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
