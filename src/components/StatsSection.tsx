@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 
@@ -13,101 +12,101 @@ const stats = [
 
 function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
   const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {
-    if (isInView) {
-      let start = 0;
-      const duration = 2000;
-      const increment = value / (duration / 16);
-      
-      const timer = setInterval(() => {
-        start += increment;
-        if (start >= value) {
-          setCount(value);
-          clearInterval(timer);
-        } else {
-          setCount(Math.floor(start));
-        }
-      }, 16);
+    if (hasAnimated) return;
 
-      return () => clearInterval(timer);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          // Use requestAnimationFrame for smoother animation
+          const duration = 1500;
+          const startTime = performance.now();
+
+          const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease out cubic for smoother finish
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * value));
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setCount(value);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
     }
-  }, [isInView, value]);
+
+    return () => observer.disconnect();
+  }, [value, hasAnimated]);
 
   return (
-    <span ref={ref} className="text-5xl md:text-6xl font-light text-white inline-block drop-shadow-lg">
-      {isInView ? count : 0}{suffix}
+    <span ref={ref} className="text-4xl sm:text-5xl md:text-6xl font-light text-white inline-block drop-shadow-lg">
+      {count}{suffix}
     </span>
   );
 }
 
 export default function StatsSections() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
-
   return (
-    <section ref={sectionRef} className="relative w-full py-24 md:py-32 overflow-hidden">
-      {/* Background Image - Fully Visible */}
+    <section className="relative w-full py-16 sm:py-24 md:py-32 overflow-hidden">
+      {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1723307060937-b003478a2c03?q=80&w=2928&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1723307060937-b003478a2c03?q=80&w=1200&auto=format&fit=crop"
           alt="Background"
           fill
           className="object-cover"
-          priority
+          sizes="100vw"
+          loading="lazy"
         />
-        {/* Very Subtle Darkening for Text Readability */}
-        <div className="absolute inset-0 bg-black/20" />
+        {/* Darkening for Text Readability */}
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-6 max-w-6xl">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 max-w-6xl">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
           {/* Left Column - Heading */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="text-white"
-          >
-            <span className="text-sm font-mono text-white/80 tracking-wider mb-4 block drop-shadow">
+          <div className="text-white text-center md:text-left">
+            <span className="text-xs sm:text-sm font-mono text-white/80 tracking-wider mb-3 sm:mb-4 block drop-shadow">
               — OUR IMPACT
             </span>
-            <h2 className="text-4xl md:text-5xl font-serif leading-tight mb-6 drop-shadow-lg">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif leading-tight mb-4 sm:mb-6 drop-shadow-lg">
               Track record of
               <span className="block text-white mt-2 font-bold">Excellence</span>
             </h2>
-            <p className="text-white/90 text-lg max-w-md drop-shadow">
+            <p className="text-white/90 text-base sm:text-lg max-w-md mx-auto md:mx-0 drop-shadow">
               We deliver measurable results that help businesses scale faster with proven expertise across industries.
             </p>
-          </motion.div>
+          </div>
 
           {/* Right Column - Stats Grid */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-2 gap-8 md:gap-12"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="border-l-4 border-white/50 pl-4"
-              >
+          <div className="grid grid-cols-2 gap-6 sm:gap-8 md:gap-12">
+            {stats.map((stat) => (
+              <div key={stat.id} className="border-l-4 border-white/50 pl-3 sm:pl-4">
                 <div className="mb-1 drop-shadow-lg">
                   <Counter value={stat.value} suffix={stat.suffix} />
                 </div>
-                <p className="text-base text-white/90 font-medium tracking-wide drop-shadow">
+                <p className="text-sm sm:text-base text-white/90 font-medium tracking-wide drop-shadow">
                   {stat.label}
                 </p>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
