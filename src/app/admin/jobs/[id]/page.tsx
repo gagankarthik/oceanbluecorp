@@ -28,11 +28,27 @@ import {
   StickyNote,
   User,
   X,
-  CalendarDays,
   MapPin,
   DollarSign,
   Users,
   Edit3,
+  Building2,
+  Hash,
+  Globe,
+  TrendingUp,
+  Share2,
+  Copy,
+  Check,
+  UserCheck,
+  UsersRound,
+  Receipt,
+  Wallet,
+  Bell,
+  FileCheck,
+  Target,
+  AlertCircle,
+  CalendarClock,
+  Handshake,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 
@@ -43,64 +59,48 @@ interface ApplicationWithJob extends Application {
 
 const statusConfig = {
   pending: {
-    label: "Pending Review",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    dotColor: "bg-amber-500",
-    icon: Clock,
+    label: "New",
+    color: "bg-gray-100 text-gray-700 border-gray-200",
+    dotColor: "bg-gray-400",
   },
   reviewing: {
-    label: "Under Review",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
+    label: "Screening",
+    color: "bg-blue-100 text-blue-700 border-blue-200",
     dotColor: "bg-blue-500",
-    icon: Eye,
   },
   interview: {
     label: "Interview",
-    color: "bg-purple-50 text-purple-700 border-purple-200",
+    color: "bg-purple-100 text-purple-700 border-purple-200",
     dotColor: "bg-purple-500",
-    icon: MessageSquare,
   },
   offered: {
-    label: "Offer Sent",
-    color: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    dotColor: "bg-cyan-500",
-    icon: Mail,
+    label: "Offered",
+    color: "bg-amber-100 text-amber-700 border-amber-200",
+    dotColor: "bg-amber-500",
   },
   hired: {
     label: "Hired",
-    color: "bg-green-50 text-green-700 border-green-200",
-    dotColor: "bg-green-500",
-    icon: CheckCircle2,
+    color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    dotColor: "bg-emerald-500",
   },
   rejected: {
     label: "Rejected",
-    color: "bg-red-50 text-red-700 border-red-200",
-    dotColor: "bg-red-500",
-    icon: XCircle,
+    color: "bg-rose-100 text-rose-700 border-rose-200",
+    dotColor: "bg-rose-500",
   },
 };
 
-const jobStatusConfig = {
-  active: {
-    label: "Active",
-    color: "bg-green-100 text-green-700",
-  },
-  paused: {
-    label: "Paused",
-    color: "bg-yellow-100 text-yellow-700",
-  },
-  draft: {
-    label: "Draft",
-    color: "bg-gray-100 text-gray-700",
-  },
-  closed: {
-    label: "Closed",
-    color: "bg-red-100 text-red-700",
-  },
+const jobStatusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  active: { label: "Active", color: "text-emerald-700", bg: "bg-emerald-100" },
+  open: { label: "Open", color: "text-emerald-700", bg: "bg-emerald-100" },
+  paused: { label: "Paused", color: "text-amber-700", bg: "bg-amber-100" },
+  "on-hold": { label: "On Hold", color: "text-amber-700", bg: "bg-amber-100" },
+  draft: { label: "Draft", color: "text-gray-700", bg: "bg-gray-100" },
+  closed: { label: "Closed", color: "text-rose-700", bg: "bg-rose-100" },
 };
 
 type ViewMode = "table" | "cards";
-type DateRange = "all" | "today" | "week" | "month" | "custom";
+type DateRange = "all" | "today" | "week" | "month";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -113,26 +113,21 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>("all");
-  const [customDateFrom, setCustomDateFrom] = useState("");
-  const [customDateTo, setCustomDateTo] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
 
-  // View
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Notes
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmails, setShareEmails] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  // Fetch job and applications
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -145,13 +140,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         const jobData = await jobResponse.json();
         const appsData = await appsResponse.json();
 
-        if (!jobResponse.ok) {
-          throw new Error(jobData.error || "Failed to fetch job");
-        }
-
-        if (!appsResponse.ok) {
-          throw new Error(appsData.error || "Failed to fetch applications");
-        }
+        if (!jobResponse.ok) throw new Error(jobData.error || "Failed to fetch job");
+        if (!appsResponse.ok) throw new Error(appsData.error || "Failed to fetch applications");
 
         setJob(jobData.job);
         setApplications(
@@ -167,14 +157,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         setLoading(false);
       }
     };
-
     fetchData();
   }, [jobId]);
 
-  // Date filtering logic
   const isWithinDateRange = (dateStr: string) => {
     if (dateRange === "all") return true;
-
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -184,29 +171,16 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
       dateOnly.setHours(0, 0, 0, 0);
       return dateOnly.getTime() === today.getTime();
     }
-
     if (dateRange === "week") {
       const weekAgo = new Date(today);
       weekAgo.setDate(weekAgo.getDate() - 7);
       return date >= weekAgo;
     }
-
     if (dateRange === "month") {
       const monthAgo = new Date(today);
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       return date >= monthAgo;
     }
-
-    if (dateRange === "custom") {
-      const from = customDateFrom ? new Date(customDateFrom) : null;
-      const to = customDateTo ? new Date(customDateTo) : null;
-      if (from && to) {
-        return date >= from && date <= new Date(to.getTime() + 86400000);
-      }
-      if (from) return date >= from;
-      if (to) return date <= new Date(to.getTime() + 86400000);
-    }
-
     return true;
   };
 
@@ -220,17 +194,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Pagination
   const totalPages = Math.ceil(filteredApplications.length / ITEMS_PER_PAGE);
   const paginatedApplications = filteredApplications.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, dateRange, customDateFrom, customDateTo]);
+  }, [searchQuery, statusFilter, dateRange]);
 
   const handleStatusChange = async (appId: string, newStatus: Application["status"]) => {
     try {
@@ -239,17 +211,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
-
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === appId ? { ...app, status: newStatus } : app
-        )
-      );
-    } catch (err) {
+      if (!response.ok) throw new Error("Failed to update status");
+      setApplications((prev) => prev.map((app) => (app.id === appId ? { ...app, status: newStatus } : app)));
+    } catch {
       alert("Failed to update application status");
     }
   };
@@ -261,15 +225,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update rating");
-      }
-
-      setApplications((prev) =>
-        prev.map((app) => (app.id === appId ? { ...app, rating } : app))
-      );
-    } catch (err) {
+      if (!response.ok) throw new Error("Failed to update rating");
+      setApplications((prev) => prev.map((app) => (app.id === appId ? { ...app, rating } : app)));
+    } catch {
       alert("Failed to update rating");
     }
   };
@@ -281,25 +239,17 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: noteText }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save notes");
-      }
-
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === appId ? { ...app, notes: noteText } : app
-        )
-      );
+      if (!response.ok) throw new Error("Failed to save notes");
+      setApplications((prev) => prev.map((app) => (app.id === appId ? { ...app, notes: noteText } : app)));
       setEditingNoteId(null);
       setNoteText("");
-    } catch (err) {
+    } catch {
       alert("Failed to save notes");
     }
   };
 
   const handleExportCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Status", "Applied Date", "Rating", "Experience", "Skills", "Cover Letter", "Notes"];
+    const headers = ["Name", "Email", "Phone", "Status", "Applied Date", "Rating", "Notes"];
     const rows = filteredApplications.map((app) => [
       `"${app.name}"`,
       `"${app.email}"`,
@@ -307,13 +257,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
       `"${app.status}"`,
       `"${new Date(app.appliedAt).toLocaleDateString()}"`,
       `"${app.rating?.toString() || ""}"`,
-      `"${app.experience || ""}"`,
-      `"${app.skills?.join(", ") || ""}"`,
-      `"${(app.coverLetter || "").replace(/"/g, '""')}"`,
       `"${(app.notes || "").replace(/"/g, '""')}"`,
     ]);
-
-    const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -327,23 +273,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     try {
       const response = await fetch(`/api/resume/${resumeId}`);
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to get resume");
-      }
-
+      if (!response.ok || !data.success) throw new Error(data.error || "Failed to get resume");
       window.open(data.downloadUrl, "_blank");
-    } catch (err) {
+    } catch {
       alert("Failed to load resume. The file may have been deleted.");
     }
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const formatTimeAgo = (dateStr: string) => {
@@ -351,29 +289,71 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
     return formatDate(dateStr);
   };
 
   const stats = {
     total: applications.length,
     pending: applications.filter((a) => a.status === "pending").length,
-    reviewing: applications.filter(
-      (a) => a.status === "reviewing" || a.status === "interview"
-    ).length,
+    inProgress: applications.filter((a) => ["reviewing", "interview", "offered"].includes(a.status)).length,
     hired: applications.filter((a) => a.status === "hired").length,
+    rejected: applications.filter((a) => a.status === "rejected").length,
+  };
+
+  const getJobUrl = () => {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/careers/${jobId}`;
+    }
+    return "";
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getJobUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert("Failed to copy link");
+    }
+  };
+
+  const handleShareViaEmail = () => {
+    if (!job) return;
+    const emails = shareEmails.split(",").map((e) => e.trim()).filter(Boolean);
+    if (emails.length === 0) {
+      alert("Please enter at least one email address");
+      return;
+    }
+
+    const jobUrl = getJobUrl();
+    const subject = encodeURIComponent(`Job Opportunity: ${job.title} at Ocean Blue Corporation`);
+    const salaryInfo = job.salary ? `\nSalary Range: $${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}` : "";
+    const body = encodeURIComponent(
+      `${shareMessage ? shareMessage + "\n\n" : ""}I wanted to share this job opportunity with you:\n\n` +
+      `Position: ${job.title}\n` +
+      `Department: ${job.department}\n` +
+      `Location: ${job.location}\n` +
+      `Type: ${job.type}${salaryInfo}\n\n` +
+      `View and apply here: ${jobUrl}\n\n` +
+      `Best regards`
+    );
+
+    window.open(`mailto:${emails.join(",")}?subject=${subject}&body=${body}`, "_blank");
+    setShowShareModal(false);
+    setShareEmails("");
+    setShareMessage("");
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-cyan-600 mx-auto mb-4 animate-spin" />
-          <p className="text-slate-500">Loading job details...</p>
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 text-blue-600 mx-auto animate-spin" />
+          <p className="text-gray-500 text-sm">Loading job details...</p>
         </div>
       </div>
     );
@@ -382,11 +362,14 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   if (error || !job) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error || "Job not found"}</p>
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <XCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-gray-900 font-medium">{error || "Job not found"}</p>
           <button
             onClick={() => router.push("/admin/jobs")}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
           >
             Back to Jobs
           </button>
@@ -395,659 +378,529 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const jobStatus = jobStatusConfig[job.status as keyof typeof jobStatusConfig] || jobStatusConfig.draft;
+  const jobStatus = jobStatusConfig[job.status] || jobStatusConfig.draft;
+
+  // Calculate days until due
+  const getDaysUntilDue = () => {
+    if (!job.submissionDueDate) return null;
+    const due = new Date(job.submissionDueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  const daysUntilDue = getDaysUntilDue();
+  const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
+  const isDueSoon = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 3;
 
   return (
-    <div className="space-y-6">
-      {/* Back Button & Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.push("/admin/jobs")}
-          className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">{job.title}</h1>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${jobStatus.color}`}>
-              {jobStatus.label}
-            </span>
-          </div>
-          <p className="text-slate-600 mt-1">
-            View and manage all applications for this position
-          </p>
-        </div>
-        <button
-          onClick={() => router.push(`/admin/jobs?edit=${job.id}`)}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-        >
-          <Edit3 className="w-4 h-4" />
-          Edit Job
-        </button>
-      </div>
-
-      {/* Job Info Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Department</p>
-              <p className="font-medium text-slate-900">{job.department}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Location</p>
-              <p className="font-medium text-slate-900">{job.location}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Users className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Type</p>
-              <p className="font-medium text-slate-900 capitalize">{job.type}</p>
-            </div>
-          </div>
-          {job.salary && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Salary Range</p>
-                <p className="font-medium text-slate-900">
-                  ${job.salary.min.toLocaleString()} - ${job.salary.max.toLocaleString()}
-                </p>
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <button onClick={() => router.push("/admin/jobs")} className="mt-0.5 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {job.postingId && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-mono rounded">
+                      <Hash className="w-3 h-3" />{job.postingId}
+                    </span>
+                  )}
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${jobStatus.bg} ${jobStatus.color}`}>
+                    {jobStatus.label}
+                  </span>
+                  {isOverdue && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                      <AlertCircle className="w-3 h-3" />Overdue
+                    </span>
+                  )}
+                  {isDueSoon && !isOverdue && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                      <CalendarClock className="w-3 h-3" />Due Soon
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-xl font-bold text-gray-900 mt-1 truncate">{job.title}</h1>
+                <div className="flex items-center gap-3 mt-1.5 text-sm text-gray-500 flex-wrap">
+                  <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" />{job.department}</span>
+                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{job.location}{job.state && `, ${job.state}`}</span>
+                  <span className="flex items-center gap-1 capitalize"><Briefcase className="w-3.5 h-3.5" />{job.type.replace(/-/g, " ")}</span>
+                </div>
               </div>
             </div>
-          )}
-          {job.submissionDueDate && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Due Date</p>
-                <p className="font-medium text-slate-900">{formatDate(job.submissionDueDate)}</p>
-              </div>
-            </div>
-          )}
-          {job.postedByName && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
-                <User className="w-5 h-5 text-cyan-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Posted By</p>
-                <p className="font-medium text-slate-900">{job.postedByName}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Application Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-              <p className="text-sm text-slate-600">Total Applications</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.pending}</p>
-              <p className="text-sm text-slate-600">Pending Review</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-              <Eye className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.reviewing}</p>
-              <p className="text-sm text-slate-600">In Progress</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.hired}</p>
-              <p className="text-sm text-slate-600">Hired</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-900">Candidates</h2>
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("cards")}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === "cards"
-                  ? "bg-white shadow-sm text-cyan-600"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-              title="Card view"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === "table"
-                  ? "bg-white shadow-sm text-cyan-600"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-              title="Table view"
-            >
-              <LayoutList className="w-4 h-4" />
-            </button>
-          </div>
-          <button
-            onClick={handleExportCSV}
-            disabled={filteredApplications.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
-              />
-            </div>
-
-            {/* Quick Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="reviewing">Reviewing</option>
-                <option value="interview">Interview</option>
-                <option value="offered">Offered</option>
-                <option value="hired">Hired</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 border rounded-xl transition-all ${
-                  showFilters || dateRange !== "all"
-                    ? "bg-cyan-50 border-cyan-300 text-cyan-700"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                <CalendarDays className="w-4 h-4" />
-                Date Filter
-                {dateRange !== "all" && (
-                  <span className="w-2 h-2 rounded-full bg-cyan-500" />
-                )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => setShowShareModal(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">
+                <Share2 className="w-4 h-4" />Share
+              </button>
+              <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <Edit3 className="w-4 h-4" />Edit
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Date Filter Panel */}
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-slate-700">Filter by date:</span>
-                {[
-                  { value: "all", label: "All Time" },
-                  { value: "today", label: "Today" },
-                  { value: "week", label: "Last 7 Days" },
-                  { value: "month", label: "Last 30 Days" },
-                  { value: "custom", label: "Custom Range" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setDateRange(option.value as DateRange)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      dateRange === option.value
-                        ? "bg-cyan-100 text-cyan-700"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-
-                {dateRange === "custom" && (
-                  <div className="flex items-center gap-2 ml-2">
-                    <input
-                      type="date"
-                      value={customDateFrom}
-                      onChange={(e) => setCustomDateFrom(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
-                    />
-                    <span className="text-slate-400">to</span>
-                    <input
-                      type="date"
-                      value={customDateTo}
-                      onChange={(e) => setCustomDateTo(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
-                    />
-                  </div>
-                )}
-
-                {dateRange !== "all" && (
-                  <button
-                    onClick={() => {
-                      setDateRange("all");
-                      setCustomDateFrom("");
-                      setCustomDateTo("");
-                    }}
-                    className="text-sm text-slate-500 hover:text-slate-700"
-                  >
-                    Clear
-                  </button>
-                )}
+        {/* ATS Pipeline Stats - Prominent Section */}
+        <div className="px-5 py-3 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
+          <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <Target className="w-3.5 h-3.5" />ATS Pipeline
+          </div>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+                <p className="text-[10px] text-gray-500 uppercase font-medium">Total</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded">
+                  <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700">{stats.pending}</span>
+                  <span className="text-xs text-gray-500">New</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 rounded">
+                  <span className="w-2 h-2 rounded-full bg-purple-500" />
+                  <span className="text-sm font-semibold text-purple-700">{stats.inProgress}</span>
+                  <span className="text-xs text-purple-600">Active</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 rounded">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-sm font-semibold text-emerald-700">{stats.hired}</span>
+                  <span className="text-xs text-emerald-600">Hired</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-rose-50 rounded">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span className="text-sm font-semibold text-rose-700">{stats.rejected}</span>
+                  <span className="text-xs text-rose-600">Rejected</span>
+                </div>
               </div>
             </div>
-          )}
+            {stats.total > 0 && (
+              <div className="ml-auto flex items-center gap-2">
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden flex">
+                  {stats.hired > 0 && <div className="bg-emerald-500 h-full" style={{ width: `${(stats.hired / stats.total) * 100}%` }} />}
+                  {stats.inProgress > 0 && <div className="bg-purple-500 h-full" style={{ width: `${(stats.inProgress / stats.total) * 100}%` }} />}
+                  {stats.pending > 0 && <div className="bg-gray-400 h-full" style={{ width: `${(stats.pending / stats.total) * 100}%` }} />}
+                  {stats.rejected > 0 && <div className="bg-rose-400 h-full" style={{ width: `${(stats.rejected / stats.total) * 100}%` }} />}
+                </div>
+                <span className="text-xs text-gray-500">{stats.total > 0 ? Math.round((stats.hired / stats.total) * 100) : 0}% hired</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Detailed Info Grid */}
+        <div className="px-5 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-3">
+            {/* Client & Vendor */}
+            {job.clientName && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Globe className="w-3 h-3" />Client</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{job.clientName}</p>
+                {job.clientNotes && <p className="text-xs text-gray-500 truncate">{job.clientNotes}</p>}
+              </div>
+            )}
+            {job.vendorName && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Handshake className="w-3 h-3" />Vendor</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{job.vendorName}</p>
+              </div>
+            )}
+
+            {/* Salary & Rates */}
+            {job.salary && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><DollarSign className="w-3 h-3" />Salary Range</p>
+                <p className="text-sm font-medium text-emerald-600">${job.salary.min.toLocaleString()} - ${job.salary.max.toLocaleString()}</p>
+              </div>
+            )}
+            {job.clientBillRate && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Receipt className="w-3 h-3" />Bill Rate</p>
+                <p className="text-sm font-medium text-gray-900">${job.clientBillRate}/hr</p>
+              </div>
+            )}
+            {job.payRate && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Wallet className="w-3 h-3" />Pay Rate</p>
+                <p className="text-sm font-medium text-gray-900">${job.payRate}/hr</p>
+              </div>
+            )}
+
+            {/* Dates */}
+            {job.submissionDueDate && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><CalendarClock className="w-3 h-3" />Due Date</p>
+                <p className={`text-sm font-medium ${isOverdue ? "text-red-600" : isDueSoon ? "text-amber-600" : "text-gray-900"}`}>
+                  {formatDate(job.submissionDueDate)}
+                  {daysUntilDue !== null && (
+                    <span className="text-xs font-normal ml-1">
+                      ({isOverdue ? `${Math.abs(daysUntilDue)}d overdue` : daysUntilDue === 0 ? "Today" : `${daysUntilDue}d left`})
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+            <div className="space-y-0.5">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Calendar className="w-3 h-3" />Posted</p>
+              <p className="text-sm font-medium text-gray-900">{formatDate(job.createdAt)}</p>
+            </div>
+            {job.updatedAt && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Clock className="w-3 h-3" />Updated</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(job.updatedAt)}</p>
+              </div>
+            )}
+
+            {/* Team Assignments */}
+            {job.recruitmentManagerName && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><UserCheck className="w-3 h-3" />Recruitment Manager</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{job.recruitmentManagerName}</p>
+                {job.recruitmentManagerEmail && <p className="text-xs text-gray-500 truncate">{job.recruitmentManagerEmail}</p>}
+              </div>
+            )}
+            {job.assignedToNames && job.assignedToNames.length > 0 && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><UsersRound className="w-3 h-3" />Assigned Team</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{job.assignedToNames.join(", ")}</p>
+              </div>
+            )}
+            {job.postedByName && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><User className="w-3 h-3" />Posted By</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{job.postedByName}</p>
+                {job.postedByRole && <p className="text-xs text-gray-500 capitalize">{job.postedByRole}</p>}
+              </div>
+            )}
+
+            {/* Notification Status */}
+            {job.notificationSentAt && (
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium flex items-center gap-1"><Bell className="w-3 h-3" />Notified</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(job.notificationSentAt)}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Description & Requirements Toggle */}
+        {(job.description || (job.requirements && job.requirements.length > 0) || (job.responsibilities && job.responsibilities.length > 0)) && (
+          <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                <FileCheck className="w-4 h-4 text-gray-400" />
+                <span>Job Description & Requirements</span>
+                <ChevronDown className="w-4 h-4 text-gray-400 ml-auto group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="mt-3 space-y-4 text-sm">
+                {job.description && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-1">Description</h4>
+                    <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
+                  </div>
+                )}
+                {job.responsibilities && job.responsibilities.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-1">Responsibilities</h4>
+                    <ul className="list-disc list-inside text-gray-600 space-y-0.5">
+                      {job.responsibilities.map((r, i) => <li key={i}>{r}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {job.requirements && job.requirements.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-1">Requirements</h4>
+                    <ul className="list-disc list-inside text-gray-600 space-y-0.5">
+                      {job.requirements.map((r, i) => <li key={i}>{r}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </details>
+          </div>
+        )}
       </div>
 
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">
+      {/* Filters & Controls */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap flex-1">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search candidates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">New</option>
+              <option value="reviewing">Screening</option>
+              <option value="interview">Interview</option>
+              <option value="offered">Offered</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value as DateRange)}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 transition-colors ${viewMode === "table" ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-50"}`}
+              >
+                <LayoutList className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`p-2 border-l border-gray-200 transition-colors ${viewMode === "cards" ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-50"}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredApplications.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-3">
           Showing {paginatedApplications.length} of {filteredApplications.length} candidates
-          {filteredApplications.length !== applications.length && (
-            <span className="text-slate-400"> (filtered from {applications.length} total)</span>
-          )}
+          {filteredApplications.length !== applications.length && ` (filtered from ${applications.length})`}
         </p>
       </div>
 
       {/* Table View */}
-      {viewMode === "table" && paginatedApplications.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Candidate</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Rating</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Applied</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-900">Notes</th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-slate-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedApplications.map((app) => {
-                  const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
-                  return (
-                    <tr key={app.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                            {app.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+      {viewMode === "table" && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {paginatedApplications.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Candidate</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Rating</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Applied</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</th>
+                    <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {paginatedApplications.map((app) => {
+                    const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
+                    return (
+                      <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {app.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{app.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{app.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-slate-900">{app.name}</p>
-                            <p className="text-sm text-slate-500">{app.email}</p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button key={star} onClick={() => handleRatingChange(app.id, star)} className="focus:outline-none">
+                                <Star className={`w-3.5 h-3.5 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200 hover:text-amber-300"}`} />
+                              </button>
+                            ))}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              onClick={() => handleRatingChange(app.id, star)}
-                              className="focus:outline-none"
-                            >
-                              <Star
-                                className={`w-4 h-4 transition-colors ${
-                                  star <= (app.rating || 0)
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-slate-300 hover:text-amber-300"
-                                }`}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm text-slate-600">{formatTimeAgo(app.appliedAt)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <select
-                          value={app.status}
-                          onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${status.color} cursor-pointer`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="reviewing">Reviewing</option>
-                          <option value="interview">Interview</option>
-                          <option value="offered">Offered</option>
-                          <option value="hired">Hired</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => {
-                            setEditingNoteId(app.id);
-                            setNoteText(app.notes || "");
-                          }}
-                          className={`flex items-center gap-1.5 text-sm ${
-                            app.notes ? "text-cyan-600" : "text-slate-400"
-                          } hover:text-cyan-700`}
-                        >
-                          <StickyNote className="w-4 h-4" />
-                          {app.notes ? "View" : "Add"}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {app.resumeId && (
-                            <button
-                              onClick={() => {
-                                if (app.resumeId) handleViewResume(app.resumeId);
-                              }}
-                              className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
-                              title="View Resume"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
-                          )}
-                          <a
-                            href={`mailto:${app.email}`}
-                            className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
-                            title="Send Email"
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-sm text-gray-600">{formatTimeAgo(app.appliedAt)}</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <select
+                            value={app.status}
+                            onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
+                            className={`text-xs px-2.5 py-1 rounded-lg font-medium border cursor-pointer focus:outline-none ${status.color}`}
                           >
-                            <Mail className="w-4 h-4" />
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            <option value="pending">New</option>
+                            <option value="reviewing">Screening</option>
+                            <option value="interview">Interview</option>
+                            <option value="offered">Offered</option>
+                            <option value="hired">Hired</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => { setEditingNoteId(app.id); setNoteText(app.notes || ""); }}
+                            className={`flex items-center gap-1 text-xs ${app.notes ? "text-blue-600" : "text-gray-400"} hover:text-blue-700`}
+                          >
+                            <StickyNote className="w-3.5 h-3.5" />
+                            {app.notes ? "View" : "Add"}
+                          </button>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            {app.resumeId && (
+                              <button onClick={() => app.resumeId && handleViewResume(app.resumeId)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Resume">
+                                <FileText className="w-4 h-4" />
+                              </button>
+                            )}
+                            <a href={`mailto:${app.email}`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Send Email">
+                              <Mail className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-16 text-center">
+              <Users className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">No candidates found</h3>
+              <p className="text-xs text-gray-500">{applications.length === 0 ? "No applications for this position yet" : "Try adjusting your filters"}</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Cards View */}
       {viewMode === "cards" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {paginatedApplications.length > 0 ? (
             paginatedApplications.map((app) => {
               const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
               const isExpanded = expandedId === app.id;
-
               return (
-                <div
-                  key={app.id}
-                  className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-cyan-200 transition-all shadow-sm"
-                >
-                  {/* Main row */}
-                  <div
-                    className="p-5 cursor-pointer"
-                    onClick={() => setExpandedId(isExpanded ? null : app.id)}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-cyan-500/20">
-                          {app.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                <div key={app.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:border-gray-300 transition-all">
+                  <div className="p-4 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : app.id)}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {app.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-semibold text-slate-900">{app.name}</h3>
-                            {/* Rating */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm font-semibold text-gray-900">{app.name}</h3>
                             <div className="flex items-center gap-0.5">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRatingChange(app.id, star);
-                                  }}
-                                  className="focus:outline-none"
-                                >
-                                  <Star
-                                    className={`w-4 h-4 transition-colors ${
-                                      star <= (app.rating || 0)
-                                        ? "fill-amber-400 text-amber-400"
-                                        : "text-slate-300 hover:text-amber-300"
-                                    }`}
-                                  />
+                                <button key={star} onClick={(e) => { e.stopPropagation(); handleRatingChange(app.id, star); }}>
+                                  <Star className={`w-3 h-3 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />
                                 </button>
                               ))}
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-slate-500">
-                            <span className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5" />
-                              {app.email}
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5" />
-                              {formatTimeAgo(app.appliedAt)}
-                            </span>
+                          <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                            <span>{app.email}</span>
+                            <span>{formatTimeAgo(app.appliedAt)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${status.color}`}>
-                          <span className={`w-2 h-2 rounded-full ${status.dotColor}`} />
-                          <span className="text-xs font-medium">{status.label}</span>
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-slate-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-slate-400" />
-                        )}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`} />
+                          {status.label}
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                       </div>
                     </div>
                   </div>
 
-                  {/* Expanded details */}
                   {isExpanded && (
-                    <div className="border-t border-slate-100 p-5 bg-slate-50/50">
-                      <div className="grid lg:grid-cols-4 gap-6">
-                        {/* Contact & Info */}
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-slate-900">Contact</h4>
+                    <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact & Info</h4>
                           <div className="space-y-2 text-sm">
-                            <a
-                              href={`mailto:${app.email}`}
-                              className="flex items-center gap-2 text-slate-600 hover:text-cyan-600"
-                            >
-                              <Mail className="w-4 h-4" />
-                              {app.email}
+                            <a href={`mailto:${app.email}`} className="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                              <Mail className="w-4 h-4 text-gray-400" />{app.email}
                             </a>
                             {app.phone && (
-                              <a
-                                href={`tel:${app.phone}`}
-                                className="flex items-center gap-2 text-slate-600 hover:text-cyan-600"
-                              >
-                                <Phone className="w-4 h-4" />
-                                {app.phone}
+                              <a href={`tel:${app.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                                <Phone className="w-4 h-4 text-gray-400" />{app.phone}
                               </a>
                             )}
                           </div>
-                          {app.experience && (
-                            <div className="pt-2">
-                              <p className="text-sm text-slate-500">Experience</p>
-                              <p className="font-medium text-slate-900">{app.experience}</p>
-                            </div>
-                          )}
                           {app.skills && app.skills.length > 0 && (
-                            <div>
-                              <p className="text-sm text-slate-500 mb-2">Skills</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {app.skills.map((skill) => (
-                                  <span
-                                    key={skill}
-                                    className="px-2 py-0.5 bg-cyan-100 text-cyan-700 rounded-md text-xs font-medium"
-                                  >
-                                    {skill}
-                                  </span>
+                            <div className="pt-2">
+                              <p className="text-xs text-gray-500 mb-1.5">Skills</p>
+                              <div className="flex flex-wrap gap-1">
+                                {app.skills.slice(0, 5).map((skill) => (
+                                  <span key={skill} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{skill}</span>
                                 ))}
+                                {app.skills.length > 5 && <span className="text-xs text-gray-400">+{app.skills.length - 5}</span>}
                               </div>
                             </div>
                           )}
                         </div>
 
-                        {/* Cover Letter & Resume */}
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-slate-900">Documents</h4>
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Documents & Notes</h4>
                           {app.resumeId ? (
-                            <button
-                              onClick={() => {
-                                if (app.resumeId) handleViewResume(app.resumeId);
-                              }}
-                              className="flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-700"
-                            >
-                              <FileText className="w-4 h-4" />
-                              View Resume
-                              <ExternalLink className="w-3 h-3" />
+                            <button onClick={() => app.resumeId && handleViewResume(app.resumeId)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+                              <FileText className="w-4 h-4" />View Resume<ExternalLink className="w-3 h-3" />
                             </button>
                           ) : (
-                            <p className="text-sm text-slate-500">No resume uploaded</p>
+                            <p className="text-sm text-gray-400">No resume uploaded</p>
                           )}
-                          {app.coverLetter && (
-                            <div>
-                              <p className="text-sm text-slate-500 mb-2">Cover Letter</p>
-                              <p className="text-sm text-slate-700 bg-white p-3 rounded-lg border border-slate-200 line-clamp-4">
-                                {app.coverLetter}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Notes Section */}
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                            <StickyNote className="w-4 h-4" />
-                            Notes
-                          </h4>
                           {editingNoteId === app.id ? (
                             <div className="space-y-2">
-                              <textarea
-                                value={noteText}
-                                onChange={(e) => setNoteText(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none text-sm"
-                                rows={4}
-                                placeholder="Add notes about this candidate..."
-                              />
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleNotesSave(app.id)}
-                                  className="px-3 py-1.5 bg-cyan-600 text-white rounded-lg text-sm hover:bg-cyan-700"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setEditingNoteId(null);
-                                    setNoteText("");
-                                  }}
-                                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50"
-                                >
-                                  Cancel
-                                </button>
+                              <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none" rows={3} placeholder="Add notes..." />
+                              <div className="flex gap-2">
+                                <button onClick={() => handleNotesSave(app.id)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700">Save</button>
+                                <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50">Cancel</button>
                               </div>
                             </div>
-                          ) : (
-                            <div>
-                              {app.notes ? (
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingNoteId(app.id);
-                                    setNoteText(app.notes || "");
-                                  }}
-                                  className="text-sm text-slate-700 bg-amber-50 p-3 rounded-lg border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
-                                >
-                                  {app.notes}
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingNoteId(app.id);
-                                    setNoteText("");
-                                  }}
-                                  className="text-sm text-slate-500 hover:text-cyan-600"
-                                >
-                                  + Add notes
-                                </button>
-                              )}
+                          ) : app.notes ? (
+                            <div onClick={(e) => { e.stopPropagation(); setEditingNoteId(app.id); setNoteText(app.notes || ""); }} className="text-sm text-gray-700 bg-amber-50 p-3 rounded-lg border border-amber-200 cursor-pointer hover:bg-amber-100">
+                              {app.notes}
                             </div>
+                          ) : (
+                            <button onClick={(e) => { e.stopPropagation(); setEditingNoteId(app.id); setNoteText(""); }} className="text-sm text-gray-500 hover:text-blue-600">+ Add notes</button>
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-slate-900">Update Status</h4>
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</h4>
                           <select
                             value={app.status}
-                            onChange={(e) =>
-                              handleStatusChange(app.id, e.target.value as Application["status"])
-                            }
-                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none bg-white"
+                            onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
                           >
-                            <option value="pending">Pending Review</option>
-                            <option value="reviewing">Under Review</option>
+                            <option value="pending">New</option>
+                            <option value="reviewing">Screening</option>
                             <option value="interview">Interview</option>
-                            <option value="offered">Offer Sent</option>
+                            <option value="offered">Offered</option>
                             <option value="hired">Hired</option>
                             <option value="rejected">Rejected</option>
                           </select>
-
-                          <a
-                            href={`mailto:${app.email}`}
-                            className="block w-full px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-colors text-sm text-center font-medium shadow-lg shadow-cyan-500/20"
-                          >
+                          <a href={`mailto:${app.email}`} className="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm text-center font-medium rounded-lg transition-colors">
                             Send Email
                           </a>
                         </div>
@@ -1058,13 +911,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               );
             })
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-              <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">
-                {applications.length === 0
-                  ? "No applications yet for this position"
-                  : "No candidates found matching your criteria"}
-              </p>
+            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+              <Users className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">No candidates found</h3>
+              <p className="text-xs text-gray-500">{applications.length === 0 ? "No applications for this position yet" : "Try adjusting your filters"}</p>
             </div>
           )}
         </div>
@@ -1072,112 +922,151 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
-          <div className="text-sm text-slate-600">
-            Page {currentPage} of {totalPages}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              First
-            </button>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="p-1.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+        <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 shadow-sm">
+          <p className="text-sm text-gray-600">Page {currentPage} of {totalPages}</p>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">First</button>
+            <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
               <ChevronLeft className="w-4 h-4" />
             </button>
-
-            {/* Page Numbers */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 mx-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((page) => {
-                  if (totalPages <= 5) return true;
-                  if (page === 1 || page === totalPages) return true;
-                  if (Math.abs(page - currentPage) <= 1) return true;
-                  return false;
-                })
+                .filter((page) => totalPages <= 5 || page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
                 .map((page, idx, arr) => (
                   <div key={page} className="flex items-center">
-                    {idx > 0 && arr[idx - 1] !== page - 1 && (
-                      <span className="px-2 text-slate-400">...</span>
-                    )}
-                    <button
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                        currentPage === page
-                          ? "bg-cyan-600 text-white"
-                          : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
+                    {idx > 0 && arr[idx - 1] !== page - 1 && <span className="px-1.5 text-gray-400 text-sm">...</span>}
+                    <button onClick={() => setCurrentPage(page)} className={`w-8 h-8 rounded-lg text-sm font-medium ${currentPage === page ? "bg-blue-600 text-white" : "hover:bg-gray-100"}`}>{page}</button>
                   </div>
                 ))}
             </div>
-
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="p-1.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Last
-            </button>
+            <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Last</button>
           </div>
         </div>
       )}
 
-      {/* Notes Modal for Table View */}
+      {/* Notes Modal */}
       {editingNoteId && viewMode === "table" && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Candidate Notes</h2>
-              <button
-                onClick={() => {
-                  setEditingNoteId(null);
-                  setNoteText("");
-                }}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
-              >
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setEditingNoteId(null); setNoteText(""); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Candidate Notes</h2>
+              <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
-              <textarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none resize-none"
-                rows={6}
-                placeholder="Add notes about this candidate..."
-              />
+              <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none" rows={5} placeholder="Add notes about this candidate..." />
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
-              <button
-                onClick={() => {
-                  setEditingNoteId(null);
-                  setNoteText("");
-                }}
-                className="px-4 py-2.5 text-slate-700 font-medium hover:bg-slate-200 rounded-xl transition-colors"
-              >
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+              <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-200 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => handleNotesSave(editingNoteId)} className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm">Save Notes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Job Modal */}
+      {showShareModal && job && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Share Job</h2>
+                <p className="text-sm text-gray-500 mt-0.5">{job.title}</p>
+              </div>
+              <button onClick={() => setShowShareModal(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Copy Link Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Job Link</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getJobUrl()}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-600"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      copied
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">or share via email</span>
+                </div>
+              </div>
+
+              {/* Email Share Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Addresses
+                  <span className="font-normal text-gray-400 ml-1">(comma separated)</span>
+                </label>
+                <input
+                  type="text"
+                  value={shareEmails}
+                  onChange={(e) => setShareEmails(e.target.value)}
+                  placeholder="john@example.com, jane@example.com"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Personal Message
+                  <span className="font-normal text-gray-400 ml-1">(optional)</span>
+                </label>
+                <textarea
+                  value={shareMessage}
+                  onChange={(e) => setShareMessage(e.target.value)}
+                  placeholder="Hi! I thought you might be interested in this opportunity..."
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              {/* Job Preview */}
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <p className="text-xs text-gray-500 mb-2">Preview</p>
+                <p className="text-sm font-medium text-gray-900">{job.title}</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {job.department} • {job.location} • {job.type}
+                  {job.salary && ` • $${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+              <button onClick={() => setShowShareModal(false)} className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-200 rounded-lg text-sm">
                 Cancel
               </button>
               <button
-                onClick={() => handleNotesSave(editingNoteId)}
-                className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-medium rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg shadow-cyan-500/25"
+                onClick={handleShareViaEmail}
+                disabled={!shareEmails.trim()}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Notes
+                <Mail className="w-4 h-4" />
+                Send Email
               </button>
             </div>
           </div>
