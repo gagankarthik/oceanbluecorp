@@ -195,27 +195,31 @@ export async function POST(request: NextRequest) {
         createdAt: now,
       }).catch((err) => console.error("Failed to create notification:", err));
 
-      // Send email notifications (don't block the response)
+      // Send email notifications - must await to ensure completion before serverless function terminates
       console.log("[APPLICATION] Sending email notifications for new application...");
       console.log(`[APPLICATION] Candidate: ${name} (${body.email})`);
       console.log(`[APPLICATION] Job: ${job.title}`);
       console.log(`[APPLICATION] Recruitment Manager: ${job.recruitmentManagerEmail || 'Not set'}`);
       console.log(`[APPLICATION] Assigned Team: ${job.assignedToEmails?.join(', ') || 'None'}`);
 
+      const emailPromises: Promise<void>[] = [];
+
       // 1. Send confirmation email to candidate
-      sendApplicationConfirmation({
-        candidateName: name,
-        candidateEmail: body.email,
-        jobTitle: job.title,
-        jobDepartment: job.department,
-        jobLocation: job.location,
-      }).then((result) => {
-        if (result.success) {
-          console.log(`[APPLICATION] Candidate confirmation email sent successfully to ${body.email}`);
-        } else {
-          console.error(`[APPLICATION] Failed to send candidate confirmation to ${body.email}:`, result.error);
-        }
-      }).catch((err) => console.error("[APPLICATION] Exception sending candidate confirmation:", err));
+      emailPromises.push(
+        sendApplicationConfirmation({
+          candidateName: name,
+          candidateEmail: body.email,
+          jobTitle: job.title,
+          jobDepartment: job.department,
+          jobLocation: job.location,
+        }).then((result) => {
+          if (result.success) {
+            console.log(`[APPLICATION] Candidate confirmation email sent successfully to ${body.email}`);
+          } else {
+            console.error(`[APPLICATION] Failed to send candidate confirmation to ${body.email}:`, result.error);
+          }
+        }).catch((err) => console.error("[APPLICATION] Exception sending candidate confirmation:", err))
+      );
 
       // 2. Send notifications to recruitment manager and assigned team members
       const notifiedEmails = new Set<string>();
@@ -223,23 +227,25 @@ export async function POST(request: NextRequest) {
       // 2a. Notify recruitment manager
       if (job.recruitmentManagerEmail) {
         notifiedEmails.add(job.recruitmentManagerEmail.toLowerCase());
-        sendNewApplicationNotification({
-          recruiterName: job.recruitmentManagerName || job.recruitmentManagerEmail.split("@")[0],
-          recruiterEmail: job.recruitmentManagerEmail,
-          candidateName: name,
-          candidateEmail: body.email,
-          candidatePhone: body.phone,
-          jobTitle: job.title,
-          jobId: job.id,
-          applicationId: application.applicationId || application.id,
-          appliedAt: application.appliedAt,
-        }).then((result) => {
-          if (result.success) {
-            console.log(`[APPLICATION] Notification sent to recruitment manager: ${job.recruitmentManagerEmail}`);
-          } else {
-            console.error(`[APPLICATION] Failed to notify recruitment manager ${job.recruitmentManagerEmail}:`, result.error);
-          }
-        }).catch((err) => console.error("[APPLICATION] Exception notifying recruitment manager:", err));
+        emailPromises.push(
+          sendNewApplicationNotification({
+            recruiterName: job.recruitmentManagerName || job.recruitmentManagerEmail.split("@")[0],
+            recruiterEmail: job.recruitmentManagerEmail,
+            candidateName: name,
+            candidateEmail: body.email,
+            candidatePhone: body.phone,
+            jobTitle: job.title,
+            jobId: job.id,
+            applicationId: application.applicationId || application.id,
+            appliedAt: application.appliedAt,
+          }).then((result) => {
+            if (result.success) {
+              console.log(`[APPLICATION] Notification sent to recruitment manager: ${job.recruitmentManagerEmail}`);
+            } else {
+              console.error(`[APPLICATION] Failed to notify recruitment manager ${job.recruitmentManagerEmail}:`, result.error);
+            }
+          }).catch((err) => console.error("[APPLICATION] Exception notifying recruitment manager:", err))
+        );
       }
 
       // 2b. Notify assigned team members
@@ -251,26 +257,31 @@ export async function POST(request: NextRequest) {
           // Skip if already notified
           if (email && !notifiedEmails.has(email.toLowerCase())) {
             notifiedEmails.add(email.toLowerCase());
-            sendNewApplicationNotification({
-              recruiterName: recipientName,
-              recruiterEmail: email,
-              candidateName: name,
-              candidateEmail: body.email,
-              candidatePhone: body.phone,
-              jobTitle: job.title,
-              jobId: job.id,
-              applicationId: application.applicationId || application.id,
-              appliedAt: application.appliedAt,
-            }).then((result) => {
-              if (result.success) {
-                console.log(`[APPLICATION] Notification sent to team member: ${email}`);
-              } else {
-                console.error(`[APPLICATION] Failed to notify team member ${email}:`, result.error);
-              }
-            }).catch((err) => console.error(`[APPLICATION] Exception notifying ${email}:`, err));
+            emailPromises.push(
+              sendNewApplicationNotification({
+                recruiterName: recipientName,
+                recruiterEmail: email,
+                candidateName: name,
+                candidateEmail: body.email,
+                candidatePhone: body.phone,
+                jobTitle: job.title,
+                jobId: job.id,
+                applicationId: application.applicationId || application.id,
+                appliedAt: application.appliedAt,
+              }).then((result) => {
+                if (result.success) {
+                  console.log(`[APPLICATION] Notification sent to team member: ${email}`);
+                } else {
+                  console.error(`[APPLICATION] Failed to notify team member ${email}:`, result.error);
+                }
+              }).catch((err) => console.error(`[APPLICATION] Exception notifying ${email}:`, err))
+            );
           }
         }
       }
+
+      // Wait for all emails to complete before returning response
+      await Promise.all(emailPromises);
     }
 
     return NextResponse.json({ application }, { status: 201 });

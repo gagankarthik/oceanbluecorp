@@ -13,7 +13,7 @@ const getSmtpConfig = () => ({
 
 // Default sender email
 const getDefaultSender = () =>
-  process.env.NEXT_AWS_SES_FROM_EMAIL || "noreply@oceanbluecorp.com";
+  process.env.NEXT_AWS_SES_FROM_EMAIL || "hiring@oceanbluecorp.com";
 
 // Create transporter
 const createTransporter = () => {

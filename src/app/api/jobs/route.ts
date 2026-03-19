@@ -169,24 +169,30 @@ export async function POST(request: NextRequest) {
         console.log(`[JOB] Sending job posting notifications to ${emailRecipients.length} recipient(s):`);
         emailRecipients.forEach((r, i) => console.log(`[JOB]   ${i + 1}. ${r.name} <${r.email}>`));
 
-        for (const recipient of emailRecipients) {
-          sendJobPostedNotification({
-            recipientName: recipient.name,
-            recipientEmail: recipient.email,
-            jobTitle: job.title,
-            jobDepartment: job.department,
-            jobLocation: job.location,
-            jobType: job.type,
-            postedByName: job.postedByName || "Admin",
-            jobId: job.id,
-          }).then((result) => {
+        // Await all email sends to ensure they complete before serverless function terminates
+        const emailPromises = emailRecipients.map(async (recipient) => {
+          try {
+            const result = await sendJobPostedNotification({
+              recipientName: recipient.name,
+              recipientEmail: recipient.email,
+              jobTitle: job.title,
+              jobDepartment: job.department,
+              jobLocation: job.location,
+              jobType: job.type,
+              postedByName: job.postedByName || "Admin",
+              jobId: job.id,
+            });
             if (result.success) {
               console.log(`[JOB] Successfully sent job notification to ${recipient.email}`);
             } else {
               console.error(`[JOB] Failed to send job notification to ${recipient.email}:`, result.error);
             }
-          }).catch((err) => console.error(`[JOB] Exception sending job notification to ${recipient.email}:`, err));
-        }
+          } catch (err) {
+            console.error(`[JOB] Exception sending job notification to ${recipient.email}:`, err);
+          }
+        });
+
+        await Promise.all(emailPromises);
       } else {
         console.log("[JOB] No email recipients configured for job posting notification");
       }
