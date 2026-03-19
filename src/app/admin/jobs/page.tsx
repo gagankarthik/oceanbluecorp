@@ -28,6 +28,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Job } from "@/lib/aws/dynamodb";
+import { useAuth, UserRole } from "@/lib/auth";
 
 import {
   DropdownMenu,
@@ -69,6 +70,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function JobsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,9 @@ export default function JobsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
   const [tableView, setTableView] = useState<TableView>("compact");
+
+  // RECRUITER role has view-only access to jobs
+  const canEditJobs = user?.role !== UserRole.RECRUITER;
 
   const exportJobsToExcel = () => {
     const headers = ["Job ID","Title","Client","Vendor","Location","Status","Pay Rate","Bill Rate","Manager","Created Date","Deadline"];
@@ -222,9 +227,11 @@ export default function JobsPage() {
           <button onClick={exportJobsToExcel} className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
             <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
           </button>
-          <button onClick={() => router.push("/admin/jobs/new")} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Job</span>
-          </button>
+          {canEditJobs && (
+            <button onClick={() => router.push("/admin/jobs/new")} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+              <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Job</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -313,11 +320,15 @@ export default function JobsPage() {
               </div>
               <div className="flex items-center justify-end gap-1 pt-3 border-t border-gray-100">
                 <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Eye className="h-4 w-4" /></button>
-                <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"><Edit3 className="h-4 w-4" /></button>
-                <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50">
-                  {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-                </button>
-                <button onClick={() => setShowDeleteConfirm(job.id)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="h-4 w-4" /></button>
+                {canEditJobs && (
+                  <>
+                    <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"><Edit3 className="h-4 w-4" /></button>
+                    <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50">
+                      {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                    <button onClick={() => setShowDeleteConfirm(job.id)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="h-4 w-4" /></button>
+                  </>
+                )}
               </div>
             </div>
           );
@@ -325,8 +336,8 @@ export default function JobsPage() {
           <div className="border border-gray-200 rounded-xl bg-white p-12 text-center">
             <Briefcase className="h-12 w-12 text-gray-200 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-gray-900 mb-1">No jobs found</h3>
-            <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? "Create your first job posting" : "No jobs match your filters"}</p>
-            {jobs.length === 0 && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
+            <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? (canEditJobs ? "Create your first job posting" : "No job postings available") : "No jobs match your filters"}</p>
+            {jobs.length === 0 && canEditJobs && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
           </div>
         )}
       </div>
@@ -378,14 +389,18 @@ export default function JobsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white">
                           <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)}><Eye className="h-4 w-4 mr-2" />View Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}><Edit3 className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id}>
-                            {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setShowDeleteConfirm(job.id)} className="text-rose-600 focus:text-rose-600 focus:bg-rose-50">
-                            <Trash2 className="h-4 w-4 mr-2" />Delete
-                          </DropdownMenuItem>
+                          {canEditJobs && (
+                            <>
+                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}><Edit3 className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id}>
+                                {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}Duplicate
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setShowDeleteConfirm(job.id)} className="text-rose-600 focus:text-rose-600 focus:bg-rose-50">
+                                <Trash2 className="h-4 w-4 mr-2" />Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -397,8 +412,8 @@ export default function JobsPage() {
               <div className="py-16 text-center">
                 <Briefcase className="h-12 w-12 text-gray-200 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-gray-900 mb-1">No jobs found</h3>
-                <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? "Create your first job posting" : "No jobs match your current filters"}</p>
-                {jobs.length === 0 && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
+                <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? (canEditJobs ? "Create your first job posting" : "No job postings available") : "No jobs match your current filters"}</p>
+                {jobs.length === 0 && canEditJobs && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
               </div>
             )}
           </div>
@@ -438,9 +453,13 @@ export default function JobsPage() {
                         <td className="py-3.5 px-4">{job.payRate ? <span className="text-sm font-medium text-gray-900">${job.payRate}/hr</span> : <span className="text-gray-400">—</span>}</td>
                         <td className="py-3.5 px-4">{job.clientBillRate ? <span className="text-sm font-medium text-gray-900">${job.clientBillRate}/hr</span> : <span className="text-gray-400">—</span>}</td>
                         <td className="py-3.5 px-4">
-                          <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job["status"])} className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700">
-                            {["open","active","closed","on-hold","draft"].map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
-                          </select>
+                          {canEditJobs ? (
+                            <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job["status"])} className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700">
+                              {["open","active","closed","on-hold","draft"].map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
+                            </select>
+                          ) : (
+                            <StatusBadge status={job.status} />
+                          )}
                         </td>
                         <td className="py-3.5 px-4">
                           {job.recruitmentManagerName ? (
@@ -468,14 +487,18 @@ export default function JobsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-white">
                               <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)}><Eye className="h-4 w-4 mr-2" />View Details</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}><Edit3 className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id}>
-                                {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setShowDeleteConfirm(job.id)} className="text-rose-600 focus:text-rose-600 focus:bg-rose-50">
-                                <Trash2 className="h-4 w-4 mr-2" />Delete
-                              </DropdownMenuItem>
+                              {canEditJobs && (
+                                <>
+                                  <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}><Edit3 className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id}>
+                                    {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}Duplicate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => setShowDeleteConfirm(job.id)} className="text-rose-600 focus:text-rose-600 focus:bg-rose-50">
+                                    <Trash2 className="h-4 w-4 mr-2" />Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -488,8 +511,8 @@ export default function JobsPage() {
                 <div className="py-16 text-center">
                   <Briefcase className="h-12 w-12 text-gray-200 mx-auto mb-3" />
                   <h3 className="text-base font-semibold text-gray-900 mb-1">No jobs found</h3>
-                  <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? "Create your first job posting" : "No jobs match your current filters"}</p>
-                  {jobs.length === 0 && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
+                  <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? (canEditJobs ? "Create your first job posting" : "No job postings available") : "No jobs match your current filters"}</p>
+                  {jobs.length === 0 && canEditJobs && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Create First Job</button>}
                 </div>
               )}
             </div>

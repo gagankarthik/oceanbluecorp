@@ -18,13 +18,16 @@ export const cognitoAuthConfig = {
 export enum UserRole {
   ADMIN = "admin",
   HR = "hr",
+  RECRUITER = "recruiter",
   USER = "user",
 }
 
 // Role hierarchy for permission checking
+// RECRUITER is same level as HR but with limited access (no clients/vendors/contacts, view-only jobs)
 export const roleHierarchy: Record<UserRole, number> = {
-  [UserRole.ADMIN]: 3,
-  [UserRole.HR]: 2,
+  [UserRole.ADMIN]: 4,
+  [UserRole.HR]: 3,
+  [UserRole.RECRUITER]: 2,
   [UserRole.USER]: 1,
 };
 
@@ -46,10 +49,15 @@ export const getCognitoUrls = () => {
 // Route access configuration
 export const routeAccess: Record<string, UserRole[]> = {
   "/admin": [UserRole.ADMIN],
-  "/admin/jobs": [UserRole.ADMIN, UserRole.HR],
-  "/admin/applications": [UserRole.ADMIN, UserRole.HR],
+  "/admin/jobs": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
+  "/admin/applications": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
+  "/admin/candidates": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
+  "/admin/bench": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
+  "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
+  "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
+  "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
   "/admin/content": [UserRole.ADMIN],
   "/admin/settings": [UserRole.ADMIN],
   "/hr": [UserRole.ADMIN, UserRole.HR],
-  "/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.USER],
+  "/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.USER],
 };

@@ -46,10 +46,10 @@ export async function PATCH(
 
     // Update role if provided
     if (role) {
-      const validRoles = ["admin", "hr", "user"];
+      const validRoles = ["admin", "hr", "recruiter", "user"];
       if (!validRoles.includes(role)) {
         return NextResponse.json(
-          { error: "Invalid role. Must be 'admin', 'hr', or 'user'" },
+          { error: "Invalid role. Must be 'admin', 'hr', 'recruiter', or 'user'" },
           { status: 400 }
         );
       }

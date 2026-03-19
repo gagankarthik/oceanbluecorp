@@ -59,9 +59,10 @@ const mapUserStatus = (cognitoStatus: string | undefined, enabled: boolean): "ac
 };
 
 // Get user role from groups
-const getRoleFromGroups = (groups: string[]): "admin" | "hr" | "user" => {
+const getRoleFromGroups = (groups: string[]): "admin" | "hr" | "recruiter" | "user" => {
   if (groups.includes("admin")) return "admin";
   if (groups.includes("hr")) return "hr";
+  if (groups.includes("recruiter")) return "recruiter";
   return "user";
 };
 
@@ -239,13 +240,13 @@ export async function removeUserFromGroup(username: string, groupName: string): 
 }
 
 // Update user role (manages groups)
-export async function updateUserRole(username: string, newRole: "admin" | "hr" | "user"): Promise<{ success: boolean; error?: string }> {
+export async function updateUserRole(username: string, newRole: "admin" | "hr" | "recruiter" | "user"): Promise<{ success: boolean; error?: string }> {
   try {
     // Get current groups
     const currentGroups = await getUserGroups(username);
 
-    // Role groups
-    const roleGroups = ["admin", "hr"];
+    // Role groups (all groups that represent roles)
+    const roleGroups = ["admin", "hr", "recruiter"];
 
     // Remove from all role groups first
     for (const group of roleGroups) {

@@ -51,6 +51,7 @@ import {
   Handshake,
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
+import { useAuth, UserRole } from "@/lib/auth";
 
 interface ApplicationWithJob extends Application {
   jobTitle?: string;
@@ -107,6 +108,10 @@ const ITEMS_PER_PAGE = 10;
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
   const router = useRouter();
+  const { user } = useAuth();
+
+  // RECRUITER role has view-only access to jobs
+  const canEditJobs = user?.role !== UserRole.RECRUITER;
 
   const [job, setJob] = useState<Job | null>(null);
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
@@ -438,9 +443,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               <button onClick={() => setShowShareModal(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">
                 <Share2 className="w-4 h-4" />Share
               </button>
-              <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <Edit3 className="w-4 h-4" />Edit
-              </button>
+              {canEditJobs && (
+                <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  <Edit3 className="w-4 h-4" />Edit
+                </button>
+              )}
             </div>
           </div>
         </div>

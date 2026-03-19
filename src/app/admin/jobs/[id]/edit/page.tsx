@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
+import { useAuth, UserRole } from "@/lib/auth";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -49,6 +50,7 @@ interface CognitoUser {
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
@@ -56,6 +58,13 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [job, setJob] = useState<Job | null>(null);
+
+  // RECRUITER role cannot edit jobs - redirect to job detail
+  useEffect(() => {
+    if (user?.role === UserRole.RECRUITER) {
+      router.replace(`/admin/jobs/${id}`);
+    }
+  }, [user, router, id]);
 
   const [formData, setFormData] = useState({
     title: "",

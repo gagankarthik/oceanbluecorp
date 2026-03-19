@@ -22,7 +22,7 @@ import {
   Hash,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { useAuth, UserRole } from "@/lib/auth";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -56,6 +56,13 @@ export default function NewJobPage() {
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+
+  // RECRUITER role cannot create jobs - redirect to jobs list
+  useEffect(() => {
+    if (user?.role === UserRole.RECRUITER) {
+      router.replace("/admin/jobs");
+    }
+  }, [user, router]);
 
   const [formData, setFormData] = useState({
     title: "",

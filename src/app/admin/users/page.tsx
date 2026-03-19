@@ -27,7 +27,7 @@ interface User {
   name: string;
   email: string;
   phone?: string;
-  role: "admin" | "hr" | "user";
+  role: "admin" | "hr" | "recruiter" | "user";
   status: "active" | "inactive" | "pending";
   groups: string[];
   createdAt: string;
@@ -38,6 +38,7 @@ interface User {
 const roleConfig: Record<string, { label: string; bg: string }> = {
   admin: { label: "Admin", bg: "bg-rose-100 text-rose-800" },
   hr: { label: "HR", bg: "bg-purple-100 text-purple-800" },
+  recruiter: { label: "Recruiter", bg: "bg-teal-100 text-teal-800" },
   user: { label: "User", bg: "bg-blue-100 text-blue-800" },
 };
 
@@ -108,7 +109,7 @@ export default function UsersPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to update role");
-      setUsers(prev => prev.map(u => u.id === userToEdit.id ? { ...u, role: newRole as "admin" | "hr" | "user" } : u));
+      setUsers(prev => prev.map(u => u.id === userToEdit.id ? { ...u, role: newRole as "admin" | "hr" | "recruiter" | "user" } : u));
       setShowRoleModal(false);
       setUserToEdit(null);
       setNewRole("");
@@ -216,6 +217,7 @@ export default function UsersPage() {
                   <option value="all">All Roles</option>
                   <option value="admin">Admin</option>
                   <option value="hr">HR</option>
+                  <option value="recruiter">Recruiter</option>
                   <option value="user">User</option>
                 </select>
               </div>
@@ -373,7 +375,8 @@ export default function UsersPage() {
               <div className="space-y-3">
                 {[
                   { role: "admin", desc: "Full access to all features and settings" },
-                  { role: "hr", desc: "Access to HR features, jobs, and applications" },
+                  { role: "hr", desc: "Access to HR features, jobs, applications, clients, vendors, contacts" },
+                  { role: "recruiter", desc: "Access to jobs (view-only), applications, and candidates only" },
                   { role: "user", desc: "Basic user access to dashboard and profile" },
                 ].map(({ role, desc }) => (
                   <label key={role} className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${newRole === role ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
