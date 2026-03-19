@@ -327,7 +327,7 @@ export default function Header() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full right-0 pt-5"
                         >
-                          <div className="overflow-hidden rounded-3xl bg-slate-900 text-sm shadow-2xl ring-1 ring-white/10 w-72">
+                          <div className="overflow-hidden rounded-3xl bg-white text-sm shadow-2xl ring-1 ring-white/10 w-72">
                             {/* User Info */}
                             <div className="p-4 border-b border-white/10">
                               <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ export default function Header() {
                                   {getUserInitials()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-white truncate">{user?.name}</p>
+                                  <p className="font-semibold text-gray-900 truncate">{user?.name}</p>
                                   <p className="text-xs text-slate-400 mt-0.5 truncate">{user?.email}</p>
                                 </div>
                               </div>
@@ -348,7 +348,7 @@ export default function Header() {
                             <div className="p-2">
                               <Link
                                 href={getDashboardLink()}
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-white hover:bg-white/5 transition-colors"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-[#F2FF9C] transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
                               >
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
@@ -358,7 +358,7 @@ export default function Header() {
                               </Link>
                               <Link
                                 href="/dashboard/settings"
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-white hover:bg-white/5 transition-colors"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-[#F2FF9C] transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
                               >
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
