@@ -37,7 +37,7 @@ export interface CognitoUser {
   name: string;
   phone?: string;
   status: "active" | "inactive" | "pending";
-  role: "admin" | "hr" | "user";
+  role: "admin" | "hr" | "recruiter" | "user";
   groups: string[];
   createdAt: string;
   lastModified?: string;
