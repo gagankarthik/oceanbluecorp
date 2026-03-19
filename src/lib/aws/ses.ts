@@ -93,26 +93,40 @@ async function sendEmail(
   htmlBody: string,
   textBody: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const config = getSmtpConfig();
+  const sender = getDefaultSender();
+
+  console.log(`[EMAIL] Attempting to send email to: ${to}`);
+  console.log(`[EMAIL] Subject: ${subject}`);
+  console.log(`[EMAIL] From: ${sender}`);
+  console.log(`[EMAIL] SMTP Host: ${config.host}`);
+  console.log(`[EMAIL] SMTP User configured: ${config.auth.user ? 'Yes' : 'No'}`);
+  console.log(`[EMAIL] SMTP Pass configured: ${config.auth.pass ? 'Yes' : 'No'}`);
+
   const transporter = createTransporter();
   if (!transporter) {
-    return { success: false, error: "SMTP not configured" };
+    console.error("[EMAIL] SMTP transporter not created - credentials missing");
+    return { success: false, error: "SMTP not configured - missing credentials" };
   }
 
   try {
     const result = await transporter.sendMail({
-      from: `"Ocean Blue Careers" <${getDefaultSender()}>`,
+      from: `"Ocean Blue Careers" <${sender}>`,
       to,
       subject,
       text: textBody,
       html: htmlBody,
     });
 
+    console.log(`[EMAIL] Successfully sent email to ${to}, messageId: ${result.messageId}`);
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error("Error sending email:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to send email";
+    console.error(`[EMAIL] Failed to send email to ${to}:`, error);
+    console.error(`[EMAIL] Error details:`, JSON.stringify(error, null, 2));
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to send email",
+      error: errorMessage,
     };
   }
 }

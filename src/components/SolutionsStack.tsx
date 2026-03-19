@@ -231,7 +231,7 @@ export default function SolutionsStack() {
           <div className="relative">
             {/* Main Card */}
             <div
-              className="relative bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-xl border border-gray-100 overflow-hidden"
+              className="relative bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 mt-16 sm:mt-0 shadow-xl border border-gray-100 overflow-hidden"
               style={{
                 boxShadow: isMobile ? '0 4px 20px rgba(0,0,0,0.1)' : `0 20px 40px -20px ${activeSolution.color}40`,
               }}

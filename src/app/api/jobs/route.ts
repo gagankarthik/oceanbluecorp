@@ -166,6 +166,9 @@ export async function POST(request: NextRequest) {
 
       // Send notifications to all recipients
       if (emailRecipients.length > 0) {
+        console.log(`[JOB] Sending job posting notifications to ${emailRecipients.length} recipient(s):`);
+        emailRecipients.forEach((r, i) => console.log(`[JOB]   ${i + 1}. ${r.name} <${r.email}>`));
+
         for (const recipient of emailRecipients) {
           sendJobPostedNotification({
             recipientName: recipient.name,
@@ -176,9 +179,16 @@ export async function POST(request: NextRequest) {
             jobType: job.type,
             postedByName: job.postedByName || "Admin",
             jobId: job.id,
-          }).catch((err) => console.error(`Failed to send job notification to ${recipient.email}:`, err));
+          }).then((result) => {
+            if (result.success) {
+              console.log(`[JOB] Successfully sent job notification to ${recipient.email}`);
+            } else {
+              console.error(`[JOB] Failed to send job notification to ${recipient.email}:`, result.error);
+            }
+          }).catch((err) => console.error(`[JOB] Exception sending job notification to ${recipient.email}:`, err));
         }
-        console.log(`Sent job posting notifications to ${emailRecipients.length} recipient(s)`);
+      } else {
+        console.log("[JOB] No email recipients configured for job posting notification");
       }
     }
 
