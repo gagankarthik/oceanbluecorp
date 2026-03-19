@@ -20,6 +20,11 @@ frontend:
         - echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=$NEXT_PUBLIC_COGNITO_CLIENT_ID" >> .env.production
         - echo "NEXT_PUBLIC_COGNITO_DOMAIN=$NEXT_PUBLIC_COGNITO_DOMAIN" >> .env.production
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
+        - echo "NEXT_AWS_SES_FROM_EMAIL=$NEXT_AWS_SES_FROM_EMAIL" >> .env.production
+        - echo "NEXT_AWS_STMP=$NEXT_AWS_STMP" >> .env.production
+        - echo "NEXT_AWS_STMP_PASSWORD=$NEXT_AWS_STMP_PASSWORD" >> .env.production
+        - echo "NEXT_AWS_STMP_IAM_USERNAME=$NEXT_AWS_STMP_IAM_USERNAME" >> .env.production
+        
         - npm run build
   artifacts:
     baseDirectory: .next
