@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   console.log(`[TEST-EMAIL] Target email: ${testEmail}`);
   console.log(`[TEST-EMAIL] SMTP User: ${process.env.NEXT_AWS_STMP ? "Configured" : "NOT SET"}`);
   console.log(`[TEST-EMAIL] SMTP Pass: ${process.env.NEXT_AWS_STMP_PASSWORD ? "Configured" : "NOT SET"}`);
-  console.log(`[TEST-EMAIL] From Email: ${process.env.NEXT_AWS_SES_FROM_EMAIL || "noreply@oceanbluecorp.com"}`);
+  console.log(`[TEST-EMAIL] From Email: ${process.env.NEXT_AWS_SES_FROM_EMAIL || "hiring@oceanbluecorp.com"}`);
   console.log(`[TEST-EMAIL] Region: ${process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2"}`);
 
   try {
