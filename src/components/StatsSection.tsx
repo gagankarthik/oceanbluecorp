@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const stats = [
   { id: 1, value: 10, label: "Years of Excellence", suffix: "+" },
-  { id: 2, value: 150, label: "Enterprise Clients", suffix: "+" },
+  { id: 2, value: 50, label: "Enterprise Clients", suffix: "+" },
   { id: 3, value: 98, label: "Client Retention", suffix: "%" },
   { id: 4, value: 8, label: "Software Solutions", suffix: "+" },
 ];

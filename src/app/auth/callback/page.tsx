@@ -51,6 +51,8 @@ export default function CallbackPage() {
             setUserRole("Administrator");
           } else if (groups.includes("hr")) {
             setUserRole("HR Manager");
+          } else if (groups.includes("recruiter")) {
+            setUserRole("Recruiter");
           } else {
             setUserRole("User");
           }
@@ -63,6 +65,8 @@ export default function CallbackPage() {
               router.push("/admin");
             } else if (groups.includes("hr")) {
               router.push("/admin/applications");
+            } else if (groups.includes("recruiter")) {
+              router.push("/admin/jobs");
             } else {
               router.push("/dashboard");
             }

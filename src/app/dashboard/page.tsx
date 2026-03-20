@@ -1149,16 +1149,16 @@ function UserDashboard() {
 
 function DashboardContent() {
   const { user } = useAuth();
-  const isAdminOrHR =
-    user?.role === UserRole.ADMIN || user?.role === UserRole.HR;
+  const isAdminHROrRecruiter =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.HR || user?.role === UserRole.RECRUITER;
 
-  if (isAdminOrHR) return <AdminAnalytics />;
+  if (isAdminHROrRecruiter) return <AdminAnalytics />;
   return <UserDashboard />;
 }
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.USER]}>
+    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.USER]}>
       <DashboardContent />
     </ProtectedRoute>
   );
