@@ -71,6 +71,8 @@ const parseUser = (oidcUser: User): AuthUser => {
     role = UserRole.HR;
   } else if (groups.includes("recruiter")) {
     role = UserRole.RECRUITER;
+  } else if (groups.includes("sales")) {
+    role = UserRole.SALES;
   }
 
   return {

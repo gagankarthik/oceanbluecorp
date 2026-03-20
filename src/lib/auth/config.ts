@@ -19,15 +19,17 @@ export enum UserRole {
   ADMIN = "admin",
   HR = "hr",
   RECRUITER = "recruiter",
+  SALES = "sales",
   USER = "user",
 }
 
 // Role hierarchy for permission checking
-// RECRUITER is same level as HR but with limited access (no clients/vendors/contacts, view-only jobs)
+// RECRUITER and SALES are same level as HR but with limited access
 export const roleHierarchy: Record<UserRole, number> = {
   [UserRole.ADMIN]: 4,
   [UserRole.HR]: 3,
   [UserRole.RECRUITER]: 2,
+  [UserRole.SALES]: 2,
   [UserRole.USER]: 1,
 };
 
@@ -49,15 +51,17 @@ export const getCognitoUrls = () => {
 // Route access configuration
 export const routeAccess: Record<string, UserRole[]> = {
   "/admin": [UserRole.ADMIN],
-  "/admin/jobs": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
-  "/admin/applications": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
-  "/admin/candidates": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
-  "/admin/bench": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER],
-  "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
-  "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
-  "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER cannot access
+  "/admin/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin/roles": [UserRole.ADMIN],
+  "/admin/jobs": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin/applications": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin/candidates": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin/bench": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
+  "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
+  "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/content": [UserRole.ADMIN],
   "/admin/settings": [UserRole.ADMIN],
   "/hr": [UserRole.ADMIN, UserRole.HR],
-  "/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.USER],
+  "/dashboard": [UserRole.USER],
 };

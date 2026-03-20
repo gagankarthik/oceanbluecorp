@@ -26,6 +26,7 @@ import {
   Building,
   UserStar,
   Boxes,
+  Shield,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -52,13 +53,15 @@ interface SearchResult {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER] },
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: [UserRole.ADMIN] },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, roles: [UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
   { name: "Users", href: "/admin/users", icon: UserCog, roles: [UserRole.ADMIN] },
+  { name: "Roles", href: "/admin/roles", icon: Shield, roles: [UserRole.ADMIN] },
   { name: "Content", href: "/admin/content", icon: FileText, roles: [UserRole.ADMIN] },
-  { name: "Job Postings", href: "/admin/jobs", icon: Briefcase, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER] },
-  { name: "Candidates", href: "/admin/candidates", icon: UserStar, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER] },
-  { name: "Applications", href: "/admin/applications", icon: Users, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER] },
-  { name: "Talent Bench", href: "/admin/bench", icon: Boxes, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER] },
+  { name: "Job Postings", href: "/admin/jobs", icon: Briefcase, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Candidates", href: "/admin/candidates", icon: UserStar, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Applications", href: "/admin/applications", icon: Users, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Talent Bench", href: "/admin/bench", icon: Boxes, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
   { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Clients", href: "/admin/clients", icon: Building, roles: [UserRole.ADMIN, UserRole.HR] },
   { name: "Vendors", href: "/admin/vendors", icon: UsersRound, roles: [UserRole.ADMIN, UserRole.HR] },
@@ -276,6 +279,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         return "bg-violet-50 text-violet-600";
       case UserRole.RECRUITER:
         return "bg-teal-50 text-teal-600";
+      case UserRole.SALES:
+        return "bg-amber-50 text-amber-600";
       default:
         return "bg-sky-50 text-sky-600";
     }
@@ -680,7 +685,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER]}>
+    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES]}>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </ProtectedRoute>
   );

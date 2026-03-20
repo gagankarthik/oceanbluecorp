@@ -53,6 +53,8 @@ export default function CallbackPage() {
             setUserRole("HR Manager");
           } else if (groups.includes("recruiter")) {
             setUserRole("Recruiter");
+          } else if (groups.includes("sales")) {
+            setUserRole("Sales");
           } else {
             setUserRole("User");
           }
@@ -63,10 +65,8 @@ export default function CallbackPage() {
           setTimeout(() => {
             if (groups.includes("admin")) {
               router.push("/admin");
-            } else if (groups.includes("hr")) {
-              router.push("/admin/applications");
-            } else if (groups.includes("recruiter")) {
-              router.push("/admin/jobs");
+            } else if (groups.includes("hr") || groups.includes("recruiter") || groups.includes("sales")) {
+              router.push("/admin/dashboard");
             } else {
               router.push("/dashboard");
             }
