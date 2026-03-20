@@ -222,39 +222,88 @@ export default function SettingsPage() {
     : (user?.email?.[0] || "U").toUpperCase();
 
   const roleColors: Record<string, string> = {
-    admin: "bg-purple-100 text-purple-800 border-purple-200",
-    hr: "bg-blue-100 text-blue-800 border-blue-200",
-    user: "bg-gray-100 text-gray-700 border-gray-200",
+    admin: "bg-rose-100 text-rose-800 border-rose-200",
+    hr: "bg-violet-100 text-violet-800 border-violet-200",
+    recruiter: "bg-teal-100 text-teal-800 border-teal-200",
+    sales: "bg-amber-100 text-amber-800 border-amber-200",
+    user: "bg-blue-100 text-blue-800 border-blue-200",
   };
   const roleColor = roleColors[profileForm.role] || roleColors.user;
+
+  // Role-specific header styling
+  const roleHeaderConfig: Record<string, { gradient: string; bgGradient: string; border: string; label: string }> = {
+    admin: {
+      gradient: "from-rose-500 to-pink-600",
+      bgGradient: "from-rose-50 to-pink-50",
+      border: "border-rose-200",
+      label: "Administrator",
+    },
+    hr: {
+      gradient: "from-violet-500 to-purple-600",
+      bgGradient: "from-violet-50 to-purple-50",
+      border: "border-violet-200",
+      label: "HR Manager",
+    },
+    recruiter: {
+      gradient: "from-teal-500 to-cyan-600",
+      bgGradient: "from-teal-50 to-cyan-50",
+      border: "border-teal-200",
+      label: "Recruiter",
+    },
+    sales: {
+      gradient: "from-amber-500 to-orange-600",
+      bgGradient: "from-amber-50 to-orange-50",
+      border: "border-amber-200",
+      label: "Sales",
+    },
+    user: {
+      gradient: "from-blue-500 to-cyan-600",
+      bgGradient: "from-blue-50 to-cyan-50",
+      border: "border-blue-200",
+      label: "User",
+    },
+  };
+  const currentRoleHeader = roleHeaderConfig[profileForm.role] || roleHeaderConfig.user;
 
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage your account and site preferences</p>
+      <div className={`rounded-2xl bg-gradient-to-r ${currentRoleHeader.bgGradient} border ${currentRoleHeader.border} p-6 shadow-sm`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentRoleHeader.gradient} flex items-center justify-center text-white text-lg font-bold shadow-lg`}>
+              {userInitials}
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${roleColor}`}>
+                  {currentRoleHeader.label}
+                </span>
+                <span className="text-sm text-gray-500">Manage your account preferences</span>
+              </div>
+            </div>
+          </div>
+          {activeTab !== "site" && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                showSaved
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50"
+              }`}
+            >
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
+              ) : showSaved ? (
+                <><Check className="w-4 h-4" />Saved!</>
+              ) : (
+                <><Save className="w-4 h-4" />Save Changes</>
+              )}
+            </button>
+          )}
         </div>
-        {activeTab !== "site" && (
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm ${
-              showSaved
-                ? "bg-emerald-600 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-            }`}
-          >
-            {isSaving ? (
-              <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
-            ) : showSaved ? (
-              <><Check className="w-4 h-4" />Saved!</>
-            ) : (
-              <><Save className="w-4 h-4" />Save Changes</>
-            )}
-          </button>
-        )}
       </div>
 
       {/* Error banner */}
@@ -291,8 +340,20 @@ export default function SettingsPage() {
         {activeTab === "profile" && (
           <div className="p-6 space-y-6">
             {/* Avatar + info row */}
-            <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0">
+            <div className={`flex items-center gap-5 p-4 rounded-xl border ${
+              profileForm.role === "admin" ? "bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100" :
+              profileForm.role === "hr" ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-100" :
+              profileForm.role === "recruiter" ? "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-100" :
+              profileForm.role === "sales" ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100" :
+              "bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-100"
+            }`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0 ${
+                profileForm.role === "admin" ? "bg-gradient-to-br from-rose-500 to-pink-600" :
+                profileForm.role === "hr" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
+                profileForm.role === "recruiter" ? "bg-gradient-to-br from-teal-500 to-cyan-600" :
+                profileForm.role === "sales" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
+                "bg-gradient-to-br from-blue-500 to-cyan-600"
+              }`}>
                 {userInitials}
               </div>
               <div className="flex-1 min-w-0">

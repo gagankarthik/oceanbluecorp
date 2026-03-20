@@ -5,6 +5,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
@@ -222,37 +223,51 @@ function UserDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-3">
               <Image src="/logo.png" alt="Ocean Blue Corporation" width={140} height={40} className="h-7 md:h-8 w-auto" priority />
+              <span className="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                My Dashboard
+              </span>
             </Link>
-            <div className="flex items-center gap-2">
-              <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50" title="Refresh">
+            <div className="flex items-center gap-1">
+              <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50" title="Refresh">
                 <RefreshCw className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`} />
               </button>
-              <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+              <button className="relative p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                 <Bell className="w-5 h-5" />
-                {appStats.interview > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
+                {appStats.interview > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-white" />}
               </button>
-              <div className="relative group">
-                <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="relative group ml-2">
+                <button className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                     {user?.name?.[0]?.toUpperCase() || "U"}
                   </div>
-                  <span className="hidden sm:block text-sm font-medium text-gray-700">{user?.name}</span>
-                </button>
-                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-medium text-gray-800">{user?.name}</p>
+                    <p className="text-xs text-gray-400">Candidate</p>
                   </div>
-                  <Link href="/auth/signout" className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                    Sign Out
-                  </Link>
+                </button>
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                  <div className="px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500">
+                    <p className="text-sm font-semibold text-white">{user?.name}</p>
+                    <p className="text-xs text-white/80 truncate">{user?.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <Link href="/careers" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                      <Briefcase className="w-4 h-4" />
+                      Browse Jobs
+                    </Link>
+                  </div>
+                  <div className="border-t border-gray-100">
+                    <Link href="/auth/signout" className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                      Sign Out
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -468,12 +483,38 @@ function UserDashboard() {
   );
 }
 
-// ---- Dashboard Page (User Only) ----
+// ---- Dashboard Page ----
+
+function DashboardRouter() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Redirect admin/hr/recruiter/sales to admin dashboard
+      if (user.role === UserRole.ADMIN || user.role === UserRole.HR ||
+          user.role === UserRole.RECRUITER || user.role === UserRole.SALES) {
+        router.replace("/admin/dashboard");
+      }
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading while checking role or redirecting
+  if (isLoading || (user && user.role !== UserRole.USER)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  return <UserDashboard />;
+}
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute requiredRoles={[UserRole.USER]}>
-      <UserDashboard />
+    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.USER]}>
+      <DashboardRouter />
     </ProtectedRoute>
   );
 }

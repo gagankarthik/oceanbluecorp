@@ -329,55 +329,70 @@ export default function Header() {
                         >
                           <div className="overflow-hidden rounded-3xl bg-white text-sm shadow-2xl ring-1 ring-white/10 w-72">
                             {/* User Info */}
-                            <div className="p-4 border-b border-white/10">
+                            <div className="p-4 bg-gradient-to-br from-blue-500 to-cyan-600">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
+                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
                                   {getUserInitials()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-900 truncate">{user?.name}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5 truncate">{user?.email}</p>
+                                  <p className="font-semibold text-white truncate">{user?.name}</p>
+                                  <p className="text-xs text-white/70 mt-0.5 truncate">{user?.email}</p>
                                 </div>
                               </div>
-                              <span className="inline-block mt-3 px-3 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 capitalize">
-                                {user?.role}
+                              <span className={`inline-block mt-3 px-3 py-1 text-xs font-semibold rounded-full capitalize ${
+                                user?.role === "admin" ? "bg-rose-100 text-rose-700" :
+                                user?.role === "hr" ? "bg-violet-100 text-violet-700" :
+                                user?.role === "recruiter" ? "bg-teal-100 text-teal-700" :
+                                user?.role === "sales" ? "bg-amber-100 text-amber-700" :
+                                "bg-blue-100 text-blue-700"
+                              }`}>
+                                {user?.role === "admin" ? "Administrator" :
+                                 user?.role === "hr" ? "HR Manager" :
+                                 user?.role === "recruiter" ? "Recruiter" :
+                                 user?.role === "sales" ? "Sales" : "User"}
                               </span>
                             </div>
 
                             {/* Menu Items */}
-                            <div className="p-2">
+                            <div className="p-2 space-y-1">
                               <Link
                                 href={getDashboardLink()}
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-[#F2FF9C] transition-colors"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-blue-50 transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
                               >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
-                                  <LayoutDashboard className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 shadow-sm">
+                                  <LayoutDashboard className="w-4 h-4 text-white" />
                                 </div>
-                                <span className="font-medium">Dashboard</span>
+                                <div>
+                                  <span className="font-medium text-gray-900">Dashboard</span>
+                                  <p className="text-xs text-gray-400">View your overview</p>
+                                </div>
                               </Link>
                               <Link
-                                href="/dashboard/settings"
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-[#F2FF9C] transition-colors"
+                                href={user?.role === "user" ? "/dashboard/settings" : "/admin/settings"}
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-blue-50 transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
                               >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors">
-                                  <Settings className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
+                                  <Settings className="w-4 h-4 text-white" />
                                 </div>
-                                <span className="font-medium">Settings</span>
+                                <div>
+                                  <span className="font-medium text-gray-900">Settings</span>
+                                  <p className="text-xs text-gray-400">Manage preferences</p>
+                                </div>
                               </Link>
                             </div>
 
                             {/* Sign Out */}
-                            <div className="border-t border-white/10">
+                            <div className="p-2 border-t border-gray-100">
                               <button
                                 onClick={() => {
                                   setUserMenuOpen(false);
                                   signOut();
                                 }}
-                                className="w-full flex items-center justify-center gap-2 p-4 font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-colors"
                               >
-                                <LogOut className="w-5 h-5" />
+                                <LogOut className="w-4 h-4" />
                                 Sign Out
                               </button>
                             </div>

@@ -63,5 +63,5 @@ export const routeAccess: Record<string, UserRole[]> = {
   "/admin/content": [UserRole.ADMIN],
   "/admin/settings": [UserRole.ADMIN],
   "/hr": [UserRole.ADMIN, UserRole.HR],
-  "/dashboard": [UserRole.USER],
+  "/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.USER],
 };

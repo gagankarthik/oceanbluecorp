@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/auth";
+import { useAuth, UserRole } from "@/lib/auth";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -198,33 +198,88 @@ export default function AdminDashboardPage() {
       ]
     : [];
 
+  // Role-specific styling
+  const roleConfig = {
+    [UserRole.ADMIN]: {
+      gradient: "from-rose-500 to-pink-600",
+      bgGradient: "from-rose-50 to-pink-50",
+      border: "border-rose-200",
+      badge: "bg-rose-100 text-rose-700",
+      label: "Administrator",
+    },
+    [UserRole.HR]: {
+      gradient: "from-violet-500 to-purple-600",
+      bgGradient: "from-violet-50 to-purple-50",
+      border: "border-violet-200",
+      badge: "bg-violet-100 text-violet-700",
+      label: "HR Manager",
+    },
+    [UserRole.RECRUITER]: {
+      gradient: "from-teal-500 to-cyan-600",
+      bgGradient: "from-teal-50 to-cyan-50",
+      border: "border-teal-200",
+      badge: "bg-teal-100 text-teal-700",
+      label: "Recruiter",
+    },
+    [UserRole.SALES]: {
+      gradient: "from-amber-500 to-orange-600",
+      bgGradient: "from-amber-50 to-orange-50",
+      border: "border-amber-200",
+      badge: "bg-amber-100 text-amber-700",
+      label: "Sales",
+    },
+    [UserRole.USER]: {
+      gradient: "from-blue-500 to-cyan-600",
+      bgGradient: "from-blue-50 to-cyan-50",
+      border: "border-blue-200",
+      badge: "bg-blue-100 text-blue-700",
+      label: "User",
+    },
+  };
+
+  const currentRole = roleConfig[user?.role as UserRole] || roleConfig[UserRole.USER];
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-light text-gray-900">
-              Welcome back,{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
-                {user?.name?.split(" ")[0] || "Admin"}
-              </span>
-            </h1>
-            <Sparkles className="w-6 h-6 text-amber-500" />
+      {/* Header Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`rounded-2xl bg-gradient-to-r ${currentRole.bgGradient} border ${currentRole.border} p-6 shadow-sm`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${currentRole.gradient} flex items-center justify-center text-white text-xl font-bold shadow-lg`}>
+              {user?.name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "U"}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+                  Welcome back, {user?.name?.split(" ")[0] || "there"}!
+                </h1>
+                <Sparkles className="w-5 h-5 text-amber-500" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentRole.badge}`}>
+                  {currentRole.label}
+                </span>
+                <span className="text-sm text-gray-500">{user?.email}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-500">
-            Here&apos;s what&apos;s happening with your recruitment pipeline today.
-          </p>
-        </motion.div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+        <p className="text-gray-600 mt-3 text-sm">
+          Here&apos;s what&apos;s happening with your recruitment pipeline today.
+        </p>
+      </motion.div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-32">
