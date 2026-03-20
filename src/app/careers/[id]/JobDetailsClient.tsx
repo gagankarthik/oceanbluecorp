@@ -351,16 +351,16 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
             </div>
 
             {/* Description */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="prose prose-lg max-w-none"
-            >
-              <p className="text-gray-600 text-lg leading-relaxed">
-                {job.description}
-              </p>
-            </motion.div>
+            {/* Description */}
+            {job.description && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">{job.description}</p>
+              </motion.div>
+            )}
 
             {/* Salary */}
             {job.salary && (
@@ -385,44 +385,52 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
             )}
 
             {/* Responsibilities */}
-            {job.responsibilities && job.responsibilities.length > 0 && (
+            {job.responsibilities && (typeof job.responsibilities === 'string' ? job.responsibilities : job.responsibilities.length > 0) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">What you'll do</h2>
-                <ul className="space-y-4">
-                  {job.responsibilities.map((item, i) => (
-                    <li key={i} className="flex items-start gap-4">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-gray-600 text-lg">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                {typeof job.responsibilities === 'string' ? (
+                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap font-sans">{job.responsibilities}</pre>
+                ) : (
+                  <ul className="space-y-4">
+                    {job.responsibilities.map((item, i) => (
+                      <li key={i} className="flex items-start gap-4">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="text-gray-600 text-lg">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </motion.div>
             )}
 
             {/* Requirements */}
-            {job.requirements && job.requirements.length > 0 && (
+            {job.requirements && (typeof job.requirements === 'string' ? job.requirements : job.requirements.length > 0) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">What we're looking for</h2>
-                <ul className="space-y-4">
-                  {job.requirements.map((item, i) => (
-                    <li key={i} className="flex items-start gap-4">
-                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Award className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <span className="text-gray-600 text-lg">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                {typeof job.requirements === 'string' ? (
+                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap font-sans">{job.requirements}</pre>
+                ) : (
+                  <ul className="space-y-4">
+                    {job.requirements.map((item, i) => (
+                      <li key={i} className="flex items-start gap-4">
+                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Award className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <span className="text-gray-600 text-lg">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </motion.div>
             )}
 

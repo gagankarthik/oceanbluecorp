@@ -20,6 +20,9 @@ import {
   Save,
   Eye,
   Hash,
+  Clock,
+  CheckCircle2,
+  Award,
 } from "lucide-react";
 import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -56,6 +59,7 @@ export default function NewJobPage() {
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // RECRUITER role cannot create jobs - redirect to jobs list
   useEffect(() => {
@@ -122,8 +126,8 @@ export default function NewJobPage() {
         state: formData.state || undefined,
         type: formData.type,
         description: formData.description,
-        requirements: formData.requirements.split("\n").filter(Boolean),
-        responsibilities: formData.responsibilities.split("\n").filter(Boolean),
+        requirements: formData.requirements || undefined,
+        responsibilities: formData.responsibilities || undefined,
         salary: formData.salaryMin && formData.salaryMax ? { min: parseInt(formData.salaryMin), max: parseInt(formData.salaryMax), currency: "$" } : undefined,
         clientBillRate: formData.clientBillRate ? parseFloat(formData.clientBillRate) : undefined,
         payRate: formData.payRate ? parseFloat(formData.payRate) : undefined,
@@ -223,6 +227,10 @@ export default function NewJobPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setShowPreviewModal(true)} className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
+            <Eye className="w-4 h-4" />
+            Preview
+          </button>
           <button type="button" onClick={() => router.back()} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
           <button type="submit" form="job-form" disabled={submitting} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -415,17 +423,34 @@ export default function NewJobPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Description <span className="text-red-500">*</span></label>
-              <textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Describe the role, team, and what makes this opportunity exciting..." rows={4} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none" />
+              <textarea
+                required
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe the role, team, and what makes this opportunity exciting..."
+                rows={6}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-mono"
+              />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Requirements <span className="text-gray-400">(one per line)</span></label>
-                <textarea value={formData.requirements} onChange={e => setFormData({ ...formData, requirements: e.target.value })} placeholder={"5+ years experience\nBachelor's degree\nStrong communication skills"} rows={4} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Responsibilities <span className="text-gray-400">(one per line)</span></label>
-                <textarea value={formData.responsibilities} onChange={e => setFormData({ ...formData, responsibilities: e.target.value })} placeholder={"Lead technical projects\nMentor junior developers\nCollaborate with stakeholders"} rows={4} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none" />
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Requirements</label>
+              <textarea
+                value={formData.requirements}
+                onChange={e => setFormData({ ...formData, requirements: e.target.value })}
+                placeholder="Paste or type the requirements - formatting will be preserved exactly as entered..."
+                rows={8}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Responsibilities</label>
+              <textarea
+                value={formData.responsibilities}
+                onChange={e => setFormData({ ...formData, responsibilities: e.target.value })}
+                placeholder="Paste or type the responsibilities - formatting will be preserved exactly as entered..."
+                rows={8}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-mono"
+              />
             </div>
           </div>
         </div>
@@ -465,6 +490,90 @@ export default function NewJobPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto py-8" onClick={() => setShowPreviewModal(false)}>
+          <div className="bg-[#F2F2F2] rounded-xl shadow-2xl w-full max-w-4xl my-auto" onClick={e => e.stopPropagation()}>
+            {/* Preview Header */}
+            <div className="sticky top-0 flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 rounded-t-xl z-10">
+              <div className="flex items-center gap-3">
+                <Eye className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Public Preview</h2>
+                  <p className="text-xs text-gray-500">This is how the job will appear to candidates</p>
+                </div>
+              </div>
+              <button onClick={() => setShowPreviewModal(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Preview Content */}
+            <div className="p-6 space-y-6">
+              {/* Job Header */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{formData.title || "Job Title"}</h1>
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                    <Briefcase className="w-4 h-4" />
+                    {formData.type === "full-time" ? "Full-time" : formData.type === "part-time" ? "Part-time" : formData.type === "contract" ? "Contract" : formData.type === "contract-to-hire" ? "Contract-to-Hire" : formData.type === "direct-hire" ? "Direct Hire" : formData.type === "managed-teams" ? "Managed Teams" : "Remote"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                    <MapPin className="w-4 h-4" />
+                    {formData.location || "Location"}{formData.state ? `, ${formData.state}` : ""}
+                  </span>
+                  {formData.submissionDueDate && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-full text-sm font-medium">
+                      <Clock className="w-4 h-4" />
+                      Due {new Date(formData.submissionDueDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                {formData.salaryMin && formData.salaryMax && (
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <DollarSign className="w-5 h-5" />
+                    <span className="text-lg font-semibold">${parseInt(formData.salaryMin).toLocaleString()} - ${parseInt(formData.salaryMax).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              {formData.description && (
+                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">About This Role</h2>
+                  <p className="text-gray-600 whitespace-pre-wrap">{formData.description}</p>
+                </div>
+              )}
+
+              {/* Responsibilities */}
+              {formData.responsibilities && (
+                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">What you'll do</h2>
+                  <pre className="text-gray-600 whitespace-pre-wrap font-sans text-sm leading-relaxed">{formData.responsibilities}</pre>
+                </div>
+              )}
+
+              {/* Requirements */}
+              {formData.requirements && (
+                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">What we're looking for</h2>
+                  <pre className="text-gray-600 whitespace-pre-wrap font-sans text-sm leading-relaxed">{formData.requirements}</pre>
+                </div>
+              )}
+
+              {/* Apply CTA */}
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-6 text-center">
+                <h3 className="text-xl font-bold text-white mb-2">Ready to apply?</h3>
+                <p className="text-blue-100 mb-4">Join our team and help shape the future of enterprise IT.</p>
+                <button className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg cursor-default">
+                  Apply for this position
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -58,6 +58,16 @@ export interface JobPostedNotificationEmail {
   jobId: string;
 }
 
+export interface JobUpdatedNotificationEmail {
+  recipientName: string;
+  recipientEmail: string;
+  jobTitle: string;
+  jobId: string;
+  postingId?: string;
+  updatedByName: string;
+  changes: string[];
+}
+
 export interface InterviewInviteEmail {
   candidateName: string;
   candidateEmail: string;
@@ -394,6 +404,99 @@ View the job at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com
   `;
 
   return sendEmail(data.recipientEmail, subject, htmlBody, textBody);
+}
+
+// Send notification about job posting update to manager/assignees
+export async function sendJobUpdatedNotification(
+  data: JobUpdatedNotificationEmail
+): Promise<{ success: boolean; error?: string }> {
+  const subject = `Job Updated - ${data.jobTitle}${data.postingId ? ` (${data.postingId})` : ""}`;
+
+  const changesHtml = data.changes.length > 0
+    ? `<ul style="color: #475569; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
+        ${data.changes.map(change => `<li>${change}</li>`).join("")}
+       </ul>`
+    : `<p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">General updates were made to this job posting.</p>`;
+
+  const htmlBody = `
+    ${getEmailHeader()}
+    <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
+      Job Posting Updated
+    </h2>
+    <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${data.recipientName},
+    </p>
+    <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
+      The job posting <strong>${data.jobTitle}</strong>${data.postingId ? ` (${data.postingId})` : ""} has been updated by <strong>${data.updatedByName}</strong>.
+    </p>
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
+        Changes Made
+      </h3>
+      ${changesHtml}
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}"
+         style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+        View Job Posting
+      </a>
+    </div>
+    <p style="color: #475569; line-height: 1.6; margin: 0;">
+      Best regards,<br>
+      <strong>Ocean Blue Recruiting System</strong>
+    </p>
+    ${getEmailFooter()}
+  `;
+
+  const textBody = `
+Job Posting Updated
+
+Hi ${data.recipientName},
+
+The job posting ${data.jobTitle}${data.postingId ? ` (${data.postingId})` : ""} has been updated by ${data.updatedByName}.
+
+Changes Made:
+${data.changes.length > 0 ? data.changes.map(c => `- ${c}`).join("\n") : "General updates were made to this job posting."}
+
+View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}
+
+Best regards,
+Ocean Blue Recruiting System
+  `;
+
+  return sendEmail(data.recipientEmail, subject, htmlBody, textBody);
+}
+
+// Send job update notifications to multiple recipients
+export async function sendJobUpdatedNotifications(
+  recipients: Array<{ name: string; email: string }>,
+  jobData: {
+    jobTitle: string;
+    jobId: string;
+    postingId?: string;
+    updatedByName: string;
+    changes: string[];
+  }
+): Promise<{ success: boolean; sent: number; failed: number }> {
+  let sent = 0;
+  let failed = 0;
+
+  for (const recipient of recipients) {
+    const result = await sendJobUpdatedNotification({
+      recipientName: recipient.name,
+      recipientEmail: recipient.email,
+      ...jobData,
+    });
+
+    if (result.success) {
+      sent++;
+    } else {
+      failed++;
+      console.error(`Failed to send update notification to ${recipient.email}:`, result.error);
+    }
+  }
+
+  return { success: failed === 0, sent, failed };
 }
 
 // Send interview invitation
