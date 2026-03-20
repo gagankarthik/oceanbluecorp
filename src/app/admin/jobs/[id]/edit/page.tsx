@@ -36,7 +36,7 @@ const US_STATES = [
 
 const departments = [
   "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce",
-  "IT Staffing", "Training", "PMO", "Operations"
+  "Information and Computers", "Training", "PMO", "Operations"
 ];
 
 interface CognitoUser {
@@ -109,7 +109,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       fetch("/api/vendors").then(r => r.json()).then(d => setVendors(d.vendors || [])),
       fetch("/api/users").then(r => r.json()).then(d => {
         const users = d.users || [];
-        setHrUsers(users.filter((u: CognitoUser) => u.role === "hr" || u.role === "admin"));
+        setHrUsers(users.filter((u: CognitoUser) => u.role === "hr" || u.role === "admin" || u.role === "recruiter" || u.role === "sales"));
       }),
     ]).catch(console.error);
   }, [id]);
