@@ -63,7 +63,7 @@ const services = [
 
 export default function TerminalServices() {
   return (
-    <section className="relative bg-[#eceafc]  py-24 md:py-32 overflow-hidden">
+    <section className="relative bg-[#f0effc] py-24 md:py-32 overflow-hidden">
       <div className="px-6 md:px-12 lg:px-20 max-w-[1400px] mx-auto">
         
         {/* Header */}
