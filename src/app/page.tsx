@@ -1,18 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, Play } from "lucide-react";
 
-// Components
+// Landing page components with updated blue/purple color scheme
+import TrustedCompanies from "@/components/TrustedCompanies";
+import Certifications from "@/components/Certifications";
+import TestimonialsShowcase from "@/components/TestimonialsShowcase";
 import HeroSection from "@/components/HeroSection";
-import PartnersCloud from "@/components/PartnersCloud";
-import StatsSection from "@/components/StatsSection";
-import IndustriesSection from "@/components/IndustriesSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import SolutionsStack from "@/components/SolutionsStack";
 import CtaSection from "@/components/CtaSection";
+import TerminalServices from "@/components/TerminalServices";
+import StatsSections from "@/components/StatsSection";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -24,31 +21,28 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="bg-white relative overflow-hidden">
-      {/* Hero Section with split layout and 3D background */}
+    <div className="bg-[#f8fafc] relative overflow-hidden">
+      {/* Hero Section with Sky/Stars Background and Globe */}
       <HeroSection />
 
-      {/* Partners Cloud */}
-      <PartnersCloud />
+      {/* Scrolling Trusted Companies */}
+      <TrustedCompanies />
 
-      {/* Solutions Grid */}
-      <SolutionsStack />
-
-      {/* Statistics */}
-      <StatsSection />
-
-      
-
-      {/* Testimonials - compact */}
-      <TestimonialsSection />
-
-    
-      {/* CTA Section with Wave Background */}
+      {/* Comprehensive Services - White background */}
      
+      <TerminalServices />
+      
+      {/* Animated Stats - Dark background */}
+      <StatsSections />
+
+      {/* Certifications - Light background */}
+      <Certifications />
+
+      {/* Testimonials - White background */}
+      <TestimonialsShowcase />
+
+      {/* CTA Section - Blue gradient */}
       <CtaSection />
-
-
-
 
     </div>
   );

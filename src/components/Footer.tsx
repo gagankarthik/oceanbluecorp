@@ -8,15 +8,12 @@ import {
   Phone,
   MapPin,
   Linkedin,
-  Twitter,
   Youtube,
   ArrowRight,
-  Send,
-  Sparkles,
   ChevronRight,
-  Github,
   Instagram,
   X,
+  Heart,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -30,7 +27,7 @@ const footerLinks = {
     { name: "Training", href: "/services#training" },
   ],
   company: [
-    { name: "About", href: "/about" },
+    { name: "About Us", href: "/about" },
     { name: "Careers", href: "/careers" },
     { name: "Blog", href: "/resources/blog" },
     { name: "Case Studies", href: "/resources/case-studies" },
@@ -41,25 +38,25 @@ const footerLinks = {
     { name: "Whitepapers", href: "/resources" },
     { name: "Webinars", href: "/resources" },
     { name: "Documentation", href: "/resources" },
+    { name: "FAQ", href: "/faq" },
   ],
   legal: [
-    { name: "Privacy", href: "/privacy" },
-    { name: "Terms", href: "/terms" },
-    { name: "Cookies", href: "/cookies" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms of Service", href: "/terms" },
+    { name: "Cookie Policy", href: "/cookies" },
   ],
 };
 
 const socialLinks = [
-  { name: "LinkedIn", href: "https://www.linkedin.com/company/ocean-blue-solutions-inc/", icon: Linkedin, color: "hover:bg-blue-600" },
-  { name: "X", href: "https://x.com/OceanBlueSol", icon: X, color: "hover:bg-sky-500" },
-  { name: "YouTube", href: "https://www.youtube.com/@OceanBlueSolutions", icon: Youtube, color: "hover:bg-red-600" },
-  { name: "Instagram", href: "https://www.instagram.com/oceanbluesolutions", icon: Instagram, color: "hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-500" },
+  { name: "LinkedIn", href: "https://www.linkedin.com/company/ocean-blue-solutions-inc/", icon: Linkedin, color: "hover:bg-[#0A66C2]" },
+  { name: "X", href: "https://x.com/OceanBlueSol", icon: X, color: "hover:bg-black" },
+  { name: "YouTube", href: "https://www.youtube.com/@OceanBlueSolutions", icon: Youtube, color: "hover:bg-[#FF0000]" },
+  { name: "Instagram", href: "https://www.instagram.com/oceanbluesolutions", icon: Instagram, color: "hover:bg-gradient-to-br hover:from-[#E4405F] hover:to-[#F56040]" },
 ];
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [focused, setFocused] = useState(false);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,129 +68,96 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white border-t border-gray-100 relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-40">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.015) 1px, transparent 0)`,
-            backgroundSize: "32px 32px",
-          }}
-        />
-      </div>
-
-      {/* Newsletter Section 
-      <div className="relative border-b border-gray-100 bg-gradient-to-b from-gray-50/50 to-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.h3
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 mb-3 md:mb-4 font-[family-name:var(--font-space-grotesk)]"
-            >
-              Get insights that
-              <br className="sm:hidden" />{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
+    <footer className="bg-gradient-to-b from-white to-gray-50 border-t border-gray-100">
+      {/* Main Footer Container - Centered with max-width */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        {/* Newsletter Section 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-16 pb-8 border-b border-gray-200"
+        >
+          <div className="max-w-3xl mx-auto text-center">
+            <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-3">
+              Stay ahead with insights that
+              <span className="block text-blue-600 font-medium mt-1">
                 actually matter
               </span>
-            </motion.h3>
-
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-500 mb-6 md:mb-8 max-w-lg mx-auto text-sm md:text-base"
-            >
+            </h3>
+            <p className="text-gray-500 mb-6 max-w-lg mx-auto text-sm">
               No spam. Just thoughtful articles, case studies, and updates.
-            </motion.p>
+            </p>
 
             {subscribed ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-3 px-5 md:px-6 py-2.5 md:py-3 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200"
+                className="inline-flex items-center gap-3 px-6 py-3 bg-green-50 text-green-700 rounded-full border border-green-200"
               >
-                <Send className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" />
                 <span className="text-sm font-medium">Thanks for subscribing!</span>
               </motion.div>
             ) : (
-              <motion.form
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                onSubmit={handleSubscribe}
-                className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto"
-              >
-                <div className="relative flex-1">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                    placeholder="Enter your email"
-                    required
-                    className="w-full px-4 md:px-5 py-2.5 md:py-3 bg-white border border-gray-200 rounded-full text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-sm"
-                  />
-                </div>
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="flex-1 px-5 py-3 bg-white border border-gray-200 rounded-full text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-sm"
+                />
                 <button
                   type="submit"
-                  className="px-5 md:px-6 py-2.5 md:py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-all text-sm font-medium flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
+                  className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-blue-600 transition-all text-sm font-medium flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
                 >
                   Subscribe
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </button>
-              </motion.form>
+              </form>
             )}
           </div>
-        </div>
-      </div>
-      */}
-
-      {/* Main Footer Grid */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
+        </motion.div>
+*/}
+        {/* Main Footer Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Company Info */}
-          <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <Link href="/" className="inline-block mb-5 md:mb-6">
+          <div className="col-span-2 md:col-span-4 lg:col-span-2">
+            <Link href="/" className="inline-block mb-6">
               <Image
                 src="/logo.png"
                 alt="Ocean Blue Corporation"
                 width={180}
                 height={40}
-                className="h-7 md:h-8 w-auto"
+                className="h-8 w-auto"
               />
             </Link>
-            {/*<p className="text-gray-500 mb-5 md:mb-6 leading-relaxed text-sm max-w-sm">
-              Making enterprise tech less painful.
-            </p>*/}
-            <div className="space-y-2.5 md:space-y-3">
+            <p className="text-gray-500 mb-6 leading-relaxed text-sm max-w-sm">
+              Making enterprise tech less painful with innovative solutions and dedicated support.
+            </p>
+            <div className="space-y-3">
               <a
                 href="mailto:hr@oceanbluecorp.com"
-                className="flex items-center gap-2.5 md:gap-3 text-gray-500 hover:text-gray-900 transition-colors text-sm group"
+                className="flex items-center gap-3 text-gray-500 hover:text-gray-900 transition-colors text-sm group"
               >
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  <Mail className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                  <Mail className="w-4 h-4" />
                 </div>
                 <span>hr@oceanbluecorp.com</span>
               </a>
               <a
                 href="tel:+16148446925"
-                className="flex items-center gap-2.5 md:gap-3 text-gray-500 hover:text-gray-900 transition-colors text-sm group"
+                className="flex items-center gap-3 text-gray-500 hover:text-gray-900 transition-colors text-sm group"
               >
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  <Phone className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                  <Phone className="w-4 h-4" />
                 </div>
                 <span>+1 614-844-6925</span>
               </a>
-              <div className="flex items-start gap-2.5 md:gap-3 text-gray-500 text-sm">
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <div className="flex items-start gap-3 text-gray-500 text-sm">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MapPin className="w-4 h-4" />
                 </div>
                 <span className="leading-relaxed">
                   9775 Fairway Drive, Suite #C<br />
@@ -205,15 +169,15 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
               Services
             </h3>
-            <ul className="space-y-2 md:space-y-2.5">
+            <ul className="space-y-2.5">
               {footerLinks.services.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-600 hover:text-gray-900 transition-colors text-sm flex items-center gap-1 group"
+                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
                   >
                     <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
                     {link.name}
@@ -225,15 +189,15 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
               Company
             </h3>
-            <ul className="space-y-2 md:space-y-2.5">
+            <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-600 hover:text-gray-900 transition-colors text-sm flex items-center gap-1 group"
+                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
                   >
                     <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
                     {link.name}
@@ -243,17 +207,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Resources 
           <div>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
               Resources
             </h3>
-            <ul className="space-y-2 md:space-y-2.5">
+            <ul className="space-y-2.5">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-600 hover:text-gray-900 transition-colors text-sm flex items-center gap-1 group"
+                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
                   >
                     <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
                     {link.name}
@@ -262,18 +226,18 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-
+*/}
           {/* Legal & Social */}
-          <div>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
               Legal
             </h3>
-            <ul className="space-y-2 md:space-y-2.5 mb-6">
+            <ul className="space-y-2.5 mb-8">
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-600 hover:text-gray-900 transition-colors text-sm flex items-center gap-1 group"
+                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
                   >
                     <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
                     {link.name}
@@ -283,20 +247,20 @@ export default function Footer() {
             </ul>
 
             {/* Social Links */}
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
-              Follow
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
+              Follow Us
             </h3>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center transition-all group ${social.color} hover:text-white`}
+                  className={`w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center transition-all hover:scale-110 hover:text-white ${social.color}`}
                   aria-label={social.name}
                 >
-                  <social.icon className="w-3.5 h-3.5 text-gray-600 group-hover:text-white transition-colors" />
+                  <social.icon className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" />
                 </a>
               ))}
             </div>
@@ -305,18 +269,16 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-100 bg-gray-50/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-6">
+      <div className="border-t border-gray-200 bg-gray-50/80">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-400 text-xs">
               &copy; {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
             </p>
-            <div className="flex items-center gap-2 md:gap-3 text-gray-300 text-xs">
-              <span className="text-gray-400">Innovation</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span className="text-gray-400">Dedication</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span className="text-gray-400">Excellence</span>
+            <div className="flex items-center gap-2 text-gray-400 text-xs">
+              <span>Built with</span>
+              <Heart className="w-3 h-3 text-red-400 fill-red-400" />
+              <span>for enterprise excellence</span>
             </div>
           </div>
         </div>
