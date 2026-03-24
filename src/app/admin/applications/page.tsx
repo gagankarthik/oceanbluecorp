@@ -35,8 +35,9 @@ import {
   ChevronDown,
   Filter,
   MoreHorizontal,
+  StickyNote,
 } from "lucide-react";
-import { Application, Job } from "@/lib/aws/dynamodb";
+import { Application, Job, NoteEntry } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -182,6 +183,7 @@ export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
   const [recruiterFilter, setRecruiterFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [customDateFrom, setCustomDateFrom] = useState("");
@@ -190,6 +192,11 @@ export default function ApplicationsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [addingNoteForId, setAddingNoteForId] = useState<string | null>(null);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [editingSkillsForId, setEditingSkillsForId] = useState<string | null>(null);
+  const [skillsInput, setSkillsInput] = useState("");
+  const [tempSkills, setTempSkills] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [uploadingResume, setUploadingResume] = useState<string | null>(null);
   const [resumeUploadError, setResumeUploadError] = useState<string | null>(null);
@@ -281,6 +288,7 @@ export default function ApplicationsPage() {
 
   const positions = [...new Set(applications.map((a) => a.jobTitle).filter(Boolean))];
   const recruiters = [...new Set(applications.map((a) => a.postedByName || a.ownershipName).filter(Boolean))] as string[];
+  const uniqueOwners = [...new Set(applications.filter(a => a.ownershipName).map(a => a.ownershipName))] as string[];
   const sources = [...new Set(applications.map((a) => a.source).filter(Boolean))] as string[];
 
   const isWithinDateRange = (dateStr: string) => {
@@ -320,9 +328,18 @@ export default function ApplicationsPage() {
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesPosition = positionFilter === "all" || app.jobTitle === positionFilter;
     const matchesRecruiter = recruiterFilter === "all" || app.postedByName === recruiterFilter || app.ownershipName === recruiterFilter;
+    // Owner filter logic
+    let matchesOwner = true;
+    if (ownerFilter === "unassigned") {
+      matchesOwner = !app.ownership;
+    } else if (ownerFilter === "mine") {
+      matchesOwner = app.ownership === user?.id;
+    } else if (ownerFilter !== "all") {
+      matchesOwner = app.ownershipName === ownerFilter;
+    }
     const matchesSource = sourceFilter === "all" || app.source === sourceFilter;
     const matchesDate = isWithinDateRange(app.appliedAt);
-    return matchesSearch && matchesStatus && matchesPosition && matchesRecruiter && matchesSource && matchesDate;
+    return matchesSearch && matchesStatus && matchesPosition && matchesRecruiter && matchesOwner && matchesSource && matchesDate;
   });
 
   const statusCounts = STATUS_TABS.reduce((acc, tab) => {
@@ -414,6 +431,109 @@ export default function ApplicationsPage() {
     } catch {
       alert("Failed to save notes");
     }
+  };
+
+  const handleClaimOwnership = async (appId: string) => {
+    if (!user) return;
+    try {
+      const response = await fetch(`/api/applications/${appId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownership: user.id,
+          ownershipName: user.name || user.email,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to claim ownership");
+      const data = await response.json();
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, ...data.application } : a));
+      if (selectedApplication?.id === appId) {
+        setSelectedApplication({ ...selectedApplication, ...data.application });
+      }
+    } catch {
+      alert("Failed to claim ownership");
+    }
+  };
+
+  const handleReleaseOwnership = async (appId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${appId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownership: "",
+          ownershipName: "",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to release ownership");
+      const data = await response.json();
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, ...data.application } : a));
+      if (selectedApplication?.id === appId) {
+        setSelectedApplication({ ...selectedApplication, ...data.application });
+      }
+    } catch {
+      alert("Failed to release ownership");
+    }
+  };
+
+  const handleAddNote = async (appId: string) => {
+    if (!user || !newNoteText.trim()) return;
+    try {
+      const response = await fetch(`/api/applications/${appId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addNote: {
+            text: newNoteText.trim(),
+            addedBy: user.id,
+            addedByName: user.name || user.email,
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add note");
+      const data = await response.json();
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, ...data.application } : a));
+      if (selectedApplication?.id === appId) {
+        setSelectedApplication({ ...selectedApplication, ...data.application });
+      }
+      setNewNoteText("");
+      setAddingNoteForId(null);
+    } catch {
+      alert("Failed to add note");
+    }
+  };
+
+  const handleUpdateSkills = async (appId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${appId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skills: tempSkills }),
+      });
+      if (!response.ok) throw new Error("Failed to update skills");
+      const data = await response.json();
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, ...data.application } : a));
+      if (selectedApplication?.id === appId) {
+        setSelectedApplication({ ...selectedApplication, ...data.application });
+      }
+      setEditingSkillsForId(null);
+      setSkillsInput("");
+      setTempSkills([]);
+    } catch {
+      alert("Failed to update skills");
+    }
+  };
+
+  const handleAddSkill = () => {
+    const skill = skillsInput.trim();
+    if (skill && !tempSkills.includes(skill)) {
+      setTempSkills([...tempSkills, skill]);
+      setSkillsInput("");
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setTempSkills(tempSkills.filter(s => s !== skillToRemove));
   };
 
   const handleExportCSV = () => {
@@ -669,6 +789,22 @@ export default function ApplicationsPage() {
     if (diff < 7) return `${diff}d ago`;
     if (diff < 30) return `${Math.floor(diff / 7)}w ago`;
     return formatDate(dateStr);
+  };
+
+  const getNotes = (app: ApplicationWithJob) => {
+    if (Array.isArray(app.notesHistory) && app.notesHistory.length > 0) {
+      return app.notesHistory;
+    }
+    if (typeof app.notes === "string" && app.notes) {
+      return [{
+        id: "legacy",
+        text: app.notes,
+        addedAt: app.appliedAt || new Date().toISOString(),
+        addedBy: "system",
+        addedByName: "Legacy Note",
+      }];
+    }
+    return [];
   };
 
   const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -1042,12 +1178,6 @@ export default function ApplicationsPage() {
                       {app.jobTitle && <div className="flex items-center gap-2 text-sm text-gray-700"><Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" /><span className="break-words">{app.jobTitle}</span></div>}
                       {app.source && <div className="flex items-center gap-2 text-sm text-gray-600"><span className="w-4 h-4 flex-shrink-0 inline-flex items-center justify-center"><span className="w-1.5 h-1.5 rounded-full bg-gray-400" /></span>via {app.source}</div>}
                       {app.workAuthorization && <div className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />{app.workAuthorization}</div>}
-                      {(app.ownershipName || app.postedByName) && (
-                        <div className="flex items-start gap-2 text-sm text-gray-600 min-w-0">
-                          <User className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                          <span className="break-all min-w-0">{app.ownershipName || app.postedByName}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1060,6 +1190,39 @@ export default function ApplicationsPage() {
                       {app.updatedAt && <div><p className="text-[10px] text-gray-400 uppercase tracking-wide">Updated</p><p className="text-gray-700">{formatDate(app.updatedAt)}</p></div>}
                       <div><p className="text-[10px] text-gray-400 uppercase tracking-wide">Talent Bench</p><p className="text-gray-700">{app.addToTalentBench ? "Yes" : "No"}</p></div>
                     </div>
+                  </div>
+
+                  {/* Ownership */}
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Ownership</h3>
+                    {app.ownershipName ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-emerald-700">
+                          <User className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-medium">{app.ownershipName}</span>
+                        </div>
+                        {app.ownershipClaimedAt && (
+                          <p className="text-xs text-gray-500 pl-6">
+                            Claimed {formatDate(app.ownershipClaimedAt)}
+                          </p>
+                        )}
+                        {app.ownership === user?.id && (
+                          <button
+                            onClick={() => handleReleaseOwnership(app.id)}
+                            className="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                          >
+                            Release Ownership
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleClaimOwnership(app.id)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors border border-blue-100"
+                      >
+                        <User className="w-4 h-4" /> Claim Ownership
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1139,20 +1302,95 @@ export default function ApplicationsPage() {
 
               {/* Skills Tab */}
               {detailTab === "skills" && (
-                <div>
-                  {app.skills && app.skills.length > 0 ? (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Skills & Expertise</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {app.skills.map(s => (
-                          <span key={s} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors">{s}</span>
-                        ))}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Skills & Expertise</h3>
+                    {editingSkillsForId !== app.id && (
+                      <button
+                        onClick={() => {
+                          setEditingSkillsForId(app.id);
+                          setTempSkills(app.skills || []);
+                          setSkillsInput("");
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" /> {app.skills && app.skills.length > 0 ? "Edit Skills" : "Add Skills"}
+                      </button>
+                    )}
+                  </div>
+
+                  {editingSkillsForId === app.id ? (
+                    <div className="space-y-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                      {/* Add skill input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={skillsInput}
+                          onChange={e => setSkillsInput(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), handleAddSkill())}
+                          className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                          placeholder="Type a skill and press Enter or click Add"
+                        />
+                        <button
+                          onClick={handleAddSkill}
+                          disabled={!skillsInput.trim()}
+                          className="px-4 py-2 bg-white text-gray-700 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {/* Current skills */}
+                      {tempSkills.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {tempSkills.map(skill => (
+                            <span key={skill} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                              {skill}
+                              <button
+                                onClick={() => handleRemoveSkill(skill)}
+                                className="ml-1 hover:text-blue-900 transition-colors"
+                                title="Remove skill"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No skills added yet. Add some above.</p>
+                      )}
+
+                      {/* Save/Cancel buttons */}
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => handleUpdateSkills(app.id)}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          Save Skills
+                        </button>
+                        <button
+                          onClick={() => { setEditingSkillsForId(null); setSkillsInput(""); setTempSkills([]); }}
+                          className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <Star className="w-10 h-10 text-gray-200 mb-3" />
-                      <p className="text-sm text-gray-400">No skills listed</p>
+                    <div>
+                      {app.skills && app.skills.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {app.skills.map(s => (
+                            <span key={s} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors">{s}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                          <Star className="w-10 h-10 text-gray-200 mb-3" />
+                          <p className="text-sm text-gray-400">No skills listed</p>
+                          <p className="text-xs text-gray-400 mt-1">Click "Add Skills" to get started</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1161,38 +1399,74 @@ export default function ApplicationsPage() {
               {/* Notes Tab */}
               {detailTab === "notes" && (
                 <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Notes</h3>
-                  {editingNoteId === app.id ? (
-                    <div className="space-y-3">
-                      <textarea
-                        value={noteText}
-                        onChange={e => setNoteText(e.target.value)}
-                        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[160px]"
-                        placeholder="Add internal notes about this applicant..."
-                      />
-                      <div className="flex gap-2">
-                        <button onClick={() => handleNotesSave(app.id)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium">Save Note</button>
-                        <button onClick={() => { setEditingNoteId(null); setNoteText(""); }} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      {app.notes ? (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mb-3">{app.notes}</div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl mb-3">
-                          <History className="w-8 h-8 text-gray-200 mb-2" />
-                          <p className="text-sm text-gray-400">No notes yet</p>
-                        </div>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Notes</h3>
+                    {addingNoteForId !== app.id && (
                       <button
-                        onClick={() => { setEditingNoteId(app.id); setNoteText(app.notes || ""); }}
+                        onClick={() => { setAddingNoteForId(app.id); setNewNoteText(""); }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-colors"
                       >
-                        <Edit3 className="w-4 h-4" />{app.notes ? "Edit Note" : "Add Note"}
+                        <Plus className="w-4 h-4" /> Add Note
                       </button>
+                    )}
+                  </div>
+
+                  {/* Add note form */}
+                  {addingNoteForId === app.id && (
+                    <div className="space-y-3 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                      <textarea
+                        value={newNoteText}
+                        onChange={e => setNewNoteText(e.target.value)}
+                        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none min-h-[100px] bg-white"
+                        placeholder="Add a note about this applicant..."
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAddNote(app.id)}
+                          disabled={!newNoteText.trim()}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Save Note
+                        </button>
+                        <button
+                          onClick={() => { setAddingNoteForId(null); setNewNoteText(""); }}
+                          className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   )}
+
+                  {/* Notes list */}
+                  {(() => {
+                    const notes = getNotes(app);
+                    if (notes.length === 0 && addingNoteForId !== app.id) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                          <StickyNote className="w-8 h-8 text-gray-200 mb-2" />
+                          <p className="text-sm text-gray-400">No notes yet</p>
+                          <p className="text-xs text-gray-400 mt-1">Click "Add Note" to add your first note</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="space-y-3">
+                        {notes.slice().reverse().map((note: NoteEntry) => (
+                          <div key={note.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-amber-800">{note.addedByName}</span>
+                              <span className="text-[10px] text-amber-600">
+                                {new Date(note.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1301,8 +1575,8 @@ export default function ApplicationsPage() {
             </select>
             <button onClick={() => setShowFilters(!showFilters)} className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all ${showFilters ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
               <Filter className="w-4 h-4" /> Filters
-              {(positionFilter !== "all" || recruiterFilter !== "all" || sourceFilter !== "all") && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-medium">{[positionFilter !== "all", recruiterFilter !== "all", sourceFilter !== "all"].filter(Boolean).length}</span>
+              {(positionFilter !== "all" || recruiterFilter !== "all" || ownerFilter !== "all" || sourceFilter !== "all") && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-medium">{[positionFilter !== "all", recruiterFilter !== "all", ownerFilter !== "all", sourceFilter !== "all"].filter(Boolean).length}</span>
               )}
             </button>
             {/* View toggle */}
@@ -1342,12 +1616,18 @@ export default function ApplicationsPage() {
                 <option value="all">All Recruiters</option>
                 {recruiters.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
+              <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                <option value="all">All Owners</option>
+                <option value="unassigned">Unassigned</option>
+                <option value="mine">My Applications</option>
+                {uniqueOwners.map(o => <option key={o} value={o!}>{o}</option>)}
+              </select>
               <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                 <option value="all">All Sources</option>
                 {sources.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              {(positionFilter !== "all" || recruiterFilter !== "all" || sourceFilter !== "all") && (
-                <button onClick={() => { setPositionFilter("all"); setRecruiterFilter("all"); setSourceFilter("all"); }} className="text-sm text-blue-600 hover:text-blue-700 font-medium">Clear filters</button>
+              {(positionFilter !== "all" || recruiterFilter !== "all" || ownerFilter !== "all" || sourceFilter !== "all") && (
+                <button onClick={() => { setPositionFilter("all"); setRecruiterFilter("all"); setOwnerFilter("all"); setSourceFilter("all"); }} className="text-sm text-blue-600 hover:text-blue-700 font-medium">Clear filters</button>
               )}
             </div>
           )}
@@ -1390,6 +1670,7 @@ export default function ApplicationsPage() {
                   <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Source</th>
                   <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden xl:table-cell">Rating</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Owner</th>
                   <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Applied</th>
                   <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                 </tr>
@@ -1427,6 +1708,20 @@ export default function ApplicationsPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-4 hidden lg:table-cell">
+                      {app.ownershipName ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          <User className="w-3 h-3" />{app.ownershipName}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleClaimOwnership(app.id); }}
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-full transition-colors"
+                        >
+                          <User className="w-3 h-3" />Claim
+                        </button>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 hidden lg:table-cell">
                       <span className="text-xs text-gray-500">{formatTimeAgo(app.appliedAt)}</span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -1439,7 +1734,7 @@ export default function ApplicationsPage() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={8} className="py-16 text-center">
+                    <td colSpan={9} className="py-16 text-center">
                       <Users className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                       <h3 className="text-base font-semibold text-gray-900 mb-1">No applications found</h3>
                       <p className="text-sm text-gray-400 mb-4">{applications.length === 0 ? "No applications yet" : "No applications match your filters"}</p>
@@ -1472,6 +1767,19 @@ export default function ApplicationsPage() {
                 <StatusBadge status={app.status} />
               </div>
               {app.jobTitle && <p className="text-xs text-gray-600 mb-1 flex items-center gap-1"><Briefcase className="w-3 h-3 text-gray-400" /> {app.jobTitle}</p>}
+              <div className="flex items-center gap-2 text-xs mb-2">
+                <User className="w-3.5 h-3.5 text-gray-400" />
+                {app.ownershipName ? (
+                  <span className="text-emerald-600 font-medium">{app.ownershipName}</span>
+                ) : (
+                  <button
+                    onClick={e => { e.stopPropagation(); handleClaimOwnership(app.id); }}
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Claim ownership
+                  </button>
+                )}
+              </div>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-0.5">
                   {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />)}

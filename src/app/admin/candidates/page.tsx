@@ -104,6 +104,9 @@ export default function CandidatesPage() {
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [newNoteText, setNewNoteText] = useState("");
   const [addingNoteForId, setAddingNoteForId] = useState<string | null>(null);
+  const [editingSkillsForId, setEditingSkillsForId] = useState<string | null>(null);
+  const [skillsInput, setSkillsInput] = useState("");
+  const [tempSkills, setTempSkills] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateWithJob | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -401,6 +404,39 @@ export default function CandidatesPage() {
     } catch {
       alert("Failed to add note");
     }
+  };
+
+  const handleUpdateSkills = async (candidateId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skills: tempSkills }),
+      });
+      if (!response.ok) throw new Error("Failed to update skills");
+      const data = await response.json();
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, ...data.application } : c));
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate({ ...selectedCandidate, ...data.application });
+      }
+      setEditingSkillsForId(null);
+      setSkillsInput("");
+      setTempSkills([]);
+    } catch {
+      alert("Failed to update skills");
+    }
+  };
+
+  const handleAddSkill = () => {
+    const skill = skillsInput.trim();
+    if (skill && !tempSkills.includes(skill)) {
+      setTempSkills([...tempSkills, skill]);
+      setSkillsInput("");
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setTempSkills(tempSkills.filter(s => s !== skillToRemove));
   };
 
   const handleExportCSV = () => {
@@ -905,20 +941,95 @@ export default function CandidatesPage() {
 
                     {/* Skills Tab */}
                     {detailTab === "skills" && (
-                      <div>
-                        {selectedCandidate.skills && selectedCandidate.skills.length > 0 ? (
-                          <div>
-                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Skills & Expertise</h3>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedCandidate.skills.map((s: string) => (
-                                <span key={s} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors">{s}</span>
-                              ))}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Skills & Expertise</h3>
+                          {editingSkillsForId !== selectedCandidate.id && (
+                            <button
+                              onClick={() => {
+                                setEditingSkillsForId(selectedCandidate.id);
+                                setTempSkills(selectedCandidate.skills || []);
+                                setSkillsInput("");
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-colors"
+                            >
+                              <Plus className="w-4 h-4" /> {selectedCandidate.skills && selectedCandidate.skills.length > 0 ? "Edit Skills" : "Add Skills"}
+                            </button>
+                          )}
+                        </div>
+
+                        {editingSkillsForId === selectedCandidate.id ? (
+                          <div className="space-y-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            {/* Add skill input */}
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={skillsInput}
+                                onChange={e => setSkillsInput(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && (e.preventDefault(), handleAddSkill())}
+                                className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                placeholder="Type a skill and press Enter or click Add"
+                              />
+                              <button
+                                onClick={handleAddSkill}
+                                disabled={!skillsInput.trim()}
+                                className="px-4 py-2 bg-white text-gray-700 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Add
+                              </button>
+                            </div>
+
+                            {/* Current skills */}
+                            {tempSkills.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {tempSkills.map(skill => (
+                                  <span key={skill} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                                    {skill}
+                                    <button
+                                      onClick={() => handleRemoveSkill(skill)}
+                                      className="ml-1 hover:text-blue-900 transition-colors"
+                                      title="Remove skill"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400 italic">No skills added yet. Add some above.</p>
+                            )}
+
+                            {/* Save/Cancel buttons */}
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                onClick={() => handleUpdateSkills(selectedCandidate.id)}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                              >
+                                Save Skills
+                              </button>
+                              <button
+                                onClick={() => { setEditingSkillsForId(null); setSkillsInput(""); setTempSkills([]); }}
+                                className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <Star className="w-10 h-10 text-gray-200 mb-3" />
-                            <p className="text-sm text-gray-400">No skills listed</p>
+                          <div>
+                            {selectedCandidate.skills && selectedCandidate.skills.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {selectedCandidate.skills.map((s: string) => (
+                                  <span key={s} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors">{s}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                                <Star className="w-10 h-10 text-gray-200 mb-3" />
+                                <p className="text-sm text-gray-400">No skills listed</p>
+                                <p className="text-xs text-gray-400 mt-1">Click "Add Skills" to get started</p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
