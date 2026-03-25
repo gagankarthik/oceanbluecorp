@@ -51,12 +51,25 @@ export interface JobPostedNotificationEmail {
   recipientName: string;
   recipientEmail: string;
   jobTitle: string;
-  payRate: number;
   jobDepartment: string;
   jobLocation: string;
   jobType: string;
   postedByName: string;
   jobId: string;
+  postingId?: string;
+  description?: string;
+  requirements?: string[];
+  responsibilities?: string[];
+  salary?: {
+    min: number;
+    max: number;
+    currency?: string;
+  };
+  payRate?: number;
+  clientBillRate?: number;
+  clientName?: string;
+  vendorName?: string;
+  submissionDueDate?: string;
 }
 
 export interface JobUpdatedNotificationEmail {
@@ -344,7 +357,16 @@ Ocean Blue Recruiting System
 export async function sendJobPostedNotification(
   data: JobPostedNotificationEmail
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `New Job Posted - ${data.jobTitle}`;
+  const subject = `New Job Posted - ${data.jobTitle}${data.postingId ? ` (${data.postingId})` : ""}`;
+
+  // Format submission due date if present
+  const formatDueDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+  };
+
+  const dueDate = formatDueDate(data.submissionDueDate);
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -355,15 +377,23 @@ export async function sendJobPostedNotification(
       Hi ${data.recipientName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      A new job has been posted by <strong>${data.postedByName}</strong>.
+      A new job has been posted by <strong>${data.postedByName}</strong>. Please review the complete details below:
     </p>
-    <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
+
+    <!-- Basic Job Information -->
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #2563eb;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
-        Job Details
+        Basic Information
       </h3>
       <table style="width: 100%; border-collapse: collapse;">
+        ${data.postingId ? `
         <tr>
-          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Position:</td>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Job ID:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.postingId}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Position:</td>
           <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobTitle}</td>
         </tr>
         <tr>
@@ -375,17 +405,108 @@ export async function sendJobPostedNotification(
           <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobLocation}</td>
         </tr>
         <tr>
-          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Type:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobType}</td>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job Type:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500; text-transform: capitalize;">${data.jobType.replace(/-/g, " ")}</td>
         </tr>
+        ${data.clientName ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.clientName}</td>
+        </tr>
+        ` : ""}
+        ${data.vendorName ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Vendor:</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.vendorName}</td>
+        </tr>
+        ` : ""}
+        ${dueDate ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Submission Due:</td>
+          <td style="color: #ef4444; padding: 8px 0; font-size: 14px; font-weight: 600;">${dueDate}</td>
+        </tr>
+        ` : ""}
       </table>
     </div>
+
+    <!-- Compensation Details -->
+    ${data.salary || data.payRate || data.clientBillRate ? `
+    <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #10b981;">
+      <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
+        Compensation Details
+      </h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        ${data.salary ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Salary Range:</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.salary.min.toLocaleString()} - $${data.salary.max.toLocaleString()} ${data.salary.currency || "USD"}</td>
+        </tr>
+        ` : ""}
+        ${data.payRate ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Pay Rate:</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.payRate}/hour</td>
+        </tr>
+        ` : ""}
+        ${data.clientBillRate ? `
+        <tr>
+          <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client Bill Rate:</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.clientBillRate}/hour</td>
+        </tr>
+        ` : ""}
+      </table>
+    </div>
+    ` : ""}
+
+    <!-- Job Description -->
+    ${data.description ? `
+    <div style="margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        Job Description
+      </h3>
+      <p style="color: #475569; line-height: 1.8; margin: 0; font-size: 14px; white-space: pre-wrap;">${data.description}</p>
+    </div>
+    ` : ""}
+
+    <!-- Key Responsibilities -->
+    ${data.responsibilities && data.responsibilities.length > 0 ? `
+    <div style="margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        Key Responsibilities
+      </h3>
+      <ul style="color: #475569; line-height: 1.8; margin: 8px 0; padding-left: 24px; font-size: 14px;">
+        ${data.responsibilities.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join("")}
+      </ul>
+    </div>
+    ` : ""}
+
+    <!-- Requirements & Qualifications -->
+    ${data.requirements && data.requirements.length > 0 ? `
+    <div style="margin: 25px 0;">
+      <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        Requirements & Qualifications
+      </h3>
+      <ul style="color: #475569; line-height: 1.8; margin: 8px 0; padding-left: 24px; font-size: 14px;">
+        ${data.requirements.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join("")}
+      </ul>
+    </div>
+    ` : ""}
+
+    <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}"
+         style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px;">
+        View in Admin Panel
+      </a>
       <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${data.jobId}"
-         style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
-        View Job Posting
+         style="display: inline-block; background: #f1f5f9; color: #475569; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px; border: 1px solid #cbd5e1;">
+        View Public Posting
       </a>
     </div>
+
+    <p style="color: #64748b; line-height: 1.6; margin: 20px 0 0; font-size: 13px; text-align: center;">
+      Posted by <strong>${data.postedByName}</strong>
+    </p>
     ${getEmailFooter()}
   `;
 
@@ -394,15 +515,42 @@ New Job Posting Published
 
 Hi ${data.recipientName},
 
-A new job has been posted by ${data.postedByName}.
+A new job has been posted by ${data.postedByName}. Please review the complete details below:
 
-Job Details:
-- Position: ${data.jobTitle}
-- Department: ${data.jobDepartment}
-- Location: ${data.jobLocation}
-- Type: ${data.jobType}
+=== BASIC INFORMATION ===
+${data.postingId ? `Job ID: ${data.postingId}` : ""}
+Position: ${data.jobTitle}
+Department: ${data.jobDepartment}
+Location: ${data.jobLocation}
+Job Type: ${data.jobType}
+${data.clientName ? `Client: ${data.clientName}` : ""}
+${data.vendorName ? `Vendor: ${data.vendorName}` : ""}
+${dueDate ? `Submission Due: ${dueDate}` : ""}
 
-View the job at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${data.jobId}
+${data.salary || data.payRate || data.clientBillRate ? `
+=== COMPENSATION DETAILS ===
+${data.salary ? `Salary Range: $${data.salary.min.toLocaleString()} - $${data.salary.max.toLocaleString()} ${data.salary.currency || "USD"}` : ""}
+${data.payRate ? `Pay Rate: $${data.payRate}/hour` : ""}
+${data.clientBillRate ? `Client Bill Rate: $${data.clientBillRate}/hour` : ""}
+` : ""}
+
+${data.description ? `
+=== JOB DESCRIPTION ===
+${data.description}
+` : ""}
+
+${data.responsibilities && data.responsibilities.length > 0 ? `
+=== KEY RESPONSIBILITIES ===
+${data.responsibilities.map((r, i) => `${i + 1}. ${r}`).join("\n")}
+` : ""}
+
+${data.requirements && data.requirements.length > 0 ? `
+=== REQUIREMENTS & QUALIFICATIONS ===
+${data.requirements.map((r, i) => `${i + 1}. ${r}`).join("\n")}
+` : ""}
+
+View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}
+View Public Posting: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${data.jobId}
   `;
 
   return sendEmail(data.recipientEmail, subject, htmlBody, textBody);
@@ -872,6 +1020,20 @@ export async function sendJobPostedNotifications(
     jobType: string;
     postedByName: string;
     jobId: string;
+    postingId?: string;
+    description?: string;
+    requirements?: string[];
+    responsibilities?: string[];
+    salary?: {
+      min: number;
+      max: number;
+      currency?: string;
+    };
+    payRate?: number;
+    clientBillRate?: number;
+    clientName?: string;
+    vendorName?: string;
+    submissionDueDate?: string;
   }
 ): Promise<{ success: boolean; sent: number; failed: number }> {
   let sent = 0;
@@ -881,7 +1043,6 @@ export async function sendJobPostedNotifications(
     const result = await sendJobPostedNotification({
       recipientName: recipient.name,
       recipientEmail: recipient.email,
-      payRate: 0, // Not needed for this notification, but required by the function signature
       ...jobData,
     });
 

@@ -214,6 +214,17 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     e.preventDefault();
     setSubmitting(true);
     try {
+      // Helper function to convert textarea content to array of items
+      const convertToArray = (text: string): string[] | undefined => {
+        if (!text || !text.trim()) return undefined;
+        // Split by newlines and filter out empty lines
+        const items = text
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
+        return items.length > 0 ? items : undefined;
+      };
+
       const jobData = {
         title: formData.title,
         department: formData.department,
@@ -221,8 +232,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         state: formData.state || undefined,
         type: formData.type,
         description: formData.description,
-        requirements: formData.requirements || undefined,
-        responsibilities: formData.responsibilities || undefined,
+        requirements: convertToArray(formData.requirements),
+        responsibilities: convertToArray(formData.responsibilities),
         salary: formData.salaryMin && formData.salaryMax ? { min: parseInt(formData.salaryMin), max: parseInt(formData.salaryMax), currency: "$" } : undefined,
         clientBillRate: formData.clientBillRate ? parseFloat(formData.clientBillRate) : undefined,
         payRate: formData.payRate ? parseFloat(formData.payRate) : undefined,
@@ -586,9 +597,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
               <textarea
                 value={formData.requirements}
                 onChange={e => setFormData({ ...formData, requirements: e.target.value })}
-                placeholder="Paste or type the requirements - formatting will be preserved exactly as entered..."
+                placeholder="Enter one requirement per line. Each line will become a bullet point.&#10;Example:&#10;Bachelor's degree in Computer Science&#10;5+ years of experience&#10;Proficiency in React and Node.js"
                 rows={8}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-mono"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y"
               />
             </div>
             <div>
@@ -596,9 +607,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
               <textarea
                 value={formData.responsibilities}
                 onChange={e => setFormData({ ...formData, responsibilities: e.target.value })}
-                placeholder="Paste or type the responsibilities - formatting will be preserved exactly as entered..."
+                placeholder="Enter one responsibility per line. Each line will become a bullet point.&#10;Example:&#10;Design and implement new features&#10;Collaborate with cross-functional teams&#10;Conduct code reviews"
                 rows={8}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-mono"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y"
               />
             </div>
           </div>

@@ -181,6 +181,16 @@ export async function POST(request: NextRequest) {
               jobType: job.type,
               postedByName: job.postedByName || "Admin",
               jobId: job.id,
+              postingId: job.postingId,
+              description: job.description,
+              requirements: job.requirements,
+              responsibilities: job.responsibilities,
+              salary: job.salary,
+              payRate: job.payRate,
+              clientBillRate: job.clientBillRate,
+              clientName: job.clientName,
+              vendorName: job.vendorName,
+              submissionDueDate: job.submissionDueDate,
             });
             if (result.success) {
               console.log(`[JOB] Successfully sent job notification to ${recipient.email}`);
