@@ -596,7 +596,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Description & Requirements Toggle */}
-        {(job.description || (job.requirements && job.requirements.length > 0) || (job.responsibilities && job.responsibilities.length > 0)) && (
+        {(job.description || (job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0) || (job.responsibilities && Array.isArray(job.responsibilities) && job.responsibilities.length > 0)) && (
           <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
             <details className="group">
               <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
@@ -611,7 +611,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                     <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
                   </div>
                 )}
-                {job.responsibilities && job.responsibilities.length > 0 && (
+                {job.responsibilities && Array.isArray(job.responsibilities) && job.responsibilities.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-1">Responsibilities</h4>
                     <ul className="list-disc list-inside text-gray-600 space-y-0.5">
@@ -619,7 +619,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                     </ul>
                   </div>
                 )}
-                {job.requirements && job.requirements.length > 0 && (
+                {job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-1">Requirements</h4>
                     <ul className="list-disc list-inside text-gray-600 space-y-0.5">

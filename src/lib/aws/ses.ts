@@ -51,6 +51,7 @@ export interface JobPostedNotificationEmail {
   recipientName: string;
   recipientEmail: string;
   jobTitle: string;
+  payRate: number;
   jobDepartment: string;
   jobLocation: string;
   jobType: string;
@@ -62,6 +63,7 @@ export interface JobUpdatedNotificationEmail {
   recipientName: string;
   recipientEmail: string;
   jobTitle: string;
+  payRate?: number;
   jobId: string;
   postingId?: string;
   updatedByName: string;
@@ -879,6 +881,7 @@ export async function sendJobPostedNotifications(
     const result = await sendJobPostedNotification({
       recipientName: recipient.name,
       recipientEmail: recipient.email,
+      payRate: 0, // Not needed for this notification, but required by the function signature
       ...jobData,
     });
 
