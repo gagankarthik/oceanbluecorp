@@ -84,6 +84,7 @@ export default function HeroSection() {
             d="M0,80 C320,40 640,100 960,60 C1200,30 1360,70 1440,50 L1440,120 L0,120 Z"
           />
         </svg>
+        
       </div>
 
       {/* Main content */}
@@ -101,7 +102,7 @@ export default function HeroSection() {
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-3xl sm:text-4xl md:text-5xl font-light text-white mb-4 font-[family-name:var(--font-space-grotesk)] leading-[1.15]"
+                className="text-5xl font-light text-white mb-4 font-[family-name:var(--font-space-grotesk)] leading-[1.15]"
               >
                 Technology.
                 <br />
@@ -198,7 +199,7 @@ export default function HeroSection() {
             >
               {/* Globe container */}
               <div className="absolute inset-0 hover:cursor-grab">
-                <ThreeGlobe />
+                <ThreeGlobe/>
               </div>
             </motion.div>
           </div>

@@ -63,7 +63,7 @@ const services = [
 
 export default function TerminalServices() {
   return (
-    <section className="relative bg-[#f0effc] py-24 md:py-32 overflow-hidden">
+    <section className="relative bg-[#f2f2f2] py-24 md:py-32 overflow-hidden">
       <div className="px-6 md:px-12 lg:px-20 max-w-[1400px] mx-auto">
         
         {/* Header */}
@@ -88,7 +88,7 @@ export default function TerminalServices() {
         </motion.div>
 
         {/* Services Grid with Lines */}
-        <div className="bg-[#f0effc] relative hidden lg:block rounded-2xl">
+        <div className="bg-[#f2f2f2] relative hidden lg:block rounded-2xl">
           <div className="grid grid-cols-3">
             {services.map((service, index) => (
               <motion.div

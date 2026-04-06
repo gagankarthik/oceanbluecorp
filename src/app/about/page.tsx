@@ -655,7 +655,7 @@ export default function AboutPage() {
       </section>
 
       {/* Leadership Section */}
-      <section className="py-20 md:py-24 lg:py-32 bg-white relative overflow-hidden">
+      <section className="py-20 md:py-24 lg:py-32 bg-white relative overflow-hidden" id="team">
         {/* Floating orb backgrounds */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}

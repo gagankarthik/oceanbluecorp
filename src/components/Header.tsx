@@ -107,10 +107,10 @@ const aboutItems = [
     description: "Learn about our company",
   },
   {
-    name: "Our Process",
-    href: "/about#process",
-    icon: Settings,
-    description: "How we deliver results",
+    name: "Our Team",
+    href: "/about#team",
+    icon: Users,
+    description: "Meet the people behind our success",
   },
 ];
 

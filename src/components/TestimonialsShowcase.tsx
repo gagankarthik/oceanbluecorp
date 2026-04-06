@@ -66,7 +66,7 @@ export default function TestimonialsShowcase() {
               className="relative bg-white p-10 lg:p-14 flex flex-col justify-center items-center text-center min-h-[420px] lg:min-h-[460px]"
             >
               <div className="relative z-10">
-                <h2 className="text-gray-900 text-5xl lg:text-6xl font-bold mb-4 leading-[1.2] tracking-tight">
+                <h2 className="text-gray-900 text-3xl lg:text-5xl font-bold mb-4 leading-[1.2] tracking-tight">
                   What our
                   <br />
                   clients say
