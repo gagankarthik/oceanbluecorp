@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { UserManager, User, WebStorageStateStore } from "oidc-client-ts";
+import type { UserProfile } from "oidc-client-ts";
 import { UserRole, roleHierarchy } from "./config";
 
 interface AuthUser {
@@ -21,6 +22,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   signIn: () => Promise<void>;
+  signInWithCredentials: (email: string, password: string) => Promise<AuthUser>;
   signUp: () => Promise<void>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
@@ -154,6 +156,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithCredentials = useCallback(async (email: string, password: string) => {
+    const response = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Sign in failed.");
+    }
+
+    // Decode the IdToken payload (base64url → JSON) to get profile claims
+    const payloadB64 = data.idToken.split(".")[1];
+    const payloadJson = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+    const profile = JSON.parse(payloadJson) as UserProfile;
+
+    const userManager = getUserManager();
+    const oidcUser = new User({
+      access_token: data.accessToken,
+      id_token: data.idToken,
+      refresh_token: data.refreshToken,
+      token_type: "Bearer",
+      scope: "openid email phone",
+      profile,
+      expires_at: Math.floor(Date.now() / 1000) + (data.expiresIn ?? 3600),
+    });
+
+    await userManager.storeUser(oidcUser);
+    const authUser = parseUser(oidcUser);
+    setUser(authUser);
+    return authUser;
+  }, []);
+
   const signUp = useCallback(async () => {
     try {
       const userManager = getUserManager();
@@ -222,6 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     error,
     signIn,
+    signInWithCredentials,
     signUp,
     signOut,
     hasRole,

@@ -1,23 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)",
-      "WebFetch(domain:oceanbluecorp.com)",
-      "mcp__ide__getDiagnostics",
-      "Bash(npm install framer-motion)",
-      "Bash(npm install:*)",
-      "WebFetch(domain:stitch.withgoogle.com)",
-      "Bash(npx tsc:*)",
-      "Bash(npx shadcn@latest add:*)",
-      "Bash(git checkout:*)",
-      "WebFetch(domain:dribbble.com)",
-      "Bash(find:*)",
-      "Bash(npm i:*)",
-      "Bash(del \"C:\\\\Users\\\\gagan\\\\Desktop\\\\oceanbluecorp\\\\src\\\\components\\\\ScrollStack.tsx\")",
-      "Bash(grep -n \"body.rating\\\\|rating.*undefined\\\\|updates.rating\" src/app/api/applications/[id]/route.ts)",
-      "Bash(ls .env*)",
-      "Bash(tree:*)",
-      "WebFetch(domain:terminal-industries.com)"
+      "Bash(npx tsc:*)"
     ]
   }
 }
