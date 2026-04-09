@@ -175,7 +175,7 @@ function StatCard({
   description: string;
   trend: "up" | "down" | "neutral";
   trendValue: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   href: string;
   color: string;
 }) {

@@ -7,15 +7,84 @@ import dynamic from "next/dynamic";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ChevronDown, Play } from "lucide-react";
 
-// Dynamic import for Three.js globe to avoid SSR issues
-const ThreeGlobe = dynamic(() => import("./ThreeGlobe"), {
+// Kick off the bundle download immediately (before the component mounts)
+if (typeof window !== "undefined") {
+  import("./ui/globe");
+}
+
+const World = dynamic(() => import("./ui/globe").then((m) => m.World), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 animate-pulse" />
-    </div>
-  ),
 });
+
+const globeConfig = {
+  pointSize: 1,
+  globeColor: "#1d072e",
+  showAtmosphere: true,
+  atmosphereColor: "#ffffff",
+  atmosphereAltitude: 0.1,
+  emissive: "#000000",
+  emissiveIntensity: 0.1,
+  shininess: 0.9,
+  polygonColor: "rgba(255,255,255,0.7)",
+  ambientLight: "#ffffff",
+  directionalLeftLight: "#ffffff",
+  directionalTopLight: "#ffffff",
+  pointLight: "#ffffff",
+  arcTime: 2000,
+  arcLength: 0.9,
+  rings: 1,
+  maxRings: 3,
+  autoRotate: true,
+  autoRotateSpeed: 1,
+};
+
+const sampleData = [
+  {
+    order: 1,  // ← Add this required property
+    startLat: 35.6895,  // Tokyo
+    startLng: 139.6917,
+    endLat: 34.0522,    // Los Angeles
+    endLng: -118.2437,
+    arcAlt: 0.2,
+    color: "#ff6b6b"
+  },
+  {
+    order: 2,  // ← Add this required property
+    startLat: 51.5074,  // London
+    startLng: -0.1278,
+    endLat: 40.7128,    // New York
+    endLng: -74.0060,
+    arcAlt: 0.3,
+    color: "#4ecdc4"
+  },
+  {
+    order: 3,  // ← Add this required property
+    startLat: 55.7558,  // Moscow
+    startLng: 37.6173,
+    endLat: 39.9042,    // Beijing
+    endLng: 116.4074,
+    arcAlt: 0.25,
+    color: "#45b7d1"
+  },
+  {
+    order: 4,  // ← Add this required property
+    startLat: -33.8688, // Sydney
+    startLng: 151.2093,
+    endLat: 37.7749,    // San Francisco
+    endLng: -122.4194,
+    arcAlt: 0.28,
+    color: "#96ceb4"
+  },
+  {
+    order: 5,  // ← Add this required property
+    startLat: 19.0760,  // Mumbai
+    startLng: 72.8777,
+    endLat: -1.2864,    // Nairobi
+    endLng: 36.8172,
+    arcAlt: 0.22,
+    color: "#ffeead"
+  }
+];
 
 // Partner logos configuration with individual sizing
 const partners = [
@@ -191,17 +260,11 @@ export default function HeroSection() {
             </div>
 
             {/* Right side - 3D Globe */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-              className="relative hidden lg:block h-[550px]"
-            >
-              {/* Globe container */}
+            <div className="relative h-[480px] lg:h-[620px] w-full">
               <div className="absolute inset-0 hover:cursor-grab">
-                <ThreeGlobe/>
+                <World globeConfig={globeConfig} data={sampleData} />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </motion.div>

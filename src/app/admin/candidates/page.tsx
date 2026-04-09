@@ -439,6 +439,24 @@ export default function CandidatesPage() {
     setTempSkills(tempSkills.filter(s => s !== skillToRemove));
   };
 
+  const handleToggleBench = async (candidateId: string, currentValue: boolean) => {
+    try {
+      const response = await fetch(`/api/applications/${candidateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ addToTalentBench: !currentValue }),
+      });
+      if (!response.ok) throw new Error("Failed to update bench status");
+      const data = await response.json();
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, ...data.application } : c));
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate({ ...selectedCandidate, ...data.application });
+      }
+    } catch {
+      alert("Failed to update bench status");
+    }
+  };
+
   const handleExportCSV = () => {
     const headers = ["Name","Email","Phone","Position","Department","Status","Rating","Applied Date"];
     const rows = filteredCandidates.map(c => [c.name, c.email, c.phone || "", c.jobTitle || "", c.jobDepartment || "", statusConfig[c.status]?.label || c.status, c.rating?.toString() || "", new Date(c.appliedAt).toLocaleDateString()]);
@@ -477,7 +495,7 @@ export default function CandidatesPage() {
         <div className="flex items-center gap-2">
           {/* View toggle */}
           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-            {([["kanban", Kanban], ["cards", LayoutGrid], ["list", LayoutList]] as [ViewMode, React.ElementType][]).map(([mode, Icon]) => (
+            {(([["kanban", Kanban], ["cards", LayoutGrid], ["list", LayoutList]] as Array<[ViewMode, React.ComponentType<{ className?: string }>]>)).map(([mode, Icon]) => (
               <button key={mode} onClick={() => setViewMode(mode)} title={`${mode} view`}
                 className={`p-2 transition-colors ${viewMode === mode ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-50"} ${mode !== "kanban" ? "border-l border-gray-200" : ""}`}>
                 <Icon className="w-4 h-4" />
@@ -887,6 +905,25 @@ export default function CandidatesPage() {
                       </button>
                     ) : (
                       <p className="text-xs text-gray-400 italic">No resume uploaded</p>
+                    )}
+                  </div>
+
+                  {/* Talent Bench */}
+                  <div>
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Talent Bench</h3>
+                    <button
+                      onClick={() => handleToggleBench(selectedCandidate.id, !!selectedCandidate.addToTalentBench)}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                        selectedCandidate.addToTalentBench
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      {selectedCandidate.addToTalentBench ? "On Bench" : "Add to Bench"}
+                    </button>
+                    {selectedCandidate.addToTalentBench && (
+                      <p className="text-[10px] text-gray-400 text-center mt-1.5">Available for future opportunities</p>
                     )}
                   </div>
 

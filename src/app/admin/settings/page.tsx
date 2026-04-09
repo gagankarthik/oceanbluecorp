@@ -70,7 +70,7 @@ function InputField({
   disabled?: boolean;
   placeholder?: string;
   hint?: string;
-  icon?: React.ElementType;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className="space-y-1.5">
