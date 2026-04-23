@@ -66,7 +66,7 @@ export default function DeskNoteCTA() {
           Let's talk.
         </h2>
         <p className="text-stone-500 text-lg mt-4 mb-8">
-          Send us what you need. We'll reply with 3 matches within 48 hours.
+          Send us what you need. We'll reply with our best candidates.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-3">

@@ -15,7 +15,7 @@ import {
   X,
   Heart,
 } from "lucide-react";
-import { useState } from "react";
+import { TextHoverEffect } from "./ui/text-hover-effect";
 
 const footerLinks = {
   services: [
@@ -30,15 +30,8 @@ const footerLinks = {
     { name: "About Us", href: "/about" },
     { name: "Careers", href: "/careers" },
     { name: "Blog", href: "/resources/blog" },
-    { name: "Case Studies", href: "/resources/case-studies" },
+    { name: "Open Positions", href: "/careers/search" },
     { name: "Contact", href: "/contact" },
-  ],
-  resources: [
-    { name: "E-Books", href: "/resources/ebook" },
-    { name: "Whitepapers", href: "/resources" },
-    { name: "Webinars", href: "/resources" },
-    { name: "Documentation", href: "/resources" },
-    { name: "FAQ", href: "/faq" },
   ],
   legal: [
     { name: "Privacy Policy", href: "/privacy" },
@@ -55,71 +48,12 @@ const socialLinks = [
 ];
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail("");
-      setTimeout(() => setSubscribed(false), 3000);
-    }
-  };
 
   return (
     <footer className="bg-gradient-to-b from-white to-gray-50 border-t border-gray-100">
       {/* Main Footer Container - Centered with max-width */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
-        {/* Newsletter Section 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16 pb-8 border-b border-gray-200"
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-3">
-              Stay ahead with insights that
-              <span className="block text-blue-600 font-medium mt-1">
-                actually matter
-              </span>
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-lg mx-auto text-sm">
-              No spam. Just thoughtful articles, case studies, and updates.
-            </p>
-
-            {subscribed ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-3 px-6 py-3 bg-green-50 text-green-700 rounded-full border border-green-200"
-              >
-                <ArrowRight className="w-4 h-4" />
-                <span className="text-sm font-medium">Thanks for subscribing!</span>
-              </motion.div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className="flex-1 px-5 py-3 bg-white border border-gray-200 rounded-full text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-sm"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-blue-600 transition-all text-sm font-medium flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
-                >
-                  Subscribe
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </form>
-            )}
-          </div>
-        </motion.div>
-*/}
+       
         {/* Main Footer Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Company Info */}
@@ -207,26 +141,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Resources 
-          <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
-              Resources
-            </h3>
-            <ul className="space-y-2.5">
-              {footerLinks.resources.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
-                  >
-                    <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-*/}
+      
           {/* Legal & Social */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
@@ -267,6 +182,10 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+     <div className="flex items-center justify-center">
+      <TextHoverEffect text="OCEANBLUE" />
+    </div>
 
       {/* Bottom Bar */}
       <div className="border-t border-gray-200 bg-gray-50/80">
