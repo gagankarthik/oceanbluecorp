@@ -83,24 +83,34 @@ export const TextHoverEffect = ({
     };
   }, [automatic, hovered, autoSpeed]);
 
-  // Dynamic font size based on text length
-  const getFontSize = () => {
+  // Calculate text dimensions to minimize vertical space
+  const getTextMetrics = () => {
     const length = text.length;
-    if (length <= 5) return "text-6xl sm:text-7xl md:text-8xl";
-    if (length <= 10) return "text-5xl sm:text-6xl md:text-7xl";
-    if (length <= 15) return "text-4xl sm:text-5xl md:text-6xl";
-    return "text-3xl sm:text-4xl md:text-5xl";
+    let fontSize = 48; // default
+    
+    if (length <= 5) fontSize = 72;
+    else if (length <= 10) fontSize = 60;
+    else if (length <= 15) fontSize = 48;
+    else fontSize = 36;
+    
+    // Calculate approximate height needed (fontSize * 1.2 for line height)
+    const height = fontSize * 1.2;
+    const width = length * fontSize * 0.6;
+    
+    return { fontSize, height, width };
   };
-
-  const fontSizeClass = getFontSize();
+  
+  const { fontSize, height, width } = getTextMetrics();
+  const svgHeight = Math.ceil(height) + 10; // Minimal padding just for the text
+  const svgWidth = Math.ceil(width) + 20;
 
   return (
-    <div className="relative w-full h-full min-h-[120px] flex items-center justify-center">
+    <div className="relative w-full h-full flex items-center justify-center" style={{ lineHeight: 0 }}>
       <svg
         ref={svgRef}
         width="100%"
         height="100%"
-        viewBox="0 0 400 120"
+        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         preserveAspectRatio="xMidYMid meet"
         xmlns="http://www.w3.org/2000/svg"
         onMouseEnter={() => setHovered(true)}
@@ -112,7 +122,7 @@ export const TextHoverEffect = ({
             y: e.clientY 
           });
         }}
-        className="select-none cursor-default w-full h-full"
+        className="select-none cursor-default"
         style={{ overflow: "visible" }}
       >
         <defs>
@@ -172,7 +182,9 @@ export const TextHoverEffect = ({
           textAnchor="middle"
           dominantBaseline="middle"
           strokeWidth="0.5"
-          className={`fill-transparent stroke-neutral-300 font-bold ${fontSizeClass} dark:stroke-neutral-700`}
+          fontSize={fontSize}
+          fontWeight="bold"
+          className="fill-transparent stroke-neutral-300 dark:stroke-neutral-700"
           style={{ opacity: hovered ? 0.4 : 0.2, transition: "opacity 0.3s" }}
         >
           {text}
@@ -185,7 +197,9 @@ export const TextHoverEffect = ({
           textAnchor="middle"
           dominantBaseline="middle"
           strokeWidth="0.5"
-          className={`fill-transparent stroke-neutral-400 font-bold ${fontSizeClass} dark:stroke-neutral-600`}
+          fontSize={fontSize}
+          fontWeight="bold"
+          className="fill-transparent stroke-neutral-400 dark:stroke-neutral-600"
           initial={{ strokeDashoffset: 1500, strokeDasharray: 1500 }}
           animate={{
             strokeDashoffset: hovered ? 1500 : 0,
@@ -207,8 +221,10 @@ export const TextHoverEffect = ({
           dominantBaseline="middle"
           stroke="url(#textGradient)"
           strokeWidth="0.8"
+          fontSize={fontSize}
+          fontWeight="bold"
           mask="url(#textMask)"
-          className={`fill-transparent font-bold ${fontSizeClass}`}
+          className="fill-transparent"
           initial={{ opacity: 0 }}
           animate={{ opacity: hovered ? 1 : 0.6 }}
           transition={{ duration: 0.3 }}
@@ -223,7 +239,8 @@ export const TextHoverEffect = ({
           y="50%"
           textAnchor="middle"
           dominantBaseline="middle"
-          className={`font-bold ${fontSizeClass}`}
+          fontSize={fontSize}
+          fontWeight="bold"
           fill="url(#textGradient)"
           initial={{ opacity: 0 }}
           animate={{ opacity: hovered ? 0.3 : 0 }}

@@ -182,11 +182,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
-
+      
+      {/* Ocean Blue Text Effect */}
      <div className="flex items-center justify-center">
       <TextHoverEffect text="OCEANBLUE" />
     </div>
-
+    
       {/* Bottom Bar */}
       <div className="border-t border-gray-200 bg-gray-50/80">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">

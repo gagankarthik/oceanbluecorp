@@ -14,6 +14,7 @@ import {
   Users,
   GraduationCap,
   Cpu,
+  Building,
   BarChart3,
   Settings,
   Headphones,
@@ -22,7 +23,6 @@ import {
   Briefcase,
   LogOut,
   LayoutDashboard,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -103,7 +103,7 @@ const aboutItems = [
   {
     name: "About Us",
     href: "/about",
-    icon: Users,
+    icon: Building,
     description: "Learn about our company",
   },
   {
