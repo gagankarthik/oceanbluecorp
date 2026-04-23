@@ -1,0 +1,38 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getAllContentBlocks, upsertContentBlock } from "@/lib/aws/dynamodb";
+
+// GET /api/content — fetch all content blocks
+export async function GET() {
+  try {
+    const result = await getAllContentBlocks();
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+    return NextResponse.json({ blocks: result.data || [] });
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// PUT /api/content — upsert a content block
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, fields, updatedBy, updatedByName } = body;
+
+    if (!id || typeof fields !== "object") {
+      return NextResponse.json({ error: "id and fields are required" }, { status: 400 });
+    }
+
+    const result = await upsertContentBlock(id, fields, updatedBy, updatedByName);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error saving content:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

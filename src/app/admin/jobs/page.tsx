@@ -114,7 +114,31 @@ export default function JobsPage() {
       const response = await fetch("/api/jobs");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch jobs");
-      setJobs(data.jobs || []);
+
+      const fetchedJobs: Job[] = data.jobs || [];
+      const now = new Date();
+      const toClose = fetchedJobs.filter(
+        (job) =>
+          job.submissionDueDate &&
+          new Date(job.submissionDueDate) < now &&
+          job.status !== "closed"
+      );
+
+      if (toClose.length > 0) {
+        await Promise.all(
+          toClose.map((job) =>
+            fetch(`/api/jobs/${job.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "closed" }),
+            })
+          )
+        );
+        const closedIds = new Set(toClose.map((j) => j.id));
+        setJobs(fetchedJobs.map((job) => closedIds.has(job.id) ? { ...job, status: "closed" } : job));
+      } else {
+        setJobs(fetchedJobs);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch jobs");
     } finally {

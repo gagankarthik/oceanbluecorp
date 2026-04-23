@@ -50,6 +50,7 @@ import {
   CalendarClock,
   Handshake,
 } from "lucide-react";
+import Link from "next/link";
 import { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 
@@ -724,15 +725,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                     return (
                       <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
+                          <Link href={`/admin/applications/${app.id}`} className="flex items-center gap-3 group">
                             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                               {app.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{app.name}</p>
+                              <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 truncate transition-colors">{app.name}</p>
                               <p className="text-xs text-gray-500 truncate">{app.email}</p>
                             </div>
-                          </div>
+                          </Link>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-0.5">
@@ -814,7 +815,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-semibold text-gray-900">{app.name}</h3>
+                            <Link href={`/admin/applications/${app.id}`} onClick={(e) => e.stopPropagation()} className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors">{app.name}</Link>
                             <div className="flex items-center gap-0.5">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <button key={star} onClick={(e) => { e.stopPropagation(); handleRatingChange(app.id, star); }}>

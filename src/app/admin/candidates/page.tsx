@@ -537,9 +537,9 @@ export default function CandidatesPage() {
 
       {/* Kanban View */}
       {viewMode === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 min-w-0" style={{ scrollSnapType: "x mandatory" }}>
           {pipelineStages.map(stage => (
-            <div key={stage.id} className="flex-shrink-0 w-72" onDragOver={e => e.preventDefault()} onDrop={e => handleDrop(e, stage.id)}>
+            <div key={stage.id} className="flex-shrink-0 w-72" style={{ scrollSnapAlign: "start" }} onDragOver={e => e.preventDefault()} onDrop={e => handleDrop(e, stage.id)}>
               {/* Column Header */}
               <div className={`rounded-t-xl px-4 py-3 border ${stage.headerBg} flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
@@ -549,7 +549,7 @@ export default function CandidatesPage() {
                 <span className="text-xs font-bold text-gray-500 bg-white/70 px-2 py-0.5 rounded-full">{candidatesByStage[stage.id]?.length || 0}</span>
               </div>
               {/* Column Body */}
-              <div className={`${stage.colBg} rounded-b-xl border border-t-0 border-gray-200 p-3 min-h-[480px] space-y-2.5`}>
+              <div className={`${stage.colBg} rounded-b-xl border border-t-0 border-gray-200 p-3 min-h-[480px] max-h-[calc(100vh-280px)] overflow-y-auto space-y-2.5`}>
                 {candidatesByStage[stage.id]?.map(candidate => (
                   <div key={candidate.id} draggable onDragStart={() => setDraggedCandidate(candidate)} onDragEnd={() => setDraggedCandidate(null)} onClick={() => setSelectedCandidate(candidate)}
                     className={`bg-white rounded-xl border border-gray-200 p-3.5 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all ${draggedCandidate?.id === candidate.id ? "opacity-50 rotate-1" : ""}`}>

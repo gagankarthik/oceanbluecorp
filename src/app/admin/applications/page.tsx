@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Search,
   Download,
@@ -1685,9 +1686,9 @@ export default function ApplicationsPage() {
                       <div className="flex items-center gap-3">
                         <Avatar name={app.name || app.email} />
                         <div className="min-w-0">
-                          <button onClick={() => handleViewApplication(app)} className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors text-left truncate block">
+                          <Link href={`/admin/applications/${app.id}`} className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors truncate block">
                             {app.name || "Unnamed"}
-                          </button>
+                          </Link>
                           <p className="text-xs text-gray-400 truncate">{app.email}</p>
                         </div>
                       </div>
@@ -1726,7 +1727,7 @@ export default function ApplicationsPage() {
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleViewApplication(app)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View"><Eye className="w-4 h-4" /></button>
+                        <Link href={`/admin/applications/${app.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Profile"><Eye className="w-4 h-4" /></Link>
                         <button onClick={() => handleEditApplication(app)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Edit"><Edit3 className="w-4 h-4" /></button>
                         <button onClick={() => handleDeleteApplication(app.id, app.name || "candidate")} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
                       </div>
@@ -1760,7 +1761,7 @@ export default function ApplicationsPage() {
                   <input type="checkbox" checked={selectedIds.includes(app.id)} onChange={() => toggleSelect(app.id)} onClick={e => e.stopPropagation()} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0" />
                   <Avatar name={app.name || app.email} />
                   <div className="min-w-0">
-                    <button onClick={() => handleViewApplication(app)} className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left truncate block">{app.name || "Unnamed"}</button>
+                    <Link href={`/admin/applications/${app.id}`} className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors truncate block">{app.name || "Unnamed"}</Link>
                     <p className="text-xs text-gray-400 truncate">{app.email}</p>
                   </div>
                 </div>

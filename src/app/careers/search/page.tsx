@@ -164,7 +164,11 @@ export default function CareersSearchPage() {
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
+    const now = new Date();
     return jobs.filter((job) => {
+      // Exclude jobs with passed deadlines
+      if (job.submissionDueDate && new Date(job.submissionDueDate) < now) return false;
+
       const matchesSearch =
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||

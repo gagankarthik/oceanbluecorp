@@ -31,6 +31,7 @@ const getEnvConfig = () => {
       clients: process.env.NEXT_AWS_DYNAMODB_TABLE_CLIENTS || "oceanblue-clients",
       vendors: process.env.NEXT_AWS_DYNAMODB_TABLE_VENDORS || "oceanblue-vendors",
       counters: process.env.NEXT_AWS_DYNAMODB_TABLE_COUNTERS || "oceanblue-counters",
+      content: process.env.NEXT_AWS_DYNAMODB_TABLE_CONTENT || "oceanblue-content",
     },
   };
 };
@@ -1752,5 +1753,70 @@ export async function deleteCandidateApplication(id: string): Promise<{ success:
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete candidate application",
     };
+  }
+}
+
+// ===========================================
+// CMS Content
+// ===========================================
+
+export interface ContentBlock {
+  id: string;           // PK — e.g. "homepage", "about", "services", "contact"
+  section: string;      // Same as id, kept for clarity
+  fields: Record<string, string>;  // Arbitrary key → value map
+  updatedAt: string;
+  updatedBy?: string;
+  updatedByName?: string;
+  version?: number;
+}
+
+export async function getContentBlock(id: string): Promise<{ success: boolean; data?: ContentBlock; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const result = await db.client.send(new GetCommand({ TableName: getTables().content, Key: { id } }));
+    return { success: true, data: result.Item as ContentBlock | undefined };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get content" };
+  }
+}
+
+export async function getAllContentBlocks(): Promise<{ success: boolean; data?: ContentBlock[]; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const result = await db.client.send(new ScanCommand({ TableName: getTables().content }));
+    return { success: true, data: (result.Items || []) as ContentBlock[] };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get content" };
+  }
+}
+
+export async function upsertContentBlock(
+  id: string,
+  fields: Record<string, string>,
+  updatedBy?: string,
+  updatedByName?: string
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const existing = await db.client.send(new GetCommand({ TableName: getTables().content, Key: { id } }));
+    const currentVersion = (existing.Item as ContentBlock | undefined)?.version || 0;
+    await db.client.send(new PutCommand({
+      TableName: getTables().content,
+      Item: {
+        id,
+        section: id,
+        fields,
+        updatedAt: new Date().toISOString(),
+        updatedBy,
+        updatedByName,
+        version: currentVersion + 1,
+      } as ContentBlock,
+    }));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to save content" };
   }
 }
