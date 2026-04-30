@@ -195,6 +195,7 @@ function EditApplicationInner() {
         city, state, skills, experience, notes,
         rating: rating || undefined,
         addToTalentBench,
+        ...(addToTalentBench && { benchAddedBy: user?.email || user?.id }),
         changedBy:     user?.id,
         changedByName: user?.name || "Admin",
         ...resumePayload,

@@ -157,6 +157,7 @@ function NewApplicationInner() {
         city, state, skills, experience, notes,
         rating: rating || undefined,
         addToTalentBench,
+        ...(addToTalentBench && { benchAddedBy: user?.email || user?.id }),
         createdBy:     user?.email || "admin",
         createdByName: user?.name  || "Admin",
         userId:    "anonymous",

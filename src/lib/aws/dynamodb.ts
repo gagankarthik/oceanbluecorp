@@ -122,6 +122,7 @@ export interface Resume {
   updatedAt?: string;
 }
 
+
 // Unified Application interface - supports both portal applications and HR-created applications
 export interface Application {
   id: string; // PK (UUID)
@@ -174,6 +175,8 @@ export interface Application {
   // Creator info
   createdBy?: string; // User ID who created (for HR-created)
   createdByName?: string;
+
+  benchAddedBy?: string;   // Email of user who added to talent bench
 
   // Talent bench flag
   addToTalentBench?: boolean;

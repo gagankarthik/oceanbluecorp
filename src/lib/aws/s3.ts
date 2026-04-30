@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { awsConfig, s3Config } from "./config";
@@ -30,6 +31,75 @@ export function generateResumeKey(userId: string, fileName: string): string {
   const timestamp = Date.now();
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
   return `resumes/${userId}/${timestamp}-${sanitizedFileName}`;
+}
+
+// Generate a key for resume bank uploads — encodes candidateName + fileName in the key
+// Format: resume-bank/{email}/{timestamp}--{candidateName}--{fileName}
+export function generateResumeBankKey(uploaderEmail: string, fileName: string, candidateName?: string): string {
+  const timestamp = Date.now();
+  // Email: only strip / (emails don't normally have it, but be safe)
+  const safeEmail = uploaderEmail.replace(/\//g, "_");
+  const safeCandidate = candidateName
+    ? candidateName.replace(/[^a-zA-Z0-9 _-]/g, "").replace(/\s+/g, "_").slice(0, 60) || "unknown"
+    : "unknown";
+  const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+  return `resume-bank/${safeEmail}/${timestamp}--${safeCandidate}--${safeFileName}`;
+}
+
+// Parse a resume-bank S3 key back into metadata
+export function parseResumeBankKey(key: string): {
+  uploaderEmail: string;
+  fileName: string;
+  candidateName?: string;
+  timestamp: number;
+} {
+  const parts = key.split("/");
+  const uploaderEmail = parts[1] || "";
+  const segment = parts[2] || "";
+
+  const i1 = segment.indexOf("--");
+  const i2 = i1 >= 0 ? segment.indexOf("--", i1 + 2) : -1;
+
+  if (i1 < 0 || i2 < 0) {
+    return { uploaderEmail, fileName: segment, timestamp: 0 };
+  }
+
+  const timestamp = parseInt(segment.slice(0, i1)) || 0;
+  const candidateRaw = segment.slice(i1 + 2, i2);
+  const fileName = segment.slice(i2 + 2);
+  const candidateName =
+    candidateRaw && candidateRaw !== "unknown"
+      ? candidateRaw.replace(/_/g, " ").trim()
+      : undefined;
+
+  return { uploaderEmail, fileName, candidateName, timestamp };
+}
+
+// List all objects in the resume-bank/ prefix
+export async function listResumeBankObjects(): Promise<{
+  success: boolean;
+  objects?: Array<{ key: string; size: number; lastModified: Date }>;
+  error?: string;
+}> {
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: s3Config.bucketName,
+      Prefix: "resume-bank/",
+    });
+    const response = await s3Client.send(command);
+    const objects = (response.Contents || []).map((obj) => ({
+      key: obj.Key!,
+      size: obj.Size || 0,
+      lastModified: obj.LastModified || new Date(),
+    }));
+    return { success: true, objects };
+  } catch (error) {
+    console.error("Error listing resume bank objects:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to list resumes",
+    };
+  }
 }
 
 // Upload resume to S3

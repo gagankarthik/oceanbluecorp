@@ -10,6 +10,9 @@ export {
   resumeExists,
   validateResumeFile,
   generateResumeKey,
+  generateResumeBankKey,
+  parseResumeBankKey,
+  listResumeBankObjects,
   ALLOWED_RESUME_TYPES,
   MAX_RESUME_SIZE,
 } from "./s3";

@@ -242,7 +242,10 @@ export default function TalentBenchPage() {
 
   const filteredApplications = applications.filter((app) => {
     // Each user only sees candidates they personally added to the bench
-    const matchesOwnership = app.createdBy === user?.email || app.createdBy === user?.id;
+    // benchAddedBy is set whenever someone explicitly adds to bench; fall back to createdBy for legacy records
+    const matchesOwnership = app.benchAddedBy
+      ? app.benchAddedBy === user?.email || app.benchAddedBy === user?.id
+      : app.createdBy === user?.email || app.createdBy === user?.id;
     const matchesSearch =
       (app.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -601,7 +604,8 @@ export default function TalentBenchPage() {
         workAuthorization: formData.workAuthorization || undefined,
         rating: formData.rating || undefined,
         notes: formData.notes || undefined,
-        addToTalentBench: true, // Always true for bench profiles
+        addToTalentBench: true,
+        benchAddedBy: user?.email || user?.id || "system",
         skills: formData.skills.length > 0 ? formData.skills : undefined,
         experience: formData.experience || undefined,
         createdBy: user?.email || user?.id || "system",

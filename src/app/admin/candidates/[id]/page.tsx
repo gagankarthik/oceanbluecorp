@@ -110,7 +110,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     setBenchSaving(true);
     const next = !candidate.addToTalentBench;
     setCandidate((p) => (p ? { ...p, addToTalentBench: next } : p));
-    try { await patch({ addToTalentBench: next }); }
+    try { await patch({ addToTalentBench: next, ...(next && { benchAddedBy: user?.email || user?.id }) }); }
     catch {
       setCandidate((p) => (p ? { ...p, addToTalentBench: !next } : p));
       alert("Failed to update talent bench");
