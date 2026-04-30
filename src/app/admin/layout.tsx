@@ -322,7 +322,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   alt="Ocean Blue Corporation"
                   width={130}
                   height={36}
-                  className="h-8 w-auto"
+                  className="h-8 w-auto px-6"
                   priority
                 />
               )}

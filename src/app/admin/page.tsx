@@ -30,6 +30,7 @@ import {
   Plus,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Area,
   AreaChart,
@@ -384,9 +385,9 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin mx-auto" />
+            <div className="w-48 h-48 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin mx-auto" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+              <Image src="/loading.png" alt="Logo" width={125} height={125} className="rounded-full" priority/>
             </div>
           </div>
           <p className="text-gray-500 mt-4 font-medium">Loading dashboard...</p>

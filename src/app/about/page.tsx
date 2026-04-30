@@ -137,7 +137,7 @@ const leadership = [
   },
   {
     name: "Sushma Moturu",
-    role: "Human Resource Manager",
+    role: "Human Resource Director",
     initials: "SM",
     linkedin:"https://www.linkedin.com/in/sushma-moturu-4ba752236/",
   },
@@ -149,13 +149,6 @@ const leadership = [
   },
 ];
 
-{/*const stats = [
-  { value: "500+", label: "Enterprise Clients", icon: Building2, gradient: "from-blue-600 to-cyan-600" },
-  { value: "2,500+", label: "Team Members", icon: Users, gradient: "from-amber-500 to-orange-500" },
-  { value: "25+", label: "Global Offices", icon: Globe, gradient: "from-emerald-500 to-teal-500" },
-  { value: "98%", label: "Client Retention", icon: TrendingUp, gradient: "from-violet-500 to-purple-500" },
-];
-*/}
 
 export default function AboutPage() {
   return (
