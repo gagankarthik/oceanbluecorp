@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = job.description.length > 160
       ? job.description.substring(0, 157) + "..."
       : job.description;
-    const url = `https://oceanbluecorp.com/careers/${id}`;
+    const url = `https://oceanbluecorp.com/careers/search/${id}`;
 
     // Create a more detailed description for Open Graph
     const ogDescription = `${jobType} position in ${job.location}. ${description}`;
@@ -55,20 +55,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         siteName: "Ocean Blue Corporation",
         type: "article",
         locale: "en_US",
-        images: [
-          {
-            url: "https://oceanbluecorp.com/logo.png",
-            width: 200,
-            height: 200,
-            alt: `${job.title} at Ocean Blue Corporation`,
-          },
-        ],
       },
       twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: `${job.title} - ${jobType}`,
         description: ogDescription,
-        images: ["https://oceanbluecorp.com/logo.png"],
       },
       alternates: {
         canonical: url,
