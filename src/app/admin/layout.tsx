@@ -31,6 +31,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 
 interface Notification {
   id: string;
@@ -43,29 +44,18 @@ interface Notification {
   createdAt: string;
 }
 
-interface SearchResult {
-  type: "job" | "application" | "contact";
-  id: string;
-  title: string;
-  subtitle: string;
-  link: string;
-  status?: string;
-}
-
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, roles: [UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Users", href: "/admin/users", icon: UserCog, roles: [UserRole.ADMIN] },
-  { name: "Roles", href: "/admin/roles", icon: Shield, roles: [UserRole.ADMIN] },
-  { name: "Content", href: "/admin/content", icon: FileText, roles: [UserRole.ADMIN] },
-  { name: "Job Postings", href: "/admin/jobs", icon: Briefcase, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Candidates", href: "/admin/candidates", icon: UserStar, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Applications", href: "/admin/applications", icon: Users, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Talent Bench", href: "/admin/bench", icon: Boxes, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Clients", href: "/admin/clients", icon: Building, roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Vendors", href: "/admin/vendors", icon: UsersRound, roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Settings", href: "/admin/settings", icon: Settings, roles: [UserRole.ADMIN] },
+  { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Users",        href: "/admin/users",        icon: UserCog,         roles: [UserRole.ADMIN] },
+  { name: "Roles",        href: "/admin/roles",        icon: Shield,          roles: [UserRole.ADMIN] },
+  { name: "Content",      href: "/admin/content",      icon: FileText,        roles: [UserRole.ADMIN] },
+  { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,       roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Applications", href: "/admin/applications", icon: Users,           roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,           roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+  { name: "Contacts",     href: "/admin/contacts",     icon: MessageSquare,   roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Clients",      href: "/admin/clients",      icon: Building,        roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Vendors",      href: "/admin/vendors",      icon: UsersRound,      roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Settings",     href: "/admin/settings",     icon: Settings,        roles: [UserRole.ADMIN] },
 ];
 
 const notificationIcons = {
@@ -87,6 +77,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, signOut, hasAnyRole } = useAuth();
+  const { openCommandPalette, openCandidateEditor } = useAdmin();
 
   // Notifications state
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -95,13 +86,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const searchDebounceRef = useRef<NodeJS.Timeout>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch notifications
@@ -128,51 +112,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Search functionality
-  const performSearch = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      setSearchOpen(false);
-      return;
-    }
-
-    try {
-      setSearchLoading(true);
-      const response = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      if (response.ok) {
-        setSearchResults(data.results || []);
-        setSearchOpen(true);
-      }
-    } catch (error) {
-      console.error("Search failed:", error);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, []);
-
-  // Debounced search
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-
-    searchDebounceRef.current = setTimeout(() => {
-      performSearch(value);
-    }, 300);
-  };
-
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setNotificationsOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setSearchOpen(false);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
@@ -216,14 +160,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       router.push(notification.link);
     }
     setNotificationsOpen(false);
-  };
-
-  // Handle search result click
-  const handleSearchResultClick = (result: SearchResult) => {
-    router.push(result.link);
-    setSearchQuery("");
-    setSearchResults([]);
-    setSearchOpen(false);
   };
 
   // Format time ago
@@ -488,68 +424,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search - Desktop */}
-            <div ref={searchRef} className="relative hidden md:block">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
-                className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 focus:outline-none transition-all"
-              />
-              {searchLoading && (
-                <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 animate-spin" />
-              )}
+            {/* Command palette trigger — replaces inline search */}
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              className="hidden md:inline-flex items-center gap-2 w-56 lg:w-72 pl-2.5 pr-1.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg hover:bg-white hover:border-slate-300 transition-colors group"
+            >
+              <Search className="w-4 h-4 text-slate-400" />
+              <span className="text-slate-400 flex-1 text-left">Search or jump to…</span>
+              <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+                ⌘K
+              </kbd>
+            </button>
 
-              {/* Search Results Dropdown */}
-              {searchOpen && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl border border-gray-200 shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
-                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-100">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Search Results</p>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto bg-white">
-                    {searchResults.map((result) => {
-                      const Icon = result.type === "job" ? Briefcase : result.type === "application" ? Users : MessageSquare;
-                      return (
-                        <button
-                          key={`${result.type}-${result.id}`}
-                          onClick={() => handleSearchResultClick(result)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-blue-50 transition-colors text-left border-b border-gray-50 last:border-0"
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${
-                            result.type === "job" ? "bg-blue-100 text-blue-600" :
-                            result.type === "application" ? "bg-emerald-100 text-emerald-600" :
-                            "bg-violet-100 text-violet-600"
-                          }`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
-                            <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* No results */}
-              {searchOpen && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl border border-gray-200 shadow-xl ring-1 ring-black/5 p-4 z-50">
-                  <div className="text-center">
-                    <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">No results found</p>
-                    <p className="text-xs text-gray-400 mt-1">Try a different search term</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Search - Mobile */}
-            <button className="md:hidden p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+            {/* Mobile search */}
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              className="md:hidden p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+            >
               <Search className="w-5 h-5" />
             </button>
 
@@ -649,26 +542,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Divider */}
-            <div className="hidden sm:block h-5 w-px bg-gray-200" />
-
-            {/* User Info - Desktop */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-800">{user?.name}</p>
-                <p className="text-[11px] text-gray-500 capitalize">{user?.role}</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-xs shadow-sm">
-                {getUserInitials()}
-              </div>
-            </div>
-
-            {/* User Avatar - Mobile */}
-            <div className="sm:hidden w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-xs shadow-sm">
-              {getUserInitials()}
-            </div>
+            </div>     
           </div>
         </header>
 
@@ -686,7 +560,9 @@ export default function AdminLayout({
 }) {
   return (
     <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES]}>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
+      <AdminProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </AdminProvider>
     </ProtectedRoute>
   );
 }
