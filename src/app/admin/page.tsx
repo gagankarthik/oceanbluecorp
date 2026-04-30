@@ -5,27 +5,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  Briefcase, Users, Target, UserPlus, Loader2, MessageSquareText,
-  TrendingUp, ArrowRight, BarChart3, AlertTriangle, Clock, Plus,
-  Activity, Mail, Calendar, Eye, FileText, KanbanSquare,
-  TableProperties, RefreshCcw, Zap, Layers,
+  Briefcase, Users, UserPlus, AlertTriangle, Clock,
+  Plus, Mail, RefreshCcw, CheckCircle2, BarChart3, ArrowRight,
 } from "lucide-react";
 import {
   Area, AreaChart, CartesianGrid, XAxis, YAxis,
-  ResponsiveContainer, BarChart, Bar, Tooltip, Cell,
+  ResponsiveContainer, Tooltip as RechartsTooltip,
 } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { SectionCard } from "@/components/admin/section-card";
-import { StatCard } from "@/components/admin/stat-card";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
-import { PipelineStrip } from "@/components/admin/pipeline-strip";
-import { PipelineKanban } from "@/components/admin/pipeline-kanban";
-import { EmptyState } from "@/components/admin/empty-state";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { tones, statusMeta, type AppStatus } from "@/components/admin/theme";
+import { type AppStatus } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
 
 interface DashboardStats {
@@ -46,268 +39,409 @@ interface DashboardStats {
   monthlyApplications?: { month: string; applications: number }[];
 }
 
-const STALE_THRESHOLD_DAYS = 7;
+const STALE_DAYS = 7;
 const OFFER_STALE_DAYS = 5;
+const SOURCE_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"];
+const JOB_COLORS   = ["#3b82f6", "#6366f1", "#8b5cf6", "#06b6d4", "#10b981"];
+
+// ── count-up hook ─────────────────────────────────────────────────────────────
+function useCountUp(target: number, ms = 900) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!target) { setN(0); return; }
+    let raf: number, t0: number | null = null;
+    const tick = (ts: number) => {
+      if (!t0) t0 = ts;
+      const p = Math.min((ts - t0) / ms, 1);
+      setN(Math.round((1 - Math.pow(1 - p, 3)) * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return n;
+}
+
+// ── sparkline ─────────────────────────────────────────────────────────────────
+function Spark({ data, color = "#60a5fa", w = 72, h = 28 }: { data: number[]; color?: string; w?: number; h?: number }) {
+  if (data.length < 2) return <div style={{ width: w, height: h }} />;
+  const mn = Math.min(...data), mx = Math.max(...data), rng = mx - mn || 1;
+  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - mn) / rng) * h * 0.85 - h * 0.075}`).join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} />
+    </svg>
+  );
+}
+
+// ── donut ring (SVG) ──────────────────────────────────────────────────────────
+function polar(cx: number, cy: number, r: number, deg: number) {
+  const rad = ((deg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function DonutRing({ segs, size = 160, thick = 20 }: {
+  segs: { label: string; value: number; color: string }[];
+  size?: number; thick?: number;
+}) {
+  const [hov, setHov] = useState<number | null>(null);
+  const total = segs.reduce((s, g) => s + g.value, 0);
+  const cx = size / 2, cy = size / 2, r = (size - thick) / 2 - 2;
+
+  if (!total) return (
+    <div className="flex items-center justify-center" style={{ width: size, height: size }}>
+      <p className="text-xs text-slate-400">No data</p>
+    </div>
+  );
+
+  let cum = 0;
+  const arcs = segs.map((seg, i) => {
+    if (!seg.value) return null;
+    const deg = (seg.value / total) * 360;
+    const s = polar(cx, cy, r, cum + 0.5);
+    const e = polar(cx, cy, r, cum + deg - 0.5);
+    const big = deg > 180 ? 1 : 0;
+    cum += deg;
+    return (
+      <path key={i}
+        d={`M ${s.x} ${s.y} A ${r} ${r} 0 ${big} 1 ${e.x} ${e.y}`}
+        fill="none" stroke={seg.color}
+        strokeWidth={hov === i ? thick + 4 : thick}
+        strokeLinecap="butt"
+        style={{ transition: "stroke-width 0.15s ease", cursor: "pointer" }}
+        onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}
+      />
+    );
+  });
+
+  const active = hov !== null ? segs[hov] : null;
+  return (
+    <div className="relative inline-flex" style={{ width: size, height: size }}>
+      <svg width={size} height={size}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={thick} />
+        {arcs}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        {active ? (
+          <>
+            <span className="text-xl font-bold tabular-nums leading-none" style={{ color: active.color }}>{active.value}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-1">{active.label}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-3xl font-bold text-slate-900 tabular-nums leading-none">{total}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1">candidates</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── hero KPI tile ─────────────────────────────────────────────────────────────
+function HeroKPI({ label, value, color, spark, suffix = "", sub }: {
+  label: string; value: number; color: string; spark: number[];
+  suffix?: string; sub?: string;
+}) {
+  const n = useCountUp(value);
+  return (
+    <div className="rounded-xl p-3.5 flex flex-col gap-2"
+      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)" }}>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.45)" }}>{label}</p>
+        {spark.length >= 2 && <Spark data={spark} color={color} w={60} h={26} />}
+      </div>
+      <p className="text-[2rem] font-extrabold tracking-tight leading-none" style={{ color }}>{n}{suffix}</p>
+      {sub && <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.38)" }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ── funnel chart ──────────────────────────────────────────────────────────────
+function FunnelChart({ stats, total }: { stats: DashboardStats; total: number }) {
+  const stages = [
+    { label: "Applied",   count: total,                       color: "#3b82f6" },
+    { label: "Screening", count: stats.reviewingApplications, color: "#6366f1" },
+    { label: "Interview", count: stats.interviewApplications, color: "#8b5cf6" },
+    { label: "Offered",   count: stats.offeredApplications,   color: "#f59e0b" },
+    { label: "Hired",     count: stats.hiredApplications,     color: "#10b981" },
+  ];
+  const max = stages[0].count || 1;
+  return (
+    <div className="space-y-0.5">
+      {stages.map((st, i) => {
+        const pct = Math.max((st.count / max) * 100, st.count > 0 ? 10 : 0);
+        const mg = (100 - pct) / 2;
+        const prev = i > 0 ? stages[i - 1].count : null;
+        const conv = prev && prev > 0 ? Math.round((st.count / prev) * 100) : null;
+        return (
+          <div key={st.label}>
+            {i > 0 && (
+              <div className="flex items-center justify-center h-5">
+                <span className="text-[10px] text-slate-400 font-medium tabular-nums">
+                  {conv !== null ? `↓ ${conv}%` : "↓"}
+                </span>
+              </div>
+            )}
+            <div style={{ paddingLeft: `${mg}%`, paddingRight: `${mg}%`, transition: "padding 0.8s ease" }}>
+              <div className="h-8 rounded-lg flex items-center justify-between px-3 shadow-sm" style={{ background: st.color }}>
+                <span className="text-[11px] font-bold text-white">{st.label}</span>
+                <span className="text-[11px] font-bold text-white/90 tabular-nums">{st.count.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {stats.rejectedApplications > 0 && (
+        <p className="text-[10px] text-center text-slate-400 pt-2">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-400 mr-1" />
+          {stats.rejectedApplications} rejected · {total > 0 ? Math.round((stats.rejectedApplications / total) * 100) : 0}%
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── attention row ─────────────────────────────────────────────────────────────
+function AttentionItem({ icon: Icon, color, title, desc, href, apps }: {
+  icon: React.ComponentType<{ className?: string }>;
+  color: string; title: string; desc: string;
+  href?: string; apps?: Application[];
+}) {
+  const router = useRouter();
+  return (
+    <div className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: color + "18" }}>
+          <span style={{ color }}><Icon className="w-4 h-4" /></span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-slate-900">{title}</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">{desc}</p>
+          {apps && apps.length > 0 && (
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {apps.slice(0, 4).map((c) => (
+                <button key={c.id} onClick={() => router.push(`/admin/candidates/${c.id}`)}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-blue-100 rounded-md transition-colors">
+                  <Avatar name={c.name || c.email} size="xs" />
+                  <span className="text-[10px] font-semibold text-slate-700 max-w-[72px] truncate">{c.name || "—"}</span>
+                </button>
+              ))}
+              {apps.length > 4 && <span className="text-[10px] text-slate-400 px-1 self-center">+{apps.length - 4}</span>}
+            </div>
+          )}
+        </div>
+        {href && (
+          <Link href={href} className="flex-shrink-0 inline-flex items-center gap-0.5 text-[11px] font-semibold hover:opacity-80" style={{ color }}>
+            View <ArrowRight className="w-3 h-3" />
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── main dashboard ────────────────────────────────────────────────────────────
+const chartLabels: Record<string, string> = {
+  "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days",
+  "ytd": "Year to date", "1y": "Last 12 months", "all": "All time",
+};
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+}
+function timeAgo(d: string) {
+  const ms = Date.now() - new Date(d).getTime();
+  const m = Math.floor(ms / 60000), hr = Math.floor(ms / 3600000), dy = Math.floor(ms / 86400000);
+  if (m < 60) return `${m}m ago`;
+  if (hr < 24) return `${hr}h ago`;
+  if (dy < 7) return `${dy}d ago`;
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const { setJobs: setProviderJobs, candidateRevision, openCandidateEditor } = useAdmin();
 
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [chartPeriod, setChartPeriod] = useState<"7d" | "30d" | "90d" | "ytd" | "1y" | "all">("30d");
-  const [pipelineView, setPipelineView] = useState<"kanban" | "table">("kanban");
-  const [pipelineFilter, setPipelineFilter] = useState<AppStatus | "all">("all");
+  const [stats, setStats]           = useState<DashboardStats | null>(null);
+  const [applications, setApps]     = useState<Application[]>([]);
+  const [jobs, setJobs]             = useState<Job[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState<string | null>(null);
+  const [period, setPeriod]         = useState<"7d"|"30d"|"90d"|"ytd"|"1y"|"all">("30d");
 
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
-      const [statsRes, appsRes, jobsRes] = await Promise.all([
-        fetch("/api/admin/stats"),
-        fetch("/api/applications"),
-        fetch("/api/jobs"),
-      ]);
-      const [statsData, appsData, jobsData] = await Promise.all([
-        statsRes.json(), appsRes.json(), jobsRes.json(),
-      ]);
-      if (!statsRes.ok) throw new Error(statsData.error || "Failed to fetch stats");
-      setStats(statsData.stats);
-
-      const jobsList: Job[] = jobsData.jobs || [];
-      const jobsMap = new Map(jobsList.map((j) => [j.id, j]));
-      const apps: Application[] = (appsData.applications || []).map((a: Application) => ({
-        ...a,
-        jobTitle: a.jobTitle || (a.jobId ? jobsMap.get(a.jobId)?.title : ""),
-      }));
-      setApplications(apps);
+      const [sr, ar, jr] = await Promise.all([fetch("/api/admin/stats"), fetch("/api/applications"), fetch("/api/jobs")]);
+      const [sd, ad, jd] = await Promise.all([sr.json(), ar.json(), jr.json()]);
+      if (!sr.ok) throw new Error(sd.error || "Failed to fetch stats");
+      setStats(sd.stats);
+      const jobsList: Job[] = jd.jobs || [];
+      const jmap = new Map(jobsList.map((j: Job) => [j.id, j]));
+      setApps((ad.applications || []).map((a: Application) => ({ ...a, jobTitle: a.jobTitle || (a.jobId ? jmap.get(a.jobId)?.title : "") })));
       setJobs(jobsList);
       setProviderJobs(jobsList);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : "Failed to load"); }
+    finally { setLoading(false); }
   }, [setProviderJobs]);
 
   useEffect(() => { void fetchAll(); }, [fetchAll, candidateRevision]);
 
-  const handleStatusChange = useCallback(async (id: string, status: AppStatus) => {
-    setApplications((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: status as Application["status"] } : a)),
-    );
-    try {
-      await fetch(`/api/applications/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
-      });
-    } catch {
-      void fetchAll();
-    }
-  }, [user, fetchAll]);
-
-  // ── Derived data ─────────────────────────────────────────────────
-
-  const filteredApps = useMemo(() => {
-    if (pipelineFilter === "all") return applications;
-    return applications.filter((a) => a.status === pipelineFilter);
-  }, [applications, pipelineFilter]);
-
-  const recentApps = useMemo(
-    () => [...applications].sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()).slice(0, 6),
-    [applications],
-  );
+  // ── derived ───────────────────────────────────────────────────────────────
+  const total      = stats?.totalApplications || 0;
+  const inPipeline = (stats?.reviewingApplications || 0) + (stats?.interviewApplications || 0) + (stats?.offeredApplications || 0);
+  const convRate   = total > 0 ? Math.round(((stats?.hiredApplications || 0) / total) * 100) : 0;
 
   const pipelineCounts = useMemo(() => {
-    const counts: Partial<Record<AppStatus, number>> = {};
-    for (const a of applications) {
-      const k = a.status as AppStatus;
-      counts[k] = (counts[k] || 0) + 1;
-    }
-    return counts;
+    const c: Partial<Record<AppStatus, number>> = {};
+    for (const a of applications) { const k = a.status as AppStatus; c[k] = (c[k] || 0) + 1; }
+    return c;
   }, [applications]);
 
-  const rejectedCount = pipelineCounts["rejected"] || 0;
-
-  // ── Unique enterprise insights ───────────────────────────────────
-
-  /** Avg time from applied → hired in days */
   const timeToHire = useMemo(() => {
     const hired = applications.filter((a) => a.status === "hired" && a.statusHistory?.length);
-    if (hired.length === 0) return null;
-    const days = hired
-      .map((a) => {
-        const hireEntry = a.statusHistory!.find((h) => h.status === "hired");
-        if (!hireEntry) return null;
-        const start = new Date(a.appliedAt).getTime();
-        const end = new Date(hireEntry.changedAt).getTime();
-        return Math.max(0, (end - start) / 86400000);
-      })
-      .filter((d): d is number => d !== null);
-    if (days.length === 0) return null;
-    return Math.round(days.reduce((s, d) => s + d, 0) / days.length);
+    if (!hired.length) return null;
+    const days = hired.flatMap((a) => {
+      const e = a.statusHistory!.find((h) => h.status === "hired");
+      if (!e) return [];
+      const d = (new Date(e.changedAt).getTime() - new Date(a.appliedAt).getTime()) / 86400000;
+      return d >= 0 ? [d] : [];
+    });
+    return days.length ? Math.round(days.reduce((s, d) => s + d, 0) / days.length) : null;
   }, [applications]);
 
-  /** Stale: not moved past pending in ≥ STALE_THRESHOLD_DAYS days */
   const staleCandidates = useMemo(() => {
-    const cutoff = Date.now() - STALE_THRESHOLD_DAYS * 86400000;
-    return applications.filter((a) =>
-      (a.status === "pending" || a.status === "reviewing") && new Date(a.appliedAt).getTime() < cutoff,
-    ).slice(0, 5);
+    const cut = Date.now() - STALE_DAYS * 86400000;
+    return applications.filter((a) => (a.status === "pending" || a.status === "reviewing") && new Date(a.appliedAt).getTime() < cut).slice(0, 5);
   }, [applications]);
 
-  /** Offers pending too long */
   const offersAtRisk = useMemo(() => {
-    const cutoff = Date.now() - OFFER_STALE_DAYS * 86400000;
+    const cut = Date.now() - OFFER_STALE_DAYS * 86400000;
     return applications.filter((a) => {
       if (a.status !== "offered") return false;
-      const offerEntry = a.statusHistory?.find((h) => h.status === "offered");
-      const since = offerEntry ? new Date(offerEntry.changedAt).getTime() : new Date(a.updatedAt || a.appliedAt).getTime();
-      return since < cutoff;
+      const e = a.statusHistory?.find((h) => h.status === "offered");
+      return (e ? new Date(e.changedAt).getTime() : new Date(a.updatedAt || a.appliedAt).getTime()) < cut;
     });
   }, [applications]);
 
-  /** Recruiter workload (by ownership) */
   const recruiterWorkload = useMemo(() => {
     const map = new Map<string, { name: string; total: number; active: number }>();
     for (const a of applications) {
       const name = a.ownershipName || "Unassigned";
-      const isActive = !["hired", "rejected"].includes(a.status);
+      const active = !["hired", "rejected"].includes(a.status);
       if (!map.has(name)) map.set(name, { name, total: 0, active: 0 });
-      const entry = map.get(name)!;
-      entry.total += 1;
-      if (isActive) entry.active += 1;
+      const e = map.get(name)!; e.total++; if (active) e.active++;
     }
     return [...map.values()].sort((a, b) => b.active - a.active).slice(0, 5);
   }, [applications]);
 
-  /** Unassigned (no owner) candidates that aren't terminal */
   const unassignedActive = useMemo(
     () => applications.filter((a) => !a.ownership && !["hired", "rejected"].includes(a.status)).length,
     [applications],
   );
 
-  // ── Chart data ───────────────────────────────────────────────────
+  const recentApps = useMemo(
+    () => [...applications].sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()).slice(0, 8),
+    [applications],
+  );
+
+  const topJobs = useMemo(
+    () => [...jobs].filter((j) => j.status === "active").sort((a, b) => (b.applicationsCount || 0) - (a.applicationsCount || 0)).slice(0, 5),
+    [jobs],
+  );
+
+  const sourceData = useMemo(() => {
+    if (!total) return [];
+    const map = new Map<string, number>();
+    for (const a of applications) { const s = a.source || "Other"; map.set(s, (map.get(s) || 0) + 1); }
+    return [...map.entries()].map(([name, count]) => ({ name, count, pct: (count / total) * 100 })).sort((a, b) => b.count - a.count).slice(0, 6);
+  }, [applications, total]);
+
+  const velocity = useMemo(() => {
+    const now = Date.now();
+    const last7 = applications.filter((a) => now - new Date(a.appliedAt).getTime() < 7 * 86400000).length;
+    const prev7 = applications.filter((a) => { const age = now - new Date(a.appliedAt).getTime(); return age >= 7 * 86400000 && age < 14 * 86400000; }).length;
+    return { last7, prev7, delta: last7 - prev7 };
+  }, [applications]);
+
   const chartData = useMemo(() => {
     const now = new Date();
-    let startDate: Date;
-    let groupBy: "day" | "week" | "month";
-    switch (chartPeriod) {
-      case "7d":  startDate = new Date(now); startDate.setDate(now.getDate() - 7);  groupBy = "day";   break;
-      case "30d": startDate = new Date(now); startDate.setDate(now.getDate() - 30); groupBy = "day";   break;
-      case "90d": startDate = new Date(now); startDate.setDate(now.getDate() - 90); groupBy = "week";  break;
-      case "ytd": startDate = new Date(now.getFullYear(), 0, 1);                     groupBy = "month"; break;
-      case "1y":  startDate = new Date(now); startDate.setFullYear(now.getFullYear() - 1); groupBy = "month"; break;
-      default:    startDate = new Date(0);                                            groupBy = "month";
+    let start: Date; let group: "day"|"week"|"month";
+    switch (period) {
+      case "7d":  start = new Date(now); start.setDate(now.getDate() - 7);          group = "day";   break;
+      case "30d": start = new Date(now); start.setDate(now.getDate() - 30);         group = "day";   break;
+      case "90d": start = new Date(now); start.setDate(now.getDate() - 90);         group = "week";  break;
+      case "ytd": start = new Date(now.getFullYear(), 0, 1);                        group = "month"; break;
+      case "1y":  start = new Date(now); start.setFullYear(now.getFullYear() - 1);  group = "month"; break;
+      default:    start = new Date(0);                                               group = "month";
     }
-    const filtered = applications.filter((a) => new Date(a.appliedAt) >= startDate);
-    const buckets: Record<string, { applied: number; hired: number }> = {};
-
-    if (groupBy === "day") {
-      const d = new Date(startDate);
-      while (d <= now) { buckets[d.toISOString().split("T")[0]] = { applied: 0, hired: 0 }; d.setDate(d.getDate() + 1); }
-      filtered.forEach((a) => {
-        const k = new Date(a.appliedAt).toISOString().split("T")[0];
-        if (k in buckets) {
-          buckets[k].applied += 1;
-          if (a.status === "hired") buckets[k].hired += 1;
-        }
-      });
-    } else if (groupBy === "week") {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-      while (d <= now) { buckets[d.toISOString().split("T")[0]] = { applied: 0, hired: 0 }; d.setDate(d.getDate() + 7); }
-      filtered.forEach((a) => {
-        const ad = new Date(a.appliedAt);
-        const mon = new Date(ad);
-        mon.setDate(ad.getDate() - ((ad.getDay() + 6) % 7));
-        const k = mon.toISOString().split("T")[0];
-        if (k in buckets) {
-          buckets[k].applied += 1;
-          if (a.status === "hired") buckets[k].hired += 1;
-        }
-      });
+    const filtered = applications.filter((a) => new Date(a.appliedAt) >= start);
+    const b: Record<string, { applied: number; hired: number }> = {};
+    if (group === "day") {
+      const d = new Date(start);
+      while (d <= now) { b[d.toISOString().split("T")[0]] = { applied: 0, hired: 0 }; d.setDate(d.getDate() + 1); }
+      filtered.forEach((a) => { const k = new Date(a.appliedAt).toISOString().split("T")[0]; if (k in b) { b[k].applied++; if (a.status === "hired") b[k].hired++; } });
+    } else if (group === "week") {
+      const d = new Date(start); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      while (d <= now) { b[d.toISOString().split("T")[0]] = { applied: 0, hired: 0 }; d.setDate(d.getDate() + 7); }
+      filtered.forEach((a) => { const ad = new Date(a.appliedAt); const m = new Date(ad); m.setDate(ad.getDate() - ((ad.getDay() + 6) % 7)); const k = m.toISOString().split("T")[0]; if (k in b) { b[k].applied++; if (a.status === "hired") b[k].hired++; } });
     } else {
-      filtered.forEach((a) => {
-        const ad = new Date(a.appliedAt);
-        const k = `${ad.getFullYear()}-${String(ad.getMonth() + 1).padStart(2, "0")}`;
-        if (!buckets[k]) buckets[k] = { applied: 0, hired: 0 };
-        buckets[k].applied += 1;
-        if (a.status === "hired") buckets[k].hired += 1;
-      });
+      filtered.forEach((a) => { const ad = new Date(a.appliedAt); const k = `${ad.getFullYear()}-${String(ad.getMonth() + 1).padStart(2, "0")}`; if (!b[k]) b[k] = { applied: 0, hired: 0 }; b[k].applied++; if (a.status === "hired") b[k].hired++; });
     }
-    return Object.entries(buckets)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, v]) => ({ date, ...v }));
-  }, [applications, chartPeriod]);
+    return Object.entries(b).sort(([a], [c]) => a.localeCompare(c)).map(([date, v]) => ({ date, ...v }));
+  }, [applications, period]);
 
-  // ── Department chart ─────────────────────────────────────────────
-  const departmentData = useMemo(() => {
-    if (!stats) return [];
-    return Object.entries(stats.jobsByDepartment || {})
-      .slice(0, 6)
-      .map(([name, count]) => ({
-        name: name.length > 14 ? name.slice(0, 14) + "…" : name,
-        jobs: count,
-      }))
-      .sort((a, b) => b.jobs - a.jobs);
-  }, [stats]);
+  const sparkData = useMemo(() => (stats?.monthlyApplications || []).map((m) => m.applications), [stats]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="relative w-32 h-32 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Image src="/loading.png" alt="Loading" width={80} height={80} className="rounded-full" priority />
-            </div>
+  const donutSegs = useMemo(() => [
+    { label: "New",       value: pipelineCounts.pending   || 0, color: "#94a3b8" },
+    { label: "Screening", value: pipelineCounts.reviewing || 0, color: "#3b82f6" },
+    { label: "Interview", value: pipelineCounts.interview || 0, color: "#8b5cf6" },
+    { label: "Offered",   value: pipelineCounts.offered   || 0, color: "#f59e0b" },
+    { label: "Hired",     value: pipelineCounts.hired     || 0, color: "#10b981" },
+    { label: "Rejected",  value: pipelineCounts.rejected  || 0, color: "#f43f5e" },
+  ], [pipelineCounts]);
+
+  const healthy = staleCandidates.length === 0 && offersAtRisk.length === 0;
+
+  // ── loading ───────────────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center">
+        <div className="relative w-28 h-28 mx-auto">
+          <div className="absolute inset-0 rounded-full border-[3px] border-blue-100 border-t-blue-600 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Image src="/loading.png" alt="Loading" width={72} height={72} className="rounded-full" priority />
           </div>
-          <p className="text-slate-500 mt-4 text-sm font-medium">Loading dashboard…</p>
         </div>
+        <p className="text-slate-500 mt-4 text-sm font-medium">Loading dashboard…</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error || !stats) {
-    return (
-      <SectionCard className="max-w-md mx-auto">
-        <EmptyState
-          icon={AlertTriangle}
-          title="Failed to load dashboard"
-          description={error || "Something went wrong"}
-          action={
-            <button onClick={fetchAll} className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
-              Retry
-            </button>
-          }
-        />
-      </SectionCard>
-    );
-  }
-
-  const total = stats.totalApplications;
-  const conversionRate = total > 0 ? ((stats.hiredApplications / total) * 100).toFixed(1) : "0";
-  const inPipeline = stats.reviewingApplications + stats.interviewApplications + stats.offeredApplications;
-  const pipelineHealth = staleCandidates.length === 0 && offersAtRisk.length === 0;
+  if (error || !stats) return (
+    <div className="max-w-md mx-auto mt-20 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
+        <AlertTriangle className="w-7 h-7 text-rose-500" />
+      </div>
+      <p className="text-slate-900 font-semibold">{error || "Failed to load"}</p>
+      <button onClick={fetchAll} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">Retry</button>
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
+    <div className="space-y-5 pb-10">
+
+      {/* ── header ── */}
       <PageHeader
         title="Dashboard"
-        subtitle={`${greeting()}, ${user?.name?.split(" ")[0] || "there"}. Here's what needs your attention today.`}
+        subtitle={`${greeting()}, ${user?.name?.split(" ")[0] || "there"}. Here's your recruiting overview.`}
         actions={
           <>
-            <button
-              onClick={fetchAll}
-              title="Refresh"
-              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-            >
+            <button onClick={fetchAll} title="Refresh"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
               <RefreshCcw className="w-4 h-4" />
             </button>
             <PageHeaderButton variant="secondary" onClick={() => router.push("/admin/jobs/new")}>
@@ -320,516 +454,354 @@ export default function AdminDashboard() {
         }
       />
 
-      {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Applications"
-          value={total}
-          tone="blue"
-          icon={Users}
-          href="/admin/applications"
-          hint={`${stats.pendingApplications} new this week`}
-          trend={stats.pendingApplications > 0 ? { direction: "up", value: `+${stats.pendingApplications} new` } : undefined}
-        />
-        <StatCard
-          label="Active jobs"
-          value={stats.activeJobs}
-          tone="emerald"
-          icon={Briefcase}
-          href="/admin/jobs"
-          hint={`${stats.totalJobs} total positions`}
-          trend={{ direction: "up", value: `${stats.draftJobs} drafts` }}
-        />
-        <StatCard
-          label="In pipeline"
-          value={inPipeline}
-          tone="violet"
-          icon={Target}
-          href="/admin/applications?status=reviewing"
-          hint={`${stats.interviewApplications} interviewing`}
-        />
-        <StatCard
-          label="Conversion"
-          value={`${conversionRate}%`}
-          tone="cyan"
-          icon={TrendingUp}
-          hint={`${stats.hiredApplications} hires this period`}
-          trend={timeToHire !== null ? { direction: "flat", value: `${timeToHire}d avg time-to-hire` } : undefined}
-        />
-      </div>
+      {/* ── HERO BAND ── */}
+      <div className="relative rounded-2xl overflow-hidden shadow-xl"
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #1e3a8a 80%, #0c4a6e 100%)" }}>
+        {/* dot-grid overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.04) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+        }} />
+        {/* ambient glow */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.25), transparent 70%)" }} />
+        <div className="absolute -bottom-16 left-10 w-64 h-64 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.12), transparent 70%)" }} />
 
-      {/* Insights row — UNIQUE ENTERPRISE FEATURES */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Needs attention */}
-        <SectionCard
-          title="Needs attention"
-          description={pipelineHealth ? "Pipeline is healthy" : "Action recommended"}
-          icon={Zap}
-          actions={pipelineHealth ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> All clear
-            </span>
-          ) : null}
-          className="lg:col-span-2"
-          bodyClassName="p-0"
-        >
-          <div className="divide-y divide-slate-100">
-            {staleCandidates.length === 0 && offersAtRisk.length === 0 && unassignedActive === 0 ? (
-              <div className="py-10 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                  <Activity className="w-6 h-6 text-emerald-500" />
-                </div>
-                <p className="text-sm font-semibold text-slate-700">You&apos;re all caught up</p>
-                <p className="text-xs text-slate-400 mt-1">No stale candidates, no offers at risk</p>
+        <div className="relative p-6 lg:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            {/* left: greeting */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                {healthy ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Pipeline healthy
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> Needs attention
+                  </span>
+                )}
+                <span className="text-slate-400 text-[11px]">
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                </span>
               </div>
-            ) : (
-              <>
-                {offersAtRisk.length > 0 && (
-                  <AttentionRow
-                    icon={Mail}
-                    tone="amber"
-                    title={`${offersAtRisk.length} offer${offersAtRisk.length > 1 ? "s" : ""} pending response`}
-                    description={`No action in ${OFFER_STALE_DAYS}+ days — consider following up`}
-                    href="/admin/applications?status=offered"
-                  />
-                )}
-                {staleCandidates.length > 0 && (
-                  <AttentionRow
-                    icon={Clock}
-                    tone="rose"
-                    title={`${staleCandidates.length} stale candidate${staleCandidates.length > 1 ? "s" : ""}`}
-                    description={`Stuck in early pipeline for ${STALE_THRESHOLD_DAYS}+ days`}
-                    items={staleCandidates}
-                  />
-                )}
-                {unassignedActive > 0 && (
-                  <AttentionRow
-                    icon={UserPlus}
-                    tone="blue"
-                    title={`${unassignedActive} unassigned candidate${unassignedActive > 1 ? "s" : ""}`}
-                    description="Active candidates without an owner"
-                    href="/admin/applications"
-                  />
-                )}
-              </>
-            )}
-          </div>
-        </SectionCard>
+              <h2 className="text-2xl font-bold text-white tracking-tight">
+                {greeting()}, {user?.name?.split(" ")[0] || "there"}
+              </h2>
+              <p className="text-sm text-slate-400 mt-1 max-w-xs leading-relaxed">
+                {velocity.delta > 0
+                  ? `+${velocity.delta} more applications vs last week — momentum building`
+                  : velocity.delta < 0
+                  ? `${Math.abs(velocity.delta)} fewer applications than last week`
+                  : "Application velocity is steady this week"}
+              </p>
+            </div>
 
-        {/* Recruiter workload */}
-        <SectionCard title="Workload" description="Active candidates per owner" icon={Layers}>
-          {recruiterWorkload.length > 0 ? (
-            <ul className="space-y-3">
-              {recruiterWorkload.map((r, i) => {
-                const max = recruiterWorkload[0].active || 1;
-                const pct = (r.active / max) * 100;
-                return (
-                  <li key={r.name}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {r.name === "Unassigned" ? (
-                          <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                            <UserPlus className="w-2.5 h-2.5 text-slate-400" />
-                          </div>
-                        ) : (
-                          <Avatar name={r.name} size="xs" />
-                        )}
-                        <span className={cn("font-semibold truncate", r.name === "Unassigned" ? "text-slate-500 italic" : "text-slate-700")}>
-                          {r.name}
-                        </span>
-                      </div>
-                      <span className="font-bold text-slate-900 tabular-nums flex-shrink-0">{r.active}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={cn("h-full rounded-full",
-                          r.name === "Unassigned" ? "bg-slate-400" :
-                          i === 0 ? "bg-blue-500" : i === 1 ? "bg-violet-500" : i === 2 ? "bg-cyan-500" : "bg-slate-400")}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-xs text-slate-400 text-center py-4 italic">No active candidates</p>
-          )}
-        </SectionCard>
+            {/* right: KPI tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 max-w-2xl">
+              <HeroKPI label="Applications" value={total}             color="#60a5fa" spark={sparkData} />
+              <HeroKPI label="Active jobs"  value={stats.activeJobs}  color="#34d399" spark={[]} />
+              <HeroKPI label="In pipeline"  value={inPipeline}        color="#a78bfa" spark={[]} />
+              <HeroKPI label="Conversion"   value={convRate}          color="#fbbf24" spark={[]}
+                suffix="%" sub={timeToHire !== null ? `${timeToHire}d avg time-to-hire` : undefined} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Charts row */}
+      {/* ── charts row ── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <SectionCard
-          title="Application trends"
-          description={`${chartLabels[chartPeriod]} · ${chartData.reduce((s, d) => s + d.applied, 0)} applications`}
-          icon={BarChart3}
-          actions={
-            <div className="flex items-center gap-1">
-              {(["7d", "30d", "90d", "ytd", "1y", "all"] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setChartPeriod(p)}
-                  className={cn(
-                    "px-2 py-1 text-[11px] font-semibold rounded-md transition-colors",
-                    chartPeriod === p
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-500 hover:bg-slate-100",
-                  )}
-                >
+
+        {/* area chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <BarChart3 className="w-4 h-4 text-blue-500" /> Application volume
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {chartLabels[period]} · {chartData.reduce((s, d) => s + d.applied, 0)} total
+              </p>
+            </div>
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg">
+              {(["7d","30d","90d","ytd","1y","all"] as const).map((p) => (
+                <button key={p} onClick={() => setPeriod(p)}
+                  className={cn("px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors",
+                    period === p ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
                   {p === "ytd" ? "YTD" : p === "1y" ? "1Y" : p === "all" ? "All" : p.toUpperCase()}
                 </button>
               ))}
             </div>
-          }
-          className="lg:col-span-2"
-        >
-          <div className="h-[260px] -mx-2">
+          </div>
+          <div className="h-[240px] -mx-1">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="appliedFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.01} />
+                  <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="hiredFill" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.01} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={32}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32}
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
                   tickFormatter={(v) => {
                     const d = new Date(v);
-                    if (chartPeriod === "ytd" || chartPeriod === "1y" || chartPeriod === "all")
-                      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-                    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                  }}
+                    return (period === "ytd" || period === "1y" || period === "all")
+                      ? d.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+                      : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  }} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={4} tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                <RechartsTooltip
+                  cursor={{ stroke: "#3b82f6", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "12px", padding: "8px 12px", boxShadow: "0 8px 24px -4px rgba(15,23,42,0.12)" }}
+                  labelFormatter={(v) => new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                <Tooltip
-                  cursor={{ stroke: "#3b82f6", strokeWidth: 1, strokeDasharray: "4" }}
-                  contentStyle={{
-                    backgroundColor: "white", border: "1px solid #e2e8f0",
-                    borderRadius: "8px", fontSize: "12px", padding: "8px 12px",
-                    boxShadow: "0 4px 12px -2px rgba(15,23,42,0.1)",
-                  }}
-                  labelFormatter={(v) =>
-                    new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                  }
-                />
-                <Area type="monotone" dataKey="applied" name="Applied" stroke="#3b82f6" fill="url(#appliedFill)" strokeWidth={2} />
-                <Area type="monotone" dataKey="hired"   name="Hired"   stroke="#10b981" fill="url(#hiredFill)"   strokeWidth={2} />
+                <Area type="monotone" dataKey="applied" name="Applied" stroke="#3b82f6" fill="url(#gA)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="hired"   name="Hired"   stroke="#10b981" fill="url(#gH)" strokeWidth={2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex items-center gap-4 pt-2 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> Applied</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Hired</span>
+          <div className="flex items-center gap-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Applied</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Hired</span>
           </div>
-        </SectionCard>
+        </div>
 
-        {/* Department breakdown */}
-        <SectionCard title="Jobs by department" description="Open positions" icon={Briefcase}>
-          {departmentData.length > 0 ? (
-            <div className="h-[260px] -mx-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentData} layout="vertical" barCategoryGap={6} margin={{ left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal vertical={false} stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} width={90} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "white", border: "1px solid #e2e8f0",
-                      borderRadius: "8px", fontSize: "12px",
-                    }}
-                    cursor={{ fill: "#f1f5f9" }}
-                  />
-                  <Bar dataKey="jobs" radius={[0, 4, 4, 0]}>
-                    {departmentData.map((_, i) => (
-                      <Cell key={i} fill={["#3b82f6", "#06b6d4", "#8b5cf6", "#10b981", "#f59e0b", "#ec4899"][i % 6]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        {/* donut ring */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col">
+          <h3 className="text-sm font-bold text-slate-900">Pipeline distribution</h3>
+          <p className="text-xs text-slate-400 mt-0.5 mb-5">Hover to inspect each stage</p>
+          <div className="flex-1 flex flex-col items-center gap-4">
+            <DonutRing segs={donutSegs} size={164} thick={22} />
+            <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 w-full">
+              {donutSegs.filter((s) => s.value > 0).map((seg) => (
+                <div key={seg.label} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }} />
+                  <span className="text-[11px] text-slate-600 font-medium">{seg.label}</span>
+                  <span className="text-[11px] font-bold text-slate-800 ml-auto tabular-nums">{seg.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── middle insights row ── */}
+      <div className="grid gap-4 lg:grid-cols-3">
+
+        {/* funnel */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <h3 className="text-sm font-bold text-slate-900">Hiring funnel</h3>
+          <p className="text-xs text-slate-400 mt-0.5 mb-4">Conversion through each stage</p>
+          <FunnelChart stats={stats} total={total} />
+        </div>
+
+        {/* source breakdown */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col">
+          <h3 className="text-sm font-bold text-slate-900">Application sources</h3>
+          <p className="text-xs text-slate-400 mt-0.5 mb-4">Where candidates come from</p>
+          {sourceData.length > 0 ? (
+            <div className="flex-1 space-y-4">
+              <div className="flex rounded-full overflow-hidden h-3 gap-px">
+                {sourceData.map((s, i) => (
+                  <div key={s.name} title={`${s.name}: ${s.count}`}
+                    style={{ width: `${s.pct}%`, background: SOURCE_COLORS[i % 6] }} />
+                ))}
+              </div>
+              <div className="space-y-2.5">
+                {sourceData.map((s, i) => (
+                  <div key={s.name} className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: SOURCE_COLORS[i % 6] }} />
+                    <span className="text-xs text-slate-600 font-medium flex-1 truncate">{s.name}</span>
+                    <span className="text-xs font-bold text-slate-800 tabular-nums">{s.count}</span>
+                    <span className="text-[10px] text-slate-400 tabular-nums w-7 text-right">{s.pct.toFixed(0)}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <EmptyState icon={Briefcase} title="No jobs yet" description="Post your first job to see departments" />
-          )}
-        </SectionCard>
-      </div>
-
-      {/* Pipeline strip */}
-      <PipelineStrip
-        counts={pipelineCounts}
-        active={pipelineFilter}
-        onSelect={setPipelineFilter}
-        rejectedCount={rejectedCount}
-      />
-
-      {/* Pipeline view (kanban / table toggle) 
-      <SectionCard
-        title="Active pipeline"
-        description={`${filteredApps.length} of ${applications.length} candidates · drag cards to update status`}
-        icon={KanbanSquare}
-        actions={
-          <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg">
-            <button
-              onClick={() => setPipelineView("kanban")}
-              className={cn(
-                "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
-                pipelineView === "kanban" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-              )}
-            >
-              <KanbanSquare className="w-3 h-3" /> Kanban
-            </button>
-            <button
-              onClick={() => setPipelineView("table")}
-              className={cn(
-                "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
-                pipelineView === "table" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-              )}
-            >
-              <TableProperties className="w-3 h-3" /> Recent
-            </button>
-          </div>
-        }
-        bodyClassName={pipelineView === "kanban" ? "p-3" : "p-0"}
-      >
-        {applications.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No candidates yet"
-            description="Add your first candidate to start tracking the pipeline"
-            action={
-              <PageHeaderButton variant="primary" onClick={() => openCandidateEditor()}>
-                <Plus className="w-3.5 h-3.5" /> Add candidate
-              </PageHeaderButton>
-            }
-          />
-        ) : pipelineView === "kanban" ? (
-          <PipelineKanban
-            applications={pipelineFilter === "all" ? applications : filteredApps}
-            onStatusChange={handleStatusChange}
-            onDelete={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}
-            onUpdate={(app) => setApplications((prev) => prev.map((a) => (a.id === app.id ? { ...a, ...app } : a)))}
-          />
-        ) : (
-          <RecentTable apps={recentApps} />
-        )}
-      </SectionCard>
-*/}
-      {/* Hiring funnel */}
-      <SectionCard title="Hiring funnel" description="Conversion across stages" icon={TrendingUp}>
-        <HiringFunnel stats={stats} total={total} />
-      </SectionCard>
-    </div>
-  );
-}
-
-const chartLabels = {
-  "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days",
-  "ytd": "Year to date", "1y": "Last 12 months", "all": "All time",
-};
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
-
-function AttentionRow({
-  icon: Icon, tone, title, description, href, items,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  tone: "amber" | "rose" | "blue";
-  title: string;
-  description: string;
-  href?: string;
-  items?: Application[];
-}) {
-  const t = tones[tone];
-  const router = useRouter();
-  return (
-    <div className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
-      <div className="flex items-start gap-3">
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", t.bg)}>
-          <Icon className={cn("w-4 h-4", t.text)} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-slate-900">{title}</p>
-          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
-          {items && items.length > 0 && (
-            <div className="flex items-center gap-1 mt-2.5 flex-wrap">
-              {items.slice(0, 4).map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => router.push(`/admin/candidates/${c.id}`)}
-                  className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-slate-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <Avatar name={c.name || c.email} size="xs" />
-                  <span className="text-[11px] font-semibold text-slate-700 truncate max-w-[100px]">{c.name || "Unnamed"}</span>
-                </button>
-              ))}
-              {items.length > 4 && (
-                <span className="text-[11px] text-slate-500 px-1">+{items.length - 4} more</span>
-              )}
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-xs text-slate-400 italic text-center py-6">No source data yet</p>
             </div>
           )}
         </div>
-        {href && (
-          <Link
-            href={href}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-md"
-          >
-            View <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
+
+        {/* top active jobs */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Top open roles</h3>
+              <p className="text-xs text-slate-400 mt-0.5">By applicant count</p>
+            </div>
+            <Link href="/admin/jobs" className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5">
+              All <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {topJobs.length > 0 ? (
+            <div className="space-y-3.5">
+              {topJobs.map((job, i) => {
+                const mx = topJobs[0].applicationsCount || 1;
+                const pct = ((job.applicationsCount || 0) / mx) * 100;
+                return (
+                  <Link key={job.id} href={`/admin/jobs/${job.id}`} className="block group">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[10px] font-bold text-slate-300 w-3.5 tabular-nums">{i + 1}</span>
+                        <span className="text-xs font-semibold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{job.title}</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 tabular-nums flex-shrink-0">{job.applicationsCount || 0}</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden ml-5">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: `linear-gradient(to right, ${JOB_COLORS[i % 5]}, ${JOB_COLORS[(i + 1) % 5]})` }} />
+                    </div>
+                    {job.department && (
+                      <p className="text-[10px] text-slate-400 mt-0.5 ml-5 truncate">{job.department}</p>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Briefcase className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+              <p className="text-xs text-slate-400">No active jobs</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
 
-{/*
-function RecentTable({ apps }: { apps: Application[] }) {
-  const router = useRouter();
-  if (apps.length === 0) {
-    return <div className="py-8 text-center text-sm text-slate-400 italic">No recent activity</div>;
-  }
-  return (
-    <table className="w-full">
-      <thead>
-        <tr className="bg-slate-50/60 border-b border-slate-100">
-          <th className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left px-5 py-2.5">Candidate</th>
-          <th className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left px-5 py-2.5">Position</th>
-          <th className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left px-5 py-2.5">Status</th>
-          <th className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right px-5 py-2.5">Applied</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100">
-        {apps.map((a) => (
-          <tr
-            key={a.id}
-            onClick={() => router.push(`/admin/candidates/${a.id}`)}
-            className="hover:bg-blue-50/40 cursor-pointer transition-colors"
-          >
-            <td className="px-5 py-3">
-              <div className="flex items-center gap-2.5">
-                <Avatar name={a.name || a.email} size="sm" />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{a.name || "—"}</p>
-                  <p className="text-xs text-slate-500 truncate">{a.email}</p>
+      {/* ── bottom row ── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+
+        {/* recent applications */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Recent applications</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Latest candidates</p>
+            </div>
+            <Link href="/admin/applications" className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {recentApps.length > 0 ? (
+            <div className="divide-y divide-slate-100">
+              {recentApps.map((app) => (
+                <Link key={app.id} href={`/admin/candidates/${app.id}`}
+                  className="flex items-center gap-3 px-5 py-3 hover:bg-blue-50/40 transition-colors group">
+                  <Avatar name={app.name || app.email} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                      {app.name || "—"}
+                    </p>
+                    <p className="text-xs text-slate-400 truncate">{app.jobTitle || app.email}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <StatusBadge status={app.status} size="sm" />
+                    <span className="text-[10px] text-slate-400">{timeAgo(app.appliedAt)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="py-14 text-center">
+              <Users className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+              <p className="text-sm font-medium text-slate-400">No applications yet</p>
+            </div>
+          )}
+        </div>
+
+        {/* right col: attention + workload */}
+        <div className="flex flex-col gap-4">
+
+          {/* needs attention */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", healthy ? "bg-emerald-50" : "bg-amber-50")}>
+                  {healthy
+                    ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    : <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                 </div>
+                <h3 className="text-sm font-bold text-slate-900">Needs attention</h3>
               </div>
-            </td>
-            <td className="px-5 py-3 text-sm text-slate-700 max-w-[180px] truncate">{a.jobTitle || <span className="text-slate-300">No position</span>}</td>
-            <td className="px-5 py-3"><StatusBadge status={a.status} /></td>
-            <td className="px-5 py-3 text-right text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1 justify-end">
-                <Calendar className="w-3 h-3" />
-                {timeAgo(a.appliedAt)}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-*/}
-
-// ── Hiring Funnel (proper funnel shape) ──────────────────────────────────────
-
-function HiringFunnel({ stats, total }: { stats: DashboardStats; total: number }) {
-  const stages = [
-    { label: "Applied",   count: total,                         colors: { bg: "#3b82f6", text: "white" } },
-    { label: "Screening", count: stats.reviewingApplications,   colors: { bg: "#6366f1", text: "white" } },
-    { label: "Interview", count: stats.interviewApplications,   colors: { bg: "#8b5cf6", text: "white" } },
-    { label: "Offered",   count: stats.offeredApplications,     colors: { bg: "#f59e0b", text: "white" } },
-    { label: "Hired",     count: stats.hiredApplications,       colors: { bg: "#10b981", text: "white" } },
-  ];
-
-  const max = stages[0].count || 1;
-
-  return (
-    <div className="py-2">
-      {stages.map((stage, i) => {
-        const pct = Math.max((stage.count / max) * 100, stage.count > 0 ? 8 : 0);
-        const marginPct = (100 - pct) / 2;
-        const prevCount = i > 0 ? stages[i - 1].count : null;
-        const convRate = prevCount && prevCount > 0
-          ? Math.round((stage.count / prevCount) * 100)
-          : null;
-
-        return (
-          <div key={stage.label}>
-            {/* Connector with conversion rate */}
-            {i > 0 && (
-              <div className="flex items-center justify-center gap-2 py-1 relative">
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                  <svg className="w-3 h-3 text-slate-300" fill="currentColor" viewBox="0 0 12 12">
-                    <path d="M6 9L1 3h10L6 9z" />
-                  </svg>
-                  {convRate !== null && (
-                    <span className="text-[10px] font-semibold text-slate-400">
-                      {convRate}% converted
-                    </span>
-                  )}
-                </div>
+              {healthy && (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">All clear</span>
+              )}
+            </div>
+            {healthy && unassignedActive === 0 ? (
+              <div className="py-7 px-5 text-center">
+                <p className="text-sm font-medium text-slate-600">Pipeline is healthy</p>
+                <p className="text-xs text-slate-400 mt-1">No stale candidates or pending offers at risk</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {offersAtRisk.length > 0 && (
+                  <AttentionItem icon={Mail} color="#f59e0b"
+                    title={`${offersAtRisk.length} offer${offersAtRisk.length > 1 ? "s" : ""} pending response`}
+                    desc={`${OFFER_STALE_DAYS}+ days without reply — follow up now`}
+                    href="/admin/applications?status=offered" />
+                )}
+                {staleCandidates.length > 0 && (
+                  <AttentionItem icon={Clock} color="#f43f5e"
+                    title={`${staleCandidates.length} stale candidate${staleCandidates.length > 1 ? "s" : ""}`}
+                    desc={`Stuck in early stages for ${STALE_DAYS}+ days`}
+                    apps={staleCandidates} />
+                )}
+                {unassignedActive > 0 && (
+                  <AttentionItem icon={UserPlus} color="#3b82f6"
+                    title={`${unassignedActive} unassigned candidate${unassignedActive > 1 ? "s" : ""}`}
+                    desc="Active candidates without an assigned recruiter"
+                    href="/admin/applications" />
+                )}
               </div>
             )}
-
-            {/* Funnel stage block */}
-            <div
-              style={{
-                paddingLeft: `${marginPct}%`,
-                paddingRight: `${marginPct}%`,
-                transition: "padding 0.6s ease",
-              }}
-            >
-              <div
-                className="h-11 rounded-lg flex items-center justify-between px-4 transition-all duration-700 shadow-sm"
-                style={{ backgroundColor: stage.colors.bg }}
-              >
-                <span className="text-sm font-semibold text-white">{stage.label}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">{stage.count.toLocaleString()}</span>
-                  {total > 0 && (
-                    <span className="text-[11px] font-medium text-white/70">
-                      {Math.round((stage.count / total) * 100)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
-        );
-      })}
 
-      {/* Dropped off */}
-      {stats.rejectedApplications > 0 && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 justify-center">
-          <span className="inline-block w-2 h-2 rounded-full bg-rose-400" />
-          {stats.rejectedApplications} rejected · {total > 0 ? Math.round((stats.rejectedApplications / total) * 100) : 0}% of applicants
+          {/* recruiter workload */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex-1">
+            <h3 className="text-sm font-bold text-slate-900">Recruiter workload</h3>
+            <p className="text-xs text-slate-400 mt-0.5 mb-4">Active candidates per owner</p>
+            {recruiterWorkload.length > 0 ? (
+              <ul className="space-y-3">
+                {recruiterWorkload.map((r, i) => {
+                  const mx = recruiterWorkload[0].active || 1;
+                  const pct = (r.active / mx) * 100;
+                  const colors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#94a3b8"];
+                  return (
+                    <li key={r.name}>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Avatar name={r.name} size="xs" />
+                          <span className={cn("font-semibold truncate", r.name === "Unassigned" ? "text-slate-400 italic" : "text-slate-700")}>
+                            {r.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-[10px] text-slate-400">{r.total} total</span>
+                          <span className="font-bold text-slate-900 tabular-nums">{r.active} active</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: colors[i % 5] }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 italic text-center py-4">No active candidates</p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
-}
-
-function timeAgo(d: string): string {
-  const diff = Date.now() - new Date(d).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hrs = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 60) return `${mins}m ago`;
-  if (hrs < 24) return `${hrs}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return new Date(d).toLocaleDateString();
 }
