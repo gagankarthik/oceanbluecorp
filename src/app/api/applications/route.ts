@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
       rating: body.rating,
       notes: body.notes,
       addToTalentBench: body.addToTalentBench || false,
+      benchAddedBy: body.benchAddedBy,
       statusHistory: [{
         status: body.status || "pending",
         changedAt: now,

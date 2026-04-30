@@ -136,8 +136,9 @@ export async function PUT(
     const isStatusChange = body.status && body.status !== existingApp.data.status;
     const hasFullUpdateFields = body.firstName || body.lastName || body.address ||
       body.city || body.state || body.workAuthorization || body.source ||
-      body.ownership || body.skills || body.experience || body.jobId !== undefined ||
-      body.resumeId !== undefined || body.resumeFileName !== undefined;
+      body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
+      body.resumeId !== undefined || body.resumeFileName !== undefined ||
+      body.addToTalentBench !== undefined || body.benchAddedBy !== undefined;
 
     if (hasFullUpdateFields) {
       // Full application update
@@ -191,6 +192,7 @@ export async function PUT(
 
       // Talent bench flag
       if (body.addToTalentBench !== undefined) updates.addToTalentBench = body.addToTalentBench;
+      if (body.benchAddedBy !== undefined) updates.benchAddedBy = body.benchAddedBy;
 
       // Resume fields
       if (body.resumeId !== undefined) updates.resumeId = body.resumeId;

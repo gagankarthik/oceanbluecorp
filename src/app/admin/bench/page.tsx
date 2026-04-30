@@ -241,11 +241,10 @@ export default function TalentBenchPage() {
   const workAuthorizations = [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[];
 
   const filteredApplications = applications.filter((app) => {
-    // Each user only sees candidates they personally added to the bench
-    // benchAddedBy is set whenever someone explicitly adds to bench; fall back to createdBy for legacy records
-    const matchesOwnership = app.benchAddedBy
-      ? app.benchAddedBy === user?.email || app.benchAddedBy === user?.id
-      : app.createdBy === user?.email || app.createdBy === user?.id;
+    const myEmail = user?.email;
+    const myId    = user?.id;
+    const addedBy = app.benchAddedBy || app.createdBy;
+    const matchesOwnership = !!addedBy && (addedBy === myEmail || addedBy === myId);
     const matchesSearch =
       (app.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -644,10 +643,10 @@ export default function TalentBenchPage() {
   };
 
   const stats = {
-    total: applications.length,
-    available: applications.filter((a) => a.status === "active" || a.status === "pending").length,
-    inProcess: applications.filter((a) => a.status === "reviewing" || a.status === "interview").length,
-    topRated: applications.filter((a) => (a.rating || 0) >= 4).length,
+    total: filteredApplications.length,
+    available: filteredApplications.filter((a) => a.status === "active" || a.status === "pending").length,
+    inProcess: filteredApplications.filter((a) => a.status === "reviewing" || a.status === "interview").length,
+    topRated: filteredApplications.filter((a) => (a.rating || 0) >= 4).length,
   };
 
   if (loading) {
