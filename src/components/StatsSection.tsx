@@ -1,148 +1,145 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Image from "next/image";
-import WorldMap from "./ui/world-map";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 const stats = [
-  { id: 1, value: 10, label: "Years of Excellence", suffix: "+" },
-  { id: 2, value: 50, label: "Enterprise Clients", suffix: "+" },
-  { id: 3, value: 98, label: "Client Retention", suffix: "%" },
-  { id: 4, value: 8, label: "Software Solutions", suffix: "+" },
+  { id: 1, value: 10,  suffix: "+", label: "Years of Excellence",  desc: "Delivering enterprise IT since 2010", grad: "from-blue-400 to-cyan-400" },
+  { id: 2, value: 50,  suffix: "+", label: "Enterprise Clients",   desc: "Across North America",               grad: "from-violet-400 to-purple-400" },
+  { id: 3, value: 98,  suffix: "%", label: "Client Retention",     desc: "Year-over-year renewal rate",        grad: "from-emerald-400 to-cyan-400" },
+  { id: 4, value: 8,   suffix: "+", label: "Software Solutions",   desc: "Purpose-built platforms deployed",   grad: "from-indigo-400 to-blue-400" },
 ];
 
-function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
+function Counter({ value, suffix, grad }: { value: number; suffix: string; grad: string }) {
   const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
+  const [fired, setFired] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (hasAnimated) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          // Use requestAnimationFrame for smoother animation
-          const duration = 1500;
-          const startTime = performance.now();
-
-          const animate = (currentTime: number) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            // Ease out cubic for smoother finish
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.floor(eased * value));
-
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            } else {
-              setCount(value);
-            }
-          };
-
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, [value, hasAnimated]);
+    if (fired) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      setFired(true);
+      const dur = 1500, t0 = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - t0) / dur, 1);
+        setCount(Math.floor((1 - Math.pow(1 - p, 3)) * value));
+        if (p < 1) requestAnimationFrame(tick);
+        else setCount(value);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.4 });
+    if (ref.current) io.observe(ref.current);
+    return () => io.disconnect();
+  }, [value, fired]);
 
   return (
-    <span ref={ref} className="text-4xl sm:text-5xl md:text-6xl font-light text-white inline-block drop-shadow-lg">
-      {count}{suffix}
-    </span>
+    <div ref={ref} className="flex items-end leading-none tabular-nums">
+      <span
+        className={`bg-gradient-to-br ${grad} bg-clip-text font-extrabold text-transparent`}
+        style={{ fontFamily: "var(--font-display)", fontSize: "clamp(3.5rem, 6.5vw, 6rem)" }}
+      >
+        {count}
+      </span>
+      <span
+        className={`mb-1 ml-0.5 bg-gradient-to-br ${grad} bg-clip-text font-extrabold text-transparent`}
+        style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem, 4vw, 3.2rem)" }}
+      >
+        {suffix}
+      </span>
+    </div>
   );
 }
 
 export default function StatsSections() {
   return (
-    <section className="relative w-full py-16 sm:py-24 md:py-32 overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-       {/* <Image
-          src="https://images.unsplash.com/photo-1723307060937-b003478a2c03?q=80&w=1200&auto=format&fit=crop"
-          alt="Background"
-          fill
-          className="object-cover"
-          sizes="100vw"
-          loading="lazy"
-        />*/}
+    <section
+      className="relative w-full overflow-hidden py-20 md:py-28"
+      style={{ background: "#080C14" }}
+    >
+      {/* Mesh gradient */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: [
+            "radial-gradient(ellipse 70% 60% at 0% 50%, rgba(37,99,235,0.12) 0%, transparent 55%)",
+            "radial-gradient(ellipse 60% 50% at 100% 50%, rgba(124,58,237,0.1) 0%, transparent 55%)",
+          ].join(", "),
+        }}
+      />
 
-         <WorldMap
-                dots={[
-                  {
-                    start: {
-                      lat: 64.2008,
-                      lng: -149.4937,
-                    }, // Alaska (Fairbanks)
-                    end: {
-                      lat: 34.0522,
-                      lng: -118.2437,
-                    }, // Los Angeles
-                  },
-                  {
-                    start: { lat: 64.2008, lng: -149.4937 }, // Alaska (Fairbanks)
-                    end: { lat: -15.7975, lng: -47.8919 }, // Brazil (Brasília)
-                  },
-                  {
-                    start: { lat: -15.7975, lng: -47.8919 }, // Brazil (Brasília)
-                    end: { lat: 38.7223, lng: -9.1393 }, // Lisbon
-                  },
-                  {
-                    start: { lat: 51.5074, lng: -0.1278 }, // London
-                    end: { lat: 28.6139, lng: 77.209 }, // New Delhi
-                  },
-                  {
-                    start: { lat: 28.6139, lng: 77.209 }, // New Delhi
-                    end: { lat: 43.1332, lng: 131.9113 }, // Vladivostok
-                  },
-                  {
-                    start: { lat: 28.6139, lng: 77.209 }, // New Delhi
-                    end: { lat: -1.2921, lng: 36.8219 }, // Nairobi
-                  },
-                ]}
-              />
-        {/* Darkening for Text Readability */}
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+      {/* Dot grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20"
+        style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }}
+      />
 
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 max-w-6xl">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
-          {/* Left Column - Heading */}
-          <div className="text-white text-center md:text-left">
-            <span className="text-xs sm:text-sm font-mono text-white/80 tracking-wider mb-3 sm:mb-4 block drop-shadow">
-              — OUR IMPACT
-            </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif leading-tight mb-4 sm:mb-6 drop-shadow-lg">
-              Track record of
-              <span className="block text-white mt-2 font-bold">Excellence</span>
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="mb-14 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div
+              className="mb-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold"
+              style={{
+                background: "rgba(52,211,153,0.08)",
+                border: "1px solid rgba(52,211,153,0.2)",
+                color: "#34d399",
+                fontFamily: "var(--font-display)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Our Impact
+            </div>
+            <h2
+              className="text-[2.2rem] font-extrabold leading-[1.06] tracking-tight text-white md:text-5xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              A track record of{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                excellence.
+              </span>
             </h2>
-            <p className="text-white/90 text-base sm:text-lg max-w-md mx-auto md:mx-0 drop-shadow">
-              We deliver measurable results that help businesses scale faster with proven expertise across industries.
-            </p>
           </div>
+          <p className="max-w-sm text-sm leading-relaxed text-slate-400 md:text-right">
+            We deliver measurable results that help businesses scale faster with
+            proven expertise across every industry.
+          </p>
+        </div>
 
-          {/* Right Column - Stats Grid */}
-          <div className="grid grid-cols-2 gap-6 sm:gap-8 md:gap-12">
-            {stats.map((stat) => (
-              <div key={stat.id} className="border-l-4 border-white/50 pl-3 sm:pl-4">
-                <div className="mb-1 drop-shadow-lg">
-                  <Counter value={stat.value} suffix={stat.suffix} />
-                </div>
-                <p className="text-sm sm:text-base text-white/90 font-medium tracking-wide drop-shadow">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* Stats grid */}
+        <div
+          className="grid grid-cols-2 divide-x divide-white/[0.06] lg:grid-cols-4"
+          style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem" }}
+        >
+          {stats.map((s) => (
+            <div
+              key={s.id}
+              className="group px-7 py-10 transition-colors duration-200 hover:bg-white/[0.02] md:px-10 md:py-12"
+              style={{ borderColor: "rgba(255,255,255,0.06)" }}
+            >
+              <Counter value={s.value} suffix={s.suffix} grad={s.grad} />
+              <p
+                className="mt-3 text-sm font-semibold text-white/75"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {s.label}
+              </p>
+              <p className="mt-0.5 text-xs text-white/28">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between border-t pt-7" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <p className="text-sm text-white/20">Consistent results since 2010.</p>
+          <Link
+            href="/about"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            About Ocean Blue <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
     </section>

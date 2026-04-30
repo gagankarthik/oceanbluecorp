@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Bricolage_Grotesque, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
@@ -10,10 +10,17 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400"],
+  style: ["normal", "italic"],
 });
 
 export const viewport: Viewport = {
@@ -185,7 +192,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}
+        className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} font-sans antialiased`}
       >
         <Providers>
       
