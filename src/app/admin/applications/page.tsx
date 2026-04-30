@@ -660,9 +660,23 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
 // ── KANBAN VIEW ────────────────────────────────────────────────────────────────
 
 function KanbanView({ apps, ...shared }: SharedProps) {
+  const [dragId, setDragId]       = React.useState<string | null>(null);
+  const [dragOver, setDragOver]   = React.useState<string | null>(null);
+
   const grouped = useMemo(() =>
     Object.fromEntries(KANBAN_COLS.map(k => [k, apps.filter(a => a.status === k)])),
   [apps]);
+
+  const handleDrop = (col: string) => {
+    if (dragId && dragId !== col) {
+      const app = apps.find(a => a.id === dragId);
+      if (app && app.status !== col) {
+        shared.onStatusChange(dragId, col as Application["status"]);
+      }
+    }
+    setDragId(null);
+    setDragOver(null);
+  };
 
   return (
     <div className="overflow-x-auto pb-2">
@@ -670,10 +684,14 @@ function KanbanView({ apps, ...shared }: SharedProps) {
         {KANBAN_COLS.map(col => {
           const m    = STAGE_META[col];
           const list = grouped[col] || [];
+          const isOver = dragOver === col;
           return (
-            <div key={col} className="w-64 flex flex-col">
+            <div key={col} className="w-64 flex flex-col"
+              onDragOver={e => { e.preventDefault(); setDragOver(col); }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
+              onDrop={() => handleDrop(col)}>
               {/* Column header */}
-              <div className={cn("flex items-center justify-between px-3 py-2.5 rounded-t-xl border border-b-0", m.hdr, m.ring)}>
+              <div className={cn("flex items-center justify-between px-3 py-2.5 rounded-t-xl border border-b-0 transition-colors", m.hdr, m.ring, isOver && "ring-2 ring-blue-400")}>
                 <div className="flex items-center gap-2">
                   <span className={cn("w-2 h-2 rounded-full flex-shrink-0", m.dot)} />
                   <span className={cn("text-xs font-bold uppercase tracking-wider", m.text)}>{m.label}</span>
@@ -681,14 +699,26 @@ function KanbanView({ apps, ...shared }: SharedProps) {
                 <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", m.bg, m.text)}>{list.length}</span>
               </div>
               {/* Cards */}
-              <div className={cn("flex-1 border border-t-0 rounded-b-xl overflow-y-auto max-h-[calc(100vh-380px)] min-h-[120px] p-2 space-y-2", m.bg, m.ring)}>
+              <div className={cn(
+                "flex-1 border border-t-0 rounded-b-xl overflow-y-auto max-h-[calc(100vh-380px)] min-h-[120px] p-2 space-y-2 transition-colors",
+                m.bg, m.ring,
+                isOver && "ring-2 ring-blue-400 ring-inset bg-blue-50/40",
+              )}>
                 {list.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-xs text-slate-400 font-medium">No applicants</p>
+                  <div className={cn("py-8 text-center rounded-xl border-2 border-dashed transition-colors", isOver ? "border-blue-300" : "border-transparent")}>
+                    <p className="text-xs text-slate-400 font-medium">{isOver ? "Drop here" : "No applicants"}</p>
                   </div>
                 ) : list.map(app => (
-                  <KanbanCard key={app.id} app={app} {...shared} />
+                  <KanbanCard key={app.id} app={app} apps={apps} isDragging={dragId === app.id}
+                    onDragStart={() => setDragId(app.id)}
+                    onDragEnd={() => { setDragId(null); setDragOver(null); }}
+                    {...shared} />
                 ))}
+                {list.length > 0 && isOver && (
+                  <div className="h-14 border-2 border-dashed border-blue-300 rounded-xl flex items-center justify-center">
+                    <p className="text-xs text-blue-400 font-semibold">Drop here</p>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -698,10 +728,22 @@ function KanbanView({ apps, ...shared }: SharedProps) {
   );
 }
 
-function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating }: SharedProps & { app: App }) {
+function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, isDragging, onDragStart, onDragEnd }: SharedProps & {
+  app: App;
+  isDragging: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+}) {
   const skills = (app.skills || []).slice(0, 3);
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group">
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={cn(
+        "bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group cursor-grab active:cursor-grabbing select-none",
+        isDragging && "opacity-40 scale-95 shadow-none",
+      )}>
       {/* Top row */}
       <div className="flex items-start gap-2 mb-2">
         <Avatar name={app.name || app.email} size="sm" />

@@ -241,8 +241,8 @@ export default function TalentBenchPage() {
   const workAuthorizations = [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[];
 
   const filteredApplications = applications.filter((app) => {
-    // HR users can only see their own candidates, admins can see all
-    const matchesOwnership = isAdmin || app.ownership === user?.id;
+    // Each user only sees candidates they personally added to the bench
+    const matchesOwnership = app.createdBy === user?.email || app.createdBy === user?.id;
     const matchesSearch =
       (app.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -604,7 +604,7 @@ export default function TalentBenchPage() {
         addToTalentBench: true, // Always true for bench profiles
         skills: formData.skills.length > 0 ? formData.skills : undefined,
         experience: formData.experience || undefined,
-        createdBy: user?.id || "system",
+        createdBy: user?.email || user?.id || "system",
         createdByName: user?.name || user?.email?.split("@")[0] || "System",
         ...resumeData,
       };
