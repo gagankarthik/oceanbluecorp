@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft, User2, MapPin, Briefcase, Shield, FileText,
   Star, Plus, X, Loader2, AlertTriangle, BookmarkPlus,
-  BookmarkCheck, ChevronRight, Upload, File,
+  BookmarkCheck, ChevronRight, Upload, File, ExternalLink,
 } from "lucide-react";
 import { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -224,6 +224,25 @@ function NewApplicationInner() {
         <h1 className="text-2xl font-bold text-slate-900">Add New Applicant</h1>
         <p className="text-sm text-slate-500 mt-1">Fill in the details below to create a new candidate record.</p>
       </div>
+
+      {/* Job context banner — shown when navigating from a specific job */}
+      {jobId && jobTitle && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Briefcase className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Applying for</p>
+            <p className="text-sm font-semibold text-blue-900 truncate">{jobTitle}</p>
+          </div>
+          <Link
+            href={`/admin/jobs/${jobId}`}
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors flex-shrink-0"
+          >
+            View job <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (

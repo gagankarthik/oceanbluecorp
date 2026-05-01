@@ -393,49 +393,79 @@ export default function JobsPage() {
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           {tableView === "compact" ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50/80 border-b border-gray-200">
-                    {["Job ID","Title","Client","Location","Status","Created","Actions"].map((h, i) => (
-                      <th key={i} className={`py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider ${i === 6 ? "text-right" : "text-left"}`}>{h}</th>
-                    ))}
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">Job ID</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Title</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Client</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Location</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">Applicants</th>
+                    <th className="py-3.5 px-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Created</th>
+                    <th className="py-3.5 px-5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredJobs.map(job => (
-                    <tr key={job.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-3.5 px-4">
-                        <span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">{job.postingId || "—"}</span>
+                    <tr key={job.id} className="hover:bg-gray-50/60 transition-colors group">
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded">
+                          {job.postingId || "—"}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-4 w-[220px]">
-                        <div className="w-[190px] overflow-hidden">
-                          <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block truncate w-full">{job.title}</button>
-                          <p className="text-xs text-gray-400 capitalize mt-0.5 truncate">{job.department} · {job.type}</p>
+                      <td className="py-4 px-5 max-w-[220px]">
+                        <button
+                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                          className="font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block truncate w-full"
+                        >
+                          {job.title}
+                        </button>
+                        <p className="text-xs text-gray-400 capitalize mt-0.5 truncate">{job.department} · {job.type}</p>
+                      </td>
+                      <td className="py-4 px-5 max-w-[160px]">
+                        {job.clientName ? (
+                          <div className="flex items-center gap-1.5 text-gray-700">
+                            <Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{job.clientName}</span>
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-4 px-5 max-w-[160px]">
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
-                        {job.clientName
-                          ? <div className="flex items-center gap-1.5 text-sm text-gray-700"><Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />{job.clientName}</div>
-                          : <span className="text-gray-300">—</span>}
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <StatusBadge status={job.status} />
                       </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-600"><MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />{job.location}{job.state ? `, ${job.state}` : ""}</div>
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <Users className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="tabular-nums">{job.applicationsCount || 0}</span>
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4"><StatusBadge status={job.status} /></td>
-                      <td className="py-3.5 px-4">
-                        <span className="text-xs text-gray-500">{new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <span className="text-xs text-gray-500">
+                          {new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-4 px-5 text-right whitespace-nowrap">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-1.5 text-gray-300 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100">
                               <MoreHorizontal className="h-4 w-4" />
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-white border border-gray-200 shadow-lg rounded-xl w-44">
-                            <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm rounded-lg cursor-pointer"><Eye className="h-4 w-4 mr-2 text-gray-400" />View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm rounded-lg cursor-pointer">
+                              <Eye className="h-4 w-4 mr-2 text-gray-400" />View Details
+                            </DropdownMenuItem>
                             {canEdit && <>
-                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="text-sm rounded-lg cursor-pointer"><Edit3 className="h-4 w-4 mr-2 text-gray-400" />Edit</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="text-sm rounded-lg cursor-pointer">
+                                <Edit3 className="h-4 w-4 mr-2 text-gray-400" />Edit
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="text-sm rounded-lg cursor-pointer">
                                 {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-400" /> : <Copy className="h-4 w-4 mr-2 text-gray-400" />}Duplicate
                               </DropdownMenuItem>
@@ -454,11 +484,17 @@ export default function JobsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1300px]">
+              <table className="w-full min-w-[1300px] text-sm">
                 <thead>
-                  <tr className="bg-gray-50/80 border-b border-gray-200">
-                    {["Job ID","Title","Client","Vendor","Location","Pay Rate","Bill Rate","Status","Manager","Applicants","Created","Deadline","Actions"].map((h, i) => (
-                      <th key={i} className={`py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider ${i === 12 ? "text-right" : "text-left"}`}>{h}</th>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    {[
+                      "Job ID","Title","Client","Vendor","Location",
+                      "Pay Rate","Bill Rate","Status","Manager",
+                      "Applicants","Created","Deadline","Actions",
+                    ].map((h, i) => (
+                      <th key={i} className={`py-3.5 px-5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap ${i === 12 ? "text-right" : "text-left"}`}>
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
@@ -466,55 +502,108 @@ export default function JobsPage() {
                   {filteredJobs.map(job => {
                     const jv = job as Job & { vendorName?: string };
                     return (
-                      <tr key={job.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="py-3.5 px-4"><span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">{job.postingId || "—"}</span></td>
-                        <td className="py-3.5 px-4 w-[180px]">
-                          <div className="w-[155px] overflow-hidden">
-                            <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block truncate w-full">{job.title}</button>
-                            <p className="text-xs text-gray-400 capitalize mt-0.5 truncate">{job.type}</p>
+                      <tr key={job.id} className="hover:bg-gray-50/60 transition-colors group">
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          <span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded">
+                            {job.postingId || "—"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5 max-w-[180px]">
+                          <button
+                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                            className="font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block truncate w-full"
+                          >
+                            {job.title}
+                          </button>
+                          <p className="text-xs text-gray-400 capitalize mt-0.5 truncate">{job.type}</p>
+                        </td>
+                        <td className="py-4 px-5 max-w-[140px]">
+                          {job.clientName ? (
+                            <div className="flex items-center gap-1.5 text-gray-700">
+                              <Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{job.clientName}</span>
+                            </div>
+                          ) : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="py-4 px-5 max-w-[130px]">
+                          {jv.vendorName ? (
+                            <div className="flex items-center gap-1.5 text-gray-700">
+                              <Truck className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{jv.vendorName}</span>
+                            </div>
+                          ) : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="py-4 px-5 max-w-[150px]">
+                          <div className="flex items-center gap-1.5 text-gray-600">
+                            <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
                           </div>
                         </td>
-                        <td className="py-3.5 px-4">{job.clientName ? <div className="flex items-center gap-1.5 text-sm text-gray-700"><Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />{job.clientName}</div> : <span className="text-gray-300">—</span>}</td>
-                        <td className="py-3.5 px-4">{jv.vendorName ? <div className="flex items-center gap-1.5 text-sm text-gray-700"><Truck className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />{jv.vendorName}</div> : <span className="text-gray-300">—</span>}</td>
-                        <td className="py-3.5 px-4"><div className="flex items-center gap-1.5 text-sm text-gray-600"><MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />{job.location}{job.state ? `, ${job.state}` : ""}</div></td>
-                        <td className="py-3.5 px-4">{job.payRate ? <span className="text-sm font-semibold text-gray-800">${job.payRate}/hr</span> : <span className="text-gray-300">—</span>}</td>
-                        <td className="py-3.5 px-4">{job.clientBillRate ? <span className="text-sm font-semibold text-gray-800">${job.clientBillRate}/hr</span> : <span className="text-gray-300">—</span>}</td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          {job.payRate
+                            ? <span className="font-semibold text-gray-800">${job.payRate}/hr</span>
+                            : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          {job.clientBillRate
+                            ? <span className="font-semibold text-gray-800">${job.clientBillRate}/hr</span>
+                            : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="py-4 px-5 whitespace-nowrap">
                           {canEdit ? (
-                            <select value={job.status} onChange={e => handleStatusChange(job.id, e.target.value as Job["status"])}
-                              className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700 cursor-pointer">
+                            <select
+                              value={job.status}
+                              onChange={e => handleStatusChange(job.id, e.target.value as Job["status"])}
+                              className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-gray-700 cursor-pointer"
+                            >
                               {JOB_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
                           ) : <StatusBadge status={job.status} />}
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-4 px-5">
                           {job.recruitmentManagerName ? (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
-                                {job.recruitmentManagerName.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase()}
+                                {job.recruitmentManagerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                               </div>
                               <span className="text-xs text-gray-600 truncate max-w-[100px]">{job.recruitmentManagerName}</span>
                             </div>
                           ) : <span className="text-gray-300">—</span>}
                         </td>
-                        <td className="py-3.5 px-4"><div className="flex items-center gap-1 text-sm text-gray-600"><Users className="h-3.5 w-3.5 text-gray-400" />{job.applicationsCount || 0}</div></td>
-                        <td className="py-3.5 px-4"><span className="text-xs text-gray-500">{new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></td>
-                        <td className="py-3.5 px-4">
-                          {job.submissionDueDate
-                            ? <div className="flex items-center gap-1 text-xs text-gray-500"><Calendar className="h-3.5 w-3.5 text-gray-400" />{new Date(job.submissionDueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
-                            : <span className="text-gray-300">—</span>}
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-gray-600">
+                            <Users className="h-3.5 w-3.5 text-gray-400" />
+                            <span className="tabular-nums">{job.applicationsCount || 0}</span>
+                          </div>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          <span className="text-xs text-gray-500">
+                            {new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5 whitespace-nowrap">
+                          {job.submissionDueDate ? (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                              <Calendar className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                              {new Date(job.submissionDueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </div>
+                          ) : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="py-4 px-5 text-right whitespace-nowrap">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="p-1.5 text-gray-300 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                              <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100">
                                 <MoreHorizontal className="h-4 w-4" />
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-white border border-gray-200 shadow-lg rounded-xl w-44">
-                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm rounded-lg cursor-pointer"><Eye className="h-4 w-4 mr-2 text-gray-400" />View Details</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}`)} className="text-sm rounded-lg cursor-pointer">
+                                <Eye className="h-4 w-4 mr-2 text-gray-400" />View Details
+                              </DropdownMenuItem>
                               {canEdit && <>
-                                <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="text-sm rounded-lg cursor-pointer"><Edit3 className="h-4 w-4 mr-2 text-gray-400" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="text-sm rounded-lg cursor-pointer">
+                                  <Edit3 className="h-4 w-4 mr-2 text-gray-400" />Edit
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="text-sm rounded-lg cursor-pointer">
                                   {duplicating === job.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-400" /> : <Copy className="h-4 w-4 mr-2 text-gray-400" />}Duplicate
                                 </DropdownMenuItem>
