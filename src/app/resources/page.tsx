@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -6,6 +7,19 @@ import {
   BarChart3,
   Download,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Resources",
+  description:
+    "Explore Ocean Blue Corporation's resource library — in-depth blog articles, enterprise case studies, and free ebooks on ERP, cloud, AI, IT staffing, and digital transformation.",
+  openGraph: {
+    title: "Resources | Ocean Blue Corporation",
+    description:
+      "Blog, case studies, and ebooks on enterprise IT, ERP, cloud, AI, and staffing.",
+    url: "https://oceanbluecorp.com/resources",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/resources" },
+};
 
 const resourceTypes = [
   {

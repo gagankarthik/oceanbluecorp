@@ -79,6 +79,18 @@ const STATIC_PAGES: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.2,
   },
+  {
+    url: `${BASE}/terms`,
+    lastModified: new Date("2025-01-01"),
+    changeFrequency: "yearly",
+    priority: 0.2,
+  },
+  {
+    url: `${BASE}/cookies`,
+    lastModified: new Date("2025-01-01"),
+    changeFrequency: "yearly",
+    priority: 0.1,
+  },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

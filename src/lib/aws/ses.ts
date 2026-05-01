@@ -19,7 +19,6 @@ const getDefaultSender = () =>
 const createTransporter = () => {
   const config = getSmtpConfig();
   if (!config.auth.user || !config.auth.pass) {
-    console.error("SMTP credentials not configured");
     return null;
   }
   return nodemailer.createTransport(config);
@@ -121,16 +120,8 @@ async function sendEmail(
   const config = getSmtpConfig();
   const sender = getDefaultSender();
 
-  console.log(`[EMAIL] Attempting to send email to: ${to}`);
-  console.log(`[EMAIL] Subject: ${subject}`);
-  console.log(`[EMAIL] From: ${sender}`);
-  console.log(`[EMAIL] SMTP Host: ${config.host}`);
-  console.log(`[EMAIL] SMTP User configured: ${config.auth.user ? 'Yes' : 'No'}`);
-  console.log(`[EMAIL] SMTP Pass configured: ${config.auth.pass ? 'Yes' : 'No'}`);
-
   const transporter = createTransporter();
   if (!transporter) {
-    console.error("[EMAIL] SMTP transporter not created - credentials missing");
     return { success: false, error: "SMTP not configured - missing credentials" };
   }
 
@@ -142,17 +133,10 @@ async function sendEmail(
       text: textBody,
       html: htmlBody,
     });
-
-    console.log(`[EMAIL] Successfully sent email to ${to}, messageId: ${result.messageId}`);
     return { success: true, messageId: result.messageId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to send email";
-    console.error(`[EMAIL] Failed to send email to ${to}:`, error);
-    console.error(`[EMAIL] Error details:`, JSON.stringify(error, null, 2));
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return { success: false, error: errorMessage };
   }
 }
 

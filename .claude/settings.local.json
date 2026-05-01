@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npm run:*)",
-      "WebFetch(domain:glider.ai)"
+      "WebFetch(domain:glider.ai)",
+      "Bash(awk -F: '{print $2}')",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(xargs cat *)"
     ]
   }
 }
