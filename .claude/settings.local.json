@@ -6,7 +6,18 @@
       "WebFetch(domain:glider.ai)",
       "Bash(awk -F: '{print $2}')",
       "Bash(grep -E \"\\\\.tsx$\")",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "Read(//c/Users/gagan/Desktop/Projects/**)",
+      "WebFetch(domain:status.aws.amazon.com)",
+      "WebFetch(domain:health.aws.amazon.com)",
+      "Bash(curl -s https://health.aws.amazon.com/public/currentevents)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s --compressed https://health.aws.amazon.com/public/currentevents)",
+      "Bash(curl -s -H \"Accept-Encoding: gzip\" https://health.aws.amazon.com/public/currentevents)",
+      "Bash(gunzip)",
+      "Bash(python3)",
+      "Bash(curl -s -w \"\\\\nHeaders:\\\\n%{http_code}\\\\n\" -H \"Accept: application/json\" https://health.aws.amazon.com/public/currentevents)",
+      "Bash(iconv -f UTF-16BE -t UTF-8)"
     ]
   }
 }

@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import StatusContent from "./_content";
+
+export const metadata: Metadata = {
+  title: "System Status",
+  description:
+    "Real-time status of Ocean Blue Corporation's AWS infrastructure — DynamoDB, S3, Cognito, SES, and Amplify in US East (Ohio).",
+  openGraph: {
+    title: "System Status | Ocean Blue Corporation",
+    description: "Live AWS service health for Ocean Blue Corporation's platform.",
+    url: "https://oceanbluecorp.com/status",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/status" },
+};
+
+export default function StatusPage() {
+  return <StatusContent />;
+}

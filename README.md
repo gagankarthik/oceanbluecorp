@@ -1,376 +1,309 @@
-# Ocean Blue Corporation – Enterprise Website
+# Ocean Blue Corporation — Enterprise Website
 
-Official corporate website for Ocean Blue Corporation (OceanBlueCorp).
+Production website and internal admin platform for Ocean Blue Corporation, built with **Next.js 16**, **React 19**, **TypeScript**, **Tailwind CSS 4**, and **AWS** (Cognito · DynamoDB · S3 · SES · Amplify).
 
-This project represents the enterprise-grade, scalable, responsive, and production-ready implementation of the Ocean Blue corporate web platform.
-
----
-
-## 📌 Project Overview
-
-The Ocean Blue corporate website is designed to:
-
-- Showcase enterprise IT services (ERP, Cloud, AI, Salesforce, Staffing, Training)
-- Present company profile and global presence
-- Capture leads through contact forms
-- Provide SEO-optimized content
-- Deliver fully responsive experience across devices
-- Maintain high performance, accessibility, and security standards
-
-This project follows **enterprise-grade architecture**, DevOps practices, and modern UI/UX standards.
+Live: [oceanbluecorp.com](https://oceanbluecorp.com) · Status: [oceanbluecorp.com/status](https://oceanbluecorp.com/status)
 
 ---
 
-# 🏗 Enterprise Architecture
+## Tech Stack
 
-## 1️⃣ High-Level Architecture
-
-Frontend → CDN → Web Server / App Server → API Layer → Database  
-                                  ↘ External Services (Email, CRM, Analytics)
-
-### Layers:
-
-- **Presentation Layer** – Responsive UI (React / Next.js / Vue / Angular)
-- **Application Layer** – API services (Node.js / .NET / Java)
-- **Data Layer** – SQL/NoSQL database
-- **Infrastructure Layer** – Cloud deployment (AWS / Azure / GCP)
-- **Security Layer** – SSL, WAF, Authentication, Role-based access
-
----
-
-# 🛠 Technology Stack (Recommended Enterprise Stack)
-
-## Frontend
-- React (Next.js preferred for SEO)
-- TypeScript
-- TailwindCSS / Material UI
-- Axios (API calls)
-
-## Backend
-- Node.js (Express or NestJS)  
-  OR  
-- .NET Core Web API
-
-## Database
-- PostgreSQL (Recommended)
-- MongoDB (Optional for CMS/blog)
-
-## DevOps
-- Docker
-- GitHub Actions / Azure DevOps
-- NGINX
-- Cloud Hosting (AWS / Azure / GCP)
-
-## Security
-- HTTPS (SSL via Let's Encrypt or Cloud Provider)
-- JWT Authentication
-- Rate limiting
-- Input validation
-- OWASP best practices
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, Tailwind CSS 4, shadcn/ui (new-york), Radix UI |
+| Language | TypeScript |
+| Auth | AWS Cognito (OIDC via `oidc-client-ts`) |
+| Database | AWS DynamoDB (10 tables, us-east-2) |
+| File Storage | AWS S3 |
+| Email | AWS SES (SMTP via Nodemailer) |
+| Deployment | AWS Amplify |
+| Animation | Framer Motion, Motion, GSAP |
+| Icons | Lucide React, Tabler Icons |
 
 ---
 
-# 🚀 Enterprise-Level Setup Guide
+## Project Structure
 
----
-
-## 1️⃣ Clone Repository
-
-```bash
-git clone https://github.com/your-org/oceanblue-website.git
-cd oceanblue-website
+```
+src/
+├── app/                        # Next.js App Router
+│   ├── (public pages)
+│   │   ├── page.tsx            # Home
+│   │   ├── about/
+│   │   ├── services/
+│   │   ├── careers/
+│   │   ├── careers/search/
+│   │   ├── contact/
+│   │   ├── products/
+│   │   ├── resources/
+│   │   │   ├── blog/
+│   │   │   ├── case-studies/
+│   │   │   └── ebook/
+│   │   ├── privacy/
+│   │   ├── terms/
+│   │   ├── cookies/
+│   │   ├── status/             # Public AWS service status page
+│   │   └── dashboard/          # Authenticated user dashboard
+│   ├── admin/                  # Internal admin panel (role-gated)
+│   │   ├── page.tsx            # Dashboard with stats & charts
+│   │   ├── jobs/               # Job postings CRUD
+│   │   ├── applications/       # Applicant pipeline (ATS)
+│   │   ├── bench/              # Talent bench
+│   │   ├── resumes/            # Resume bank
+│   │   ├── candidates/         # Candidate profiles
+│   │   ├── clients/            # Client accounts
+│   │   ├── vendors/            # Vendor management
+│   │   ├── contacts/           # Site contact submissions
+│   │   ├── users/              # User management
+│   │   ├── roles/              # Role management
+│   │   ├── content/            # CMS content editor
+│   │   ├── settings/           # Platform settings
+│   │   └── docs/               # Admin documentation
+│   ├── api/                    # API routes (Next.js Route Handlers)
+│   │   ├── jobs/
+│   │   ├── applications/
+│   │   ├── users/
+│   │   ├── resume/
+│   │   ├── resume-bank/
+│   │   ├── clients/
+│   │   ├── vendors/
+│   │   ├── contacts/
+│   │   ├── notifications/
+│   │   ├── content/
+│   │   ├── status/             # AWS health check (fetches status.aws.amazon.com)
+│   │   └── admin/
+│   │       ├── stats/
+│   │       └── search/
+│   └── auth/                   # Cognito OIDC pages
+│       ├── signin/
+│       ├── signup/
+│       ├── callback/
+│       └── signout/
+├── components/
+│   ├── ui/                     # shadcn/ui component library
+│   ├── admin/                  # Admin-specific components
+│   ├── dashboard/              # User dashboard components
+│   ├── providers/              # Context providers
+│   ├── Footer.tsx
+│   └── Navbar.tsx
+├── lib/
+│   ├── auth/                   # Cognito config, AuthContext, ProtectedRoute
+│   └── aws/
+│       ├── config.ts           # AWS credentials + table/bucket config
+│       ├── dynamodb.ts         # DynamoDB CRUD operations
+│       ├── s3.ts               # S3 file upload / presigned URLs
+│       └── ses.ts              # SES SMTP transactional email
+└── hooks/                      # Custom React hooks
 ```
 
 ---
 
-## 2️⃣ Install Dependencies
+## AWS Services
 
-### Frontend
+### Region: `us-east-2` (US East — Ohio)
+
+| Service | Purpose |
+|---|---|
+| **Cognito** | User authentication, OIDC flow, role-based access via groups |
+| **DynamoDB** | Primary datastore — 10 tables (see below) |
+| **S3** | Resume / document file storage with presigned URLs |
+| **SES (SMTP)** | Transactional email — application confirmations, recruiter alerts |
+| **Amplify** | CI/CD deployment pipeline and hosting |
+
+### DynamoDB Tables
+
+| Table | Partition Key | GSI(s) | Purpose |
+|---|---|---|---|
+| `oceanblue-jobs` | `id` | `status-index` | Job postings |
+| `oceanblue-applications` | `id` | `userId-index`, `jobId-index` | Job applications / ATS |
+| `oceanblue-candidates` | `id` | `email-index`, `userId-index` | Candidate profiles |
+| `oceanblue-resumes` | `id` | `userId-index` | Resume bank |
+| `oceanblue-contacts` | `id` | — | Site contact form submissions |
+| `oceanblue-notifications` | `id` | — | In-app admin notifications |
+| `oceanblue-clients` | `id` | — | Client company accounts |
+| `oceanblue-vendors` | `id` | — | Vendor / supplier records |
+| `oceanblue-counters` | `id` | — | Sequential ID counters (APP-YYYY-XXXX, OB-YYYY-XXXX) |
+| `oceanblue-content` | `id` | — | CMS content (homepage, services, etc.) |
+
+---
+
+## Authentication & Roles
+
+Auth uses **AWS Cognito OIDC** via `oidc-client-ts`. Tokens are stored in browser `localStorage`. Cognito group membership maps to roles:
+
+| Cognito Group | Role | Access |
+|---|---|---|
+| `admin` | ADMIN | Full platform — all features, user management, content, settings |
+| `hr` | HR | Jobs, applications, candidates, clients, vendors, contacts |
+| `recruiter` | RECRUITER | Jobs, applications, candidates, talent bench |
+| `sales` | SALES | Same as Recruiter + clients/vendors read-only |
+| _(none)_ | USER | Career portal — apply for jobs, upload resume, view own applications |
+
+---
+
+## Local Development
 
 ```bash
-cd frontend
+# 1. Install dependencies
 npm install
-```
 
-### Backend
+# 2. Copy environment variables
+cp .env.example .env.local
+# Fill in all values — see Environment Variables section below
 
-```bash
-cd backend
-npm install
-```
-
----
-
-## 3️⃣ Environment Configuration
-
-Create `.env` files.
-
-### Example: backend/.env
-
-```
-PORT=5000
-DATABASE_URL=postgresql://username:password@localhost:5432/oceanblue
-JWT_SECRET=your_super_secure_secret
-EMAIL_SERVICE_API_KEY=your_email_provider_key
-```
-
----
-
-## 4️⃣ Database Setup
-
-```bash
-npx prisma migrate dev
-```
-
-OR manually create schema:
-
-- Users
-- Contact Inquiries
-- Blog Posts
-- Job Listings
-- Admin Roles
-
----
-
-## 5️⃣ Run Locally
-
-### Backend
-```bash
+# 3. Start dev server
 npm run dev
+# → http://localhost:3000
+
+# 4. Production build check
+npm run build
 ```
 
-### Frontend
+---
+
+## Environment Variables
+
+Create `.env.local` from `.env.example`:
+
+```env
+# AWS Credentials (server-side only — never exposed to browser)
+NEXT_AWS_ACCESS_KEY_ID=
+NEXT_AWS_SECRET_ACCESS_KEY=
+
+# AWS Region
+NEXT_PUBLIC_AWS_REGION=us-east-2
+
+# Cognito
+NEXT_PUBLIC_COGNITO_USER_POOL_ID=
+NEXT_PUBLIC_COGNITO_CLIENT_ID=
+NEXT_PUBLIC_COGNITO_DOMAIN=
+NEXT_PUBLIC_COGNITO_REDIRECT_URI=http://localhost:3000/auth/callback
+
+# DynamoDB Table Names
+NEXT_AWS_DYNAMODB_TABLE_JOBS=oceanblue-jobs
+NEXT_AWS_DYNAMODB_TABLE_APPLICATIONS=oceanblue-applications
+NEXT_AWS_DYNAMODB_TABLE_CANDIDATES=oceanblue-candidates
+NEXT_AWS_DYNAMODB_TABLE_RESUMES=oceanblue-resumes
+NEXT_AWS_DYNAMODB_TABLE_CONTACTS=oceanblue-contacts
+NEXT_AWS_DYNAMODB_TABLE_NOTIFICATIONS=oceanblue-notifications
+NEXT_AWS_DYNAMODB_TABLE_CLIENTS=oceanblue-clients
+NEXT_AWS_DYNAMODB_TABLE_VENDORS=oceanblue-vendors
+NEXT_AWS_DYNAMODB_TABLE_COUNTERS=oceanblue-counters
+NEXT_AWS_DYNAMODB_TABLE_CONTENT=oceanblue-content
+
+# S3
+NEXT_AWS_S3_BUCKET_NAME=oceanblue-resumes
+
+# SES SMTP
+NEXT_AWS_STMP=
+NEXT_AWS_STMP_PASSWORD=
+NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com
+```
+
+---
+
+## API Routes
+
+### Public (no auth)
+| Method | Route | Description |
+|---|---|---|
+| GET | `/api/jobs` | List active job postings |
+| GET | `/api/jobs/[id]` | Get single job |
+| POST | `/api/applications` | Submit job application |
+| POST | `/api/contacts` | Submit contact form |
+| GET | `/api/status` | AWS service health (from status.aws.amazon.com) |
+
+### Admin (requires session)
+| Method | Route | Description |
+|---|---|---|
+| GET/POST | `/api/admin/stats` | Dashboard statistics |
+| GET | `/api/admin/search` | Global search across entities |
+| GET/POST/PUT/DELETE | `/api/users` | User management |
+| GET/POST/PUT/DELETE | `/api/clients` | Client records |
+| GET/POST/PUT/DELETE | `/api/vendors` | Vendor records |
+| GET/PUT | `/api/notifications` | In-app notifications |
+| GET/POST/PUT/DELETE | `/api/content` | CMS content |
+| GET/POST/PUT/DELETE | `/api/resume-bank` | Resume bank management |
+
+---
+
+## Deployment
+
+Deployed via **AWS Amplify** with configuration in `amplify.yml`.
+
 ```bash
-npm run dev
+# Amplify build command
+npm run build
+
+# Output directory
+.next
 ```
 
-Frontend: `http://localhost:3000`  
-Backend: `http://localhost:5000`
+Environment variables are injected at build time through the Amplify console under **App Settings → Environment Variables**.
+
+### Security Headers (configured in `next.config.ts`)
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
 
 ---
-
-# 📱 Responsive Design Strategy
-
-This project follows **Mobile-First Design** principles.
-
-## Breakpoints
-
-- Mobile: 320px – 640px
-- Tablet: 641px – 1024px
-- Desktop: 1025px+
-
-## Best Practices Implemented
-
-- Flexible grid system
-- Fluid typography
-- Responsive images
-- Lazy loading
-- Accessibility (ARIA labels, semantic HTML)
-- WCAG 2.1 compliance
-
----
-
-# 🔐 Enterprise Security Standards
-
-- HTTPS enforced
-- Helmet.js for HTTP headers
-- CORS configuration
-- Input sanitization
-- Rate limiting
-- SQL injection protection
-- CSRF protection
-- Admin RBAC system
-- Secure password hashing (bcrypt)
-
----
-
-# 📊 Performance Optimization
-
-- Image optimization (WebP)
-- CDN integration
-- Code splitting
-- Server-side rendering (Next.js)
-- Lazy loading components
-- GZIP / Brotli compression
-- Lighthouse score target: 90+
-
----
-
-# 🧩 Features
 
 ## Public Pages
-- Home
-- About Us
-- Services
-  - ERP
-  - Cloud
-  - Data & AI
-  - Salesforce
-  - Staffing
-  - Training
-- Blog
-- Case Studies
-- Careers
-- Contact
+
+| Route | Description |
+|---|---|
+| `/` | Homepage |
+| `/about` | Company overview |
+| `/services` | IT services (ERP, Cloud, AI, Salesforce, Staffing, Training) |
+| `/products` | Products showcase |
+| `/careers` | Careers landing page |
+| `/careers/search` | Live job listings |
+| `/careers/search/[id]` | Individual job detail + apply |
+| `/resources/blog` | Blog articles |
+| `/resources/case-studies` | Case studies |
+| `/resources/ebook` | eBooks & guides |
+| `/contact` | Contact form |
+| `/status` | Live AWS service status monitor |
+| `/privacy` | Privacy policy |
+| `/terms` | Terms of service |
+| `/cookies` | Cookie policy |
+
+---
 
 ## Admin Panel
-- Manage blog posts
-- Manage job listings
-- View contact submissions
-- Content management
-- Role-based access
+
+| Route | Description | Min. Role |
+|---|---|---|
+| `/admin` | Dashboard (stats, charts) | All |
+| `/admin/jobs` | Job postings list + create/edit | All |
+| `/admin/jobs/[id]` | Job detail — info + applicants tab | All |
+| `/admin/applications` | Applications pipeline (ATS) | All |
+| `/admin/applications/new` | Manually add an applicant | All |
+| `/admin/applications/[id]` | Applicant profile + status history | All |
+| `/admin/bench` | Talent bench (saved candidates) | All |
+| `/admin/resumes` | Resume bank | All |
+| `/admin/clients` | Client accounts | HR+ |
+| `/admin/vendors` | Vendor management | HR+ |
+| `/admin/contacts` | Site contact submissions | HR+ |
+| `/admin/users` | User management | Admin |
+| `/admin/roles` | Role management | Admin |
+| `/admin/content` | CMS content editor | Admin |
+| `/admin/settings` | Platform settings | Admin |
+| `/admin/docs` | Admin documentation | All |
 
 ---
 
-# 🌍 SEO & Marketing Setup
+## License
 
-- Meta tags per page
-- OpenGraph tags
-- XML sitemap
-- robots.txt
-- Schema.org structured data
-- Google Analytics integration
-- CRM integration (HubSpot / Salesforce)
+Proprietary — Ocean Blue Corporation. All Rights Reserved.
 
 ---
 
-# 🐳 Docker Setup (Production)
+## Support
 
-```bash
-docker build -t oceanblue-app .
-docker run -p 3000:3000 oceanblue-app
-```
-
-Use docker-compose for multi-service setup.
-
----
-
-# ☁️ Cloud Deployment (Example: AWS)
-
-1. Create EC2 instance
-2. Install Docker
-3. Configure NGINX reverse proxy
-4. Install SSL via Certbot
-5. Setup CI/CD pipeline
-6. Configure auto-scaling group
-7. Attach CloudFront CDN
-
----
-
-# 🔄 CI/CD Pipeline
-
-## Workflow
-
-1. Push to main branch
-2. Run tests
-3. Build Docker image
-4. Run security scans
-5. Deploy to staging
-6. Manual approval
-7. Deploy to production
-
----
-
-# 🧪 Testing Strategy
-
-- Unit Tests (Jest)
-- Integration Tests
-- API Tests (Postman/Newman)
-- E2E Testing (Cypress)
-- Lighthouse audits
-- Security scanning
-
----
-
-# 📂 Project Structure
-
-```
-oceanblue-website/
-│
-├── frontend/
-│   ├── components/
-│   ├── pages/
-│   ├── layouts/
-│   ├── hooks/
-│   └── styles/
-│
-├── backend/
-│   ├── controllers/
-│   ├── routes/
-│   ├── services/
-│   ├── models/
-│   └── middleware/
-│
-├── docker/
-├── docs/
-└── README.md
-```
-
----
-
-# 📈 Enterprise Scalability Considerations
-
-- Microservices-ready architecture
-- Horizontal scaling enabled
-- Load balancer support
-- Database replication
-- Redis caching
-- Queue system (BullMQ / RabbitMQ)
-
----
-
-# 🛡 Compliance & Governance
-
-- GDPR ready
-- Data retention policy
-- Audit logging
-- Secure backups
-- Role-based permissions
-
----
-
-# 🤝 Contribution Guidelines
-
-1. Create feature branch
-2. Follow ESLint + Prettier rules
-3. Write unit tests
-4. Submit PR
-5. Code review required
-6. Merge after approval
-
----
-
-# 📄 License
-
-Proprietary – Ocean Blue Corporation  
-All Rights Reserved.
-
----
-
-# 📞 Support
-
-For enterprise support:
-
-- IT Team: it@oceanbluecorp.com
-- HR: hr@oceanbluecorp.com
-
----
-
-# 🎯 Production Readiness Checklist
-
-- [ ] SSL enabled
-- [ ] Environment variables secured
-- [ ] Database backups configured
-- [ ] Monitoring enabled (CloudWatch / Datadog)
-- [ ] Error logging (Sentry)
-- [ ] Security headers verified
-- [ ] Lighthouse score > 90
-- [ ] Load testing completed
-
----
-
-## 🚀 Final Note
-
-This project is built with enterprise scalability, maintainability, and security as first-class priorities.
-
-It is production-ready and designed to grow with Ocean Blue Corporation’s global expansion.
+- General: [contact@oceanbluecorp.com](mailto:contact@oceanbluecorp.com)
+- HR: [hr@oceanbluecorp.com](mailto:hr@oceanbluecorp.com)
+- Phone: +1 614-844-6925

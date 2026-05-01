@@ -3,13 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   Mail,
   Phone,
   MapPin,
   Linkedin,
   Youtube,
-  ArrowRight,
   ChevronRight,
   Instagram,
   X,
@@ -46,6 +46,44 @@ const socialLinks = [
   { name: "YouTube", href: "https://www.youtube.com/@OceanBlueSolutions", icon: Youtube, color: "hover:bg-[#FF0000]" },
   { name: "Instagram", href: "https://www.instagram.com/oceanbluesolutions", icon: Instagram, color: "hover:bg-gradient-to-br hover:from-[#E4405F] hover:to-[#F56040]" },
 ];
+
+type OverallStatus = "operational" | "degraded" | "outage" | "maintenance" | "unknown";
+
+const STATUS_STYLE: Record<OverallStatus, { dot: string; text: string; label: string }> = {
+  operational: { dot: "bg-emerald-500", text: "text-emerald-700", label: "All Systems Operational" },
+  maintenance:  { dot: "bg-blue-500",    text: "text-blue-700",    label: "Scheduled Maintenance" },
+  degraded:     { dot: "bg-amber-500",   text: "text-amber-700",   label: "Partial Degradation" },
+  outage:       { dot: "bg-rose-500",    text: "text-rose-700",    label: "Service Disruption" },
+  unknown:      { dot: "bg-gray-400",    text: "text-gray-500",    label: "Status Unknown" },
+};
+
+function FooterStatus() {
+  const [status, setStatus] = useState<OverallStatus>("unknown");
+
+  useEffect(() => {
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((d) => { if (d?.overall) setStatus(d.overall as OverallStatus); })
+      .catch(() => {});
+  }, []);
+
+  const cfg = STATUS_STYLE[status];
+
+  return (
+    <Link
+      href="/status"
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all group"
+    >
+      <span className="relative flex h-2 w-2">
+        {(status === "operational") && (
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${cfg.dot} opacity-50`} />
+        )}
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${cfg.dot}`} />
+      </span>
+      <span className={`text-xs font-medium ${cfg.text}`}>{cfg.label}</span>
+    </Link>
+  );
+}
 
 export default function Footer() {
 
@@ -190,11 +228,12 @@ export default function Footer() {
     
       {/* Bottom Bar */}
       <div className="border-t border-gray-200 bg-gray-50/80">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-gray-400 text-xs">
               &copy; {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
             </p>
+            <FooterStatus />
             <div className="flex items-center gap-2 text-gray-400 text-xs">
               <span>Built with</span>
               <Heart className="w-3 h-3 text-red-400 fill-red-400" />
