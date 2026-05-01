@@ -17,17 +17,17 @@ import {
   Search,
   Home,
   UserCog,
-  HelpCircle,
   PanelLeftClose,
   PanelLeft,
   MessageSquare,
   Loader2,
   UsersRound,
   Building,
-  UserStar,
   Boxes,
   Shield,
   FolderOpen,
+  BookOpen,
+  Activity,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -45,20 +45,57 @@ interface Notification {
   createdAt: string;
 }
 
-const navigation = [
-  { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Users",        href: "/admin/users",        icon: UserCog,         roles: [UserRole.ADMIN] },
-  { name: "Roles",        href: "/admin/roles",        icon: Shield,          roles: [UserRole.ADMIN] },
-  { name: "Content",      href: "/admin/content",      icon: FileText,        roles: [UserRole.ADMIN] },
-  { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,       roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Applications", href: "/admin/applications", icon: Users,           roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,           roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Resumes",      href: "/admin/resumes",      icon: FolderOpen,      roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-  { name: "Contacts",     href: "/admin/contacts",     icon: MessageSquare,   roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Clients",      href: "/admin/clients",      icon: Building,        roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Vendors",      href: "/admin/vendors",      icon: UsersRound,      roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Settings",     href: "/admin/settings",     icon: Settings,        roles: [UserRole.ADMIN] },
+type NavItem = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: UserRole[];
+};
+
+const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
+  {
+    label: null,
+    items: [
+      { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+    ],
+  },
+  {
+    label: "Recruitment",
+    items: [
+      { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+      { name: "Applications", href: "/admin/applications", icon: Users,      roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+      { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,      roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+      { name: "Resumes",      href: "/admin/resumes",      icon: FolderOpen, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+    ],
+  },
+  {
+    label: "CRM",
+    items: [
+      { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
+      { name: "Clients",  href: "/admin/clients",  icon: Building,      roles: [UserRole.ADMIN, UserRole.HR] },
+      { name: "Vendors",  href: "/admin/vendors",  icon: UsersRound,    roles: [UserRole.ADMIN, UserRole.HR] },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { name: "Users",    href: "/admin/users",    icon: UserCog,  roles: [UserRole.ADMIN] },
+      { name: "Roles",    href: "/admin/roles",    icon: Shield,   roles: [UserRole.ADMIN] },
+      { name: "Content",  href: "/admin/content",  icon: FileText, roles: [UserRole.ADMIN] },
+      { name: "Settings", href: "/admin/settings", icon: Settings, roles: [UserRole.ADMIN] },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { name: "Docs",   href: "/admin/docs",   icon: BookOpen,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+      { name: "Status", href: "/status",        icon: Activity,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
+    ],
+  },
 ];
+
+// Flat list still needed for page-title lookup
+const navigation = NAV_GROUPS.flatMap((g) => g.items);
 
 const notificationIcons = {
   job_posted: Briefcase,
@@ -195,9 +232,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     localStorage.setItem("adminSidebarCollapsed", JSON.stringify(newState));
   };
 
-  // Filter navigation based on user role
-  const filteredNavigation = navigation.filter((item) => hasAnyRole(item.roles));
-
   // Get user initials
   const getUserInitials = () => {
     if (!user?.name) return "U";
@@ -274,56 +308,66 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Navigation */}
-          <nav className={`flex-1 py-3 overflow-y-auto ${sidebarCollapsed ? "px-2" : "px-2"}`}>
-            <div className="space-y-0.5">
-              {filteredNavigation.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    title={sidebarCollapsed ? item.name : undefined}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                      sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
-                    } ${
-                      isActive
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-4 h-4"}`} />
-                    {!sidebarCollapsed && <span>{item.name}</span>}
-                  </Link>
-                );
-              })}
-            </div>
+          <nav className="flex-1 py-2 overflow-y-auto px-2 space-y-1">
+            {NAV_GROUPS.map((group) => {
+              const visibleItems = group.items.filter((item) => hasAnyRole(item.roles));
+              if (visibleItems.length === 0) return null;
+              return (
+                <div key={group.label ?? "top"}>
+                  {/* Group label */}
+                  {group.label && !sidebarCollapsed && (
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-3 pb-1">
+                      {group.label}
+                    </p>
+                  )}
+                  {group.label && sidebarCollapsed && (
+                    <div className="my-1 border-t border-gray-100 mx-1" />
+                  )}
+                  <div className="space-y-px">
+                    {visibleItems.map((item) => {
+                      const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          title={sidebarCollapsed ? item.name : undefined}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                            sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
+                          } ${
+                            isActive
+                              ? "bg-blue-600 text-white shadow-sm"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                          }`}
+                        >
+                          <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-[15px] h-[15px]"}`} />
+                          {!sidebarCollapsed && <span>{item.name}</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
 
-            {/* Divider */}
-            <div className={`my-3 border-t border-gray-100 ${sidebarCollapsed ? "mx-1" : "mx-2"}`} />
-
-            {/* Quick Links */}
-            <div className="space-y-0.5">
+            {/* Website link */}
+            <div>
+              {!sidebarCollapsed && (
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-3 pb-1">
+                  External
+                </p>
+              )}
+              {sidebarCollapsed && <div className="my-1 border-t border-gray-100 mx-1" />}
               <Link
                 href="/"
                 target="_blank"
                 title={sidebarCollapsed ? "View Website" : undefined}
                 className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all ${
-                  sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
+                  sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
                 }`}
               >
-                <Home className={sidebarCollapsed ? "w-[18px] h-[18px]" : "w-4 h-4"} />
+                <Home className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-[15px] h-[15px]"}`} />
                 {!sidebarCollapsed && <span>View Website</span>}
-              </Link>
-              <Link
-                href="/admin/help"
-                title={sidebarCollapsed ? "Help & Support" : undefined}
-                className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all ${
-                  sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
-                }`}
-              >
-                <HelpCircle className={sidebarCollapsed ? "w-[18px] h-[18px]" : "w-4 h-4"} />
-                {!sidebarCollapsed && <span>Help</span>}
               </Link>
             </div>
           </nav>
