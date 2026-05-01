@@ -433,7 +433,7 @@ export default function ContactPage() {
 
             {/* Side Content */}
             <div className="space-y-8">
-              <div>
+              <div className="pt-28">
                 <h2 className="heading-md mb-4">Why Partner With Us?</h2>
                 <p className="text-muted-foreground mb-6">
                   Join the enterprises that trust Ocean Blue Corporation for their
