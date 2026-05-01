@@ -308,7 +308,7 @@ export default function ServicesPage() {
               <Sparkles className="w-4 h-4 text-cyan-400" />
               <span className="text-sm font-medium text-white/90">Technology. Talent. Transformation.</span>
             </motion.div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight">
               IT Services and Talent Solutions Built for{" "}
               <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent font-medium">
                 Modern Organizations

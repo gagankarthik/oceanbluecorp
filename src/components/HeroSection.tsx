@@ -171,7 +171,7 @@ export default function HeroSection() {
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-5xl font-light text-white mb-4 font-[family-name:var(--font-space-grotesk)] leading-[1.15]"
+                className="text-3xl sm:text-4xl md:text-5xl font-light text-white mb-4 font-[family-name:var(--font-space-grotesk)] leading-[1.15]"
               >
                 Technology.
                 <br />
@@ -231,7 +231,7 @@ export default function HeroSection() {
                   Technology Partners
                 </p>
 
-                <div className="flex items-center justify-center lg:justify-start gap-3">
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3">
                   {partners.map((partner, index) => (
                     <motion.div
                       key={partner.name}
@@ -260,7 +260,7 @@ export default function HeroSection() {
             </div>
 
             {/* Right side - 3D Globe */}
-            <div className="relative h-[480px] lg:h-[620px] w-full">
+            <div className="relative h-[260px] sm:h-[380px] md:h-[440px] lg:h-[620px] w-full">
               <div className="absolute inset-0 hover:cursor-grab">
                 <World globeConfig={globeConfig} data={sampleData} />
               </div>

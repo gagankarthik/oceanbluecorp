@@ -294,47 +294,96 @@ export default function JobsPage() {
 
       <p className="text-xs text-gray-400 -mt-1 px-0.5">{filteredJobs.length} of {jobs.length} jobs</p>
 
-      {/* ── Mobile cards ── */}
-      <div className="grid gap-3 lg:hidden">
+      {/* ── Mobile / tablet cards ── */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
         {filteredJobs.length > 0 ? filteredJobs.map(job => {
           const jv = job as Job & { vendorName?: string };
           return (
-            <div key={job.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-blue-200 transition-colors">
+            <div key={job.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-blue-200 transition-colors flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 flex-1">
-                  {job.postingId && <span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">{job.postingId}</span>}
-                  <button onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                    className="font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block text-sm mt-1.5 truncate">
+                  {job.postingId && (
+                    <span className="font-mono text-[11px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">
+                      {job.postingId}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                    className="font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left block text-sm mt-1.5 line-clamp-2 leading-snug"
+                  >
                     {job.title}
                   </button>
-                  <p className="text-xs text-gray-400 capitalize mt-0.5">{job.type}</p>
+                  <p className="text-xs text-gray-400 capitalize mt-0.5">{job.department} · {job.type}</p>
                 </div>
                 <StatusBadge status={job.status} />
               </div>
-              <div className="space-y-1 text-xs text-gray-500 mb-4">
-                {job.clientName && <div className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-gray-400" />{job.clientName}</div>}
-                {jv.vendorName  && <div className="flex items-center gap-1.5"><Truck className="h-3.5 w-3.5 text-gray-400" />{jv.vendorName}</div>}
-                <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-gray-400" />{job.location}{job.state ? `, ${job.state}` : ""}</div>
-                {job.payRate    && <div className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5 text-gray-400" />${job.payRate}/hr pay · ${job.clientBillRate}/hr bill</div>}
+
+              <div className="space-y-1.5 text-xs text-gray-500 mb-4 flex-1">
+                {job.clientName && (
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{job.clientName}</span>
+                  </div>
+                )}
+                {jv.vendorName && (
+                  <div className="flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{jv.vendorName}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                  <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
+                </div>
+                {job.payRate && (
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <span>${job.payRate}/hr pay{job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}</span>
+                  </div>
+                )}
+                {job.submissionDueDate && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <span>Due {new Date(job.submissionDueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                  </div>
+                )}
               </div>
+
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <span className="text-xs text-gray-400 flex items-center gap-1"><Users className="w-3 h-3" />{job.applicationsCount || 0} applicants</span>
+                <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <Users className="w-3 h-3" />{job.applicationsCount || 0} applicants
+                </span>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Eye className="h-4 w-4" /></button>
-                  {canEdit && <>
-                    <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"><Edit3 className="h-4 w-4" /></button>
-                    <button onClick={() => setShowDeleteConfirm(job.id)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="h-4 w-4" /></button>
-                  </>}
+                  <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  {canEdit && (
+                    <>
+                      <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50">
+                        {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                      <button onClick={() => setShowDeleteConfirm(job.id)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           );
         }) : (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div className="col-span-full bg-white border border-gray-200 rounded-xl p-12 text-center">
             <Briefcase className="h-12 w-12 text-gray-200 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-gray-900 mb-1">No jobs found</h3>
             <p className="text-sm text-gray-400 mb-4">{jobs.length === 0 ? "Create your first job posting" : "No jobs match your filters"}</p>
-            {jobs.length === 0 && canEdit && <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Post a Job</button>}
+            {jobs.length === 0 && canEdit && (
+              <button onClick={() => router.push("/admin/jobs/new")} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                Post a Job
+              </button>
+            )}
           </div>
         )}
       </div>

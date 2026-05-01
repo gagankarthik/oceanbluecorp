@@ -199,7 +199,7 @@ export default function TestimonialsShowcase() {
             {/* Navigation Buttons */}
             <button
               onClick={prevSlide}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 bg-white border-2 border-gray-300 rounded-full p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 sm:-ml-4 bg-white border-2 border-gray-300 rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
               aria-label="Previous testimonial"
               onMouseEnter={() => setIsAutoScrolling(false)}
               onMouseLeave={() => setIsAutoScrolling(true)}
@@ -208,7 +208,7 @@ export default function TestimonialsShowcase() {
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 bg-white border-2 border-gray-300 rounded-full p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
+              className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 sm:-mr-4 bg-white border-2 border-gray-300 rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
               aria-label="Next testimonial"
               onMouseEnter={() => setIsAutoScrolling(false)}
               onMouseLeave={() => setIsAutoScrolling(true)}

@@ -154,7 +154,7 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#1e3a8a] overflow-hidden">
+      <section className="relative pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#1e3a8a] overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
@@ -184,20 +184,20 @@ export default function AboutPage() {
           />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-18">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="max-w-4xl"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight">
               We Build Technology and Teams That{" "}
               <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent font-medium">
                 Move Organizations Forward
               </span>
             </h1>
-            <p className="text-xl text-white/60 leading-relaxed">
+            <p className="text-base sm:text-xl text-white/60 leading-relaxed">
               Ocean Blue is a trusted partner for IT staffing, enterprise solutions, and digital transformation — delivering clarity, expertise, and measurable results.
             </p>
           </motion.div>

@@ -82,7 +82,7 @@ export default function TermsPage() {
           ].join(", "),
         }}
       >
-        <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
+        <div className="mx-auto max-w-5xl px-6 pt-24 pb-12 md:pt-28 lg:px-8">
           <Link
             href="/"
             className="group mb-8 inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-800"
@@ -97,7 +97,7 @@ export default function TermsPage() {
           </div>
 
           <h1
-            className="mt-3 text-[2.6rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 md:text-5xl"
+            className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 sm:text-[2.6rem] md:text-5xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Terms of Service

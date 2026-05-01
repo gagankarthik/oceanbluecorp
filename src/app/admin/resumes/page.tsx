@@ -499,7 +499,7 @@ export default function ResumeBankPage() {
           <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-slate-200">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-rose-600" />
-              <span className="text-sm font-semibold text-slate-800 truncate max-w-[400px]">{previewName}</span>
+              <span className="text-sm font-semibold text-slate-800 truncate max-w-[40vw] sm:max-w-[400px]">{previewName}</span>
             </div>
             <div className="flex items-center gap-2">
               <a href={previewUrl} download={previewName || "resume"}
@@ -588,54 +588,58 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-2.5 bg-slate-50 border-b border-slate-200">
-        {["File", "Candidate", "Uploaded by", "Date / Size", ""].map((h, i) => (
-          <div key={i} className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{h}</div>
-        ))}
-      </div>
-      <div className="divide-y divide-slate-100">
-        {resumes.map(r => (
-          <div key={r.id}
-            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center hover:bg-blue-50/20 transition-colors group">
-            <div className="flex items-center gap-3 min-w-0">
-              <FileTypeIcon type={r.fileType} size="sm" />
-              <p className="text-sm font-semibold text-slate-800 truncate">{r.fileName}</p>
-            </div>
-
-            <div className="min-w-0">
-              {r.candidateName
-                ? <span className="text-sm text-blue-700 font-semibold truncate block">{r.candidateName}</span>
-                : <span className="text-xs text-slate-300 italic">—</span>}
-            </div>
-
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                {r.uploaderEmail.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs text-slate-600 truncate">{r.uploaderEmail}</span>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-700 font-medium">{fmtDate(r.uploadedAt)}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">{fmtSize(r.fileSize)}</p>
-            </div>
-
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => onPreview(r)}
-                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Preview">
-                <Eye className="w-4 h-4" />
-              </button>
-              <button onClick={() => onDownload(r)}
-                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download">
-                <Download className="w-4 h-4" />
-              </button>
-              <button onClick={() => onDelete(r.id)}
-                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-[540px]">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-2.5 bg-slate-50 border-b border-slate-200">
+            {["File", "Candidate", "Uploaded by", "Date / Size", ""].map((h, i) => (
+              <div key={i} className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{h}</div>
+            ))}
           </div>
-        ))}
+          <div className="divide-y divide-slate-100">
+            {resumes.map(r => (
+              <div key={r.id}
+                className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center hover:bg-blue-50/20 transition-colors group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileTypeIcon type={r.fileType} size="sm" />
+                  <p className="text-sm font-semibold text-slate-800 truncate">{r.fileName}</p>
+                </div>
+
+                <div className="min-w-0">
+                  {r.candidateName
+                    ? <span className="text-sm text-blue-700 font-semibold truncate block">{r.candidateName}</span>
+                    : <span className="text-xs text-slate-300 italic">—</span>}
+                </div>
+
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                    {r.uploaderEmail.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs text-slate-600 truncate">{r.uploaderEmail}</span>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-700 font-medium">{fmtDate(r.uploadedAt)}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{fmtSize(r.fileSize)}</p>
+                </div>
+
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => onPreview(r)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Preview">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => onDownload(r)}
+                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download">
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => onDelete(r.id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

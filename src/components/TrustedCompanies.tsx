@@ -44,7 +44,7 @@ const partners: Partner[] = [
 
 function LogoCard({ partner }: { partner: Partner }) {
   return (
-    <div className="flex-shrink-0 px-8 group">
+    <div className="flex-shrink-0 px-3 sm:px-6 md:px-8 group">
       <div className="relative h-16 w-32 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
         {partner.logo.startsWith("http") ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -88,7 +88,7 @@ export default function TrustedCompanies() {
         <div className="relative">
           <div className="flex overflow-hidden">
             <motion.div
-              className="flex gap-16 items-center"
+              className="flex gap-8 sm:gap-12 md:gap-16 items-center"
               animate={{
                 x: [0, -1920],
               }}

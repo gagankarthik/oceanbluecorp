@@ -92,7 +92,7 @@ export default function CtaSection() {
           </div>
 
           {/* Subtext */}
-          <p className="mx-auto mb-11 max-w-lg text-lg leading-relaxed text-white/55">
+          <p className="mx-auto mb-11 max-w-lg text-base sm:text-lg leading-relaxed text-white/55">
             Whether you need elite IT talent, cloud infrastructure, or a complete
             digital transformation — we deliver at every scale.
           </p>
@@ -101,7 +101,7 @@ export default function CtaSection() {
           <div className="mb-11 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-9 py-4 text-sm font-bold transition-all hover:bg-white/92"
+              className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 sm:px-9 sm:py-4 text-sm font-bold transition-all hover:bg-white/92"
               style={{
                 color: "#4338ca",
                 boxShadow: "0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
@@ -113,7 +113,7 @@ export default function CtaSection() {
             </Link>
             <Link
               href="/careers"
-              className="inline-flex items-center gap-2 rounded-full border px-9 py-4 text-sm font-semibold backdrop-blur-sm transition-all hover:border-white/45 hover:bg-white/8 hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full border px-6 py-3.5 sm:px-9 sm:py-4 text-sm font-semibold backdrop-blur-sm transition-all hover:border-white/45 hover:bg-white/8 hover:text-white"
               style={{
                 borderColor: "rgba(255,255,255,0.22)",
                 color: "rgba(255,255,255,0.75)",

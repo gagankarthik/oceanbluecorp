@@ -62,7 +62,7 @@ function UL({ items }: { items: (string | React.ReactNode)[] }) {
 }
 
 function CookieCard({ icon: Icon, title, color, children }: {
-  icon: React.ElementType; title: string; color: string; children: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>; title: string; color: string; children: React.ReactNode;
 }) {
   return (
     <div className={`rounded-xl border p-5 ${color}`}>
@@ -103,7 +103,7 @@ export default function CookiesPage() {
     >
       {/* Hero */}
       <div className="border-b border-gray-100 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 pt-24 pb-14 md:pt-28 lg:px-8 lg:pb-20">
           <Link
             href="/"
             className="group mb-8 inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-900"
@@ -117,7 +117,7 @@ export default function CookiesPage() {
             </div>
             <div>
               <h1
-                className="text-4xl font-extrabold tracking-tight text-gray-900 lg:text-5xl"
+                className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.025em" }}
               >
                 Cookie Policy

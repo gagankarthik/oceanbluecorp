@@ -93,7 +93,7 @@ export default function StatsSections() {
               Our Impact
             </div>
             <h2
-              className="text-[2.2rem] font-extrabold leading-[1.06] tracking-tight text-white md:text-5xl"
+              className="text-[1.7rem] font-extrabold leading-[1.06] tracking-tight text-white sm:text-[2.2rem] md:text-5xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
               A track record of{" "}
@@ -110,14 +110,14 @@ export default function StatsSections() {
 
         {/* Stats grid */}
         <div
-          className="grid grid-cols-2 divide-x divide-white/[0.06] lg:grid-cols-4"
-          style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem" }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem" }}
         >
           {stats.map((s) => (
             <div
               key={s.id}
-              className="group px-7 py-10 transition-colors duration-200 hover:bg-white/[0.02] md:px-10 md:py-12"
-              style={{ borderColor: "rgba(255,255,255,0.06)" }}
+              className="group px-5 py-8 transition-colors duration-200 hover:bg-white/[0.02] sm:px-7 sm:py-10 md:px-10 md:py-12"
+              style={{ background: "#080C14" }}
             >
               <Counter value={s.value} suffix={s.suffix} grad={s.grad} />
               <p

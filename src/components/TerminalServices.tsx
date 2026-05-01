@@ -94,7 +94,7 @@ export default function TerminalServices() {
               What We Offer
             </div>
             <h2
-              className="text-[2.4rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 md:text-5xl"
+              className="text-[1.75rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 sm:text-[2.4rem] md:text-5xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Everything your enterprise

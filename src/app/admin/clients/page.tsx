@@ -305,7 +305,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
