@@ -32,6 +32,7 @@ const getEnvConfig = () => {
       vendors: process.env.NEXT_AWS_DYNAMODB_TABLE_VENDORS || "oceanblue-vendors",
       counters: process.env.NEXT_AWS_DYNAMODB_TABLE_COUNTERS || "oceanblue-counters",
       content: process.env.NEXT_AWS_DYNAMODB_TABLE_CONTENT || "oceanblue-content",
+      apiKeys: process.env.NEXT_AWS_DYNAMODB_TABLE_API_KEYS || "oceanblue-api-keys",
     },
   };
 };
@@ -1821,5 +1822,103 @@ export async function upsertContentBlock(
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to save content" };
+  }
+}
+
+// ===========================================
+// API Key Operations
+// ===========================================
+
+export interface ApiKey {
+  id: string;         // PK (UUID)
+  key: string;        // The actual API key string (obk_live_...)
+  name: string;       // Platform / partner name
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  lastUsedAt?: string;
+  createdBy: string;  // Admin user who created the key
+  createdByName?: string;
+}
+
+export async function createApiKey(apiKey: ApiKey): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    await db.client.send(new PutCommand({ TableName: getTables().apiKeys, Item: apiKey }));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create API key" };
+  }
+}
+
+export async function getApiKeyByValue(key: string): Promise<{ success: boolean; data?: ApiKey; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const result = await db.client.send(
+      new ScanCommand({
+        TableName: getTables().apiKeys,
+        FilterExpression: "#k = :key",
+        ExpressionAttributeNames: { "#k": "key" },
+        ExpressionAttributeValues: { ":key": key },
+      })
+    );
+    const item = (result.Items || [])[0] as ApiKey | undefined;
+    return { success: true, data: item };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to validate API key" };
+  }
+}
+
+export async function getAllApiKeys(): Promise<{ success: boolean; data?: ApiKey[]; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const result = await db.client.send(new ScanCommand({ TableName: getTables().apiKeys }));
+    return { success: true, data: (result.Items || []) as ApiKey[] };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to list API keys" };
+  }
+}
+
+export async function updateApiKey(
+  id: string,
+  updates: Partial<Pick<ApiKey, "name" | "description" | "isActive" | "lastUsedAt">>
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const expressions: string[] = ["#updatedAt = :updatedAt"];
+    const names: Record<string, string> = { "#updatedAt": "updatedAt" };
+    const values: Record<string, unknown> = { ":updatedAt": new Date().toISOString() };
+
+    if (updates.name !== undefined) { expressions.push("#name = :name"); names["#name"] = "name"; values[":name"] = updates.name; }
+    if (updates.description !== undefined) { expressions.push("#desc = :desc"); names["#desc"] = "description"; values[":desc"] = updates.description; }
+    if (updates.isActive !== undefined) { expressions.push("#active = :active"); names["#active"] = "isActive"; values[":active"] = updates.isActive; }
+    if (updates.lastUsedAt !== undefined) { expressions.push("#used = :used"); names["#used"] = "lastUsedAt"; values[":used"] = updates.lastUsedAt; }
+
+    await db.client.send(new UpdateCommand({
+      TableName: getTables().apiKeys,
+      Key: { id },
+      UpdateExpression: `SET ${expressions.join(", ")}`,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+    }));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update API key" };
+  }
+}
+
+export async function deleteApiKey(id: string): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    await db.client.send(new DeleteCommand({ TableName: getTables().apiKeys, Key: { id } }));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete API key" };
   }
 }

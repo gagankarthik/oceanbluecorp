@@ -24,7 +24,8 @@ frontend:
         - echo "NEXT_AWS_STMP=$NEXT_AWS_STMP" >> .env.production
         - echo "NEXT_AWS_STMP_PASSWORD=$NEXT_AWS_STMP_PASSWORD" >> .env.production
         - echo "NEXT_AWS_STMP_IAM_USERNAME=$NEXT_AWS_STMP_IAM_USERNAME" >> .env.production
-        
+        - echo "NEXT_AWS_DYNAMODB_TABLE_API_KEYS=$NEXT_AWS_DYNAMODB_TABLE_API_KEYS" >> .env.production
+
         - npm run build
   artifacts:
     baseDirectory: .next

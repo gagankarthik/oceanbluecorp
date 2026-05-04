@@ -922,6 +922,32 @@ export default function AdminDocsPage() {
                 ]}
               />
             </SubSection>
+
+            <SubSection title="Job Feed API (v1 — Partner Platforms)">
+              <InfoCard variant="tip">
+                These are public-facing routes authenticated by API keys (not Cognito). Manage keys at{" "}
+                <strong>/admin/api-keys</strong>. Public docs at <strong>/developers</strong>.
+              </InfoCard>
+              <DataTable
+                headers={["Method", "Route", "Auth", "Description"]}
+                rows={[
+                  [<HttpBadge key="1" method="GET" />, "/api/v1/jobs", "X-API-Key header", "Paginated list of active/open jobs. Query: status, department, type, page, limit"],
+                  [<HttpBadge key="2" method="GET" />, "/api/v1/jobs/[id]", "X-API-Key header", "Single job by UUID — strips all internal fields"],
+                ]}
+              />
+            </SubSection>
+
+            <SubSection title="API Key Management (Admin)">
+              <DataTable
+                headers={["Method", "Route", "Description"]}
+                rows={[
+                  [<HttpBadge key="1" method="GET" />, "/api/admin/api-keys", "List all partner API keys (key value previewed only)"],
+                  [<HttpBadge key="2" method="POST" />, "/api/admin/api-keys", "Generate a new API key — full value returned once only"],
+                  [<HttpBadge key="3" method="PUT" />, "/api/admin/api-keys/[id]", "Enable / disable key or update name/description"],
+                  [<HttpBadge key="4" method="DELETE" />, "/api/admin/api-keys/[id]", "Permanently revoke and delete a key"],
+                ]}
+              />
+            </SubSection>
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════
@@ -962,6 +988,7 @@ export default function AdminDocsPage() {
                   ["oceanblue-vendors", "id", "—", "Vendor partner records"],
                   ["oceanblue-counters", "id", "—", "Auto-increment counters for Posting IDs"],
                   ["oceanblue-content", "id", "—", "CMS content blocks with version history"],
+                  ["oceanblue-api-keys", "id", "—", "Partner API keys for the Job Feed API (v1)"],
                 ]}
               />
             </SubSection>

@@ -28,6 +28,7 @@ import {
   FolderOpen,
   BookOpen,
   Activity,
+  KeyRound,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
@@ -79,10 +80,11 @@ const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
   {
     label: "Administration",
     items: [
-      { name: "Users",    href: "/admin/users",    icon: UserCog,  roles: [UserRole.ADMIN] },
-      { name: "Roles",    href: "/admin/roles",    icon: Shield,   roles: [UserRole.ADMIN] },
-      { name: "Content",  href: "/admin/content",  icon: FileText, roles: [UserRole.ADMIN] },
-      { name: "Settings", href: "/admin/settings", icon: Settings, roles: [UserRole.ADMIN] },
+      { name: "Users",    href: "/admin/users",     icon: UserCog,  roles: [UserRole.ADMIN] },
+      { name: "Roles",    href: "/admin/roles",     icon: Shield,   roles: [UserRole.ADMIN] },
+      { name: "API Keys", href: "/admin/api-keys",  icon: KeyRound, roles: [UserRole.ADMIN] },
+      { name: "Content",  href: "/admin/content",   icon: FileText, roles: [UserRole.ADMIN] },
+      { name: "Settings", href: "/admin/settings",  icon: Settings, roles: [UserRole.ADMIN] },
     ],
   },
   {

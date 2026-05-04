@@ -33,6 +33,12 @@ const footerLinks = {
     { name: "Open Positions", href: "/careers/search" },
     { name: "Contact", href: "/contact" },
   ],
+  developers: [
+    { name: "Job Feed API", href: "/developers" },
+    { name: "API Docs", href: "/developers#endpoints" },
+    { name: "Authentication", href: "/developers#authentication" },
+    { name: "Quickstart", href: "/developers#quickstart" },
+  ],
   legal: [
     { name: "Privacy Policy", href: "/privacy" },
     { name: "Terms of Service", href: "/terms" },
@@ -93,7 +99,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
        
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 lg:gap-10">
           {/* Company Info */}
           <div className="col-span-2 md:col-span-4 lg:col-span-2">
             <Link href="/" className="inline-block mb-6">
@@ -180,6 +186,26 @@ export default function Footer() {
           </div>
 
       
+          {/* Developers */}
+          <div>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
+              Developers
+            </h3>
+            <ul className="space-y-2.5">
+              {footerLinks.developers.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center gap-1.5 group"
+                  >
+                    <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Legal & Social */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
