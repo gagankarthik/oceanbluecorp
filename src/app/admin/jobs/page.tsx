@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
+import { PageLoading } from "@/components/ui/ocean-spinner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -186,14 +187,7 @@ export default function JobsPage() {
 
   // ── Loading / Error states ───────────────────────────────────────────────
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center space-y-3">
-        <Loader2 className="w-8 h-8 text-blue-500 mx-auto animate-spin" />
-        <p className="text-sm text-gray-500">Loading job postings…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <PageLoading label="Loading job postings…" />;
 
   if (error) return (
     <div className="flex items-center justify-center min-h-[60vh]">

@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
+import { PageLoading } from "@/components/ui/ocean-spinner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -496,38 +497,21 @@ export default function TalentBenchPage() {
 
     setResumeUploading(true);
     try {
-      // Step 1: Get presigned upload URL
+      const fd = new FormData();
+      fd.append("file", resumeFile);
+      fd.append("userId", userId);
+
       const response = await fetch("/api/resume/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          fileName: resumeFile.name,
-          fileType: resumeFile.type,
-          fileSize: resumeFile.size,
-        }),
+        body: fd,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to get upload URL");
+        throw new Error(data.error || "Failed to upload resume");
       }
 
-      const { resumeId, uploadUrl, fileKey } = await response.json();
-
-      // Step 2: Upload file to S3
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: resumeFile,
-        headers: {
-          "Content-Type": resumeFile.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file to storage");
-      }
-
+      const { resumeId, fileKey } = await response.json();
       return { resumeId, fileName: resumeFile.name, fileKey };
     } catch (err) {
       console.error("Resume upload error:", err);
@@ -649,16 +633,7 @@ export default function TalentBenchPage() {
     topRated: filteredApplications.filter((a) => (a.rating || 0) >= 4).length,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-blue-600 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500 text-sm">Loading talent bench...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <PageLoading label="Loading talent bench…" />;
 
   if (error) {
     return (

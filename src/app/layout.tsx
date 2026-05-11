@@ -3,6 +3,7 @@ import { Inter, Bricolage_Grotesque, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import CookieConsent from "@/components/CookieConsent";
 import { Suspense } from "react";
 
 const inter = Inter({
@@ -194,12 +195,20 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} font-sans antialiased`}
       >
+        {/* ADA / WCAG 2.1 — skip to main content */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[99999] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
+        >
+          Skip to main content
+        </a>
+
         <Providers>
-      
           <LayoutWrapper>{children}</LayoutWrapper>
-         
         </Providers>
-        
+
+        {/* GDPR / CCPA cookie consent — rendered outside Providers so it always shows */}
+        <CookieConsent />
       </body>
     </html>
   );

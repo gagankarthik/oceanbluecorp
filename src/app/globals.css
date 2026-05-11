@@ -154,6 +154,32 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* ADA / WCAG 2.1 AA — visible focus ring for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove focus ring for mouse users, keep for keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Ensure interactive elements have minimum touch target size (WCAG 2.5.5) */
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+    min-height: 24px;
+  }
+
+  /* Smooth scrollbar hide utility */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Custom Animations */

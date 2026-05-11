@@ -2,73 +2,62 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import {
   generateResumeKey,
-  getResumeUploadUrl,
+  uploadResume,
   createResume,
   validateResumeFile,
 } from "@/lib/aws";
 
+// Accept multipart/form-data — uploads file directly from the server to S3.
+// This avoids S3 CORS restrictions that break browser-to-S3 presigned PUT requests.
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, fileName, fileType, fileSize } = body;
+    const formData = await request.formData();
 
-    // Validate required fields
-    if (!userId || !fileName || !fileType || !fileSize) {
+    const file = formData.get("file") as File | null;
+    const userId = formData.get("userId") as string | null;
+
+    if (!file || !userId) {
       return NextResponse.json(
-        { error: "Missing required fields: userId, fileName, fileType, fileSize" },
+        { error: "Missing required fields: file and userId" },
         { status: 400 }
       );
     }
 
-    // Validate file
-    const validation = validateResumeFile({ type: fileType, size: fileSize });
+    // Validate file type and size
+    const validation = validateResumeFile({ type: file.type, size: file.size });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Generate resume ID and S3 key
     const resumeId = uuidv4();
-    const fileKey = generateResumeKey(userId, fileName);
+    const fileKey = generateResumeKey(userId, file.name);
 
-    // Get presigned upload URL
-    const uploadUrlResult = await getResumeUploadUrl(fileKey, fileType);
-    if (!uploadUrlResult.success) {
-      return NextResponse.json(
-        { error: uploadUrlResult.error },
-        { status: 500 }
-      );
+    // Upload directly from the server — no browser CORS issues
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const uploadResult = await uploadResume(buffer, fileKey, file.type);
+
+    if (!uploadResult.success) {
+      return NextResponse.json({ error: uploadResult.error }, { status: 500 });
     }
 
-    // Create resume record in DynamoDB
-    const resumeRecord = {
+    // Persist metadata in DynamoDB
+    const createResult = await createResume({
       id: resumeId,
       userId,
-      fileName,
+      fileName: file.name,
       fileKey,
-      fileSize,
-      fileType,
+      fileSize: file.size,
+      fileType: file.type,
       uploadedAt: new Date().toISOString(),
-    };
+    });
 
-    const createResult = await createResume(resumeRecord);
     if (!createResult.success) {
-      return NextResponse.json(
-        { error: createResult.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: createResult.error }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      resumeId,
-      uploadUrl: uploadUrlResult.url,
-      fileKey,
-    });
+    return NextResponse.json({ success: true, resumeId, fileKey });
   } catch (error) {
     console.error("Resume upload error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

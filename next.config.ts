@@ -90,6 +90,11 @@ const nextConfig: NextConfig = {
         hostname: "www.gstatic.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+        pathname: "/**",
+      },
     ],
   },
 };

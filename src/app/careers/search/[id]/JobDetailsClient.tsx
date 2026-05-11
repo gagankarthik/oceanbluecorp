@@ -147,15 +147,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
       let resumeId = null;
 
       if (resumeFile) {
+        const fd = new FormData();
+        fd.append("file", resumeFile);
+        fd.append("userId", formData.email);
+
         const uploadResponse = await fetch("/api/resume/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: formData.email,
-            fileName: resumeFile.name,
-            fileType: resumeFile.type,
-            fileSize: resumeFile.size,
-          }),
+          body: fd,
         });
 
         if (!uploadResponse.ok) {
@@ -163,18 +161,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           throw new Error(data.error || "Failed to upload resume");
         }
 
-        const { resumeId: newResumeId, uploadUrl } = await uploadResponse.json();
-
-        const s3Response = await fetch(uploadUrl, {
-          method: "PUT",
-          body: resumeFile,
-          headers: { "Content-Type": resumeFile.type },
-        });
-
-        if (!s3Response.ok) {
-          throw new Error("Failed to upload resume to storage");
-        }
-
+        const { resumeId: newResumeId } = await uploadResponse.json();
         resumeId = newResumeId;
       }
 

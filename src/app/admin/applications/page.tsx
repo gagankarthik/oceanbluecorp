@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { PageLoading } from "@/components/ui/ocean-spinner";
 import { useAdmin } from "@/components/admin/admin-provider";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -249,14 +250,7 @@ export default function ApplicationsPage() {
 
   // ── Loading / error ────────────────────────────────────────────────────────
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center space-y-3">
-        <Loader2 className="w-8 h-8 text-blue-500 mx-auto animate-spin" />
-        <p className="text-sm text-slate-500">Loading applications…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <PageLoading label="Loading applications…" />;
   if (error) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center space-y-4">

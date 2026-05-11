@@ -21,7 +21,13 @@
       "Bash(curl -s http://localhost:3000/api/status)",
       "Bash(pkill -f \"next dev\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('ok:', d.get\\('ok'\\)\\); print\\('overall:', d.get\\('overall'\\)\\); print\\('error:', d.get\\('error','none'\\)\\); print\\('services count:', len\\(d.get\\('services',[]\\)\\)\\)\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(not exist *)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\gagan\\\\Desktop\\\\Projects\\\\oceanbluecorp\\\\src\\\\app\\\\privacy\")",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\gagan\\\\Desktop\\\\Projects\\\\oceanbluecorp\\\\src\\\\app\\\\terms\")",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\gagan\\\\Desktop\\\\Projects\\\\oceanbluecorp\\\\src\\\\app\\\\cookies\")",
+      "Bash(Write-Output \"done\")"
     ]
   }
 }

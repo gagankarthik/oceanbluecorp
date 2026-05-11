@@ -28,7 +28,15 @@ import {
   Cell,
   PieChart,
   Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
 } from "recharts";
+import { OceanSpinner, InlineSpinner } from "@/components/ui/ocean-spinner";
 import {
   ChartContainer,
   ChartTooltip,
@@ -214,6 +222,27 @@ function UserDashboard() {
     .map((s) => ({ name: s.label, value: appStats[s.key as keyof typeof appStats] as number, color: s.color }))
     .filter((d) => d.value > 0);
 
+  const monthlyData = (() => {
+    const now = new Date();
+    const map: Record<string, number> = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      map[key] = 0;
+    }
+    for (const app of applications) {
+      const d = new Date(app.appliedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key in map) map[key]++;
+    }
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, count]) => ({
+        month: new Date(key + "-01").toLocaleDateString("en-US", { month: "short" }),
+        count,
+      }));
+  })();
+
   const kpiCards = [
     { label: "Total Applied",   value: appStats.total,     icon: Briefcase,   gradient: "from-blue-600 to-cyan-600"     },
     { label: "Pending Review",  value: appStats.pending,   icon: Clock,       gradient: "from-amber-500 to-orange-500"  },
@@ -244,18 +273,27 @@ function UserDashboard() {
               </button>
               <div className="relative group ml-2">
                 <button className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                    {user?.name?.[0]?.toUpperCase() || "U"}
-                  </div>
+                  <img
+                    src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                    alt={user?.name || "User"}
+                    className="w-8 h-8 rounded-full bg-blue-50 ring-1 ring-gray-200 shadow-sm"
+                  />
                   <div className="hidden sm:block text-left">
                     <p className="text-sm font-medium text-gray-800">{user?.name}</p>
                     <p className="text-xs text-gray-400">Candidate</p>
                   </div>
                 </button>
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                  <div className="px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500">
-                    <p className="text-sm font-semibold text-white">{user?.name}</p>
-                    <p className="text-xs text-white/80 truncate">{user?.email}</p>
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
+                    <img
+                      src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                      alt={user?.name || "User"}
+                      className="w-9 h-9 rounded-full bg-blue-50 flex-shrink-0 ring-2 ring-white shadow-sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
                   </div>
                   <div className="py-1">
                     <Link href="/careers" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -292,7 +330,7 @@ function UserDashboard() {
 
         {/* KPI cards */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {kpiCards.map((kpi, i) => (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow group">
@@ -307,7 +345,7 @@ function UserDashboard() {
 
         {/* Charts + Application list */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
           {/* Status breakdown */}
           <div className="space-y-4">
@@ -319,7 +357,7 @@ function UserDashboard() {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="h-[160px] flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                  <div className="h-[160px] flex items-center justify-center"><InlineSpinner size={44} /></div>
                 ) : pieData.length > 0 ? (
                   <>
                     <ChartContainer config={{}} className="h-[160px]">
@@ -351,6 +389,28 @@ function UserDashboard() {
                     <p className="text-xs">No data yet</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Monthly activity */}
+            <Card className="shadow-sm border-gray-100">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-semibold">Monthly Activity</CardTitle>
+                <CardDescription className="text-xs">Applications last 6 months</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0 px-3 pb-3">
+                <ResponsiveContainer width="100%" height={110}>
+                  <BarChart data={monthlyData} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
+                    <RechartsTooltip
+                      contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", padding: "6px 10px" }}
+                      formatter={(v: number) => [v, "Applications"]}
+                    />
+                    <Bar dataKey="count" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
@@ -388,7 +448,7 @@ function UserDashboard() {
           </div>
 
           {/* Application list */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <Card className="shadow-sm border-gray-100 h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -400,9 +460,8 @@ function UserDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {isLoading && (
-                  <div className="py-16 text-center">
-                    <Loader2 className="w-8 h-8 text-blue-600 mx-auto mb-3 animate-spin" />
-                    <p className="text-sm text-gray-500">Loading your applications…</p>
+                  <div className="py-12 flex justify-center">
+                    <OceanSpinner size={64} label="Loading your applications…" />
                   </div>
                 )}
                 {!isLoading && error && (
@@ -417,7 +476,7 @@ function UserDashboard() {
                 {!isLoading && !error && (
                   <AnimatePresence>
                     {applications.length > 0 ? (
-                      <div className="divide-y divide-gray-50 max-h-[520px] overflow-y-auto">
+                      <div className="divide-y divide-gray-50 max-h-[400px] sm:max-h-[520px] overflow-y-auto">
                         {applications.map((application, index) => {
                           const statusCfg = USER_STATUS_CONFIG.find((s) => s.key === application.status) || USER_STATUS_CONFIG[0];
                           const StatusIcon = statusCfg.icon;
@@ -502,8 +561,32 @@ function DashboardRouter() {
   // Show loading while checking role or redirecting
   if (isLoading || (user && user.role !== UserRole.USER)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="flex items-center gap-3">
+                <Image src="/logo.png" alt="Ocean Blue Corporation" width={140} height={40} className="h-7 md:h-8 w-auto" priority />
+              </Link>
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            </div>
+          </div>
+        </header>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          <div className="h-9 w-64 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 h-28 animate-pulse">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 mb-3" />
+                <div className="h-7 w-10 bg-gray-200 rounded mb-1" />
+                <div className="h-3 w-20 bg-gray-100 rounded" />
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center py-10">
+            <OceanSpinner size={72} label="Setting up your dashboard…" />
+          </div>
+        </div>
       </div>
     );
   }

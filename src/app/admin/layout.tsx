@@ -234,16 +234,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     localStorage.setItem("adminSidebarCollapsed", JSON.stringify(newState));
   };
 
-  // Get user initials
-  const getUserInitials = () => {
-    if (!user?.name) return "U";
-    const names = user.name.split(" ");
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[1][0]}`.toUpperCase();
-    }
-    return user.name[0].toUpperCase();
-  };
-
   // Get role badge color
   const getRoleBadgeColor = () => {
     switch (user?.role) {
@@ -393,55 +383,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          {/* User section */}
-          <div className={`border-t border-gray-100 ${sidebarCollapsed ? "p-2" : "p-2"}`} ref={userMenuRef}>
-            <div
-              className={`flex items-center gap-2.5 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
-                sidebarCollapsed ? "justify-center p-2" : "px-2.5 py-2"
-              }`}
-              onClick={() => !sidebarCollapsed && setUserMenuOpen(!userMenuOpen)}
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-xs shadow-sm">
-                {getUserInitials()}
-              </div>
-              {!sidebarCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{user?.name || "User"}</p>
-                  <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${getRoleBadgeColor()}`}>
-                    {user?.role}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* User dropdown menu */}
-            {userMenuOpen && !sidebarCollapsed && (
-              <div className="mt-2 py-1.5 rounded-xl bg-white border border-gray-200 shadow-xl ring-1 ring-black/5">
-                <div className="px-3 py-2 border-b border-gray-100">
-                  <p className="text-xs font-medium text-gray-900 truncate">{user?.name}</p>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
-                </div>
-                <div className="py-1">
-                  <Link
-                    href="/admin/settings"
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    Settings
-                  </Link>
-                </div>
-                <div className="border-t border-gray-100 pt-1">
-                  <button
-                    onClick={() => signOut()}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </aside>
 
@@ -590,7 +531,65 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   )}
                 </div>
               )}
-            </div>     
+            </div>
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-5 bg-gray-200 mx-0.5" />
+
+            {/* User Menu */}
+            <div ref={userMenuRef} className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <img
+                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                  alt={user?.name || "User"}
+                  className="w-7 h-7 rounded-full bg-blue-50 ring-1 ring-gray-200"
+                />
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[100px]">{user?.name || "User"}</p>
+                  <span className={`text-[10px] px-1.5 py-px rounded font-medium capitalize ${getRoleBadgeColor()}`}>
+                    {user?.role}
+                  </span>
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
+                  <div className="flex items-center gap-3 px-3 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
+                    <img
+                      src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                      alt={user?.name || "User"}
+                      className="w-9 h-9 rounded-full bg-blue-50 flex-shrink-0 ring-2 ring-white shadow-sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      href="/admin/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                      Settings
+                    </Link>
+                  </div>
+                  <div className="border-t border-gray-100 pt-1 pb-1">
+                    <button
+                      onClick={() => signOut()}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

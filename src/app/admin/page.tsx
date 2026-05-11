@@ -20,6 +20,7 @@ import { Avatar } from "@/components/admin/avatar";
 import { useAdmin } from "@/components/admin/admin-provider";
 import { type AppStatus } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
+import { PageLoading, InlineSpinner } from "@/components/ui/ocean-spinner";
 
 interface DashboardStats {
   totalJobs: number;
@@ -407,19 +408,7 @@ export default function AdminDashboard() {
   const healthy = staleCandidates.length === 0 && offersAtRisk.length === 0;
 
   // ── loading ───────────────────────────────────────────────────────────────
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center">
-        <div className="relative w-28 h-28 mx-auto">
-          <div className="absolute inset-0 rounded-full border-[3px] border-blue-100 border-t-blue-600 animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Image src="/loading.png" alt="Loading" width={72} height={72} className="rounded-full" priority />
-          </div>
-        </div>
-        <p className="text-slate-500 mt-4 text-sm font-medium">Loading dashboard…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <PageLoading label="Loading dashboard…" />;
 
   if (error || !stats) return (
     <div className="max-w-md mx-auto mt-20 text-center">
@@ -469,7 +458,7 @@ export default function AdminDashboard() {
           style={{ background: "radial-gradient(circle, rgba(14,165,233,0.12), transparent 70%)" }} />
 
         <div className="relative p-6 lg:p-8">
-          <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
             {/* left: greeting */}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2.5">
@@ -499,7 +488,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* right: KPI tiles */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 max-w-2xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full lg:flex-1 lg:max-w-2xl">
               <HeroKPI label="Applications" value={total}             color="#60a5fa" spark={sparkData} />
               <HeroKPI label="Active jobs"  value={stats.activeJobs}  color="#34d399" spark={[]} />
               <HeroKPI label="In pipeline"  value={inPipeline}        color="#a78bfa" spark={[]} />
@@ -515,7 +504,7 @@ export default function AdminDashboard() {
 
         {/* area chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <BarChart3 className="w-4 h-4 text-blue-500" /> Application volume
@@ -524,17 +513,19 @@ export default function AdminDashboard() {
                 {chartLabels[period]} · {chartData.reduce((s, d) => s + d.applied, 0)} total
               </p>
             </div>
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg">
-              {(["7d","30d","90d","ytd","1y","all"] as const).map((p) => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={cn("px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors",
-                    period === p ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-                  {p === "ytd" ? "YTD" : p === "1y" ? "1Y" : p === "all" ? "All" : p.toUpperCase()}
-                </button>
-              ))}
+            <div className="overflow-x-auto scrollbar-none flex-shrink-0">
+              <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg min-w-max">
+                {(["7d","30d","90d","ytd","1y","all"] as const).map((p) => (
+                  <button key={p} onClick={() => setPeriod(p)}
+                    className={cn("px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors",
+                      period === p ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+                    {p === "ytd" ? "YTD" : p === "1y" ? "1Y" : p === "all" ? "All" : p.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="h-[240px] -mx-1">
+          <div className="h-[200px] sm:h-[240px] -mx-1">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
                 <defs>
