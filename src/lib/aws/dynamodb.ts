@@ -136,7 +136,7 @@ export interface Application {
   resumeFileKey?: string; // S3 file key for direct access
 
   // Status - unified status values
-  status: "pending" | "reviewing" | "interview" | "offered" | "hired" | "rejected" | "active" | "inactive";
+  status: "pending" | "reviewing" | "submitted" | "interview" | "offered" | "hired" | "rejected" | "active" | "inactive";
 
   // Timestamps
   appliedAt: string;

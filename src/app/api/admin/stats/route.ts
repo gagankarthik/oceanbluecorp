@@ -33,6 +33,7 @@ export async function GET() {
       totalApplications: applications.length,
       pendingApplications: applications.filter((a) => a.status === "pending").length,
       reviewingApplications: applications.filter((a) => a.status === "reviewing").length,
+      submittedApplications: applications.filter((a) => a.status === "submitted").length,
       interviewApplications: applications.filter((a) => a.status === "interview").length,
       offeredApplications: applications.filter((a) => a.status === "offered").length,
       hiredApplications: applications.filter((a) => a.status === "hired").length,
@@ -67,6 +68,7 @@ export async function GET() {
       applicationsByStatus: {
         pending: applications.filter((a) => a.status === "pending").length,
         reviewing: applications.filter((a) => a.status === "reviewing").length,
+        submitted: applications.filter((a) => a.status === "submitted").length,
         interview: applications.filter((a) => a.status === "interview").length,
         offered: applications.filter((a) => a.status === "offered").length,
         hired: applications.filter((a) => a.status === "hired").length,

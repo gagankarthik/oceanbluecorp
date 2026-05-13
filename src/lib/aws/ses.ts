@@ -739,6 +739,7 @@ export async function sendStatusUpdate(
 
   const statusMessages: Record<string, string> = {
     reviewing: "Your application is currently under review by our hiring team.",
+    submitted: "Your application has been submitted to the hiring manager for further consideration.",
     interview: "Congratulations! You have been selected for an interview.",
     offered: "We are pleased to extend an offer for the position.",
     hired: "Congratulations! You have been selected for the position.",

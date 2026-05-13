@@ -33,13 +33,14 @@ type SortDir   = "asc" | "desc";
 const STAGE_META: Record<string, { label: string; bg: string; hdr: string; dot: string; text: string; ring: string }> = {
   pending:   { label: "New",       bg: "bg-slate-50",    hdr: "bg-slate-100",   dot: "bg-slate-400",   text: "text-slate-700",   ring: "ring-slate-200"   },
   reviewing: { label: "Screening", bg: "bg-blue-50",     hdr: "bg-blue-100",    dot: "bg-blue-500",    text: "text-blue-700",    ring: "ring-blue-200"    },
+  submitted: { label: "Submitted", bg: "bg-indigo-50",   hdr: "bg-indigo-100",  dot: "bg-indigo-500",  text: "text-indigo-700",  ring: "ring-indigo-200"  },
   interview: { label: "Interview", bg: "bg-violet-50",   hdr: "bg-violet-100",  dot: "bg-violet-500",  text: "text-violet-700",  ring: "ring-violet-200"  },
   offered:   { label: "Offered",   bg: "bg-amber-50",    hdr: "bg-amber-100",   dot: "bg-amber-500",   text: "text-amber-700",   ring: "ring-amber-200"   },
   hired:     { label: "Hired",     bg: "bg-emerald-50",  hdr: "bg-emerald-100", dot: "bg-emerald-500", text: "text-emerald-700", ring: "ring-emerald-200" },
   rejected:  { label: "Rejected",  bg: "bg-rose-50",     hdr: "bg-rose-100",    dot: "bg-rose-500",    text: "text-rose-700",    ring: "ring-rose-200"    },
 };
 
-const PIPELINE = ["pending","reviewing","interview","offered","hired"] as const;
+const PIPELINE = ["pending","reviewing","submitted","interview","offered","hired"] as const;
 const KANBAN_COLS = [...PIPELINE, "rejected"] as const;
 const ALL_STATUSES = [...KANBAN_COLS] as string[];
 

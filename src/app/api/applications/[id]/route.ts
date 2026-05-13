@@ -65,6 +65,7 @@ export async function PUT(
     const validStatuses: Application["status"][] = [
       "pending",
       "reviewing",
+      "submitted",
       "interview",
       "offered",
       "hired",

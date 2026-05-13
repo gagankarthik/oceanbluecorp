@@ -31,6 +31,7 @@ interface DashboardStats {
   totalApplications: number;
   pendingApplications: number;
   reviewingApplications: number;
+  submittedApplications: number;
   interviewApplications: number;
   offeredApplications: number;
   hiredApplications: number;
@@ -163,6 +164,7 @@ function FunnelChart({ stats, total }: { stats: DashboardStats; total: number })
   const stages = [
     { label: "Applied",   count: total,                       color: "#3b82f6" },
     { label: "Screening", count: stats.reviewingApplications, color: "#6366f1" },
+    { label: "Submitted", count: stats.submittedApplications, color: "#4f46e5" },
     { label: "Interview", count: stats.interviewApplications, color: "#8b5cf6" },
     { label: "Offered",   count: stats.offeredApplications,   color: "#f59e0b" },
     { label: "Hired",     count: stats.hiredApplications,     color: "#10b981" },
@@ -292,7 +294,7 @@ export default function AdminDashboard() {
 
   // ── derived ───────────────────────────────────────────────────────────────
   const total      = stats?.totalApplications || 0;
-  const inPipeline = (stats?.reviewingApplications || 0) + (stats?.interviewApplications || 0) + (stats?.offeredApplications || 0);
+  const inPipeline = (stats?.reviewingApplications || 0) + (stats?.submittedApplications || 0) + (stats?.interviewApplications || 0) + (stats?.offeredApplications || 0);
   const convRate   = total > 0 ? Math.round(((stats?.hiredApplications || 0) / total) * 100) : 0;
 
   const pipelineCounts = useMemo(() => {
@@ -399,6 +401,7 @@ export default function AdminDashboard() {
   const donutSegs = useMemo(() => [
     { label: "New",       value: pipelineCounts.pending   || 0, color: "#94a3b8" },
     { label: "Screening", value: pipelineCounts.reviewing || 0, color: "#3b82f6" },
+    { label: "Submitted", value: pipelineCounts.submitted || 0, color: "#4f46e5" },
     { label: "Interview", value: pipelineCounts.interview || 0, color: "#8b5cf6" },
     { label: "Offered",   value: pipelineCounts.offered   || 0, color: "#f59e0b" },
     { label: "Hired",     value: pipelineCounts.hired     || 0, color: "#10b981" },

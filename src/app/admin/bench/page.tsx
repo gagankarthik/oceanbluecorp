@@ -68,6 +68,11 @@ const statusConfig = {
     color: "bg-blue-50 text-blue-700 border-blue-200",
     dotColor: "bg-blue-500",
   },
+  submitted: {
+    label: "Submitted",
+    color: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    dotColor: "bg-indigo-500",
+  },
   interview: {
     label: "Interview",
     color: "bg-purple-50 text-purple-700 border-purple-200",
@@ -629,7 +634,7 @@ export default function TalentBenchPage() {
   const stats = {
     total: filteredApplications.length,
     available: filteredApplications.filter((a) => a.status === "active" || a.status === "pending").length,
-    inProcess: filteredApplications.filter((a) => a.status === "reviewing" || a.status === "interview").length,
+    inProcess: filteredApplications.filter((a) => a.status === "reviewing" || a.status === "submitted" || a.status === "interview").length,
     topRated: filteredApplications.filter((a) => (a.rating || 0) >= 4).length,
   };
 
@@ -883,6 +888,7 @@ export default function TalentBenchPage() {
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="reviewing">Reviewing</SelectItem>
+                        <SelectItem value="submitted">Submitted</SelectItem>
                         <SelectItem value="interview">Interview</SelectItem>
                         <SelectItem value="inactive">Inactive</SelectItem>
                       </SelectContent>
@@ -1215,6 +1221,7 @@ export default function TalentBenchPage() {
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="reviewing">Reviewing</SelectItem>
+                      <SelectItem value="submitted">Submitted</SelectItem>
                       <SelectItem value="interview">Interview</SelectItem>
                       <SelectItem value="hired">Hired</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
@@ -1462,6 +1469,7 @@ export default function TalentBenchPage() {
                     <option value="active">Active</option>
                     <option value="pending">Pending</option>
                     <option value="reviewing">Reviewing</option>
+                    <option value="submitted">Submitted</option>
                     <option value="interview">Interview</option>
                     <option value="hired">Hired</option>
                   </select>
@@ -1738,6 +1746,7 @@ export default function TalentBenchPage() {
                           <option value="active">Active</option>
                           <option value="pending">Pending</option>
                           <option value="reviewing">Reviewing</option>
+                          <option value="submitted">Submitted</option>
                           <option value="interview">Interview</option>
                           <option value="hired">Hired</option>
                           <option value="inactive">Inactive</option>

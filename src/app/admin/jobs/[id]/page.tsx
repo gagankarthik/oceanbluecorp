@@ -362,6 +362,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   { key: "all",       label: "All",       count: applications.length            },
                   { key: "pending",   label: "New",       count: pipelineCounts["pending"]   || 0 },
                   { key: "reviewing", label: "Screening", count: pipelineCounts["reviewing"] || 0 },
+                  { key: "submitted", label: "Submitted", count: pipelineCounts["submitted"] || 0 },
                   { key: "interview", label: "Interview", count: pipelineCounts["interview"] || 0 },
                   { key: "offered",   label: "Offered",   count: pipelineCounts["offered"]   || 0 },
                   { key: "hired",     label: "Hired",     count: pipelineCounts["hired"]     || 0 },
@@ -486,6 +487,7 @@ function ApplicantRow({
   const STATUSES: { value: Application["status"]; label: string }[] = [
     { value: "pending",   label: "New"       },
     { value: "reviewing", label: "Screening" },
+    { value: "submitted", label: "Submitted" },
     { value: "interview", label: "Interview" },
     { value: "offered",   label: "Offered"   },
     { value: "hired",     label: "Hired"     },

@@ -57,7 +57,7 @@ interface UserApplication {
   userId: string;
   jobId: string;
   resumeId: string;
-  status: "pending" | "reviewing" | "interview" | "offered" | "hired" | "rejected";
+  status: "pending" | "reviewing" | "submitted" | "interview" | "offered" | "hired" | "rejected";
   appliedAt: string;
   updatedAt?: string;
   notes?: string;
@@ -89,6 +89,7 @@ interface ApplicationWithJob extends UserApplication {
 const USER_STATUS_CONFIG = [
   { key: "pending",   label: "Pending Review",     color: "#f59e0b", bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,         dot: "bg-amber-400",    barColor: "bg-amber-400"   },
   { key: "reviewing", label: "Under Review",        color: "#3b82f6", bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: Eye,           dot: "bg-blue-400",     barColor: "bg-blue-500"    },
+  { key: "submitted", label: "Submitted",            color: "#6366f1", bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-200",  icon: FileText,      dot: "bg-indigo-400",   barColor: "bg-indigo-500"  },
   { key: "interview", label: "Interview Scheduled", color: "#8b5cf6", bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200",  icon: Calendar,      dot: "bg-purple-400",   barColor: "bg-purple-500"  },
   { key: "offered",   label: "Offer Extended",      color: "#10b981", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: Star,          dot: "bg-emerald-400",  barColor: "bg-emerald-500" },
   { key: "hired",     label: "Hired",               color: "#059669", bg: "bg-green-50",   text: "text-green-700",   border: "border-green-200",   icon: CheckCircle,   dot: "bg-green-500",    barColor: "bg-green-500"   },
@@ -98,6 +99,7 @@ const USER_STATUS_CONFIG = [
 const JOURNEY_STEPS = [
   { key: "pending",   label: "Applied"   },
   { key: "reviewing", label: "Reviewing" },
+  { key: "submitted", label: "Submitted" },
   { key: "interview", label: "Interview" },
   { key: "offered",   label: "Offered"   },
   { key: "hired",     label: "Hired"     },
@@ -212,6 +214,7 @@ function UserDashboard() {
     total: applications.length,
     pending: applications.filter((a) => a.status === "pending").length,
     reviewing: applications.filter((a) => a.status === "reviewing").length,
+    submitted: applications.filter((a) => a.status === "submitted").length,
     interview: applications.filter((a) => a.status === "interview").length,
     offered: applications.filter((a) => a.status === "offered").length,
     hired: applications.filter((a) => a.status === "hired").length,

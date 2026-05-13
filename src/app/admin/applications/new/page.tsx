@@ -25,7 +25,7 @@ const COMMON_SKILLS = [
   "Power BI", "Tableau", "Agile", "Scrum",
 ];
 
-const PIPELINE_OPTIONS: AppStatus[] = ["pending", "reviewing", "interview", "offered", "hired"];
+const PIPELINE_OPTIONS: AppStatus[] = ["pending", "reviewing", "submitted", "interview", "offered", "hired"];
 
 function NewApplicationInner() {
   const router = useRouter();

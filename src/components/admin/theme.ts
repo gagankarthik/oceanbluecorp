@@ -23,12 +23,13 @@ export const tones: Record<Tone, {
 };
 
 export type AppStatus =
-  | "pending" | "reviewing" | "interview" | "offered" | "hired" | "rejected"
+  | "pending" | "reviewing" | "submitted" | "interview" | "offered" | "hired" | "rejected"
   | "active" | "inactive" | "paused" | "draft" | "closed" | "open" | "on-hold";
 
 export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: React.ComponentType<{ className?: string }> }> = {
   pending:   { label: "New",       tone: "slate",   icon: Clock        },
   reviewing: { label: "Screening", tone: "blue",    icon: Eye          },
+  submitted: { label: "Submitted", tone: "indigo",  icon: FileText     },
   interview: { label: "Interview", tone: "violet",  icon: MessageSquare},
   offered:   { label: "Offered",   tone: "amber",   icon: Mail         },
   hired:     { label: "Hired",     tone: "emerald", icon: CheckCircle2 },
@@ -45,6 +46,7 @@ export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: Re
 export const PIPELINE_STAGES: { key: AppStatus; label: string; tone: Tone }[] = [
   { key: "pending",   label: "New",       tone: "slate"   },
   { key: "reviewing", label: "Screening", tone: "blue"    },
+  { key: "submitted", label: "Submitted", tone: "indigo"  },
   { key: "interview", label: "Interview", tone: "violet"  },
   { key: "offered",   label: "Offered",   tone: "amber"   },
   { key: "hired",     label: "Hired",     tone: "emerald" },
