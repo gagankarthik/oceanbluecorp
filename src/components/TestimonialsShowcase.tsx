@@ -1,242 +1,185 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Quote, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { SectionHeader } from "./landing/SectionHeader";
 
-const testimonials = [
+/* ============================================================
+   TESTIMONIALS — real Ocean Blue clients, Register aesthetic.
+   Desktop: 3-up grid. Mobile: swipeable carousel.
+   ============================================================ */
+
+type Testimonial = {
+  quote: string;
+  author: string;
+  role: string;
+  company: string;
+  initials: string;
+};
+
+const testimonials: Testimonial[] = [
   {
-    id: 1,
-    quote: "Ocean Blue Solutions operates as a true strategic partner. Their team brings deep expertise, a disciplined approach to execution, and a consistent commitment to quality.",
+    quote:
+      "Ocean Blue Solutions operates as a true strategic partner. Their team brings deep expertise, a disciplined approach to execution, and a consistent commitment to quality.",
     author: "Brian K.",
     role: "Co-Founder",
     company: "Pivotpoint",
+    initials: "BK",
   },
   {
-    id: 2,
-    quote: "OceanBlue resources demonstrated high levels of skill and professionalism, delivering quality results that met our expectations and deadlines.",
+    quote:
+      "OceanBlue resources demonstrated high levels of skill and professionalism, delivering quality results that met our expectations and deadlines.",
     author: "Damodar Buchi Reddy",
     role: "Project Director",
     company: "Diebold Nixdorf",
+    initials: "DR",
   },
   {
-    id: 3,
-    quote: "I have partnered with Ocean Blue for many years. They are trustworthy, honest, motivated and display a high degree of work ethic.",
+    quote:
+      "I have partnered with Ocean Blue for many years. They are trustworthy, honest, motivated and display a high degree of work ethic.",
     author: "Ken H.",
     role: "Senior Account Executive",
     company: "Mapsys, Inc.",
+    initials: "KH",
   },
 ];
 
+function TestimonialCard({ t, featured }: { t: Testimonial; featured?: boolean }) {
+  return (
+    <motion.figure
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      className={`relative flex h-full flex-col rounded-2xl border p-6 transition-all sm:p-7 ${
+        featured
+          ? "border-[var(--reg-brand-200)] bg-[var(--reg-brand-25)] shadow-[var(--reg-shadow-md)]"
+          : "border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xs)] hover:shadow-[var(--reg-shadow-md)]"
+      }`}
+    >
+      {/* Top row: quote mark + rating */}
+      <div className="flex items-center justify-between">
+        <span
+          className={`grid h-8 w-8 place-items-center rounded-lg ${
+            featured
+              ? "bg-[var(--reg-brand-600)] text-white"
+              : "bg-[var(--reg-brand-50)] text-[var(--reg-brand-700)]"
+          }`}
+        >
+          <Quote className="h-4 w-4" strokeWidth={2.25} />
+        </span>
+        <div className="flex">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Star key={i} className="h-3.5 w-3.5 fill-[#f79009] text-[#f79009]" />
+          ))}
+        </div>
+      </div>
+
+      {/* Quote */}
+      <blockquote className="mt-5 text-[15.5px] leading-relaxed text-[var(--reg-text-primary)] sm:text-[16px]">
+        &ldquo;{t.quote}&rdquo;
+      </blockquote>
+
+      {/* Author + engagement */}
+      <figcaption className="mt-6 flex items-center gap-3 border-t border-[var(--reg-line)] pt-5">
+        <div
+          className={`grid h-10 w-10 flex-shrink-0 place-items-center rounded-full text-[12px] font-semibold ${
+            featured
+              ? "bg-[var(--reg-brand-600)] text-white"
+              : "bg-[var(--reg-brand-100)] text-[var(--reg-brand-700)]"
+          }`}
+        >
+          {t.initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13.5px] font-semibold text-[var(--reg-text-primary)]">
+            {t.author}
+          </p>
+          <p className="truncate text-[12px] text-[var(--reg-text-subtle)]">
+            {t.role} · {t.company}
+          </p>
+        </div>
+      </figcaption>
+    </motion.figure>
+  );
+}
+
 export default function TestimonialsShowcase() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [active, setActive] = useState(0);
+  const total = testimonials.length;
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + testimonials.length) % testimonials.length);
-  };
-
-  useEffect(() => {
-    if (!isAutoScrolling) return;
-    
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isAutoScrolling, currentIndex]);
+  const prev = () => setActive((p) => (p - 1 + total) % total);
+  const next = () => setActive((p) => (p + 1) % total);
 
   return (
-    <section className="relative bg-white py-24 md:py-32 overflow-hidden">
-      <div className="relative px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto">
-        
-        {/* Desktop View - 2x2 Grid with plus sign lines */}
-        <div className="hidden lg:block relative">
-          <div className="grid grid-cols-2 relative">
-            {/* First Box - Header/Intro Box */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="relative bg-white p-10 lg:p-14 flex flex-col justify-center items-center text-center min-h-[420px] lg:min-h-[460px]"
-            >
-              <div className="relative z-10">
-                <h2 className="text-gray-900 text-3xl lg:text-5xl font-bold mb-4 leading-[1.2] tracking-tight">
-                  What our
-                  <br />
-                  clients say
-                </h2>
-                <p className="text-gray-600 text-lg leading-relaxed max-w-sm">
-                  Real stories from real partnerships that drive exceptional results
-                </p>
-              </div>
-            </motion.div>
+    <section className="bg-white px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-7xl">
+        <SectionHeader
+          eyebrow="Client voices"
+          title={<>What our clients <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent">say about us.</span></>}
+          subtitle="Real partnerships, in their own words. These are leaders we've worked alongside on the projects that mattered most to their business."
+        />
 
-            {/* Testimonial 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="relative bg-white p-10 lg:p-14 flex flex-col justify-center items-center text-center min-h-[420px] lg:min-h-[460px]"
-            >
-              <div>
-                <Quote className="w-12 h-12 text-[#8d81f0] mb-6 opacity-70 mx-auto" />
-                <p className="text-gray-700 text-lg lg:text-xl leading-relaxed mb-8 max-w-md">
-                  "{testimonials[0].quote}"
-                </p>
-              </div>
-              <div className="w-full">
-                <div className="text-gray-900 font-semibold text-xl lg:text-2xl mb-1">
-                  {testimonials[0].author}
-                </div>
-                <div className="text-gray-500 text-base lg:text-lg">
-                  {testimonials[0].role}, {testimonials[0].company}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Testimonial 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative bg-white p-10 lg:p-14 flex flex-col justify-center items-center text-center min-h-[420px] lg:min-h-[460px]"
-            >
-              <div>
-                <Quote className="w-12 h-12 text-[#8d81f0] mb-6 opacity-70 mx-auto" />
-                <p className="text-gray-700 text-lg lg:text-xl leading-relaxed mb-8 max-w-md">
-                  "{testimonials[1].quote}"
-                </p>
-              </div>
-              <div className="w-full">
-                <div className="text-gray-900 font-semibold text-xl lg:text-2xl mb-1">
-                  {testimonials[1].author}
-                </div>
-                <div className="text-gray-500 text-base lg:text-lg">
-                  {testimonials[1].role}, {testimonials[1].company}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Testimonial 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="relative bg-white p-10 lg:p-14 flex flex-col justify-center items-center text-center min-h-[420px] lg:min-h-[460px]"
-            >
-              <div className="relative z-10">
-                <Quote className="w-12 h-12 text-[#8d81f0] mb-6 opacity-70 mx-auto" />
-                <p className="text-gray-700 text-lg lg:text-xl leading-relaxed mb-8 max-w-md">
-                  "{testimonials[2].quote}"
-                </p>
-              </div>
-              <div className="relative z-10 w-full">
-                <div className="text-gray-900 font-semibold text-xl lg:text-2xl mb-1">
-                  {testimonials[2].author}
-                </div>
-                <div className="text-gray-500 text-base lg:text-lg">
-                  {testimonials[2].role}, {testimonials[2].company}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Vertical Line - Center */}
-          <div className="absolute left-1/2 top-8 bottom-8 w-px bg-gray-300 transform -translate-x-1/2"></div>
-          
-          {/* Horizontal Line - Center */}
-          <div className="absolute top-1/2 left-8 right-8 h-px bg-gray-300 transform -translate-y-1/2"></div>
+        {/* Desktop grid */}
+        <div className="mt-12 hidden grid-cols-3 gap-4 md:grid">
+          {testimonials.map((t, i) => (
+            <TestimonialCard key={t.author} t={t} featured={i === 1} />
+          ))}
         </div>
 
-        {/* Mobile View - Carousel with Auto-scroll */}
-        <div className="lg:hidden">
-          <div className="text-center mb-12">
-            <h2 className="text-gray-900 text-4xl font-bold mb-4 leading-[1.2] tracking-tight">
-              What our
-              <br />
-              clients say
-            </h2>
-            <p className="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
-              Real stories from real partnerships that drive exceptional results
-            </p>
+        {/* Mobile carousel */}
+        <div className="mt-10 md:hidden">
+          <div className="relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <TestimonialCard t={testimonials[active]} featured />
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          <div className="relative">
-            {/* Carousel Container */}
-            <div className="overflow-hidden">
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.5 }}
-                className="bg-white p-8 rounded-2xl border-2 border-gray-300 shadow-lg"
-              >
-                <Quote className="w-12 h-12 text-[#8d81f0] mb-6 opacity-70 mx-auto" />
-                <p className="text-gray-700 text-lg leading-relaxed mb-8">
-                  "{testimonials[currentIndex].quote}"
-                </p>
-                <div className="w-full">
-                  <div className="text-gray-900 font-semibold text-xl mb-1">
-                    {testimonials[currentIndex].author}
-                  </div>
-                  <div className="text-gray-500 text-base">
-                    {testimonials[currentIndex].role}, {testimonials[currentIndex].company}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Navigation Buttons */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 sm:-ml-4 bg-white border-2 border-gray-300 rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
-              aria-label="Previous testimonial"
-              onMouseEnter={() => setIsAutoScrolling(false)}
-              onMouseLeave={() => setIsAutoScrolling(true)}
-            >
-              <ChevronLeft className="w-6 h-6 text-[#8d81f0]" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 sm:-mr-4 bg-white border-2 border-gray-300 rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-gray-50 transition-all z-10"
-              aria-label="Next testimonial"
-              onMouseEnter={() => setIsAutoScrolling(false)}
-              onMouseLeave={() => setIsAutoScrolling(true)}
-            >
-              <ChevronRight className="w-6 h-6 text-[#8d81f0]" />
-            </button>
-
-            {/* Dots Indicator */}
-            <div className="flex justify-center gap-2 mt-8">
-              {testimonials.map((_, index) => (
+          {/* Controls */}
+          <div className="mt-5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              {testimonials.map((_, i) => (
                 <button
-                  key={index}
-                  onClick={() => {
-                    setCurrentIndex(index);
-                    setIsAutoScrolling(false);
-                    setTimeout(() => setIsAutoScrolling(true), 5000);
+                  key={i}
+                  onClick={() => setActive(i)}
+                  aria-label={`Show testimonial ${i + 1}`}
+                  className="h-1.5 rounded-full transition-all"
+                  style={{
+                    width: i === active ? 24 : 8,
+                    background:
+                      i === active ? "var(--reg-brand-600)" : "var(--reg-line-2)",
                   }}
-                  className={`transition-all duration-300 ${
-                    currentIndex === index
-                      ? "w-8 h-2 bg-[#8d81f0] rounded-full"
-                      : "w-2 h-2 bg-gray-300 rounded-full hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
                 />
               ))}
             </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={prev}
+                aria-label="Previous testimonial"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--reg-line)] bg-[var(--reg-surface)] text-[var(--reg-text-secondary)] transition-colors hover:bg-[var(--reg-surface-3)]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={next}
+                aria-label="Next testimonial"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--reg-line)] bg-[var(--reg-surface)] text-[var(--reg-text-secondary)] transition-colors hover:bg-[var(--reg-surface-3)]"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
     </section>
   );

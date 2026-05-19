@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Bricolage_Grotesque, Instrument_Serif } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
@@ -193,7 +195,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} font-sans antialiased`}
+        className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
         {/* ADA / WCAG 2.1 — skip to main content */}
         <a

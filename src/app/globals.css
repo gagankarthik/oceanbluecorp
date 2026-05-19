@@ -675,6 +675,254 @@
   }
 }
 
+/* ============================================================
+   Enterprise — landing page palette + utilities
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --ob-bg:        #ffffff;
+  --ob-bg-soft:   #f7f9fc;
+  --ob-bg-card:   #ffffff;
+  --ob-ink:       #0a1525;   /* near-black navy */
+  --ob-ink-2:     #1c2940;
+  --ob-mute:      #5b6b85;
+  --ob-mute-2:    #8492aa;
+  --ob-line:      #e5eaf2;
+  --ob-line-2:    #eef1f6;
+
+  /* Dark surfaces */
+  --ob-dark:      #0a0f1a;
+  --ob-dark-2:    #0f1626;
+  --ob-dark-3:    #182336;
+
+  /* Brand palette — deep ocean × warm horizon */
+  --ob-accent:        #1e4dd8;   /* confident cobalt — primary action */
+  --ob-accent-hover:  #1a40b8;
+  --ob-blue:          #2563eb;
+  --ob-cyan:          #22d3ee;
+  --ob-deep:          #0c2156;   /* deep ocean */
+  --ob-deep-2:        #1a2a52;
+  /* The distinctive accent: warm coral/copper — the horizon line */
+  --ob-coral:         #ff6b47;
+  --ob-coral-soft:    #ffa686;
+  --ob-amber:         #f5b942;   /* warm gold */
+  --ob-emerald:       #10b981;
+  --ob-sand:          #f6f1e7;   /* warm warm off-white for surfaces */
+  --ob-sand-2:        #efe8d8;
+}
+
+/* Tech fonts */
+.font-mono {
+  font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-feature-settings: "tnum", "ss01", "zero";
+}
+
+/* Eyebrow / kicker */
+.ob-eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ob-mute);
+}
+
+/* Dot grid background */
+.bg-ob-dots {
+  background-image: radial-gradient(rgba(10,21,37,0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.bg-ob-dots-dark {
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Crosshatch grid */
+.bg-ob-grid {
+  background-image:
+    linear-gradient(to right,  rgba(10,21,37,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(10,21,37,0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+.bg-ob-grid-dark {
+  background-image:
+    linear-gradient(to right,  rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Distinctive: navy ocean × coral horizon mesh */
+.bg-ob-mesh-dark {
+  background-color: var(--ob-dark);
+  background-image:
+    radial-gradient(at 88% 8%,  rgba(255,107,71,0.22) 0px, transparent 45%),
+    radial-gradient(at 12% 24%, rgba(30,77,216,0.22)  0px, transparent 50%),
+    radial-gradient(at 60% 96%, rgba(245,185,66,0.10) 0px, transparent 55%);
+}
+.bg-ob-mesh-soft {
+  background-color: var(--ob-bg-soft);
+  background-image:
+    radial-gradient(at 8% 0%,  rgba(30,77,216,0.06) 0px, transparent 50%),
+    radial-gradient(at 92% 0%, rgba(255,107,71,0.05)  0px, transparent 50%);
+}
+
+/* Architectural diagonal stripes — distinctive */
+.bg-ob-diagonal {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    transparent 0px,
+    transparent 18px,
+    rgba(255,107,71,0.05) 18px,
+    rgba(255,107,71,0.05) 19px
+  );
+}
+
+/* Status pill */
+.ob-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--ob-line);
+  background: var(--ob-bg);
+  color: var(--ob-ink-2);
+}
+.ob-pill-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+}
+.ob-pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ob-emerald);
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+}
+.ob-pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--ob-emerald);
+  animation: ob-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ob-ping {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  80%  { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Primary CTA — confident cobalt */
+.ob-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  background: var(--ob-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.10) inset, 0 10px 28px -10px rgba(30,77,216,0.55);
+}
+.ob-btn-primary:hover {
+  background: var(--ob-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 14px 36px -10px rgba(30,77,216,0.65);
+}
+
+/* Coral accent CTA — distinctive secondary */
+.ob-btn-coral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  background: var(--ob-coral);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 10px 28px -10px rgba(255,107,71,0.55);
+}
+.ob-btn-coral:hover {
+  background: #ff5732;
+  transform: translateY(-1px);
+}
+.ob-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: var(--ob-bg);
+  color: var(--ob-ink);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--ob-line);
+  transition: all 0.2s ease;
+}
+.ob-btn-ghost:hover {
+  border-color: var(--ob-ink);
+  transform: translateY(-1px);
+}
+
+/* Animated gradient border for cards */
+.ob-card {
+  position: relative;
+  background: var(--ob-bg-card);
+  border: 1px solid var(--ob-line);
+  border-radius: 16px;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.ob-card:hover {
+  border-color: rgba(14,165,183,0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -22px rgba(14,165,183,0.35), 0 4px 12px -6px rgba(10,21,37,0.08);
+}
+
+/* Slow shimmer for "live" data feel */
+@keyframes ob-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+.ob-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(14,165,183,0.18) 50%, transparent 70%);
+  animation: ob-shimmer 3.2s ease-in-out infinite;
+}
+
+/* Conic spinner accent */
+@keyframes ob-spin-slow {
+  to { transform: rotate(360deg); }
+}
+.ob-spin-slow { animation: ob-spin-slow 16s linear infinite; }
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -693,3 +941,100 @@
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #0e7490, #1d4ed8);
 }
+
+/* ============================================================
+   LANDING — "Operator Console" design tokens (Register-grade)
+   Replaces all prior landing-only tokens. Cascades after them.
+   Aesthetic: Stripe / Mercury / Linear. Neutral slate base,
+   one restrained cobalt accent. Used ONLY by landing components.
+   ============================================================ */
+
+:root {
+  /* Surfaces & neutrals */
+  --reg-canvas:    #fcfcfd;
+  --reg-surface:   #ffffff;
+  --reg-surface-2: #f9fafb;
+  --reg-surface-3: #f3f4f6;
+
+  --reg-line:      #eaecf0;
+  --reg-line-2:    #d0d5dd;
+  --reg-line-3:    #98a2b3;
+
+  /* Semantic text */
+  --reg-text-primary:   #101828;
+  --reg-text-secondary: #344054;
+  --reg-text-muted:     #475467;
+  --reg-text-subtle:    #667085;
+  --reg-text-tertiary:  #98a2b3;
+
+  /* Inverse (dark panels) */
+  --reg-ink:    #0c111d;
+  --reg-ink-2:  #161b26;
+  --reg-ink-3:  #1f242f;
+  --reg-ink-4:  #2d3239;
+
+  /* Brand — Ocean cobalt (restrained) */
+  --reg-brand-25:  #f3f7ff;
+  --reg-brand-50:  #ecf2ff;
+  --reg-brand-100: #dbe6ff;
+  --reg-brand-200: #b9cdff;
+  --reg-brand-300: #8caefe;
+  --reg-brand-400: #5d89fb;
+  --reg-brand-500: #3c69f0;
+  --reg-brand-600: #1e4dd8;
+  --reg-brand-700: #1a3eb8;
+  --reg-brand-800: #173291;
+  --reg-brand-900: #142a73;
+
+  /* Semantic */
+  --reg-success-50:  #ecfdf3;
+  --reg-success-200: #abefc6;
+  --reg-success-500: #17b26a;
+  --reg-success-600: #079455;
+  --reg-success-700: #067647;
+
+  --reg-warning-50:  #fffaeb;
+  --reg-warning-200: #fedf89;
+  --reg-warning-500: #f79009;
+  --reg-warning-600: #dc6803;
+  --reg-warning-700: #b54708;
+
+  --reg-error-50:  #fef3f2;
+  --reg-error-200: #fecdca;
+  --reg-error-500: #f04438;
+  --reg-error-700: #b42318;
+
+  /* Shadows — single ring, no multi-layer drama */
+  --reg-shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  --reg-shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.10), 0 1px 2px -1px rgb(16 24 40 / 0.06);
+  --reg-shadow-md: 0 4px 6px -1px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.06);
+  --reg-shadow-lg: 0 12px 16px -4px rgb(16 24 40 / 0.08), 0 4px 6px -2px rgb(16 24 40 / 0.03);
+  --reg-shadow-xl: 0 20px 24px -4px rgb(16 24 40 / 0.08), 0 8px 8px -4px rgb(16 24 40 / 0.03);
+}
+
+/* Tabular numbers */
+.reg-tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+/* Subtle dot pattern */
+.bg-reg-dots {
+  background-image: radial-gradient(circle, var(--reg-line-2) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Live status pulse */
+@keyframes reg-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+.reg-live { animation: reg-live-pulse 2s ease-in-out infinite; }
+
+/* Slow horizontal marquee for logo strip */
+@keyframes reg-marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.reg-marquee { animation: reg-marquee 60s linear infinite; }
+.reg-marquee:hover { animation-play-state: paused; }

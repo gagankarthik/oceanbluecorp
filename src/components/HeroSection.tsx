@@ -7,14 +7,19 @@ import dynamic from "next/dynamic";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ChevronDown, Play } from "lucide-react";
 
-// Kick off the bundle download immediately (before the component mounts)
+/* Lazy-load the globe — it's heavy. Kick off prefetch in browser. */
 if (typeof window !== "undefined") {
   import("./ui/globe");
 }
-
 const World = dynamic(() => import("./ui/globe").then((m) => m.World), {
   ssr: false,
 });
+
+/* ============================================================
+   HERO — Ocean Blue original, refined.
+   Dark slate → indigo gradient, interactive globe, simple copy.
+   No fake stats. Tech Partners explicitly labelled.
+   ============================================================ */
 
 const globeConfig = {
   pointSize: 1,
@@ -35,62 +40,21 @@ const globeConfig = {
   rings: 1,
   maxRings: 3,
   autoRotate: true,
-  autoRotateSpeed: 1,
+  autoRotateSpeed: 0.9,
 };
 
-const sampleData = [
-  {
-    order: 1,  // ← Add this required property
-    startLat: 35.6895,  // Tokyo
-    startLng: 139.6917,
-    endLat: 34.0522,    // Los Angeles
-    endLng: -118.2437,
-    arcAlt: 0.2,
-    color: "#ff6b6b"
-  },
-  {
-    order: 2,  // ← Add this required property
-    startLat: 51.5074,  // London
-    startLng: -0.1278,
-    endLat: 40.7128,    // New York
-    endLng: -74.0060,
-    arcAlt: 0.3,
-    color: "#4ecdc4"
-  },
-  {
-    order: 3,  // ← Add this required property
-    startLat: 55.7558,  // Moscow
-    startLng: 37.6173,
-    endLat: 39.9042,    // Beijing
-    endLng: 116.4074,
-    arcAlt: 0.25,
-    color: "#45b7d1"
-  },
-  {
-    order: 4,  // ← Add this required property
-    startLat: -33.8688, // Sydney
-    startLng: 151.2093,
-    endLat: 37.7749,    // San Francisco
-    endLng: -122.4194,
-    arcAlt: 0.28,
-    color: "#96ceb4"
-  },
-  {
-    order: 5,  // ← Add this required property
-    startLat: 19.0760,  // Mumbai
-    startLng: 72.8777,
-    endLat: -1.2864,    // Nairobi
-    endLng: 36.8172,
-    arcAlt: 0.22,
-    color: "#ffeead"
-  }
+const arcs = [
+  { order: 1, startLat: 40.1573,  startLng: -83.0752,  endLat: 40.7128,  endLng: -74.0060,  arcAlt: 0.18, color: "#60a5fa" },
+  { order: 2, startLat: 40.1573,  startLng: -83.0752,  endLat: 51.5074,  endLng: -0.1278,   arcAlt: 0.32, color: "#a78bfa" },
+  { order: 3, startLat: 40.1573,  startLng: -83.0752,  endLat: 12.9716,  endLng: 77.5946,   arcAlt: 0.46, color: "#22d3ee" },
+  { order: 4, startLat: 40.7128,  startLng: -74.0060,  endLat: 53.3498,  endLng: -6.2603,   arcAlt: 0.28, color: "#60a5fa" },
+  { order: 5, startLat: 37.7749,  startLng: -122.4194, endLat: 43.6532,  endLng: -79.3832,  arcAlt: 0.22, color: "#a78bfa" },
 ];
 
-// Partner logos configuration with individual sizing
-const partners = [
-  { name: "AWS Partner", logo: "/AWS-Partner.png", height: "h-24 md:h-18" },
-  { name: "Snowflake", logo: "/snowflake.svg", height: "h-8 md:h-10" },
-  { name: "Databricks", logo: "/databricks.svg", height: "h-8 md:h-10" },
+const techPartners = [
+  { name: "AWS Partner", logo: "/AWS-Partner.png", height: "h-12 md:h-14" },
+  { name: "Snowflake",   logo: "/snowflake.svg",   height: "h-7 md:h-8" },
+  { name: "Databricks",  logo: "/databricks.svg",  height: "h-7 md:h-8" },
 ];
 
 export default function HeroSection() {
@@ -99,20 +63,15 @@ export default function HeroSection() {
     target: containerRef,
     offset: ["start start", "end start"],
   });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
+  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const y       = useTransform(scrollYProgress, [0, 0.6], [0, 80]);
 
   const textVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 18 },
     visible: (delay: number) => ({
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.6,
-        delay,
-        ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number],
-      },
+      transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
     }),
   };
 
@@ -121,29 +80,23 @@ export default function HeroSection() {
       ref={containerRef}
       className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900"
     >
-      {/* Animated background gradients */}
-      <div className="absolute inset-0">
+      {/* Soft animated background orbs */}
+      <div className="absolute inset-0" aria-hidden>
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-blue-600/20 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.15, 1], opacity: [0.32, 0.5, 0.32] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -left-1/4 top-1/4 h-1/2 w-1/2 rounded-full bg-blue-600/20 blur-3xl"
         />
         <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-600/20 rounded-full blur-3xl"
+          animate={{ scale: [1.15, 1, 1.15], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute -right-1/4 bottom-1/4 h-1/2 w-1/2 rounded-full bg-cyan-600/20 blur-3xl"
         />
       </div>
 
-      {/* Wave bottom */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" className="w-full h-auto" preserveAspectRatio="none">
+      {/* Wave bottom — subtle */}
+      <div className="absolute inset-x-0 bottom-0" aria-hidden>
+        <svg viewBox="0 0 1440 120" className="h-auto w-full" preserveAspectRatio="none">
           <path
             fill="rgba(255,255,255,0.03)"
             d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,75 1440,60 L1440,120 L0,120 Z"
@@ -153,105 +106,100 @@ export default function HeroSection() {
             d="M0,80 C320,40 640,100 960,60 C1200,30 1360,70 1440,50 L1440,120 L0,120 Z"
           />
         </svg>
-        
       </div>
 
       {/* Main content */}
       <motion.div
         style={{ opacity, y }}
-        className="relative z-10 min-h-screen flex items-center pt-20 md:pt-24"
+        className="relative z-10 flex min-h-screen items-center pt-24 md:pt-28"
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-4 items-center">
-            {/* Left side - Text content */}
-            <div className="relative z-20 lg:pr-8">
-              {/* Title */}
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-6">
+            {/* LEFT — Copy */}
+            <div className="relative z-20 lg:pr-6">
               <motion.h1
-                custom={0.1}
+                custom={0.05}
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-3xl sm:text-4xl md:text-5xl font-light text-white mb-4 font-[family-name:var(--font-space-grotesk)] leading-[1.15]"
+                className="text-[2.4rem] font-light leading-[1.05] tracking-tight text-white sm:text-[3rem] md:text-[3.6rem] lg:text-[4.2rem]"
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 Technology.
                 <br />
                 Talent.
-                 <br />{" "}
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent font-medium">
+                <br />
+                <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 bg-clip-text font-medium text-transparent">
                   Transformation.
                 </span>
               </motion.h1>
 
-              {/* Description */}
               <motion.p
-                custom={0.2}
+                custom={0.18}
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-base text-gray-400 mb-6 leading-relaxed max-w-md"
+                className="mt-6 max-w-md text-[15px] leading-relaxed text-gray-300 sm:text-[16px]"
               >
-                Ocean Blue provides IT staffing, enterprise solutions, and managed
-                services that help organizations modernize, scale, and operate
-                with confidence.
+                Ocean Blue provides IT staffing, enterprise solutions, and
+                managed services that help organisations modernise, scale, and
+                operate with confidence.
               </motion.p>
 
-              {/* CTAs */}
               <motion.div
                 custom={0.3}
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
-                className="flex flex-col sm:flex-row gap-3"
+                className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
               >
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-900 text-sm rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl group"
+                  className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-gray-900 shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl"
                 >
-                  <span className="font-medium">Start a conversation</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span>Start a conversation</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
                   href="/services"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm text-white text-sm rounded-full border border-white/20 hover:bg-white/20 transition-all group"
+                  className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20"
                 >
-                  <Play className="w-3.5 h-3.5" />
-                  <span className="font-medium">See how we work</span>
+                  <Play className="h-3.5 w-3.5" />
+                  <span>See how we work</span>
                 </Link>
               </motion.div>
 
-              {/* Technology Partners Section */}
+              {/* Technology Partners — explicitly labelled */}
               <motion.div
-                custom={0.4}
+                custom={0.45}
                 variants={textVariants}
                 initial="hidden"
                 animate="visible"
                 className="mt-12"
               >
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-5 text-center lg:text-left">
-                  Technology Partners
+                <p className="text-center text-[10.5px] font-semibold uppercase tracking-[0.18em] text-gray-400 sm:text-left">
+                  Technology partners
                 </p>
-
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3">
-                  {partners.map((partner, index) => (
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 sm:justify-start sm:gap-x-3">
+                  {techPartners.map((p, i) => (
                     <motion.div
-                      key={partner.name}
-                      initial={{ opacity: 0, y: 10 }}
+                      key={p.name}
+                      initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 + index * 0.1 }}
+                      transition={{ duration: 0.5, delay: 0.6 + i * 0.08 }}
                       className="flex items-center gap-3"
                     >
-                      <div className="group px-4 py-2">
+                      <div className="px-3 py-2 transition-opacity">
                         <Image
-                          src={partner.logo}
-                          alt={partner.name}
+                          src={p.logo}
+                          alt={p.name}
                           width={160}
-                          height={64}
-                          className={`${partner.height} w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity duration-300`}
+                          height={56}
+                          className={`${p.height} w-auto object-contain opacity-90 transition-opacity hover:opacity-100`}
                         />
                       </div>
-                      {/* Divider line between partners */}
-                      {index < partners.length - 1 && (
-                        <div className="w-px h-10 bg-white/20" />
+                      {i < techPartners.length - 1 && (
+                        <span className="h-8 w-px bg-white/15" />
                       )}
                     </motion.div>
                   ))}
@@ -259,10 +207,10 @@ export default function HeroSection() {
               </motion.div>
             </div>
 
-            {/* Right side - 3D Globe */}
-            <div className="relative h-[260px] sm:h-[380px] md:h-[440px] lg:h-[620px] w-full">
-              <div className="absolute inset-0 hover:cursor-grab">
-                <World globeConfig={globeConfig} data={sampleData} />
+            {/* RIGHT — Interactive globe */}
+            <div className="relative h-[280px] w-full sm:h-[380px] md:h-[460px] lg:h-[620px]">
+              <div className="absolute inset-0 cursor-grab active:cursor-grabbing">
+                <World globeConfig={globeConfig} data={arcs} />
               </div>
             </div>
           </div>
@@ -273,21 +221,21 @@ export default function HeroSection() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20"
+        transition={{ delay: 1.1, duration: 0.8 }}
+        className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-1.5 cursor-pointer group"
+          className="group flex cursor-pointer flex-col items-center gap-1.5"
           onClick={() =>
             window.scrollTo({ top: window.innerHeight, behavior: "smooth" })
           }
         >
-          <span className="text-[10px] text-gray-500 uppercase tracking-widest">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
             Scroll
           </span>
-          <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+          <ChevronDown className="h-4 w-4 text-gray-400 transition-colors group-hover:text-white" />
         </motion.div>
       </motion.div>
     </section>

@@ -24,95 +24,76 @@ import {
   LogOut,
   LayoutDashboard,
   ArrowRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
 
+// Flat list (still used by mobile menu)
 const services = [
+  { name: "ERP Solutions",     href: "/services#erp",          icon: BarChart3,    description: "SAP & Oracle Implementation"     },
+  { name: "Cloud Services",    href: "/services#cloud",        icon: Cloud,        description: "Cloud Migration & Management"    },
+  { name: "AI & Analytics",    href: "/services#ai",           icon: Cpu,          description: "AI & Machine Learning"           },
+  { name: "Salesforce",        href: "/services#salesforce",   icon: Database,     description: "CRM Implementation"              },
+  { name: "Staffing",          href: "/services#staffing",     icon: Users,        description: "IT Talent Acquisition"           },
+  { name: "Training",          href: "/services#training",     icon: GraduationCap,description: "Corporate Programs"              },
+  { name: "Managed Services",  href: "/services#managed",      icon: Settings,     description: "IT Management & Support"         },
+  { name: "Outsourcing",       href: "/services#outsourcing",  icon: Headphones,   description: "Business Process Outsourcing"    },
+];
+
+// Mega-menu structure: grouped columns for desktop
+const servicesGroups: { heading: string; items: { name: string; href: string; icon: typeof Cloud; description: string }[] }[] = [
   {
-    name: "ERP Solutions",
-    href: "/services#erp",
-    icon: BarChart3,
-    description: "SAP & Oracle Implementation",
+    heading: "Platform",
+    items: [
+      { name: "Cloud Services",    href: "/services#cloud",     icon: Cloud,     description: "Migrate, modernise, and operate on AWS, Azure, GCP." },
+      { name: "Managed Services",  href: "/services#managed",   icon: Settings,  description: "24/7 monitoring, response, and reliability." },
+      { name: "ERP Solutions",     href: "/services#erp",       icon: BarChart3, description: "SAP, Oracle, and platform modernisation." },
+      { name: "Salesforce",        href: "/services#salesforce",icon: Database,  description: "CRM implementation and customisation." },
+    ],
   },
   {
-    name: "Cloud Services",
-    href: "/services#cloud",
-    icon: Cloud,
-    description: "Cloud Migration & Management",
+    heading: "Intelligence",
+    items: [
+      { name: "AI & Machine Learning", href: "/services#ai",    icon: Cpu,       description: "Production-grade ML, NLP, and computer vision." },
+      { name: "Data & Analytics",      href: "/services#data",  icon: Database,  description: "Warehousing, pipelines, and BI dashboards." },
+    ],
   },
   {
-    name: "AI & Analytics",
-    href: "/services#ai",
-    icon: Cpu,
-    description: "AI & Machine Learning",
-  },
-  {
-    name: "Salesforce",
-    href: "/services#salesforce",
-    icon: Database,
-    description: "CRM Implementation",
-  },
-  {
-    name: "Staffing",
-    href: "/services#staffing",
-    icon: Users,
-    description: "IT Talent Acquisition",
-  },
-  {
-    name: "Training",
-    href: "/services#training",
-    icon: GraduationCap,
-    description: "Corporate Programs",
-  },
-  {
-    name: "Managed Services",
-    href: "/services#managed",
-    icon: Settings,
-    description: "IT Management & Support",
-  },
-  {
-    name: "Outsourcing",
-    href: "/services#outsourcing",
-    icon: Headphones,
-    description: "Business Process Outsourcing",
+    heading: "People",
+    items: [
+      { name: "IT Staffing",   href: "/services#staffing",     icon: Users,        description: "Pre-vetted specialists — median 9-day time-to-bill." },
+      { name: "Corporate Training", href: "/services#training",icon: GraduationCap,description: "Upskilling programmes and certification paths." },
+      { name: "BPO & Outsourcing",  href: "/services#outsourcing", icon: Headphones,description: "Cross-functional managed business processes." },
+    ],
   },
 ];
 
+const servicesFeature = {
+  eyebrow: "New practice",
+  title: "AI in Production",
+  body:  "We help enterprises move past pilots — into governed, audited AI deployed against EHRs, ERPs, and customer systems.",
+  href:  "/services#ai",
+  cta:   "Read the practice",
+};
+
 const resources = [
-  {
-    name: "Ebooks",
-    href: "/resources/ebook",
-    icon: BookOpen,
-    description: "Free guides & whitepapers",
-  },
-  {
-    name: "Blog",
-    href: "/resources/blog",
-    icon: FileText,
-    description: "Latest insights & articles",
-  },
-  {
-    name: "Case Studies",
-    href: "/resources/case-studies",
-    icon: Briefcase,
-    description: "Success stories & results",
-  },
+  { name: "Ebooks",       href: "/resources/ebook",        icon: BookOpen,  description: "Free guides & whitepapers"   },
+  { name: "Blog",         href: "/resources/blog",         icon: FileText,  description: "Latest insights & articles"  },
+  { name: "Case Studies", href: "/resources/case-studies", icon: Briefcase, description: "Success stories & results"   },
 ];
 
 const aboutItems = [
-  {
-    name: "About Us",
-    href: "/about",
-    icon: Building,
-    description: "Learn about our company",
-  },
-  {
-    name: "Our Team",
-    href: "/about#team",
-    icon: Users,
-    description: "Meet the people behind our success",
-  },
+  { name: "About Us",  href: "/about",      icon: Building, description: "Our story, principles, and how we work." },
+  { name: "Our Team",  href: "/about#team", icon: Users,    description: "Meet the architects behind the practice."  },
 ];
+
+const aboutFeature = {
+  eyebrow: "Sixteen years on station",
+  title: "How we partner with enterprises",
+  body:  "A single accountable team, a consolidated SLA, and quarterly business reviews that report against the outcomes you actually asked for.",
+  href:  "/about",
+  cta:   "Read our approach",
+};
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -122,6 +103,175 @@ const navigation = [
   { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
+
+/* ============================================================
+   MEGA-MENU COMPONENTS — large enterprise dropdowns
+   ============================================================ */
+
+function MenuTile({
+  name, href, description, icon: Icon, onClick,
+}: {
+  name: string;
+  href: string;
+  description: string;
+  icon: typeof Cloud;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-[var(--reg-surface-3)]"
+    >
+      <div className="flex size-9 flex-none items-center justify-center rounded-lg border border-[var(--reg-brand-200)] bg-[var(--reg-brand-50)] text-[var(--reg-brand-700)]">
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--reg-text-primary)] transition-colors group-hover:text-[var(--reg-brand-700)]">
+          {name}
+          <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+        </p>
+        <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--reg-text-subtle)]">{description}</p>
+      </div>
+    </Link>
+  );
+}
+
+function FeaturePanel({
+  eyebrow, title, body, href, cta, onClick,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-gradient-to-br from-[var(--reg-brand-600)] to-[var(--reg-brand-800)] p-5 text-white"
+    >
+      <div className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-white/10 blur-3xl" />
+      <div className="relative">
+        <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+          {eyebrow}
+        </span>
+        <h4 className="mt-3 text-[18px] font-semibold leading-tight tracking-tight">{title}</h4>
+        <p className="mt-2 text-[12.5px] leading-relaxed text-white/75">{body}</p>
+        <span className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold transition-all group-hover:gap-1.5">
+          {cta}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function ServicesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="w-[920px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
+      <div className="grid grid-cols-12 gap-0">
+        <div className="col-span-12 p-6 lg:col-span-9">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-3">
+            {servicesGroups.map((group) => (
+              <div key={group.heading}>
+                <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
+                  {group.heading}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map((it) => (
+                    <MenuTile key={it.name} {...it} onClick={onNavigate} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="col-span-12 bg-[var(--reg-surface-2)] p-6 lg:col-span-3">
+          <FeaturePanel {...servicesFeature} onClick={onNavigate} />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-[var(--reg-line)] bg-[var(--reg-surface-2)] px-6 py-3">
+        <div className="flex items-center gap-2 text-[12px] text-[var(--reg-text-secondary)]">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--reg-success-500)]" />
+          <span>Single accountable SLA · quarterly business reviews</span>
+        </div>
+        <Link
+          href="/services"
+          onClick={onNavigate}
+          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--reg-text-primary)] hover:text-[var(--reg-brand-700)]"
+        >
+          View all 9 practices
+          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="w-[680px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
+      <div className="grid grid-cols-12 gap-0">
+        <div className="col-span-12 p-6 md:col-span-7">
+          <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
+            The firm
+          </p>
+          <div className="space-y-0.5">
+            {aboutItems.map((it) => (
+              <MenuTile key={it.name} {...it} onClick={onNavigate} />
+            ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--reg-line)] pt-5">
+            <div className="rounded-lg bg-[var(--reg-surface-2)] p-3">
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">Founded</p>
+              <p className="reg-tnum mt-1 text-[18px] font-semibold text-[var(--reg-text-primary)]">2010</p>
+            </div>
+            <div className="rounded-lg bg-[var(--reg-surface-2)] p-3">
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">Clients</p>
+              <p className="reg-tnum mt-1 text-[18px] font-semibold text-[var(--reg-text-primary)]">50+</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-span-12 bg-[var(--reg-surface-2)] p-6 md:col-span-5">
+          <FeaturePanel {...aboutFeature} onClick={onNavigate} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourcesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
+      <div className="p-6">
+        <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
+          Insights &amp; research
+        </p>
+        <div className="space-y-0.5">
+          {resources.map((it) => (
+            <MenuTile key={it.name} {...it} onClick={onNavigate} />
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between border-t border-[var(--reg-line)] bg-[var(--reg-surface-2)] px-6 py-3">
+        <span className="text-[12px] text-[var(--reg-text-secondary)]">New brief every fortnight</span>
+        <Link
+          href="/resources"
+          onClick={onNavigate}
+          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--reg-text-primary)] hover:text-[var(--reg-brand-700)]"
+        >
+          Browse all
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -243,43 +393,27 @@ export default function Header() {
                       }`} />
                     </button>
 
-                    {/* Dropdown - Dark Flyout Style */}
+                    {/* Mega-menu — wide enterprise dropdown */}
                     <AnimatePresence>
                       {activeDropdown === item.dropdownType && (
                         <motion.div
-                          initial={{ opacity: 0, y: 8 }}
+                          initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 pt-5"
+                          exit={{ opacity: 0, y: 10 }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className={`absolute top-full pt-5 ${
+                            item.dropdownType === "services"
+                              ? "left-1/2 -translate-x-1/2"
+                              : "left-1/2 -translate-x-1/2"
+                          }`}
                         >
-                          <div className={`overflow-hidden rounded-3xl bg-white text-sm shadow-lg outline-1 outline-gray-900/5 ${
-                            item.dropdownType === "services" ? "w-[580px]" : "w-[320px]"
-                          }`}>
-                            {/* Menu Items */}
-                            <div className={`p-4 ${item.dropdownType === "services" ? "grid grid-cols-2 gap-1" : ""}`}>
-                              {getDropdownItems(item.dropdownType || "").map((dropItem) => (
-                                <Link
-                                  key={dropItem.name}
-                                  href={dropItem.href}
-                                  className="group relative flex items-start gap-4 rounded-xl p-3"
-                                >
-                                  <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
-                                    <dropItem.icon aria-hidden="true" className="w-5 h-5 size-6 text-gray-600 group-hover:text-indigo-600" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900">
-                                      {dropItem.name}
-                                      <span className="absolute inset-0" />
-                                    </p>
-                                    <p className="mt-1 text-gray-600 text-xs leading-relaxed">
-                                      {dropItem.description}
-                                    </p>
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          </div>
+                          {item.dropdownType === "services" ? (
+                            <ServicesMegaMenu onNavigate={() => setActiveDropdown(null)} />
+                          ) : item.dropdownType === "about" ? (
+                            <AboutMegaMenu onNavigate={() => setActiveDropdown(null)} />
+                          ) : (
+                            <ResourcesMegaMenu onNavigate={() => setActiveDropdown(null)} />
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

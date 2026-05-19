@@ -27,7 +27,10 @@
       "Bash(Out-Null)",
       "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\gagan\\\\Desktop\\\\Projects\\\\oceanbluecorp\\\\src\\\\app\\\\terms\")",
       "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\gagan\\\\Desktop\\\\Projects\\\\oceanbluecorp\\\\src\\\\app\\\\cookies\")",
-      "Bash(Write-Output \"done\")"
+      "Bash(Write-Output \"done\")",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(awk *)",
+      "Bash(npm install *)"
     ]
   }
 }

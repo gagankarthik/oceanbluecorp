@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 
-// Landing page components with updated blue/purple color scheme
+import HeroSection from "@/components/HeroSection";
 import TrustedCompanies from "@/components/TrustedCompanies";
+import TerminalServices from "@/components/TerminalServices";
+import StatsSection from "@/components/StatsSection";
 import Certifications from "@/components/Certifications";
 import TestimonialsShowcase from "@/components/TestimonialsShowcase";
-import HeroSection from "@/components/HeroSection";
 import CtaSection from "@/components/CtaSection";
-import TerminalServices from "@/components/TerminalServices";
-import StatsSections from "@/components/StatsSection";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -21,29 +20,27 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="bg-[#f8fafc] relative overflow-hidden">
-      {/* Hero Section with Sky/Stars Background and Globe */}
+    <div className="relative overflow-hidden bg-white">
+      {/* Hero — dark navy/indigo gradient with globe */}
       <HeroSection />
 
-      {/* Scrolling Trusted Companies */}
+      {/* Clients — logo marquee */}
       <TrustedCompanies />
 
-      {/* Comprehensive Services - White background */}
-     
+      {/* What We Offer — colorful 9-card service grid */}
       <TerminalServices />
-      
-      {/* Animated Stats - Dark background */}
-      <StatsSections />
 
-      {/* Certifications - Light background */}
+      {/* Our Impact — stats on dark background */}
+      <StatsSection />
+
+      {/* Trust signals */}
       <Certifications />
 
-      {/* Testimonials - White background */}
+      {/* Client testimonials */}
       <TestimonialsShowcase />
 
-      {/* CTA Section - Blue gradient */}
+      {/* CTA */}
       <CtaSection />
-
     </div>
   );
 }

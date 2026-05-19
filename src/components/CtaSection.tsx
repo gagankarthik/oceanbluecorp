@@ -1,146 +1,249 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Mail, Phone } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Sparkles as SparklesIcon,
+} from "lucide-react";
+import { Sparkles } from "./ui/sparkles";
 
-const MESH = [
-  "radial-gradient(ellipse 90% 70% at 50% 120%, rgba(79,70,229,0.95) 0%, transparent 60%)",
-  "radial-gradient(ellipse 65% 55% at 8%  15%,  rgba(37,99,235,0.7)  0%, transparent 50%)",
-  "radial-gradient(ellipse 55% 45% at 92% 12%,  rgba(124,58,237,0.6) 0%, transparent 48%)",
-  "radial-gradient(ellipse 50% 40% at 15% 92%,  rgba(6,182,212,0.45) 0%, transparent 48%)",
-  "radial-gradient(ellipse 45% 38% at 88% 88%,  rgba(16,185,129,0.3) 0%, transparent 45%)",
-  "#080C14",
-].join(", ");
-
-const NOISE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
+/* ============================================================
+   CTA — Ocean Blue brand, sparkles background + glassmorphism.
+   ============================================================ */
 
 export default function CtaSection() {
   return (
-    <section className="relative overflow-hidden" style={{ background: "#080C14" }}>
-      {/* Rich Stripe-quality mesh gradient */}
-      <div className="pointer-events-none absolute inset-0" style={{ background: MESH }} />
-
-      {/* Grain texture */}
-      <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: NOISE, opacity: 0.04 }} />
-
-      {/* Fine dot grid */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-15"
-        style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
-      />
-
-      {/* Radial top-bloom for depth */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse 70% 50% at 50% -5%, rgba(255,255,255,0.12) 0%, transparent 60%)" }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 text-center md:py-36 lg:px-8">
+    <section className="relative overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-7xl">
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="relative isolate overflow-hidden rounded-3xl"
+          style={{
+            background:
+              "linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%)",
+          }}
         >
-          {/* Badge */}
-          <div className="mb-9 flex justify-center">
-            <span
-              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium backdrop-blur-sm"
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                color: "rgba(255,255,255,0.8)",
-                fontFamily: "var(--font-display)",
-              }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-white/55" />
-              Ready to get started?
-            </span>
+          {/* Sparkles particle layer */}
+          <Sparkles
+            className="absolute inset-0 z-0"
+            density={520}
+            size={1.4}
+            minSize={0.5}
+            speed={0.5}
+            minSpeed={0.08}
+            opacity={0.9}
+            opacitySpeed={2.4}
+            minOpacity={0.05}
+            color="#c4b5fd"
+          />
+
+          {/* Soft animated orbs — depth above particles */}
+          <motion.div
+            aria-hidden
+            animate={{ scale: [1, 1.18, 1], opacity: [0.45, 0.7, 0.45] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+            className="pointer-events-none absolute -right-32 -top-32 z-[1] h-96 w-96 rounded-full bg-blue-500/35 blur-3xl"
+          />
+          <motion.div
+            aria-hidden
+            animate={{ scale: [1.15, 1, 1.15], opacity: [0.3, 0.55, 0.3] }}
+            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="pointer-events-none absolute -bottom-40 -left-32 z-[1] h-96 w-96 rounded-full bg-cyan-500/30 blur-3xl"
+          />
+
+          {/* Bottom wave for continuity with hero */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-[2]">
+            <svg viewBox="0 0 1440 80" className="h-auto w-full" preserveAspectRatio="none">
+              <path
+                fill="rgba(255,255,255,0.025)"
+                d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z"
+              />
+            </svg>
           </div>
 
-          {/* Headline — mixed typeface */}
-          <div className="mb-7">
-            <h2
-              style={{
-                fontSize: "clamp(2.8rem, 7vw, 5.5rem)",
-                lineHeight: 1.02,
-                letterSpacing: "-0.025em",
-              }}
+          {/* Top glassmorphism overlay — the foreground card */}
+          <div className="relative z-10 grid grid-cols-12 gap-10 p-8 sm:p-12 lg:p-16">
+            {/* LEFT: glass headline panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="col-span-12 lg:col-span-7"
             >
-              <span
-                className="block text-white"
-                style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}
-              >
-                Let&rsquo;s build something
-              </span>
-              <span
-                className="block"
+              <div
+                className="relative overflow-hidden rounded-2xl border border-white/15 p-6 sm:p-8"
                 style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  letterSpacing: "-0.015em",
-                  background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 35%, #a5b4fc 65%, #818cf8 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  background: "rgba(255, 255, 255, 0.06)",
+                  backdropFilter: "blur(20px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(20px) saturate(140%)",
+                  boxShadow:
+                    "inset 0 1px 0 0 rgba(255,255,255,0.18), 0 30px 80px -20px rgba(0,0,0,0.45)",
                 }}
               >
-                extraordinary.
-              </span>
-            </h2>
-          </div>
+                {/* Top sheen line */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                  }}
+                />
 
-          {/* Subtext */}
-          <p className="mx-auto mb-11 max-w-lg text-base sm:text-lg leading-relaxed text-white/55">
-            Whether you need elite IT talent, cloud infrastructure, or a complete
-            digital transformation — we deliver at every scale.
-          </p>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-sm">
+                  <SparklesIcon className="h-3 w-3 text-cyan-300" />
+                  Let's build something
+                </span>
 
-          {/* CTAs */}
-          <div className="mb-11 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/contact"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 sm:px-9 sm:py-4 text-sm font-bold transition-all hover:bg-white/92"
-              style={{
-                color: "#4338ca",
-                boxShadow: "0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
-                fontFamily: "var(--font-display)",
-              }}
-            >
-              Contact us today
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <Link
-              href="/careers"
-              className="inline-flex items-center gap-2 rounded-full border px-6 py-3.5 sm:px-9 sm:py-4 text-sm font-semibold backdrop-blur-sm transition-all hover:border-white/45 hover:bg-white/8 hover:text-white"
-              style={{
-                borderColor: "rgba(255,255,255,0.22)",
-                color: "rgba(255,255,255,0.75)",
-                fontFamily: "var(--font-display)",
-              }}
-            >
-              Explore careers
-            </Link>
-          </div>
+                <h2
+                  className="mt-5 text-[2rem] font-light leading-[1.05] tracking-tight text-white sm:text-[2.6rem] lg:text-[3.4rem]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Ready to modernise{" "}
+                  <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 bg-clip-text font-medium text-transparent">
+                    what's next?
+                  </span>
+                </h2>
 
-          {/* Contact details */}
-          <div className="flex flex-col items-center justify-center gap-4 text-sm text-white/38 sm:flex-row sm:gap-7">
-            <a
-              href="mailto:hr@oceanbluecorp.com"
-              className="flex items-center gap-2 transition-colors hover:text-white/72"
+                <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/75 sm:text-[16px]">
+                  Tell us where you're headed. We'll bring the people, the
+                  playbook, and the operating muscle to get you there — one
+                  accountable partner, one consolidated SLA.
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Link
+                    href="/contact"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-xl"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Book a discovery call
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                  <Link
+                    href="/services"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/[0.08] px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:border-white/45 hover:bg-white/[0.14]"
+                  >
+                    Explore services
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* RIGHT: glass contact card */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="col-span-12 lg:col-span-5"
             >
-              <Mail className="h-4 w-4" />
-              hr@oceanbluecorp.com
-            </a>
-            <div className="hidden h-4 w-px bg-white/14 sm:block" />
-            <a
-              href="tel:+16148446925"
-              className="flex items-center gap-2 transition-colors hover:text-white/72"
-            >
-              <Phone className="h-4 w-4" />
-              +1 (614) 844-6925
-            </a>
+              <div
+                className="relative overflow-hidden rounded-2xl border border-white/15 p-5 sm:p-6"
+                style={{
+                  background: "rgba(255, 255, 255, 0.06)",
+                  backdropFilter: "blur(20px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(20px) saturate(140%)",
+                  boxShadow:
+                    "inset 0 1px 0 0 rgba(255,255,255,0.18), 0 30px 80px -20px rgba(0,0,0,0.45)",
+                }}
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                  }}
+                />
+
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                  Get in touch
+                </p>
+                <p
+                  className="mt-1 text-[18px] font-medium text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Reach the team directly.
+                </p>
+
+                <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5">
+                  <li>
+                    <a
+                      href="mailto:info@oceanbluecorp.com"
+                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 transition-all hover:border-cyan-300/40 hover:bg-white/[0.08]"
+                    >
+                      <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-500/30 ring-1 ring-white/15">
+                        <Mail className="h-4 w-4 text-cyan-200" strokeWidth={2.25} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/55">
+                          Email
+                        </p>
+                        <p className="truncate text-[13.5px] font-semibold text-white">
+                          info@oceanbluecorp.com
+                        </p>
+                      </div>
+                      <ArrowRight className="ml-auto h-4 w-4 text-white/40 transition-all group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="tel:+16148446925"
+                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 transition-all hover:border-cyan-300/40 hover:bg-white/[0.08]"
+                    >
+                      <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-gradient-to-br from-indigo-500/30 to-violet-500/30 ring-1 ring-white/15">
+                        <Phone className="h-4 w-4 text-cyan-200" strokeWidth={2.25} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/55">
+                          Phone
+                        </p>
+                        <p className="truncate text-[13.5px] font-semibold text-white">
+                          +1 (614) 844-6925
+                        </p>
+                      </div>
+                      <ArrowRight className="ml-auto h-4 w-4 text-white/40 transition-all group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+                    </a>
+                  </li>
+                  <li>
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+                      <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-500/30 ring-1 ring-white/15">
+                        <MapPin className="h-4 w-4 text-cyan-200" strokeWidth={2.25} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/55">
+                          Headquarters
+                        </p>
+                        <p className="truncate text-[13.5px] font-semibold text-white">
+                          Powell, Ohio · USA
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5 text-[11.5px] text-white/65">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="relative inline-flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    </span>
+                    Replies within 24 hours
+                  </span>
+                  <span className="text-white/45">Mon — Fri</span>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>

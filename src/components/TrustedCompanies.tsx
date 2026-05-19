@@ -1,120 +1,106 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { Sparkles } from "./ui/sparkles";
 
 type Partner = {
   name: string;
   logo: string;
-  className?: string;
+  width?: number;
 };
 
+/* Clients only — tech partners (AWS, Snowflake, Databricks) live in the Hero */
 const partners: Partner[] = [
-  { 
-    name: "Ohio", 
-    logo: "https://development.ohio.gov/wps/wcm/connect/gov/7efff5ea-f9fd-4c0f-9a71-401183103f50/development-logo.png?MOD=AJPERES",
-    className: "h-12 w-auto"
-  },
-  { 
-    name: "HGS", 
-    logo: "/hgs.svg",
-    className: "h-12 w-auto"
-  },
-  { 
-    name: "Dieboldnixdorf", 
-    logo: "https://www.dieboldnixdorf.com/-/media/diebold/images/global/logo/dn-color-logo.svg",
-    className: "h-12 w-auto"
-  },
-  { 
-    name: "Satyawholesale", 
-    logo: "https://www.satyawholesalers.com/_next/image?url=https%3A%2F%2Fsatyawholesalers.net%2Fstorage%2F3288%2Fsatya-wholesale-logo-(1).png&w=1920&q=75",
-    className: "h-12 w-auto"
-  },
-  { 
-    name: "CityBarbeque", 
-    logo: "/citybarbeque.svg",
-    className: "h-12 w-auto"
-  },
-  { 
-    name: "Tacos", 
-    logo: "/tacos.webp", 
-    className: "h-12 w-auto bg-black p-2 rounded-md"
-  },
+  { name: "Ohio Development",   logo: "https://development.ohio.gov/wps/wcm/connect/gov/7efff5ea-f9fd-4c0f-9a71-401183103f50/development-logo.png?MOD=AJPERES", width: 130 },
+  { name: "HGS",                logo: "/hgs.svg",                     width: 110 },
+  { name: "Diebold Nixdorf",    logo: "https://www.dieboldnixdorf.com/-/media/diebold/images/global/logo/dn-color-logo.svg", width: 150 },
+  { name: "Satya Wholesalers",  logo: "https://www.satyawholesalers.com/_next/image?url=https%3A%2F%2Fsatyawholesalers.net%2Fstorage%2F3288%2Fsatya-wholesale-logo-(1).png&w=1920&q=75", width: 130 },
+  { name: "City Barbeque",      logo: "/citybarbeque.svg",            width: 130 },
 ];
 
-function LogoCard({ partner }: { partner: Partner }) {
+function LogoItem({ p }: { p: Partner }) {
   return (
-    <div className="flex-shrink-0 px-3 sm:px-6 md:px-8 group">
-      <div className="relative h-16 w-32 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-        {partner.logo.startsWith("http") ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={partner.logo}
-            alt={partner.name}
-            className={`object-contain max-h-full max-w-full ${partner.className || ""}`}
-          />
-        ) : (
-          <Image
-            src={partner.logo}
-            alt={partner.name}
-            fill
-            className={`object-contain ${partner.className || ""}`}
-            sizes="(max-width: 768px) 100px, 128px"
-          />
-        )}
-      </div>
+    <div className="flex h-10 shrink-0 items-center px-6 sm:px-9">
+      {p.logo.startsWith("http") ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={p.logo}
+          alt={p.name}
+          width={p.width ?? 120}
+          height={32}
+          className="h-7 w-auto object-contain opacity-65 brightness-0 invert transition-all duration-300 hover:opacity-100"
+          style={{ maxWidth: p.width ?? 120 }}
+        />
+      ) : (
+        <Image
+          src={p.logo}
+          alt={p.name}
+          width={p.width ?? 120}
+          height={32}
+          className="h-7 w-auto object-contain opacity-65 brightness-0 invert transition-all duration-300 hover:opacity-100"
+        />
+      )}
     </div>
   );
 }
 
 export default function TrustedCompanies() {
+  const list = [...partners, ...partners]; // duplicate for seamless loop
+
   return (
-    <section className="relative bg-white py-16 overflow-hidden border-y border-gray-200">
-      <div className="px-6 md:px-12 lg:px-20 max-w-[1400px] mx-auto">
-        {/* Header */}
+    <section
+      className="relative isolate overflow-hidden py-14 sm:py-16"
+      style={{
+        background:
+          "linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+      }}
+    >
+      {/* Sparkles particle background */}
+      <Sparkles
+        className="absolute inset-0 z-0"
+        density={460}
+        size={1.1}
+        minSize={0.4}
+        speed={0.45}
+        minSpeed={0.08}
+        opacity={0.85}
+        opacitySpeed={2}
+        minOpacity={0.05}
+        color="#a5b4fc"
+      />
+
+      {/* Subtle radial wash on top of particles for depth */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 50% 50%, transparent 0%, rgba(15,23,42,0.55) 100%)",
+        }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-2 text-center"
         >
-          <p className="text-gray-600 text-sm font-medium tracking-wider uppercase">
-            Trusted by industry leaders
+          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-200/80">
+            <span className="inline-block h-px w-6 bg-indigo-400/40" />
+            Trusted by leaders across industries
+            <span className="inline-block h-px w-6 bg-indigo-400/40" />
           </p>
         </motion.div>
 
-        {/* Scrolling logos */}
-        <div className="relative">
-          <div className="flex overflow-hidden">
-            <motion.div
-              className="flex gap-8 sm:gap-12 md:gap-16 items-center"
-              animate={{
-                x: [0, -1920],
-              }}
-              transition={{
-                x: {
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 30,
-                  ease: "linear",
-                },
-              }}
-            >
-              {/* First set */}
-              {partners.map((partner, index) => (
-                <LogoCard key={`first-${index}`} partner={partner} />
-              ))}
-              {/* Duplicate set for seamless loop */}
-              {partners.map((partner, index) => (
-                <LogoCard key={`second-${index}`} partner={partner} />
-              ))}
-            </motion.div>
+        <div className="relative mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+          <div className="flex reg-marquee">
+            {list.map((p, i) => (
+              <LogoItem key={`${p.name}-${i}`} p={p} />
+            ))}
           </div>
-
-          {/* Gradient overlays */}
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none" />
         </div>
       </div>
     </section>
