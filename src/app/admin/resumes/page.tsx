@@ -178,30 +178,17 @@ export default function ResumeBankPage() {
     setQueue(q => q.map(item => item.id === id ? { ...item, ...patch } : item));
 
   const uploadOne = async (item: QueueItem): Promise<void> => {
-    updateQueueItem(item.id, { status: "uploading", progress: 5 });
+    updateQueueItem(item.id, { status: "uploading", progress: 10 });
     try {
-      const res = await fetch("/api/resume-bank", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName:      item.file.name,
-          fileType:      item.file.type,
-          fileSize:      item.file.size,
-          candidateName: item.candidateName || undefined,
-          uploadedBy:    user?.email || "recruiter",
-        }),
-      });
+      const formData = new FormData();
+      formData.append("file", item.file);
+      formData.append("uploadedBy", user?.email || "recruiter");
+      if (item.candidateName) formData.append("candidateName", item.candidateName);
+
+      const res = await fetch("/api/resume-bank", { method: "POST", body: formData });
+      updateQueueItem(item.id, { progress: 80 });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to initiate upload");
-
-      updateQueueItem(item.id, { progress: 30 });
-
-      const s3 = await fetch(data.uploadUrl, {
-        method: "PUT",
-        body: item.file,
-        headers: { "Content-Type": item.file.type },
-      });
-      if (!s3.ok) throw new Error("S3 upload failed");
+      if (!res.ok) throw new Error(data.error || "Upload failed");
 
       updateQueueItem(item.id, { status: "done", progress: 100 });
     } catch (e) {

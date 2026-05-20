@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   generateResumeBankKey,
-  getResumeUploadUrl,
+  uploadResume,
   validateResumeFile,
   listResumeBankObjects,
   parseResumeBankKey,
@@ -46,31 +46,35 @@ export async function GET() {
   }
 }
 
-// POST — get presigned upload URL (no DynamoDB write needed)
+// POST — upload resume file server-side to S3 (avoids browser CORS restrictions on direct S3 PUT)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { fileName, fileType, fileSize, candidateName, uploadedBy } = body;
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const uploadedBy = formData.get("uploadedBy") as string | null;
+    const candidateName = (formData.get("candidateName") as string | null) || undefined;
 
-    if (!fileName || !fileType || !fileSize || !uploadedBy) {
+    if (!file || !uploadedBy) {
       return NextResponse.json(
-        { error: "Missing required fields: fileName, fileType, fileSize, uploadedBy" },
+        { error: "Missing required fields: file and uploadedBy" },
         { status: 400 },
       );
     }
 
-    const validation = validateResumeFile({ type: fileType, size: fileSize });
+    const validation = validateResumeFile({ type: file.type, size: file.size });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const fileKey = generateResumeBankKey(uploadedBy, fileName, candidateName);
-    const uploadUrlResult = await getResumeUploadUrl(fileKey, fileType);
-    if (!uploadUrlResult.success) {
-      return NextResponse.json({ error: uploadUrlResult.error }, { status: 500 });
+    const fileKey = generateResumeBankKey(uploadedBy, file.name, candidateName);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const result = await uploadResume(buffer, fileKey, file.type);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, uploadUrl: uploadUrlResult.url, fileKey });
+    return NextResponse.json({ success: true, fileKey });
   } catch (error) {
     console.error("Resume bank upload error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
