@@ -46,29 +46,41 @@ export async function GET() {
   }
 }
 
-// POST — upload resume file server-side to S3 (avoids browser CORS restrictions on direct S3 PUT)
+// POST — upload resume file server-side to S3 (avoids browser CORS restrictions on direct S3 PUT).
+// File is sent as a raw binary body with metadata in headers rather than multipart/form-data,
+// because AWS Amplify's SSR compute layer does not reliably forward the multipart Content-Type
+// (boundary) to the function, which makes request.formData() throw.
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const uploadedBy = formData.get("uploadedBy") as string | null;
-    const candidateName = (formData.get("candidateName") as string | null) || undefined;
+    const rawFileName = request.headers.get("x-file-name");
+    const rawUploadedBy = request.headers.get("x-uploaded-by");
+    const rawCandidateName = request.headers.get("x-candidate-name");
+    const fileType = request.headers.get("x-file-type") || "application/octet-stream";
 
-    if (!file || !uploadedBy) {
+    if (!rawFileName || !rawUploadedBy) {
       return NextResponse.json(
         { error: "Missing required fields: file and uploadedBy" },
         { status: 400 },
       );
     }
 
-    const validation = validateResumeFile({ type: file.type, size: file.size });
+    // Header values are encodeURIComponent'd on the client to stay ASCII-safe.
+    const fileName = decodeURIComponent(rawFileName);
+    const uploadedBy = decodeURIComponent(rawUploadedBy);
+    const candidateName = rawCandidateName ? decodeURIComponent(rawCandidateName) : undefined;
+
+    const buffer = Buffer.from(await request.arrayBuffer());
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: "Empty file body" }, { status: 400 });
+    }
+
+    const validation = validateResumeFile({ type: fileType, size: buffer.length });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const fileKey = generateResumeBankKey(uploadedBy, file.name, candidateName);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const result = await uploadResume(buffer, fileKey, file.type);
+    const fileKey = generateResumeBankKey(uploadedBy, fileName, candidateName);
+    const result = await uploadResume(buffer, fileKey, fileType);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });

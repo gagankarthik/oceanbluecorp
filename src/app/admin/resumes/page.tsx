@@ -180,12 +180,19 @@ export default function ResumeBankPage() {
   const uploadOne = async (item: QueueItem): Promise<void> => {
     updateQueueItem(item.id, { status: "uploading", progress: 10 });
     try {
-      const formData = new FormData();
-      formData.append("file", item.file);
-      formData.append("uploadedBy", user?.email || "recruiter");
-      if (item.candidateName) formData.append("candidateName", item.candidateName);
-
-      const res = await fetch("/api/resume-bank", { method: "POST", body: formData });
+      // Send the file as a raw binary body with metadata in headers (not multipart/form-data):
+      // Amplify's SSR compute layer drops the multipart boundary, breaking request.formData().
+      const res = await fetch("/api/resume-bank", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "x-file-name": encodeURIComponent(item.file.name),
+          "x-file-type": item.file.type || "application/octet-stream",
+          "x-uploaded-by": encodeURIComponent(user?.email || "recruiter"),
+          ...(item.candidateName ? { "x-candidate-name": encodeURIComponent(item.candidateName) } : {}),
+        },
+        body: item.file,
+      });
       updateQueueItem(item.id, { progress: 80 });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
