@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 import HeroSection from "@/components/HeroSection";
 import TrustedCompanies from "@/components/TrustedCompanies";
-import TerminalServices from "@/components/TerminalServices";
+import ScrollMorphHero from "@/components/ui/scroll-morph-hero";
 import StatsSection from "@/components/StatsSection";
 import Certifications from "@/components/Certifications";
 import TestimonialsShowcase from "@/components/TestimonialsShowcase";
@@ -27,8 +27,10 @@ export default function Home() {
       {/* Clients — logo marquee */}
       <TrustedCompanies />
 
-      {/* What We Offer — colorful 9-card service grid */}
-      <TerminalServices />
+      {/* What We Offer — scroll-morph services showcase */}
+      <section className="relative h-screen min-h-[820px] w-full overflow-hidden">
+        <ScrollMorphHero />
+      </section>
 
       {/* Our Impact — stats on dark background */}
       <StatsSection />

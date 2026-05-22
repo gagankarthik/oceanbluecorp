@@ -26,7 +26,8 @@ function ServiceCard({ s }: { s: typeof services[0] }) {
   return (
     <Link
       href="/services"
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white p-7 transition-all duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      // Light card by default; flips to a dark theme on hover.
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       style={{
         boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.04)",
         "--glow": s.glow,
@@ -41,7 +42,7 @@ function ServiceCard({ s }: { s: typeof services[0] }) {
       {/* Hover glow overlay */}
       <div
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ boxShadow: `inset 0 0 0 1px ${s.iColor}22, 0 8px 32px -4px ${s.iColor}1a` }}
+        style={{ boxShadow: `inset 0 0 0 1px ${s.iColor}33, 0 8px 32px -4px ${s.iColor}33` }}
       />
 
       {/* Icon + number */}
@@ -52,16 +53,20 @@ function ServiceCard({ s }: { s: typeof services[0] }) {
         >
           <s.icon className="h-5 w-5" style={{ color: s.iColor }} />
         </div>
-        <span className="font-mono text-[10px] text-gray-200 tabular-nums">{s.id}</span>
+        <span className="font-mono text-[10px] text-gray-200 tabular-nums transition-colors duration-300 group-hover:text-white/20">
+          {s.id}
+        </span>
       </div>
 
       <h3
-        className="mb-2 text-[15px] font-bold tracking-tight text-gray-900"
+        className="mb-2 text-[15px] font-bold tracking-tight text-gray-900 transition-colors duration-300 group-hover:text-white"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {s.title}
       </h3>
-      <p className="flex-1 text-sm leading-relaxed text-slate-500">{s.desc}</p>
+      <p className="flex-1 text-sm leading-relaxed text-slate-500 transition-colors duration-300 group-hover:text-slate-300">
+        {s.desc}
+      </p>
 
       <div
         className="mt-5 flex translate-y-1 items-center gap-1 text-xs font-semibold opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
