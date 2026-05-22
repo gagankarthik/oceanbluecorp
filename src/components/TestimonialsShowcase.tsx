@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Quote, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeader } from "./landing/SectionHeader";
+import { Sparkles } from "./ui/sparkles";
 
 /* ============================================================
    TESTIMONIALS — real Ocean Blue clients, Register aesthetic.
@@ -113,8 +114,23 @@ export default function TestimonialsShowcase() {
   const next = () => setActive((p) => (p + 1) % total);
 
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-7xl">
+    <section className="relative isolate overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28">
+      {/* Sparkles particle background — subtle indigo specks, faintly visible on white.
+         Masked top/bottom so it blends into the adjacent white sections. */}
+      <Sparkles
+        className="absolute inset-0 z-0 [mask-image:linear-gradient(to_bottom,transparent,black_16%,black_84%,transparent)]"
+        density={300}
+        size={1.3}
+        minSize={0.4}
+        speed={0.4}
+        minSpeed={0.06}
+        opacity={0.5}
+        opacitySpeed={2}
+        minOpacity={0.04}
+        color="#6366f1"
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl">
         <SectionHeader
           eyebrow="Client voices"
           title={<>What our clients <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent">say about us.</span></>}

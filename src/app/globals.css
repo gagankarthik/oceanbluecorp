@@ -1038,3 +1038,49 @@
 }
 .reg-marquee { animation: reg-marquee 60s linear infinite; }
 .reg-marquee:hover { animation-play-state: paused; }
+
+/* ── Aurora animated background (used by <AuroraBackground />) ──────
+   Optimised, dark-mode-only port of the Aceternity aurora: gradient
+   logic lives here (not in a giant arbitrary-class string), colours are
+   explicit (no undefined --blue-500 vars), and background-attachment:fixed
+   is dropped (it forces repaints / breaks on iOS). */
+@keyframes aurora {
+  from { background-position: 50% 50%, 50% 50%; }
+  to   { background-position: 350% 50%, 350% 50%; }
+}
+
+.aurora-layer {
+  --aurora: repeating-linear-gradient(100deg,
+    #3b82f6 10%, #a5b4fc 15%, #93c5fd 20%, #ddd6fe 25%, #60a5fa 30%);
+  --aurora-stripes: repeating-linear-gradient(100deg,
+    #0b1224 0%, #0b1224 7%, transparent 10%, transparent 12%, #0b1224 16%);
+
+  position: absolute;
+  inset: -10px;
+  pointer-events: none;
+  opacity: 0.45;
+  background-image: var(--aurora-stripes), var(--aurora);
+  background-size: 300%, 200%;
+  background-position: 50% 50%, 50% 50%;
+  filter: blur(10px);
+  will-change: transform;
+}
+
+.aurora-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--aurora-stripes), var(--aurora);
+  background-size: 200%, 100%;
+  mix-blend-mode: difference;
+  animation: aurora 60s linear infinite;
+}
+
+.aurora-layer.aurora-mask {
+  -webkit-mask-image: radial-gradient(ellipse at 100% 0%, #000 10%, transparent 70%);
+  mask-image: radial-gradient(ellipse at 100% 0%, #000 10%, transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-layer::after { animation: none; }
+}

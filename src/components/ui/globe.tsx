@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import { Color, Vector3 } from "three";
 import ThreeGlobe from "three-globe";
 import { useThree, useFrame, Canvas, extend } from "@react-three/fiber";
@@ -263,32 +263,107 @@ function OrbitControlsComponent() {
   return null;
 }
 
+/* Returns whether a WebGL context can actually be created in this browser.
+   Computed once on mount (lazy state init) — World is loaded with ssr:false,
+   so `document` is available at first render and there's no hydration flash. */
+function useWebGLAvailable(): boolean | null {
+  return useState<boolean | null>(() => {
+    if (typeof document === "undefined") return null;
+    try {
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl2") ||
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl");
+      if (!gl) return false;
+      // Release the probe context immediately so we don't burn one of the
+      // browser's limited WebGL contexts.
+      (gl as WebGLRenderingContext)
+        .getExtension?.("WEBGL_lose_context")
+        ?.loseContext?.();
+      return true;
+    } catch {
+      return false;
+    }
+  })[0];
+}
+
+/* Catches any runtime WebGL/Three errors thrown while mounting <Canvas>
+   (e.g. context lost mid-render) and shows the static fallback instead of
+   crashing the whole page. */
+class GlobeErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children;
+  }
+}
+
+/* Static, dependency-free globe shown when WebGL is unavailable. Keeps the
+   hero's right column from collapsing and roughly matches the live globe's
+   dark-indigo body + blue atmosphere glow. */
+function GlobeFallback() {
+  return (
+    <div
+      className="relative flex h-full w-full items-center justify-center"
+      aria-hidden
+    >
+      <div className="relative aspect-square w-[82%] max-w-[520px]">
+        {/* outer atmosphere glow */}
+        <div className="absolute -inset-6 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(96,165,250,0.30),rgba(167,139,250,0.12)_45%,transparent_70%)] blur-2xl" />
+        {/* sphere body */}
+        <div className="absolute inset-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_35%_28%,#3a2b63,#1d072e_72%)] shadow-[inset_-24px_-24px_70px_rgba(0,0,0,0.65),0_0_90px_rgba(99,102,241,0.22)] ring-1 ring-white/10">
+          {/* latitude lines */}
+          <div className="absolute inset-0 rounded-full opacity-[0.16] [background:repeating-linear-gradient(0deg,transparent_0,transparent_21px,rgba(255,255,255,0.5)_22px,transparent_23px)]" />
+          {/* longitude lines */}
+          <div className="absolute inset-0 rounded-full opacity-[0.10] [background:repeating-linear-gradient(90deg,transparent_0,transparent_29px,rgba(255,255,255,0.4)_30px,transparent_31px)]" />
+          {/* top-left sheen */}
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_38%_25%,rgba(255,255,255,0.20),transparent_42%)]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function World(props: WorldProps) {
   const { globeConfig } = props;
+  const webglAvailable = useWebGLAvailable();
+
+  // null = not yet determined (effectively never, since ssr:false)
+  if (webglAvailable === null) return null;
+  if (webglAvailable === false) return <GlobeFallback />;
+
   return (
-    <Canvas
-      camera={{ fov: 50, near: 1, far: 2000, position: [0, 0, cameraZ] }}
-      gl={{ alpha: true, antialias: true }}
-      dpr={[1, 2]}
-    >
-      <fog attach="fog" args={[0xffffff, 400, 2000]} />
-      <ambientLight color={globeConfig.ambientLight} intensity={0.6} />
-      <directionalLight
-        color={globeConfig.directionalLeftLight}
-        position={new Vector3(-400, 100, 400)}
-      />
-      <directionalLight
-        color={globeConfig.directionalTopLight}
-        position={new Vector3(-200, 500, 200)}
-      />
-      <pointLight
-        color={globeConfig.pointLight}
-        position={new Vector3(-200, 500, 200)}
-        intensity={0.8}
-      />
-      <Globe {...props} />
-      <OrbitControlsComponent />
-    </Canvas>
+    <GlobeErrorBoundary fallback={<GlobeFallback />}>
+      <Canvas
+        camera={{ fov: 50, near: 1, far: 2000, position: [0, 0, cameraZ] }}
+        gl={{ alpha: true, antialias: true }}
+        dpr={[1, 2]}
+      >
+        <fog attach="fog" args={[0xffffff, 400, 2000]} />
+        <ambientLight color={globeConfig.ambientLight} intensity={0.6} />
+        <directionalLight
+          color={globeConfig.directionalLeftLight}
+          position={new Vector3(-400, 100, 400)}
+        />
+        <directionalLight
+          color={globeConfig.directionalTopLight}
+          position={new Vector3(-200, 500, 200)}
+        />
+        <pointLight
+          color={globeConfig.pointLight}
+          position={new Vector3(-200, 500, 200)}
+          intensity={0.8}
+        />
+        <Globe {...props} />
+        <OrbitControlsComponent />
+      </Canvas>
+    </GlobeErrorBoundary>
   );
 }
 

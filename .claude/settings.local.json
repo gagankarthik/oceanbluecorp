@@ -30,7 +30,11 @@
       "Bash(Write-Output \"done\")",
       "Skill(frontend-design:frontend-design)",
       "Bash(awk *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm ls *)",
+      "PowerShell(git *)",
+      "PowerShell(npx tsc --noEmit)"
     ]
   }
 }
