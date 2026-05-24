@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import ContactPage from "./_content";
+import { getSiteContent } from "@/lib/content";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -14,6 +17,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oceanbluecorp.com/contact" },
 };
 
-export default function Contact() {
-  return <ContactPage />;
+export default async function Contact() {
+  const content = await getSiteContent("contact");
+  return <ContactPage content={content} />;
 }

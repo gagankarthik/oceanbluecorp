@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getAllContentBlocks, upsertContentBlock } from "@/lib/aws/dynamodb";
 
 // GET /api/content — fetch all content blocks
@@ -28,6 +29,15 @@ export async function PUT(request: NextRequest) {
     const result = await upsertContentBlock(id, fields, updatedBy, updatedByName);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+
+    // Push the edit live immediately: clear the cached announcement and
+    // re-render the layout + content pages (so removing the announcement —
+    // or any CMS copy — reflects on the site right away, not after 60s).
+    try {
+      revalidatePath("/", "layout");
+    } catch {
+      // revalidation is best-effort; the 60s ISR window is the fallback
     }
 
     return NextResponse.json({ success: true });

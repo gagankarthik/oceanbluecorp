@@ -5,7 +5,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
@@ -23,6 +23,12 @@ import {
   Star,
   Eye,
   Sparkles,
+  LayoutDashboard,
+  Search,
+  Menu,
+  X,
+  Home,
+  LogOut,
 } from "lucide-react";
 import {
   Cell,
@@ -120,9 +126,9 @@ function ApplicationJourney({ status }: { status: string }) {
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                   current
-                    ? "border-blue-600 bg-blue-600 shadow-sm shadow-blue-300"
+                    ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt)] shadow-sm shadow-[rgba(29,78,216,0.3)]"
                     : reached
-                    ? "border-blue-400 bg-blue-400"
+                    ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt)]"
                     : "border-gray-200 bg-white"
                 }`}
               >
@@ -132,12 +138,12 @@ function ApplicationJourney({ status }: { status: string }) {
                   </svg>
                 )}
               </div>
-              <span className={`text-[9px] mt-1 font-medium whitespace-nowrap ${current ? "text-blue-600" : reached ? "text-gray-600" : "text-gray-300"}`}>
+              <span className={`text-[9px] mt-1 font-medium whitespace-nowrap ${current ? "text-[var(--hz-cobalt)]" : reached ? "text-gray-600" : "text-gray-300"}`}>
                 {step.label}
               </span>
             </div>
             {i < JOURNEY_STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-1 mb-3 ${i < stepIndex && !isRejected ? "bg-blue-400" : "bg-gray-200"}`} />
+              <div className={`flex-1 h-0.5 mx-1 mb-3 ${i < stepIndex && !isRejected ? "bg-[var(--hz-cobalt)]" : "bg-gray-200"}`} />
             )}
           </div>
         );
@@ -152,12 +158,132 @@ function ApplicationJourney({ status }: { status: string }) {
   );
 }
 
+// ---- Candidate sidebar ----
+
+const USER_NAV = [
+  { name: "Dashboard",       href: "/dashboard",              icon: LayoutDashboard },
+  { name: "My Applications", href: "/dashboard#applications", icon: FileText },
+  { name: "Browse Jobs",     href: "/careers",                icon: Briefcase },
+  { name: "Search Roles",    href: "/careers/search",         icon: Search },
+];
+
+function DashboardSidebar({
+  open,
+  onClose,
+  user,
+  onSignOut,
+}: {
+  open: boolean;
+  onClose: () => void;
+  user: { name?: string; email?: string } | null | undefined;
+  onSignOut: () => void;
+}) {
+  const pathname = usePathname();
+  const avatar = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`;
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-gray-900/60 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 z-50 h-full w-64 border-r border-gray-200/80 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4">
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/logo.png" alt="Ocean Blue Corporation" width={140} height={40} className="h-7 w-auto md:h-8" priority />
+            </Link>
+            <button
+              onClick={onClose}
+              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:hidden"
+              aria-label="Close menu"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Profile */}
+          <div className="border-b border-gray-100 px-4 py-4">
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatar} alt={user?.name || "User"} className="h-10 w-10 rounded-full bg-[var(--hz-cobalt-100)] ring-1 ring-gray-200" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">{user?.name || "Candidate"}</p>
+                <span className="mt-0.5 inline-flex items-center rounded bg-[var(--hz-cobalt-100)] px-1.5 py-px text-[10px] font-semibold text-[var(--hz-cobalt)]">
+                  Candidate
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-px overflow-y-auto px-2 py-3">
+            <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Menu</p>
+            {USER_NAV.map((item) => {
+              const base = item.href.split("#")[0];
+              const isActive = item.href.includes("#")
+                ? false
+                : base === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(base);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+                    isActive
+                      ? "bg-[var(--hz-cobalt)] text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                >
+                  <item.icon className="h-[15px] w-[15px] flex-shrink-0" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="space-y-px border-t border-gray-100 px-2 py-3">
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700"
+            >
+              <Home className="h-[15px] w-[15px] flex-shrink-0" />
+              <span>View Website</span>
+            </Link>
+            <button
+              onClick={onSignOut}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-rose-600 transition-all hover:bg-rose-50"
+            >
+              <LogOut className="h-[15px] w-[15px] flex-shrink-0" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 function UserDashboard() {
   const { user, signOut } = useAuth();
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchApplications = useCallback(async () => {
     if (!user?.id && !user?.email) return;
@@ -255,66 +381,77 @@ function UserDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-3">
-              <Image src="/logo.png" alt="Ocean Blue Corporation" width={140} height={40} className="h-7 md:h-8 w-auto" priority />
-              <span className="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-                My Dashboard
-              </span>
-            </Link>
-            <div className="flex items-center gap-1">
-              <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50" title="Refresh">
-                <RefreshCw className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-[#f3f7ff] to-white">
+      <DashboardSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        user={user}
+        onSignOut={() => signOut()}
+      />
+
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200/70 bg-white/85 px-4 backdrop-blur-md sm:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <h1 className="text-base font-semibold text-gray-800">Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={handleRefresh} disabled={isRefreshing} className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)] disabled:opacity-50" title="Refresh">
+              <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
+            </button>
+            <button className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
+              <Bell className="h-5 w-5" />
+              {appStats.interview > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--hz-cobalt)] ring-2 ring-white" />}
+            </button>
+            <div className="group relative ml-1">
+              <button className="flex items-center gap-2.5 rounded-xl border border-transparent px-2 py-1.5 transition-colors hover:border-gray-200 hover:bg-gray-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                  alt={user?.name || "User"}
+                  className="h-8 w-8 rounded-full bg-[var(--hz-cobalt-100)] ring-1 ring-gray-200 shadow-sm"
+                />
+                <div className="hidden text-left sm:block">
+                  <p className="text-sm font-medium text-gray-800">{user?.name}</p>
+                  <p className="text-xs text-gray-400">Candidate</p>
+                </div>
               </button>
-              <button className="relative p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                {appStats.interview > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-white" />}
-              </button>
-              <div className="relative group ml-2">
-                <button className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+              <div className="invisible absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                <div className="flex items-center gap-3 border-b border-gray-100 bg-[var(--hz-cobalt-100)] px-4 py-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
                     alt={user?.name || "User"}
-                    className="w-8 h-8 rounded-full bg-blue-50 ring-1 ring-gray-200 shadow-sm"
+                    className="h-9 w-9 flex-shrink-0 rounded-full bg-white ring-2 ring-white shadow-sm"
                   />
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium text-gray-800">{user?.name}</p>
-                    <p className="text-xs text-gray-400">Candidate</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900">{user?.name}</p>
+                    <p className="truncate text-xs text-gray-500">{user?.email}</p>
                   </div>
-                </button>
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
-                    <img
-                      src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
-                      alt={user?.name || "User"}
-                      className="w-9 h-9 rounded-full bg-blue-50 flex-shrink-0 ring-2 ring-white shadow-sm"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                    </div>
-                  </div>
-                  <div className="py-1">
-                    <Link href="/careers" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                      <Briefcase className="w-4 h-4" />
-                      Browse Jobs
-                    </Link>
-                  </div>
-                  <div className="border-t border-gray-100">
-                    <Link href="/auth/signout" className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                      Sign Out
-                    </Link>
-                  </div>
+                </div>
+                <div className="py-1">
+                  <Link href="/careers" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50">
+                    <Briefcase className="h-4 w-4" />
+                    Browse Jobs
+                  </Link>
+                </div>
+                <div className="border-t border-gray-100">
+                  <Link href="/auth/signout" className="flex items-center gap-2 px-4 py-2 text-sm text-rose-600 transition-colors hover:bg-rose-50">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Link>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Welcome */}
@@ -411,7 +548,7 @@ function UserDashboard() {
                       contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", padding: "6px 10px" }}
                       formatter={(v: number) => [v, "Applications"]}
                     />
-                    <Bar dataKey="count" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                    <Bar dataKey="count" fill="#1d4ed8" radius={[3, 3, 0, 0]} maxBarSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -451,12 +588,12 @@ function UserDashboard() {
           </div>
 
           {/* Application list */}
-          <div className="md:col-span-2">
+          <div id="applications" className="md:col-span-2 scroll-mt-20">
             <Card className="shadow-sm border-gray-100 h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Your Applications</CardTitle>
-                  <Link href="/careers" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
+                  <Link href="/careers" className="text-xs text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium flex items-center gap-0.5">
                     Browse Jobs <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -471,7 +608,7 @@ function UserDashboard() {
                   <div className="py-12 text-center px-6">
                     <XCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
                     <p className="text-sm text-gray-600 mb-3">{error}</p>
-                    <button onClick={handleRefresh} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    <button onClick={handleRefresh} className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors text-sm">
                       <RefreshCw className="w-4 h-4" /> Try Again
                     </button>
                   </div>
@@ -493,7 +630,7 @@ function UserDashboard() {
                                       {application.job?.title || "Position"}
                                     </h3>
                                     {application.job?.type && (
-                                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                      <span className="text-xs bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] px-2 py-0.5 rounded-full font-medium flex-shrink-0">
                                         {getJobTypeBadge(application.job.type)}
                                       </span>
                                     )}
@@ -541,6 +678,7 @@ function UserDashboard() {
           </div>
         </motion.div>
       </main>
+      </div>
     </div>
   );
 }
@@ -548,7 +686,7 @@ function UserDashboard() {
 // ---- Dashboard Page ----
 
 function DashboardRouter() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -556,7 +694,7 @@ function DashboardRouter() {
       // Redirect admin/hr/recruiter/sales to admin dashboard
       if (user.role === UserRole.ADMIN || user.role === UserRole.HR ||
           user.role === UserRole.RECRUITER || user.role === UserRole.SALES) {
-        router.replace("/admin/dashboard");
+        router.replace("/admin");
       }
     }
   }, [user, isLoading, router]);
@@ -564,30 +702,27 @@ function DashboardRouter() {
   // Show loading while checking role or redirecting
   if (isLoading || (user && user.role !== UserRole.USER)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/" className="flex items-center gap-3">
-                <Image src="/logo.png" alt="Ocean Blue Corporation" width={140} height={40} className="h-7 md:h-8 w-auto" priority />
-              </Link>
-              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-[#f3f7ff] to-white">
+        <DashboardSidebar open={false} onClose={() => {}} user={user} onSignOut={() => signOut()} />
+        <div className="lg:pl-64">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200/70 bg-white/85 px-4 backdrop-blur-md sm:px-6">
+            <h1 className="text-base font-semibold text-gray-800">Dashboard</h1>
+            <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />
+          </header>
+          <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+            <div className="h-9 w-64 animate-pulse rounded-lg bg-gray-200" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-28 animate-pulse rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="mb-3 h-10 w-10 rounded-xl bg-gray-200" />
+                  <div className="mb-1 h-7 w-10 rounded bg-gray-200" />
+                  <div className="h-3 w-20 rounded bg-gray-100" />
+                </div>
+              ))}
             </div>
-          </div>
-        </header>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <div className="h-9 w-64 bg-gray-200 rounded-lg animate-pulse" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 h-28 animate-pulse">
-                <div className="w-10 h-10 rounded-xl bg-gray-200 mb-3" />
-                <div className="h-7 w-10 bg-gray-200 rounded mb-1" />
-                <div className="h-3 w-20 bg-gray-100 rounded" />
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-center py-10">
-            <OceanSpinner size={72} label="Setting up your dashboard…" />
+            <div className="flex items-center justify-center py-10">
+              <OceanSpinner size={72} label="Setting up your dashboard…" />
+            </div>
           </div>
         </div>
       </div>

@@ -66,7 +66,7 @@ export default function CallbackPage() {
             if (groups.includes("admin")) {
               router.push("/admin");
             } else if (groups.includes("hr") || groups.includes("recruiter") || groups.includes("sales")) {
-              router.push("/admin/dashboard");
+              router.push("/admin");
             } else {
               router.push("/dashboard");
             }

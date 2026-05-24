@@ -1,23 +1,28 @@
 "use client";
+import { toast } from "sonner";
+import { AdminDetailSkeleton } from "@/components/admin/skeletons";
 
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, useEffect, use, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  ArrowLeft, Mail, Phone, MapPin, Briefcase, FileText, Star,
+  ArrowLeft, Mail, Phone, MapPin, Briefcase, FileText,
   MessageSquareText, XCircle, Edit3, Loader2, History, Plus,
   Building2, Calendar, BookmarkPlus, BookmarkCheck, UserCheck,
-  UserX, Download, Tag, Clock, ArrowRight, Check, ExternalLink,
+  UserX, Download, Tag, Clock, ExternalLink, Check,
   AlertCircle, Shield, Zap,
 } from "lucide-react";
-import { Application, Job, NoteEntry } from "@/lib/aws/dynamodb";
+import type { Application, NoteEntry } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
-import { useAdmin } from "@/components/admin/admin-provider";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
 import { tones, statusMeta, PIPELINE_STAGES, type AppStatus } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 
 interface CandidateDetail extends Application {
   jobDepartment?: string;
@@ -31,6 +36,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
+  const reduce = useReducedMotion();
   const { openCandidateEditor } = useAdmin();
 
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null);
@@ -49,22 +55,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const res = await fetch(`/api/applications/${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Candidate not found");
-      const application: Application = data.application;
-
-      let extra: Partial<CandidateDetail> = {};
-      if (application.jobId) {
-        const jr = await fetch(`/api/jobs/${application.jobId}`);
-        if (jr.ok) {
-          const jd = await jr.json();
-          extra = {
-            jobTitle:      application.jobTitle || jd.job?.title,
-            jobDepartment: jd.job?.department,
-            jobLocation:   jd.job?.location,
-            jobType:       jd.job?.type,
-          };
-        }
-      }
-      setCandidate({ ...application, ...extra });
+      // Render the candidate immediately; the linked job's details are enriched
+      // in a separate non-blocking effect below so the job fetch never blocks paint.
+      setCandidate(data.application as CandidateDetail);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -73,6 +66,33 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   }, [id]);
 
   useEffect(() => { void fetchCandidate(); }, [fetchCandidate]);
+
+  // Enrich with the linked job's details — fetched once per job, off the render path.
+  const jobEnrichedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const jobId = candidate?.jobId;
+    if (!jobId || jobEnrichedRef.current === jobId) return;
+    jobEnrichedRef.current = jobId;
+    let cancelled = false;
+    (async () => {
+      try {
+        const jr = await fetch(`/api/jobs/${jobId}`);
+        if (!jr.ok || cancelled) return;
+        const jd = await jr.json();
+        setCandidate((p) => (p ? {
+          ...p,
+          jobTitle:      p.jobTitle || jd.job?.title,
+          jobDepartment: jd.job?.department,
+          jobLocation:   jd.job?.location,
+          jobType:       jd.job?.type,
+        } : p));
+      } catch { /* non-fatal — job details are supplementary */ }
+    })();
+    return () => { cancelled = true; };
+  }, [candidate?.jobId]);
+
+  // Show the application code (e.g. APP-2026-0103) as the top-nav breadcrumb.
+  usePageCrumb(candidate?.applicationId);
 
   const patch = async (body: Record<string, unknown>) => {
     const res = await fetch(`/api/applications/${id}`, {
@@ -91,7 +111,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try {
       const updated = await patch({ status: stage, changedBy: user?.id, changedByName: user?.name || user?.email || "Admin" });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
-    } catch { alert("Failed to update status"); }
+    } catch { toast.error("Failed to update status"); }
     finally { setStatusSaving(false); }
   };
 
@@ -99,7 +119,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     if (!candidate) return;
     const next = rating === candidate.rating ? 0 : rating;
     setCandidate((p) => (p ? { ...p, rating: next } : p));
-    try { await patch({ rating: next }); } catch { alert("Failed to update rating"); }
+    try { await patch({ rating: next }); } catch { toast.error("Failed to update rating"); }
   };
 
   const handleBenchToggle = async () => {
@@ -110,7 +130,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try { await patch({ addToTalentBench: next, ...(next && { benchAddedBy: user?.email || user?.id }) }); }
     catch {
       setCandidate((p) => (p ? { ...p, addToTalentBench: !next } : p));
-      alert("Failed to update talent bench");
+      toast.error("Failed to update talent bench");
     } finally { setBenchSaving(false); }
   };
 
@@ -120,7 +140,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try {
       const updated = await patch({ ownership: user.id, ownershipName: user.name || user.email });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
-    } catch { alert("Failed to claim ownership"); }
+    } catch { toast.error("Failed to claim ownership"); }
     finally { setOwnerSaving(false); }
   };
 
@@ -130,7 +150,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try {
       const updated = await patch({ ownership: "", ownershipName: "" });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
-    } catch { alert("Failed to release ownership"); }
+    } catch { toast.error("Failed to release ownership"); }
     finally { setOwnerSaving(false); }
   };
 
@@ -147,7 +167,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const data = await res.json();
       setCandidate((p) => (p ? { ...p, notesHistory: data.application.notesHistory } : p));
       setNewNote("");
-    } catch { alert("Failed to add note"); }
+    } catch { toast.error("Failed to add note"); }
     finally { setAddingNote(false); }
   };
 
@@ -158,21 +178,10 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed");
       window.open(data.downloadUrl, "_blank");
-    } catch { alert("Failed to load resume. The file may have been deleted."); }
+    } catch { toast.error("Failed to load resume. The file may have been deleted."); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto">
-            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-          </div>
-          <p className="text-sm text-slate-500 font-medium">Loading profile…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AdminDetailSkeleton />;
 
   if (error || !candidate) {
     return (
@@ -186,7 +195,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
             <p className="text-sm text-slate-500 mt-1">This record may have been removed.</p>
           </div>
           <button onClick={() => router.push("/admin/applications")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+            className="px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--hz-cobalt-600)] transition-colors">
             Back to candidates
           </button>
         </div>
@@ -194,39 +203,30 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const isRejected    = candidate.status === "rejected";
-  const currentIdx    = PIPELINE_STAGES.findIndex((s) => s.key === candidate.status);
+  const isRejected = candidate.status === "rejected";
+  const currentIdx = PIPELINE_STAGES.findIndex((s) => s.key === candidate.status);
   const notes: NoteEntry[] = candidate.notesHistory || [];
   const isOwner = candidate.ownership === user?.id;
   const skills  = candidate.skills || [];
 
+  const fade = (delay = 0) =>
+    reduce
+      ? {}
+      : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay, ease: [0.22, 1, 0.36, 1] as const } };
+
   return (
     <div className="max-w-6xl mx-auto pb-10 space-y-5">
 
-      {/* ── Breadcrumb bar ── */}
+      {/* ── Top action bar (breadcrumb lives in the top nav) ── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 text-sm">
-          <button onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg font-medium transition-all border border-transparent hover:border-slate-200">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <span className="text-slate-300">/</span>
-          <Link href="/admin/applications" className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
-            Applications
-          </Link>
-          {candidate.applicationId && (
-            <>
-              <span className="text-slate-300">/</span>
-              <code className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-mono font-semibold">
-                {candidate.applicationId}
-              </code>
-            </>
-          )}
-        </div>
+        <button onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg font-medium transition-all border border-transparent hover:border-slate-200">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
         <div className="flex items-center gap-2">
           {candidate.jobId && (
             <Link href={`/admin/jobs/${candidate.jobId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 hover:text-blue-600 hover:border-blue-300 text-xs font-semibold rounded-lg transition-colors">
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 hover:text-[var(--hz-cobalt)] hover:border-[var(--hz-cobalt)] text-xs font-semibold rounded-lg transition-colors">
               <Briefcase className="w-3.5 h-3.5" /> View job
             </Link>
           )}
@@ -235,189 +235,190 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all disabled:opacity-60",
               candidate.addToTalentBench
                 ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
-                : "bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"
+                : "bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50",
             )}>
             {benchSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
               candidate.addToTalentBench ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
             {candidate.addToTalentBench ? "In bench" : "Add to bench"}
           </button>
           <button onClick={() => openCandidateEditor({ candidate })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] text-white text-xs font-semibold rounded-lg transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
             <Edit3 className="w-3.5 h-3.5" /> Edit profile
           </button>
         </div>
       </div>
 
       {/* ── Hero card ── */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        {/* Accent top bar */}
-        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
-
-        <div className="px-6 pt-5 pb-5">
-          {/* Avatar + name row */}
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="ring-2 ring-slate-100 rounded-2xl shadow-sm inline-block flex-shrink-0">
-                <Avatar name={candidate.name || candidate.email} size="xl" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  {candidate.name || "Unnamed candidate"}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
+      <motion.div {...fade(0.02)}>
+        <AdminCard className="overflow-hidden">
+          <div className="px-6 pt-6 pb-5">
+            {/* Avatar + name row */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="ring-2 ring-slate-100 rounded-full shadow-sm inline-block flex-shrink-0">
+                  <Avatar name={candidate.name} email={candidate.email} size="xl" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                    {candidate.name || "Unnamed candidate"}
+                  </h1>
                   {candidate.jobTitle && (
-                    <span className="text-sm text-slate-500 font-medium flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                      {candidate.jobTitle}
-                      {candidate.jobDepartment && <span className="text-slate-400">· {candidate.jobDepartment}</span>}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-sm text-slate-500 font-medium flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                        {candidate.jobTitle}
+                        {candidate.jobDepartment && <span className="text-slate-400">· {candidate.jobDepartment}</span>}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
-            {/* Star rating */}
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rating</span>
-              <StarRating rating={candidate.rating || 0} onRate={handleRating} size="md" />
-              <span className="text-[10px] text-slate-400">{candidate.rating ? `${candidate.rating} / 5` : "Not rated"}</span>
-            </div>
-          </div>
-
-          {/* Badges row */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <StatusBadge status={candidate.status} withIcon size="sm" />
-            {candidate.workAuthorization && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-100">
-                <Shield className="w-3 h-3" /> {candidate.workAuthorization}
-              </span>
-            )}
-            {candidate.source && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
-                <Zap className="w-3 h-3" /> {candidate.source}
-              </span>
-            )}
-            {candidate.addToTalentBench && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                <BookmarkCheck className="w-3 h-3" /> Talent bench
-              </span>
-            )}
-          </div>
-
-          {/* Contact row */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
-            <a href={`mailto:${candidate.email}`}
-              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 transition-colors group font-medium">
-              <div className="w-6 h-6 rounded-md bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-                <Mail className="w-3.5 h-3.5 text-blue-500" />
+              {/* Star rating */}
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Rating</span>
+                <StarRating rating={candidate.rating || 0} onRate={handleRating} size="md" />
+                <span className="text-[10px] text-slate-400 tabular-nums">{candidate.rating ? `${candidate.rating} / 5` : "Not rated"}</span>
               </div>
-              {candidate.email}
-            </a>
-            {candidate.phone && (
-              <a href={`tel:${candidate.phone}`}
-                className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 transition-colors group font-medium">
-                <div className="w-6 h-6 rounded-md bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center transition-colors">
-                  <Phone className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-500" />
-                </div>
-                {candidate.phone}
+            </div>
+
+            {/* Badges row */}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <StatusBadge status={candidate.status} withIcon size="md" />
+              {candidate.workAuthorization && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+                  <Shield className="w-3 h-3 text-slate-500" /> {candidate.workAuthorization}
+                </span>
+              )}
+              {candidate.source && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
+                  <Zap className="w-3 h-3 text-slate-400" /> {candidate.source}
+                </span>
+              )}
+              {candidate.addToTalentBench && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+                  <BookmarkCheck className="w-3 h-3" /> Talent bench
+                </span>
+              )}
+            </div>
+
+            {/* Contact row */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
+              <a href={`mailto:${candidate.email}`}
+                className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors group font-medium">
+                <span className="w-6 h-6 rounded-md bg-[var(--hz-cobalt-100)] flex items-center justify-center">
+                  <Mail className="w-3.5 h-3.5 text-[var(--hz-cobalt)]" />
+                </span>
+                {candidate.email}
               </a>
-            )}
-            {(candidate.city || candidate.state) && (
-              <span className="inline-flex items-center gap-1.5 text-slate-500">
-                <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                </div>
-                {[candidate.city, candidate.state].filter(Boolean).join(", ")}
+              {candidate.phone && (
+                <a href={`tel:${candidate.phone}`}
+                  className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors group font-medium">
+                  <span className="w-6 h-6 rounded-md bg-slate-100 group-hover:bg-[var(--hz-cobalt-100)] flex items-center justify-center transition-colors">
+                    <Phone className="w-3.5 h-3.5 text-slate-500 group-hover:text-[var(--hz-cobalt)]" />
+                  </span>
+                  {candidate.phone}
+                </a>
+              )}
+              {(candidate.city || candidate.state) && (
+                <span className="inline-flex items-center gap-1.5 text-slate-500">
+                  <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  </span>
+                  {[candidate.city, candidate.state].filter(Boolean).join(", ")}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 text-slate-400 text-xs ml-auto tabular-nums">
+                <Calendar className="w-3.5 h-3.5" />
+                Applied {fmtDate(candidate.appliedAt)}
               </span>
-            )}
-            <span className="inline-flex items-center gap-1.5 text-slate-400 text-xs ml-auto">
-              <Calendar className="w-3.5 h-3.5" />
-              Applied {fmtDate(candidate.appliedAt)}
-            </span>
+            </div>
           </div>
-        </div>
+        </AdminCard>
+      </motion.div>
 
-        {/* ── Pipeline strip ── */}
-        <div className="border-t border-slate-100 bg-gradient-to-b from-slate-50/80 to-white px-6 py-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Hiring pipeline</p>
-            {statusSaving && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-blue-500 font-medium">
-                <Loader2 className="w-3 h-3 animate-spin" /> Saving…
-              </span>
-            )}
-          </div>
+      {/* ── Pipeline card ── */}
+      <motion.div {...fade(0.04)}>
+        <AdminCard className="px-6 py-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Hiring pipeline</p>
+              {statusSaving && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-[var(--hz-cobalt)] font-medium">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Saving…
+                </span>
+              )}
+            </div>
 
-          <div className="flex items-center gap-1.5">
-            {PIPELINE_STAGES.map((stage, i) => {
-              const t = tones[stage.tone];
-              const isActive = stage.key === candidate.status;
-              const isPast   = !isRejected && currentIdx > i;
-              return (
-                <div key={stage.key} className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <button
-                    onClick={() => handleStageClick(stage.key)}
-                    disabled={statusSaving}
-                    title={stage.label}
-                    className={cn(
-                      "flex-1 min-w-0 h-9 rounded-lg flex items-center justify-center gap-1.5 px-2 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border",
-                      isActive
-                        ? cn(t.bg, "border-transparent shadow-sm ring-2 ring-offset-1", t.ring)
-                        : isPast
-                        ? cn(t.bg, "border-transparent opacity-80")
-                        : "bg-white border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600"
-                    )}>
-                    <span className={cn(
-                      "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                      isActive || isPast ? t.dot : "bg-slate-200",
-                    )}>
-                      {isPast && <Check className="w-2.5 h-2.5 text-white" />}
-                    </span>
-                    <span className={cn(
-                      "truncate hidden sm:block",
-                      isActive || isPast ? t.text : "text-slate-400",
-                    )}>
-                      {stage.label}
-                    </span>
-                  </button>
-                  {i < PIPELINE_STAGES.length - 1 && (
-                    <div className={cn("w-3 h-0.5 flex-shrink-0 rounded-full", isPast && !isRejected ? "bg-blue-300" : "bg-slate-200")} />
-                  )}
-                </div>
-              );
-            })}
+            <div className="flex items-center gap-1.5">
+              {PIPELINE_STAGES.map((stage, i) => {
+                const t = tones[stage.tone];
+                const isActive = stage.key === candidate.status;
+                const isPast   = !isRejected && currentIdx > i;
+                return (
+                  <div key={stage.key} className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <button
+                      onClick={() => handleStageClick(stage.key)}
+                      disabled={statusSaving}
+                      title={stage.label}
+                      className={cn(
+                        "flex-1 min-w-0 h-9 rounded-lg flex items-center justify-center gap-1.5 px-2 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border",
+                        isActive
+                          ? cn(t.bg, "border-transparent shadow-sm ring-2 ring-offset-1", t.ring)
+                          : isPast
+                          ? cn(t.bg, "border-transparent opacity-80")
+                          : "bg-white border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600",
+                      )}>
+                      <span className={cn(
+                        "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                        isActive || isPast ? t.dot : "bg-slate-200",
+                      )}>
+                        {isPast && <Check className="w-2.5 h-2.5 text-white" />}
+                      </span>
+                      <span className={cn(
+                        "truncate hidden sm:block",
+                        isActive || isPast ? t.text : "text-slate-400",
+                      )}>
+                        {stage.label}
+                      </span>
+                    </button>
+                    {i < PIPELINE_STAGES.length - 1 && (
+                      <div className={cn("w-3 h-0.5 flex-shrink-0 rounded-full", isPast && !isRejected ? "bg-[var(--hz-cobalt)]" : "bg-slate-200")} />
+                    )}
+                  </div>
+                );
+              })}
 
-            <div className="w-px h-6 bg-slate-200 mx-1 flex-shrink-0 hidden sm:block" />
+              <div className="w-px h-6 bg-slate-200 mx-1 flex-shrink-0 hidden sm:block" />
 
-            <button
-              onClick={() => handleStageClick("rejected")}
-              disabled={statusSaving}
-              className={cn(
-                "h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border flex-shrink-0",
-                isRejected
-                  ? "bg-rose-50 border-rose-200 text-rose-700 ring-2 ring-offset-1 ring-rose-200 shadow-sm"
-                  : "bg-white border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 text-slate-400 hover:text-rose-600"
-              )}>
-              <span className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                isRejected ? "bg-rose-500" : "bg-slate-200")}>
-                {isRejected && <XCircle className="w-2.5 h-2.5 text-white" />}
-              </span>
-              <span className={cn("hidden sm:block", isRejected ? "text-rose-700" : "text-slate-400")}>Rejected</span>
-            </button>
-          </div>
-        </div>
-      </div>
+              <button
+                onClick={() => handleStageClick("rejected")}
+                disabled={statusSaving}
+                className={cn(
+                  "h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border flex-shrink-0",
+                  isRejected
+                    ? "bg-rose-50 border-rose-200 text-rose-700 ring-2 ring-offset-1 ring-rose-200 shadow-sm"
+                    : "bg-white border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 text-slate-400 hover:text-rose-600",
+                )}>
+                <span className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                  isRejected ? "bg-rose-500" : "bg-slate-200")}>
+                  {isRejected && <XCircle className="w-2.5 h-2.5 text-white" />}
+                </span>
+                <span className={cn("hidden sm:block", isRejected ? "text-rose-700" : "text-slate-400")}>Rejected</span>
+              </button>
+            </div>
+        </AdminCard>
+      </motion.div>
 
       {/* ── Body: main + sidebar ── */}
       <div className="grid lg:grid-cols-3 gap-5 items-start">
 
         {/* Left — tabs */}
-        <div className="lg:col-span-2 space-y-4">
+        <motion.div className="lg:col-span-2 space-y-4" {...fade(0.06)}>
           {/* Tab bar */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex overflow-hidden">
+          <AdminCard className="flex overflow-hidden">
             {([
-              { key: "overview" as TabKey, label: "Overview",  icon: FileText,          count: undefined as number | undefined },
-              { key: "notes"    as TabKey, label: "Notes",     icon: MessageSquareText, count: notes.length },
-              { key: "activity" as TabKey, label: "Activity",  icon: History,           count: candidate.statusHistory?.length },
+              { key: "overview" as TabKey, label: "Overview", icon: FileText,          count: undefined as number | undefined },
+              { key: "notes"    as TabKey, label: "Notes",    icon: MessageSquareText, count: notes.length },
+              { key: "activity" as TabKey, label: "Activity", icon: History,           count: candidate.statusHistory?.length },
             ]).map((tab) => {
               const Icon   = tab.icon;
               const active = activeTab === tab.key;
@@ -428,16 +429,16 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                   className={cn(
                     "flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors relative",
                     active
-                      ? "text-blue-600 bg-blue-50/60"
+                      ? "text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]/40"
                       : "text-slate-500 hover:text-slate-800 hover:bg-slate-50",
                   )}>
-                  {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />}
+                  {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--hz-cobalt)] rounded-full" />}
                   <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                   {tab.label}
                   {tab.count !== undefined && tab.count > 0 && (
                     <span className={cn(
-                      "min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center",
-                      active ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600",
+                      "min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center tabular-nums",
+                      active ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" : "bg-slate-100 text-slate-600",
                     )}>
                       {tab.count}
                     </span>
@@ -445,34 +446,30 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </button>
               );
             })}
-          </div>
+          </AdminCard>
 
           {/* Overview tab */}
           {activeTab === "overview" && (
             <div className="space-y-4">
               {/* Skills */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center">
-                      <Tag className="w-3.5 h-3.5 text-blue-600" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Skills</h3>
-                    {skills.length > 0 && (
-                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">{skills.length}</span>
-                    )}
-                  </div>
-                  <button onClick={() => openCandidateEditor({ candidate })}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
-                    <Edit3 className="w-3 h-3" /> Edit
-                  </button>
-                </div>
+              <AdminCard className="overflow-hidden">
+                <AdminCardHeader
+                  icon={Tag}
+                  title="Skills"
+                  count={skills.length}
+                  action={
+                    <button onClick={() => openCandidateEditor({ candidate })}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md transition-colors">
+                      <Edit3 className="w-3 h-3" /> Edit
+                    </button>
+                  }
+                />
                 <div className="px-5 py-4">
                   {skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {skills.map((skill, i) => (
                         <span key={i}
-                          className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-100/80 shadow-[0_1px_2px_rgba(59,130,246,0.08)]">
+                          className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
                           {skill}
                         </span>
                       ))}
@@ -481,61 +478,46 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                     <p className="text-sm text-slate-400 italic py-2">No skills listed — edit profile to add</p>
                   )}
                 </div>
-              </div>
+              </AdminCard>
 
               {/* Experience */}
               {candidate.experience && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
-                    <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center">
-                      <Briefcase className="w-3.5 h-3.5 text-amber-600" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Experience</h3>
-                  </div>
+                <AdminCard className="overflow-hidden">
+                  <AdminCardHeader icon={Briefcase} title="Experience" />
                   <div className="px-5 py-4">
                     <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{candidate.experience}</p>
                   </div>
-                </div>
+                </AdminCard>
               )}
 
               {/* Cover letter */}
               {candidate.coverLetter && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
-                    <div className="w-6 h-6 rounded-md bg-violet-50 flex items-center justify-center">
-                      <FileText className="w-3.5 h-3.5 text-violet-600" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Cover letter</h3>
-                  </div>
+                <AdminCard className="overflow-hidden">
+                  <AdminCardHeader icon={FileText} title="Cover letter" />
                   <div className="px-5 py-4">
                     <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{candidate.coverLetter}</p>
                   </div>
-                </div>
+                </AdminCard>
               )}
 
               {/* Resume */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
-                  <div className="w-6 h-6 rounded-md bg-rose-50 flex items-center justify-center">
-                    <FileText className="w-3.5 h-3.5 text-rose-600" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">Resume</h3>
-                </div>
+              <AdminCard className="overflow-hidden">
+                <AdminCardHeader icon={FileText} title="Resume" tone="blue" />
                 <div className="px-5 py-4">
                   {candidate.resumeId ? (
                     <button onClick={handleViewResume}
-                      className="w-full flex items-center gap-3.5 p-3.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl transition-all group text-left">
-                      <div className="w-11 h-11 rounded-xl bg-rose-100 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-200 transition-colors">
-                        <FileText className="w-5 h-5 text-rose-600" />
+                      className="w-full flex items-center gap-3.5 p-3.5 bg-slate-50 hover:bg-[var(--hz-cobalt-100)]/50 border border-slate-200 hover:border-[var(--hz-cobalt-100)] rounded-xl transition-all group text-left">
+                      <div className="w-11 h-11 rounded-xl bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-[var(--hz-cobalt)]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-blue-700 transition-colors">
+                        <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-[var(--hz-cobalt)] transition-colors">
                           {candidate.resumeFileName || "resume.pdf"}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">Click to view or download</p>
                       </div>
-                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 flex items-center justify-center transition-all flex-shrink-0">
-                        <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600" />
+                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 group-hover:border-[var(--hz-cobalt)] group-hover:bg-[var(--hz-cobalt-100)] flex items-center justify-center transition-all flex-shrink-0">
+                        <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-[var(--hz-cobalt)]" />
                       </div>
                     </button>
                   ) : (
@@ -550,7 +532,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                   )}
                 </div>
-              </div>
+              </AdminCard>
             </div>
           )}
 
@@ -558,7 +540,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           {activeTab === "notes" && (
             <div className="space-y-4">
               {/* Input */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <AdminCard className="overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
                   <Avatar name={user?.name || user?.email || "You"} size="xs" />
                   <span className="text-sm font-semibold text-slate-700">{user?.name || user?.email || "You"}</span>
@@ -578,56 +560,45 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                       {newNote.length > 0 ? `${newNote.length} characters` : "⌘↵ to save · visible to your team"}
                     </p>
                     <button onClick={handleAddNote} disabled={!newNote.trim() || addingNote}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-50 transition shadow-sm">
                       {addingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                       Post note
                     </button>
                   </div>
                 </div>
-              </div>
+              </AdminCard>
 
               {notes.length > 0 ? (
                 <div className="space-y-3">
                   {[...notes].reverse().map((note) => (
-                    <div key={note.id}
-                      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                    <AdminCard key={note.id} hover className="overflow-hidden">
                       <div className="flex items-center gap-2.5 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
                         <Avatar name={note.addedByName} size="xs" />
                         <span className="text-xs font-bold text-slate-700">{note.addedByName}</span>
-                        <span className="text-[10px] text-slate-400 ml-auto">{fmtFull(note.addedAt)}</span>
+                        <span className="text-[10px] text-slate-400 ml-auto tabular-nums">{fmtDateTime(note.addedAt)}</span>
                       </div>
                       <div className="px-5 py-4">
                         <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{note.text}</p>
                       </div>
-                    </div>
+                    </AdminCard>
                   ))}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm py-14 text-center">
+                <AdminCard className="py-14 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
                     <MessageSquareText className="w-6 h-6 text-slate-300" />
                   </div>
                   <p className="text-sm font-semibold text-slate-500">No notes yet</p>
                   <p className="text-xs text-slate-400 mt-1">Add the first note above</p>
-                </div>
+                </AdminCard>
               )}
             </div>
           )}
 
           {/* Activity tab */}
           {activeTab === "activity" && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
-                <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
-                  <History className="w-3.5 h-3.5 text-slate-500" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">Status history</h3>
-                {candidate.statusHistory && candidate.statusHistory.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
-                    {candidate.statusHistory.length}
-                  </span>
-                )}
-              </div>
+            <AdminCard className="overflow-hidden">
+              <AdminCardHeader icon={History} title="Status history" count={candidate.statusHistory?.length} />
               <div className="px-5 py-4">
                 {candidate.statusHistory && candidate.statusHistory.length > 0 ? (
                   <ol className="space-y-0">
@@ -650,7 +621,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                                   <span className="text-slate-500 font-normal"> by <span className="font-medium text-slate-700">{entry.changedByName}</span></span>
                                 )}
                               </p>
-                              <span className="text-[11px] text-slate-400 flex-shrink-0">{fmtFull(entry.changedAt)}</span>
+                              <span className="text-[11px] text-slate-400 flex-shrink-0 tabular-nums">{fmtDateTime(entry.changedAt)}</span>
                             </div>
                             {entry.notes && (
                               <p className="text-xs text-slate-600 mt-1.5 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100 italic">
@@ -669,28 +640,28 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                   </div>
                 )}
               </div>
-            </div>
+            </AdminCard>
           )}
-        </div>
+        </motion.div>
 
         {/* Right — sidebar */}
-        <div className="space-y-4">
+        <motion.div className="space-y-4 lg:sticky lg:top-20" {...fade(0.1)}>
 
           {/* Application info */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
-              <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Application details</h3>
+          <AdminCard className="overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Application details</h3>
             </div>
             <dl className="divide-y divide-slate-100">
               {[
-                { label: "App ID",   value: candidate.applicationId || candidate.id?.slice(0, 8), mono: true },
-                { label: "Status",   value: candidate.status,    badge: true },
-                { label: "Source",   value: candidate.source },
-                { label: "Work auth",value: candidate.workAuthorization },
-                { label: "Applied",  value: fmtDate(candidate.appliedAt) },
+                { label: "App ID",    value: candidate.applicationId || candidate.id?.slice(0, 8), mono: true },
+                { label: "Status",    value: candidate.status, badge: true },
+                { label: "Source",    value: candidate.source },
+                { label: "Work auth", value: candidate.workAuthorization },
+                { label: "Applied",   value: fmtDate(candidate.appliedAt) },
                 ...(candidate.updatedAt ? [{ label: "Updated", value: fmtDate(candidate.updatedAt) }] : []),
               ].map(({ label, value, mono, badge }) => (
-                <div key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div key={label} className="flex items-center justify-between gap-3 px-5 py-2.5">
                   <dt className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex-shrink-0">{label}</dt>
                   <dd className="text-right min-w-0">
                     {badge && value ? (
@@ -709,18 +680,17 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               ))}
             </dl>
-          </div>
+          </AdminCard>
 
           {/* Position */}
           {candidate.jobTitle && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
-                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Position</h3>
+            <AdminCard className="overflow-hidden">
+              <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</h3>
               </div>
-              <div className="p-4">
-                <Link href={candidate.jobId ? `/admin/jobs/${candidate.jobId}` : "#"}
-                  className="group block">
-                  <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+              <div className="p-5">
+                <Link href={candidate.jobId ? `/admin/jobs/${candidate.jobId}` : "#"} className="group block">
+                  <p className="text-sm font-bold text-slate-900 group-hover:text-[var(--hz-cobalt)] transition-colors">
                     {candidate.jobTitle}
                   </p>
                   <div className="mt-2 space-y-1">
@@ -740,20 +710,20 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                       </p>
                     )}
                   </div>
-                  <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-blue-600 group-hover:gap-1.5 transition-all">
+                  <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--hz-cobalt)] group-hover:gap-1.5 transition-all">
                     View job posting <ExternalLink className="w-3 h-3" />
                   </span>
                 </Link>
               </div>
-            </div>
+            </AdminCard>
           )}
 
           {/* Owner */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
-              <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Assigned recruiter</h3>
+          <AdminCard className="overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Assigned recruiter</h3>
             </div>
-            <div className="p-4">
+            <div className="p-5">
               {candidate.ownership && candidate.ownershipName ? (
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -775,13 +745,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               ) : (
                 <button onClick={handleClaimOwnership} disabled={ownerSaving}
-                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold border-2 border-dashed border-slate-200 text-slate-500 rounded-xl hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50 transition-all">
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold border-2 border-dashed border-slate-200 text-slate-500 rounded-xl hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)]/40 transition-all">
                   {ownerSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                   Claim this candidate
                 </button>
               )}
             </div>
-          </div>
+          </AdminCard>
 
           {/* Created by */}
           {candidate.createdByName && (
@@ -793,18 +763,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               </p>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
-}
-
-function fmtDate(d?: string) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-function fmtFull(d?: string) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { CommandPalette } from "./command-palette";
 
@@ -17,6 +17,9 @@ interface AdminContextValue {
   openCommandPalette: () => void;
   candidateRevision: number;
   setJobs: (jobs: Job[]) => void;
+  /** Trailing breadcrumb shown in the top nav on detail pages (e.g. "APP-2026-0103"). */
+  pageCrumb: string | null;
+  setPageCrumb: (crumb: string | null) => void;
 }
 
 const AdminContext = React.createContext<AdminContextValue | null>(null);
@@ -27,12 +30,25 @@ export function useAdmin() {
   return ctx;
 }
 
+/**
+ * Set the trailing breadcrumb for the current detail page (cleared on unmount).
+ * Pass the record's friendly code, e.g. `usePageCrumb(candidate?.applicationId)`.
+ */
+export function usePageCrumb(label: string | null | undefined) {
+  const { setPageCrumb } = useAdmin();
+  React.useEffect(() => {
+    setPageCrumb(label || null);
+    return () => setPageCrumb(null);
+  }, [label, setPageCrumb]);
+}
+
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [revision, setRevision] = React.useState(0);
   const [jobs, setJobs] = React.useState<Job[]>([]);
+  const [pageCrumb, setPageCrumb] = React.useState<string | null>(null);
 
   const openCandidateEditor = React.useCallback((opts: OpenEditOptions = {}) => {
     const isCreate = !opts.candidate && opts.mode !== "edit";
@@ -67,8 +83,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [openCandidateEditor]);
 
   const value = React.useMemo<AdminContextValue>(
-    () => ({ openCandidateEditor, openCommandPalette, candidateRevision: revision, setJobs }),
-    [openCandidateEditor, openCommandPalette, revision],
+    () => ({ openCandidateEditor, openCommandPalette, candidateRevision: revision, setJobs, pageCrumb, setPageCrumb }),
+    [openCandidateEditor, openCommandPalette, revision, pageCrumb],
   );
 
   return (

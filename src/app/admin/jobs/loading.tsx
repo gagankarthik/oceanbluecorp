@@ -9,7 +9,7 @@ export default function JobsLoading() {
         </div>
         <div className="flex gap-2">
           <div className="h-9 w-9 bg-slate-100 rounded-lg" />
-          <div className="h-9 w-28 bg-blue-100 rounded-lg" />
+          <div className="h-9 w-28 bg-[var(--hz-cobalt-100)] rounded-lg" />
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export default function JobsLoading() {
               </div>
               <div className="h-3 w-20 bg-slate-100 rounded hidden sm:block" />
               <div className="h-3 w-16 bg-slate-100 rounded hidden md:block" />
-              <div className="h-5 w-16 bg-blue-100 rounded-full" />
+              <div className="h-5 w-16 bg-[var(--hz-cobalt-100)] rounded-full" />
               <div className="h-3 w-6 bg-slate-100 rounded" />
             </div>
           ))}

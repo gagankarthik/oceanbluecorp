@@ -10,7 +10,7 @@ export default function AdminLoading() {
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 bg-slate-100 rounded-lg animate-pulse" />
           <div className="h-9 w-24 bg-slate-100 rounded-lg animate-pulse" />
-          <div className="h-9 w-32 bg-blue-100 rounded-lg animate-pulse" />
+          <div className="h-9 w-32 bg-[var(--hz-cobalt-100)] rounded-lg animate-pulse" />
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export default function AdminLoading() {
               ))}
             </div>
           </div>
-          <div className="h-[200px] sm:h-[240px] bg-gradient-to-b from-blue-50 to-slate-50 rounded-xl animate-pulse" />
+          <div className="h-[200px] sm:h-[240px] bg-gradient-to-b from-[var(--hz-cobalt-100)] to-slate-50 rounded-xl animate-pulse" />
           <div className="flex gap-4 pt-1 border-t border-slate-100">
             <div className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
             <div className="h-3 w-12 bg-slate-100 rounded animate-pulse" />
@@ -88,7 +88,7 @@ export default function AdminLoading() {
                     <div className="h-3 w-8 bg-slate-100 rounded animate-pulse" />
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden animate-pulse">
-                    <div className="h-full bg-blue-200 rounded-full" style={{ width: `${80 - j * 12}%` }} />
+                    <div className="h-full bg-[var(--hz-cobalt-100)] rounded-full" style={{ width: `${80 - j * 12}%` }} />
                   </div>
                 </div>
               ))}

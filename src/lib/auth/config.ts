@@ -50,8 +50,7 @@ export const getCognitoUrls = () => {
 
 // Route access configuration
 export const routeAccess: Record<string, UserRole[]> = {
-  "/admin": [UserRole.ADMIN],
-  "/admin/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
   "/admin/roles": [UserRole.ADMIN],
   "/admin/jobs": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
   "/admin/applications": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],

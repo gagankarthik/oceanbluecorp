@@ -10,6 +10,7 @@ import {
   DollarSign,
   Clock,
   ArrowLeft,
+  ArrowRight,
   Briefcase,
   CalendarClock,
   CheckCircle2,
@@ -19,15 +20,13 @@ import {
   Upload,
   FileText,
   X,
-  Sparkles,
   ExternalLink,
   Share2,
   Users,
   Calendar,
-  Award,
   Heart,
 } from "lucide-react";
-import { Job } from "@/lib/aws/dynamodb";
+import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth";
 
 // Format job type for display
@@ -236,14 +235,14 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
   });
 
   return (
-    <div className="min-h-screen bg-[#F2F2F2] pt-32 ">
+    <div className="horizon min-h-screen bg-[var(--hz-surface)] pt-32">
       {/* Breadcrumb */}
       <div className="border-b border-gray-100 bg-gray-50/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-2 text-sm">
 
-            <Link href="/careers" className="text-gray-500 hover:text-blue-600 transition-colors">
-              Jobs
+            <Link href="/careers/search" className="text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors">
+              Open positions
             </Link>
             <span className="text-gray-300">/</span>
             <span className="text-gray-900 font-medium truncate">{job.title}</span>
@@ -257,10 +256,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           <div className="lg:col-span-2 space-y-8">
              {/* Back Link */}
               <Link
-                href="/careers"
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm"
+                href="/careers/search"
+                className="group inline-flex items-center gap-2 text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors text-sm font-medium"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
                 View all open positions
               </Link>
             {/* Header */}
@@ -274,7 +273,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
               {/* Meta Tags */}
               <div className="flex flex-wrap items-center gap-3 mb-6">
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full text-sm font-medium">
                   <Briefcase className="w-4 h-4" />
                   {formatJobType(job.type)}
                 </span>
@@ -330,9 +329,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               ) : (
                 <button
                   onClick={() => setShowApplyModal(true)}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg"
+                  className="group w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg"
                 >
                   Apply for this position
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                 </button>
               )}
             </div>
@@ -385,8 +385,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <ul className="space-y-4">
                     {job.responsibilities.map((item, i) => (
                       <li key={i} className="flex items-start gap-4">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
                         <span className="text-gray-600 text-lg">{item}</span>
                       </li>
@@ -410,8 +410,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <ul className="space-y-4">
                     {job.requirements.map((item, i) => (
                       <li key={i} className="flex items-start gap-4">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Award className="w-4 h-4 text-purple-600" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
                         <span className="text-gray-600 text-lg">{item}</span>
                       </li>
@@ -426,7 +426,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className={`rounded-2xl p-8 text-center ${hasApplied ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-blue-600 to-cyan-600"}`}
+              className={`rounded-2xl p-8 text-center ${hasApplied ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)]"}`}
             >
               {hasApplied ? (
                 <>
@@ -452,13 +452,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               ) : (
                 <>
                   <h3 className="text-2xl font-bold text-white mb-3">Ready to apply?</h3>
-                  <p className="text-blue-100 mb-6">Join our team and help shape the future of enterprise IT.</p>
+                  <p className="text-[var(--hz-cobalt-100)] mb-6">Join our team and help shape the future of enterprise IT.</p>
                   <button
                     onClick={() => setShowApplyModal(true)}
-                    className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:shadow-lg transition-all inline-flex items-center gap-2"
+                    className="group px-8 py-4 bg-white text-[var(--hz-cobalt)] font-semibold rounded-xl hover:shadow-lg transition-all inline-flex items-center gap-2"
                   >
-                    <Sparkles className="w-5 h-5" />
                     Apply for this position
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </>
               )}
@@ -489,9 +489,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 ) : (
                   <button
                     onClick={() => setShowApplyModal(true)}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg mb-4"
+                    className="group w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg mb-4"
                   >
                     Apply for this position
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 )}
                 <div className="flex items-center gap-3">
@@ -540,7 +541,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
                 <Link
                   href="https://oceanbluecorp.com/"
-                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  className="inline-flex items-center gap-2 text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium text-sm"
                 >
                   Learn more about us
                   <ExternalLink className="w-4 h-4" />
@@ -665,7 +666,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="John"
                       />
                     </div>
@@ -676,7 +677,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="Doe"
                       />
                     </div>
@@ -690,7 +691,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -700,7 +701,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="+1 (555) 000-0000"
                       />
                     </div>
@@ -752,7 +753,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                       rows={3}
                       value={formData.coverLetter}
                       onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] resize-none bg-white"
                       placeholder="Tell us why you're interested..."
                     />
                   </div>
@@ -760,13 +761,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full px-5 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
+                    className="w-full px-5 py-3 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
                   >
                     {submitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4" />
                         Submit Application
                       </>
                     )}

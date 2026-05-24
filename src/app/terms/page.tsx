@@ -31,7 +31,7 @@ function Section({ id, number, title, children }: {
   return (
     <section id={id} className="scroll-mt-8 py-8 border-b border-gray-100 last:border-0">
       <div className="flex items-baseline gap-3 mb-4">
-        <span className="font-mono text-[11px] font-semibold text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-md">
+        <span className="font-mono text-[11px] font-semibold text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-2 py-0.5 rounded-md">
           {number}
         </span>
         <h2
@@ -57,7 +57,7 @@ function UL({ items }: { items: string[] }) {
     <ul className="space-y-2 pl-1">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-400" />
+          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
           <span>{item}</span>
         </li>
       ))}
@@ -69,14 +69,14 @@ export default function TermsPage() {
   const EFFECTIVE = "April 1, 2026";
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="horizon min-h-screen bg-white">
 
       {/* Hero */}
       <div
         className="border-b border-gray-100"
         style={{
           background: [
-            "radial-gradient(ellipse 70% 55% at 10% 20%, rgba(99,102,241,0.07) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 55% at 10% 20%, rgba(29,78,216,0.07) 0%, transparent 60%)",
             "radial-gradient(ellipse 55% 45% at 90% 80%, rgba(6,182,212,0.05) 0%, transparent 60%)",
             "#FAFBFF",
           ].join(", "),
@@ -91,8 +91,8 @@ export default function TermsPage() {
             Back to Home
           </Link>
 
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-3 py-1 text-xs font-semibold text-[var(--hz-cobalt)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--hz-cobalt)]" />
             Legal
           </div>
 
@@ -117,7 +117,7 @@ export default function TermsPage() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 {s.label}
               </a>
@@ -141,7 +141,7 @@ export default function TermsPage() {
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-1.5 text-[13px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-indigo-700"
+                    className="block rounded-lg px-3 py-1.5 text-[13px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-[var(--hz-cobalt)]"
                   >
                     {s.label}
                   </a>
@@ -470,16 +470,16 @@ export default function TermsPage() {
                   Ocean Blue Corporation — Legal Department
                 </p>
                 <div className="space-y-2.5 text-sm text-gray-600">
-                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-indigo-600">
-                    <Mail className="h-4 w-4 text-indigo-400" />
+                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
+                    <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" />
                     hr@oceanbluecorp.com
                   </a>
-                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-indigo-600">
-                    <Phone className="h-4 w-4 text-indigo-400" />
+                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
+                    <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" />
                     +1 (614) 844-6925
                   </a>
                   <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-400" />
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--hz-cobalt)]" />
                     <span>9775 Fairway Drive, Suite C<br />Powell, OH 43065</span>
                   </div>
                 </div>
@@ -490,14 +490,14 @@ export default function TermsPage() {
             <div className="mt-8 mb-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/privacy"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Privacy Policy</span>
                 <ExternalLink className="h-4 w-4" />
               </Link>
               <Link
                 href="/contact"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Contact Us</span>
                 <ExternalLink className="h-4 w-4" />

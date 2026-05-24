@@ -4,9 +4,14 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
-import LayoutWrapper from "@/components/LayoutWrapper";
-import CookieConsent from "@/components/CookieConsent";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
+import CookieConsent from "@/components/layout/CookieConsent";
+import { getAnnouncement } from "@/lib/content";
 import { Suspense } from "react";
+
+// ISR: re-render the layout (which reads the CMS announcement) at most once a
+// minute; content saves call revalidatePath("/", "layout") to push edits live.
+export const revalidate = 60;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +30,6 @@ const instrumentSerif = Instrument_Serif({
   weight: ["400"],
   style: ["normal", "italic"],
 });
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -178,11 +182,12 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const announcement = await getAnnouncement();
   return (
     <html lang="en" className="scroll-smooth">
       <head>
@@ -206,7 +211,9 @@ export default function RootLayout({
         </a>
 
         <Providers>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <LayoutWrapper announcement={announcement.text} announcementHref={announcement.href} announcementScroll={announcement.scroll}>
+            {children}
+          </LayoutWrapper>
         </Providers>
 
         {/* GDPR / CCPA cookie consent — rendered outside Providers so it always shows */}

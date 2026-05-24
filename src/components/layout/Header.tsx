@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,10 +10,10 @@ import {
   ChevronDown,
   ChevronRight,
   Cloud,
-  Database,
   Users,
-  GraduationCap,
   Cpu,
+  Shield,
+  Lightbulb,
   Building,
   BarChart3,
   Settings,
@@ -30,50 +30,22 @@ import { useAuth, UserRole } from "@/lib/auth";
 
 // Flat list (still used by mobile menu)
 const services = [
-  { name: "ERP Solutions",     href: "/services#erp",          icon: BarChart3,    description: "SAP & Oracle Implementation"     },
-  { name: "Cloud Services",    href: "/services#cloud",        icon: Cloud,        description: "Cloud Migration & Management"    },
-  { name: "AI & Analytics",    href: "/services#ai",           icon: Cpu,          description: "AI & Machine Learning"           },
-  { name: "Salesforce",        href: "/services#salesforce",   icon: Database,     description: "CRM Implementation"              },
-  { name: "Staffing",          href: "/services#staffing",     icon: Users,        description: "IT Talent Acquisition"           },
-  { name: "Training",          href: "/services#training",     icon: GraduationCap,description: "Corporate Programs"              },
-  { name: "Managed Services",  href: "/services#managed",      icon: Settings,     description: "IT Management & Support"         },
-  { name: "Outsourcing",       href: "/services#outsourcing",  icon: Headphones,   description: "Business Process Outsourcing"    },
-];
-
-// Mega-menu structure: grouped columns for desktop
-const servicesGroups: { heading: string; items: { name: string; href: string; icon: typeof Cloud; description: string }[] }[] = [
-  {
-    heading: "Platform",
-    items: [
-      { name: "Cloud Services",    href: "/services#cloud",     icon: Cloud,     description: "Migrate, modernise, and operate on AWS, Azure, GCP." },
-      { name: "Managed Services",  href: "/services#managed",   icon: Settings,  description: "24/7 monitoring, response, and reliability." },
-      { name: "ERP Solutions",     href: "/services#erp",       icon: BarChart3, description: "SAP, Oracle, and platform modernisation." },
-      { name: "Salesforce",        href: "/services#salesforce",icon: Database,  description: "CRM implementation and customisation." },
-    ],
-  },
-  {
-    heading: "Intelligence",
-    items: [
-      { name: "AI & Machine Learning", href: "/services#ai",    icon: Cpu,       description: "Production-grade ML, NLP, and computer vision." },
-      { name: "Data & Analytics",      href: "/services#data",  icon: Database,  description: "Warehousing, pipelines, and BI dashboards." },
-    ],
-  },
-  {
-    heading: "People",
-    items: [
-      { name: "IT Staffing",   href: "/services#staffing",     icon: Users,        description: "Pre-vetted specialists — median 9-day time-to-bill." },
-      { name: "Corporate Training", href: "/services#training",icon: GraduationCap,description: "Upskilling programmes and certification paths." },
-      { name: "BPO & Outsourcing",  href: "/services#outsourcing", icon: Headphones,description: "Cross-functional managed business processes." },
-    ],
-  },
+  { name: "IT Staffing & Talent", href: "/services#staffing",      icon: Users,      description: "Specialists, embedded fast"   },
+  { name: "Cloud Engineering",    href: "/services#cloud",         icon: Cloud,      description: "Migrate, modernize, scale"    },
+  { name: "Cybersecurity",        href: "/services#cybersecurity", icon: Shield,     description: "Protect what matters"         },
+  { name: "ERP Solutions",        href: "/services#erp",           icon: BarChart3,  description: "SAP, Oracle, Dynamics"        },
+  { name: "Salesforce",           href: "/services#salesforce",    icon: Settings,   description: "CRM that fits your business"  },
+  { name: "AI & Data Intelligence", href: "/services#ai",          icon: Cpu,        description: "Practical AI & analytics"     },
+  { name: "Managed Services",     href: "/services#managed",       icon: Headphones, description: "24/7 operations, one SLA"     },
+  { name: "Digital Transformation", href: "/services#transformation", icon: Lightbulb, description: "Strategy & execution"       },
 ];
 
 const servicesFeature = {
-  eyebrow: "New practice",
-  title: "AI in Production",
-  body:  "We help enterprises move past pilots — into governed, audited AI deployed against EHRs, ERPs, and customer systems.",
-  href:  "/services#ai",
-  cta:   "Read the practice",
+  eyebrow: "One partner",
+  title: "Talent, technology, and operations",
+  body:  "Bring us a roster gap, a platform to modernize, or a system to keep running — we cover it end to end, on one SLA.",
+  href:  "/services",
+  cta:   "Explore all services",
 };
 
 const resources = [
@@ -83,23 +55,23 @@ const resources = [
 ];
 
 const aboutItems = [
-  { name: "About Us",  href: "/about",      icon: Building, description: "Our story, principles, and how we work." },
-  { name: "Our Team",  href: "/about#team", icon: Users,    description: "Meet the architects behind the practice."  },
+  { name: "About Us",  href: "/about",      icon: Building,   description: "Our story, principles, and how we work." },
+  { name: "Our Team",  href: "/team",       icon: Users,      description: "Meet the leadership behind the practice." },
+  { name: "Careers",   href: "/careers",    icon: Briefcase,  description: "Open roles and life at Ocean Blue." },
 ];
 
 const aboutFeature = {
-  eyebrow: "Sixteen years on station",
+  eyebrow: "Our approach",
   title: "How we partner with enterprises",
-  body:  "A single accountable team, a consolidated SLA, and quarterly business reviews that report against the outcomes you actually asked for.",
+  body:  "A single accountable team, a consolidated SLA, and quarterly business reviews against the outcomes you set.",
   href:  "/about",
   cta:   "Read our approach",
 };
 
 const navigation = [
-  { name: "Home", href: "/" },
-  { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
-  { name: "Products", href:"/products"},
   { name: "Services", href: "/services", hasDropdown: true, dropdownType: "services" },
+  { name: "Products", href: "/products" },
+  { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
   { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
@@ -121,17 +93,17 @@ function MenuTile({
     <Link
       href={href}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-[var(--reg-surface-3)]"
+      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#f1f5f9]"
     >
-      <div className="flex size-9 flex-none items-center justify-center rounded-lg border border-[var(--reg-brand-200)] bg-[var(--reg-brand-50)] text-[var(--reg-brand-700)]">
+      <div className="flex size-9 flex-none items-center justify-center rounded-lg border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--reg-text-primary)] transition-colors group-hover:text-[var(--reg-brand-700)]">
+        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
           {name}
           <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
         </p>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--reg-text-subtle)]">{description}</p>
+        <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--hz-text-subtle)]">{description}</p>
       </div>
     </Link>
   );
@@ -151,11 +123,10 @@ function FeaturePanel({
     <Link
       href={href}
       onClick={onClick}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-gradient-to-br from-[var(--reg-brand-600)] to-[var(--reg-brand-800)] p-5 text-white"
+      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-5 text-white"
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-white/10 blur-3xl" />
       <div className="relative">
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
           {eyebrow}
         </span>
         <h4 className="mt-3 text-[18px] font-semibold leading-tight tracking-tight">{title}</h4>
@@ -171,40 +142,36 @@ function FeaturePanel({
 
 function ServicesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="w-[920px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-12 gap-0">
-        <div className="col-span-12 p-6 lg:col-span-9">
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-3">
-            {servicesGroups.map((group) => (
-              <div key={group.heading}>
-                <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
-                  {group.heading}
-                </p>
-                <div className="space-y-0.5">
-                  {group.items.map((it) => (
-                    <MenuTile key={it.name} {...it} onClick={onNavigate} />
-                  ))}
-                </div>
-              </div>
+    <div className="w-[720px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
+      <div className="grid grid-cols-12">
+        {/* All services — balanced two-column tile grid */}
+        <div className="col-span-12 p-4 md:col-span-8">
+          <p className="px-2.5 pb-2 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
+            All services
+          </p>
+          <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2">
+            {services.map((it) => (
+              <MenuTile key={it.name} {...it} onClick={onNavigate} />
             ))}
           </div>
         </div>
-        <div className="col-span-12 bg-[var(--reg-surface-2)] p-6 lg:col-span-3">
+        {/* Feature */}
+        <div className="col-span-12 bg-[#f8fafc] p-4 md:col-span-4">
           <FeaturePanel {...servicesFeature} onClick={onNavigate} />
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-[var(--reg-line)] bg-[var(--reg-surface-2)] px-6 py-3">
-        <div className="flex items-center gap-2 text-[12px] text-[var(--reg-text-secondary)]">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--reg-success-500)]" />
-          <span>Single accountable SLA · quarterly business reviews</span>
+      <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-[#f8fafc] px-5 py-2.5">
+        <div className="flex items-center gap-2 text-[12px] text-[var(--hz-text-mute)]">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10b981]" />
+          <span>Single accountable SLA · quarterly reviews</span>
         </div>
         <Link
           href="/services"
           onClick={onNavigate}
-          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--reg-text-primary)] hover:text-[var(--reg-brand-700)]"
+          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-cobalt)] hover:opacity-80"
         >
-          View all 9 practices
+          View all services
           <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </Link>
       </div>
@@ -214,10 +181,10 @@ function ServicesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
 
 function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="w-[680px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
+    <div className="w-[680px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#ffffff] shadow-[var(--reg-shadow-xl)]">
       <div className="grid grid-cols-12 gap-0">
         <div className="col-span-12 p-6 md:col-span-7">
-          <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
+          <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
             The firm
           </p>
           <div className="space-y-0.5">
@@ -226,18 +193,8 @@ function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--reg-line)] pt-5">
-            <div className="rounded-lg bg-[var(--reg-surface-2)] p-3">
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">Founded</p>
-              <p className="reg-tnum mt-1 text-[18px] font-semibold text-[var(--reg-text-primary)]">2010</p>
-            </div>
-            <div className="rounded-lg bg-[var(--reg-surface-2)] p-3">
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">Clients</p>
-              <p className="reg-tnum mt-1 text-[18px] font-semibold text-[var(--reg-text-primary)]">50+</p>
-            </div>
-          </div>
         </div>
-        <div className="col-span-12 bg-[var(--reg-surface-2)] p-6 md:col-span-5">
+        <div className="col-span-12 bg-[#f8fafc] p-6 md:col-span-5">
           <FeaturePanel {...aboutFeature} onClick={onNavigate} />
         </div>
       </div>
@@ -247,9 +204,9 @@ function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
 
 function ResourcesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[var(--reg-line)] bg-[var(--reg-surface)] shadow-[var(--reg-shadow-xl)]">
+    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#ffffff] shadow-[var(--reg-shadow-xl)]">
       <div className="p-6">
-        <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--reg-text-tertiary)]">
+        <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
           Insights &amp; research
         </p>
         <div className="space-y-0.5">
@@ -258,12 +215,12 @@ function ResourcesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between border-t border-[var(--reg-line)] bg-[var(--reg-surface-2)] px-6 py-3">
-        <span className="text-[12px] text-[var(--reg-text-secondary)]">New brief every fortnight</span>
+      <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-[#f8fafc] px-6 py-3">
+        <span className="text-[12px] text-[var(--hz-text-mute)]">New brief every fortnight</span>
         <Link
           href="/resources"
           onClick={onNavigate}
-          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--reg-text-primary)] hover:text-[var(--reg-brand-700)]"
+          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-text)] hover:text-[var(--hz-cobalt)]"
         >
           Browse all
           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -273,13 +230,26 @@ function ResourcesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export default function Header() {
+export default function Header({ topOffset = "top-0" }: { topOffset?: string }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading, signOut, hasAnyRole } = useAuth();
+
+  // Mega-menu open/close with a small delay so the cursor can travel to the
+  // (full-width) panel without it closing.
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openMenu = (type: string | null) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setActiveDropdown(type);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setActiveDropdown(null), 140);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -288,6 +258,21 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close the account menu on outside click / Escape
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setUserMenuOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [userMenuOpen]);
 
   // Get dashboard link based on role
   const getDashboardLink = () => {
@@ -343,21 +328,17 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed z-[9999] transition-all duration-500 ease-out ${
+        className={`fixed left-0 right-0 ${topOffset} z-[9999] transition-all duration-300 ease-out ${
           scrolled
-            ? "top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl"
-            : "top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl"
+            ? "border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+            : "border-b border-gray-100 bg-white"
         }`}
       >
         <nav
-          className={`relative mx-auto transition-all duration-500 ease-out ${
-            scrolled
-              ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-gray-900/5 border border-gray-200/50 rounded-full px-3 sm:px-4 lg:px-6"
-              : "bg-white/90 backdrop-blur-md shadow-md shadow-gray-900/5 border border-gray-100 rounded-full px-4 sm:px-6 lg:px-8"
-          }`}
+          className="relative mx-auto w-full max-w-7xl px-6 lg:px-8"
           aria-label="Global"
         >
-          <div className="flex items-center justify-between h-14 md:h-16">
+          <div className="flex items-center justify-between h-16 md:h-[72px]">
             {/* Logo - Always visible with proper contrast */}
             <Link href="/" className="flex items-center">
               <Image
@@ -377,19 +358,19 @@ export default function Header() {
                   <div
                     key={item.name}
                     className="relative"
-                    onMouseEnter={() => setActiveDropdown(item.dropdownType || null)}
-                    onMouseLeave={() => setActiveDropdown(null)}
+                    onMouseEnter={() => openMenu(item.dropdownType || null)}
+                    onMouseLeave={scheduleClose}
                   >
                     <button
-                      className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        scrolled
-                          ? "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                          : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${
+                        activeDropdown === item.dropdownType
+                          ? "text-[var(--hz-cobalt)]"
+                          : "text-gray-700 hover:text-[var(--hz-cobalt)]"
                       }`}
                     >
                       {item.name}
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                        activeDropdown === item.dropdownType ? "rotate-180" : ""
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                        activeDropdown === item.dropdownType ? "rotate-180 text-[var(--hz-cobalt)]" : "text-gray-400"
                       }`} />
                     </button>
 
@@ -397,15 +378,17 @@ export default function Header() {
                     <AnimatePresence>
                       {activeDropdown === item.dropdownType && (
                         <motion.div
+                          onMouseEnter={() => openMenu(item.dropdownType || null)}
+                          onMouseLeave={scheduleClose}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
                           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                          className={`absolute top-full pt-5 ${
+                          className={
                             item.dropdownType === "services"
-                              ? "left-1/2 -translate-x-1/2"
-                              : "left-1/2 -translate-x-1/2"
-                          }`}
+                              ? "absolute left-0 top-full pt-5"
+                              : "absolute left-1/2 top-full -translate-x-1/2 pt-5"
+                          }
                         >
                           {item.dropdownType === "services" ? (
                             <ServicesMegaMenu onNavigate={() => setActiveDropdown(null)} />
@@ -422,11 +405,7 @@ export default function Header() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      scrolled
-                        ? "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
+                    className="rounded-lg px-3.5 py-2 text-[14px] font-medium text-gray-700 transition-colors hover:text-[var(--hz-cobalt)]"
                   >
                     {item.name}
                   </Link>
@@ -438,14 +417,17 @@ export default function Header() {
                 {isLoading ? (
                   <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
                 ) : isAuthenticated ? (
-                  <div className="relative">
+                  <div className="relative" ref={userMenuRef}>
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center gap-2 rounded-full border border-gray-200 py-1 pl-1 pr-2.5 transition-colors hover:border-gray-300 hover:bg-gray-50"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[var(--hz-cobalt)] flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                         {getUserInitials()}
                       </div>
+                      <span className="hidden xl:block max-w-[120px] truncate text-[13px] font-semibold text-gray-700">
+                        {user?.name?.split(" ")[0] || "Account"}
+                      </span>
                       <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
                         userMenuOpen ? "rotate-180" : ""
                       }`} />
@@ -461,9 +443,9 @@ export default function Header() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full right-0 pt-5"
                         >
-                          <div className="overflow-hidden rounded-3xl bg-white text-sm shadow-2xl ring-1 ring-white/10 w-72">
+                          <div className="w-72 overflow-hidden rounded-2xl bg-white text-sm shadow-xl ring-1 ring-black/5">
                             {/* User Info */}
-                            <div className="p-4 bg-gradient-to-br from-blue-500 to-cyan-600">
+                            <div className="bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
                                   {getUserInitials()}
@@ -478,7 +460,7 @@ export default function Header() {
                                 user?.role === "hr" ? "bg-violet-100 text-violet-700" :
                                 user?.role === "recruiter" ? "bg-teal-100 text-teal-700" :
                                 user?.role === "sales" ? "bg-amber-100 text-amber-700" :
-                                "bg-blue-100 text-blue-700"
+                                "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
                               }`}>
                                 {user?.role === "admin" ? "Administrator" :
                                  user?.role === "hr" ? "HR Manager" :
@@ -491,10 +473,10 @@ export default function Header() {
                             <div className="p-2 space-y-1">
                               <Link
                                 href={getDashboardLink()}
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-blue-50 transition-colors"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
                               >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 shadow-sm">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--hz-cobalt)] shadow-sm">
                                   <LayoutDashboard className="w-4 h-4 text-white" />
                                 </div>
                                 <div>
@@ -502,19 +484,35 @@ export default function Header() {
                                   <p className="text-xs text-gray-400">View your overview</p>
                                 </div>
                               </Link>
-                              <Link
-                                href={user?.role === "user" ? "/dashboard/settings" : "/admin/settings"}
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-blue-50 transition-colors"
-                                onClick={() => setUserMenuOpen(false)}
-                              >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
-                                  <Settings className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-900">Settings</span>
-                                  <p className="text-xs text-gray-400">Manage preferences</p>
-                                </div>
-                              </Link>
+                              {user?.role === "user" ? (
+                                <Link
+                                  href="/careers"
+                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
+                                  onClick={() => setUserMenuOpen(false)}
+                                >
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
+                                    <Briefcase className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-900">Browse Jobs</span>
+                                    <p className="text-xs text-gray-400">Find your next role</p>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <Link
+                                  href="/admin/settings"
+                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
+                                  onClick={() => setUserMenuOpen(false)}
+                                >
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
+                                    <Settings className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-900">Settings</span>
+                                    <p className="text-xs text-gray-400">Manage preferences</p>
+                                  </div>
+                                </Link>
+                              )}
                             </div>
 
                             {/* Sign Out */}
@@ -545,7 +543,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href="/auth/signup"
-                      className="px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-sm hover:shadow-md"
+                      className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--hz-cobalt)] text-white hover:bg-[var(--hz-cobalt-600)] transition-all shadow-sm hover:shadow-md"
                     >
                       Sign Up
                     </Link>
@@ -591,7 +589,7 @@ export default function Header() {
                           <div>
                             <button
                               onClick={() => toggleMobileDropdown(item.dropdownType || "")}
-                              className="w-full flex items-center justify-between py-4 text-gray-900 hover:text-blue-600 transition-colors"
+                              className="w-full flex items-center justify-between py-4 text-gray-900 hover:text-[var(--hz-cobalt)] transition-colors"
                             >
                               <span className="font-medium text-base">{item.name}</span>
                               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
@@ -611,8 +609,8 @@ export default function Header() {
                                       setMobileDropdown(null);
                                     }}
                                   >
-                                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0`}>
-                                      <dropItem.icon className="w-5 h-5" />
+                                    <div className="w-10 h-10 rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] flex items-center justify-center flex-shrink-0">
+                                      <dropItem.icon className="w-5 h-5" strokeWidth={1.75} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <p className="font-medium text-gray-900 text-sm">
@@ -629,16 +627,16 @@ export default function Header() {
                                 {item.dropdownType !== "about" && (
                                   <Link
                                     href={item.dropdownType === "services" ? "/services" : "/resources"}
-                                    className="flex items-center justify-between p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition-all mt-2"
+                                    className="flex items-center justify-between p-3 rounded-xl bg-[var(--hz-cobalt-100)] hover:brightness-95 transition-all mt-2"
                                     onClick={() => {
                                       setMobileMenuOpen(false);
                                       setMobileDropdown(null);
                                     }}
                                   >
-                                    <span className="text-sm font-medium text-blue-700">
+                                    <span className="text-sm font-medium text-[var(--hz-cobalt)]">
                                       View all {item.dropdownType}
                                     </span>
-                                    <ArrowRight className="w-4 h-4 text-blue-600" />
+                                    <ArrowRight className="w-4 h-4 text-[var(--hz-cobalt)]" />
                                   </Link>
                                 )}
                               </div>
@@ -647,7 +645,7 @@ export default function Header() {
                         ) : (
                           <Link
                             href={item.href}
-                            className="flex items-center justify-between py-4 text-gray-900 hover:text-blue-600 transition-colors"
+                            className="flex items-center justify-between py-4 text-gray-900 hover:text-[var(--hz-cobalt)] transition-colors"
                             onClick={() => setMobileMenuOpen(false)}
                           >
                             <span className="font-medium text-base">{item.name}</span>
@@ -665,13 +663,13 @@ export default function Header() {
                     ) : isAuthenticated ? (
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-semibold text-base shadow-sm">
+                          <div className="w-12 h-12 rounded-full bg-[var(--hz-cobalt)] flex items-center justify-center text-white font-semibold text-base shadow-sm">
                             {getUserInitials()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 text-sm truncate">{user?.name}</p>
                             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 capitalize">
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] capitalize">
                               {user?.role}
                             </span>
                           </div>
@@ -706,7 +704,7 @@ export default function Header() {
                         </Link>
                         <Link
                           href="/auth/signup"
-                          className="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:from-orange-600 hover:to-amber-600 transition-colors"
+                          className="block w-full px-4 py-3 text-center text-sm font-semibold text-white bg-[var(--hz-cobalt)] rounded-xl hover:bg-[var(--hz-cobalt-600)] transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           Create Account

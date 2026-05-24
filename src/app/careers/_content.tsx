@@ -1,271 +1,134 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
 import {
-  MapPin,
-  Briefcase,
-  Clock,
-  DollarSign,
-  Building2,
-  Search,
-  Filter,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Globe,
-  Loader2,
-  ArrowRight,
-  CalendarClock,
-  CheckCircle2,
-  Users,
-  Building,
-  Calendar,
+  Clock, Users, Calendar, Heart, Landmark, GraduationCap, ArrowRight, type LucideIcon,
 } from "lucide-react";
-import { Job } from "@/lib/aws/dynamodb";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
+import { Cta } from "@/components/landing/ui";
+import Photo from "@/components/landing/Photo";
+import { IMG } from "@/components/landing/media";
 
-const departments = ["All Departments", "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce", "IT Staffing", "Training", "PMO"];
-const jobTypes = ["All Types", "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams", "remote"];
+const facts = [
+  { v: "50+", k: "Team members" },
+  { v: "4", k: "Global offices" },
+  { v: "Since 2010", k: "Growing" },
+];
 
-// Format job type for display
-const formatJobType = (type: string) => {
-  const typeMap: Record<string, string> = {
-    "full-time": "Full-time",
-    "part-time": "Part-time",
-    "contract": "Contract",
-    "contract-to-hire": "Contract-to-Hire",
-    "direct-hire": "Direct Hire",
-    "managed-teams": "Managed Teams",
-    "remote": "Remote",
-  };
-  return typeMap[type] || type;
-};
+const culture: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: GraduationCap, title: "Professional growth", desc: "We invest in your development through training, mentorship, and work on cutting-edge projects." },
+  { icon: Clock, title: "Work-life balance", desc: "Flexible working arrangements and a culture that respects your time outside work." },
+  { icon: Users, title: "Inclusive environment", desc: "A supportive workplace where every voice is heard and diversity is celebrated." },
+];
 
-// Format due date
-const formatDueDate = (dueDate: string | undefined): { text: string; isUrgent: boolean } | null => {
-  if (!dueDate) return null;
-  const due = new Date(dueDate);
-  const now = new Date();
-  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+const benefits: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Heart, title: "Health insurance", desc: "Comprehensive medical, dental, and vision coverage for you and your family." },
+  { icon: Landmark, title: "Retirement plans", desc: "Robust 401(k) and savings options to help you build a secure financial future." },
+  { icon: Calendar, title: "Paid time off", desc: "Generous vacation and sick leave so you have time to rest and recharge." },
+];
 
-  if (diffDays < 0) return { text: "Closed", isUrgent: true };
-  if (diffDays === 0) return { text: "Due Today", isUrgent: true };
-  if (diffDays === 1) return { text: "Due Tomorrow", isUrgent: true };
-  if (diffDays <= 7) return { text: `${diffDays} days left`, isUrgent: true };
-  return { text: `Due ${due.toLocaleDateString()}`, isUrgent: false };
-};
-
-const PER_PAGE_OPTIONS = [6, 12, 24] as const;
-
-interface JobWithUI extends Job {
-  postedAgo?: string;
+function Card({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
+  return (
+    <div className="hz-card h-full p-8">
+      <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      </div>
+      <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{title}</h3>
+      <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{desc}</p>
+    </div>
+  );
 }
 
 export default function CareersPage() {
-  
   return (
-    <div className="bg-white">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pb-28 overflow-hidden">
-        {/* Animated background orbs */}
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100 rounded-full blur-3xl opacity-40"
-        />
-        <motion.div
-          animate={{ scale: [1.2, 1, 1.2], x: [0, -20, 0], y: [0, 20, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-100 rounded-full blur-3xl opacity-40"
-        />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-block text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4"
-            >
-              Careers at Ocean Blue
-            </motion.span>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="heading-section text-gray-900 mb-6"
-            >
-              Build Your{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-medium">
-                  Future
-                </span>
-                <motion.span
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-blue-200 to-cyan-200 opacity-50 -z-0 rounded-full"
-                  style={{ originX: 0 }}
-                />
-              </span>{" "}
-              With Us
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl mx-auto"
-            >
-              Join a team of innovators, problem-solvers, and technology experts who are shaping the future of enterprise IT.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-wrap justify-center gap-6 text-gray-600"
-            >
-              {[
-                { icon: Building2, label: "50+ Employees" },
-                { icon: Globe, label: "3 Locations" },
-                { icon: Briefcase, label: "Open Positions" },
-              ].map((stat, index) => (
-                <div key={stat.label} className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <stat.icon className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="font-medium">{stat.label}</span>
+    <div className="horizon w-full bg-[var(--hz-canvas)]">
+      {/* Hero */}
+      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
+        <Photo src={IMG.heroSlides[1]} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+          <Reveal>
+            <h1 className="hz-display max-w-[16ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+              Build your career with our team.
+            </h1>
+            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
+              Join the engineers, recruiters, and problem-solvers shaping enterprise IT — and grow with a partner that backs its people.
+            </p>
+            <div className="mt-10">
+              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+            </div>
+            <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-y-6 border-t border-white/15 pt-8">
+              {facts.map((f) => (
+                <div key={f.k}>
+                  <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>
+                  <dd className="hz-eyebrow mt-1 text-white/55">{f.k}</dd>
                 </div>
               ))}
-            </motion.div>
-          </div>
-          <div className="flex justify-center align-center">
-            <Link href="/careers/search" className="mt-12 inline-flex items-center gap-2 text-blue-600 bg-blue-100 hover:bg-blue-200 p-4 rounded-lg font-medium transition-colors">
-              View Open Positions
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+            </dl>
+          </Reveal>
         </div>
       </section>
 
-      {/* Additional sections like company culture, benefits, employee testimonials can be added here */}
-      <section className="py-16 md:py-20 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block">Why Work With Us?</span>
-            <h2 className="heading-subsection text-gray-900 mb-4">
-              A Culture of{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Innovation</span> and{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Collaboration</span>
-            </h2>
-            <p className="text-gray-500">
-              At Ocean Blue, we foster a supportive and inclusive environment where every voice is heard. We believe in continuous learning, professional growth, and making a positive impact on our clients and communities.
+      {/* Culture */}
+      <section className="relative w-full py-24 sm:py-28">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <Reveal className="max-w-2xl">
+            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">A culture of growth and collaboration.</h2>
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
+              We foster a supportive, inclusive environment built on continuous learning and real impact for our clients.
             </p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                title: "Professional Growth",
-                description: "We invest in our employees' development through training, mentorship, and opportunities to work on cutting-edge projects.",
-                icon: CalendarClock,
-              },
-              {
-                title: "Work-Life Balance",
-                description: "We understand the importance of maintaining a healthy work-life balance and provide flexible working arrangements to support our employees.",
-                icon: Clock,
-              },
-              {
-                title: "Inclusive Environment",
-                description: "We are committed to creating an inclusive workplace where diversity is celebrated, and every employee feels valued and respected.",
-                icon: Users,
-              }
-            ].map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-500">{feature.description}</p>
-              </div>
+          </Reveal>
+          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
+            {culture.map((c) => (
+              <StaggerItem key={c.title} className="h-full"><Card {...c} /></StaggerItem>
             ))}
-
-          </div>
+          </Stagger>
         </div>
       </section>
 
-      {/* Our Benefits Section as Equal employment opportunity,medical,401k */}
-      <section className="py-16 md:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-sm font-medium text-gray-400 uppercase tracking-[0.2em] mb-4 block">Our Benefits</span>
-            <h2 className="heading-subsection text-gray-900 mb-4">
-              Comprehensive Benefits for a{" "}<span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Healthy</span> and{" "}<span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Secure</span> Future
-            </h2>
-            <p className="text-gray-500"> We offer a competitive benefits package that includes health insurance, retirement plans, paid time off, and more to support the well-being and financial security of our employees.</p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                title: "Health Insurance",
-                description: "Comprehensive medical, dental, and vision coverage to keep you and your family healthy.",
-                icon: CheckCircle2,
-              },
-              {
-                title: "Retirement Plans",
-                description: "Robust retirement savings options to help you build a secure financial future.",
-                icon: Building,
-              },
-              {
-                title: "Paid Time Off",
-                description: "Generous vacation and sick leave policies to ensure you have time to rest and recharge.",
-                icon: Calendar,
-              }
-            ].map((benefit, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <benefit.icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{benefit.title}</h3>
-                <p className="text-gray-500">{benefit.description}</p>
-              </div>
+      {/* Benefits */}
+      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-28">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <Reveal className="max-w-2xl">
+            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Benefits that have your back.</h2>
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
+              A competitive package supporting the well-being and financial security of every team member.
+            </p>
+          </Reveal>
+          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
+            {benefits.map((b) => (
+              <StaggerItem key={b.title} className="h-full"><Card {...b} /></StaggerItem>
             ))}
-          </div>
-          {/* 401k and other benefits can be added here in the future  */}
-          <div className="flex justify-center align-center mt-12">
-           <div className="text-center">
-              <h2 className="heading-subsection text-gray-900 mb-4">
-                We Are an{" "}
-                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Equal Opportunity Employer</span>
-              </h2>
-              <p className="text-gray-500 max-w-xl mx-auto">
-                We celebrate diversity and are committed to creating an inclusive environment for all employees. We do not discriminate based on race, color, religion, sex, sexual orientation, gender
-                identity, national origin, disability, or veteran status.
+          </Stagger>
+
+          <Reveal>
+            <div className="mt-12 rounded-2xl border border-black/[0.08] bg-white p-8 text-center sm:p-10">
+              <h3 className="hz-display text-[1.4rem] text-[var(--hz-text)] sm:text-[1.75rem]">An equal opportunity employer</h3>
+              <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
+                We celebrate diversity and are committed to an inclusive environment for all. We do not discriminate based on
+                race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.
               </p>
-          </div>
-        </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-    {/* Call to Action Section */}
-    <section className="py-16 md:py-20 bg-gradient-to-r from-blue-600 to-cyan-600">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="heading-subsection text-white mb-4">Ready to Join Our Team?</h2>
-          <p className="text-blue-100 max-w-2xl mx-auto mb-8">
-            We're always looking for talented individuals to help us drive innovation and make a positive impact.
-          </p>
-          <Link href="/careers/search" className="inline-flex items-center gap-2 text-blue-600 bg-white hover:bg-gray-100 p-4 rounded-lg font-medium transition-colors">
-            View Open Positions
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+      {/* CTA */}
+      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
+        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+          <Reveal className="flex flex-col items-center">
+            <h2 className="hz-display max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Ready to join our team?</h2>
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
+              We&apos;re always looking for talented people to help us drive innovation and impact.
+            </p>
+            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
+              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+              <Cta href="/contact" variant="ghostDark">Get in touch</Cta>
+            </div>
+          </Reveal>
         </div>
-      </div>
-    </section>
-
+      </section>
     </div>
   );
 }

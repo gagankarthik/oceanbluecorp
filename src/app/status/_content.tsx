@@ -6,7 +6,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, RefreshCw,
   ExternalLink, Clock, Database, HardDrive, Mail,
   Shield, Zap, Search, Loader2, ChevronDown, ChevronUp,
-  Activity, Globe, Info,
+  Activity, Globe, Info, ArrowLeft,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -296,7 +296,7 @@ export default function StatusContent() {
   const banner = BANNER[overall];
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="horizon min-h-screen bg-[var(--hz-surface)]">
 
       {/* ── Banner ── */}
       <div className={`bg-gradient-to-r ${banner.gradient} pt-28 pb-20 px-4 relative overflow-hidden`}>
@@ -305,6 +305,13 @@ export default function StatusContent() {
           style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
 
         <div className="max-w-4xl mx-auto relative z-10">
+          <Link
+            href="/"
+            className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Back to Home
+          </Link>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <Activity className="w-5 h-5 text-white" />

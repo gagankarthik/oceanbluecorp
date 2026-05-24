@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import ServicesPage from "./_content";
+import { getSiteContent } from "@/lib/content";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "IT Services",
@@ -14,6 +17,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oceanbluecorp.com/services" },
 };
 
-export default function Services() {
-  return <ServicesPage />;
+export default async function Services() {
+  const content = await getSiteContent("services");
+  return <ServicesPage content={content} />;
 }

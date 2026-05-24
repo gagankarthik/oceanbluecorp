@@ -27,7 +27,7 @@ function Section({ id, number, title, children }: {
   return (
     <section id={id} className="scroll-mt-8 border-b border-gray-100 py-8 last:border-0">
       <div className="mb-4 flex items-baseline gap-3">
-        <span className="rounded-md bg-amber-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-600">
+        <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
           {number}
         </span>
         <h2
@@ -53,7 +53,7 @@ function UL({ items }: { items: (string | React.ReactNode)[] }) {
     <ul className="space-y-2 pl-1">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />
+          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
           <span>{item}</span>
         </li>
       ))}
@@ -92,11 +92,11 @@ export default function CookiesPage() {
 
   return (
     <div
-      className="min-h-screen"
+      className="horizon min-h-screen"
       style={{
         background: [
-          "radial-gradient(ellipse 70% 50% at 15% 5%, rgba(245,158,11,0.06) 0%, transparent 55%)",
-          "radial-gradient(ellipse 60% 45% at 88% 15%, rgba(99,102,241,0.05) 0%, transparent 55%)",
+          "radial-gradient(ellipse 70% 50% at 15% 5%, rgba(29,78,216,0.06) 0%, transparent 55%)",
+          "radial-gradient(ellipse 60% 45% at 88% 15%, rgba(29,78,216,0.05) 0%, transparent 55%)",
           "#FAFBFF",
         ].join(", "),
       }}
@@ -112,8 +112,8 @@ export default function CookiesPage() {
             Back to Home
           </Link>
           <div className="flex items-start gap-5">
-            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-50 ring-1 ring-amber-100">
-              <Cookie className="h-7 w-7 text-amber-500" />
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--hz-cobalt-100)] ring-1 ring-[var(--hz-cobalt-100)]">
+              <Cookie className="h-7 w-7 text-[var(--hz-cobalt)]" />
             </div>
             <div>
               <h1
@@ -154,15 +154,15 @@ export default function CookiesPage() {
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-amber-50 hover:text-amber-700"
+                    className="block rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
                   >
                     {s.label}
                   </a>
                 ))}
               </nav>
-              <div className="mt-8 rounded-xl border border-amber-100 bg-amber-50/60 p-4">
-                <p className="mb-1 text-xs font-semibold text-amber-700">Questions?</p>
-                <p className="text-xs text-amber-700/70 leading-relaxed">
+              <div className="mt-8 rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] p-4">
+                <p className="mb-1 text-xs font-semibold text-[var(--hz-cobalt)]">Questions?</p>
+                <p className="text-xs text-[var(--hz-cobalt)] leading-relaxed">
                   Contact our privacy team at{" "}
                   <a href="mailto:privacy@oceanbluecorp.com" className="underline underline-offset-2">
                     privacy@oceanbluecorp.com
@@ -204,11 +204,11 @@ export default function CookiesPage() {
               <Section id="types" number="03" title="Types of Cookies We Use">
                 <P>We categorize the cookies on our website into four types:</P>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <CookieCard icon={Shield} title="Strictly Necessary" color="border-blue-100 bg-blue-50/50">
+                  <CookieCard icon={Shield} title="Strictly Necessary" color="border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]">
                     <p>
                       Essential for the website to function. They enable core features such as security, account login, and network management. You cannot opt out of these without significantly affecting how our website works.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-blue-700">Always active</p>
+                    <p className="mt-2 text-xs font-medium text-[var(--hz-cobalt)]">Always active</p>
                   </CookieCard>
                   <CookieCard icon={Settings2} title="Functional / Preference" color="border-green-100 bg-green-50/50">
                     <p>
@@ -216,11 +216,11 @@ export default function CookiesPage() {
                     </p>
                     <p className="mt-2 text-xs font-medium text-green-700">Optional — enabled by default</p>
                   </CookieCard>
-                  <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-amber-100 bg-amber-50/50">
+                  <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-slate-200 bg-slate-50">
                     <p>
                       Help us understand how visitors interact with our website by collecting and reporting information anonymously. We use Google Analytics 4 for this purpose. No personally identifiable information is transmitted.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-amber-700">Optional — requires consent</p>
+                    <p className="mt-2 text-xs font-medium text-slate-600">Optional — requires consent</p>
                   </CookieCard>
                   <CookieCard icon={ExternalLink} title="Marketing / Targeting" color="border-rose-100 bg-rose-50/50">
                     <p>
@@ -257,8 +257,8 @@ export default function CookiesPage() {
                             <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.duration}</td>
                             <td className="px-4 py-3">
                               <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                                row.type === "Security"    ? "bg-blue-50 text-blue-700" :
-                                row.type === "Analytics"  ? "bg-amber-50 text-amber-700" :
+                                row.type === "Security"    ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" :
+                                row.type === "Analytics"  ? "bg-slate-100 text-slate-600" :
                                 row.type === "Marketing"  ? "bg-rose-50 text-rose-700" :
                                 row.type === "Functional" ? "bg-green-50 text-green-700" :
                                 "bg-gray-100 text-gray-600"
@@ -321,7 +321,7 @@ export default function CookiesPage() {
                       href={b.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition-colors hover:border-amber-300 hover:text-amber-700"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition-colors hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)]"
                     >
                       {b.name}
                       <ExternalLink className="h-3 w-3" />
@@ -330,7 +330,7 @@ export default function CookiesPage() {
                 </div>
                 <P>
                   To opt out of being tracked by Google Analytics across all websites, you can install the{" "}
-                  <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-amber-600 underline underline-offset-2 hover:text-amber-700">
+                  <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
                     Google Analytics Opt-out Browser Add-on
                   </a>.
                 </P>
@@ -351,7 +351,7 @@ export default function CookiesPage() {
                 </P>
                 <P>
                   For users in the United States, some states (including California under the CPRA) provide rights relating to the use of cookies for targeted advertising purposes. Please see our{" "}
-                  <Link href="/privacy#california" className="text-amber-600 underline underline-offset-2 hover:text-amber-700">
+                  <Link href="/privacy#california" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
                     Privacy Policy
                   </Link>{" "}
                   for details about your rights as a California resident.
@@ -377,10 +377,10 @@ export default function CookiesPage() {
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <a
                     href="mailto:privacy@oceanbluecorp.com"
-                    className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-amber-200 hover:bg-amber-50"
+                    className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)]"
                   >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100 group-hover:bg-amber-100 group-hover:ring-amber-200 transition-colors">
-                      <Mail className="h-4 w-4 text-gray-500 group-hover:text-amber-600 transition-colors" />
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100 group-hover:bg-[var(--hz-cobalt-100)] group-hover:ring-[var(--hz-cobalt-100)] transition-colors">
+                      <Mail className="h-4 w-4 text-gray-500 group-hover:text-[var(--hz-cobalt)] transition-colors" />
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Privacy Team</p>
@@ -402,7 +402,7 @@ export default function CookiesPage() {
                 </div>
                 <P>
                   For general inquiries unrelated to privacy, please visit our{" "}
-                  <Link href="/contact" className="text-amber-600 underline underline-offset-2 hover:text-amber-700">
+                  <Link href="/contact" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
                     Contact page
                   </Link>.
                 </P>
@@ -413,16 +413,16 @@ export default function CookiesPage() {
             {/* Footer nav */}
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white px-8 py-5 shadow-sm ring-1 ring-gray-100">
               <div className="flex items-center gap-6 text-sm">
-                <Link href="/privacy" className="text-gray-500 hover:text-amber-600 transition-colors">
+                <Link href="/privacy" className="text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors">
                   Privacy Policy
                 </Link>
-                <Link href="/terms" className="text-gray-500 hover:text-amber-600 transition-colors">
+                <Link href="/terms" className="text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors">
                   Terms of Service
                 </Link>
               </div>
               <Link
                 href="/"
-                className="group inline-flex items-center gap-2 text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
+                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--hz-cobalt)] transition-colors hover:text-[var(--hz-cobalt)]"
               >
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
                 Back to Home

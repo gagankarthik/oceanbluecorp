@@ -1,4 +1,5 @@
 "use client";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 
 import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
 import { motion } from "framer-motion";
@@ -76,9 +77,9 @@ const roleConfigs: Record<string, RoleConfig> = {
   [UserRole.USER]: {
     name: "User",
     description: "Basic access to personal dashboard and job applications",
-    color: "text-blue-700",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    color: "text-[var(--hz-cobalt)]",
+    bgColor: "bg-[var(--hz-cobalt-100)]",
+    borderColor: "border-[var(--hz-cobalt-100)]",
     icon: Users,
     level: roleHierarchy[UserRole.USER],
   },
@@ -92,7 +93,7 @@ interface RouteConfig {
 
 const routes: RouteConfig[] = [
   { path: "/admin", name: "Admin Home", icon: LayoutDashboard },
-  { path: "/admin/dashboard", name: "Dashboard", icon: LayoutDashboard },
+  { path: "/admin", name: "Dashboard", icon: LayoutDashboard },
   { path: "/admin/roles", name: "Roles", icon: Shield },
   { path: "/admin/jobs", name: "Job Postings", icon: Briefcase },
   { path: "/admin/applications", name: "Applications", icon: FileText },
@@ -119,23 +120,17 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">Roles & Permissions</h1>
-          </div>
-          <p className="text-gray-500 text-sm mt-0.5">
-            View role hierarchy and route access permissions
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Roles & Permissions"
+        subtitle="View role hierarchy and route access permissions"
+        icon={Shield}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Total Roles", value: totalRoles, icon: Shield, color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
-          { label: "Admin Routes", value: routes.filter(r => r.path.startsWith("/admin")).length, icon: LayoutDashboard, color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
+          { label: "Admin Routes", value: routes.filter(r => r.path.startsWith("/admin")).length, icon: LayoutDashboard, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
           { label: "User Routes", value: routes.filter(r => !r.path.startsWith("/admin")).length, icon: Users, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
           { label: "Total Routes", value: totalRoutes, icon: Settings, color: "text-violet-700", bg: "bg-violet-50 border-violet-200" },
         ].map(stat => (
@@ -144,7 +139,7 @@ export default function RolesPage() {
               <stat.icon className={`w-4 h-4 ${stat.color}`} />
             </div>
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -155,7 +150,7 @@ export default function RolesPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="shadow-sm border-gray-100">
+        <Card className="shadow-sm border-slate-100">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-semibold">Role Hierarchy</CardTitle>
             <CardDescription>System roles ordered by hierarchy level</CardDescription>
@@ -184,7 +179,7 @@ export default function RolesPage() {
                         </span>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {config.description}
                     </p>
                   </motion.div>
@@ -201,7 +196,7 @@ export default function RolesPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className="shadow-sm border-gray-100">
+        <Card className="shadow-sm border-slate-100">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-semibold">Permissions Matrix</CardTitle>
             <CardDescription>Route access by role (read-only view)</CardDescription>
@@ -210,8 +205,8 @@ export default function RolesPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide sticky left-0 bg-gray-50 z-10">
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide sticky left-0 bg-slate-50 z-10">
                       Route
                     </th>
                     {roles.map(role => {
@@ -226,19 +221,19 @@ export default function RolesPage() {
                     })}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {routes.map((route, index) => {
                     const Icon = route.icon;
                     return (
-                      <tr key={route.path} className={index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                      <tr key={route.path} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
                         <td className="py-3 px-4 sticky left-0 bg-inherit z-10">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-4 h-4 text-gray-600" />
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                              <Icon className="w-4 h-4 text-slate-600" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{route.name}</p>
-                              <p className="text-xs text-gray-400 font-mono">{route.path}</p>
+                              <p className="text-sm font-medium text-slate-900">{route.name}</p>
+                              <p className="text-xs text-slate-400 font-mono">{route.path}</p>
                             </div>
                           </div>
                         </td>
@@ -251,8 +246,8 @@ export default function RolesPage() {
                                   <Check className="w-4 h-4 text-emerald-600" />
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                                  <X className="w-4 h-4 text-gray-400" />
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100">
+                                  <X className="w-4 h-4 text-slate-400" />
                                 </span>
                               )}
                             </td>
@@ -274,15 +269,15 @@ export default function RolesPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <div className="flex items-start gap-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Info className="w-5 h-5 text-blue-600" />
+        <div className="flex items-start gap-4 p-4 bg-[var(--hz-cobalt-100)] border border-[var(--hz-cobalt-100)] rounded-xl">
+          <div className="w-10 h-10 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
+            <Info className="w-5 h-5 text-[var(--hz-cobalt)]" />
           </div>
           <div>
-            <h3 className="font-semibold text-blue-900">Configuration Note</h3>
-            <p className="text-sm text-blue-700 mt-1">
+            <h3 className="font-semibold text-[var(--hz-cobalt)]">Configuration Note</h3>
+            <p className="text-sm text-[var(--hz-cobalt)] mt-1">
               Permissions are managed in the code configuration at{" "}
-              <code className="px-1.5 py-0.5 bg-blue-100 rounded text-xs font-mono">
+              <code className="px-1.5 py-0.5 bg-[var(--hz-cobalt-100)] rounded text-xs font-mono">
                 src/lib/auth/config.ts
               </code>
               . Role assignments are managed through AWS Cognito user groups. To change a user&apos;s role,

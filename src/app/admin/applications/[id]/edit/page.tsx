@@ -1,16 +1,20 @@
 "use client";
+import { toast } from "sonner";
+import { AdminFormSkeleton } from "@/components/admin/skeletons";
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, User2, MapPin, Briefcase, Shield, FileText,
-  Star, Plus, X, Loader2, AlertTriangle, BookmarkPlus,
-  BookmarkCheck, ChevronRight, Upload, File, Download, Trash2,
+  Plus, X, Loader2, AlertTriangle, BookmarkPlus,
+  BookmarkCheck, ChevronRight, Upload, File, Download, Trash2, Star, Edit3,
 } from "lucide-react";
-import { Job } from "@/lib/aws/dynamodb";
+import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { statusMeta, SOURCE_OPTIONS, US_STATES, type AppStatus } from "@/components/admin/theme";
+import { FormSection, Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
+import { StarRating } from "@/components/admin/star-rating";
 import { cn } from "@/lib/utils";
 
 const VISA_OPTIONS = [
@@ -78,8 +82,8 @@ function EditApplicationInner() {
   // Load application + jobs in parallel
   useEffect(() => {
     Promise.all([
-      fetch(`/api/applications/${id}`).then(r => r.json()),
-      fetch("/api/jobs").then(r => r.json()),
+      fetch(`/api/applications/${id}`).then((r) => r.json()),
+      fetch("/api/jobs").then((r) => r.json()),
     ]).then(([appData, jobsData]) => {
       const app = appData.application;
       const jArr: Job[] = jobsData.jobs || [];
@@ -103,6 +107,7 @@ function EditApplicationInner() {
         setExperience(app.experience || "");
         setWorkAuth(app.workAuthorization || "");
         setNeedsSponsorship(!!app.visaSponsorshipRequired);
+        setVisaExpiry(app.visaExpiry || "");
         setRating(app.rating || 0);
         setNotes(app.notes || "");
         if (app.resumeId && app.resumeFileName) {
@@ -116,7 +121,7 @@ function EditApplicationInner() {
   const addSkill = (s: string) => {
     const t = s.trim();
     if (!t || skills.includes(t)) return;
-    setSkills(p => [...p, t]);
+    setSkills((p) => [...p, t]);
     setSkillInput("");
   };
 
@@ -159,7 +164,7 @@ function EditApplicationInner() {
       const res = await fetch(`/api/resume/${existingResume.id}`);
       const data = await res.json();
       if (res.ok) window.open(data.downloadUrl, "_blank");
-    } catch { alert("Failed to download resume"); }
+    } catch { toast.error("Failed to download resume"); }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -180,7 +185,7 @@ function EditApplicationInner() {
         resumePayload = { resumeId: existingResume.id, resumeFileName: existingResume.fileName };
       }
 
-      const job = jobs.find(j => j.id === jobId);
+      const job = jobs.find((j) => j.id === jobId);
       const payload = {
         firstName: firstName.trim(),
         lastName:  lastName.trim(),
@@ -192,6 +197,8 @@ function EditApplicationInner() {
         jobTitle:          jobTitle || job?.title || undefined,
         source:            source   || undefined,
         workAuthorization: workAuth || undefined,
+        visaSponsorshipRequired: needsSponsorship,
+        ...(visaExpiry && { visaExpiry }),
         city, state, skills, experience, notes,
         rating: rating || undefined,
         addToTalentBench,
@@ -217,11 +224,7 @@ function EditApplicationInner() {
 
   const isPermanent = ["US Citizen", "Green Card"].includes(workAuth);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-    </div>
-  );
+  if (loading) return <AdminFormSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
@@ -229,30 +232,30 @@ function EditApplicationInner() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all">
-            <ArrowLeft className="w-4 h-4" />
+          <button onClick={() => router.back()} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all">
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Link href="/admin/applications" className="hover:text-blue-600 transition-colors font-medium">Applications</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-700 font-semibold">Edit Applicant</span>
-          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/admin/applications" className="px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
             Cancel
           </Link>
           <button type="button" onClick={handleSubmit} disabled={submitting || resumeUploading}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
+            className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
             {(submitting || resumeUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
             Save Changes
           </button>
         </div>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Edit Applicant</h1>
-        <p className="text-sm text-slate-500 mt-1">Update the candidate&apos;s information below.</p>
+      <div className="flex items-start gap-3">
+        <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 items-center justify-center shadow-sm shadow-[rgba(29,78,216,0.2)] flex-shrink-0">
+          <Edit3 className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-slate-900 leading-tight">Edit Applicant</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Update the candidate&apos;s information below.</p>
+        </div>
       </div>
 
       {error && (
@@ -269,64 +272,61 @@ function EditApplicationInner() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Personal Info */}
-          <Card>
-            <CardHeader icon={User2} color="blue" title="Personal Information" />
+          <FormSection icon={User2} title="Personal Information">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="First Name" required>
-                <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" autoFocus />
+                <FormInput value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" autoFocus />
               </Field>
               <Field label="Last Name">
-                <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Smith" />
+                <FormInput value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" />
               </Field>
               <Field label="Email Address" required>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
+                <FormInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
               </Field>
               <Field label="Phone Number">
-                <Input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+                <FormInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
               </Field>
             </div>
-          </Card>
+          </FormSection>
 
           {/* Location */}
-          <Card>
-            <CardHeader icon={MapPin} color="emerald" title="Location" />
+          <FormSection icon={MapPin} title="Location">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="City">
-                <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Austin" />
+                <FormInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="Austin" />
               </Field>
               <Field label="State">
-                <Select value={state} onChange={e => setState(e.target.value)}>
+                <FormSelect value={state} onChange={(e) => setState(e.target.value)}>
                   <option value="">Select state…</option>
-                  {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                </Select>
+                  {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </FormSelect>
               </Field>
             </div>
-          </Card>
+          </FormSection>
 
           {/* Skills & Experience */}
-          <Card>
-            <CardHeader icon={Briefcase} color="violet" title="Skills & Experience" />
+          <FormSection icon={Briefcase} title="Skills & Experience">
             <div className="space-y-5">
               <Field label="Skills">
                 <div className="flex gap-2">
-                  <Input value={skillInput} onChange={e => setSkillInput(e.target.value)}
-                    onKeyDown={e => {
+                  <FormInput value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") { e.preventDefault(); addSkill(skillInput); }
                       if (e.key === ",") { e.preventDefault(); addSkill(skillInput); }
                     }}
                     placeholder="Type a skill and press Enter…" />
                   <button type="button" onClick={() => addSkill(skillInput)}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0">
+                    className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0">
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </Field>
               {skills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {skills.map(s => (
-                    <span key={s} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-100">
+                  {skills.map((s) => (
+                    <span key={s} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-semibold rounded-full">
                       {s}
-                      <button type="button" onClick={() => setSkills(p => p.filter(x => x !== s))} className="p-0.5 hover:bg-blue-200 rounded-full transition-colors">
+                      <button type="button" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
                         <X className="w-3 h-3" />
                       </button>
                     </span>
@@ -334,39 +334,38 @@ function EditApplicationInner() {
                 </div>
               )}
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quick add</p>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Quick add</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {COMMON_SKILLS.filter(s => !skills.includes(s)).map(s => (
+                  {COMMON_SKILLS.filter((s) => !skills.includes(s)).map((s) => (
                     <button key={s} type="button" onClick={() => addSkill(s)}
-                      className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 rounded-full border border-slate-200 hover:border-blue-200 transition-colors">
+                      className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)] rounded-full border border-slate-200 hover:border-[var(--hz-cobalt-100)] transition-colors">
                       + {s}
                     </button>
                   ))}
                 </div>
               </div>
               <Field label="Experience Summary">
-                <Textarea rows={4} value={experience} onChange={e => setExperience(e.target.value)}
+                <FormTextarea rows={4} value={experience} onChange={(e) => setExperience(e.target.value)}
                   placeholder="Brief summary of experience, industries, key achievements…" />
               </Field>
             </div>
-          </Card>
+          </FormSection>
 
           {/* Resume */}
-          <Card>
-            <CardHeader icon={FileText} color="slate" title="Resume" compact />
+          <FormSection icon={FileText} title="Resume">
             <div className="space-y-3">
               {/* Existing resume */}
               {existingResume && !resumeFile && (
                 <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <File className="w-4 h-4 text-blue-600" />
+                  <div className="w-9 h-9 bg-[var(--hz-cobalt-100)] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <File className="w-4 h-4 text-[var(--hz-cobalt)]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-800 truncate">{existingResume.fileName}</p>
                     <p className="text-xs text-slate-400">Attached resume</p>
                   </div>
                   <button type="button" onClick={handleDownloadResume}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Download">
+                    className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Download">
                     <Download className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => setExistingResume(null)}
@@ -399,10 +398,10 @@ function EditApplicationInner() {
                   "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors",
                   existingResume
                     ? "border-slate-200 bg-slate-50/50 hover:bg-slate-50"
-                    : "border-blue-200 bg-blue-50/30 hover:bg-blue-50/60"
+                    : "border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]/40 hover:bg-[var(--hz-cobalt-100)]/60",
                 )}>
                   <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeSelect} className="hidden" />
-                  <Upload className={cn("w-6 h-6", existingResume ? "text-slate-400" : "text-blue-400")} />
+                  <Upload className={cn("w-6 h-6", existingResume ? "text-slate-400" : "text-[var(--hz-cobalt)]")} />
                   <div className="text-center">
                     <p className="text-sm font-semibold text-slate-700">
                       {existingResume ? "Replace resume" : "Upload resume"}
@@ -419,72 +418,70 @@ function EditApplicationInner() {
                 </div>
               )}
             </div>
-          </Card>
+          </FormSection>
         </div>
 
         {/* Right sidebar */}
         <div className="space-y-5">
 
           {/* Position & Pipeline */}
-          <Card>
-            <CardHeader icon={Briefcase} color="blue" title="Position & Pipeline" compact />
+          <FormSection icon={Briefcase} title="Position & Pipeline">
             <div className="space-y-3">
               <Field label="Job Posting">
-                <Select value={jobId} onChange={e => {
-                  const j = jobs.find(x => x.id === e.target.value);
+                <FormSelect value={jobId} onChange={(e) => {
+                  const j = jobs.find((x) => x.id === e.target.value);
                   setJobId(e.target.value);
                   setJobTitle(j?.title || "");
                 }}>
                   <option value="">Unassigned</option>
-                  {jobs.filter(j => j.status === "open" || j.status === "active").map(j => (
+                  {jobs.filter((j) => j.status === "open" || j.status === "active").map((j) => (
                     <option key={j.id} value={j.id}>{j.title}</option>
                   ))}
-                </Select>
+                </FormSelect>
               </Field>
               <Field label="Pipeline Stage">
-                <Select value={status} onChange={e => setStatus(e.target.value as AppStatus)}>
-                  {PIPELINE_OPTIONS.map(k => (
+                <FormSelect value={status} onChange={(e) => setStatus(e.target.value as AppStatus)}>
+                  {PIPELINE_OPTIONS.map((k) => (
                     <option key={k} value={k}>{statusMeta[k].label}</option>
                   ))}
-                </Select>
+                </FormSelect>
               </Field>
               <Field label="Source">
-                <Select value={source} onChange={e => setSource(e.target.value)}>
+                <FormSelect value={source} onChange={(e) => setSource(e.target.value)}>
                   <option value="">Select…</option>
-                  {SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </Select>
+                  {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </FormSelect>
               </Field>
-              <button type="button" onClick={() => setAddToTalentBench(v => !v)}
+              <button type="button" onClick={() => setAddToTalentBench((v) => !v)}
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all",
                   addToTalentBench
                     ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-white"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-white",
                 )}>
                 {addToTalentBench ? <BookmarkCheck className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
                 {addToTalentBench ? "In talent bench" : "Add to talent bench"}
               </button>
             </div>
-          </Card>
+          </FormSection>
 
           {/* Work Authorization */}
-          <Card>
-            <CardHeader icon={Shield} color="amber" title="Work Authorization" compact />
+          <FormSection icon={Shield} title="Work Authorization">
             <div className="space-y-3">
               <Field label="Visa / Authorization">
-                <Select value={workAuth} onChange={e => setWorkAuth(e.target.value)}>
+                <FormSelect value={workAuth} onChange={(e) => setWorkAuth(e.target.value)}>
                   <option value="">Select…</option>
-                  {VISA_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-                </Select>
+                  {VISA_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                </FormSelect>
               </Field>
               {workAuth && !isPermanent && (
                 <Field label="Expiry Date">
-                  <Input type="date" value={visaExpiry} onChange={e => setVisaExpiry(e.target.value)} />
+                  <FormInput type="date" value={visaExpiry} onChange={(e) => setVisaExpiry(e.target.value)} />
                 </Field>
               )}
               <label className="flex items-center gap-2.5 cursor-pointer py-1">
-                <input type="checkbox" checked={needsSponsorship} onChange={e => setNeedsSponsorship(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 w-4 h-4 flex-shrink-0" />
+                <input type="checkbox" checked={needsSponsorship} onChange={(e) => setNeedsSponsorship(e.target.checked)}
+                  className="rounded border-slate-300 text-[var(--hz-cobalt)] w-4 h-4 flex-shrink-0" />
                 <span className="text-sm text-slate-700">Requires sponsorship</span>
               </label>
               {workAuth && (
@@ -492,7 +489,7 @@ function EditApplicationInner() {
                   "rounded-xl p-3 text-xs leading-relaxed",
                   isPermanent
                     ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-                    : "bg-amber-50 border border-amber-200 text-amber-700"
+                    : "bg-amber-50 border border-amber-200 text-amber-700",
                 )}>
                   {isPermanent
                     ? "✓ Permanent US work authorization."
@@ -504,28 +501,23 @@ function EditApplicationInner() {
                 </div>
               )}
             </div>
-          </Card>
+          </FormSection>
 
           {/* Rating & Notes */}
-          <Card>
-            <CardHeader icon={FileText} color="slate" title="Rating & Notes" compact />
+          <FormSection icon={Star} title="Rating & Notes">
             <div className="space-y-3">
               <Field label="Candidate Rating">
                 <div className="flex items-center gap-1.5 py-1">
-                  {[1,2,3,4,5].map(n => (
-                    <button key={n} type="button" onClick={() => setRating(n === rating ? 0 : n)} className="transition-transform hover:scale-110">
-                      <Star className={cn("w-6 h-6", n <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200")} />
-                    </button>
-                  ))}
-                  {rating > 0 && <span className="text-xs text-slate-400 ml-1">{rating}/5</span>}
+                  <StarRating rating={rating} onRate={(n) => setRating(n === rating ? 0 : n)} size="lg" />
+                  {rating > 0 && <span className="text-xs text-slate-400 ml-1 tabular-nums">{rating}/5</span>}
                 </div>
               </Field>
               <Field label="Internal Notes">
-                <Textarea rows={5} value={notes} onChange={e => setNotes(e.target.value)}
+                <FormTextarea rows={5} value={notes} onChange={(e) => setNotes(e.target.value)}
                   placeholder="Interview impressions, concerns, next steps… (internal only)" />
               </Field>
             </div>
-          </Card>
+          </FormSection>
         </div>
       </div>
 
@@ -537,7 +529,7 @@ function EditApplicationInner() {
             Cancel
           </Link>
           <button type="button" onClick={handleSubmit} disabled={submitting || resumeUploading}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
+            className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
             {(submitting || resumeUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
             {resumeUploading ? "Uploading resume…" : "Save Changes"}
           </button>
@@ -552,84 +544,5 @@ export default function EditApplicationPage() {
     <Suspense>
       <EditApplicationInner />
     </Suspense>
-  );
-}
-
-// ── Primitives ──────────────────────────────────────────────────────────────────
-
-type IconColor = "blue" | "emerald" | "violet" | "amber" | "slate";
-const iconColors: Record<IconColor, string> = {
-  blue:    "bg-blue-50 text-blue-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  violet:  "bg-violet-50 text-violet-600",
-  amber:   "bg-amber-50 text-amber-600",
-  slate:   "bg-slate-100 text-slate-500",
-};
-
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">{children}</div>;
-}
-
-function CardHeader({ icon: Icon, color, title, compact }: {
-  icon: React.ComponentType<{ className?: string }>;
-  color: IconColor;
-  title: string;
-  compact?: boolean;
-}) {
-  return (
-    <div className={cn("flex items-center gap-2.5", compact ? "mb-1" : "mb-2")}>
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", iconColors[color])}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <h2 className={cn("font-bold text-slate-900", compact ? "text-xs uppercase tracking-wider text-slate-500" : "text-sm")}>
-        {title}
-      </h2>
-    </div>
-  );
-}
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-        {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props} className={cn(
-      "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white",
-      "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-      "transition-colors placeholder:text-slate-400",
-      props.className,
-    )} />
-  );
-}
-
-function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...props} className={cn(
-      "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white",
-      "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-      "transition-colors text-slate-700",
-      props.className,
-    )}>
-      {children}
-    </select>
-  );
-}
-
-function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea {...props} className={cn(
-      "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white",
-      "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-      "transition-colors placeholder:text-slate-400 resize-none",
-      props.className,
-    )} />
   );
 }

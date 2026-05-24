@@ -166,7 +166,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
             placeholder="Search jobs, applications, candidates, or jump to a page…"
             className="flex-1 bg-transparent text-[15px] text-slate-900 placeholder:text-slate-400 outline-none"
           />
-          {loading && <div className="w-3 h-3 rounded-full border-2 border-slate-300 border-t-blue-500 animate-spin" />}
+          {loading && <div className="w-3 h-3 rounded-full border-2 border-slate-300 border-t-[var(--hz-cobalt)] animate-spin" />}
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 rounded">
             ESC
           </kbd>
@@ -185,7 +185,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
-                    icon={<div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><a.icon className="w-4 h-4 text-blue-600" /></div>}
+                    icon={<div className="w-8 h-8 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center"><a.icon className="w-4 h-4 text-[var(--hz-cobalt)]" /></div>}
                     title={a.label}
                     subtitle={a.hint}
                     badge={idx === 0 ? <Kbd>⌘⇧C</Kbd> : null}
@@ -292,7 +292,7 @@ function Item({
       onMouseEnter={onMouseEnter}
       className={cn(
         "w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-colors",
-        active ? "bg-blue-50" : "hover:bg-slate-50",
+        active ? "bg-[var(--hz-cobalt-100)]" : "hover:bg-slate-50",
       )}
     >
       {icon}
@@ -301,7 +301,7 @@ function Item({
         {subtitle && <p className="text-xs text-slate-500 truncate">{subtitle}</p>}
       </div>
       {badge}
-      {active && <ArrowRight className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />}
+      {active && <ArrowRight className="w-3.5 h-3.5 text-[var(--hz-cobalt)] flex-shrink-0" />}
     </button>
   );
 }

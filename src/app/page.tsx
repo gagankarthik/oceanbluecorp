@@ -1,48 +1,40 @@
-"use client";
+import Hero from "@/components/landing/Hero";
+import ClientLogos from "@/components/landing/ClientLogos";
+import Services from "@/components/landing/Services";
+import ImpactStats from "@/components/landing/ImpactStats";
+import Certifications from "@/components/landing/Certifications";
+import Insights from "@/components/landing/Insights";
+import CaseStudy from "@/components/landing/CaseStudy";
+import Testimonials from "@/components/landing/Testimonials";
+import CallToAction from "@/components/landing/CallToAction";
+import { getSiteContent } from "@/lib/content";
 
-import { useState, useEffect } from "react";
+// Re-read CMS content (edited at /admin/content) at most once a minute, so
+// admin edits go live without a rebuild while the page stays effectively static.
+export const revalidate = 60;
 
-import HeroSection from "@/components/HeroSection";
-import TrustedCompanies from "@/components/TrustedCompanies";
-import ScrollMorphHero from "@/components/ui/scroll-morph-hero";
-import StatsSection from "@/components/StatsSection";
-import Certifications from "@/components/Certifications";
-import TestimonialsShowcase from "@/components/TestimonialsShowcase";
-import CtaSection from "@/components/CtaSection";
+/* ============================================================
+   LANDING — consulting-firm direction (EY / Deloitte / Accenture).
+   Light, editorial, photography-led, bold statement type, content
+   cards in grids, an Insights section, one decisive Ocean-Blue
+   accent, a flat sticky header, and a bold image-backed CTA.
+   Order: Hero(image) · Clients · Services · Impact · Insights ·
+   Case Study · CTA.
+   ============================================================ */
 
-export default function Home() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
+export default async function Home() {
+  const content = await getSiteContent("homepage");
   return (
-    <div className="relative overflow-hidden bg-white">
-      {/* Hero — dark navy/indigo gradient with globe */}
-      <HeroSection />
-
-      {/* Clients — logo marquee */}
-      <TrustedCompanies />
-
-      {/* What We Offer — scroll-morph services showcase */}
-      <section className="relative h-screen min-h-[820px] w-full overflow-hidden">
-        <ScrollMorphHero />
-      </section>
-
-      {/* Our Impact — stats on dark background */}
-      <StatsSection />
-
-      {/* Trust signals */}
+    <div className="horizon relative w-full bg-[var(--hz-canvas)]">
+      <Hero content={content} />
+      <ClientLogos />
+      <Services />
+      <ImpactStats content={content} />
       <Certifications />
-
-      {/* Client testimonials */}
-      <TestimonialsShowcase />
-
-      {/* CTA */}
-      <CtaSection />
+      <Insights />
+      <CaseStudy />
+      <Testimonials />
+      <CallToAction content={content} />
     </div>
   );
 }

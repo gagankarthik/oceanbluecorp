@@ -75,31 +75,31 @@ const TeamPage: React.FC = () => {
       .toUpperCase();
 
     return (
-      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-slate-100">
         <div className="p-6">
           {/* Header with Avatar */}
           <div className="flex items-center space-x-4 mb-4">
             <div className="flex-shrink-0">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] flex items-center justify-center text-white font-semibold text-lg">
                 {initials}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 truncate">
+              <h3 className="text-lg font-semibold text-slate-900 truncate">
                 {member.name}
               </h3>
-              <p className="text-sm text-blue-600 font-medium">
+              <p className="text-sm text-[var(--hz-cobalt)] font-medium">
                 {member.designation}
               </p>
             </div>
           </div>
 
           {/* Contact Information */}
-          <div className="space-y-3 border-t border-gray-100 pt-4">
+          <div className="space-y-3 border-t border-slate-100 pt-4">
             {/* Email */}
             <div className="flex items-center text-sm">
               <svg 
-                className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" 
+                className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -113,7 +113,7 @@ const TeamPage: React.FC = () => {
               </svg>
               <a 
                 href={`mailto:${member.email}`}
-                className="text-gray-600 hover:text-blue-600 truncate"
+                className="text-slate-600 hover:text-[var(--hz-cobalt)] truncate"
                 title={member.email}
               >
                 {member.email}
@@ -123,7 +123,7 @@ const TeamPage: React.FC = () => {
             {/* Phone */}
             <div className="flex items-center text-sm">
               <svg 
-                className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" 
+                className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -137,7 +137,7 @@ const TeamPage: React.FC = () => {
               </svg>
               <a 
                 href={`tel:${member.phone}`}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-slate-600 hover:text-[var(--hz-cobalt)]"
               >
                 {member.phone}
               </a>
@@ -148,7 +148,7 @@ const TeamPage: React.FC = () => {
           <div className="mt-4 flex space-x-2">
             <a
               href={`mailto:${member.email}`}
-              className="flex-1 bg-blue-50 text-blue-600 text-sm font-medium py-2 px-3 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-center"
+              className="flex-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-sm font-medium py-2 px-3 rounded-lg hover:bg-[var(--hz-cobalt-100)] transition-colors duration-200 text-center"
             >
               Email
             </a>
@@ -165,14 +165,14 @@ const TeamPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-slate-900 mb-4">
             Our Team
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Meet our dedicated team of professionals committed to excellence
           </p>
         </div>

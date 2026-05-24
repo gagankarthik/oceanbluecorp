@@ -1,22 +1,35 @@
 "use client";
+import { toast } from "sonner";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  Search, Download, Calendar, Eye, Star, Loader2, X, Trash2, Plus, Edit3, Users,
+  Search, Download, Calendar, Eye, Star, X, Trash2, Plus, Edit3, Users,
   MoreHorizontal, AlertTriangle, ChevronDown, ArrowRight,
   LayoutList, Columns, AlignJustify, BookmarkCheck,
   SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown,
+  Clock, MessageSquare, CheckCircle2, XCircle,
 } from "lucide-react";
-import { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PageLoading } from "@/components/ui/ocean-spinner";
+import ApplicationsLoading from "./loading";
 import { useAdmin } from "@/components/admin/admin-provider";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { AdminCard } from "@/components/admin/admin-card";
+import { StatCard } from "@/components/admin/stat-card";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Avatar } from "@/components/admin/avatar";
+import { StarRating } from "@/components/admin/star-rating";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { statusMeta, tones, type AppStatus, type Tone } from "@/components/admin/theme";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { fmtDate } from "@/lib/format";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -30,109 +43,61 @@ type SortDir   = "asc" | "desc";
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 
-const STAGE_META: Record<string, { label: string; bg: string; hdr: string; dot: string; text: string; ring: string }> = {
-  pending:   { label: "New",       bg: "bg-slate-50",    hdr: "bg-slate-100",   dot: "bg-slate-400",   text: "text-slate-700",   ring: "ring-slate-200"   },
-  reviewing: { label: "Screening", bg: "bg-blue-50",     hdr: "bg-blue-100",    dot: "bg-blue-500",    text: "text-blue-700",    ring: "ring-blue-200"    },
-  submitted: { label: "Submitted", bg: "bg-indigo-50",   hdr: "bg-indigo-100",  dot: "bg-indigo-500",  text: "text-indigo-700",  ring: "ring-indigo-200"  },
-  interview: { label: "Interview", bg: "bg-violet-50",   hdr: "bg-violet-100",  dot: "bg-violet-500",  text: "text-violet-700",  ring: "ring-violet-200"  },
-  offered:   { label: "Offered",   bg: "bg-amber-50",    hdr: "bg-amber-100",   dot: "bg-amber-500",   text: "text-amber-700",   ring: "ring-amber-200"   },
-  hired:     { label: "Hired",     bg: "bg-emerald-50",  hdr: "bg-emerald-100", dot: "bg-emerald-500", text: "text-emerald-700", ring: "ring-emerald-200" },
-  rejected:  { label: "Rejected",  bg: "bg-rose-50",     hdr: "bg-rose-100",    dot: "bg-rose-500",    text: "text-rose-700",    ring: "ring-rose-200"    },
-};
-
-const PIPELINE = ["pending","reviewing","submitted","interview","offered","hired"] as const;
+const PIPELINE = ["pending", "reviewing", "submitted", "interview", "offered", "hired"] as const;
 const KANBAN_COLS = [...PIPELINE, "rejected"] as const;
 const ALL_STATUSES = [...KANBAN_COLS] as string[];
 
 const STATUS_FILTERS = [
-  { key: "all",       label: "All"       },
-  ...KANBAN_COLS.map(k => ({ key: k, label: STAGE_META[k].label })),
+  { key: "all", label: "All" },
+  ...KANBAN_COLS.map((k) => ({ key: k, label: statusMeta[k as AppStatus].label })),
 ];
 
-const SOURCE_OPTIONS = ["LinkedIn","Indeed","Company Website","Referral","Agency","Career Portal","Other"];
-const WORK_AUTH_OPTIONS = ["US Citizen","Green Card","H1-B","H4 EAD","OPT","CPT","TN Visa","E3 Visa","L1 Visa","Other"];
+const SOURCE_OPTIONS = ["LinkedIn", "Indeed", "Company Website", "Referral", "Agency", "Career Portal", "Other"];
+const WORK_AUTH_OPTIONS = ["US Citizen", "Green Card", "H1-B", "H4 EAD", "OPT", "CPT", "TN Visa", "E3 Visa", "L1 Visa", "Other"];
 
-// ── Tiny helpers ───────────────────────────────────────────────────────────────
-
-function Avatar({ name, size = "md" }: { name: string; size?: "xs" | "sm" | "md" | "lg" }) {
-  const initials = name.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase() || "?";
-  const sz = { xs: "w-6 h-6 text-[9px]", sm: "w-8 h-8 text-[10px]", md: "w-9 h-9 text-xs", lg: "w-11 h-11 text-sm" }[size];
-  return (
-    <div className={cn("rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white flex-shrink-0", sz)}>
-      {initials}
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const m = STAGE_META[status] ?? STAGE_META.pending;
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold", m.bg, m.text)}>
-      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", m.dot)} />
-      {m.label}
-    </span>
-  );
-}
-
-function Stars({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
-  const [hover, setHover] = useState(0);
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1,2,3,4,5].map(n => (
-        <button key={n} type="button"
-          onClick={() => onRate?.(n === rating ? 0 : n)}
-          onMouseEnter={() => onRate && setHover(n)}
-          onMouseLeave={() => setHover(0)}
-          className={cn("transition-colors", onRate ? "cursor-pointer" : "cursor-default pointer-events-none")}>
-          <Star className={cn("w-3.5 h-3.5", (hover || rating) >= n ? "fill-amber-400 text-amber-400" : "text-slate-200")} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function fmt(d?: string) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+const sLabel = (s: string) => statusMeta[s as AppStatus]?.label ?? s;
+const sTone = (s: string): Tone => statusMeta[s as AppStatus]?.tone ?? "slate";
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function ApplicationsPage() {
-  const router   = useRouter();
+  const router = useRouter();
   const { user } = useAuth();
+  const reduce = useReducedMotion();
   const { openCandidateEditor, candidateRevision, setJobs: setCtxJobs } = useAdmin();
 
   // ── Data state
   const [applications, setApplications] = useState<App[]>([]);
-  const [jobs,         setJobs]         = useState<Job[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState<string | null>(null);
+  const [, setJobs]    = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
 
   // ── View / sort
-  const [view,     setView]     = useState<ViewMode>("table");
+  const [view, setView]           = useState<ViewMode>("table");
   const [sortField, setSortField] = useState<SortField>("appliedAt");
-  const [sortDir,   setSortDir]   = useState<SortDir>("desc");
+  const [sortDir, setSortDir]     = useState<SortDir>("desc");
 
   // ── Filters
-  const [search,       setSearch]       = useState("");
+  const [search, setSearch]             = useState("");
+  const debouncedSearch                 = useDebouncedValue(search, 250);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [posFilter,    setPosFilter]    = useState("all");
+  const [posFilter, setPosFilter]       = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
-  const [authFilter,   setAuthFilter]   = useState("all");
-  const [minRating,    setMinRating]    = useState(0);
-  const [dateFrom,     setDateFrom]     = useState("");
-  const [dateTo,       setDateTo]       = useState("");
-  const [filtersOpen,  setFiltersOpen]  = useState(false);
+  const [authFilter, setAuthFilter]     = useState("all");
+  const [minRating, setMinRating]       = useState(0);
+  const [dateFrom, setDateFrom]         = useState("");
+  const [dateTo, setDateTo]             = useState("");
+  const [filtersOpen, setFiltersOpen]   = useState(false);
 
   // ── Selection + modals
-  const [selected,       setSelected]       = useState<string[]>([]);
-  const [deleteId,       setDeleteId]       = useState<string | null>(null);
+  const [selected, setSelected]             = useState<string[]>([]);
+  const [deleteId, setDeleteId]             = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [deleting, setDeleting]             = useState(false);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
-  useEffect(() => { load(); }, [candidateRevision]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [candidateRevision]);
 
   const load = async () => {
     try {
@@ -142,7 +107,7 @@ export default function ApplicationsPage() {
       if (!ar.ok || !jr.ok) throw new Error("Failed to fetch");
       const jArr: Job[] = jd.jobs || [];
       setJobs(jArr); setCtxJobs(jArr);
-      const jMap = new Map(jArr.map(j => [j.id, j]));
+      const jMap = new Map(jArr.map((j) => [j.id, j]));
       const list: App[] = (ad.applications || []).map((a: Application) => {
         const j = a.jobId ? jMap.get(a.jobId) : null;
         return { ...a, jobTitle: a.jobTitle || j?.title || "", jobDepartment: j?.department || "" };
@@ -156,25 +121,25 @@ export default function ApplicationsPage() {
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const positions = useMemo(() => [...new Set(applications.map(a => a.jobTitle).filter(Boolean))], [applications]);
+  const positions = useMemo(() => [...new Set(applications.map((a) => a.jobTitle).filter(Boolean))], [applications]);
 
   const activeFilterCount = [
     posFilter !== "all", sourceFilter !== "all", authFilter !== "all",
     minRating > 0, !!dateFrom, !!dateTo,
   ].filter(Boolean).length;
 
-  const filtered = useMemo(() => applications.filter(a => {
-    const q = search.toLowerCase();
-    if (q && ![ a.name, a.email, a.applicationId, a.jobTitle, a.phone ].some(f => f?.toLowerCase().includes(q))) return false;
+  const filtered = useMemo(() => applications.filter((a) => {
+    const q = debouncedSearch.toLowerCase();
+    if (q && ![a.name, a.email, a.applicationId, a.jobTitle, a.phone].some((f) => f?.toLowerCase().includes(q))) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
-    if (posFilter    !== "all" && a.jobTitle !== posFilter)  return false;
-    if (sourceFilter !== "all" && a.source   !== sourceFilter) return false;
+    if (posFilter    !== "all" && a.jobTitle !== posFilter) return false;
+    if (sourceFilter !== "all" && a.source !== sourceFilter) return false;
     if (authFilter   !== "all" && a.workAuthorization !== authFilter) return false;
     if (minRating > 0 && (a.rating || 0) < minRating) return false;
     if (dateFrom && new Date(a.appliedAt) < new Date(dateFrom)) return false;
     if (dateTo   && new Date(a.appliedAt) > new Date(dateTo + "T23:59:59")) return false;
     return true;
-  }), [applications, search, statusFilter, posFilter, sourceFilter, authFilter, minRating, dateFrom, dateTo]);
+  }), [applications, debouncedSearch, statusFilter, posFilter, sourceFilter, authFilter, minRating, dateFrom, dateTo]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -192,54 +157,74 @@ export default function ApplicationsPage() {
   }, [filtered, sortField, sortDir]);
 
   const pipelineCounts = useMemo(() =>
-    Object.fromEntries(ALL_STATUSES.map(s => [s, applications.filter(a => a.status === s).length])),
+    Object.fromEntries(ALL_STATUSES.map((s) => [s, applications.filter((a) => a.status === s).length])),
   [applications]);
+  const pipelineMax = Math.max(1, ...PIPELINE.map((k) => pipelineCounts[k] || 0));
+
+  // KPI strip
+  const kpi = useMemo(() => {
+    const total = applications.length;
+    const pending = applications.filter((a) => a.status === "pending").length;
+    const interview = applications.filter((a) => a.status === "interview").length;
+    const hired = applications.filter((a) => a.status === "hired").length;
+    return { total, pending, interview, hired };
+  }, [applications]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const sort = (f: SortField) => {
-    if (sortField === f) setSortDir(d => d === "asc" ? "desc" : "asc");
+    if (sortField === f) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortField(f); setSortDir("asc"); }
   };
 
   const patchStatus = async (id: string, status: Application["status"]) => {
-    setApplications(p => p.map(a => a.id === id ? { ...a, status } : a));
+    setApplications((p) => p.map((a) => (a.id === id ? { ...a, status } : a)));
     await fetch(`/api/applications/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
-    }).catch(() => { alert("Failed to update status"); load(); });
+    }).catch(() => { toast.error("Failed to update status"); load(); });
   };
 
   const patchRating = async (id: string, rating: number) => {
-    setApplications(p => p.map(a => a.id === id ? { ...a, rating } : a));
+    setApplications((p) => p.map((a) => (a.id === id ? { ...a, rating } : a)));
     await fetch(`/api/applications/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating }),
     }).catch(() => load());
   };
 
-  const deleteOne = async (id: string) => {
-    await fetch(`/api/applications/${id}`, { method: "DELETE" });
-    setApplications(p => p.filter(a => a.id !== id));
-    setDeleteId(null);
+  const deleteOne = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      await fetch(`/api/applications/${deleteId}`, { method: "DELETE" });
+      setApplications((p) => p.filter((a) => a.id !== deleteId));
+      toast.success("Application deleted");
+    } catch { toast.error("Failed to delete"); }
+    finally { setDeleting(false); setDeleteId(null); }
   };
 
   const deleteBulk = async () => {
-    await Promise.all(selected.map(id => fetch(`/api/applications/${id}`, { method: "DELETE" })));
-    setApplications(p => p.filter(a => !selected.includes(a.id)));
-    setSelected([]); setBulkDeleteOpen(false);
+    setDeleting(true);
+    try {
+      await Promise.all(selected.map((id) => fetch(`/api/applications/${id}`, { method: "DELETE" })));
+      setApplications((p) => p.filter((a) => !selected.includes(a.id)));
+      toast.success(`${selected.length} application${selected.length > 1 ? "s" : ""} deleted`);
+      setSelected([]);
+    } catch { toast.error("Failed to delete"); }
+    finally { setDeleting(false); setBulkDeleteOpen(false); }
   };
 
   const exportCSV = () => {
-    const headers = ["ID","Name","Email","Phone","Job","Status","Source","Work Auth","Applied","Rating"];
-    const rows = sorted.map(a => [
-      a.applicationId||"", a.name||"", a.email, a.phone||"",
-      a.jobTitle||"", a.status, a.source||"", a.workAuthorization||"",
-      fmt(a.appliedAt), String(a.rating||""),
+    const headers = ["ID", "Name", "Email", "Phone", "Job", "Status", "Source", "Work Auth", "Applied", "Rating"];
+    const rows = sorted.map((a) => [
+      a.applicationId || "", a.name || "", a.email, a.phone || "",
+      a.jobTitle || "", a.status, a.source || "", a.workAuthorization || "",
+      fmtDate(a.appliedAt), String(a.rating || ""),
     ]);
-    const csv = [headers,...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    link.download = `applications_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `applications_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
   };
 
@@ -249,283 +234,383 @@ export default function ApplicationsPage() {
     setDateFrom(""); setDateTo("");
   };
 
+  // active-filter chips
+  const filterChips: { label: string; clear: () => void }[] = [
+    ...(posFilter !== "all" ? [{ label: `Position: ${posFilter}`, clear: () => setPosFilter("all") }] : []),
+    ...(sourceFilter !== "all" ? [{ label: `Source: ${sourceFilter}`, clear: () => setSourceFilter("all") }] : []),
+    ...(authFilter !== "all" ? [{ label: `Auth: ${authFilter}`, clear: () => setAuthFilter("all") }] : []),
+    ...(minRating > 0 ? [{ label: `${minRating}+ stars`, clear: () => setMinRating(0) }] : []),
+    ...(dateFrom ? [{ label: `From ${fmtDate(dateFrom)}`, clear: () => setDateFrom("") }] : []),
+    ...(dateTo ? [{ label: `To ${fmtDate(dateTo)}`, clear: () => setDateTo("") }] : []),
+  ];
+
   // ── Loading / error ────────────────────────────────────────────────────────
 
-  if (loading) return <PageLoading label="Loading applications…" />;
+  if (loading) return <ApplicationsLoading />;
   if (error) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center space-y-4">
         <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
         <p className="text-sm text-rose-600">{error}</p>
-        <button onClick={load} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Retry</button>
+        <button onClick={load} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors">Retry</button>
       </div>
     </div>
   );
 
-  const allSelected = sorted.length > 0 && sorted.every(a => selected.includes(a.id));
+  const allSelected = sorted.length > 0 && sorted.every((a) => selected.includes(a.id));
+  const fade = (delay = 0) =>
+    reduce
+      ? {}
+      : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay, ease: [0.22, 1, 0.36, 1] as const } };
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 pb-10">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Applications</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{applications.length} total · {filtered.length} matching filters</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={exportCSV} className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
-            <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
-          </button>
-          <button onClick={() => openCandidateEditor({ mode: "create" })}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
-            <Plus className="w-4 h-4" />Add Applicant
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Applications"
+        subtitle={`${applications.length} total · ${filtered.length} matching filters`}
+        icon={Users}
+        actions={
+          <>
+            <PageHeaderButton variant="secondary" onClick={exportCSV}>
+              <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
+            </PageHeaderButton>
+            <PageHeaderButton variant="primary" onClick={() => openCandidateEditor({ mode: "create" })}>
+              <Plus className="w-4 h-4" />Add Applicant
+            </PageHeaderButton>
+          </>
+        }
+      />
+
+      {/* ── KPI strip ── */}
+      <motion.div className="grid grid-cols-2 gap-3 md:grid-cols-4" {...fade(0.02)}>
+        <StatCard size="sm" label="Total candidates" value={kpi.total} icon={Users} tone="blue" />
+        <StatCard size="sm" label="New / pending" value={kpi.pending} icon={Clock} tone="slate" />
+        <StatCard size="sm" label="In interview" value={kpi.interview} icon={MessageSquare} tone="violet" />
+        <StatCard size="sm" label="Hired" value={kpi.hired} icon={CheckCircle2} tone="emerald" />
+      </motion.div>
 
       {/* ── Pipeline overview ── */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-4 py-3">
-        <div className="flex items-center gap-1 sm:gap-2">
-          {PIPELINE.map((key, i) => {
-            const m = STAGE_META[key];
-            const count = pipelineCounts[key] || 0;
-            const active = statusFilter === key;
-            return (
-              <div key={key} className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
-                <button onClick={() => setStatusFilter(active ? "all" : key)}
-                  className={cn("flex-1 min-w-0 text-center py-2 px-2 rounded-lg border transition-all",
-                    active ? `${m.bg} border-current ${m.text} ring-1 ring-current/30` : "border-slate-200 hover:border-slate-300 hover:bg-slate-50")}>
-                  <p className={cn("text-xl font-bold leading-none", active ? m.text : "text-slate-700")}>{count}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate font-medium">{m.label}</p>
-                </button>
-                {i < PIPELINE.length - 1 && <ArrowRight className="w-3 h-3 text-slate-300 flex-shrink-0 hidden sm:block" />}
+      <motion.div {...fade(0.06)}>
+        <AdminCard className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hiring pipeline</h3>
+            <span className="text-[11px] font-medium text-slate-400">{applications.length} total · click a stage to filter</span>
+          </div>
+          <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1 sm:gap-2">
+            {PIPELINE.map((key, i) => {
+              const meta = statusMeta[key as AppStatus];
+              const Icon = meta.icon;
+              const t = tones[meta.tone];
+              const count = pipelineCounts[key] || 0;
+              const active = statusFilter === key;
+              const pct = Math.round(((count || 0) / pipelineMax) * 100);
+              return (
+                <div key={key} className="flex min-w-[88px] flex-1 items-center gap-1.5 sm:gap-2">
+                  <button
+                    onClick={() => setStatusFilter(active ? "all" : key)}
+                    title={`Filter by ${meta.label}`}
+                    className={cn(
+                      "group w-full rounded-xl border p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                      active
+                        ? cn(t.bg, "border-transparent ring-1", t.ring)
+                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm",
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={cn("grid h-7 w-7 place-items-center rounded-lg", t.bg)}>
+                        <Icon className={cn("h-3.5 w-3.5", t.text)} />
+                      </span>
+                      <span className={cn("text-2xl font-bold leading-none tracking-tight tabular-nums", active ? t.text : "text-slate-900")}>{count}</span>
+                    </div>
+                    <p className="mt-2 truncate text-[11px] font-semibold text-slate-500">{meta.label}</p>
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className={cn("h-full rounded-full transition-all duration-500", t.dot)} style={{ width: `${pct}%` }} />
+                    </div>
+                  </button>
+                  {i < PIPELINE.length - 1 && <ArrowRight className="hidden h-3.5 w-3.5 flex-shrink-0 text-slate-300 sm:block" />}
+                </div>
+              );
+            })}
+            <div className="mx-1 hidden w-px self-stretch bg-slate-200 sm:block" />
+            <button
+              onClick={() => setStatusFilter(statusFilter === "rejected" ? "all" : "rejected")}
+              title="Filter by Rejected"
+              className={cn(
+                "min-w-[88px] flex-shrink-0 rounded-xl border p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                statusFilter === "rejected"
+                  ? "border-transparent bg-rose-50 ring-1 ring-rose-200"
+                  : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm",
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-rose-50">
+                  <XCircle className="h-3.5 w-3.5 text-rose-600" strokeWidth={2} />
+                </span>
+                <span className={cn("text-2xl font-bold leading-none tracking-tight tabular-nums", statusFilter === "rejected" ? "text-rose-700" : "text-slate-900")}>{pipelineCounts.rejected || 0}</span>
               </div>
-            );
-          })}
-          <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1 flex-shrink-0" />
-          <button onClick={() => setStatusFilter(statusFilter === "rejected" ? "all" : "rejected")}
-            className={cn("text-center px-3 py-2 rounded-lg border transition-all flex-shrink-0",
-              statusFilter === "rejected" ? "bg-rose-50 border-rose-300 text-rose-700 ring-1 ring-rose-200" : "border-slate-200 hover:bg-slate-50")}>
-            <p className={cn("text-xl font-bold leading-none", statusFilter === "rejected" ? "text-rose-700" : "text-slate-700")}>{pipelineCounts.rejected || 0}</p>
-            <p className="text-[10px] sm:text-xs text-slate-400 mt-1 font-medium">Rejected</p>
-          </button>
-        </div>
-      </div>
+              <p className="mt-2 text-[11px] font-semibold text-slate-500">Rejected</p>
+              <div className="mt-2 h-1 w-full rounded-full bg-rose-100/70" />
+            </button>
+          </div>
+        </AdminCard>
+      </motion.div>
 
       {/* ── Toolbar ── */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-3 space-y-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <input type="text" placeholder="Search name, email, job, ID…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" />
-          </div>
+      <motion.div {...fade(0.1)}>
+        <AdminCard className="p-3 space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search name, email, job, ID…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-9 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] transition-colors placeholder:text-slate-400"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-700 rounded">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-          {/* Filters toggle */}
-          <button onClick={() => setFiltersOpen(v => !v)}
-            className={cn("inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg font-medium transition-colors",
-              filtersOpen || activeFilterCount > 0 ? "bg-blue-50 border-blue-300 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50")}>
-            <SlidersHorizontal className="w-4 h-4" />Filters
-            {activeFilterCount > 0 && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded-full leading-none">{activeFilterCount}</span>
+            {/* Filters toggle */}
+            <button
+              onClick={() => setFiltersOpen((v) => !v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg font-medium transition-colors",
+                filtersOpen || activeFilterCount > 0
+                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt)] text-[var(--hz-cobalt)]"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50",
+              )}
+            >
+              <SlidersHorizontal className="w-4 h-4" />Filters
+              {activeFilterCount > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[var(--hz-cobalt)] text-white rounded-full leading-none">{activeFilterCount}</span>
+              )}
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", filtersOpen && "rotate-180")} />
+            </button>
+
+            {/* View switcher */}
+            <div className="flex items-center rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+              {([
+                { mode: "table",  Icon: LayoutList,   title: "Table" },
+                { mode: "kanban", Icon: Columns,      title: "Kanban" },
+                { mode: "list",   Icon: AlignJustify, title: "List" },
+              ] as const).map(({ mode, Icon, title }, i) => (
+                <button
+                  key={mode}
+                  title={title}
+                  onClick={() => setView(mode)}
+                  className={cn(
+                    "px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5",
+                    i > 0 && "border-l border-slate-200",
+                    view === mode ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100",
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{title}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Bulk actions */}
+            {selected.length > 0 && (
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs text-slate-500 font-medium tabular-nums">{selected.length} selected</span>
+                <button
+                  onClick={() => setBulkDeleteOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />Delete
+                </button>
+                <button onClick={() => setSelected([])} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
-            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", filtersOpen && "rotate-180")} />
-          </button>
-
-          {/* View switcher */}
-          <div className="flex items-center rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
-            {([
-              { mode: "table",  Icon: LayoutList,   title: "Table"  },
-              { mode: "kanban", Icon: Columns,       title: "Kanban" },
-              { mode: "list",   Icon: AlignJustify,  title: "List"   },
-            ] as const).map(({ mode, Icon, title }, i) => (
-              <button key={mode} title={title} onClick={() => setView(mode)}
-                className={cn("px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5",
-                  i > 0 && "border-l border-slate-200",
-                  view === mode ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100")}>
-                <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{title}</span>
-              </button>
-            ))}
           </div>
 
-          {/* Bulk actions */}
-          {selected.length > 0 && (
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-slate-500 font-medium">{selected.length} selected</span>
-              <button onClick={() => setBulkDeleteOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors">
-                <Trash2 className="w-3.5 h-3.5" />Delete
-              </button>
-              <button onClick={() => setSelected([])} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
-                <X className="w-4 h-4" />
+          {/* Expandable filters */}
+          {filtersOpen && (
+            <div className="border-t border-slate-100 pt-3 space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Position</label>
+                  <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className={selectCls}>
+                    <option value="all">All Positions</option>
+                    {positions.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Source</label>
+                  <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={selectCls}>
+                    <option value="all">All Sources</option>
+                    {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Work Auth</label>
+                  <select value={authFilter} onChange={(e) => setAuthFilter(e.target.value)} className={selectCls}>
+                    <option value="all">All</option>
+                    {WORK_AUTH_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Min Rating</label>
+                  <div className="flex items-center gap-1 py-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button key={n} type="button" onClick={() => setMinRating(n === minRating ? 0 : n)}>
+                        <Star className={cn("w-5 h-5 transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300")} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Applied From</label>
+                  <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={selectCls} />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Applied To</label>
+                  <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={selectCls} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Status pills */}
+          <div className="flex flex-wrap gap-1">
+            {STATUS_FILTERS.map((tab) => {
+              const count = tab.key === "all" ? applications.length : pipelineCounts[tab.key] || 0;
+              const active = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    active ? "bg-[var(--hz-cobalt)] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100",
+                  )}
+                >
+                  {tab.label}
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none tabular-nums",
+                    active ? "bg-white/25 text-white" : "bg-slate-200 text-slate-600",
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active-filter chips */}
+          {filterChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">Filters</span>
+              {filterChips.map((chip) => (
+                <button
+                  key={chip.label}
+                  onClick={chip.clear}
+                  className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-[11px] font-semibold rounded-full hover:bg-[var(--hz-cobalt-100)]/70 transition-colors"
+                >
+                  {chip.label}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+              <button onClick={clearFilters} className="text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:underline ml-1">
+                Clear all
               </button>
             </div>
           )}
-        </div>
-
-        {/* Expandable filters */}
-        {filtersOpen && (
-          <div className="border-t border-slate-100 pt-3 space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Position</label>
-                <select value={posFilter} onChange={e => setPosFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700">
-                  <option value="all">All Positions</option>
-                  {positions.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Source</label>
-                <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700">
-                  <option value="all">All Sources</option>
-                  {SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Work Auth</label>
-                <select value={authFilter} onChange={e => setAuthFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700">
-                  <option value="all">All</option>
-                  {WORK_AUTH_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Min Rating</label>
-                <div className="flex items-center gap-1 py-1">
-                  {[1,2,3,4,5].map(n => (
-                    <button key={n} type="button" onClick={() => setMinRating(n === minRating ? 0 : n)}>
-                      <Star className={cn("w-5 h-5 transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Applied From</label>
-                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Applied To</label>
-                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700" />
-              </div>
-            </div>
-            {activeFilterCount > 0 && (
-              <button onClick={clearFilters} className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline">
-                Clear all filters
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Status pills */}
-        <div className="flex flex-wrap gap-1">
-          {STATUS_FILTERS.map(tab => {
-            const count = tab.key === "all" ? applications.length : pipelineCounts[tab.key] || 0;
-            const active = statusFilter === tab.key;
-            return (
-              <button key={tab.key} onClick={() => setStatusFilter(tab.key)}
-                className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  active ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100")}>
-                {tab.label}
-                <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
-                  active ? "bg-white/25 text-white" : "bg-slate-200 text-slate-600")}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        </AdminCard>
+      </motion.div>
 
       {/* ── Views ── */}
-      {view === "table" && (
-        <TableView
-          apps={sorted} allSelected={allSelected} selected={selected}
-          onSelectAll={all => setSelected(all ? sorted.map(a => a.id) : [])}
-          onSelect={(id, on) => setSelected(p => on ? [...p, id] : p.filter(x => x !== id))}
-          onView={id => router.push(`/admin/candidates/${id}`)}
-          onEdit={app => openCandidateEditor({ candidate: app, mode: "edit" })}
-          onDelete={setDeleteId}
-          onStatusChange={patchStatus}
-          onRating={patchRating}
-          sortField={sortField} sortDir={sortDir} onSort={sort}
-          empty={applications.length === 0}
-          onAdd={() => openCandidateEditor({ mode: "create" })}
-        />
-      )}
+      <motion.div {...fade(0.14)}>
+        {view === "table" && (
+          <TableView
+            apps={sorted} allSelected={allSelected} selected={selected}
+            onSelectAll={(all) => setSelected(all ? sorted.map((a) => a.id) : [])}
+            onSelect={(id, on) => setSelected((p) => (on ? [...p, id] : p.filter((x) => x !== id)))}
+            onView={(id) => router.push(`/admin/candidates/${id}`)}
+            onEdit={(app) => openCandidateEditor({ candidate: app, mode: "edit" })}
+            onDelete={setDeleteId}
+            onStatusChange={patchStatus}
+            onRating={patchRating}
+            sortField={sortField} sortDir={sortDir} onSort={sort}
+            empty={applications.length === 0}
+            onAdd={() => openCandidateEditor({ mode: "create" })}
+          />
+        )}
 
-      {view === "kanban" && (
-        <KanbanView
-          apps={filtered}
-          onView={id => router.push(`/admin/candidates/${id}`)}
-          onEdit={app => openCandidateEditor({ candidate: app, mode: "edit" })}
-          onDelete={setDeleteId}
-          onStatusChange={patchStatus}
-          onRating={patchRating}
-        />
-      )}
+        {view === "kanban" && (
+          <KanbanView
+            apps={filtered}
+            onView={(id) => router.push(`/admin/candidates/${id}`)}
+            onEdit={(app) => openCandidateEditor({ candidate: app, mode: "edit" })}
+            onDelete={setDeleteId}
+            onStatusChange={patchStatus}
+            onRating={patchRating}
+          />
+        )}
 
-      {view === "list" && (
-        <ListView
-          apps={sorted}
-          onView={id => router.push(`/admin/candidates/${id}`)}
-          onEdit={app => openCandidateEditor({ candidate: app, mode: "edit" })}
-          onDelete={setDeleteId}
-          onStatusChange={patchStatus}
-          onRating={patchRating}
-          empty={applications.length === 0}
-          onAdd={() => openCandidateEditor({ mode: "create" })}
-        />
-      )}
+        {view === "list" && (
+          <ListView
+            apps={sorted}
+            onView={(id) => router.push(`/admin/candidates/${id}`)}
+            onEdit={(app) => openCandidateEditor({ candidate: app, mode: "edit" })}
+            onDelete={setDeleteId}
+            onStatusChange={patchStatus}
+            onRating={patchRating}
+            empty={applications.length === 0}
+            onAdd={() => openCandidateEditor({ mode: "create" })}
+          />
+        )}
+      </motion.div>
 
-      {/* ── Delete confirm ── */}
-      {deleteId && (
-        <Modal>
-          <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-5 h-5 text-rose-600" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900 text-center mb-1">Delete application?</h3>
-          <p className="text-sm text-slate-500 text-center mb-6 leading-relaxed">This action is permanent and cannot be undone.</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
-            <button onClick={() => deleteOne(deleteId)} className="flex-1 px-4 py-2.5 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Delete</button>
-          </div>
-        </Modal>
-      )}
-
-      {bulkDeleteOpen && (
-        <Modal>
-          <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-5 h-5 text-rose-600" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900 text-center mb-1">Delete {selected.length} application{selected.length > 1 ? "s" : ""}?</h3>
-          <p className="text-sm text-slate-500 text-center mb-6">This is permanent and cannot be undone.</p>
-          <div className="flex gap-3">
-            <button onClick={() => setBulkDeleteOpen(false)} className="flex-1 px-4 py-2.5 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
-            <button onClick={deleteBulk} className="flex-1 px-4 py-2.5 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Delete All</button>
-          </div>
-        </Modal>
-      )}
+      {/* ── Confirm dialogs ── */}
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete application?"
+        body="This action is permanent and cannot be undone."
+        confirmLabel="Delete"
+        busy={deleting}
+        onConfirm={deleteOne}
+        onCancel={() => setDeleteId(null)}
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.length} application${selected.length > 1 ? "s" : ""}?`}
+        body="This is permanent and cannot be undone."
+        confirmLabel="Delete All"
+        busy={deleting}
+        onConfirm={deleteBulk}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
     </div>
   );
 }
 
+const selectCls =
+  "w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700 transition-colors";
+
 // ── TABLE VIEW ─────────────────────────────────────────────────────────────────
 
-interface SharedProps {
-  apps: App[];
+interface RowActions {
   onView: (id: string) => void;
   onEdit: (app: App) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, s: Application["status"]) => void;
   onRating: (id: string, r: number) => void;
+}
+interface SharedProps extends RowActions {
+  apps: App[];
 }
 
 function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortField, sortDir, onSort, empty, onAdd, ...shared }: SharedProps & {
@@ -537,16 +622,16 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
 }) {
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
-    return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-blue-600" /> : <ArrowDown className="w-3 h-3 text-blue-600" />;
+    return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-[var(--hz-cobalt)]" /> : <ArrowDown className="w-3 h-3 text-[var(--hz-cobalt)]" />;
   };
   const Th = ({ field, label, className }: { field?: SortField; label: string; className?: string }) => (
     <th className={cn("py-3 px-4 text-left", className)}>
       {field ? (
-        <button onClick={() => onSort(field)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-900 transition-colors">
+        <button onClick={() => onSort(field)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-900 transition-colors">
           {label}<SortIcon field={field} />
         </button>
       ) : (
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
+        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
       )}
     </th>
   );
@@ -554,21 +639,17 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
   if (apps.length === 0 && empty) return <EmptyState onAdd={onAdd} />;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <AdminCard className="overflow-hidden">
       {apps.length === 0 ? (
-        <div className="py-16 text-center">
-          <Users className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-600 mb-1">No results</p>
-          <p className="text-xs text-slate-400">Try adjusting your search or filters</p>
-        </div>
+        <NoResults />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200">
                 <th className="py-3 px-4 w-10">
-                  <input type="checkbox" checked={allSelected} onChange={e => onSelectAll(e.target.checked)}
-                    className="rounded border-slate-300 text-blue-600 cursor-pointer" />
+                  <input type="checkbox" checked={allSelected} onChange={(e) => onSelectAll(e.target.checked)}
+                    className="rounded border-slate-300 text-[var(--hz-cobalt)] cursor-pointer" />
                 </th>
                 <Th field="name"      label="Applicant" />
                 <Th field="jobTitle"  label="Job" />
@@ -577,27 +658,27 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                 <Th field="appliedAt" label="Applied" />
                 <Th field="rating"    label="Rating" />
                 <th className="py-3 px-4 text-right">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {apps.map(app => (
-                <tr key={app.id} className={cn("hover:bg-blue-50/20 transition-colors group", selected.includes(app.id) && "bg-blue-50/30")}>
+              {apps.map((app) => (
+                <tr key={app.id} className={cn("hover:bg-slate-50 transition-colors group", selected.includes(app.id) && "bg-[var(--hz-cobalt-100)]/40")}>
                   <td className="py-3.5 px-4">
                     <input type="checkbox" checked={selected.includes(app.id)}
-                      onChange={e => onSelect(app.id, e.target.checked)}
-                      className="rounded border-slate-300 text-blue-600 cursor-pointer" />
+                      onChange={(e) => onSelect(app.id, e.target.checked)}
+                      className="rounded border-slate-300 text-[var(--hz-cobalt)] cursor-pointer" />
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <Avatar name={app.name || app.email} size="sm" />
+                      <Avatar name={app.name} email={app.email} size="sm" />
                       <div className="min-w-0">
-                        <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors text-left block truncate max-w-[160px]">
+                        <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-[var(--hz-cobalt)] transition-colors text-left block truncate max-w-[160px]">
                           {app.name || "—"}
                         </button>
                         <p className="text-xs text-slate-400 truncate max-w-[160px]">{app.email}</p>
-                        {app.applicationId && <span className="font-mono text-[10px] text-blue-500 bg-blue-50 px-1 py-0.5 rounded">{app.applicationId}</span>}
+                        {app.applicationId && <span className="font-mono text-[10px] text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-1 py-0.5 rounded">{app.applicationId}</span>}
                       </div>
                     </div>
                   </td>
@@ -606,9 +687,9 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     {app.jobDepartment && <p className="text-xs text-slate-400 mt-0.5">{app.jobDepartment}</p>}
                   </td>
                   <td className="py-3.5 px-4">
-                    <select value={app.status} onChange={e => shared.onStatusChange(app.id, e.target.value as Application["status"])}
-                      className="text-xs px-2 py-1.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700 cursor-pointer">
-                      {ALL_STATUSES.map(s => <option key={s} value={s}>{STAGE_META[s].label}</option>)}
+                    <select value={app.status} onChange={(e) => shared.onStatusChange(app.id, e.target.value as Application["status"])}
+                      className="text-xs px-2 py-1.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700 cursor-pointer">
+                      {ALL_STATUSES.map((s) => <option key={s} value={s}>{sLabel(s)}</option>)}
                     </select>
                   </td>
                   <td className="py-3.5 px-4">
@@ -617,30 +698,16 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                       : <span className="text-slate-300 text-sm">—</span>}
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 tabular-nums">
                       <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                      {fmt(app.appliedAt)}
+                      {fmtDate(app.appliedAt)}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <Stars rating={app.rating || 0} onRate={r => shared.onRating(app.id, r)} />
+                    <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-1.5 text-slate-300 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-white border border-slate-200 shadow-lg rounded-xl w-44">
-                        <DropdownMenuItem onClick={() => shared.onView(app.id)} className="text-sm rounded-lg cursor-pointer"><Eye className="h-4 w-4 mr-2 text-slate-400" />View Profile</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => shared.onEdit(app)} className="text-sm rounded-lg cursor-pointer"><Edit3 className="h-4 w-4 mr-2 text-slate-400" />Edit</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => shared.onDelete(app.id)} className="text-sm rounded-lg text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer">
-                          <Trash2 className="h-4 w-4 mr-2" />Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <RowMenu app={app} {...shared} />
                   </td>
                 </tr>
               ))}
@@ -648,26 +715,44 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
           </table>
         </div>
       )}
-    </div>
+    </AdminCard>
+  );
+}
+
+function RowMenu({ app, onView, onEdit, onDelete }: RowActions & { app: App }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 text-slate-300 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-white border border-slate-200 shadow-lg rounded-xl w-44">
+        <DropdownMenuItem onClick={() => onView(app.id)} className="text-sm rounded-lg cursor-pointer"><Eye className="h-4 w-4 mr-2 text-slate-400" />View Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(app)} className="text-sm rounded-lg cursor-pointer"><Edit3 className="h-4 w-4 mr-2 text-slate-400" />Edit</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onDelete(app.id)} className="text-sm rounded-lg text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer">
+          <Trash2 className="h-4 w-4 mr-2" />Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 // ── KANBAN VIEW ────────────────────────────────────────────────────────────────
 
 function KanbanView({ apps, ...shared }: SharedProps) {
-  const [dragId, setDragId]       = React.useState<string | null>(null);
-  const [dragOver, setDragOver]   = React.useState<string | null>(null);
+  const [dragId, setDragId]     = React.useState<string | null>(null);
+  const [dragOver, setDragOver] = React.useState<string | null>(null);
 
   const grouped = useMemo(() =>
-    Object.fromEntries(KANBAN_COLS.map(k => [k, apps.filter(a => a.status === k)])),
+    Object.fromEntries(KANBAN_COLS.map((k) => [k, apps.filter((a) => a.status === k)])),
   [apps]);
 
   const handleDrop = (col: string) => {
     if (dragId && dragId !== col) {
-      const app = apps.find(a => a.id === dragId);
-      if (app && app.status !== col) {
-        shared.onStatusChange(dragId, col as Application["status"]);
-      }
+      const app = apps.find((a) => a.id === dragId);
+      if (app && app.status !== col) shared.onStatusChange(dragId, col as Application["status"]);
     }
     setDragId(null);
     setDragOver(null);
@@ -676,42 +761,42 @@ function KanbanView({ apps, ...shared }: SharedProps) {
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex gap-3 min-w-max">
-        {KANBAN_COLS.map(col => {
-          const m    = STAGE_META[col];
+        {KANBAN_COLS.map((col) => {
+          const t = tones[sTone(col)];
           const list = grouped[col] || [];
           const isOver = dragOver === col;
           return (
             <div key={col} className="w-64 flex flex-col"
-              onDragOver={e => { e.preventDefault(); setDragOver(col); }}
-              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(col); }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
               onDrop={() => handleDrop(col)}>
               {/* Column header */}
-              <div className={cn("flex items-center justify-between px-3 py-2.5 rounded-t-xl border border-b-0 transition-colors", m.hdr, m.ring, isOver && "ring-2 ring-blue-400")}>
+              <div className={cn("flex items-center justify-between px-3 py-2.5 rounded-t-2xl border border-b-0 transition-colors", t.soft, t.ring, isOver && "ring-2 ring-[var(--hz-cobalt)]")}>
                 <div className="flex items-center gap-2">
-                  <span className={cn("w-2 h-2 rounded-full flex-shrink-0", m.dot)} />
-                  <span className={cn("text-xs font-bold uppercase tracking-wider", m.text)}>{m.label}</span>
+                  <span className={cn("w-2 h-2 rounded-full flex-shrink-0", t.dot)} />
+                  <span className={cn("text-[11px] font-bold uppercase tracking-wider", t.text)}>{sLabel(col)}</span>
                 </div>
-                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", m.bg, m.text)}>{list.length}</span>
+                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full tabular-nums", t.bg, t.text)}>{list.length}</span>
               </div>
               {/* Cards */}
               <div className={cn(
-                "flex-1 border border-t-0 rounded-b-xl overflow-y-auto max-h-[calc(100vh-380px)] min-h-[120px] p-2 space-y-2 transition-colors",
-                m.bg, m.ring,
-                isOver && "ring-2 ring-blue-400 ring-inset bg-blue-50/40",
+                "flex-1 border border-t-0 rounded-b-2xl overflow-y-auto max-h-[calc(100vh-420px)] min-h-[120px] p-2 space-y-2 transition-colors",
+                t.bg, t.ring,
+                isOver && "ring-2 ring-[var(--hz-cobalt)] ring-inset bg-[var(--hz-cobalt-100)]/40",
               )}>
                 {list.length === 0 ? (
-                  <div className={cn("py-8 text-center rounded-xl border-2 border-dashed transition-colors", isOver ? "border-blue-300" : "border-transparent")}>
+                  <div className={cn("py-8 text-center rounded-xl border-2 border-dashed transition-colors", isOver ? "border-[var(--hz-cobalt)]" : "border-transparent")}>
                     <p className="text-xs text-slate-400 font-medium">{isOver ? "Drop here" : "No applicants"}</p>
                   </div>
-                ) : list.map(app => (
-                  <KanbanCard key={app.id} app={app} apps={apps} isDragging={dragId === app.id}
+                ) : list.map((app) => (
+                  <KanbanCard key={app.id} app={app} isDragging={dragId === app.id}
                     onDragStart={() => setDragId(app.id)}
                     onDragEnd={() => { setDragId(null); setDragOver(null); }}
                     {...shared} />
                 ))}
                 {list.length > 0 && isOver && (
-                  <div className="h-14 border-2 border-dashed border-blue-300 rounded-xl flex items-center justify-center">
-                    <p className="text-xs text-blue-400 font-semibold">Drop here</p>
+                  <div className="h-14 border-2 border-dashed border-[var(--hz-cobalt)] rounded-xl flex items-center justify-center">
+                    <p className="text-xs text-[var(--hz-cobalt)] font-semibold">Drop here</p>
                   </div>
                 )}
               </div>
@@ -723,7 +808,7 @@ function KanbanView({ apps, ...shared }: SharedProps) {
   );
 }
 
-function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, isDragging, onDragStart, onDragEnd }: SharedProps & {
+function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, isDragging, onDragStart, onDragEnd }: RowActions & {
   app: App;
   isDragging: boolean;
   onDragStart: () => void;
@@ -736,14 +821,14 @@ function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, i
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        "bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group cursor-grab active:cursor-grabbing select-none",
+        "bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm hover:shadow-md hover:border-[var(--hz-cobalt-100)] transition-all group cursor-grab active:cursor-grabbing select-none",
         isDragging && "opacity-40 scale-95 shadow-none",
       )}>
       {/* Top row */}
       <div className="flex items-start gap-2 mb-2">
-        <Avatar name={app.name || app.email} size="sm" />
+        <Avatar name={app.name} email={app.email} size="sm" />
         <div className="flex-1 min-w-0">
-          <button onClick={() => onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors text-left block truncate w-full">
+          <button onClick={() => onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-[var(--hz-cobalt)] transition-colors text-left block truncate w-full">
             {app.name || "—"}
           </button>
           {app.jobTitle && <p className="text-xs text-slate-500 truncate mt-0.5">{app.jobTitle}</p>}
@@ -760,10 +845,10 @@ function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, i
             <DropdownMenuSeparator />
             <div className="px-2 py-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Move to</p>
-              {KANBAN_COLS.filter(c => c !== app.status).map(c => (
+              {KANBAN_COLS.filter((c) => c !== app.status).map((c) => (
                 <button key={c} onClick={() => onStatusChange(app.id, c as Application["status"])}
                   className="w-full text-left flex items-center gap-2 px-2 py-1 rounded-md text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                  <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", STAGE_META[c].dot)} />{STAGE_META[c].label}
+                  <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", tones[sTone(c)].dot)} />{sLabel(c)}
                 </button>
               ))}
             </div>
@@ -778,23 +863,21 @@ function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, i
       {/* Skills */}
       {skills.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {skills.map(s => <span key={s} className="px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">{s}</span>)}
+          {skills.map((s) => <span key={s} className="px-2 py-0.5 text-[10px] font-medium bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full">{s}</span>)}
           {(app.skills || []).length > 3 && <span className="px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-500 rounded-full">+{(app.skills || []).length - 3}</span>}
         </div>
       )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <Stars rating={app.rating || 0} onRate={r => onRating(app.id, r)} />
-        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+        <StarRating rating={app.rating || 0} onRate={(r) => onRating(app.id, r === app.rating ? 0 : r)} />
+        <div className="flex items-center gap-1 text-[10px] text-slate-400 tabular-nums">
           <Calendar className="w-3 h-3" />
           {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </div>
       </div>
 
-      {app.source && (
-        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{app.source}</p>
-      )}
+      {app.source && <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{app.source}</p>}
     </div>
   );
 }
@@ -805,34 +888,29 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
   if (apps.length === 0 && empty) return <EmptyState onAdd={onAdd} />;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <AdminCard className="overflow-hidden">
       {apps.length === 0 ? (
-        <div className="py-16 text-center">
-          <Users className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-600 mb-1">No results</p>
-          <p className="text-xs text-slate-400">Try adjusting your search or filters</p>
-        </div>
+        <NoResults />
       ) : (
         <div className="divide-y divide-slate-100">
-          {apps.map(app => {
+          {apps.map((app) => {
             const skills = (app.skills || []).slice(0, 4);
             return (
-              <div key={app.id} className="px-4 py-3.5 hover:bg-blue-50/20 transition-colors group flex items-center gap-4">
-                {/* Avatar */}
-                <Avatar name={app.name || app.email} size="md" />
+              <div key={app.id} className="px-4 py-3.5 hover:bg-slate-50 transition-colors group flex items-center gap-4">
+                <Avatar name={app.name} email={app.email} size="md" />
 
                 {/* Main info */}
                 <div className="flex-1 min-w-0 grid sm:grid-cols-3 gap-2">
                   {/* Col 1: identity */}
                   <div className="min-w-0">
-                    <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors text-left block truncate">
+                    <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-[var(--hz-cobalt)] transition-colors text-left block truncate">
                       {app.name || "—"}
                     </button>
                     <p className="text-xs text-slate-400 truncate">{app.email}</p>
                     {app.phone && <p className="text-xs text-slate-400 truncate">{app.phone}</p>}
                     {skills.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
-                        {skills.map(s => <span key={s} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">{s}</span>)}
+                        {skills.map((s) => <span key={s} className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full">{s}</span>)}
                         {(app.skills || []).length > 4 && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-500 rounded-full">+{(app.skills || []).length - 4}</span>}
                       </div>
                     )}
@@ -849,9 +927,9 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
                   {/* Col 3: meta */}
                   <div className="flex sm:flex-col sm:items-end gap-2">
                     <StatusBadge status={app.status} />
-                    <Stars rating={app.rating || 0} onRate={r => shared.onRating(app.id, r)} />
-                    <div className="flex items-center gap-1 text-xs text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 flex-shrink-0" />{fmt(app.appliedAt)}
+                    <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
+                    <div className="flex items-center gap-1 text-xs text-slate-400 tabular-nums">
+                      <Calendar className="w-3.5 h-3.5 flex-shrink-0" />{fmtDate(app.appliedAt)}
                     </div>
                     {app.addToTalentBench && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
@@ -863,7 +941,7 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => shared.onView(app.id)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View profile">
+                  <button onClick={() => shared.onView(app.id)} className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="View profile">
                     <Eye className="w-4 h-4" />
                   </button>
                   <button onClick={() => shared.onEdit(app)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
@@ -878,31 +956,33 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
           })}
         </div>
       )}
-    </div>
+    </AdminCard>
   );
 }
 
 // ── SHARED HELPERS ─────────────────────────────────────────────────────────────
 
+function NoResults() {
+  return (
+    <div className="py-16 text-center">
+      <Users className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+      <p className="text-sm font-semibold text-slate-600 mb-1">No results</p>
+      <p className="text-xs text-slate-400">Try adjusting your search or filters</p>
+    </div>
+  );
+}
+
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm py-20 text-center">
+    <AdminCard className="py-20 text-center">
       <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
         <Users className="h-8 w-8 text-slate-300" />
       </div>
       <h3 className="text-base font-semibold text-slate-900 mb-1">No applicants yet</h3>
       <p className="text-sm text-slate-400 mb-5">Add your first candidate to start tracking the pipeline.</p>
-      <button onClick={onAdd} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
+      <button onClick={onAdd} className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition">
         <Plus className="w-4 h-4" />Add Applicant
       </button>
-    </div>
-  );
-}
-
-function Modal({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">{children}</div>
-    </div>
+    </AdminCard>
   );
 }

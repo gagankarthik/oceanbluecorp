@@ -15,7 +15,7 @@ export function PageHeader({ title, subtitle, icon: Icon, actions, meta, classNa
     <div className={cn("flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4", className)}>
       <div className="flex items-start gap-3 min-w-0">
         {Icon && (
-          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 items-center justify-center shadow-sm shadow-blue-500/20 flex-shrink-0">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 items-center justify-center shadow-sm shadow-[rgba(29,78,216,0.2)] flex-shrink-0">
             <Icon className="w-5 h-5 text-white" />
           </div>
         )}
@@ -40,7 +40,7 @@ export function PageHeaderButton({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" }) {
   const styles = {
-    primary:   "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20",
+    primary:   "bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white shadow-sm shadow-[rgba(29,78,216,0.2)]",
     secondary: "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm",
     ghost:     "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
   }[variant];

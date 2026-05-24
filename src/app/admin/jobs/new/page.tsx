@@ -1,9 +1,10 @@
 "use client";
+import { toast } from "sonner";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, UserRole } from "@/lib/auth";
-import { Client, Vendor } from "@/lib/aws/dynamodb";
+import type { Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload,
 } from "@/components/admin/forms/job-form";
@@ -53,7 +54,7 @@ export default function NewJobPage() {
       if (!res.ok) throw new Error(json.error || "Failed to create job");
       router.push("/admin/jobs");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create job");
+      toast.error(err instanceof Error ? err.message : "Failed to create job");
     } finally {
       setSubmitting(false);
     }

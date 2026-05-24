@@ -205,38 +205,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Always clear the local session first, so the app reads as signed-out
+    // regardless of what the identity provider does next. Each step is guarded
+    // so one failure never blocks the sign-out (this was the "try again" bug —
+    // a failed Cognito hosted-logout redirect surfaced as an error).
     try {
       const userManager = getUserManager();
       await userManager.removeUser();
-      setUser(null);
-
-      // Clear all oidc related items from localStorage
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("oidc.")) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
-
-      // For localhost, skip Cognito logout (it requires logout_uri to be registered)
-      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-
-      if (isLocalhost) {
-        window.location.href = "/";
-        return;
-      }
-
-      // For production, redirect to Cognito logout.
-      // logout_uri MUST exactly match an "Allowed sign-out URL" registered in the Cognito App Client.
-      // Set NEXT_PUBLIC_COGNITO_LOGOUT_URI in your env to that exact URL.
-      // If not set, falls back to the bare origin (e.g. https://oceanbluecorp.com).
-      const logoutUri = process.env.NEXT_PUBLIC_COGNITO_LOGOUT_URI || window.location.origin;
-      const logoutUrl = `${process.env.NEXT_PUBLIC_COGNITO_DOMAIN}/logout?client_id=${process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(logoutUri)}`;
-      window.location.href = logoutUrl;
     } catch (err) {
-      console.error("Sign out error:", err);
+      console.error("removeUser failed (continuing sign-out):", err);
+    }
+    setUser(null);
+
+    try {
+      // Clear all oidc.* entries from both storages
+      [localStorage, sessionStorage].forEach((store) => {
+        const keys: string[] = [];
+        for (let i = 0; i < store.length; i++) {
+          const k = store.key(i);
+          if (k && k.startsWith("oidc.")) keys.push(k);
+        }
+        keys.forEach((k) => store.removeItem(k));
+      });
+    } catch (err) {
+      console.error("Failed clearing auth storage (continuing):", err);
+    }
+
+    // Always a clean LOCAL sign-out → go home. We deliberately do NOT redirect
+    // to the Cognito hosted `/logout` endpoint: it only works if logout_uri is
+    // registered as an Allowed sign-out URL, otherwise Cognito shows a "please
+    // try again" error page — which is exactly what broke sign-out in
+    // production. `replace` so Back doesn't return to an authed page.
+    if (typeof window !== "undefined") {
+      window.location.replace("/");
     }
   }, []);
 

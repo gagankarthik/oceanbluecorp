@@ -1,10 +1,12 @@
 "use client";
+import { toast } from "sonner";
+import { AdminFormSkeleton } from "@/components/admin/skeletons";
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
-import { Job, Client, Vendor } from "@/lib/aws/dynamodb";
+import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, jobToFormData, formDataToPayload,
 } from "@/components/admin/forms/job-form";
@@ -49,7 +51,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           ),
         );
       } catch (err) {
-        alert(err instanceof Error ? err.message : "Failed to load job");
+        toast.error(err instanceof Error ? err.message : "Failed to load job");
         router.push("/admin/jobs");
       } finally {
         setLoading(false);
@@ -71,7 +73,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       if (!res.ok) throw new Error(json.error || "Failed to update job");
       router.push(`/admin/jobs/${id}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update job");
+      toast.error(err instanceof Error ? err.message : "Failed to update job");
     } finally {
       setSubmitting(false);
     }
@@ -91,16 +93,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     return json.client;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-600 mx-auto animate-spin" />
-          <p className="text-gray-500 text-sm">Loading job…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AdminFormSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto">

@@ -30,7 +30,7 @@ function Section({ id, number, title, children }: {
   return (
     <section id={id} className="scroll-mt-8 border-b border-gray-100 py-8 last:border-0">
       <div className="mb-4 flex items-baseline gap-3">
-        <span className="rounded-md bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-violet-500">
+        <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
           {number}
         </span>
         <h2
@@ -56,7 +56,7 @@ function UL({ items }: { items: (string | React.ReactNode)[] }) {
     <ul className="space-y-2 pl-1">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
+          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
           <span>{item}</span>
         </li>
       ))}
@@ -66,11 +66,11 @@ function UL({ items }: { items: (string | React.ReactNode)[] }) {
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-5">
-      <p className="mb-2 text-sm font-semibold text-violet-700" style={{ fontFamily: "var(--font-display)" }}>
+    <div className="rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] p-5">
+      <p className="mb-2 text-sm font-semibold text-[var(--hz-cobalt)]" style={{ fontFamily: "var(--font-display)" }}>
         {title}
       </p>
-      <div className="text-sm text-violet-800/80 space-y-1">{children}</div>
+      <div className="text-sm text-[var(--hz-cobalt)] space-y-1">{children}</div>
     </div>
   );
 }
@@ -79,14 +79,14 @@ export default function PrivacyPage() {
   const EFFECTIVE = "April 1, 2026";
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="horizon min-h-screen bg-white">
 
       {/* Hero */}
       <div
         className="border-b border-gray-100"
         style={{
           background: [
-            "radial-gradient(ellipse 70% 55% at 90% 15%, rgba(124,58,237,0.07) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 55% at 90% 15%, rgba(29,78,216,0.07) 0%, transparent 60%)",
             "radial-gradient(ellipse 55% 45% at 10% 80%, rgba(6,182,212,0.05) 0%, transparent 60%)",
             "#FAFBFF",
           ].join(", "),
@@ -101,8 +101,8 @@ export default function PrivacyPage() {
             Back to Home
           </Link>
 
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-3 py-1 text-xs font-semibold text-[var(--hz-cobalt)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--hz-cobalt)]" />
             Legal
           </div>
 
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 {s.label}
               </a>
@@ -151,7 +151,7 @@ export default function PrivacyPage() {
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-1.5 text-[13px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-violet-700"
+                    className="block rounded-lg px-3 py-1.5 text-[13px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-[var(--hz-cobalt)]"
                   >
                     {s.label}
                   </a>
@@ -458,16 +458,16 @@ export default function PrivacyPage() {
                   Ocean Blue Corporation — Privacy Team
                 </p>
                 <div className="space-y-2.5 text-sm text-gray-600">
-                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-violet-600">
-                    <Mail className="h-4 w-4 text-violet-400" />
+                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
+                    <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" />
                     hr@oceanbluecorp.com
                   </a>
-                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-violet-600">
-                    <Phone className="h-4 w-4 text-violet-400" />
+                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
+                    <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" />
                     +1 (614) 844-6925
                   </a>
                   <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-violet-400" />
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--hz-cobalt)]" />
                     <span>9775 Fairway Drive, Suite C<br />Powell, OH 43065</span>
                   </div>
                 </div>
@@ -482,14 +482,14 @@ export default function PrivacyPage() {
             <div className="mb-10 mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/terms"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Terms of Service</span>
                 <ExternalLink className="h-4 w-4" />
               </Link>
               <Link
                 href="/contact"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Contact Us</span>
                 <ExternalLink className="h-4 w-4" />

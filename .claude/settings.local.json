@@ -34,7 +34,17 @@
       "PowerShell(npm install *)",
       "PowerShell(npm ls *)",
       "PowerShell(git *)",
-      "PowerShell(npx tsc --noEmit)"
+      "PowerShell(npx tsc --noEmit)",
+      "Bash(node -e \"const m=require\\('./.next/app-path-routes-manifest.json'\\); console.log\\(Object.keys\\(m\\).filter\\(k=>k==='/page'||k==='/'\\)\\)\")",
+      "Bash(rm -f LhHero.tsx LhClients.tsx LhPillars.tsx LhProof.tsx LhProcess.tsx LhCaseStudy.tsx LhIndustries.tsx LhTestimonials.tsx LhFinalCta.tsx three/OceanBeam.tsx three/Beacon.tsx lh/Primitives.tsx)",
+      "Bash(rmdir lh *)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)",
+      "Read(//c/Users/gagan/.claude/projects/C--Users-gagan-Desktop-Projects-oceanbluecorp/memory/**)",
+      "Bash(rm -f landing_design_lighthouse.md)",
+      "WebFetch(domain:www.accenture.com)",
+      "WebFetch(domain:www.deloitte.com)",
+      "WebFetch(domain:www.ey.com)"
     ]
   }
 }

@@ -1,309 +1,103 @@
-# Ocean Blue Corporation — Enterprise Website
+# Ocean Blue Corporation
 
-Production website and internal admin platform for Ocean Blue Corporation, built with **Next.js 16**, **React 19**, **TypeScript**, **Tailwind CSS 4**, and **AWS** (Cognito · DynamoDB · S3 · SES · Amplify).
+The corporate website and operations platform for Ocean Blue Solutions Inc., an IT staffing, enterprise solutions, and managed-services firm. It is a single Next.js application that runs the public marketing site, a careers portal, an internal back office for recruiting and account management, and a public Job Feed API. Content shown to visitors is editable in the admin panel and goes live without a redeploy.
 
-Live: [oceanbluecorp.com](https://oceanbluecorp.com) · Status: [oceanbluecorp.com/status](https://oceanbluecorp.com/status)
+## What's inside
 
----
+The codebase is one app that serves four distinct products:
 
-## Tech Stack
+1. **Public marketing site** — company pages (about, services, products, team, developers, resources, contact) plus legal, accessibility, and brand pages. Landing-page copy and the announcement bar are CMS-driven.
+2. **Careers portal** — job search, listings, individual job detail pages, and an application flow that uploads a resume and emails a confirmation.
+3. **Admin back office (ATS)** — a role-gated applicant tracking and account-management system covering jobs, applications, candidates, the talent bench, clients, vendors, contacts, users and roles, the resume bank, notifications, content, settings, and API keys.
+4. **Job Feed API (v1)** — a public, read-only jobs endpoint secured by per-client API keys, so partners and job boards can pull active postings.
 
-| Layer | Technology |
-|---|---|
+## Key features
+
+**Public site**
+- Marketing pages composed from reusable landing sections (hero, services, impact stats, insights, case study, testimonials, certifications, client logos, call to action).
+- A content CMS: admins edit content blocks at `/admin/content`, and pages read them through a server reader (`getSiteContent`) with ISR (`revalidate` 60s), so edits appear within a minute without a rebuild.
+- SEO and metadata: `robots.txt`, a dynamic `/sitemap.xml` plus a human-readable `/sitemap` page, and per-job OpenGraph images.
+- Accessibility statement, cookie consent, and a sitewide announcement bar.
+- Security headers set at the framework level: HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+
+**Careers**
+- Job search and listings backed by DynamoDB, with individual job detail pages.
+- Application submission that stores the record, uploads the resume file to S3, and sends the applicant a confirmation email while notifying recruiters of the new application.
+
+**Admin (ATS)**
+- Role-based access enforced both on routes and in the UI, with the hierarchy ADMIN > HR > RECRUITER / SALES > USER mapped from Cognito groups.
+- Modules for jobs, applications, candidates, the talent bench, clients, vendors, contacts, users and roles, resume bank, notifications, content CMS, settings, and API key management.
+- Transactional email throughout the recruiting workflow: job-posted and job-updated notifications, interview invites, status updates, and HR/recruiter alerts.
+
+**API**
+- `GET /api/v1/jobs` and `GET /api/v1/jobs/:id` return sanitized, paginated job data.
+- Authentication via an `X-API-Key` header (or `api_key` query parameter); keys are validated against DynamoDB, can be disabled, and have their last-used timestamp tracked.
+
+## Tech stack
+
+| Area | Choice |
+| --- | --- |
 | Framework | Next.js 16 (App Router) |
-| UI | React 19, Tailwind CSS 4, shadcn/ui (new-york), Radix UI |
-| Language | TypeScript |
-| Auth | AWS Cognito (OIDC via `oidc-client-ts`) |
-| Database | AWS DynamoDB (10 tables, us-east-2) |
-| File Storage | AWS S3 |
-| Email | AWS SES (SMTP via Nodemailer) |
-| Deployment | AWS Amplify |
-| Animation | Framer Motion, Motion, GSAP |
-| Icons | Lucide React, Tabler Icons |
+| UI runtime | React 19, TypeScript |
+| Styling | Tailwind CSS 4 |
+| Components | shadcn/ui (new-york style) on Radix UI |
+| Animation | framer-motion |
+| Icons | Lucide |
+| Fonts | Geist |
+| Auth | Amazon Cognito via OIDC (`oidc-client-ts`) |
+| Data | Amazon DynamoDB |
+| File storage | Amazon S3 |
+| Email | Amazon SES |
+| Hosting | AWS Amplify |
 
----
+## Architecture
 
-## Project Structure
+The frontend and all backend logic live in one Next.js app. Server-side route handlers under `src/app/api` talk to AWS through typed clients in `src/lib/aws`. AWS credentials and table/bucket names are read at runtime through getter functions, so secrets stay server-side and never ship to the browser.
+
+- **Authentication** — Amazon Cognito with an OIDC code flow. Cognito group membership maps to application roles (ADMIN, HR, RECRUITER, SALES, USER), and a role hierarchy gates admin routes. An auth context (`src/lib/auth`) exposes the current user and role to the client, and a `ProtectedRoute` component guards pages.
+- **Data** — Amazon DynamoDB is the primary datastore (region `us-east-2`). All reads and writes go through `src/lib/aws/dynamodb.ts`. Sequential, human-readable IDs (for example application and posting numbers) are issued from a counters table.
+- **Files** — resume and document uploads are stored in Amazon S3 (`src/lib/aws/s3.ts`).
+- **Email** — Amazon SES (`src/lib/aws/ses.ts`) sends transactional mail: application confirmations to candidates, new-application and job-posting notifications to recruiters and HR, job-update notices, interview invites, status updates, and contact-form notifications.
+- **Content** — the CMS stores editable content blocks in DynamoDB; the public site reads them server-side with ISR so changes publish without a deploy.
+- **Hosting** — deployed on AWS Amplify, which injects environment variables at build time.
+
+### DynamoDB tables
+
+All in region `us-east-2`:
+
+`oceanblue-jobs` · `oceanblue-applications` · `oceanblue-resumes` · `oceanblue-candidates` · `oceanblue-contacts` · `oceanblue-clients` · `oceanblue-vendors` · `oceanblue-content` (CMS) · `oceanblue-notifications` · `oceanblue-counters` · `oceanblue-api-keys`
+
+## Project structure
 
 ```
 src/
-├── app/                        # Next.js App Router
-│   ├── (public pages)
-│   │   ├── page.tsx            # Home
-│   │   ├── about/
-│   │   ├── services/
-│   │   ├── careers/
-│   │   ├── careers/search/
-│   │   ├── contact/
-│   │   ├── products/
-│   │   ├── resources/
-│   │   │   ├── blog/
-│   │   │   ├── case-studies/
-│   │   │   └── ebook/
-│   │   ├── privacy/
-│   │   ├── terms/
-│   │   ├── cookies/
-│   │   ├── status/             # Public AWS service status page
-│   │   └── dashboard/          # Authenticated user dashboard
-│   ├── admin/                  # Internal admin panel (role-gated)
-│   │   ├── page.tsx            # Dashboard with stats & charts
-│   │   ├── jobs/               # Job postings CRUD
-│   │   ├── applications/       # Applicant pipeline (ATS)
-│   │   ├── bench/              # Talent bench
-│   │   ├── resumes/            # Resume bank
-│   │   ├── candidates/         # Candidate profiles
-│   │   ├── clients/            # Client accounts
-│   │   ├── vendors/            # Vendor management
-│   │   ├── contacts/           # Site contact submissions
-│   │   ├── users/              # User management
-│   │   ├── roles/              # Role management
-│   │   ├── content/            # CMS content editor
-│   │   ├── settings/           # Platform settings
-│   │   └── docs/               # Admin documentation
-│   ├── api/                    # API routes (Next.js Route Handlers)
-│   │   ├── jobs/
-│   │   ├── applications/
-│   │   ├── users/
-│   │   ├── resume/
-│   │   ├── resume-bank/
-│   │   ├── clients/
-│   │   ├── vendors/
-│   │   ├── contacts/
-│   │   ├── notifications/
-│   │   ├── content/
-│   │   ├── status/             # AWS health check (fetches status.aws.amazon.com)
-│   │   └── admin/
-│   │       ├── stats/
-│   │       └── search/
-│   └── auth/                   # Cognito OIDC pages
-│       ├── signin/
-│       ├── signup/
-│       ├── callback/
-│       └── signout/
-├── components/
-│   ├── ui/                     # shadcn/ui component library
-│   ├── admin/                  # Admin-specific components
-│   ├── dashboard/              # User dashboard components
-│   ├── providers/              # Context providers
-│   ├── Footer.tsx
-│   └── Navbar.tsx
-├── lib/
-│   ├── auth/                   # Cognito config, AuthContext, ProtectedRoute
-│   └── aws/
-│       ├── config.ts           # AWS credentials + table/bucket config
-│       ├── dynamodb.ts         # DynamoDB CRUD operations
-│       ├── s3.ts               # S3 file upload / presigned URLs
-│       └── ses.ts              # SES SMTP transactional email
-└── hooks/                      # Custom React hooks
+  app/                     App Router routes
+    (marketing)            about, services, team, products, developers,
+                           resources, contact, careers, brand-kit, legal pages
+    api/                   Route handlers — jobs, applications, contacts,
+                           content, users, vendors, clients, notifications,
+                           resume, admin/*, v1/* (public API)
+    admin/                 Admin back office
+    auth/                  Cognito auth — signin, signup, callback, signout
+    dashboard/             User dashboard
+  components/
+    layout/                Header, Footer, AnnouncementBar, LayoutWrapper,
+                           CookieConsent
+    landing/               Landing sections — Hero, Services, ImpactStats,
+                           Insights, CaseStudy, Testimonials, Certifications,
+                           ClientLogos, CallToAction
+    admin/                 Admin-specific components
+    ui/                    shadcn/ui primitives
+    auth/                  ProtectedRoute
+    providers/             Context providers
+  lib/
+    aws/                   AWS clients — config, dynamodb, s3, ses, cognito
+    auth/                  Cognito auth context and config
+    content.ts             CMS content reader
+  hooks/                   Custom hooks
 ```
 
----
+## Documentation
 
-## AWS Services
-
-### Region: `us-east-2` (US East — Ohio)
-
-| Service | Purpose |
-|---|---|
-| **Cognito** | User authentication, OIDC flow, role-based access via groups |
-| **DynamoDB** | Primary datastore — 10 tables (see below) |
-| **S3** | Resume / document file storage with presigned URLs |
-| **SES (SMTP)** | Transactional email — application confirmations, recruiter alerts |
-| **Amplify** | CI/CD deployment pipeline and hosting |
-
-### DynamoDB Tables
-
-| Table | Partition Key | GSI(s) | Purpose |
-|---|---|---|---|
-| `oceanblue-jobs` | `id` | `status-index` | Job postings |
-| `oceanblue-applications` | `id` | `userId-index`, `jobId-index` | Job applications / ATS |
-| `oceanblue-candidates` | `id` | `email-index`, `userId-index` | Candidate profiles |
-| `oceanblue-resumes` | `id` | `userId-index` | Resume bank |
-| `oceanblue-contacts` | `id` | — | Site contact form submissions |
-| `oceanblue-notifications` | `id` | — | In-app admin notifications |
-| `oceanblue-clients` | `id` | — | Client company accounts |
-| `oceanblue-vendors` | `id` | — | Vendor / supplier records |
-| `oceanblue-counters` | `id` | — | Sequential ID counters (APP-YYYY-XXXX, OB-YYYY-XXXX) |
-| `oceanblue-content` | `id` | — | CMS content (homepage, services, etc.) |
-
----
-
-## Authentication & Roles
-
-Auth uses **AWS Cognito OIDC** via `oidc-client-ts`. Tokens are stored in browser `localStorage`. Cognito group membership maps to roles:
-
-| Cognito Group | Role | Access |
-|---|---|---|
-| `admin` | ADMIN | Full platform — all features, user management, content, settings |
-| `hr` | HR | Jobs, applications, candidates, clients, vendors, contacts |
-| `recruiter` | RECRUITER | Jobs, applications, candidates, talent bench |
-| `sales` | SALES | Same as Recruiter + clients/vendors read-only |
-| _(none)_ | USER | Career portal — apply for jobs, upload resume, view own applications |
-
----
-
-## Local Development
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Copy environment variables
-cp .env.example .env.local
-# Fill in all values — see Environment Variables section below
-
-# 3. Start dev server
-npm run dev
-# → http://localhost:3000
-
-# 4. Production build check
-npm run build
-```
-
----
-
-## Environment Variables
-
-Create `.env.local` from `.env.example`:
-
-```env
-# AWS Credentials (server-side only — never exposed to browser)
-NEXT_AWS_ACCESS_KEY_ID=
-NEXT_AWS_SECRET_ACCESS_KEY=
-
-# AWS Region
-NEXT_PUBLIC_AWS_REGION=us-east-2
-
-# Cognito
-NEXT_PUBLIC_COGNITO_USER_POOL_ID=
-NEXT_PUBLIC_COGNITO_CLIENT_ID=
-NEXT_PUBLIC_COGNITO_DOMAIN=
-NEXT_PUBLIC_COGNITO_REDIRECT_URI=http://localhost:3000/auth/callback
-
-# DynamoDB Table Names
-NEXT_AWS_DYNAMODB_TABLE_JOBS=oceanblue-jobs
-NEXT_AWS_DYNAMODB_TABLE_APPLICATIONS=oceanblue-applications
-NEXT_AWS_DYNAMODB_TABLE_CANDIDATES=oceanblue-candidates
-NEXT_AWS_DYNAMODB_TABLE_RESUMES=oceanblue-resumes
-NEXT_AWS_DYNAMODB_TABLE_CONTACTS=oceanblue-contacts
-NEXT_AWS_DYNAMODB_TABLE_NOTIFICATIONS=oceanblue-notifications
-NEXT_AWS_DYNAMODB_TABLE_CLIENTS=oceanblue-clients
-NEXT_AWS_DYNAMODB_TABLE_VENDORS=oceanblue-vendors
-NEXT_AWS_DYNAMODB_TABLE_COUNTERS=oceanblue-counters
-NEXT_AWS_DYNAMODB_TABLE_CONTENT=oceanblue-content
-
-# S3
-NEXT_AWS_S3_BUCKET_NAME=oceanblue-resumes
-
-# SES SMTP
-NEXT_AWS_STMP=
-NEXT_AWS_STMP_PASSWORD=
-NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com
-```
-
----
-
-## API Routes
-
-### Public (no auth)
-| Method | Route | Description |
-|---|---|---|
-| GET | `/api/jobs` | List active job postings |
-| GET | `/api/jobs/[id]` | Get single job |
-| POST | `/api/applications` | Submit job application |
-| POST | `/api/contacts` | Submit contact form |
-| GET | `/api/status` | AWS service health (from status.aws.amazon.com) |
-
-### Admin (requires session)
-| Method | Route | Description |
-|---|---|---|
-| GET/POST | `/api/admin/stats` | Dashboard statistics |
-| GET | `/api/admin/search` | Global search across entities |
-| GET/POST/PUT/DELETE | `/api/users` | User management |
-| GET/POST/PUT/DELETE | `/api/clients` | Client records |
-| GET/POST/PUT/DELETE | `/api/vendors` | Vendor records |
-| GET/PUT | `/api/notifications` | In-app notifications |
-| GET/POST/PUT/DELETE | `/api/content` | CMS content |
-| GET/POST/PUT/DELETE | `/api/resume-bank` | Resume bank management |
-
----
-
-## Deployment
-
-Deployed via **AWS Amplify** with configuration in `amplify.yml`.
-
-```bash
-# Amplify build command
-npm run build
-
-# Output directory
-.next
-```
-
-Environment variables are injected at build time through the Amplify console under **App Settings → Environment Variables**.
-
-### Security Headers (configured in `next.config.ts`)
-- `X-Frame-Options: SAMEORIGIN`
-- `X-Content-Type-Options: nosniff`
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
-
----
-
-## Public Pages
-
-| Route | Description |
-|---|---|
-| `/` | Homepage |
-| `/about` | Company overview |
-| `/services` | IT services (ERP, Cloud, AI, Salesforce, Staffing, Training) |
-| `/products` | Products showcase |
-| `/careers` | Careers landing page |
-| `/careers/search` | Live job listings |
-| `/careers/search/[id]` | Individual job detail + apply |
-| `/resources/blog` | Blog articles |
-| `/resources/case-studies` | Case studies |
-| `/resources/ebook` | eBooks & guides |
-| `/contact` | Contact form |
-| `/status` | Live AWS service status monitor |
-| `/privacy` | Privacy policy |
-| `/terms` | Terms of service |
-| `/cookies` | Cookie policy |
-
----
-
-## Admin Panel
-
-| Route | Description | Min. Role |
-|---|---|---|
-| `/admin` | Dashboard (stats, charts) | All |
-| `/admin/jobs` | Job postings list + create/edit | All |
-| `/admin/jobs/[id]` | Job detail — info + applicants tab | All |
-| `/admin/applications` | Applications pipeline (ATS) | All |
-| `/admin/applications/new` | Manually add an applicant | All |
-| `/admin/applications/[id]` | Applicant profile + status history | All |
-| `/admin/bench` | Talent bench (saved candidates) | All |
-| `/admin/resumes` | Resume bank | All |
-| `/admin/clients` | Client accounts | HR+ |
-| `/admin/vendors` | Vendor management | HR+ |
-| `/admin/contacts` | Site contact submissions | HR+ |
-| `/admin/users` | User management | Admin |
-| `/admin/roles` | Role management | Admin |
-| `/admin/content` | CMS content editor | Admin |
-| `/admin/settings` | Platform settings | Admin |
-| `/admin/docs` | Admin documentation | All |
-
----
-
-## License
-
-Proprietary — Ocean Blue Corporation. All Rights Reserved.
-
----
-
-## Support
-
-- General: [contact@oceanbluecorp.com](mailto:contact@oceanbluecorp.com)
-- HR: [hr@oceanbluecorp.com](mailto:hr@oceanbluecorp.com)
-- Phone: +1 614-844-6925
+- `CLAUDE.md` — repository conventions, architecture notes, and guidance for working in the codebase.
+- `AWS.md` — AWS resource setup and deployment.

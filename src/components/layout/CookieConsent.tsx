@@ -36,13 +36,13 @@ export default function CookieConsent() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed bottom-0 left-0 right-0 z-[9999] p-3 sm:p-4"
+      className="horizon fixed bottom-0 left-0 right-0 z-[9999] p-3 sm:p-4"
     >
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
         {/* Main row */}
         <div className="flex items-start gap-3 p-4 sm:p-5">
-          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Cookie className="w-4.5 h-4.5 text-blue-600" aria-hidden="true" />
+          <div className="w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Cookie className="w-4.5 h-4.5 text-[var(--hz-cobalt)]" aria-hidden="true" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -50,9 +50,9 @@ export default function CookieConsent() {
             <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
               We use essential cookies to make our site work, and optional analytics cookies to understand how you use it.
               By clicking <strong>Accept All</strong> you consent to all cookies.{" "}
-              <Link href="/cookies" className="text-blue-600 hover:underline">Cookie Policy</Link>
+              <Link href="/cookies" className="text-[var(--hz-cobalt)] hover:underline">Cookie Policy</Link>
               {" · "}
-              <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+              <Link href="/privacy" className="text-[var(--hz-cobalt)] hover:underline">Privacy Policy</Link>
             </p>
 
             {/* Details toggle */}
@@ -89,13 +89,13 @@ export default function CookieConsent() {
                 name: "Analytics",
                 always: false,
                 desc: "Help us understand how visitors use our site so we can improve it.",
-                color: "bg-blue-50 border-blue-200 text-blue-700",
+                color: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
               },
               {
                 name: "Preferences",
                 always: false,
                 desc: "Remember your settings like sidebar state and language preferences.",
-                color: "bg-violet-50 border-violet-200 text-violet-700",
+                color: "bg-slate-50 border-slate-200 text-slate-600",
               },
             ].map((cat) => (
               <div key={cat.name} className={`rounded-xl border p-3 ${cat.color}`}>
@@ -115,7 +115,7 @@ export default function CookieConsent() {
         <div className="flex flex-col sm:flex-row items-center gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
           <div className="flex items-center gap-1 text-[11px] text-gray-400 flex-1">
             <Shield className="w-3 h-3" aria-hidden="true" />
-            <span>We never sell your personal data. GDPR &amp; CCPA compliant.</span>
+            <span>We never sell your personal data. SOC 2 Type II &middot; GDPR &amp; CCPA compliant.</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
             <button
@@ -126,7 +126,7 @@ export default function CookieConsent() {
             </button>
             <button
               onClick={() => save("all")}
-              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-white bg-[var(--hz-cobalt)] rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors"
             >
               Accept All
             </button>

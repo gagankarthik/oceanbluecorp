@@ -9,7 +9,7 @@ export default function BenchLoading() {
         </div>
         <div className="flex gap-2">
           <div className="h-9 w-9 bg-slate-100 rounded-lg" />
-          <div className="h-9 w-32 bg-blue-100 rounded-lg" />
+          <div className="h-9 w-32 bg-[var(--hz-cobalt-100)] rounded-lg" />
         </div>
       </div>
 
@@ -31,7 +31,7 @@ export default function BenchLoading() {
                 <div className="h-3.5 w-28 bg-slate-200 rounded" />
                 <div className="h-2.5 w-36 bg-slate-100 rounded" />
               </div>
-              <div className="h-5 w-14 bg-blue-100 rounded-full" />
+              <div className="h-5 w-14 bg-[var(--hz-cobalt-100)] rounded-full" />
             </div>
             <div className="flex gap-1.5 flex-wrap">
               {Array.from({ length: 3 }).map((_, j) => (
@@ -47,7 +47,7 @@ export default function BenchLoading() {
             </div>
             <div className="flex gap-2 pt-1 border-t border-slate-50">
               <div className="h-7 flex-1 bg-slate-100 rounded-lg" />
-              <div className="h-7 flex-1 bg-blue-100 rounded-lg" />
+              <div className="h-7 flex-1 bg-[var(--hz-cobalt-100)] rounded-lg" />
             </div>
           </div>
         ))}

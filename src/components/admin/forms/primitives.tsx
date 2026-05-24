@@ -1,31 +1,52 @@
 "use client";
 
 import * as React from "react";
+import type { LucideIcon } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { tones, type Tone } from "@/components/admin/theme";
 
 // ── Section wrapper ────────────────────────────────────────────────────────────
+// A calm, scannable card section: tinted icon chip + title (+ optional description)
+// in a soft header band, content padded below.
 
 interface SectionProps {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   title: string;
   description?: string;
+  tone?: Tone;
+  /** Optional slot rendered on the right of the header (e.g. a small action). */
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }
 
-export function FormSection({ icon: Icon, title, description, children, className }: SectionProps) {
+export function FormSection({
+  icon: Icon,
+  title,
+  description,
+  tone = "blue",
+  action,
+  children,
+  className,
+}: SectionProps) {
+  const t = tones[tone];
   return (
-    <div className={cn("bg-white rounded-xl border border-gray-200 shadow-sm p-5", className)}>
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
-      </div>
-      {description && (
-        <p className="text-xs text-gray-500 mb-4">{description}</p>
-      )}
-      {!description && <div className="mb-4" />}
-      {children}
-    </div>
+    <section className={cn("overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm", className)}>
+      <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className={cn("mt-0.5 grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg", t.bg)}>
+            <Icon className={cn("h-4 w-4", t.text)} strokeWidth={2} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+            {description && <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{description}</p>}
+          </div>
+        </div>
+        {action}
+      </header>
+      <div className="p-5">{children}</div>
+    </section>
   );
 }
 
@@ -43,16 +64,25 @@ interface FieldProps {
 export function Field({ label, required, hint, children, className, fullWidth }: FieldProps) {
   return (
     <div className={cn(fullWidth && "col-span-full", className)}>
-      <label className="flex items-baseline justify-between mb-1.5">
-        <span className="text-xs font-medium text-gray-600">
-          {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
+      <label className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-sm font-medium text-slate-700">
+          {label}
+          {required && <span className="ml-0.5 text-rose-500">*</span>}
         </span>
-        {hint && <span className="text-[10px] text-gray-400 font-normal">{hint}</span>}
+        {hint && <span className="text-[11px] font-normal text-slate-400">{hint}</span>}
       </label>
       {children}
     </div>
   );
 }
+
+// ── Shared control classes ──────────────────────────────────────────────────────
+
+const controlBase =
+  "w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-900 shadow-sm transition-colors " +
+  "placeholder:text-slate-400 " +
+  "focus:outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] " +
+  "hover:border-slate-300 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
@@ -64,12 +94,7 @@ export const FormInput = React.forwardRef<
     <input
       ref={ref}
       {...props}
-      className={cn(
-        "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-        "transition-colors placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500",
-        className,
-      )}
+      className={cn(controlBase, "px-3 py-2.5", className)}
     />
   );
 });
@@ -82,12 +107,12 @@ export function MoneyInput({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">$</span>
       <FormInput
         type="number"
         step="0.01"
         min="0"
-        className={cn("pl-7", className)}
+        className={cn("pl-7 tabular-nums", className)}
         {...props}
       />
     </div>
@@ -102,17 +127,19 @@ export function FormSelect({
   ...props
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select
-      {...props}
-      className={cn(
-        "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-        "transition-colors text-gray-700 disabled:bg-gray-50",
-        className,
-      )}
-    >
-      {children}
-    </select>
+    <div className="group relative">
+      <select
+        {...props}
+        className={cn(controlBase, "peer cursor-pointer appearance-none px-3 py-2.5 pr-11", className)}
+      >
+        {children}
+      </select>
+      <span className="pointer-events-none absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md bg-slate-100 text-slate-500 transition-colors peer-hover:bg-slate-200/70 peer-focus:bg-[var(--hz-cobalt-100)] peer-focus:text-[var(--hz-cobalt)]">
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </div>
   );
 }
 
@@ -125,12 +152,7 @@ export function FormTextarea({
   return (
     <textarea
       {...props}
-      className={cn(
-        "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white resize-y",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
-        "transition-colors placeholder:text-gray-400",
-        className,
-      )}
+      className={cn(controlBase, "resize-y px-3 py-2.5 leading-relaxed", className)}
     />
   );
 }
@@ -172,6 +194,7 @@ export function AssigneePicker({
   return (
     <div>
       <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           value={search}
@@ -179,29 +202,26 @@ export function AssigneePicker({
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Search team members…"
-          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          className={cn(controlBase, "py-2.5 pl-9 pr-3")}
         />
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
         {open && filtered.length > 0 && (
-          <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
             {filtered.map((u) => (
               <button
                 key={u.id}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { onToggle(u); setSearch(""); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 text-left border-b border-gray-100 last:border-0"
+                className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-slate-50"
               >
-                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600 flex-shrink-0">
+                <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[var(--hz-cobalt-100)] text-xs font-semibold text-[var(--hz-cobalt)]">
                   {(u.name || u.email)[0].toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-900">{u.name || u.email}</p>
+                  <p className="truncate text-xs text-slate-500">{u.email}</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{u.name || u.email}</p>
-                  <p className="text-xs text-gray-500 truncate">{u.email}</p>
-                </div>
-                <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{u.role}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{u.role}</span>
               </button>
             ))}
           </div>
@@ -209,24 +229,23 @@ export function AssigneePicker({
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
           {selectedIds.map((id, idx) => {
             const u = users.find((r) => r.id === id);
             const name = selectedNames[idx] || u?.name || u?.email || id;
             return (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200"
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] py-1 pl-2.5 pr-1.5 text-xs font-medium text-[var(--hz-cobalt)]"
               >
                 {name}
                 <button
                   type="button"
                   onClick={() => u && onToggle(u)}
-                  className="p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                  className="rounded-full p-0.5 transition-colors hover:bg-white/60"
+                  aria-label={`Remove ${name}`}
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="h-3 w-3" />
                 </button>
               </span>
             );

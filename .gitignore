@@ -39,3 +39,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# AWS Amplify (local artifacts)
+/.amplify
+
+# logs
+*.log
+
+# Claude Code (local-only)
+.claude/skills
+.claude/agents
+.claude/settings.local.json
+.agents
+skills-lock.json
+.claude/

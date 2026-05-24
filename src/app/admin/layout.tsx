@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
   Bell,
   Search,
   Home,
@@ -34,6 +35,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole } from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
+import { Toaster } from "sonner";
 
 interface Notification {
   id: string;
@@ -106,7 +108,7 @@ const notificationIcons = {
 };
 
 const notificationColors = {
-  job_posted: "bg-blue-50 text-blue-600",
+  job_posted: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
   application_received: "bg-emerald-50 text-emerald-600",
   contact_received: "bg-violet-50 text-violet-600",
 };
@@ -118,7 +120,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, signOut, hasAnyRole } = useAuth();
-  const { openCommandPalette, openCandidateEditor } = useAdmin();
+  const { openCommandPalette, openCandidateEditor, pageCrumb } = useAdmin();
 
   // Notifications state
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -250,31 +252,43 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Get current page title
-  const getCurrentPageTitle = () => {
-    const currentNav = navigation.find((item) => item.href === pathname);
-    return currentNav?.name || "Dashboard";
+  // Resolve the breadcrumb section from the URL. Detail pages (e.g.
+  // /admin/jobs/123 or /admin/candidates/APP-2026-0103) have no exact nav entry,
+  // so we match by longest nav href prefix and alias sections that share a parent.
+  const getCurrentSection = (): { name: string; href: string } => {
+    // Sections with pages but no nav item of their own map to their parent.
+    const aliases: Record<string, { name: string; href: string }> = {
+      "/admin/candidates": { name: "Applications", href: "/admin/applications" },
+    };
+    for (const [prefix, info] of Object.entries(aliases)) {
+      if (pathname === prefix || pathname.startsWith(prefix + "/")) return info;
+    }
+    const match = navigation
+      .filter((item) => item.href !== "/admin" && (pathname === item.href || pathname.startsWith(item.href + "/")))
+      .sort((a, b) => b.href.length - a.href.length)[0];
+    return match ? { name: match.name, href: match.href } : { name: "Dashboard", href: "/admin" };
   };
+  const section = getCurrentSection();
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-slate-50/50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200/80 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-slate-200/80 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${sidebarCollapsed ? "lg:w-[68px]" : "lg:w-60"} w-60`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`flex items-center h-14 border-b border-gray-100 ${sidebarCollapsed ? "justify-center px-2" : "justify-between px-4"}`}>
+          <div className={`flex items-center h-14 border-b border-slate-100 ${sidebarCollapsed ? "justify-center px-2" : "justify-between px-4"}`}>
             <Link href="/admin" className="flex items-center gap-2">
               {sidebarCollapsed ? (
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -293,7 +307,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -308,12 +322,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <div key={group.label ?? "top"}>
                   {/* Group label */}
                   {group.label && !sidebarCollapsed && (
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-3 pb-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 pt-3 pb-1">
                       {group.label}
                     </p>
                   )}
                   {group.label && sidebarCollapsed && (
-                    <div className="my-1 border-t border-gray-100 mx-1" />
+                    <div className="my-1 border-t border-slate-100 mx-1" />
                   )}
                   <div className="space-y-px">
                     {visibleItems.map((item) => {
@@ -328,8 +342,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                             sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
                           } ${
                             isActive
-                              ? "bg-blue-600 text-white shadow-sm"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                              ? "bg-[var(--hz-cobalt)] text-white shadow-sm"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                           }`}
                         >
                           <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-[15px] h-[15px]"}`} />
@@ -345,16 +359,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Website link */}
             <div>
               {!sidebarCollapsed && (
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-3 pb-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 pt-3 pb-1">
                   External
                 </p>
               )}
-              {sidebarCollapsed && <div className="my-1 border-t border-gray-100 mx-1" />}
+              {sidebarCollapsed && <div className="my-1 border-t border-slate-100 mx-1" />}
               <Link
                 href="/"
                 target="_blank"
                 title={sidebarCollapsed ? "View Website" : undefined}
-                className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all ${
+                className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all ${
                   sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
                 }`}
               >
@@ -365,10 +379,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Collapse Toggle */}
-          <div className="hidden lg:block px-2 py-2 border-t border-gray-100">
+          <div className="hidden lg:block px-2 py-2 border-t border-slate-100">
             <button
               onClick={toggleSidebarCollapse}
-              className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all ${
+              className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all ${
                 sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
               }`}
             >
@@ -389,27 +403,37 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:pl-[68px]" : "lg:pl-60"}`}>
         {/* Top header */}
-        <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 flex items-center justify-between px-4 lg:px-5">
+        <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              className="lg:hidden p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Breadcrumb */}
             <nav className="hidden sm:flex items-center gap-1 text-sm">
-              <Link href="/admin" className="text-gray-400 hover:text-blue-600 transition-colors">
+              <Link href="/admin" className="text-slate-400 hover:text-[var(--hz-cobalt)] transition-colors">
                 Admin
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-              <span className="font-medium text-gray-800">{getCurrentPageTitle()}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+              {pageCrumb ? (
+                <>
+                  <Link href={section.href} className="text-slate-400 hover:text-[var(--hz-cobalt)] transition-colors">
+                    {section.name}
+                  </Link>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                  <span className="font-medium text-slate-800">{pageCrumb}</span>
+                </>
+              ) : (
+                <span className="font-medium text-slate-800">{section.name}</span>
+              )}
             </nav>
 
             {/* Mobile Title */}
-            <h1 className="sm:hidden font-semibold text-gray-800">{getCurrentPageTitle()}</h1>
+            <h1 className="sm:hidden font-semibold text-slate-800">{pageCrumb || section.name}</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -439,7 +463,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <div ref={notificationsRef} className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                className="relative p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -451,19 +475,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
               {/* Notifications Dropdown */}
               {notificationsOpen && (
-                <div className="absolute top-full right-0 mt-1.5 w-80 sm:w-96 bg-white rounded-xl border border-gray-200 shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-1.5 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200/80 shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
                   {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                  <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-sm">Notifications</h3>
+                      <h3 className="font-semibold text-slate-900 text-sm">Notifications</h3>
                       {unreadCount > 0 && (
-                        <p className="text-xs text-gray-500 mt-0.5">{unreadCount} unread</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{unreadCount} unread</p>
                       )}
                     </div>
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                        className="text-xs text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium px-2 py-1 rounded-md hover:bg-[var(--hz-cobalt-100)] transition-colors"
                       >
                         Mark all read
                       </button>
@@ -474,15 +498,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   <div className="max-h-96 overflow-y-auto bg-white">
                     {loadingNotifications && notifications.length === 0 ? (
                       <div className="flex items-center justify-center py-12 bg-white">
-                        <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                        <Loader2 className="w-6 h-6 text-[var(--hz-cobalt)] animate-spin" />
                       </div>
                     ) : notifications.length === 0 ? (
                       <div className="py-12 text-center bg-white">
-                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                          <Bell className="w-6 h-6 text-gray-400" />
+                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                          <Bell className="w-6 h-6 text-slate-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-600">No notifications</p>
-                        <p className="text-xs text-gray-400 mt-1">You&apos;re all caught up!</p>
+                        <p className="text-sm font-medium text-slate-600">No notifications</p>
+                        <p className="text-xs text-slate-400 mt-1">You&apos;re all caught up!</p>
                       </div>
                     ) : (
                       notifications.slice(0, 10).map((notification) => {
@@ -492,8 +516,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                           <button
                             key={notification.id}
                             onClick={() => handleNotificationClick(notification)}
-                            className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-0 ${
-                              !notification.isRead ? "bg-blue-50/50" : "bg-white"
+                            className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0 ${
+                              !notification.isRead ? "bg-[#eef3fe]" : "bg-white"
                             }`}
                           >
                             <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${colorClass}`}>
@@ -501,15 +525,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
-                                <p className={`text-sm leading-tight ${!notification.isRead ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                                <p className={`text-sm leading-tight ${!notification.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700"}`}>
                                   {notification.title}
                                 </p>
                                 {!notification.isRead && (
-                                  <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1 ring-2 ring-blue-500/20" />
+                                  <span className="w-2 h-2 rounded-full bg-[var(--hz-cobalt)] flex-shrink-0 mt-1 ring-2 ring-[rgba(29,78,216,0.2)]" />
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{notification.message}</p>
-                              <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{formatTimeAgo(notification.createdAt)}</p>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{notification.message}</p>
+                              <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{formatTimeAgo(notification.createdAt)}</p>
                             </div>
                           </button>
                         );
@@ -519,10 +543,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
                   {/* Footer */}
                   {notifications.length > 0 && (
-                    <div className="px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                    <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100">
                       <Link
                         href="/admin/notifications"
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-1"
+                        className="text-xs text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium flex items-center justify-center gap-1"
                       >
                         View all notifications
                         <ChevronRight className="w-3 h-3" />
@@ -534,57 +558,66 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Divider */}
-            <div className="hidden md:block w-px h-5 bg-gray-200 mx-0.5" />
+            <div className="hidden md:block w-px h-5 bg-slate-200 mx-0.5" />
 
             {/* User Menu */}
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-transparent py-1 pl-1 pr-1.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
               >
                 <img
                   src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
                   alt={user?.name || "User"}
-                  className="w-7 h-7 rounded-full bg-blue-50 ring-1 ring-gray-200"
+                  className="w-7 h-7 rounded-full bg-[var(--hz-cobalt-100)] ring-2 ring-white shadow-sm"
                 />
                 <div className="hidden md:block text-left">
-                  <p className="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[100px]">{user?.name || "User"}</p>
+                  <p className="text-xs font-semibold text-slate-800 leading-tight truncate max-w-[110px]">{user?.name || "User"}</p>
                   <span className={`text-[10px] px-1.5 py-px rounded font-medium capitalize ${getRoleBadgeColor()}`}>
                     {user?.role}
                   </span>
                 </div>
+                <ChevronDown className={`hidden md:block w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
-                  <div className="flex items-center gap-3 px-3 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
+                <div className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 z-50">
+                  <div className="flex items-center gap-3 bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-4 py-3.5">
                     <img
                       src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
                       alt={user?.name || "User"}
-                      className="w-9 h-9 rounded-full bg-blue-50 flex-shrink-0 ring-2 ring-white shadow-sm"
+                      className="w-10 h-10 rounded-full bg-white/20 flex-shrink-0 ring-2 ring-white/40 shadow-sm"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
+                      <p className="text-[11px] text-white/75 truncate">{user?.email}</p>
                     </div>
                   </div>
+                  <div className="px-3 pt-2.5 pb-1.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${getRoleBadgeColor()}`}>
+                      {user?.role}
+                    </span>
+                  </div>
                   <div className="py-1">
-                    <Link
-                      href="/admin/settings"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <Settings className="w-3.5 h-3.5" />
-                      Settings
+                    <Link href="/admin" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
+                      <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard
+                    </Link>
+                    <Link href="/admin/settings" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
+                      <Settings className="w-4 h-4 text-slate-400" /> Settings
+                    </Link>
+                    <Link href="/" target="_blank" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
+                      <Home className="w-4 h-4 text-slate-400" /> View website
                     </Link>
                   </div>
-                  <div className="border-t border-gray-100 pt-1 pb-1">
+                  <div className="border-t border-slate-100 py-1">
                     <button
                       onClick={() => signOut()}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                     >
-                      <LogOut className="w-3.5 h-3.5" />
-                      Sign Out
+                      <LogOut className="w-4 h-4" /> Sign Out
                     </button>
                   </div>
                 </div>
@@ -609,6 +642,12 @@ export default function AdminLayout({
     <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES]}>
       <AdminProvider>
         <AdminLayoutContent>{children}</AdminLayoutContent>
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          toastOptions={{ style: { fontFamily: "var(--font-geist-sans)" } }}
+        />
       </AdminProvider>
     </ProtectedRoute>
   );

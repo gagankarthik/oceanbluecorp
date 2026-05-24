@@ -8,7 +8,7 @@ export default function JobDetailLoading() {
           <div className="space-y-2">
             <div className="h-6 w-52 bg-slate-200 rounded-lg" />
             <div className="flex flex-wrap items-center gap-2">
-              <div className="h-5 w-16 bg-blue-100 rounded-full" />
+              <div className="h-5 w-16 bg-[var(--hz-cobalt-100)] rounded-full" />
               <div className="h-4 w-24 bg-slate-100 rounded" />
               <div className="h-4 w-20 bg-slate-100 rounded" />
             </div>
@@ -16,7 +16,7 @@ export default function JobDetailLoading() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <div className="h-9 w-20 bg-slate-100 rounded-lg" />
-          <div className="h-9 w-28 bg-blue-100 rounded-lg" />
+          <div className="h-9 w-28 bg-[var(--hz-cobalt-100)] rounded-lg" />
         </div>
       </div>
 
@@ -34,7 +34,7 @@ export default function JobDetailLoading() {
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex border-b border-slate-100 px-4 pt-1 gap-1">
           {["Description", "Applications", "Activity"].map((tab, i) => (
-            <div key={tab} className={`h-9 w-28 rounded-t-lg ${i === 0 ? "bg-blue-100" : "bg-slate-50"}`} />
+            <div key={tab} className={`h-9 w-28 rounded-t-lg ${i === 0 ? "bg-[var(--hz-cobalt-100)]" : "bg-slate-50"}`} />
           ))}
         </div>
         <div className="p-5 space-y-4">

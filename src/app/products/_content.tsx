@@ -1,138 +1,144 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { ArrowUpRight, ArrowRight, Cpu, ShieldCheck, LifeBuoy, type LucideIcon } from "lucide-react";
+import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
+import { Eyebrow, Cta } from "@/components/landing/ui";
+import Photo from "@/components/landing/Photo";
+import { IMG } from "@/components/landing/media";
 
-// Products - Replace with actual product details
-// logo: path to logo image in /public folder (e.g., "/products/product-logo.png")
-// link: external URL or internal path to redirect on click
-const products = [
+/* Real Ocean Blue products. Refine `category` / `desc` with final copy. */
+type Product = { id: string; name: string; category: string; desc: string; logo: string; remote?: boolean; link: string };
+
+const products: Product[] = [
   {
-    id: "product-1",
+    id: "blue-iq",
     name: "Blue-IQ",
-    logo: "/Blue-iq.png", 
-    link: "http://blue-iq.ai/", 
+    category: "AI & Intelligence",
+    desc: "Our AI platform for turning enterprise data into faster, clearer decisions — built and operated in-house.",
+    logo: "/Blue-iq.png",
+    link: "http://blue-iq.ai/",
   },
   {
-    id: "product-2",
+    id: "inytes",
     name: "Inytes",
+    category: "Digital Platform",
+    desc: "A consumer platform from the Ocean Blue portfolio — designed, shipped, and supported by our own teams.",
     logo: "https://cdn.inytes.com/images/brand/inytes-logo.png",
+    remote: true,
     link: "https://www.inytes.com/",
   },
 ];
 
+const principles: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Cpu, title: "Engineered in-house", desc: "Built by the same teams that deliver for our enterprise clients." },
+  { icon: ShieldCheck, title: "Production-grade", desc: "Shipped to real users, secured, monitored, and improved continuously." },
+  { icon: LifeBuoy, title: "Backed long-term", desc: "We operate and support everything we build — not just launch it." },
+];
+
 export default function ProductsPage() {
   return (
-    <>
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-16 bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#1e3a8a] overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-20 -right-20 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.2, 0.4, 0.2],
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -bottom-20 -left-20 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-gradient-to-tr from-blue-500/20 to-cyan-500/20 rounded-full blur-3xl"
-          />
-        </div>
-
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-6"
-            >
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-white/90">Our Products</span>
-            </motion.div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-6 leading-tight">
-              Products Built{" "}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent font-medium">
-                In-House
-              </span>
+    <div className="horizon w-full bg-[var(--hz-canvas)]">
+      {/* Hero */}
+      <section className="relative isolate flex min-h-[60vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
+        <Photo src={IMG.productsHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+          <Reveal>
+            <Eyebrow tone="dark">Our products</Eyebrow>
+            <h1 className="hz-display mt-7 max-w-[16ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+              Products we build, ship, and stand behind.
             </h1>
-            <p className="text-lg text-white/60 leading-relaxed">
-              Explore our proprietary solutions designed to drive business impact.
+            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
+              Beyond client delivery, we invest in our own platforms — the same
+              engineering rigor, applied to products we own end to end.
             </p>
-          </motion.div>
+          </Reveal>
         </div>
       </section>
 
-      {/* Products Grid */}
-      <section className="py-20 md:py-28 lg:py-32 bg-gray-50 min-h-[60vh]">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto">
-            {products.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <Link
-                  href={product.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block"
-                >
-                  <div className="relative bg-white rounded-3xl border border-gray-100 p-8 md:p-10 lg:p-12 hover:border-gray-200 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 text-center overflow-hidden">
-                    {/* Corner accent on hover */}
-                    <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-[0.08] transition-opacity rounded-tr-3xl" />
-
-                    {/* Logo */}
-                    <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 mx-auto mb-6 md:mb-8 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden p-4">
-                      <Image
-                        src={product.logo}
-                        alt={product.name}
-                        width={200}
-                        height={200}
-                        className="object-contain w-full h-full"
-                      />
+      {/* Principles */}
+      <section className="relative w-full py-24 sm:py-28">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <Reveal className="max-w-2xl">
+            <Eyebrow>How we build</Eyebrow>
+            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Owned end to end.</h2>
+          </Reveal>
+          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
+            {principles.map((p) => {
+              const Icon = p.icon;
+              return (
+                <StaggerItem key={p.title} className="h-full">
+                  <div className="hz-card h-full p-8">
+                    <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                      <Icon className="h-6 w-6" strokeWidth={1.5} />
                     </div>
-
-                    {/* Name */}
-                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {product.name}
-                    </h3>
-
-                    {/* Hover gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500 pointer-events-none rounded-3xl" />
+                    <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{p.title}</h3>
+                    <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{p.desc}</p>
                   </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+                </StaggerItem>
+              );
+            })}
+          </Stagger>
         </div>
       </section>
-    </>
+
+      {/* Products */}
+      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <Reveal className="max-w-2xl">
+            <Eyebrow>The portfolio</Eyebrow>
+            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Platforms in production.</h2>
+          </Reveal>
+          <Stagger className="mt-14 grid gap-6 md:grid-cols-2" gap={0.1}>
+            {products.map((product) => (
+              <StaggerItem key={product.id} className="h-full">
+                <a href={product.link} target="_blank" rel="noopener noreferrer" className="hz-card group flex h-full flex-col p-8 sm:p-10">
+                  <div className="flex items-start justify-between">
+                    <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl border border-black/[0.06] bg-white p-3.5">
+                      {product.remote ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={product.logo} alt={product.name} className="h-full w-full object-contain" />
+                      ) : (
+                        <Image src={product.logo} alt={product.name} width={120} height={120} className="h-full w-full object-contain" />
+                      )}
+                    </div>
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-black/[0.04] text-[var(--hz-text-subtle)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-[var(--hz-cobalt)] group-hover:text-white">
+                      <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+                    </span>
+                  </div>
+                  <span className="hz-eyebrow mt-7 text-[var(--hz-cobalt)]">{product.category}</span>
+                  <h3 className="hz-display mt-2 text-[1.6rem] text-[var(--hz-text)]">{product.name}</h3>
+                  <p className="mt-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{product.desc}</p>
+                  <span className="mt-auto inline-flex items-center gap-2 pt-8 text-[14px] font-semibold text-[var(--hz-cobalt)]">
+                    Visit site
+                    <ArrowUpRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.75} />
+                  </span>
+                </a>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
+        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+          <Reveal className="flex flex-col items-center">
+            <Eyebrow tone="dark">Build with us</Eyebrow>
+            <h2 className="hz-display mt-7 max-w-[18ch] text-[2.25rem] text-white sm:text-[3rem]">Have a product to build or scale?</h2>
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
+              We bring the team that designs, ships, and runs software in production.
+            </p>
+            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
+              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
+              <Cta href="/services" variant="ghostDark">Explore services</Cta>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </div>
   );
 }

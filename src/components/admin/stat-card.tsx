@@ -1,69 +1,74 @@
-import * as React from "react";
+"use client";
+
 import Link from "next/link";
-import { ArrowUpRight, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 import { tones, type Tone } from "./theme";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   label: string;
-  value: number | string;
-  hint?: string;
+  value: string | number;
+  icon: LucideIcon;
   tone?: Tone;
-  icon?: React.ComponentType<{ className?: string }>;
+  /** Optional period-over-period delta chip. */
+  delta?: { value: string; direction: "up" | "down" | "flat" };
+  hint?: string;
+  /** If set, the whole card becomes a link and gains a hover lift. */
   href?: string;
-  trend?: { direction: "up" | "down" | "flat"; value: string };
-  onClick?: () => void;
+  /** "sm" is a more compact variant for dense list-page headers. */
+  size?: "default" | "sm";
   className?: string;
 }
 
-export function StatCard({
-  label, value, hint, tone = "blue", icon: Icon, href, trend, onClick, className,
-}: StatCardProps) {
+/**
+ * Premium KPI card for the admin dashboard and list headers.
+ * Soft tinted icon chip + large tabular number + label + optional delta.
+ */
+export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint, href, size = "default", className }: StatCardProps) {
   const t = tones[tone];
-  const inner = (
+  const sm = size === "sm";
+  const body = (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl bg-white border border-slate-200/80 p-4 transition-all",
-        (href || onClick) && "hover:border-slate-300 hover:shadow-md cursor-pointer",
+        "group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        sm ? "gap-2.5 p-4" : "gap-4 p-5",
+        href && "hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-md",
         className,
       )}
     >
-      {/* Subtle accent stripe */}
-      <div className={cn("absolute inset-y-0 left-0 w-1", t.dot)} />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold tracking-wide uppercase text-slate-500">{label}</p>
-          <p className="mt-1.5 text-[26px] font-bold leading-none tracking-tight text-slate-900 tabular-nums">
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </p>
-          {hint && <p className="mt-1.5 text-xs text-slate-500 truncate">{hint}</p>}
-        </div>
-        {Icon && (
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", t.bg)}>
-            <Icon className={cn("w-5 h-5", t.text)} />
-          </div>
+      <div className="flex items-start justify-between">
+        <span className={cn("grid place-items-center rounded-xl", t.bg, sm ? "h-8 w-8" : "h-10 w-10")}>
+          <Icon className={cn(t.text, sm ? "h-4 w-4" : "h-[18px] w-[18px]")} strokeWidth={2} />
+        </span>
+        {delta && (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              delta.direction === "up"
+                ? "bg-emerald-50 text-emerald-700"
+                : delta.direction === "down"
+                ? "bg-rose-50 text-rose-700"
+                : "bg-slate-100 text-slate-500",
+            )}
+          >
+            {delta.direction === "up" && <TrendingUp className="h-3 w-3" />}
+            {delta.direction === "down" && <TrendingDown className="h-3 w-3" />}
+            {delta.value}
+          </span>
         )}
       </div>
-      {(trend || href) && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-          {trend ? (
-            <div className={cn("inline-flex items-center gap-1 text-xs font-medium",
-              trend.direction === "up" ? "text-emerald-600" : trend.direction === "down" ? "text-rose-600" : "text-slate-500"
-            )}>
-              {trend.direction === "up" && <TrendingUp className="w-3.5 h-3.5" />}
-              {trend.direction === "down" && <TrendingDown className="w-3.5 h-3.5" />}
-              <span>{trend.value}</span>
-            </div>
-          ) : <span className="text-[11px] text-slate-400">View details</span>}
-          {href && (
-            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
-          )}
-        </div>
-      )}
+      <div>
+        <div className={cn("font-bold leading-none tracking-tight tabular-nums text-slate-900", sm ? "text-[22px]" : "text-[28px]")}>{value}</div>
+        <div className={cn("font-medium text-slate-500", sm ? "mt-1.5 text-[12px]" : "mt-2 text-[13px]")}>{label}</div>
+        {hint && <div className="mt-0.5 text-[11px] text-slate-400">{hint}</div>}
+      </div>
     </div>
   );
-
-  if (href) return <Link href={href}>{inner}</Link>;
-  if (onClick) return <button type="button" onClick={onClick} className="text-left w-full">{inner}</button>;
-  return inner;
+  return href ? (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
 }

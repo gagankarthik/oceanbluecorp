@@ -1,4 +1,8 @@
 "use client";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { AdminListSkeleton } from "@/components/admin/skeletons";
 
 import { useState, useEffect } from "react";
 import {
@@ -18,7 +22,7 @@ import {
   Shield,
   UserCog,
 } from "lucide-react";
-import { Vendor } from "@/lib/aws/dynamodb";
+import type { Vendor } from "@/lib/aws/dynamodb";
 
 const vendorLeadConfig = {
   hr: {
@@ -203,7 +207,7 @@ export default function VendorsPage() {
       setFormData(initialFormData);
       setFormErrors({});
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save vendor");
+      toast.error(err instanceof Error ? err.message : "Failed to save vendor");
     } finally {
       setSubmitting(false);
     }
@@ -225,21 +229,22 @@ export default function VendorsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (vendorId: string) => {
-    if (!confirm("Are you sure you want to delete this vendor? This action cannot be undone.")) return;
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
+  const performDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      const response = await fetch(`/api/vendors/${vendorId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete vendor");
-      }
-
-      setVendors((prev) => prev.filter((vendor) => vendor.id !== vendorId));
-    } catch (err) {
-      alert("Failed to delete vendor");
+      const response = await fetch(`/api/vendors/${pendingDelete}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete vendor");
+      setVendors((prev) => prev.filter((vendor) => vendor.id !== pendingDelete));
+      toast.success("Vendor deleted");
+      setPendingDelete(null);
+    } catch {
+      toast.error("Failed to delete vendor");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -272,16 +277,7 @@ export default function VendorsPage() {
     admin: vendors.filter((v) => v.vendorLeadRole === "admin").length,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-blue-600 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500 text-sm">Loading vendors...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AdminListSkeleton rows={8} />;
 
   if (error) {
     return (
@@ -290,7 +286,7 @@ export default function VendorsPage() {
           <p className="text-rose-500 text-sm mb-3">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]"
           >
             Retry
           </button>
@@ -301,101 +297,102 @@ export default function VendorsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Vendor Management</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
-            Manage your vendor records
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleExportCSV}
-            disabled={filteredVendors.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button
-            onClick={() => {
-              setEditingVendor(null);
-              setFormData(initialFormData);
-              setFormErrors({});
-              setShowForm(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add Vendor
-          </button>
-        </div>
-      </div>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Delete vendor?"
+        body="This action cannot be undone."
+        busy={deleting}
+        onConfirm={performDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <PageHeader
+        title="Vendor Management"
+        subtitle="Manage your vendor records"
+        actions={
+          <>
+            <PageHeaderButton variant="secondary" onClick={handleExportCSV} disabled={filteredVendors.length === 0}>
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Export</span>
+            </PageHeaderButton>
+            <PageHeaderButton
+              variant="primary"
+              onClick={() => {
+                setEditingVendor(null);
+                setFormData(initialFormData);
+                setFormErrors({});
+                setShowForm(true);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Vendor
+            </PageHeaderButton>
+          </>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center">
               <UserCog className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-xs text-gray-500">Total Vendors</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+              <p className="text-xs text-slate-500">Total Vendors</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.hr}</p>
-              <p className="text-xs text-gray-500">HR Lead</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.hr}</p>
+              <p className="text-xs text-slate-500">HR Lead</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.admin}</p>
-              <p className="text-xs text-gray-500">Admin Lead</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.admin}</p>
+              <p className="text-xs text-slate-500">Admin Lead</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200">
+      <div className="bg-white rounded-2xl border border-slate-200/80">
         <div className="p-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search vendors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${
                 showFilters || vendorLeadFilter !== "all"
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Filter className="w-4 h-4" />
               <span className="hidden sm:inline">Filters</span>
               {vendorLeadFilter !== "all" && (
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
+                <span className="w-5 h-5 rounded-full bg-[var(--hz-cobalt)] text-white text-xs flex items-center justify-center font-medium">
                   1
                 </span>
               )}
@@ -403,11 +400,11 @@ export default function VendorsPage() {
           </div>
 
           {showFilters && (
-            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-3">
+            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-3">
               <select
                 value={vendorLeadFilter}
                 onChange={(e) => setVendorLeadFilter(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
               >
                 <option value="all">All Vendor Leads</option>
                 <option value="hr">HR</option>
@@ -416,7 +413,7 @@ export default function VendorsPage() {
               {vendorLeadFilter !== "all" && (
                 <button
                   onClick={() => setVendorLeadFilter("all")}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium"
                 >
                   Clear filters
                 </button>
@@ -428,72 +425,72 @@ export default function VendorsPage() {
 
       {/* Results count */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           {filteredVendors.length} of {vendors.length} vendors
         </p>
       </div>
 
       {/* Vendor Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Vendor</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Vendor Lead</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Location</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor Lead</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Created</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {filteredVendors.length > 0 ? (
                 filteredVendors.map((vendor) => {
                   const lead = vendorLeadConfig[vendor.vendorLeadRole] || vendorLeadConfig.hr;
                   const LeadIcon = lead.icon;
 
                   return (
-                    <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={vendor.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
                             {vendor.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{vendor.name}</p>
+                            <p className="font-medium text-slate-900 truncate">{vendor.name}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="space-y-1">
                           {vendor.contactPerson && (
-                            <div className="text-sm text-gray-600 flex items-center gap-1.5">
-                              <User className="w-3.5 h-3.5 text-gray-400" />
+                            <div className="text-sm text-slate-600 flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-slate-400" />
                               {vendor.contactPerson}
                             </div>
                           )}
                           {vendor.email && (
-                            <a href={`mailto:${vendor.email}`} className="text-sm text-gray-600 hover:text-blue-600 flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            <a href={`mailto:${vendor.email}`} className="text-sm text-slate-600 hover:text-[var(--hz-cobalt)] flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
                               {vendor.email}
                             </a>
                           )}
                           {!vendor.contactPerson && !vendor.email && (
-                            <span className="text-sm text-gray-400">No contact info</span>
+                            <span className="text-sm text-slate-400">No contact info</span>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         {vendor.state || vendor.zipCode ? (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                             <span>
                               {[vendor.state, vendor.zipCode].filter(Boolean).join(", ")}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">No location</span>
+                          <span className="text-sm text-slate-400">No location</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -503,13 +500,13 @@ export default function VendorsPage() {
                             {lead.label}
                           </span>
                           {vendor.vendorLeadName && (
-                            <span className="text-sm text-gray-700">{vendor.vendorLeadName}</span>
+                            <span className="text-sm text-slate-700">{vendor.vendorLeadName}</span>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           {new Date(vendor.createdAt).toLocaleDateString()}
                         </div>
                       </td>
@@ -517,14 +514,14 @@ export default function VendorsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleEdit(vendor)}
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-500 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(vendor.id)}
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={() => setPendingDelete(vendor.id)}
+                            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -537,9 +534,9 @@ export default function VendorsPage() {
               ) : (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center">
-                    <UserCog className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
-                    <p className="text-gray-500 text-sm">
+                    <UserCog className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 mb-1">No vendors found</h3>
+                    <p className="text-slate-500 text-sm">
                       {vendors.length === 0
                         ? "Add your first vendor to get started"
                         : "No vendors match your search criteria"}
@@ -557,8 +554,8 @@ export default function VendorsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-              <h2 className="text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-[var(--hz-cobalt-100)] to-cyan-50">
+              <h2 className="text-xl font-bold text-slate-900">
                 {editingVendor ? "Edit Vendor" : "Add New Vendor"}
               </h2>
               <button
@@ -568,7 +565,7 @@ export default function VendorsPage() {
                   setFormData(initialFormData);
                   setFormErrors({});
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white/50 transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white/50 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -579,37 +576,37 @@ export default function VendorsPage() {
               <div className="space-y-6">
                 {/* Required Fields Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
                     Required Information
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Vendor Name <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Vendor Name <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none ${
-                          formErrors.name ? "border-red-300 bg-red-50" : "border-gray-200"
+                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
+                          formErrors.name ? "border-rose-300 bg-rose-50" : "border-slate-200"
                         }`}
                         placeholder="Enter vendor name"
                       />
                       {formErrors.name && (
-                        <p className="mt-1.5 text-sm text-red-600">{formErrors.name}</p>
+                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Vendor Lead <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Vendor Lead <span className="text-rose-500">*</span>
                       </label>
                       <select
                         value={formData.vendorLeadId}
                         onChange={(e) => handleVendorLeadSelect(e.target.value)}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white ${
-                          formErrors.vendorLead ? "border-red-300 bg-red-50" : "border-gray-200"
+                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none bg-white ${
+                          formErrors.vendorLead ? "border-rose-300 bg-rose-50" : "border-slate-200"
                         }`}
                       >
                         <option value="">Select a vendor lead...</option>
@@ -620,7 +617,7 @@ export default function VendorsPage() {
                         ))}
                       </select>
                       {formErrors.vendorLead && (
-                        <p className="mt-1.5 text-sm text-red-600">{formErrors.vendorLead}</p>
+                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.vendorLead}</p>
                       )}
                     </div>
                   </div>
@@ -628,31 +625,31 @@ export default function VendorsPage() {
 
                 {/* Contact Information Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Contact Information</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4">Contact Information</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Person</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Contact Person</label>
                       <input
                         type="text"
                         value={formData.contactPerson}
                         onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="Contact person name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none ${
-                          formErrors.email ? "border-red-300 bg-red-50" : "border-gray-200"
+                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
+                          formErrors.email ? "border-rose-300 bg-rose-50" : "border-slate-200"
                         }`}
                         placeholder="vendor@example.com"
                       />
                       {formErrors.email && (
-                        <p className="mt-1.5 text-sm text-red-600">{formErrors.email}</p>
+                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>
                       )}
                     </div>
                   </div>
@@ -660,25 +657,25 @@ export default function VendorsPage() {
 
                 {/* Location Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Location</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4">Location</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">State</label>
                       <input
                         type="text"
                         value={formData.state}
                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="State"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">ZIP Code</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">ZIP Code</label>
                       <input
                         type="text"
                         value={formData.zipCode}
                         onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="12345"
                       />
                     </div>
@@ -687,7 +684,7 @@ export default function VendorsPage() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => {
@@ -696,14 +693,14 @@ export default function VendorsPage() {
                     setFormData(initialFormData);
                     setFormErrors({});
                   }}
-                  className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingVendor ? "Update Vendor" : "Add Vendor"}

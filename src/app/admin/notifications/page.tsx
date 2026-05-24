@@ -1,4 +1,6 @@
 "use client";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { AdminListSkeleton } from "@/components/admin/skeletons";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -34,7 +36,7 @@ const notificationIcons = {
 };
 
 const notificationColors = {
-  job_posted: "bg-blue-50 text-blue-600 border-blue-200",
+  job_posted: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] border-[var(--hz-cobalt-100)]",
   application_received: "bg-emerald-50 text-emerald-600 border-emerald-200",
   contact_received: "bg-violet-50 text-violet-600 border-violet-200",
 };
@@ -163,65 +165,45 @@ export default function NotificationsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <AdminListSkeleton rows={6} />;
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Bell className="w-6 h-6" />
-            Notifications
+      <PageHeader
+        className="mb-6"
+        title="Notifications"
+        subtitle="Stay updated with the latest activities"
+        icon={Bell}
+        meta={unreadCount > 0 ? (
+          <span className="inline-flex items-center rounded-full bg-[var(--hz-cobalt-100)] px-2.5 py-0.5 text-xs font-semibold text-[var(--hz-cobalt)]">
+            {unreadCount} unread
+          </span>
+        ) : undefined}
+        actions={
+          <>
+            <PageHeaderButton variant="secondary" onClick={fetchNotifications} title="Refresh">
+              <RefreshCw className="w-4 h-4" />
+            </PageHeaderButton>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-sm bg-blue-100 text-blue-700 rounded-full">
-                {unreadCount} unread
-              </span>
+              <PageHeaderButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
+                {markingAllRead ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Mark all as read
+              </PageHeaderButton>
             )}
-          </h1>
-          <p className="text-gray-500 mt-1">Stay updated with the latest activities</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchNotifications}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllAsRead}
-              disabled={markingAllRead}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {markingAllRead ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-4 h-4" />
-              )}
-              Mark all as read
-            </button>
-          )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-gray-50 rounded-xl">
+      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-slate-50 rounded-xl">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filter:</span>
+          <Filter className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700">Filter:</span>
         </div>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as "all" | "unread")}
-          className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)]"
         >
           <option value="all">All notifications</option>
           <option value="unread">Unread only</option>
@@ -229,7 +211,7 @@ export default function NotificationsPage() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)]"
         >
           <option value="all">All types</option>
           <option value="job_posted">Job Posted</option>
@@ -254,7 +236,7 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       {filteredNotifications.length > 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
           {filteredNotifications.map((notification) => {
             const Icon = notificationIcons[notification.type];
             const colorClass = notificationColors[notification.type];
@@ -264,8 +246,8 @@ export default function NotificationsPage() {
             return (
               <div
                 key={notification.id}
-                className={`flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors ${
-                  !notification.isRead ? "bg-blue-50/30" : ""
+                className={`flex items-start gap-4 p-4 hover:bg-slate-50 transition-colors ${
+                  !notification.isRead ? "bg-[#eef3fe]" : ""
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${colorClass}`}>
@@ -279,20 +261,20 @@ export default function NotificationsPage() {
                           {label}
                         </span>
                         {!notification.isRead && (
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="w-2 h-2 rounded-full bg-[var(--hz-cobalt)]" />
                         )}
                       </div>
-                      <h3 className={`mt-2 font-medium ${!notification.isRead ? "text-gray-900" : "text-gray-700"}`}>
+                      <h3 className={`mt-2 font-medium ${!notification.isRead ? "text-slate-900" : "text-slate-700"}`}>
                         {notification.title}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-400 mt-2">{formatTimeAgo(notification.createdAt)}</p>
+                      <p className="text-sm text-slate-500 mt-1">{notification.message}</p>
+                      <p className="text-xs text-slate-400 mt-2">{formatTimeAgo(notification.createdAt)}</p>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {!notification.isRead && (
                         <button
                           onClick={() => handleMarkAsRead(notification.id)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
                           title="Mark as read"
                         >
                           <CheckCircle2 className="w-4 h-4" />
@@ -300,14 +282,14 @@ export default function NotificationsPage() {
                       )}
                       <button
                         onClick={() => handleDeleteNotification(notification.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <Link
                         href={link}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                         title="View details"
                       >
                         <ChevronRight className="w-4 h-4" />
@@ -320,12 +302,12 @@ export default function NotificationsPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <Bell className="w-8 h-8 text-gray-400" />
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <Bell className="w-8 h-8 text-slate-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-          <p className="text-gray-500">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">No notifications</h3>
+          <p className="text-slate-500">
             {filter === "unread"
               ? "You're all caught up! No unread notifications."
               : "No notifications to display."}

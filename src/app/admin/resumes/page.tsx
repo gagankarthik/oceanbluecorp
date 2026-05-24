@@ -1,4 +1,7 @@
 "use client";
+import { toast } from "sonner";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { AdminRowsSkeleton } from "@/components/admin/skeletons";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
@@ -66,7 +69,7 @@ function FileTypeIcon({ type, size = "md" }: { type: string; size?: "sm" | "md" 
   }
   if (isWord(type)) {
     return (
-      <div className={cn("rounded-xl flex flex-col items-center justify-center font-bold bg-blue-100 text-blue-700 flex-shrink-0", sz)}>
+      <div className={cn("rounded-xl flex flex-col items-center justify-center font-bold bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] flex-shrink-0", sz)}>
         DOC
       </div>
     );
@@ -215,7 +218,7 @@ export default function ResumeBankPage() {
   const getDownloadUrl = async (id: string): Promise<string | null> => {
     const res = await fetch(`/api/resume-bank/${id}`);
     const data = await res.json();
-    if (!res.ok) { alert("Failed to get download link"); return null; }
+    if (!res.ok) { toast.error("Failed to get download link"); return null; }
     return data.downloadUrl;
   };
 
@@ -248,7 +251,7 @@ export default function ResumeBankPage() {
 
   return (
     <div
-      className={cn("space-y-4 min-h-[60vh]", dragActive && "outline-4 outline-dashed outline-blue-400 outline-offset-4 rounded-2xl")}
+      className={cn("space-y-4 min-h-[60vh]", dragActive && "outline-4 outline-dashed outline-[var(--hz-cobalt)] outline-offset-4 rounded-2xl")}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -257,33 +260,27 @@ export default function ResumeBankPage() {
       <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx"
         onChange={handleFileInput} className="hidden" />
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Resume Bank</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {stats.total} files &middot; {stats.pdfs} PDF &middot; {stats.words} Word &middot; {stats.size} total
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={load} className="p-2 border border-slate-200 bg-white text-slate-500 rounded-lg hover:bg-slate-50 transition-colors">
-            <RefreshCcw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-          >
-            <Upload className="w-4 h-4" />Upload Resumes
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Resume Bank"
+        subtitle={`${stats.total} files · ${stats.pdfs} PDF · ${stats.words} Word · ${stats.size} total`}
+        actions={
+          <>
+            <PageHeaderButton variant="secondary" onClick={load} title="Refresh">
+              <RefreshCcw className="w-4 h-4" />
+            </PageHeaderButton>
+            <PageHeaderButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="w-4 h-4" />Upload Resumes
+            </PageHeaderButton>
+          </>
+        }
+      />
 
       {/* Drop overlay */}
       {dragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-600/10 backdrop-blur-sm pointer-events-none">
-          <div className="bg-white border-2 border-dashed border-blue-400 rounded-3xl px-16 py-12 text-center shadow-2xl">
-            <Upload className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-            <p className="text-2xl font-bold text-blue-700">Drop resumes here</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(29,78,216,0.1)] backdrop-blur-sm pointer-events-none">
+          <div className="bg-white border-2 border-dashed border-[var(--hz-cobalt)] rounded-3xl px-16 py-12 text-center shadow-2xl">
+            <Upload className="w-12 h-12 text-[var(--hz-cobalt)] mx-auto mb-3" />
+            <p className="text-2xl font-bold text-[var(--hz-cobalt)]">Drop resumes here</p>
             <p className="text-sm text-slate-500 mt-1">PDF or Word &middot; max 5MB each</p>
           </div>
         </div>
@@ -294,9 +291,9 @@ export default function ResumeBankPage() {
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Upload className="w-4 h-4 text-blue-600" />
+              <Upload className="w-4 h-4 text-[var(--hz-cobalt)]" />
               <h3 className="text-sm font-bold text-slate-900">Upload Queue</h3>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full">{queue.length}</span>
+              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full">{queue.length}</span>
             </div>
             <div className="flex items-center gap-2">
               {queue.some(q => q.status === "done") && (
@@ -318,7 +315,7 @@ export default function ResumeBankPage() {
                       <p className="text-sm font-semibold text-slate-800 truncate">{item.file.name}</p>
                       <span className="text-[10px] text-slate-400 flex-shrink-0">{fmtSize(item.file.size)}</span>
                       {item.status === "done"      && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-                      {item.status === "uploading" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin flex-shrink-0" />}
+                      {item.status === "uploading" && <Loader2 className="w-4 h-4 text-[var(--hz-cobalt)] animate-spin flex-shrink-0" />}
                       {item.status === "error"     && <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0" />}
                     </div>
 
@@ -328,13 +325,13 @@ export default function ResumeBankPage() {
                         placeholder="Candidate name (optional)"
                         value={item.candidateName}
                         onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
-                        className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                        className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700"
                       />
                     )}
 
                     {item.status === "uploading" && (
                       <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                        <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${item.progress}%` }} />
+                        <div className="h-full bg-[var(--hz-cobalt)] rounded-full transition-all duration-500" style={{ width: `${item.progress}%` }} />
                       </div>
                     )}
 
@@ -365,7 +362,7 @@ export default function ResumeBankPage() {
               <button
                 onClick={uploadAll}
                 disabled={anyUploading || pendingCount === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] disabled:opacity-60 transition-colors"
               >
                 {anyUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
@@ -376,12 +373,12 @@ export default function ResumeBankPage() {
       )}
 
       {/* Toolbar */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-3 space-y-3">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-3 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input type="text" placeholder="Search by name, candidate, uploader…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" />
+              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] transition-colors" />
           </div>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
@@ -395,18 +392,18 @@ export default function ResumeBankPage() {
 
           <button onClick={() => setFiltersOpen(v => !v)}
             className={cn("inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg font-medium transition-colors",
-              filtersOpen || uploaderFilter !== "all" ? "bg-blue-50 border-blue-300 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50")}>
+              filtersOpen || uploaderFilter !== "all" ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt)] text-[var(--hz-cobalt)]" : "border-slate-200 text-slate-600 hover:bg-slate-50")}>
             <SlidersHorizontal className="w-4 h-4" />Filters
             <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", filtersOpen && "rotate-180")} />
           </button>
 
           <div className="flex items-center rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
             <button onClick={() => setView("grid")}
-              className={cn("px-3 py-2 transition-colors", view === "grid" ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-slate-100")}>
+              className={cn("px-3 py-2 transition-colors", view === "grid" ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-500 hover:bg-slate-100")}>
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => setView("list")}
-              className={cn("px-3 py-2 border-l border-slate-200 transition-colors", view === "list" ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-slate-100")}>
+              className={cn("px-3 py-2 border-l border-slate-200 transition-colors", view === "list" ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-500 hover:bg-slate-100")}>
               <LayoutList className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -418,7 +415,7 @@ export default function ResumeBankPage() {
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Uploaded by</label>
                 <select value={uploaderFilter} onChange={e => setUploaderFilter(e.target.value)}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
+                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] text-slate-700">
                   <option value="all">All recruiters</option>
                   {uploaders.map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
@@ -433,18 +430,15 @@ export default function ResumeBankPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-24">
-          <div className="text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-blue-500 mx-auto animate-spin" />
-            <p className="text-sm text-slate-500">Loading resumes…</p>
-          </div>
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+          <AdminRowsSkeleton rows={6} />
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-16">
           <div className="text-center space-y-3">
             <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
             <p className="text-sm text-rose-600">{error}</p>
-            <button onClick={load} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Retry</button>
+            <button onClick={load} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg">Retry</button>
           </div>
         </div>
       ) : filtered.length === 0 ? (
@@ -497,7 +491,7 @@ export default function ResumeBankPage() {
             </div>
             <div className="flex items-center gap-2">
               <a href={previewUrl} download={previewName || "resume"}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)]">
                 <Download className="w-3.5 h-3.5" />Download
               </a>
               <button onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
@@ -527,12 +521,12 @@ function GridView({ resumes, onPreview, onDownload, onDelete }: {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {resumes.map(r => (
         <div key={r.id}
-          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group flex flex-col gap-3">
+          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[var(--hz-cobalt-100)] transition-all group flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <FileTypeIcon type={r.fileType} size="lg" />
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => onPreview(r)} title="Preview"
-                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors">
                 <Eye className="w-4 h-4" />
               </button>
               <button onClick={() => onDownload(r)} title="Download"
@@ -549,7 +543,7 @@ function GridView({ resumes, onPreview, onDownload, onDelete }: {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate" title={r.fileName}>{r.fileName}</p>
             {r.candidateName && (
-              <p className="text-xs text-blue-700 font-medium mt-0.5 truncate">{r.candidateName}</p>
+              <p className="text-xs text-[var(--hz-cobalt)] font-medium mt-0.5 truncate">{r.candidateName}</p>
             )}
           </div>
 
@@ -581,7 +575,7 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <div className="min-w-[540px]">
           <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-2.5 bg-slate-50 border-b border-slate-200">
@@ -592,7 +586,7 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
           <div className="divide-y divide-slate-100">
             {resumes.map(r => (
               <div key={r.id}
-                className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center hover:bg-blue-50/20 transition-colors group">
+                className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center hover:bg-[#eef3fe] transition-colors group">
                 <div className="flex items-center gap-3 min-w-0">
                   <FileTypeIcon type={r.fileType} size="sm" />
                   <p className="text-sm font-semibold text-slate-800 truncate">{r.fileName}</p>
@@ -600,12 +594,12 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
 
                 <div className="min-w-0">
                   {r.candidateName
-                    ? <span className="text-sm text-blue-700 font-semibold truncate block">{r.candidateName}</span>
+                    ? <span className="text-sm text-[var(--hz-cobalt)] font-semibold truncate block">{r.candidateName}</span>
                     : <span className="text-xs text-slate-300 italic">—</span>}
                 </div>
 
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
                     {r.uploaderEmail.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-xs text-slate-600 truncate">{r.uploaderEmail}</span>
@@ -618,7 +612,7 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
 
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onPreview(r)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Preview">
+                    className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Preview">
                     <Eye className="w-4 h-4" />
                   </button>
                   <button onClick={() => onDownload(r)}
@@ -644,7 +638,7 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
 function EmptyState({ hasResumes, onUpload }: { hasResumes: boolean; onUpload: () => void }) {
   if (hasResumes) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl py-16 text-center shadow-sm">
+      <div className="bg-white border border-slate-200/80 rounded-2xl py-16 text-center shadow-sm">
         <Search className="w-10 h-10 text-slate-200 mx-auto mb-3" />
         <p className="text-sm font-semibold text-slate-600">No results</p>
         <p className="text-xs text-slate-400 mt-1">Try adjusting your search or filters</p>
@@ -654,14 +648,14 @@ function EmptyState({ hasResumes, onUpload }: { hasResumes: boolean; onUpload: (
   return (
     <button
       onClick={onUpload}
-      className="w-full bg-white border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/30 rounded-2xl py-20 text-center transition-colors group"
+      className="w-full bg-white border-2 border-dashed border-slate-300 hover:border-[var(--hz-cobalt)] hover:bg-[#eef3fe] rounded-2xl py-20 text-center transition-colors group"
     >
-      <div className="w-16 h-16 rounded-2xl bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mx-auto mb-4 transition-colors">
-        <FolderOpen className="w-8 h-8 text-blue-400" />
+      <div className="w-16 h-16 rounded-2xl bg-[var(--hz-cobalt-100)] group-hover:bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-4 transition-colors">
+        <FolderOpen className="w-8 h-8 text-[var(--hz-cobalt)]" />
       </div>
       <h3 className="text-base font-semibold text-slate-700 mb-1">No resumes yet</h3>
       <p className="text-sm text-slate-400 mb-4">Drag &amp; drop files anywhere, or click to browse</p>
-      <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-sm">
+      <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-xl shadow-sm">
         <Upload className="w-4 h-4" />Upload Resumes
       </div>
     </button>

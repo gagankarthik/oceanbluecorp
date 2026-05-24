@@ -20,7 +20,7 @@ import {
   CalendarClock,
   CheckCircle2,
 } from "lucide-react";
-import { Job } from "@/lib/aws/dynamodb";
+import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth";
 
 const departments = ["All Departments", "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce", "IT Staffing", "Training", "PMO"];
@@ -69,6 +69,7 @@ export default function CareersSearchPage() {
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const [selectedState, setSelectedState] = useState("All States");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -79,6 +80,19 @@ export default function CareersSearchPage() {
   const locations = useMemo(() => {
     const uniqueLocations = [...new Set(jobs.map((job) => job.location))].filter(Boolean).sort();
     return ["All Locations", ...uniqueLocations];
+  }, [jobs]);
+
+  // Get unique states from jobs (derived from the trailing part of the location, e.g. "Austin, TX" → "TX")
+  const states = useMemo(() => {
+    const set = new Set<string>();
+    jobs.forEach((job) => {
+      const parts = (job.location || "").split(",");
+      if (parts.length > 1) {
+        const st = parts[parts.length - 1].trim();
+        if (st) set.add(st);
+      }
+    });
+    return ["All States", ...[...set].sort()];
   }, [jobs]);
 
   // Fetch jobs from API
@@ -176,11 +190,13 @@ export default function CareersSearchPage() {
       const matchesDepartment = selectedDepartment === "All Departments" || job.department === selectedDepartment;
       const matchesType = selectedType === "All Types" || job.type === selectedType;
       const matchesLocation = selectedLocation === "All Locations" || job.location === selectedLocation;
+      const jobState = (job.location || "").split(",").pop()?.trim() || "";
+      const matchesState = selectedState === "All States" || jobState === selectedState;
       const matchesRemote = !remoteOnly || job.type === "remote" || job.location.toLowerCase().includes("remote");
 
-      return matchesSearch && matchesDepartment && matchesType && matchesLocation && matchesRemote;
+      return matchesSearch && matchesDepartment && matchesType && matchesLocation && matchesState && matchesRemote;
     });
-  }, [jobs, searchQuery, selectedDepartment, selectedType, selectedLocation, remoteOnly]);
+  }, [jobs, searchQuery, selectedDepartment, selectedType, selectedLocation, selectedState, remoteOnly]);
 
   // Pagination
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
@@ -191,6 +207,7 @@ export default function CareersSearchPage() {
     setSelectedDepartment("All Departments");
     setSelectedType("All Types");
     setSelectedLocation("All Locations");
+    setSelectedState("All States");
     setRemoteOnly(false);
     setCurrentPage(1);
   };
@@ -199,23 +216,21 @@ export default function CareersSearchPage() {
     selectedDepartment !== "All Departments",
     selectedType !== "All Types",
     selectedLocation !== "All Locations",
+    selectedState !== "All States",
     remoteOnly,
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-white">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pb-28 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-block text-2xl text-blue-600 uppercase tracking-[0.2em]"
-            >
-              Careers at Ocean Blue
-            </motion.span>
-          </div>
+    <div className="horizon bg-[var(--hz-canvas)]">
+      {/* Hero */}
+      <section className="relative pt-32 pb-10 sm:pb-14">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+            <h1 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Open positions.</h1>
+            <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
+              Find your next role at Ocean Blue — filter by team, type, and location.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -239,7 +254,7 @@ export default function CareersSearchPage() {
                   <Filter className="w-5 h-5 text-gray-600" />
                   <span className="font-medium">Filters</span>
                   {activeFiltersCount > 0 && (
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                    <span className="px-2 py-0.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium rounded-full">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -251,7 +266,7 @@ export default function CareersSearchPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-gray-900">Filters</h3>
                   {activeFiltersCount > 0 && (
-                    <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    <button onClick={clearFilters} className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium">
                       Clear all
                     </button>
                   )}
@@ -267,7 +282,7 @@ export default function CareersSearchPage() {
                       placeholder="Job title or keyword..."
                       value={searchQuery}
                       onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -278,7 +293,7 @@ export default function CareersSearchPage() {
                   <select
                     value={selectedDepartment}
                     onChange={(e) => { setSelectedDepartment(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {departments.map((dept) => (
                       <option key={dept} value={dept}>{dept}</option>
@@ -292,7 +307,7 @@ export default function CareersSearchPage() {
                   <select
                     value={selectedType}
                     onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {jobTypes.map((type) => (
                       <option key={type} value={type}>{type === "All Types" ? type : formatJobType(type)}</option>
@@ -306,7 +321,7 @@ export default function CareersSearchPage() {
                   <select
                     value={selectedLocation}
                     onChange={(e) => { setSelectedLocation(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {locations.map((loc) => (
                       <option key={loc} value={loc}>{loc}</option>
@@ -314,11 +329,27 @@ export default function CareersSearchPage() {
                   </select>
                 </div>
 
+                {/* State */}
+                {states.length > 1 && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                    <select
+                      value={selectedState}
+                      onChange={(e) => { setSelectedState(e.target.value); setCurrentPage(1); }}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                    >
+                      {states.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {/* Remote Toggle */}
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => { setRemoteOnly(!remoteOnly); setCurrentPage(1); }}
-                    className={`w-11 h-6 rounded-full transition-colors relative ${remoteOnly ? "bg-blue-600" : "bg-gray-200"}`}
+                    className={`w-11 h-6 rounded-full transition-colors relative ${remoteOnly ? "bg-[var(--hz-cobalt)]" : "bg-gray-200"}`}
                   >
                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${remoteOnly ? "left-6" : "left-1"}`} />
                   </button>
@@ -331,13 +362,13 @@ export default function CareersSearchPage() {
             <div className="flex-1">
               {loading ? (
                 <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                  <Loader2 className="w-10 h-10 text-blue-600 mx-auto mb-4 animate-spin" />
+                  <Loader2 className="w-10 h-10 text-[var(--hz-cobalt)] mx-auto mb-4 animate-spin" />
                   <p className="text-gray-500">Loading positions...</p>
                 </div>
               ) : error ? (
                 <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
                   <p className="text-red-500 mb-4">{error}</p>
-                  <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                  <button onClick={() => window.location.reload()} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg">
                     Retry
                   </button>
                 </div>
@@ -369,7 +400,7 @@ export default function CareersSearchPage() {
                                   Remote
                                 </span>
                               )}
-                              <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                              <span className="px-3 py-1 rounded-full bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium">
                                 {formatJobType(job.type)}
                               </span>
                               {(() => {
@@ -385,7 +416,7 @@ export default function CareersSearchPage() {
                                 );
                               })()}
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{job.title}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-[var(--hz-cobalt)] transition-colors">{job.title}</h3>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1.5">
                                 <MapPin className="w-4 h-4" />
@@ -406,7 +437,7 @@ export default function CareersSearchPage() {
                             </span>
                             <Link
                               href={`/careers/search/${job.id}`}
-                              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm font-medium rounded-xl hover:shadow-lg transition-all flex items-center gap-1.5"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white text-sm font-medium rounded-xl hover:shadow-lg transition-all flex items-center gap-1.5"
                             >
                               View <ArrowRight className="w-4 h-4" />
                             </Link>
@@ -437,7 +468,7 @@ export default function CareersSearchPage() {
                             <button
                               key={page}
                               onClick={() => setCurrentPage(page)}
-                              className={`w-10 h-10 rounded-lg font-medium ${currentPage === page ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                              className={`w-10 h-10 rounded-lg font-medium ${currentPage === page ? "bg-[var(--hz-cobalt)] text-white" : "text-gray-600 hover:bg-gray-100"}`}
                             >
                               {page}
                             </button>
@@ -461,14 +492,14 @@ export default function CareersSearchPage() {
                           <button
                             key={n}
                             onClick={() => { setItemsPerPage(n); setCurrentPage(1); }}
-                            className={`w-9 h-9 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                            className={`w-9 h-9 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
                           >
                             {n}
                           </button>
                         ))}
                         <button
                           onClick={() => { setItemsPerPage(filteredJobs.length || 999); setCurrentPage(1); }}
-                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-[var(--hz-cobalt)] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
                         >
                           All
                         </button>
@@ -483,7 +514,7 @@ export default function CareersSearchPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No positions found</h3>
                   <p className="text-gray-500 mb-4">Try adjusting your filters or search query</p>
-                  <button onClick={clearFilters} className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg">
+                  <button onClick={clearFilters} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white font-medium rounded-lg">
                     Clear filters
                   </button>
                 </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  ArrowLeft,
   Briefcase,
   TrendingUp,
   Clock,
@@ -83,17 +84,23 @@ const industries = [
 
 export default function CaseStudiesPage() {
   return (
-    <>
+    <div className="horizon">
       {/* Hero Section */}
-      <section className="pt-32 pb-16 bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-500/20 rounded-full blur-3xl" />
+      <section className="pt-32 pb-20 text-white relative overflow-hidden" style={{ background: "#07142b" }}>
+        <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
 
         <div className="container-custom relative z-10">
           <div className="max-w-3xl">
+            <Link
+              href="/resources"
+              className="group mb-6 inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              Back to Resources
+            </Link>
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-6 h-6 text-cyan-400" />
-              <span className="text-cyan-400 font-semibold">Resources</span>
+              <Briefcase className="w-6 h-6 text-[var(--hz-cyan-400)]" />
+              <span className="text-[var(--hz-cyan-400)] font-semibold">Resources</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Client Success Stories
@@ -111,19 +118,19 @@ export default function CaseStudiesPage() {
         <div className="container-custom">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">500+</p>
+              <p className="text-3xl font-bold text-[var(--hz-cobalt)]">500+</p>
               <p className="text-sm text-slate-600">Projects Delivered</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">98%</p>
+              <p className="text-3xl font-bold text-[var(--hz-cobalt)]">98%</p>
               <p className="text-sm text-slate-600">Client Satisfaction</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">$100M+</p>
+              <p className="text-3xl font-bold text-[var(--hz-cobalt)]">$100M+</p>
               <p className="text-sm text-slate-600">Client Savings</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">15+</p>
+              <p className="text-3xl font-bold text-[var(--hz-cobalt)]">15+</p>
               <p className="text-sm text-slate-600">Years Experience</p>
             </div>
           </div>
@@ -135,7 +142,7 @@ export default function CaseStudiesPage() {
         <div className="container-custom">
           <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
             <div className="grid lg:grid-cols-2">
-              <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 md:p-12 text-white">
+              <div className="bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-8 md:p-12 text-white">
                 <span className="inline-block px-4 py-1.5 bg-white/20 text-white text-sm font-semibold rounded-full mb-6">
                   Featured Case Study
                 </span>
@@ -145,22 +152,22 @@ export default function CaseStudiesPage() {
                 </h2>
 
                 <div className="flex items-center gap-3 mb-6">
-                  <Building2 className="w-5 h-5 text-cyan-300" />
+                  <Building2 className="w-5 h-5 text-[var(--hz-cyan-400)]" />
                   <span className="text-white/80">{featuredCase.client}</span>
                 </div>
 
                 <div className="space-y-4 mb-8">
                   <div>
-                    <h4 className="font-semibold text-cyan-300 mb-2">Challenge</h4>
+                    <h4 className="font-semibold text-[var(--hz-cyan-400)] mb-2">Challenge</h4>
                     <p className="text-white/70">{featuredCase.challenge}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-cyan-300 mb-2">Solution</h4>
+                    <h4 className="font-semibold text-[var(--hz-cyan-400)] mb-2">Solution</h4>
                     <p className="text-white/70">{featuredCase.solution}</p>
                   </div>
                 </div>
 
-                <blockquote className="border-l-4 border-cyan-400 pl-4 italic text-white/80 mb-2">
+                <blockquote className="border-l-4 border-[var(--hz-cyan-400)] pl-4 italic text-white/80 mb-2">
                   &ldquo;{featuredCase.testimonial}&rdquo;
                 </blockquote>
                 <p className="text-sm text-white/60">— {featuredCase.author}</p>
@@ -171,14 +178,14 @@ export default function CaseStudiesPage() {
 
                 <div className="grid grid-cols-2 gap-6 mb-8">
                   {featuredCase.results.map((result, index) => (
-                    <div key={index} className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl">
-                      <p className="text-3xl font-bold text-blue-600 mb-1">{result.metric}</p>
+                    <div key={index} className="text-center p-6 bg-gradient-to-br from-[var(--hz-cobalt-100)] to-[var(--hz-cobalt-100)] rounded-2xl">
+                      <p className="text-3xl font-bold text-[var(--hz-cobalt)] mb-1">{result.metric}</p>
                       <p className="text-sm text-slate-600">{result.label}</p>
                     </div>
                   ))}
                 </div>
 
-                <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/25">
+                <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt)] text-white font-semibold rounded-xl hover:from-[var(--hz-cobalt)] hover:to-[var(--hz-cobalt-600)] transition-all shadow-lg shadow-[rgba(29,78,216,0.25)]">
                   Read Full Case Study
                   <ArrowRight className="w-5 h-5" />
                 </button>
@@ -197,8 +204,8 @@ export default function CaseStudiesPage() {
                 key={industry.name}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2 ${
                   industry.name === "All Industries"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-[var(--hz-cobalt)] text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
                 }`}
               >
                 {industry.name}
@@ -218,15 +225,15 @@ export default function CaseStudiesPage() {
             {caseStudies.map((study, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 group"
+                className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-[var(--hz-cobalt-100)] transition-all duration-300 group"
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+                  <span className="px-3 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-semibold rounded-full">
                     {study.industry}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-semibold text-slate-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-3 group-hover:text-[var(--hz-cobalt)] transition-colors line-clamp-2">
                   {study.title}
                 </h3>
 
@@ -252,7 +259,7 @@ export default function CaseStudiesPage() {
                   ))}
                 </div>
 
-                <button className="flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all">
+                <button className="flex items-center gap-2 text-[var(--hz-cobalt)] font-medium hover:gap-3 transition-all">
                   View Case Study
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -263,7 +270,7 @@ export default function CaseStudiesPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <section className="py-16 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white">
         <div className="container-custom text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Write Your Success Story?</h2>
           <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
@@ -271,13 +278,13 @@ export default function CaseStudiesPage() {
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--hz-cobalt)] font-semibold rounded-xl hover:bg-[var(--hz-cobalt-100)] transition-colors"
           >
             Start Your Journey
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
-    </>
+    </div>
   );
 }

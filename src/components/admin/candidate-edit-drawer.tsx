@@ -2,14 +2,16 @@
 
 import * as React from "react";
 import {
-  Loader2, AlertTriangle, X, Briefcase, Mail, MapPin, FileText,
+  Loader2, AlertTriangle, X, Briefcase, MapPin, FileText,
   Star, User2, Shield, Plus,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
-import { statusMeta, WORK_AUTH_OPTIONS, SOURCE_OPTIONS, US_STATES, type AppStatus } from "./theme";
+import { statusMeta, SOURCE_OPTIONS, US_STATES, type AppStatus } from "./theme";
+import { FormSection, Field, FormInput, FormSelect, FormTextarea } from "./forms/primitives";
+import { StarRating } from "./star-rating";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 
@@ -192,8 +194,8 @@ export function CandidateEditDrawer({
         {/* Header */}
         <div className="flex-shrink-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-              <User2 className="w-[18px] h-[18px] text-blue-600" />
+            <div className="w-9 h-9 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center">
+              <User2 className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" />
             </div>
             <div>
               <SheetTitle className="text-[15px] font-bold text-slate-900">
@@ -220,7 +222,7 @@ export function CandidateEditDrawer({
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors border-b-2",
                   activeTab === tab.id
-                    ? "text-blue-600 border-blue-600"
+                    ? "text-[var(--hz-cobalt)] border-[var(--hz-cobalt)]"
                     : "text-slate-500 border-transparent hover:text-slate-700",
                 )}
               >
@@ -243,48 +245,48 @@ export function CandidateEditDrawer({
             {/* ── Profile tab ── */}
             {activeTab === "profile" && (
               <>
-                <Section icon={User2} title="Personal Info">
+                <FormSection icon={User2} title="Personal Info">
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="First name" required>
-                      <Input value={form.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="Jane" />
+                      <FormInput value={form.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="Jane" />
                     </Field>
                     <Field label="Last name">
-                      <Input value={form.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder="Smith" />
+                      <FormInput value={form.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder="Smith" />
                     </Field>
                     <Field label="Email" required>
-                      <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="jane@example.com" />
+                      <FormInput type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="jane@example.com" />
                     </Field>
                     <Field label="Phone">
-                      <Input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 (555) 000-0000" />
+                      <FormInput type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 (555) 000-0000" />
                     </Field>
                   </div>
-                </Section>
+                </FormSection>
 
-                <Section icon={MapPin} title="Location">
+                <FormSection icon={MapPin} title="Location">
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="City">
-                      <Input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Austin" />
+                      <FormInput value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Austin" />
                     </Field>
                     <Field label="State">
-                      <Select value={form.state} onChange={(e) => set("state", e.target.value)}>
+                      <FormSelect value={form.state} onChange={(e) => set("state", e.target.value)}>
                         <option value="">Select state…</option>
                         {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </Select>
+                      </FormSelect>
                     </Field>
                   </div>
-                </Section>
+                </FormSection>
 
-                <Section icon={Briefcase} title="Position & Pipeline">
+                <FormSection icon={Briefcase} title="Position & Pipeline">
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Pipeline status">
-                      <Select value={form.status} onChange={(e) => set("status", e.target.value as AppStatus)}>
+                      <FormSelect value={form.status} onChange={(e) => set("status", e.target.value as AppStatus)}>
                         {Object.entries(statusMeta)
                           .filter(([k]) => !["active", "inactive", "paused", "draft", "closed", "open", "on-hold"].includes(k))
                           .map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                      </Select>
+                      </FormSelect>
                     </Field>
                     <Field label="Job posting">
-                      <Select
+                      <FormSelect
                         value={form.jobId}
                         onChange={(e) => {
                           const job = jobs.find((j) => j.id === e.target.value);
@@ -296,33 +298,33 @@ export function CandidateEditDrawer({
                         {jobs.filter((j) => j.status === "open" || j.status === "active").map((j) => (
                           <option key={j.id} value={j.id}>{j.title}</option>
                         ))}
-                      </Select>
+                      </FormSelect>
                     </Field>
                     <Field label="Source">
-                      <Select value={form.source} onChange={(e) => set("source", e.target.value)}>
+                      <FormSelect value={form.source} onChange={(e) => set("source", e.target.value)}>
                         <option value="">Select source…</option>
                         {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </Select>
+                      </FormSelect>
                     </Field>
                     <Field label="Add to talent bench">
-                      <label className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50">
-                        <input type="checkbox" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-slate-300 text-blue-600" />
+                      <label className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input type="checkbox" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-slate-300 text-[var(--hz-cobalt)]" />
                         <span className="text-sm text-slate-700">Add to bench</span>
                       </label>
                     </Field>
                   </div>
-                </Section>
+                </FormSection>
               </>
             )}
 
             {/* ── Skills tab ── */}
             {activeTab === "skills" && (
               <>
-                <Section icon={Briefcase} title="Skills">
+                <FormSection icon={Briefcase} title="Skills">
                   <div className="space-y-3">
                     {/* Skill chip input */}
                     <div className="flex gap-2">
-                      <Input
+                      <FormInput
                         value={form.skillInput}
                         onChange={(e) => set("skillInput", e.target.value)}
                         onKeyDown={(e) => {
@@ -334,7 +336,7 @@ export function CandidateEditDrawer({
                       <button
                         type="button"
                         onClick={() => addSkill(form.skillInput)}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+                        className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -344,9 +346,9 @@ export function CandidateEditDrawer({
                     {form.skills.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {form.skills.map((skill) => (
-                          <span key={skill} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-200">
+                          <span key={skill} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium rounded-full">
                             {skill}
-                            <button type="button" onClick={() => removeSkill(skill)} className="p-0.5 hover:bg-blue-100 rounded-full transition-colors">
+                            <button type="button" onClick={() => removeSkill(skill)} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
                               <X className="w-3 h-3" />
                             </button>
                           </span>
@@ -363,7 +365,7 @@ export function CandidateEditDrawer({
                             key={skill}
                             type="button"
                             onClick={() => addSkill(skill)}
-                            className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 rounded-full border border-slate-200 hover:border-blue-200 transition-colors"
+                            className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)] rounded-full border border-slate-200 hover:border-[var(--hz-cobalt-100)] transition-colors"
                           >
                             + {skill}
                           </button>
@@ -371,41 +373,41 @@ export function CandidateEditDrawer({
                       </div>
                     </div>
                   </div>
-                </Section>
+                </FormSection>
 
-                <Section icon={FileText} title="Experience">
+                <FormSection icon={FileText} title="Experience">
                   <Field label="Experience summary">
-                    <Textarea rows={5} value={form.experience} onChange={(e) => set("experience", e.target.value)} placeholder="Brief summary of candidate's experience, industries, key achievements…" />
+                    <FormTextarea rows={5} value={form.experience} onChange={(e) => set("experience", e.target.value)} placeholder="Brief summary of candidate's experience, industries, key achievements…" />
                   </Field>
-                </Section>
+                </FormSection>
               </>
             )}
 
             {/* ── Visa tab ── */}
             {activeTab === "visa" && (
-              <Section icon={Shield} title="Work Authorization & Visa Status">
+              <FormSection icon={Shield} title="Work Authorization & Visa Status">
                 <div className="space-y-4">
                   <Field label="Work Authorization / Visa Status">
-                    <Select value={form.workAuthorization} onChange={(e) => set("workAuthorization", e.target.value)}>
+                    <FormSelect value={form.workAuthorization} onChange={(e) => set("workAuthorization", e.target.value)}>
                       <option value="">Select status…</option>
                       {VISA_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                    </Select>
+                    </FormSelect>
                   </Field>
 
                   {/* Visa expiry — only for non-permanent statuses */}
                   {form.workAuthorization && !["US Citizen", "Green Card"].includes(form.workAuthorization) && (
                     <Field label="Visa / OPT Expiry Date">
-                      <Input type="date" value={form.visaExpiry} onChange={(e) => set("visaExpiry", e.target.value)} />
+                      <FormInput type="date" value={form.visaExpiry} onChange={(e) => set("visaExpiry", e.target.value)} />
                     </Field>
                   )}
 
                   <Field label="Sponsorship">
-                    <label className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50">
+                    <label className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
                       <input
                         type="checkbox"
                         checked={form.visaSponsorshipRequired}
                         onChange={(e) => set("visaSponsorshipRequired", e.target.checked)}
-                        className="rounded border-slate-300 text-blue-600"
+                        className="rounded border-slate-300 text-[var(--hz-cobalt)]"
                       />
                       <div>
                         <p className="text-sm font-medium text-slate-700">Requires sponsorship</p>
@@ -432,32 +434,28 @@ export function CandidateEditDrawer({
                     </div>
                   )}
                 </div>
-              </Section>
+              </FormSection>
             )}
 
             {/* ── Notes tab ── */}
             {activeTab === "notes" && (
               <>
-                <Section icon={Star} title="Rating">
+                <FormSection icon={Star} title="Rating">
                   <Field label="Candidate rating">
                     <div className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 rounded-lg bg-white">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <button key={n} type="button" onClick={() => set("rating", n === form.rating ? 0 : n)} className="transition-transform hover:scale-110">
-                          <Star className={cn("w-5 h-5", n <= form.rating ? "fill-amber-400 text-amber-400" : "text-slate-200")} />
-                        </button>
-                      ))}
+                      <StarRating rating={form.rating} onRate={(n) => set("rating", n === form.rating ? 0 : n)} size="md" />
                       {form.rating > 0 && (
-                        <span className="text-xs text-slate-500 ml-1">{form.rating}/5</span>
+                        <span className="text-xs text-slate-500 ml-1 tabular-nums">{form.rating}/5</span>
                       )}
                     </div>
                   </Field>
-                </Section>
+                </FormSection>
 
-                <Section icon={FileText} title="Internal Notes">
+                <FormSection icon={FileText} title="Internal Notes">
                   <Field label="Notes" hint="Internal only — not visible to candidate">
-                    <Textarea rows={8} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Interview impressions, concerns, next steps…" />
+                    <FormTextarea rows={8} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Interview impressions, concerns, next steps…" />
                   </Field>
-                </Section>
+                </FormSection>
               </>
             )}
           </div>
@@ -467,7 +465,7 @@ export function CandidateEditDrawer({
             <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
+            <button type="submit" disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "create" ? "Add Applicant" : "Save Changes"}
             </button>
@@ -475,52 +473,5 @@ export function CandidateEditDrawer({
         </form>
       </SheetContent>
     </Sheet>
-  );
-}
-
-// ── Form primitives ────────────────────────────────────────────────────────────
-
-function Section({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Icon className="w-3.5 h-3.5 text-slate-400" />
-        <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{title}</h4>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="flex items-baseline gap-1 text-xs font-semibold text-slate-700 mb-1.5">
-        {label}
-        {required && <span className="text-rose-500">*</span>}
-        {hint && <span className="text-[10px] text-slate-400 font-normal ml-auto">{hint}</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props} className={cn("w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder:text-slate-400", props.className)} />
-  );
-}
-
-function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...props} className={cn("w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors text-slate-700", props.className)}>
-      {children}
-    </select>
-  );
-}
-
-function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea {...props} className={cn("w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder:text-slate-400 resize-none", props.className)} />
   );
 }

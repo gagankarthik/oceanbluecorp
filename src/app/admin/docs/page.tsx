@@ -78,13 +78,13 @@ function SectionHeader({
   return (
     <div id={id} className="scroll-mt-6 mb-6">
       <div className="flex items-center gap-3 mb-1.5">
-        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-          <Icon className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 rounded-lg bg-[var(--hz-cobalt-100)] border border-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
+          <Icon className="w-4 h-4 text-[var(--hz-cobalt)]" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-xl font-bold text-slate-900">{title}</h2>
       </div>
-      {description && <p className="text-sm text-gray-500 ml-11 leading-relaxed">{description}</p>}
-      <div className="mt-4 border-b border-gray-100" />
+      {description && <p className="text-sm text-slate-500 ml-11 leading-relaxed">{description}</p>}
+      <div className="mt-4 border-b border-slate-100" />
     </div>
   );
 }
@@ -92,7 +92,7 @@ function SectionHeader({
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-7 space-y-3">
-      <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{title}</h3>
+      <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">{title}</h3>
       {children}
     </div>
   );
@@ -100,7 +100,7 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 
 function InfoCard({ children, variant = "info" }: { children: React.ReactNode; variant?: "info" | "warning" | "tip" }) {
   const styles = {
-    info:    "bg-blue-50 border-blue-200 text-blue-800",
+    info:    "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
     warning: "bg-amber-50 border-amber-200 text-amber-800",
     tip:     "bg-emerald-50 border-emerald-200 text-emerald-800",
   };
@@ -122,22 +122,22 @@ function DataTable({
   rows: (string | React.ReactNode)[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200">
+    <div className="overflow-x-auto rounded-xl border border-slate-200">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-200">
+          <tr className="bg-slate-50 border-b border-slate-200">
             {headers.map((h, i) => (
-              <th key={i} className="py-3 px-4 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+              <th key={i} className="py-3 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-slate-100">
           {rows.map((row, i) => (
-            <tr key={i} className="hover:bg-gray-50/60 transition-colors">
+            <tr key={i} className="hover:bg-slate-50/60 transition-colors">
               {row.map((cell, j) => (
-                <td key={j} className="py-3 px-4 text-gray-700 align-top">{cell}</td>
+                <td key={j} className="py-3 px-4 text-slate-700 align-top">{cell}</td>
               ))}
             </tr>
           ))}
@@ -150,18 +150,18 @@ function DataTable({
 function CodeBlock({ children }: { children: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="relative rounded-xl overflow-hidden border border-gray-800">
-      <div className="flex items-center justify-between bg-gray-900 px-4 py-2">
-        <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">code</span>
+    <div className="relative rounded-xl overflow-hidden border border-slate-800">
+      <div className="flex items-center justify-between bg-slate-900 px-4 py-2">
+        <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">code</span>
         <button
           onClick={() => { void navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-white transition-colors"
         >
           {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <pre className="bg-gray-950 text-gray-200 text-xs p-4 overflow-x-auto leading-relaxed font-mono">{children}</pre>
+      <pre className="bg-slate-950 text-slate-200 text-xs p-4 overflow-x-auto leading-relaxed font-mono">{children}</pre>
     </div>
   );
 }
@@ -171,13 +171,13 @@ function Badge({ label, color }: { label: string; color: string }) {
 }
 
 function Kbd({ children }: { children: string }) {
-  return <kbd className="inline-flex items-center px-2 py-0.5 rounded-md border border-gray-200 bg-gray-100 text-[11px] font-mono text-gray-700 shadow-sm">{children}</kbd>;
+  return <kbd className="inline-flex items-center px-2 py-0.5 rounded-md border border-slate-200 bg-slate-100 text-[11px] font-mono text-slate-700 shadow-sm">{children}</kbd>;
 }
 
 function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" }) {
   const colors = {
     GET:    "bg-emerald-100 text-emerald-700",
-    POST:   "bg-blue-100 text-blue-700",
+    POST:   "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
     PUT:    "bg-amber-100 text-amber-700",
     DELETE: "bg-rose-100 text-rose-700",
     PATCH:  "bg-purple-100 text-purple-700",
@@ -225,26 +225,26 @@ export default function AdminDocsPage() {
   };
 
   return (
-    <div className="flex -m-4 lg:-m-5 min-h-[calc(100vh-3.5rem)] bg-gray-50">
+    <div className="flex -m-4 lg:-m-5 min-h-[calc(100vh-3.5rem)] bg-slate-50">
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+      <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
         {/* Sidebar header */}
-        <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+        <div className="px-4 pt-4 pb-3 border-b border-slate-100">
           <button
             onClick={() => router.push("/admin")}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-xs font-medium transition-colors mb-3.5 group"
+            className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 text-xs font-medium transition-colors mb-3.5 group"
           >
             <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
             Back to Admin
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] flex items-center justify-center shadow-sm">
               <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Admin Docs</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">v1.0 · OceanBlue Corp</p>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Admin Docs</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">v1.0 · OceanBlue Corp</p>
             </div>
           </div>
         </div>
@@ -253,7 +253,7 @@ export default function AdminDocsPage() {
         <nav className="px-2.5 py-3 space-y-4">
           {CATEGORIES.map((cat) => (
             <div key={cat.id}>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2.5 mb-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2.5 mb-1">
                 {cat.label}
               </p>
               <div className="space-y-px">
@@ -267,14 +267,14 @@ export default function AdminDocsPage() {
                       className={cn(
                         "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-all text-left relative",
                         isActive
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                          ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
+                          : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                       )}
                     >
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-600 rounded-full" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-[var(--hz-cobalt)] rounded-full" />
                       )}
-                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", isActive ? "text-blue-600" : "text-gray-400")} />
+                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", isActive ? "text-[var(--hz-cobalt)]" : "text-slate-400")} />
                       {item.label}
                     </button>
                   );
@@ -285,8 +285,8 @@ export default function AdminDocsPage() {
         </nav>
 
         {/* Sidebar footer */}
-        <div className="mt-auto px-4 py-3 border-t border-gray-100">
-          <p className="text-[10px] text-gray-400 leading-relaxed">
+        <div className="mt-auto px-4 py-3 border-t border-slate-100">
+          <p className="text-[10px] text-slate-400 leading-relaxed">
             Ocean Blue Corporation<br />Internal Admin Platform
           </p>
         </div>
@@ -316,12 +316,12 @@ export default function AdminDocsPage() {
                 { icon: Phone,     label: "Contacts",     desc: "Handle site inquiries" },
                 { icon: UserCog,   label: "Users",        desc: "Manage team access" },
               ].map((f) => (
-                <div key={f.label} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:shadow-sm transition-all">
+                <div key={f.label} className="bg-white border border-slate-200/80 rounded-2xl p-4 hover:border-[var(--hz-cobalt-100)] hover:shadow-sm transition-all">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <f.icon className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-semibold text-gray-800">{f.label}</span>
+                    <f.icon className="w-4 h-4 text-[var(--hz-cobalt)]" />
+                    <span className="text-sm font-semibold text-slate-800">{f.label}</span>
                   </div>
-                  <p className="text-xs text-gray-500">{f.desc}</p>
+                  <p className="text-xs text-slate-500">{f.desc}</p>
                 </div>
               ))}
             </div>
@@ -330,17 +330,17 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Route", "Page", "Access"]}
                 rows={[
-                  ["/admin", "Dashboard", <Badge key="a" label="All Admin Roles" color="bg-blue-100 text-blue-700" />],
-                  ["/admin/jobs", "Job Postings", <Badge key="b" label="Admin · HR · Recruiter" color="bg-blue-100 text-blue-700" />],
-                  ["/admin/applications", "Applications", <Badge key="c" label="Admin · HR · Recruiter" color="bg-blue-100 text-blue-700" />],
-                  ["/admin/bench", "Talent Bench", <Badge key="d" label="Admin · HR · Recruiter" color="bg-blue-100 text-blue-700" />],
+                  ["/admin", "Dashboard", <Badge key="a" label="All Admin Roles" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
+                  ["/admin/jobs", "Job Postings", <Badge key="b" label="Admin · HR · Recruiter" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
+                  ["/admin/applications", "Applications", <Badge key="c" label="Admin · HR · Recruiter" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
+                  ["/admin/bench", "Talent Bench", <Badge key="d" label="Admin · HR · Recruiter" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
                   ["/admin/clients", "Clients", <Badge key="e" label="Admin · HR" color="bg-purple-100 text-purple-700" />],
                   ["/admin/vendors", "Vendors", <Badge key="f" label="Admin · HR" color="bg-purple-100 text-purple-700" />],
                   ["/admin/contacts", "Contacts", <Badge key="g" label="Admin · HR" color="bg-purple-100 text-purple-700" />],
                   ["/admin/users", "User Management", <Badge key="h" label="Admin only" color="bg-rose-100 text-rose-700" />],
                   ["/admin/content", "CMS Content", <Badge key="i" label="Admin only" color="bg-rose-100 text-rose-700" />],
                   ["/admin/settings", "Settings", <Badge key="j" label="Admin only" color="bg-rose-100 text-rose-700" />],
-                  ["/admin/docs", "This Page", <Badge key="k" label="All Admin Roles" color="bg-blue-100 text-blue-700" />],
+                  ["/admin/docs", "This Page", <Badge key="k" label="All Admin Roles" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
                 ]}
               />
             </SubSection>
@@ -359,7 +359,7 @@ export default function AdminDocsPage() {
 
             <SubSection title="Authentication">
               <div className="space-y-3">
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   The admin panel uses <strong>AWS Cognito OIDC</strong> for authentication. Click <em>Sign In</em> on the login page and you&apos;ll be redirected to the Cognito Hosted UI. After authenticating, you&apos;re redirected back and your session is stored locally.
                 </p>
                 <InfoCard variant="info">
@@ -378,7 +378,7 @@ export default function AdminDocsPage() {
                     "Full platform access — all features, user management, content, settings",
                   ],
                   [
-                    <Badge key="2" label="HR" color="bg-blue-100 text-blue-700" />,
+                    <Badge key="2" label="HR" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />,
                     "3",
                     "Jobs, applications, candidates, clients, vendors, contacts",
                   ],
@@ -393,7 +393,7 @@ export default function AdminDocsPage() {
                     "Same as Recruiter — clients and vendors read-only",
                   ],
                   [
-                    <Badge key="5" label="USER" color="bg-gray-100 text-gray-600" />,
+                    <Badge key="5" label="USER" color="bg-slate-100 text-slate-600" />,
                     "1",
                     "Portal only — apply for jobs, upload resume, view own applications",
                   ],
@@ -411,9 +411,9 @@ export default function AdminDocsPage() {
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
                   { keys: "Tab", desc: "Cycle through form fields" },
                 ].map((s) => (
-                  <div key={s.keys} className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-2.5">
+                  <div key={s.keys} className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg px-4 py-2.5">
                     <Kbd>{s.keys}</Kbd>
-                    <span className="text-sm text-gray-600">{s.desc}</span>
+                    <span className="text-sm text-slate-600">{s.desc}</span>
                   </div>
                 ))}
               </div>
@@ -432,7 +432,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Creating a Job">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p>Navigate to <strong>/admin/jobs</strong> and click <strong>New Job</strong>. The form is organized into sections:</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
                   <li><strong>Basic Info</strong> — Title, department, type (full-time / contract / etc.), location</li>
@@ -448,7 +448,7 @@ export default function AdminDocsPage() {
             <SubSection title="Job Status Workflow">
               <div className="flex items-center gap-2 flex-wrap mb-3">
                 {[
-                  { label: "Draft",   color: "bg-gray-100 text-gray-600",     dot: "bg-gray-400" },
+                  { label: "Draft",   color: "bg-slate-100 text-slate-600",     dot: "bg-slate-400" },
                   { label: "Open",    color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
                   { label: "Active",  color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
                   { label: "On Hold", color: "bg-amber-100 text-amber-700",    dot: "bg-amber-500" },
@@ -459,7 +459,7 @@ export default function AdminDocsPage() {
                       <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
                       {s.label}
                     </span>
-                    {i < arr.length - 1 && <ChevronRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />}
+                    {i < arr.length - 1 && <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />}
                   </Fragment>
                 ))}
               </div>
@@ -489,13 +489,13 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Duplicate Job">
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 In the jobs table, click the <strong>⋯ menu</strong> on any row and select <strong>Duplicate</strong>. A copy is created with a new Posting ID and status reset to <em>Draft</em>. Useful for recurring roles or similar positions.
               </p>
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 The <strong>Export</strong> button on the jobs page downloads a CSV with columns: Job ID, Title, Client, Location, Status, Pay Rate, Bill Rate, Manager, Created, Deadline. Applies your current filter/search state.
               </p>
             </SubSection>
@@ -515,19 +515,19 @@ export default function AdminDocsPage() {
             <SubSection title="Pipeline Stages">
               <div className="space-y-1.5">
                 {[
-                  { stage: "New (Pending)",  color: "bg-gray-100 text-gray-700",      dot: "bg-gray-400",    desc: "Application just received, not yet reviewed" },
-                  { stage: "Screening",      color: "bg-blue-100 text-blue-700",       dot: "bg-blue-500",    desc: "Initial review — checking resume and qualifications" },
+                  { stage: "New (Pending)",  color: "bg-slate-100 text-slate-700",      dot: "bg-slate-400",    desc: "Application just received, not yet reviewed" },
+                  { stage: "Screening",      color: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",       dot: "bg-[var(--hz-cobalt)]",    desc: "Initial review — checking resume and qualifications" },
                   { stage: "Interview",      color: "bg-violet-100 text-violet-700",   dot: "bg-violet-500",  desc: "Actively scheduling or conducting interviews" },
                   { stage: "Offered",        color: "bg-amber-100 text-amber-700",     dot: "bg-amber-500",   desc: "Offer extended, awaiting candidate response" },
                   { stage: "Hired",          color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500", desc: "Accepted offer and placement confirmed" },
                   { stage: "Rejected",       color: "bg-rose-100 text-rose-700",       dot: "bg-rose-500",    desc: "Not moving forward — candidate notified" },
                 ].map((s) => (
-                  <div key={s.stage} className="flex items-start gap-3 bg-white border border-gray-100 rounded-lg px-4 py-3">
+                  <div key={s.stage} className="flex items-start gap-3 bg-white border border-slate-100 rounded-lg px-4 py-3">
                     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap mt-0.5", s.color)}>
                       <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
                       {s.stage}
                     </span>
-                    <p className="text-sm text-gray-600 pt-0.5">{s.desc}</p>
+                    <p className="text-sm text-slate-600 pt-0.5">{s.desc}</p>
                   </div>
                 ))}
               </div>
@@ -546,17 +546,17 @@ export default function AdminDocsPage() {
 
             <SubSection title="Adding Applicants">
               <div className="space-y-2.5">
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">From Job Detail Page</p>
-                  <p className="text-sm text-gray-600">Open a job → click the <strong>Add Applicant</strong> floating button (bottom-right corner). The form opens with that job pre-selected.</p>
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">From Job Detail Page</p>
+                  <p className="text-sm text-slate-600">Open a job → click the <strong>Add Applicant</strong> floating button (bottom-right corner). The form opens with that job pre-selected.</p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">From Applications Page</p>
-                  <p className="text-sm text-gray-600">Go to <strong>/admin/applications</strong> → click <strong>+ Add Applicant</strong> in the top-right. Select the job from the dropdown.</p>
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">From Applications Page</p>
+                  <p className="text-sm text-slate-600">Go to <strong>/admin/applications</strong> → click <strong>+ Add Applicant</strong> in the top-right. Select the job from the dropdown.</p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Portal Submissions</p>
-                  <p className="text-sm text-gray-600">Candidates applying through <strong>/careers/search</strong> are automatically added with status <em>New</em>. Confirmation email sent automatically.</p>
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Portal Submissions</p>
+                  <p className="text-sm text-slate-600">Candidates applying through <strong>/careers/search</strong> are automatically added with status <em>New</em>. Confirmation email sent automatically.</p>
                 </div>
               </div>
             </SubSection>
@@ -580,7 +580,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 Use the <strong>Export CSV</strong> button on the applications page to download all filtered results with columns: Name, Email, Phone, Status, Applied, Source, Work Auth.
               </p>
             </SubSection>
@@ -598,7 +598,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Adding to Bench">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p>Toggle <strong>Add to Talent Bench</strong> when creating or editing an application. The candidate is then visible in <strong>/admin/bench</strong> regardless of job status.</p>
                 <InfoCard variant="tip">
                   Bench candidates retain all their application data (skills, visa status, notes, rating). Use the bench to quickly match top candidates when new roles open.
@@ -607,7 +607,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Resume Bank">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p>The <strong>/admin/resumes</strong> page shows all uploaded resumes stored in S3. Each resume entry has:</p>
                 <ul className="list-disc list-inside ml-2 space-y-1">
                   <li>File name and size</li>
@@ -641,7 +641,7 @@ export default function AdminDocsPage() {
                   ["Notes", "Internal notes about the client relationship"],
                 ]}
               />
-              <p className="text-sm text-gray-500 mt-2">Clients are linked to jobs via the <em>Client Name</em> field. When a job is created, you can search existing clients or enter a new one.</p>
+              <p className="text-sm text-slate-500 mt-2">Clients are linked to jobs via the <em>Client Name</em> field. When a job is created, you can search existing clients or enter a new one.</p>
             </SubSection>
 
             <SubSection title="Vendors">
@@ -671,18 +671,18 @@ export default function AdminDocsPage() {
             <SubSection title="Contact Status Workflow">
               <div className="flex flex-wrap gap-2 mb-3">
                 {[
-                  { label: "New",      color: "bg-blue-100 text-blue-700" },
-                  { label: "Read",     color: "bg-gray-100 text-gray-600" },
+                  { label: "New",      color: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" },
+                  { label: "Read",     color: "bg-slate-100 text-slate-600" },
                   { label: "Replied",  color: "bg-emerald-100 text-emerald-700" },
                   { label: "Archived", color: "bg-slate-100 text-slate-600" },
                 ].map((s, i, arr) => (
                   <>
                     <Badge key={s.label} label={s.label} color={s.color} />
-                    {i < arr.length - 1 && <ChevronRight key={`c-${i}`} className="w-3.5 h-3.5 text-gray-300 self-center" />}
+                    {i < arr.length - 1 && <ChevronRight key={`c-${i}`} className="w-3.5 h-3.5 text-slate-300 self-center" />}
                   </>
                 ))}
               </div>
-              <p className="text-sm text-gray-600">All contact submissions arrive as <strong>New</strong>. Mark as <em>Replied</em> after responding, or <em>Archived</em> to hide from active view.</p>
+              <p className="text-sm text-slate-600">All contact submissions arrive as <strong>New</strong>. Mark as <em>Replied</em> after responding, or <em>Archived</em> to hide from active view.</p>
             </SubSection>
 
             <SubSection title="Contact Fields">
@@ -711,7 +711,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="User Management">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p>Navigate to <strong>/admin/users</strong> to see all Cognito users. You can:</p>
                 <ul className="list-disc list-inside ml-2 space-y-1">
                   <li>View all registered users with their email, status, and role</li>
@@ -742,11 +742,11 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Adding a New Admin User">
-              <ol className="text-sm text-gray-600 space-y-1.5 list-decimal list-inside ml-1 leading-relaxed">
+              <ol className="text-sm text-slate-600 space-y-1.5 list-decimal list-inside ml-1 leading-relaxed">
                 <li>Go to <strong>/admin/users</strong> → click <strong>Invite User</strong></li>
                 <li>Enter the email address — Cognito sends a temporary password</li>
                 <li>After the user signs in and resets their password, assign their role group</li>
-                <li>Select the appropriate group: <code className="bg-gray-100 px-1 rounded text-xs">admin</code>, <code className="bg-gray-100 px-1 rounded text-xs">hr</code>, <code className="bg-gray-100 px-1 rounded text-xs">recruiter</code>, or <code className="bg-gray-100 px-1 rounded text-xs">sales</code></li>
+                <li>Select the appropriate group: <code className="bg-slate-100 px-1 rounded text-xs">admin</code>, <code className="bg-slate-100 px-1 rounded text-xs">hr</code>, <code className="bg-slate-100 px-1 rounded text-xs">recruiter</code>, or <code className="bg-slate-100 px-1 rounded text-xs">sales</code></li>
               </ol>
             </SubSection>
           </section>
@@ -763,7 +763,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Global Command Palette">
-              <div className="space-y-2 text-sm text-gray-600">
+              <div className="space-y-2 text-sm text-slate-600">
                 <p>Press <Kbd>⌘ K</Kbd> (Mac) or <Kbd>Ctrl K</Kbd> (Windows) from anywhere in the admin panel to open the command palette.</p>
                 <DataTable
                   headers={["Search Scope", "Examples"]}
@@ -778,7 +778,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="In-App Notifications">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p>The bell icon in the admin header shows unread notification count. Notifications are created automatically for:</p>
                 <ul className="list-disc list-inside ml-2 space-y-1">
                   <li>New application received for a job you manage</li>
@@ -816,7 +816,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Content Management">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <p><strong>/admin/content</strong> lets you update website content blocks without deploying code. Sections available:</p>
                 <ul className="list-disc list-inside ml-2 space-y-1">
                   <li>Homepage hero text, CTA labels</li>
@@ -828,12 +828,6 @@ export default function AdminDocsPage() {
                   Content changes take effect immediately on the live site. Each save creates a new version — the current version number is shown next to each block.
                 </InfoCard>
               </div>
-            </SubSection>
-
-            <SubSection title="Test Email">
-              <p className="text-sm text-gray-600">
-                Go to <strong>/api/test-email</strong> (POST) to validate your SES SMTP configuration. Use the admin UI or a tool like Postman with your auth token.
-              </p>
             </SubSection>
           </section>
 
@@ -1035,11 +1029,11 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
             />
 
             <SubSection title="Authentication Flow">
-              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <ol className="list-decimal list-inside space-y-2 ml-1">
                   <li>User clicks <strong>Sign In</strong> → redirected to Cognito Hosted UI</li>
                   <li>Cognito authenticates via email/password or SSO</li>
-                  <li>Authorization code returned to <code className="bg-gray-100 px-1 rounded text-xs">/auth/callback</code></li>
+                  <li>Authorization code returned to <code className="bg-slate-100 px-1 rounded text-xs">/auth/callback</code></li>
                   <li>OIDC client exchanges code for ID token + access token</li>
                   <li>Tokens stored in localStorage — user object decoded from JWT claims</li>
                   <li>Cognito groups in JWT claims map to app roles (admin → ADMIN, hr → HR, etc.)</li>

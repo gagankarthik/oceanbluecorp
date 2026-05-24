@@ -29,7 +29,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 interface FieldDef {
   key: string;
   label: string;
-  type: "text" | "textarea" | "email" | "tel" | "url";
+  type: "text" | "textarea" | "email" | "tel" | "url" | "toggle";
   placeholder?: string;
 }
 
@@ -58,16 +58,21 @@ const PAGES: PageDef[] = [
     ],
     fields: {
       hero: [
-        { key: "heroTitle", label: "Headline", type: "text", placeholder: "Transform Your Business…" },
-        { key: "heroSubtitle", label: "Subheadline", type: "textarea", placeholder: "Leading provider of…" },
-        { key: "heroCtaText", label: "Primary CTA Button", type: "text", placeholder: "Get Started" },
-        { key: "heroCtaSecondary", label: "Secondary CTA Button", type: "text", placeholder: "Learn More" },
+        { key: "announcement", label: "Announcement bar — leave blank to hide", type: "text", placeholder: "e.g. We're hiring across 4 cities — view open roles" },
+        { key: "announcementHref", label: "Announcement link (optional)", type: "text", placeholder: "/careers" },
+        { key: "announcementScroll", label: "Scroll the announcement (marquee)", type: "toggle" },
+        { key: "heroTitle", label: "Headline — blank uses the default", type: "text", placeholder: "The people and platforms behind ambitious enterprises." },
+        { key: "heroSubtitle", label: "Subheadline", type: "textarea", placeholder: "IT staffing, enterprise solutions, and managed services — one accountable partner, on one SLA." },
+        { key: "heroCtaText", label: "Primary CTA Button", type: "text", placeholder: "Start a conversation" },
+        { key: "heroCtaSecondary", label: "Secondary CTA Button", type: "text", placeholder: "Explore what we do" },
       ],
       stats: [
-        { key: "statsClients", label: "Enterprise Clients", type: "text", placeholder: "500+" },
-        { key: "statsYears", label: "Years of Excellence", type: "text", placeholder: "15+" },
-        { key: "statsLocations", label: "Global Locations", type: "text", placeholder: "25+" },
-        { key: "statsSatisfaction", label: "Client Satisfaction", type: "text", placeholder: "98%" },
+        { key: "statsHeading", label: "Section heading", type: "text", placeholder: "A decade of delivery, one accountable team." },
+        { key: "statsSubtitle", label: "Section subtitle", type: "textarea", placeholder: "Headquartered in Powell, Ohio — trusted across North America." },
+        { key: "statYears", label: "Stat 1 — Years delivering", type: "text", placeholder: "10+" },
+        { key: "statClients", label: "Stat 2 — Enterprise clients", type: "text", placeholder: "50+" },
+        { key: "statRetention", label: "Stat 3 — Client retention", type: "text", placeholder: "98%" },
+        { key: "statOffices", label: "Stat 4 — Global offices", type: "text", placeholder: "4" },
       ],
       cta: [
         { key: "ctaHeading", label: "CTA Heading", type: "text", placeholder: "Ready to transform your business?" },
@@ -81,25 +86,12 @@ const PAGES: PageDef[] = [
     name: "About",
     icon: Info,
     sections: [
-      { id: "main", label: "About Page" },
-      { id: "values", label: "Core Values" },
+      { id: "main", label: "Hero" },
     ],
     fields: {
       main: [
-        { key: "aboutTitle", label: "Page Title", type: "text", placeholder: "About Ocean Blue" },
-        { key: "aboutMission", label: "Mission Statement", type: "textarea", placeholder: "Our mission is…" },
-        { key: "aboutVision", label: "Vision Statement", type: "textarea", placeholder: "Our vision is…" },
-        { key: "aboutDescription", label: "Company Description", type: "textarea", placeholder: "Ocean Blue Corporation is…" },
-        { key: "aboutFoundedYear", label: "Founded Year", type: "text", placeholder: "2009" },
-        { key: "aboutHeadquarters", label: "Headquarters", type: "text", placeholder: "Powell, OH" },
-      ],
-      values: [
-        { key: "value1Title", label: "Value 1 Title", type: "text", placeholder: "Innovation" },
-        { key: "value1Desc", label: "Value 1 Description", type: "textarea", placeholder: "" },
-        { key: "value2Title", label: "Value 2 Title", type: "text", placeholder: "Integrity" },
-        { key: "value2Desc", label: "Value 2 Description", type: "textarea", placeholder: "" },
-        { key: "value3Title", label: "Value 3 Title", type: "text", placeholder: "Excellence" },
-        { key: "value3Desc", label: "Value 3 Description", type: "textarea", placeholder: "" },
+        { key: "aboutTitle", label: "Headline — blank uses the default", type: "text", placeholder: "We build the technology and teams that move organizations forward." },
+        { key: "aboutSubtitle", label: "Subheadline", type: "textarea", placeholder: "A trusted partner for IT staffing, enterprise solutions, and digital transformation." },
       ],
     },
   },
@@ -108,24 +100,12 @@ const PAGES: PageDef[] = [
     name: "Services",
     icon: Briefcase,
     sections: [
-      { id: "header", label: "Page Header" },
-      { id: "offerings", label: "Service Offerings" },
+      { id: "header", label: "Hero" },
     ],
     fields: {
       header: [
-        { key: "servicesTitle", label: "Page Title", type: "text", placeholder: "Our Services" },
-        { key: "servicesSubtitle", label: "Subtitle", type: "text", placeholder: "Comprehensive IT Solutions…" },
-        { key: "servicesDescription", label: "Intro Description", type: "textarea", placeholder: "From legacy system modernization…" },
-      ],
-      offerings: [
-        { key: "service1Name", label: "Service 1 Name", type: "text", placeholder: "ERP Solutions" },
-        { key: "service1Desc", label: "Service 1 Description", type: "textarea", placeholder: "" },
-        { key: "service2Name", label: "Service 2 Name", type: "text", placeholder: "Cloud Services" },
-        { key: "service2Desc", label: "Service 2 Description", type: "textarea", placeholder: "" },
-        { key: "service3Name", label: "Service 3 Name", type: "text", placeholder: "Data & AI" },
-        { key: "service3Desc", label: "Service 3 Description", type: "textarea", placeholder: "" },
-        { key: "service4Name", label: "Service 4 Name", type: "text", placeholder: "Salesforce" },
-        { key: "service4Desc", label: "Service 4 Description", type: "textarea", placeholder: "" },
+        { key: "servicesTitle", label: "Headline — blank uses the default", type: "text", placeholder: "Talent, technology, and managed operations." },
+        { key: "servicesSubtitle", label: "Subheadline", type: "textarea", placeholder: "From specialized staffing to enterprise-grade technology services." },
       ],
     },
   },
@@ -134,51 +114,27 @@ const PAGES: PageDef[] = [
     name: "Contact",
     icon: Phone,
     sections: [
-      { id: "info", label: "Contact Info" },
-      { id: "social", label: "Social & Links" },
+      { id: "info", label: "Hero & Details" },
     ],
     fields: {
       info: [
-        { key: "contactTitle", label: "Page Title", type: "text", placeholder: "Get in Touch" },
-        { key: "contactSubtitle", label: "Subtitle", type: "text", placeholder: "We'd love to hear from you" },
-        { key: "contactEmail", label: "Email", type: "email", placeholder: "hr@oceanbluecorp.com" },
-        { key: "contactPhone", label: "Phone", type: "tel", placeholder: "+1 614-844-6925" },
-        { key: "contactAddress", label: "Address", type: "text", placeholder: "Powell, OH 43065" },
-        { key: "contactHours", label: "Business Hours", type: "text", placeholder: "Mon–Fri, 9 AM – 6 PM EST" },
-      ],
-      social: [
-        { key: "socialLinkedIn", label: "LinkedIn URL", type: "url", placeholder: "https://linkedin.com/company/…" },
-        { key: "socialTwitter", label: "Twitter/X URL", type: "url", placeholder: "https://x.com/…" },
-        { key: "socialFacebook", label: "Facebook URL", type: "url", placeholder: "https://facebook.com/…" },
-        { key: "socialYouTube", label: "YouTube URL", type: "url", placeholder: "https://youtube.com/…" },
+        { key: "contactTitle", label: "Headline — blank uses the default", type: "text", placeholder: "Let's start a conversation." },
+        { key: "contactSubtitle", label: "Subheadline", type: "textarea", placeholder: "A question about our services, a custom solution, or a partnership." },
+        { key: "contactPhone", label: "Phone (Call us card)", type: "tel", placeholder: "+1 (614) 844-6925" },
+        { key: "contactEmail", label: "Email (Email us card)", type: "email", placeholder: "hr@oceanbluecorp.com" },
+        { key: "contactAddress", label: "Address (Visit us card)", type: "text", placeholder: "9775 Fairway Drive, Suite C, Powell, OH 43065" },
+        { key: "contactHours", label: "Business hours card", type: "text", placeholder: "8:00 AM – 5:00 PM EST" },
       ],
     },
   },
 ];
 
-// Default values so fields show useful placeholders before first DB save
-const DEFAULT_FIELDS: Record<string, string> = {
-  heroTitle: "Transform Your Business with Enterprise IT Solutions",
-  heroSubtitle: "Leading provider of ERP, Cloud, AI, and Salesforce solutions for Fortune 500 companies worldwide.",
-  heroCtaText: "Get Started",
-  heroCtaSecondary: "Learn More",
-  statsClients: "500+",
-  statsYears: "15+",
-  statsLocations: "25+",
-  statsSatisfaction: "98%",
-  aboutTitle: "About Ocean Blue Corporation",
-  aboutMission: "To empower businesses with cutting-edge technology solutions that drive growth and innovation.",
-  aboutVision: "To be the global leader in enterprise IT transformation and digital innovation.",
-  aboutDescription: "Ocean Blue Corporation is a premier IT consulting firm specializing in enterprise solutions. With over 15 years of experience, we have helped hundreds of organizations transform their operations through technology.",
-  servicesTitle: "Our Services",
-  servicesSubtitle: "Comprehensive IT Solutions for Modern Enterprises",
-  servicesDescription: "From legacy system modernization to cutting-edge AI implementation, we provide end-to-end solutions that drive business growth.",
-  contactTitle: "Get in Touch",
-  contactSubtitle: "We'd love to hear from you",
-  contactEmail: "hr@oceanbluecorp.com",
-  contactPhone: "+1 614-844-6925",
-  contactAddress: "Powell, OH 43065",
-};
+// Intentionally empty: a blank field means "use the site's built-in copy".
+// (The page components hold the real default text and fall back to it when a
+// field is empty.) This keeps the editor and the live site in sync — saving a
+// page never overwrites unedited copy with generic placeholder text. The
+// helpful guidance text lives in each field's `placeholder`.
+const DEFAULT_FIELDS: Record<string, string> = {};
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -288,8 +244,10 @@ export default function ContentPage() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   const currentPage = PAGES.find((p) => p.id === activePage)!;
-  const currentSection = currentPage.sections.find((s) => s.id === activeSection)!;
-  const currentFields = currentPage.fields[activeSection] || [];
+  // Fall back to the first section: when switching pages, activeSection may
+  // briefly hold a section id that doesn't exist on the new page.
+  const currentSection = currentPage.sections.find((s) => s.id === activeSection) ?? currentPage.sections[0];
+  const currentFields = currentPage.fields[currentSection.id] || [];
 
   const isSaving = loadingPages.has(activePage);
   const isSaved = savedPages.has(activePage);
@@ -300,15 +258,15 @@ export default function ContentPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Edit and publish website content — changes save directly to the database.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Content Management</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Edit and publish website content — changes save directly to the database.</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
           >
             <Eye className="w-4 h-4" />Preview
           </a>
@@ -320,7 +278,7 @@ export default function ContentPage() {
                 ? "bg-emerald-600 text-white"
                 : saveError
                 ? "bg-rose-600 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white"
             } disabled:opacity-60`}
           >
             {isSaving ? (
@@ -338,16 +296,16 @@ export default function ContentPage() {
 
       {fetching ? (
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[var(--hz-cobalt)] animate-spin" />
         </div>
       ) : (
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             {/* Pages */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pages</p>
+            <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden sticky top-24">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Pages</p>
               </div>
               <nav className="p-2 space-y-0.5">
                 {PAGES.map((page) => {
@@ -360,14 +318,14 @@ export default function ContentPage() {
                       key={page.id}
                       onClick={() => setActivePage(page.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm ${
-                        isActive ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+                        isActive ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] font-medium" : "text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       <span className="flex-1">{page.name}</span>
                       {saved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                       {err && <AlertCircle className="w-3.5 h-3.5 text-rose-500" />}
-                      <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${isActive ? "rotate-90 text-blue-500" : "text-gray-300"}`} />
+                      <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${isActive ? "rotate-90 text-[var(--hz-cobalt)]" : "text-slate-300"}`} />
                     </button>
                   );
                 })}
@@ -375,9 +333,9 @@ export default function ContentPage() {
             </div>
 
             {/* Sections for current page */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sections</p>
+            <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Sections</p>
               </div>
               <nav className="p-2 space-y-0.5">
                 {currentPage.sections.map((section) => (
@@ -385,10 +343,10 @@ export default function ContentPage() {
                     key={section.id}
                     onClick={() => { setActiveSection(section.id); setEditingField(null); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all ${
-                      activeSection === section.id ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+                      activeSection === section.id ? "bg-slate-100 text-slate-900 font-medium" : "text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeSection === section.id ? "bg-blue-500" : "bg-gray-300"}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeSection === section.id ? "bg-[var(--hz-cobalt)]" : "bg-slate-300"}`} />
                     {section.label}
                   </button>
                 ))}
@@ -397,7 +355,7 @@ export default function ContentPage() {
 
             {/* Last saved info */}
             {lastSaved[activePage] && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-400 px-1">
+              <div className="flex items-center gap-1.5 text-xs text-slate-400 px-1">
                 <Clock className="w-3 h-3" />
                 Last saved at {lastSaved[activePage]}
               </div>
@@ -407,11 +365,11 @@ export default function ContentPage() {
           {/* Editor */}
           <div className="lg:col-span-3 space-y-4">
             {/* Section header */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{currentPage.name}</p>
-                  <h2 className="text-lg font-semibold text-gray-900">{currentSection.label}</h2>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{currentPage.name}</p>
+                  <h2 className="text-lg font-semibold text-slate-900">{currentSection.label}</h2>
                 </div>
                 {saveError && (
                   <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg">
@@ -420,18 +378,41 @@ export default function ContentPage() {
                 )}
               </div>
 
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-100">
                 {currentFields.map((fieldDef) => {
                   const fieldKey = `${activePage}.${fieldDef.key}`;
                   const isEditing = editingField === fieldKey;
                   const value = getVal(activePage, fieldDef.key);
                   const isLong = fieldDef.type === "textarea";
 
+                  if (fieldDef.type === "toggle") {
+                    const on = value === "true";
+                    return (
+                      <div key={fieldDef.key} className="flex items-center justify-between gap-4 px-5 py-4">
+                        <label className="text-sm font-medium text-slate-700">{fieldDef.label}</label>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={on}
+                          onClick={() =>
+                            setContent((prev) => ({
+                              ...prev,
+                              [activePage]: { ...(prev[activePage] || {}), [fieldDef.key]: on ? "false" : "true" },
+                            }))
+                          }
+                          className={`relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors ${on ? "bg-[var(--hz-cobalt)]" : "bg-slate-200"}`}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : "translate-x-0.5"}`} />
+                        </button>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={fieldDef.key} className="px-5 py-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <label className="block text-sm font-medium text-gray-700 mb-1.5">{fieldDef.label}</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">{fieldDef.label}</label>
                           {isEditing ? (
                             <div className="space-y-2">
                               {isLong ? (
@@ -440,7 +421,7 @@ export default function ContentPage() {
                                   onChange={(e) => setTempValue(e.target.value)}
                                   rows={4}
                                   autoFocus
-                                  className="w-full px-3 py-2.5 text-sm border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                                  className="w-full px-3 py-2.5 text-sm border border-[var(--hz-cobalt)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] resize-y"
                                 />
                               ) : (
                                 <input
@@ -449,19 +430,19 @@ export default function ContentPage() {
                                   onChange={(e) => setTempValue(e.target.value)}
                                   autoFocus
                                   placeholder={fieldDef.placeholder}
-                                  className="w-full px-3 py-2.5 text-sm border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                  className="w-full px-3 py-2.5 text-sm border border-[var(--hz-cobalt)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
                                 />
                               )}
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => commitEdit(activePage, fieldDef.key)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors"
                                 >
                                   <Check className="w-3.5 h-3.5" />Apply
                                 </button>
                                 <button
                                   onClick={cancelEdit}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200 transition-colors"
                                 >
                                   <X className="w-3.5 h-3.5" />Cancel
                                 </button>
@@ -473,11 +454,11 @@ export default function ContentPage() {
                               className="group cursor-text"
                             >
                               {value ? (
-                                <p className={`text-gray-900 text-sm leading-relaxed group-hover:bg-gray-50 rounded px-2 py-1 -mx-2 transition-colors ${isLong ? "whitespace-pre-wrap" : "truncate"}`}>
+                                <p className={`text-slate-900 text-sm leading-relaxed group-hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition-colors ${isLong ? "whitespace-pre-wrap" : "truncate"}`}>
                                   {value}
                                 </p>
                               ) : (
-                                <p className="text-gray-400 text-sm italic group-hover:bg-gray-50 rounded px-2 py-1 -mx-2 transition-colors">
+                                <p className="text-slate-400 text-sm italic group-hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition-colors">
                                   {fieldDef.placeholder || "Click to add…"}
                                 </p>
                               )}
@@ -487,7 +468,7 @@ export default function ContentPage() {
                         {!isEditing && (
                           <button
                             onClick={() => startEdit(activePage, fieldDef.key)}
-                            className="p-2 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                            className="p-2 text-slate-300 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors flex-shrink-0"
                             title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -501,8 +482,8 @@ export default function ContentPage() {
             </div>
 
             {/* Save button (bottom) */}
-            <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-3">
-              <p className="text-xs text-gray-400">
+            <div className="flex items-center justify-between bg-white rounded-2xl border border-slate-200/80 px-5 py-3">
+              <p className="text-xs text-slate-400">
                 {lastSaved[activePage]
                   ? `Changes last saved at ${lastSaved[activePage]}`
                   : "Unsaved changes will be lost if you leave without saving."}
@@ -510,7 +491,7 @@ export default function ContentPage() {
               <button
                 onClick={() => savePage(activePage)}
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isSaving ? "Saving…" : "Save Page"}

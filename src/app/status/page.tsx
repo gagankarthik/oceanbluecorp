@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     url: "https://oceanbluecorp.com/status",
   },
   alternates: { canonical: "https://oceanbluecorp.com/status" },
+  // Operational/transient page — keep it out of search results.
+  robots: { index: false, follow: true },
 };
 
 export default function StatusPage() {

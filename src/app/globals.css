@@ -1084,3 +1084,147 @@
 @media (prefers-reduced-motion: reduce) {
   .aurora-layer::after { animation: none; }
 }
+
+/* ============================================================
+   HORIZON — landing-page design system (current; chosen 2026-05-23,
+   supersedes the warm "Lighthouse" direction).
+   Light canvas + dark navy cinematic bands. Cobalt → cyan accent
+   used with restraint. Geist Sans display + Inter body + Geist Mono
+   labels. Strong parallax at every light↔dark seam.
+   Scoped to landing via the .horizon class + --hz-* tokens; does NOT
+   touch admin / dashboard / auth. Avoids gradient-text headlines,
+   animated orbs, glassmorphism, sparkle fields, rainbow gradients.
+   ============================================================ */
+
+:root {
+  /* Light surfaces */
+  --hz-canvas:    #ffffff;
+  --hz-surface:   #f8fafc;
+  --hz-surface-2: #f1f5f9;
+  --hz-line:      #e2e8f0;
+  --hz-line-2:    #cbd5e1;
+
+  /* Dark bands — deep, futuristic near-black blue */
+  --hz-ink:       #050912;   /* darkest — hero / CTA */
+  --hz-navy:      #0a1730;   /* feature band */
+  --hz-navy-2:    #0e2147;   /* raised dark surface */
+  --hz-navy-3:    #15315e;
+
+  /* Text */
+  --hz-text:        #0f172a;
+  --hz-text-mute:   #475569;
+  --hz-text-subtle: #64748b;
+  --hz-on-dark:     #f1f5f9;
+  --hz-on-dark-mute: #94a3b8;
+  --hz-line-dark:   rgba(226,232,240,0.12);
+
+  /* Accent — confident "Ocean Blue" (single decisive brand color, consulting-grade) */
+  --hz-cobalt:     #1d4ed8;
+  --hz-cobalt-600: #1740ad;
+  --hz-cobalt-100: #dbe6fe;
+  --hz-cyan:       #2ad8ef;
+  --hz-cyan-400:   #5ce0f7;
+  --hz-indigo:     #6366f1;
+
+  /* Cool-tinted shadows */
+  --hz-shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.05);
+  --hz-shadow-md: 0 10px 30px -12px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);
+  --hz-shadow-lg: 0 30px 60px -24px rgba(10,37,64,0.35), 0 12px 24px -12px rgba(15,23,42,0.12);
+}
+
+/* Landing base — Geist Sans everywhere (no Inter body on the landing) */
+.horizon {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  color: var(--hz-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display — Geist Sans, tight modern grotesque */
+.hz-display {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+  font-weight: 600;
+}
+
+/* Eyebrow — mono, uppercase, tracked */
+.hz-eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Film grain — applied only to a fixed, pointer-events-none overlay */
+.hz-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+
+/* Tabular numerals for stats */
+.hz-tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Primary CTA — cobalt */
+.hz-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px; border-radius: 10px;
+  background: var(--hz-cobalt); color: #fff;
+  font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background .2s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -12px rgba(37,99,235,0.6);
+}
+.hz-btn-primary:hover { background: var(--hz-cobalt-600); transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(37,99,235,0.7); }
+.hz-btn-primary:active { transform: translateY(0) scale(.985); }
+
+/* Ghost CTA on light */
+.hz-btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border-radius: 10px;
+  background: var(--hz-canvas); color: var(--hz-text);
+  font-size: 14px; font-weight: 600; border: 1px solid var(--hz-line-2);
+  transition: all .2s ease;
+}
+.hz-btn-ghost:hover { border-color: var(--hz-cobalt); color: var(--hz-cobalt); transform: translateY(-2px); }
+
+/* Ghost CTA on dark */
+.hz-btn-ghost-dark {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border-radius: 10px;
+  background: rgba(241,245,249,0.04); color: var(--hz-on-dark);
+  font-size: 14px; font-weight: 600; border: 1px solid var(--hz-line-dark);
+  transition: all .2s ease;
+}
+.hz-btn-ghost-dark:hover { background: rgba(241,245,249,0.10); transform: translateY(-2px); }
+
+/* Hairline card */
+.hz-card {
+  background: var(--hz-canvas);
+  border: 1px solid var(--hz-line);
+  border-radius: 16px;
+  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, border-color .25s ease;
+}
+.hz-card:hover { border-color: var(--hz-cobalt-100); box-shadow: var(--hz-shadow-md); }
+
+/* Ambient aurora wash — a soft, drifting color field (no grids) */
+@keyframes hz-aurora {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(2%, -2%, 0) scale(1.08); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+.hz-aurora { animation: hz-aurora 18s ease-in-out infinite; will-change: transform; }
+
+/* Logo marquee */
+@keyframes hz-marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.hz-marquee { animation: hz-marquee 50s linear infinite; }
+.hz-marquee:hover { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-marquee { animation: none; }
+}

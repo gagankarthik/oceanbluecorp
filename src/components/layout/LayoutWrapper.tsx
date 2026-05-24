@@ -1,10 +1,21 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import AnnouncementBar from "@/components/layout/AnnouncementBar";
 
-export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
+export default function LayoutWrapper({
+  children,
+  announcement = "",
+  announcementHref = "",
+  announcementScroll = false,
+}: {
+  children: React.ReactNode;
+  announcement?: string;
+  announcementHref?: string;
+  announcementScroll?: boolean;
+}) {
   const pathname = usePathname();
 
   // Routes that should not show Header/Footer
@@ -18,10 +29,16 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     return <>{children}</>;
   }
 
+  // Announcement strip sits above the navbar. When present it's a fixed 40px
+  // bar (top-0); the header drops to top-10 and content gets pt-10 so the
+  // relative spacing every page already has below the header is preserved.
+  const showBar = !isAuthRoute && announcement.length > 0;
+
   return (
     <>
-      {!isAuthRoute && <Header />}
-      <main id="main-content" className="min-h-screen">{children}</main>
+      {showBar && <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} />}
+      {!isAuthRoute && <Header topOffset={showBar ? "top-10" : "top-0"} />}
+      <main id="main-content" className={`min-h-screen ${showBar ? "pt-10" : ""}`}>{children}</main>
       {!isAuthRoute && <Footer />}
     </>
   );

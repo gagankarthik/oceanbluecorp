@@ -1,6 +1,5 @@
 import {
   Clock, Eye, MessageSquare, Mail, CheckCircle2, XCircle, FileText,
-  Briefcase, Users, Building, UserStar, Boxes, MessageSquareText,
 } from "lucide-react";
 
 export type Tone =
@@ -9,7 +8,7 @@ export type Tone =
 export const tones: Record<Tone, {
   bg: string; soft: string; ring: string; text: string; dot: string; solid: string; gradFrom: string; gradTo: string;
 }> = {
-  blue:    { bg: "bg-blue-50",    soft: "bg-blue-100",    ring: "ring-blue-200",    text: "text-blue-700",    dot: "bg-blue-500",    solid: "bg-blue-600",    gradFrom: "from-blue-500",    gradTo: "to-blue-600"    },
+  blue:    { bg: "bg-[var(--hz-cobalt-100)]", soft: "bg-[var(--hz-cobalt-100)]", ring: "ring-[var(--hz-cobalt-100)]", text: "text-[var(--hz-cobalt)]", dot: "bg-[var(--hz-cobalt)]", solid: "bg-[var(--hz-cobalt)]", gradFrom: "from-[var(--hz-cobalt)]", gradTo: "to-[var(--hz-cobalt-600)]" },
   indigo:  { bg: "bg-indigo-50",  soft: "bg-indigo-100",  ring: "ring-indigo-200",  text: "text-indigo-700",  dot: "bg-indigo-500",  solid: "bg-indigo-600",  gradFrom: "from-indigo-500",  gradTo: "to-indigo-600"  },
   violet:  { bg: "bg-violet-50",  soft: "bg-violet-100",  ring: "ring-violet-200",  text: "text-violet-700",  dot: "bg-violet-500",  solid: "bg-violet-600",  gradFrom: "from-violet-500",  gradTo: "to-violet-600"  },
   emerald: { bg: "bg-emerald-50", soft: "bg-emerald-100", ring: "ring-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500", solid: "bg-emerald-600", gradFrom: "from-emerald-500", gradTo: "to-emerald-600" },
@@ -51,15 +50,6 @@ export const PIPELINE_STAGES: { key: AppStatus; label: string; tone: Tone }[] = 
   { key: "offered",   label: "Offered",   tone: "amber"   },
   { key: "hired",     label: "Hired",     tone: "emerald" },
 ];
-
-export const entityIcons = {
-  job: Briefcase,
-  application: Users,
-  candidate: UserStar,
-  contact: MessageSquareText,
-  client: Building,
-  bench: Boxes,
-};
 
 export const WORK_AUTH_OPTIONS = [
   "US Citizen", "Green Card", "H1-B", "OPT", "CPT", "TN Visa", "Other",

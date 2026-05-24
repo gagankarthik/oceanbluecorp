@@ -43,8 +43,7 @@ const isAwsConfigured = (): boolean => {
   const configured = !!(accessKeyId && secretAccessKey && accessKeyId !== "" && secretAccessKey !== "");
 
   if (!configured) {
-    console.log("AWS Config Check - accessKeyId present:", !!accessKeyId, "length:", accessKeyId?.length || 0);
-    console.log("AWS Config Check - secretAccessKey present:", !!secretAccessKey, "length:", secretAccessKey?.length || 0);
+    console.error("AWS credentials are not configured");
   }
 
   return configured;
@@ -58,8 +57,6 @@ const createDocClient = (): DynamoDBDocumentClient | null => {
     console.error("Cannot create DynamoDB client - missing credentials");
     return null;
   }
-
-  console.log("Creating DynamoDB client with region:", config.region);
 
   const dynamoClient = new DynamoDBClient({
     region: config.region,
