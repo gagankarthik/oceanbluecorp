@@ -49,11 +49,11 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   ];
 
   return (
-    <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-surface)] py-24 sm:py-32">
+    <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-32">
       <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
         {/* Heading — left */}
         <Reveal className="lg:col-span-5">
-          <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
+          <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
           <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
             {content.statsHeading || "A decade of delivery, one accountable team."}
           </h2>
@@ -70,7 +70,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
               <div className="group h-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-slate-300/80 hover:shadow-md sm:p-7">
                 <p className="hz-display hz-tnum text-[2.75rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
                   <Counter target={s.value} run={inView} />
-                  <span className="text-[var(--hz-cobalt)]">{s.suffix}</span>
+                  <span className="text-[var(--hz-amber)]">{s.suffix}</span>
                 </p>
                 <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)]">{s.label}</p>
                 <p className="mt-1.5 text-[13px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>

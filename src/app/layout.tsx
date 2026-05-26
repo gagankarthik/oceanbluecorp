@@ -189,7 +189,7 @@ export default async function RootLayout({
 }>) {
   const announcement = await getAnnouncement();
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <head>
         {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
             are injected automatically by Next.js from the App Router file conventions. */}

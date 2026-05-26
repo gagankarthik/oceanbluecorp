@@ -1126,6 +1126,12 @@
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;
 
+  /* Warm secondary — amber highlight + ivory surface (landing) */
+  --hz-ivory:      #faf7f1;
+  --hz-amber:      #d97706;
+  --hz-amber-600:  #b45309;
+  --hz-amber-100:  #fde7c9;
+
   /* Cool-tinted shadows */
   --hz-shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.05);
   --hz-shadow-md: 0 10px 30px -12px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);

@@ -45,7 +45,7 @@ export default function Testimonials() {
   const active = testimonials[i];
 
   return (
-    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] py-24 sm:py-32">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-ivory)] py-24 sm:py-32">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"

@@ -50,7 +50,7 @@ function ServiceCard({ s }: { s: Service }) {
       </div>
 
       <div className="mt-6 flex flex-1 flex-col">
-        <span className="hz-eyebrow text-[var(--hz-cobalt)]">{s.name}</span>
+        <span className="hz-eyebrow text-[var(--hz-amber)]">{s.name}</span>
         <h3 className="hz-display mt-3 text-[1.5rem] text-[var(--hz-text)] sm:text-[1.75rem]">{s.title}</h3>
         <p className="mt-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{s.desc}</p>
 

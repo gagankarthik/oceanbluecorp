@@ -46,7 +46,7 @@ export default function CaseStudy() {
           <dl className="mt-10 grid grid-cols-1 gap-x-8 gap-y-5 border-t border-black/[0.08] pt-8 sm:grid-cols-3">
             {facts.map((f) => (
               <div key={f.k}>
-                <dt className="hz-eyebrow text-[var(--hz-text-subtle)]">{f.k}</dt>
+                <dt className="hz-eyebrow text-[var(--hz-amber)]">{f.k}</dt>
                 <dd className="mt-2 text-[14px] font-medium text-[var(--hz-text)]">{f.v}</dd>
               </div>
             ))}

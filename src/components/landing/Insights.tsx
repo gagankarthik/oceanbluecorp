@@ -44,7 +44,7 @@ function InsightCard({ p }: { p: Insight }) {
         <Photo src={p.img} className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105" />
       </div>
       <div className="mt-5 flex items-center gap-3">
-        <span className="hz-eyebrow text-[var(--hz-cobalt)]">{p.category}</span>
+        <span className="hz-eyebrow text-[var(--hz-amber)]">{p.category}</span>
         <span className="h-3 w-px bg-black/15" />
         <span className="hz-eyebrow text-[var(--hz-text-subtle)]">{p.read}</span>
       </div>
@@ -57,7 +57,7 @@ function InsightCard({ p }: { p: Insight }) {
 
 export default function Insights() {
   return (
-    <section className="relative w-full bg-[var(--hz-surface)] py-24 sm:py-32">
+    <section className="relative w-full bg-[var(--hz-ivory)] py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
