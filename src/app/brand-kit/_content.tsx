@@ -45,7 +45,7 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
 ];
 
 const TYPE_SCALE = [
-  { label: "Display / Hero", cls: "text-[3.5rem] leading-none", sample: "Ambitious enterprises." },
+  { label: "Display / Hero", cls: "text-[3.5rem] leading-none", sample: "Enterprises & agencies." },
   { label: "H1", cls: "text-[2.5rem] leading-tight", sample: "Section headline" },
   { label: "H2", cls: "text-[1.75rem]", sample: "Subsection heading" },
   { label: "H3", cls: "text-[1.25rem]", sample: "Card title" },

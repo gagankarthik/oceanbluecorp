@@ -43,7 +43,7 @@ const services = [
 const servicesFeature = {
   eyebrow: "One partner",
   title: "Talent, technology, and managed services",
-  body:  "Bring us a roster gap, a platform to modernize, or a system to keep running — we cover it end to end, on one SLA.",
+  body:  "Bring us a roster gap, a platform to modernize, or a system to keep running — we cover it end to end, to one accountable standard.",
   href:  "/services",
   cta:   "Explore all services",
 };

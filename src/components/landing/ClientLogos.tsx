@@ -58,7 +58,7 @@ export default function ClientLogos() {
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <Reveal className="flex flex-col items-center gap-5 text-center">
           <h2 className="hz-display max-w-2xl text-[1.7rem] text-[var(--hz-text)] sm:text-[2.1rem]">
-            Relied on by public agencies and enterprises across North America.
+            Relied on by enterprises and state government agencies across North America.
           </h2>
         </Reveal>
       </div>

@@ -79,7 +79,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             <>
               <WordsReveal text="The people and platforms behind" delay={0.12} />{" "}
               <span className="text-[var(--hz-cyan-400)]">
-                <WordsReveal text="ambitious enterprises." delay={0.6} />
+                <WordsReveal text="enterprises and government agencies." delay={0.6} />
               </span>
             </>
           )}
@@ -92,7 +92,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           className="mt-8 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]"
         >
           {content.heroSubtitle ||
-            "IT staffing, enterprise solutions, and managed services — delivered by one accountable partner, on one SLA."}
+            "IT staffing, enterprise solutions, and managed services — delivered by one accountable partner, one accountable standard."}
         </motion.p>
 
         <motion.div

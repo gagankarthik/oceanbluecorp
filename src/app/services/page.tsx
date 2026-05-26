@@ -7,11 +7,11 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "IT Services",
   description:
-    "Explore Ocean Blue Corporation's enterprise IT services — ERP implementation, cloud migration, AI & data analytics, Salesforce CRM, IT staffing, and corporate training. End-to-end digital transformation.",
+    "Explore Ocean Blue Corporation's IT services — IT staffing, cloud, cybersecurity, ERP, Salesforce, AI & data, managed services, and digital transformation. Serving Fortune 500 enterprises and state government agencies across North America.",
   openGraph: {
     title: "Enterprise IT Services | Ocean Blue Corporation",
     description:
-      "End-to-end IT services: ERP, cloud, AI analytics, Salesforce, IT staffing, and corporate training.",
+      "End-to-end IT services: staffing, cloud, cybersecurity, ERP, Salesforce, AI & data, and managed services.",
     url: "https://oceanbluecorp.com/services",
   },
   alternates: { canonical: "https://oceanbluecorp.com/services" },

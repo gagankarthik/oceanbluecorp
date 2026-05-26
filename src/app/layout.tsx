@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     template: "%s | Ocean Blue Corporation",
   },
   description:
-    "Transform your business with Ocean Blue Corporation's enterprise IT solutions. Expert services in ERP, Cloud Computing, AI & Data Analytics, Salesforce CRM, IT Staffing, and Corporate Training. Trusted by Fortune 500 companies worldwide.",
+    "Ocean Blue Corporation delivers IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for Fortune 500 enterprises and state government agencies across North America.",
   keywords: [
     "enterprise IT solutions",
     "ERP implementation",
@@ -54,7 +54,10 @@ export const metadata: Metadata = {
     "data analytics",
     "Salesforce consulting",
     "IT staffing",
-    "corporate training",
+    "managed services",
+    "cybersecurity services",
+    "government IT services",
+    "public sector technology",
     "enterprise software",
     "business consulting",
     "technology solutions",
@@ -86,10 +89,10 @@ export const metadata: Metadata = {
     siteName: "Ocean Blue Corporation",
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
-      "Transform your business with Ocean Blue Corporation's enterprise IT solutions. Expert services in ERP, Cloud, AI, Salesforce, Staffing & Training.",
+      "IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for enterprises and government agencies.",
     images: [
       {
-        url: "/logo.ico",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "Ocean Blue Corporation - Enterprise IT Solutions",
@@ -100,7 +103,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
-      "Transform your business with enterprise IT solutions. Expert services in ERP, Cloud, AI, Salesforce & more.",
+      "IT staffing, enterprise solutions, and managed services for enterprises and government agencies — ERP, cloud, cybersecurity, AI, and Salesforce.",
     images: ["/logo.png"],
     creator: "@oceanbluecorp",
   },
@@ -119,8 +122,8 @@ const jsonLd = {
   url: "https://oceanbluecorp.com",
   logo: "/logo.png",
   description:
-    "Enterprise IT solutions provider specializing in ERP, Cloud, AI, Salesforce, IT Staffing, and Corporate Training.",
-  foundingDate: "2010",
+    "IT staffing, enterprise solutions, and managed services provider — ERP, cloud, cybersecurity, AI & data, and Salesforce — serving enterprises and state government agencies across North America.",
+  foundingDate: "2013",
   address: {
     "@type": "PostalAddress",
     streetAddress: "9775 Fairway Drive, Suite C",
@@ -151,33 +154,43 @@ const jsonLd = {
   service: [
     {
       "@type": "Service",
+      name: "IT Staffing & Talent",
+      description: "Vetted IT specialists — contract, contract-to-hire, direct, and managed teams",
+    },
+    {
+      "@type": "Service",
+      name: "Cloud Engineering",
+      description: "Cloud migration, modernization, and optimization across AWS, Azure, and GCP",
+    },
+    {
+      "@type": "Service",
+      name: "Cybersecurity",
+      description: "Compliance-aligned security across cloud, identity, and applications",
+    },
+    {
+      "@type": "Service",
       name: "ERP Solutions",
-      description: "Enterprise Resource Planning implementation and consulting",
+      description: "Implementations and integrations across SAP, Oracle, and Microsoft Dynamics",
     },
     {
       "@type": "Service",
-      name: "Cloud Services",
-      description: "Cloud migration, management, and optimization",
+      name: "Salesforce Services",
+      description: "Salesforce implementation, development, automation, and managed admin",
     },
     {
       "@type": "Service",
-      name: "Data & AI Solutions",
-      description: "Artificial intelligence and data analytics services",
+      name: "AI & Data Intelligence",
+      description: "Business-first AI, automation, predictive analytics, and data engineering",
     },
     {
       "@type": "Service",
-      name: "Salesforce Consulting",
-      description: "Salesforce CRM implementation and customization",
+      name: "Managed Services",
+      description: "24/7 monitoring, helpdesk, and infrastructure management to one standard",
     },
     {
       "@type": "Service",
-      name: "IT Staffing",
-      description: "Technical talent acquisition and staffing solutions",
-    },
-    {
-      "@type": "Service",
-      name: "Corporate Training",
-      description: "Professional IT training and certification programs",
+      name: "Digital Transformation",
+      description: "Technology strategy, architecture, and roadmaps with measurable outcomes",
     },
   ],
 };

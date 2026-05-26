@@ -11,7 +11,7 @@ import { IMG } from "@/components/landing/media";
 const facts = [
   { v: "50+", k: "Team members" },
   { v: "4", k: "Global offices" },
-  { v: "Since 2010", k: "Growing" },
+  { v: "Since 2013", k: "Growing" },
 ];
 
 const culture: { icon: LucideIcon; title: string; desc: string }[] = [

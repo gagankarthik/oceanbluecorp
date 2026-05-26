@@ -185,7 +185,7 @@ export default function TermsPage() {
                 "Salesforce CRM Consulting — implementation, integration, administration, and custom development",
                 "Managed IT Services — 24/7 monitoring, help desk support, and infrastructure management",
                 "DevOps and Application Development — CI/CD pipeline design, containerization, and custom software development",
-                "Corporate Training — technical skills development, certification preparation, and leadership programs",
+                "Cybersecurity — security assessments, identity and access management, vulnerability management, and HIPAA, SOC 2, and NIST compliance",
                 "Digital Transformation Consulting — strategic advisory services for organizational modernization",
               ]} />
               <P>

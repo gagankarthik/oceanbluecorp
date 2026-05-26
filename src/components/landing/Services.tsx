@@ -29,7 +29,15 @@ const services: Service[] = [
     desc: "Cloud migration, security, and production AI — engineered and shipped without stopping the business.",
     href: "/services#cloud",
     img: IMG.serviceSolutions,
-    items: ["Cloud migration · AWS, Azure, GCP", "DevOps, CI/CD & automation", "AI & data intelligence"],
+    items: [
+      "Cloud migration · AWS, Azure, GCP",
+      "DevOps, CI/CD & automation",
+      "AI & data intelligence",
+      "Cybersecurity & compliance",
+      "ERP · SAP, Oracle, Dynamics",
+      "Salesforce implementation & support",
+      "Digital transformation & roadmaps",
+    ],
   },
   {
     name: "Managed Services",

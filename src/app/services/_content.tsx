@@ -57,7 +57,7 @@ const SERVICES: Record<string, Service> = {
   transformation: {
     icon: Lightbulb,
     title: "Digital Transformation",
-    desc: "We modernize processes, improve workflows, and adopt the right technologies — with a clear roadmap.",
+    desc: "We modernize processes, improve workflows, and adopt the right technologies — with a clear roadmap and measurable outcomes.",
     capabilities: ["Technology strategy", "Architecture & roadmaps", "Process optimization", "Change management & training"],
   },
 };
@@ -66,8 +66,8 @@ type Pillar = { name: string; tag: string; desc: string; img: string; ids: strin
 
 const pillars: Pillar[] = [
   { name: "Talent", tag: "People who deliver", img: IMG.serviceTalent, desc: "The specialists who join your team and own the work.", ids: ["staffing"] },
-  { name: "Solutions", tag: "Engineering the core", img: IMG.serviceSolutions, desc: "Platform and product work, delivered securely and without disruption.", ids: ["cloud", "cybersecurity", "erp", "salesforce", "ai"] },
-  { name: "Managed", tag: "Run & optimize", img: IMG.serviceManaged, desc: "We operate and improve your systems around the clock, on one SLA.", ids: ["managed", "transformation"] },
+  { name: "Solutions", tag: "Engineering the core", img: IMG.serviceSolutions, desc: "Platform and product work, delivered securely and without disruption.", ids: ["cloud", "cybersecurity", "erp", "salesforce", "ai", "transformation"] },
+  { name: "Managed", tag: "Run & optimize", img: IMG.serviceManaged, desc: "We operate and improve your systems around the clock, on one SLA.", ids: ["managed"] },
 ];
 
 const steps = [
@@ -116,7 +116,10 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               {content.servicesSubtitle ||
-                "From specialized staffing to enterprise-grade technology services — eight practices across three connected service lines, one accountable team."}
+                "From specialized staffing to enterprise-grade technology services — eight practices across three connected service lines, one accountable team. Serving enterprises and state government agencies across North America."}
+            </p>
+            <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-white/55 sm:text-[15px]">
+              Trusted by Fortune 500 enterprises and state government agencies — from large-scale IT modernization programs to mission-critical managed operations.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>

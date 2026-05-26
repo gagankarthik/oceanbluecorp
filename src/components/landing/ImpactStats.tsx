@@ -42,10 +42,10 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   const stats: Stat[] = [
-    { ...parseStatValue(content.statYears, 10, "+"),     label: "Years delivering",  sub: "Since 2014, without a missed SLA" },
+    { ...parseStatValue(content.statYears, 13, "+"),     label: "Years delivering",  sub: "Since 2013, without a missed SLA" },
     { ...parseStatValue(content.statClients, 50, "+"),   label: "Enterprise clients", sub: "Across North America" },
     { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention",  sub: "Year over year" },
-    { ...parseStatValue(content.statOffices, 4, ""),     label: "Global offices",    sub: "US · India delivery centers" },
+    { ...parseStatValue(content.statOffices, 4, ""),     label: "Global offices",    sub: "US · India · UK delivery centers" },
   ];
 
   return (
@@ -55,11 +55,11 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
         <Reveal className="lg:col-span-5">
           <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
           <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
-            {content.statsHeading || "A decade of delivery, one accountable team."}
+            {content.statsHeading || "Over a decade of delivery, one accountable team."}
           </h2>
           <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
             {content.statsSubtitle ||
-              "Headquartered in Powell, Ohio — trusted by enterprise and public-sector clients across North America, on a single SLA."}
+              "Headquartered in Powell, Ohio — trusted by enterprises and state government agencies across North America, held to one standard of delivery."}
           </p>
         </Reveal>
 

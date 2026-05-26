@@ -88,7 +88,7 @@ export default function Footer() {
             </Link>
             <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
               IT staffing, enterprise solutions, and managed services — one
-              accountable partner for ambitious enterprises.
+              accountable partner for enterprises and government agencies.
             </p>
             <div className="mt-8 space-y-3 text-[14px]">
               <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
