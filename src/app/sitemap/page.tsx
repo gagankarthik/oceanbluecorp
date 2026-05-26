@@ -27,7 +27,7 @@ const SECTIONS: { group: string; links: { name: string; href: string }[] }[] = [
       { name: "Cloud Engineering", href: "/services#cloud" },
       { name: "Cybersecurity", href: "/services#cybersecurity" },
       { name: "ERP Solutions", href: "/services#erp" },
-      { name: "Salesforce", href: "/services#salesforce" },
+      { name: "Salesforce Services", href: "/services#salesforce" },
       { name: "AI & Data Intelligence", href: "/services#ai" },
       { name: "Managed Services", href: "/services#managed" },
       { name: "Digital Transformation", href: "/services#transformation" },

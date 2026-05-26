@@ -451,7 +451,7 @@ export default function JobsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredJobs.map(job => (
-                    <tr key={job.id} className="group transition-colors hover:bg-slate-50">
+                    <tr key={job.id} className="group transition-colors hover:bg-[var(--hz-cobalt-100)]/30">
                       <td className="whitespace-nowrap px-5 py-4">
                         <span className="rounded bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
                           {job.postingId || "—"}
@@ -491,6 +491,11 @@ export default function JobsPage() {
                       </td>
                       <td className="whitespace-nowrap px-5 py-4">
                         <span className="text-xs text-slate-500 tabular-nums">{fmtDate(job.createdAt)}</span>
+                        {job.submissionDueDate && (
+                          <span className="mt-0.5 flex items-center gap-1 text-[11px] tabular-nums text-amber-600">
+                            <Calendar className="h-3 w-3" />Due {fmtDate(job.submissionDueDate)}
+                          </span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right">
                         <RowMenu
@@ -528,7 +533,7 @@ export default function JobsPage() {
                   {filteredJobs.map(job => {
                     const jv = job as Job & { vendorName?: string };
                     return (
-                      <tr key={job.id} className="group transition-colors hover:bg-slate-50">
+                      <tr key={job.id} className="group transition-colors hover:bg-[var(--hz-cobalt-100)]/30">
                         <td className="whitespace-nowrap px-5 py-4">
                           <span className="rounded bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
                             {job.postingId || "—"}
@@ -603,6 +608,9 @@ export default function JobsPage() {
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4">
+                          <span className="text-xs text-slate-500 tabular-nums">{fmtDate(job.createdAt)}</span>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4">
                           {job.submissionDueDate ? (
                             <div className="flex items-center gap-1.5 text-xs text-slate-500">
                               <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
@@ -663,7 +671,7 @@ function RowMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-lg p-1.5 text-slate-400 opacity-40 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:opacity-100 group-hover:opacity-100" aria-label={`Actions for ${job.title}`}>
+        <button className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label={`Actions for ${job.title}`}>
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>

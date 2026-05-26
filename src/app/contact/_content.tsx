@@ -246,7 +246,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
             <Eyebrow>Why partner with us</Eyebrow>
             <h2 className="hz-display mt-5 text-[1.8rem] text-[var(--hz-text)] sm:text-[2.1rem]">Built for the long term.</h2>
             <p className="mt-3 text-[15px] text-[var(--hz-text-mute)]">
-              Join the enterprises that trust Ocean Blue for IT staffing, solutions, and managed operations.
+              Join the enterprises that trust Ocean Blue for IT staffing, solutions, and managed services.
             </p>
 
             <Stagger className="mt-8 space-y-3" gap={0.09}>

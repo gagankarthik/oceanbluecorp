@@ -16,7 +16,7 @@ const products: Product[] = [
     name: "Blue-IQ",
     category: "AI & Intelligence",
     desc: "Our AI platform for turning enterprise data into faster, clearer decisions — built and operated in-house.",
-    logo: "/Blue-iq.png",
+    logo: "/logos/products/Blue-iq.png",
     link: "http://blue-iq.ai/",
   },
   {

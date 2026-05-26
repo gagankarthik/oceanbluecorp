@@ -34,7 +34,7 @@ const services = [
   { name: "Cloud Engineering",    href: "/services#cloud",         icon: Cloud,      description: "Migrate, modernize, scale"    },
   { name: "Cybersecurity",        href: "/services#cybersecurity", icon: Shield,     description: "Protect what matters"         },
   { name: "ERP Solutions",        href: "/services#erp",           icon: BarChart3,  description: "SAP, Oracle, Dynamics"        },
-  { name: "Salesforce",           href: "/services#salesforce",    icon: Settings,   description: "CRM that fits your business"  },
+  { name: "Salesforce Services",  href: "/services#salesforce",    icon: Settings,   description: "CRM that fits your business"  },
   { name: "AI & Data Intelligence", href: "/services#ai",          icon: Cpu,        description: "Practical AI & analytics"     },
   { name: "Managed Services",     href: "/services#managed",       icon: Headphones, description: "24/7 operations, one SLA"     },
   { name: "Digital Transformation", href: "/services#transformation", icon: Lightbulb, description: "Strategy & execution"       },
@@ -42,7 +42,7 @@ const services = [
 
 const servicesFeature = {
   eyebrow: "One partner",
-  title: "Talent, technology, and operations",
+  title: "Talent, technology, and managed services",
   body:  "Bring us a roster gap, a platform to modernize, or a system to keep running — we cover it end to end, on one SLA.",
   href:  "/services",
   cta:   "Explore all services",
@@ -93,9 +93,9 @@ function MenuTile({
     <Link
       href={href}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#f1f5f9]"
+      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-slate-50"
     >
-      <div className="flex size-9 flex-none items-center justify-center rounded-lg border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+      <div className="flex size-9 flex-none items-center justify-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-colors duration-200 group-hover:bg-[var(--hz-cobalt)] group-hover:text-white">
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
       </div>
       <div className="min-w-0 flex-1">
@@ -236,6 +236,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading, signOut, hasAnyRole } = useAuth();
 
@@ -274,11 +275,11 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
     };
   }, [userMenuOpen]);
 
-  // Get dashboard link based on role
+  // Get dashboard link based on role. Every signed-in user is staff, so this
+  // always points into the admin area.
   const getDashboardLink = () => {
-    if (hasAnyRole([UserRole.ADMIN])) return "/admin";
     if (hasAnyRole([UserRole.HR])) return "/admin/applications";
-    return "/dashboard";
+    return "/admin";
   };
 
   // Get user initials
@@ -384,11 +385,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
                           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                          className={
-                            item.dropdownType === "services"
-                              ? "absolute left-0 top-full pt-5"
-                              : "absolute left-1/2 top-full -translate-x-1/2 pt-5"
-                          }
+                          className="absolute left-1/2 top-full -translate-x-1/2 pt-2.5"
                         >
                           {item.dropdownType === "services" ? (
                             <ServicesMegaMenu onNavigate={() => setActiveDropdown(null)} />
@@ -422,8 +419,18 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
                       className="flex items-center gap-2 rounded-full border border-gray-200 py-1 pl-1 pr-2.5 transition-colors hover:border-gray-300 hover:bg-gray-50"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[var(--hz-cobalt)] flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                        {getUserInitials()}
+                      <div className="w-8 h-8 overflow-hidden rounded-full bg-[var(--hz-cobalt)] flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                        {user?.id && !avatarFailed ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={`/api/users/avatar/${user.id}`}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={() => setAvatarFailed(true)}
+                          />
+                        ) : (
+                          getUserInitials()
+                        )}
                       </div>
                       <span className="hidden xl:block max-w-[120px] truncate text-[13px] font-semibold text-gray-700">
                         {user?.name?.split(" ")[0] || "Account"}
@@ -441,91 +448,72 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full right-0 pt-5"
+                          className="absolute top-full right-0 pt-2.5"
                         >
-                          <div className="w-72 overflow-hidden rounded-2xl bg-white text-sm shadow-xl ring-1 ring-black/5">
-                            {/* User Info */}
-                            <div className="bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
-                                  {getUserInitials()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-white truncate">{user?.name}</p>
-                                  <p className="text-xs text-white/70 mt-0.5 truncate">{user?.email}</p>
-                                </div>
+                          <div className="w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[var(--reg-shadow-xl)]">
+                            {/* Identity */}
+                            <div className="flex items-center gap-3 border-b border-slate-100 px-3.5 py-3">
+                              <div className="flex h-9 w-9 flex-none items-center justify-center overflow-hidden rounded-full bg-[var(--hz-cobalt)] text-[13px] font-semibold text-white">
+                                {user?.id && !avatarFailed ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={`/api/users/avatar/${user.id}`}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                    onError={() => setAvatarFailed(true)}
+                                  />
+                                ) : (
+                                  getUserInitials()
+                                )}
                               </div>
-                              <span className={`inline-block mt-3 px-3 py-1 text-xs font-semibold rounded-full capitalize ${
-                                user?.role === "admin" ? "bg-rose-100 text-rose-700" :
-                                user?.role === "hr" ? "bg-violet-100 text-violet-700" :
-                                user?.role === "recruiter" ? "bg-teal-100 text-teal-700" :
-                                user?.role === "sales" ? "bg-amber-100 text-amber-700" :
-                                "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-                              }`}>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[13px] font-semibold text-slate-900">{user?.name}</p>
+                                <p className="truncate text-[12px] text-slate-500">{user?.email}</p>
+                              </div>
+                            </div>
+
+                            <div className="px-3.5 pt-2.5">
+                              <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
                                 {user?.role === "admin" ? "Administrator" :
                                  user?.role === "hr" ? "HR Manager" :
                                  user?.role === "recruiter" ? "Recruiter" :
-                                 user?.role === "sales" ? "Sales" : "User"}
+                                 user?.role === "sales" ? "Sales" : "Staff"}
                               </span>
                             </div>
 
                             {/* Menu Items */}
-                            <div className="p-2 space-y-1">
+                            <div className="p-1.5">
                               <Link
                                 href={getDashboardLink()}
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
                                 onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
                               >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--hz-cobalt)] shadow-sm">
-                                  <LayoutDashboard className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-900">Dashboard</span>
-                                  <p className="text-xs text-gray-400">View your overview</p>
-                                </div>
+                                <LayoutDashboard className="h-4 w-4 text-slate-400" strokeWidth={2} />
+                                Dashboard
                               </Link>
-                              {user?.role === "user" ? (
-                                <Link
-                                  href="/careers"
-                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
-                                  onClick={() => setUserMenuOpen(false)}
-                                >
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
-                                    <Briefcase className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-gray-900">Browse Jobs</span>
-                                    <p className="text-xs text-gray-400">Find your next role</p>
-                                  </div>
-                                </Link>
-                              ) : (
+                              {hasAnyRole([UserRole.ADMIN]) && (
                                 <Link
                                   href="/admin/settings"
-                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-[var(--hz-cobalt-100)] transition-colors"
                                   onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
                                 >
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 shadow-sm">
-                                    <Settings className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-gray-900">Settings</span>
-                                    <p className="text-xs text-gray-400">Manage preferences</p>
-                                  </div>
+                                  <Settings className="h-4 w-4 text-slate-400" strokeWidth={2} />
+                                  Settings
                                 </Link>
                               )}
                             </div>
 
                             {/* Sign Out */}
-                            <div className="p-2 border-t border-gray-100">
+                            <div className="border-t border-slate-100 p-1.5">
                               <button
                                 onClick={() => {
                                   setUserMenuOpen(false);
                                   signOut();
                                 }}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-rose-600 transition-colors hover:bg-rose-50"
                               >
-                                <LogOut className="w-4 h-4" />
-                                Sign Out
+                                <LogOut className="h-4 w-4" strokeWidth={2} />
+                                Sign out
                               </button>
                             </div>
                           </div>
@@ -534,20 +522,12 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                     </AnimatePresence>
                   </div>
                 ) : (
-                  <>
-                    <Link
-                      href="/auth/signin"
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all"
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/auth/signup"
-                      className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--hz-cobalt)] text-white hover:bg-[var(--hz-cobalt-600)] transition-all shadow-sm hover:shadow-md"
-                    >
-                      Sign Up
-                    </Link>
-                  </>
+                  <Link
+                    href="/auth/signin"
+                    className="hz-btn-fill rounded-full bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    Sign In
+                  </Link>
                 )}
               </div>
             </div>
@@ -697,17 +677,10 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                       <div className="space-y-3">
                         <Link
                           href="/auth/signin"
-                          className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Sign In
-                        </Link>
-                        <Link
-                          href="/auth/signup"
                           className="block w-full px-4 py-3 text-center text-sm font-semibold text-white bg-[var(--hz-cobalt)] rounded-xl hover:bg-[var(--hz-cobalt-600)] transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          Create Account
+                          Sign In
                         </Link>
                       </div>
                     )}

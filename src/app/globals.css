@@ -1168,17 +1168,34 @@
   font-feature-settings: "tnum" 1;
 }
 
-/* Primary CTA — cobalt */
+/* Primary CTA — cobalt, with a fill-up-from-bottom hover */
 .hz-btn-primary {
+  position: relative; overflow: hidden; z-index: 0;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 12px 22px; border-radius: 10px;
   background: var(--hz-cobalt); color: #fff;
   font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
-  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background .2s ease;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
   box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -12px rgba(37,99,235,0.6);
 }
-.hz-btn-primary:hover { background: var(--hz-cobalt-600); transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(37,99,235,0.7); }
+.hz-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(37,99,235,0.7); }
 .hz-btn-primary:active { transform: translateY(0) scale(.985); }
+
+/* Fill-up hover: a darker layer scales up from the bottom edge behind the text.
+   Reusable on any solid-cobalt button (e.g. the header Sign In pill). */
+.hz-btn-primary::before,
+.hz-btn-fill::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--hz-cobalt-600);
+  transform: scaleY(0); transform-origin: bottom;
+  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+}
+.hz-btn-primary:hover::before,
+.hz-btn-fill:hover::before { transform: scaleY(1); }
+.hz-btn-fill { position: relative; overflow: hidden; z-index: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .hz-btn-primary::before, .hz-btn-fill::before { transition: none; }
+}
 
 /* Ghost CTA on light */
 .hz-btn-ghost {

@@ -612,7 +612,7 @@ export default function VendorsPage() {
                         <option value="">Select a vendor lead...</option>
                         {hrUsers.map((user) => (
                           <option key={user.id} value={user.id}>
-                            {user.name || user.email} ({user.role.toUpperCase()})
+                            {user.name || user.email} ({(user.role || "").toUpperCase()})
                           </option>
                         ))}
                       </select>

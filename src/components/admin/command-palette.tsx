@@ -147,13 +147,13 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150"
-      onClick={() => onOpenChange(false)}
-    >
+    <>
+      {/* transparent click-away — keeps the rest of the screen visible */}
+      <div className="fixed inset-0 z-[90]" onClick={() => onOpenChange(false)} />
+      {/* Anchored under the top bar (h-14) on the search side — not a centered modal */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[640px] bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 overflow-hidden animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200"
+        className="fixed right-3 top-[3.75rem] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--reg-shadow-xl)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-5"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
@@ -261,7 +261,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

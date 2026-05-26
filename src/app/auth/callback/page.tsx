@@ -56,19 +56,17 @@ export default function CallbackPage() {
           } else if (groups.includes("sales")) {
             setUserRole("Sales");
           } else {
-            setUserRole("User");
+            setUserRole("Staff");
           }
 
           setStatus("success");
 
           // Redirect after a brief delay to show success state
           setTimeout(() => {
-            if (groups.includes("admin")) {
-              router.push("/admin");
-            } else if (groups.includes("hr") || groups.includes("recruiter") || groups.includes("sales")) {
+            if (groups.includes("admin") || groups.includes("hr") || groups.includes("recruiter") || groups.includes("sales")) {
               router.push("/admin");
             } else {
-              router.push("/dashboard");
+              router.push("/");
             }
           }, 2000);
         } else {

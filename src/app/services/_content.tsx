@@ -112,7 +112,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
           <Reveal>
             <Eyebrow tone="dark">Our services</Eyebrow>
             <h1 className="hz-display mt-7 max-w-[18ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
-              {content.servicesTitle || "Talent, technology, and managed operations."}
+              {content.servicesTitle || "Talent, technology, and managed services."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               {content.servicesSubtitle ||

@@ -93,7 +93,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
-        userRole={user?.role}
+        userRole={user?.role ?? undefined}
         onCreateCandidate={() => {
           setPaletteOpen(false);
           openCandidateEditor();

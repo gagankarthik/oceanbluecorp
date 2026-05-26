@@ -104,7 +104,7 @@ const PAGES: PageDef[] = [
     ],
     fields: {
       header: [
-        { key: "servicesTitle", label: "Headline — blank uses the default", type: "text", placeholder: "Talent, technology, and managed operations." },
+        { key: "servicesTitle", label: "Headline — blank uses the default", type: "text", placeholder: "Talent, technology, and managed services." },
         { key: "servicesSubtitle", label: "Subheadline", type: "textarea", placeholder: "From specialized staffing to enterprise-grade technology services." },
       ],
     },

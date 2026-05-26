@@ -5,12 +5,18 @@ import {
   AdminAddUserToGroupCommand,
   AdminRemoveUserFromGroupCommand,
   AdminGetUserCommand,
+  AdminCreateUserCommand,
   AdminDisableUserCommand,
   AdminEnableUserCommand,
   AdminDeleteUserCommand,
   AdminUpdateUserAttributesCommand,
   ListGroupsCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
+
+// Assignable staff roles. There is no public "user" role — every account is
+// created by an admin and belongs to exactly one of these groups.
+export type StaffRole = "admin" | "hr" | "recruiter" | "sales";
+export const STAFF_ROLES: StaffRole[] = ["admin", "hr", "recruiter", "sales"];
 
 // Get configuration at runtime
 const getConfig = () => ({
@@ -37,7 +43,7 @@ export interface CognitoUser {
   name: string;
   phone?: string;
   status: "active" | "inactive" | "pending";
-  role: "admin" | "hr" | "recruiter" | "sales" | "user";
+  role: StaffRole | null;
   groups: string[];
   createdAt: string;
   lastModified?: string;
@@ -58,13 +64,13 @@ const mapUserStatus = (cognitoStatus: string | undefined, enabled: boolean): "ac
   }
 };
 
-// Get user role from groups
-const getRoleFromGroups = (groups: string[]): "admin" | "hr" | "recruiter" | "sales" | "user" => {
+// Get user role from groups. null when the account belongs to no staff group.
+const getRoleFromGroups = (groups: string[]): StaffRole | null => {
   if (groups.includes("admin")) return "admin";
   if (groups.includes("hr")) return "hr";
   if (groups.includes("recruiter")) return "recruiter";
   if (groups.includes("sales")) return "sales";
-  return "user";
+  return null;
 };
 
 // List all users from Cognito
@@ -241,16 +247,13 @@ export async function removeUserFromGroup(username: string, groupName: string): 
 }
 
 // Update user role (manages groups)
-export async function updateUserRole(username: string, newRole: "admin" | "hr" | "recruiter" | "sales" | "user"): Promise<{ success: boolean; error?: string }> {
+export async function updateUserRole(username: string, newRole: StaffRole): Promise<{ success: boolean; error?: string }> {
   try {
     // Get current groups
     const currentGroups = await getUserGroups(username);
 
-    // Role groups (all groups that represent roles)
-    const roleGroups = ["admin", "hr", "recruiter", "sales"];
-
-    // Remove from all role groups first
-    for (const group of roleGroups) {
+    // Remove from every role group the user is currently in
+    for (const group of STAFF_ROLES) {
       if (currentGroups.includes(group)) {
         const result = await removeUserFromGroup(username, group);
         if (!result.success) {
@@ -259,12 +262,10 @@ export async function updateUserRole(username: string, newRole: "admin" | "hr" |
       }
     }
 
-    // Add to new role group (if not 'user' - user is the default with no group)
-    if (newRole !== "user") {
-      const result = await addUserToGroup(username, newRole);
-      if (!result.success) {
-        return result;
-      }
+    // Add to the new role group
+    const result = await addUserToGroup(username, newRole);
+    if (!result.success) {
+      return result;
     }
 
     return { success: true };
@@ -273,6 +274,50 @@ export async function updateUserRole(username: string, newRole: "admin" | "hr" |
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update user role",
+    };
+  }
+}
+
+// Invite a new staff member: create the Cognito account with a temporary
+// password (Cognito emails the invite containing the email + temp password)
+// and assign their role group. On first sign-in they're forced to set a
+// permanent password and provide their name + phone.
+export async function inviteUser(
+  email: string,
+  role: StaffRole
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const config = getConfig();
+    const client = createCognitoClient();
+
+    // MessageAction is omitted so Cognito sends its default invitation email.
+    // TemporaryPassword is omitted so Cognito generates and emails one.
+    const created = await client.send(
+      new AdminCreateUserCommand({
+        UserPoolId: config.userPoolId,
+        Username: email,
+        UserAttributes: [
+          { Name: "email", Value: email },
+          { Name: "email_verified", Value: "true" },
+        ],
+        DesiredDeliveryMediums: ["EMAIL"],
+      })
+    );
+
+    // Use the username Cognito assigned (the pool may use a UUID username with
+    // email as an alias) so the group assignment targets the right account.
+    const username = created.User?.Username || email;
+    const roleResult = await addUserToGroup(username, role);
+    if (!roleResult.success) {
+      return roleResult;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error inviting user:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to invite user",
     };
   }
 }

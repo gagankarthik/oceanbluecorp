@@ -14,13 +14,13 @@ export const cognitoAuthConfig = {
   loadUserInfo: true,
 };
 
-// User roles enum
+// Staff roles enum. These are the only assignable roles — every account is
+// created by an admin via invite and belongs to one of these groups.
 export enum UserRole {
   ADMIN = "admin",
   HR = "hr",
   RECRUITER = "recruiter",
   SALES = "sales",
-  USER = "user",
 }
 
 // Role hierarchy for permission checking
@@ -30,7 +30,6 @@ export const roleHierarchy: Record<UserRole, number> = {
   [UserRole.HR]: 3,
   [UserRole.RECRUITER]: 2,
   [UserRole.SALES]: 2,
-  [UserRole.USER]: 1,
 };
 
 // Cognito Hosted UI URLs
@@ -43,7 +42,6 @@ export const getCognitoUrls = () => {
 
   return {
     signIn: `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${scope}&redirect_uri=${redirectUri}`,
-    signUp: `${domain}/signup?client_id=${clientId}&response_type=${responseType}&scope=${scope}&redirect_uri=${redirectUri}`,
     signOut: `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(cognitoAuthConfig.post_logout_redirect_uri)}`,
   };
 };
@@ -62,5 +60,4 @@ export const routeAccess: Record<string, UserRole[]> = {
   "/admin/content": [UserRole.ADMIN],
   "/admin/settings": [UserRole.ADMIN],
   "/hr": [UserRole.ADMIN, UserRole.HR],
-  "/dashboard": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.USER],
 };

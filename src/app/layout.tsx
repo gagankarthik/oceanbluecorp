@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://oceanbluecorp.com"),
   title: {
-    default: "Ocean Blue Corporation | Enterprise IT Solutions & Digital Transformation",
+    default: "Ocean Blue Corporation | Enterprise IT Solutions",
     template: "%s | Ocean Blue Corporation",
   },
   description:
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://oceanbluecorp.com",
     siteName: "Ocean Blue Corporation",
-    title: "Ocean Blue Corporation | Enterprise IT Solutions & Digital Transformation",
+    title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
       "Transform your business with Ocean Blue Corporation's enterprise IT solutions. Expert services in ERP, Cloud, AI, Salesforce, Staffing & Training.",
     images: [
@@ -191,8 +191,8 @@ export default async function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
+            are injected automatically by Next.js from the App Router file conventions. */}
         <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"

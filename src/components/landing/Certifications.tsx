@@ -4,10 +4,10 @@ import Image from "next/image";
 import { Reveal } from "./motion/Primitives";
 
 const certs = [
-  { name: "NMSDC", logo: "/NMSDC.png" },
-  { name: "Ohio WBE", logo: "/wbe.png" },
-  { name: "Ohio MBE", logo: "/ohiombe.png" },
-  { name: "MBE", logo: "/mbe.png" },
+  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png" },
+  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png" },
+  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png" },
+  { name: "MBE", logo: "/logos/certifications/mbe.png" },
 ];
 
 export default function Certifications() {

@@ -7,11 +7,11 @@ import { Mail, Phone, MapPin, Linkedin, Youtube, Instagram, X } from "lucide-rea
 
 const footerLinks = {
   Services: [
-    { name: "IT Staffing", href: "/services#staffing" },
-    { name: "Cloud & Solutions", href: "/services#cloud" },
+    { name: "IT Staffing & Talent", href: "/services#staffing" },
+    { name: "Cloud Engineering", href: "/services#cloud" },
     { name: "Managed Services", href: "/services#managed" },
-    { name: "AI & Analytics", href: "/services#ai" },
-    { name: "Salesforce", href: "/services#salesforce" },
+    { name: "AI & Data Intelligence", href: "/services#ai" },
+    { name: "Salesforce Services", href: "/services#salesforce" },
   ],
   Company: [
     { name: "About Us", href: "/about" },

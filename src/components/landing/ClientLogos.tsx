@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Reveal } from "./motion/Primitives";
 
-type Logo = { name: string; logo: string; w: number; remote?: boolean };
+type Logo = { name: string; logo: string; w: number; remote?: boolean; dark?: boolean };
 
 const clients: Logo[] = [
   {
@@ -12,7 +12,7 @@ const clients: Logo[] = [
     w: 132,
     remote: true,
   },
-  { name: "HGS", logo: "/hgs.svg", w: 104 },
+  { name: "HGS", logo: "/logos/clients/hgs.svg", w: 104 },
   {
     name: "Diebold Nixdorf",
     logo: "https://www.dieboldnixdorf.com/-/media/diebold/images/global/logo/dn-color-logo.svg",
@@ -25,7 +25,9 @@ const clients: Logo[] = [
     w: 130,
     remote: true,
   },
-  { name: "City Barbeque", logo: "/citybarbeque.svg", w: 128 },
+  { name: "City Barbeque", logo: "/logos/clients/citybarbeque.svg", w: 128 },
+  // Asset is a near-white wordmark, so render it dark on the white marquee.
+  { name: "Condado Tacos & Tequila", logo: "/logos/clients/tacos.webp", w: 150, dark: true },
 ];
 
 // One marquee "half" — the set repeated so it comfortably exceeds the widest
@@ -35,7 +37,9 @@ const HALF: Logo[] = [...clients, ...clients, ...clients];
 
 function LogoMark({ l }: { l: Logo }) {
   const cls =
-    "h-8 w-auto object-contain opacity-90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:opacity-100";
+    `h-8 w-auto object-contain opacity-90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:opacity-100${
+      l.dark ? " brightness-0" : ""
+    }`;
   return (
     <div className="flex shrink-0 items-center px-10" style={{ minWidth: l.w }}>
       {l.remote ? (

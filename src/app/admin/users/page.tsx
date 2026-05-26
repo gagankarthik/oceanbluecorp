@@ -9,11 +9,8 @@ import {
   Mail,
   Phone,
   Shield,
-  Calendar,
   Trash2,
   UserCheck,
-  UserX,
-  Download,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -22,14 +19,18 @@ import {
   Loader2,
   RefreshCw,
   Users,
+  UserPlus,
+  Send,
 } from "lucide-react";
+
+type Role = "admin" | "hr" | "recruiter" | "sales";
 
 interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  role: "admin" | "hr" | "recruiter" | "sales" | "user";
+  role: Role | null;
   status: "active" | "inactive" | "pending";
   groups: string[];
   createdAt: string;
@@ -37,28 +38,36 @@ interface User {
   enabled: boolean;
 }
 
-const roleConfig: Record<string, { label: string; bg: string }> = {
+// The four assignable staff roles, with the descriptions shown when changing
+// or assigning a role. Order matches the access hierarchy.
+const ROLE_OPTIONS: { role: Role; desc: string }[] = [
+  { role: "admin", desc: "Full access to all features, settings, and user management" },
+  { role: "hr", desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
+  { role: "sales", desc: "Can create/edit jobs, plus applications, candidates, and bench" },
+  { role: "recruiter", desc: "View-only jobs, plus applications, candidates, and bench" },
+];
+
+const roleConfig: Record<Role, { label: string; bg: string }> = {
   admin: { label: "Admin", bg: "bg-rose-100 text-rose-800" },
   hr: { label: "HR", bg: "bg-purple-100 text-purple-800" },
   recruiter: { label: "Recruiter", bg: "bg-teal-100 text-teal-800" },
   sales: { label: "Sales", bg: "bg-amber-100 text-amber-800" },
-  user: { label: "User", bg: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" },
 };
+const noRoleConfig = { label: "No role", bg: "bg-slate-100 text-slate-600" };
 
 const statusConfig: Record<string, { label: string; bg: string; dot: string }> = {
   active: { label: "Active", bg: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
   inactive: { label: "Inactive", bg: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
-  pending: { label: "Pending", bg: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
+  pending: { label: "Invited", bg: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
 };
 
 // Role tabs — primary segmentation so each group is easy to find
 const ROLE_TABS: { key: string; label: string }[] = [
-  { key: "all",       label: "All Users" },
+  { key: "all",       label: "All" },
   { key: "admin",     label: "Admins" },
   { key: "hr",        label: "HR" },
-  { key: "recruiter", label: "Recruiters" },
   { key: "sales",     label: "Sales" },
-  { key: "user",      label: "Users" },
+  { key: "recruiter", label: "Recruiters" },
 ];
 
 export default function UsersPage() {
@@ -68,7 +77,6 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -77,6 +85,12 @@ export default function UsersPage() {
   const [updating, setUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Invite modal
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<Role>("recruiter");
+  const [inviting, setInviting] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -108,8 +122,28 @@ export default function UsersPage() {
 
   const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
-  const toggleUserSelection = (userId: string) => setSelectedUsers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
-  const toggleSelectAll = () => setSelectedUsers(prev => prev.length === paginatedUsers.length ? [] : paginatedUsers.map(u => u.id));
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      const response = await fetch("/api/users/invite", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to send invite");
+      toast.success(`Invite sent to ${inviteEmail.trim()}`);
+      setShowInviteModal(false);
+      setInviteEmail("");
+      setInviteRole("recruiter");
+      fetchUsers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send invite");
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const handleUpdateRole = async () => {
     if (!userToEdit || !newRole) return;
@@ -121,7 +155,7 @@ export default function UsersPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to update role");
-      setUsers(prev => prev.map(u => u.id === userToEdit.id ? { ...u, role: newRole as "admin" | "hr" | "recruiter" | "sales" | "user" } : u));
+      setUsers(prev => prev.map(u => u.id === userToEdit.id ? { ...u, role: newRole as Role } : u));
       setShowRoleModal(false);
       setUserToEdit(null);
       setNewRole("");
@@ -177,13 +211,18 @@ export default function UsersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Users Management"
-        subtitle="Manage user accounts, roles, and permissions"
+        subtitle="Invite teammates and manage their roles and access"
         icon={Users}
         meta={<span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{users.length} total</span>}
         actions={
-          <PageHeaderButton variant="secondary" onClick={fetchUsers} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </PageHeaderButton>
+          <>
+            <PageHeaderButton variant="secondary" onClick={fetchUsers} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+            </PageHeaderButton>
+            <PageHeaderButton variant="primary" onClick={() => setShowInviteModal(true)}>
+              <UserPlus className="w-4 h-4" /> Invite User
+            </PageHeaderButton>
+          </>
         }
       />
 
@@ -193,7 +232,7 @@ export default function UsersPage() {
           { label: "Total Users", value: stats.total, icon: Users, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
           { label: "Active", value: stats.active, icon: UserCheck, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
           { label: "Admins", value: stats.admins, icon: Shield, color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
-          { label: "Pending", value: stats.pending, icon: AlertCircle, color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
+          { label: "Invited", value: stats.pending, icon: Send, color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
         ].map(stat => (
           <div key={stat.label} className={`${stat.bg} border rounded-2xl p-4 shadow-sm`}>
             <div className="flex items-center justify-between mb-2">
@@ -254,7 +293,7 @@ export default function UsersPage() {
             <option value="all">All statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-            <option value="pending">Pending</option>
+            <option value="pending">Invited</option>
           </select>
         </div>
 
@@ -278,9 +317,6 @@ export default function UsersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="py-3 px-4 text-left">
-                      <input type="checkbox" checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-300 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
-                    </th>
                     <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">User</th>
                     <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Contact</th>
                     <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
@@ -291,13 +327,10 @@ export default function UsersPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paginatedUsers.map(user => {
-                    const roleCfg = roleConfig[user.role] || roleConfig.user;
+                    const roleCfg = user.role ? roleConfig[user.role] : noRoleConfig;
                     const statusCfg = statusConfig[user.status] || statusConfig.pending;
                     return (
-                      <tr key={user.id} className={`hover:bg-slate-50 transition-colors ${selectedUsers.includes(user.id) ? "bg-[#eef3fe]" : ""}`}>
-                        <td className="py-3.5 px-4">
-                          <input type="checkbox" checked={selectedUsers.includes(user.id)} onChange={() => toggleUserSelection(user.id)} className="w-4 h-4 rounded border-slate-300 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
-                        </td>
+                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
@@ -316,15 +349,15 @@ export default function UsersPage() {
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <button onClick={() => { setUserToEdit(user); setNewRole(user.role); setShowRoleModal(true); }}
+                          <button onClick={() => { setUserToEdit(user); setNewRole(user.role || ""); setShowRoleModal(true); }}
                             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize hover:opacity-80 transition-opacity ${roleCfg.bg}`}>
-                            {user.role}<ChevronDown className="w-3 h-3" />
+                            {roleCfg.label}<ChevronDown className="w-3 h-3" />
                           </button>
                         </td>
                         <td className="py-3.5 px-4 hidden md:table-cell">
                           <button onClick={() => handleToggleStatus(user)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize hover:opacity-80 transition-opacity ${statusCfg.bg}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />{user.status}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold hover:opacity-80 transition-opacity ${statusCfg.bg}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />{statusCfg.label}
                           </button>
                         </td>
                         <td className="py-3.5 px-4 hidden xl:table-cell">
@@ -351,7 +384,7 @@ export default function UsersPage() {
                   <Search className="w-7 h-7 text-slate-400" />
                 </div>
                 <h3 className="text-base font-semibold text-slate-900 mb-1">No users found</h3>
-                <p className="text-slate-500 text-sm">Try adjusting your search or filter criteria</p>
+                <p className="text-slate-500 text-sm">Try adjusting your search or invite a teammate</p>
               </div>
             )}
 
@@ -378,6 +411,49 @@ export default function UsersPage() {
         )}
       </div>
 
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleInvite} className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">Invite a teammate</h2>
+              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="space-y-1.5">
+                <label htmlFor="inviteEmail" className="block text-sm font-medium text-slate-700">Email address</label>
+                <input
+                  id="inviteEmail" type="email" required autoFocus value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]"
+                />
+                <p className="text-xs text-slate-400">We&apos;ll email them an invite with a temporary password. They set their name, phone, and password on first sign-in.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Role</label>
+                <div className="space-y-2">
+                  {ROLE_OPTIONS.map(({ role, desc }) => (
+                    <label key={role} className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${inviteRole === role ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]" : "border-slate-200 hover:border-slate-300"}`}>
+                      <input type="radio" name="inviteRole" value={role} checked={inviteRole === role} onChange={() => setInviteRole(role)} className="mt-0.5 w-4 h-4 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
+                      <div>
+                        <p className="font-medium text-slate-900">{roleConfig[role].label}</p>
+                        <p className="text-xs text-slate-500">{desc}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
+              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+              <button type="submit" disabled={inviting || !inviteEmail} className="px-5 py-2 text-sm font-medium bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors disabled:opacity-50 flex items-center gap-2">
+                {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Invite
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Change Role Modal */}
       {showRoleModal && userToEdit && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -389,17 +465,11 @@ export default function UsersPage() {
             <div className="p-6">
               <p className="text-sm text-slate-600 mb-4">Change role for <span className="font-semibold text-slate-900">{userToEdit.name}</span></p>
               <div className="space-y-3">
-                {[
-                  { role: "admin", desc: "Full access to all features and settings" },
-                  { role: "hr", desc: "Access to HR features, jobs, applications, clients, vendors, contacts" },
-                  { role: "recruiter", desc: "View-only jobs access, plus applications, candidates, and bench" },
-                  { role: "sales", desc: "Can create/edit jobs, plus applications, candidates, and bench" },
-                  { role: "user", desc: "Basic user access to dashboard and profile" },
-                ].map(({ role, desc }) => (
+                {ROLE_OPTIONS.map(({ role, desc }) => (
                   <label key={role} className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${newRole === role ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]" : "border-slate-200 hover:border-slate-300"}`}>
                     <input type="radio" name="role" value={role} checked={newRole === role} onChange={e => setNewRole(e.target.value)} className="w-4 h-4 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
                     <div>
-                      <p className="font-medium text-slate-900 capitalize">{role}</p>
+                      <p className="font-medium text-slate-900">{roleConfig[role].label}</p>
                       <p className="text-xs text-slate-500">{desc}</p>
                     </div>
                   </label>
@@ -408,7 +478,7 @@ export default function UsersPage() {
             </div>
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
               <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
-              <button onClick={handleUpdateRole} disabled={updating || newRole === userToEdit.role} className="px-5 py-2 text-sm font-medium bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors disabled:opacity-50 flex items-center gap-2">
+              <button onClick={handleUpdateRole} disabled={updating || newRole === userToEdit.role || !newRole} className="px-5 py-2 text-sm font-medium bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors disabled:opacity-50 flex items-center gap-2">
                 {updating && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
               </button>
             </div>

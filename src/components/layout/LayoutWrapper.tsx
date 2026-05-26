@@ -20,10 +20,9 @@ export default function LayoutWrapper({
 
   // Routes that should not show Header/Footer
   const isAdminRoute = pathname?.startsWith("/admin");
-  const isDashboardRoute = pathname?.startsWith("/dashboard");
   const isAuthRoute = pathname?.startsWith("/auth");
 
-  const hideHeaderFooter = isAdminRoute || isDashboardRoute;
+  const hideHeaderFooter = isAdminRoute;
 
   if (hideHeaderFooter) {
     return <>{children}</>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/admin/page-header";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   User,
   Bell,
@@ -16,6 +16,7 @@ import {
   Phone,
   MapPin,
   Link2,
+  Camera,
   Server,
   Lock,
   AlertCircle,
@@ -121,6 +122,13 @@ export default function SettingsPage() {
     role: "",
   });
 
+  // Profile photo
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoVersion, setPhotoVersion] = useState(0); // cache-buster after upload
+  const [photoFailed, setPhotoFailed] = useState(false); // no photo / load error → initials
+  const [hasPhoto, setHasPhoto] = useState(false); // a photo actually loaded
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   const [notifications, setNotifications] = useState({
     newApplications: true,
     applicationStatusUpdates: true,
@@ -142,7 +150,7 @@ export default function SettingsPage() {
         lastName: nameParts.slice(1).join(" ") || "",
         email: user.email || "",
         phone: user.phone || "",
-        role: user.role || "user",
+        role: user.role || "",
       });
     }
   }, [user]);
@@ -167,6 +175,62 @@ export default function SettingsPage() {
       setSaveError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file || !user?.id) return;
+
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setSaveError("Please choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveError("Image too large. Maximum size is 2MB.");
+      return;
+    }
+
+    setSaveError(null);
+    setUploadingPhoto(true);
+    try {
+      const response = await fetch(`/api/users/avatar?userId=${encodeURIComponent(user.id)}`, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to upload photo");
+      setPhotoFailed(false);
+      setHasPhoto(true);
+      setPhotoVersion(Date.now()); // bust the <img> cache so the new photo shows
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!user?.id) return;
+    setSaveError(null);
+    setUploadingPhoto(true);
+    try {
+      const response = await fetch(`/api/users/avatar/${encodeURIComponent(user.id)}`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to remove photo");
+      }
+      setHasPhoto(false);
+      setPhotoFailed(true);
+      setPhotoVersion(Date.now());
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to remove photo");
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -332,14 +396,43 @@ export default function SettingsPage() {
               profileForm.role === "sales" ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100" :
               "bg-gradient-to-r from-[var(--hz-cobalt-100)] to-cyan-50 border-[var(--hz-cobalt-100)]"
             }`}>
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0 ${
-                profileForm.role === "admin" ? "bg-gradient-to-br from-rose-500 to-pink-600" :
-                profileForm.role === "hr" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
-                profileForm.role === "recruiter" ? "bg-gradient-to-br from-teal-500 to-cyan-600" :
-                profileForm.role === "sales" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
-                "bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600"
-              }`}>
-                {userInitials}
+              <div className="relative flex-shrink-0">
+                <div className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white text-xl font-bold shadow-md ${
+                  profileForm.role === "admin" ? "bg-gradient-to-br from-rose-500 to-pink-600" :
+                  profileForm.role === "hr" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
+                  profileForm.role === "recruiter" ? "bg-gradient-to-br from-teal-500 to-cyan-600" :
+                  profileForm.role === "sales" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
+                  "bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600"
+                }`}>
+                  {user?.id && !photoFailed ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/api/users/avatar/${user.id}?v=${photoVersion}`}
+                      alt={user?.name || "Profile photo"}
+                      className="h-full w-full object-cover"
+                      onLoad={() => setHasPhoto(true)}
+                      onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
+                    />
+                  ) : (
+                    userInitials
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  aria-label="Change profile photo"
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[var(--hz-cobalt)] text-white shadow-sm transition-colors hover:bg-[var(--hz-cobalt-600)] disabled:opacity-60"
+                >
+                  {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-900 text-lg truncate">
@@ -349,6 +442,27 @@ export default function SettingsPage() {
                 <span className={`inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border capitalize ${roleColor}`}>
                   {profileForm.role}
                 </span>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="text-xs font-semibold text-[var(--hz-cobalt)] hover:underline disabled:opacity-50"
+                  >
+                    {hasPhoto ? "Change photo" : "Upload photo"}
+                  </button>
+                  {hasPhoto && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      disabled={uploadingPhoto}
+                      className="text-xs font-medium text-slate-400 transition-colors hover:text-rose-600 disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <span className="text-[11px] text-slate-400">JPG, PNG or WebP · max 2MB</span>
+                </div>
               </div>
             </div>
 
@@ -551,29 +665,6 @@ export default function SettingsPage() {
                     <div className="min-w-0">
                       <p className="text-xs text-slate-400">{item.label}</p>
                       <p className="text-sm font-medium text-slate-800 truncate">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AWS config */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                AWS Configuration
-              </h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                {[
-                  { label: "Region", value: process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2", icon: Server },
-                  { label: "User Pool ID", value: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "—", icon: Shield },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-slate-400">{item.label}</p>
-                      <p className="text-sm font-medium text-slate-800 truncate font-mono">{item.value}</p>
                     </div>
                   </div>
                 ))}

@@ -135,13 +135,15 @@ export default function TalentBenchPage() {
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
+  const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [skillFilter, setSkillFilter] = useState("all");
   const [authFilter, setAuthFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [showFilters, setShowFilters] = useState(false);
 
   // Form states
@@ -238,6 +240,7 @@ export default function TalentBenchPage() {
       const data = await response.json();
       if (response.ok) {
         const users = data.users || [];
+        setAllUsers(users);
         setHrUsers(users.filter((u: CognitoUser) => u.role === "hr" || u.role === "admin"));
       }
     } catch (err) {
@@ -248,11 +251,30 @@ export default function TalentBenchPage() {
   const allSkills = [...new Set(applications.flatMap((a) => a.skills || []))];
   const workAuthorizations = [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[];
 
+  // Resolve who added a bench entry (benchAddedBy/createdBy holds an email or id).
+  const addedByIndex = new Map<string, CognitoUser>();
+  for (const u of allUsers) {
+    if (u.email) addedByIndex.set(u.email.toLowerCase(), u);
+    if (u.id) addedByIndex.set(u.id, u);
+  }
+  const resolveAdder = (app: ApplicationWithJob): { name: string; role?: string } => {
+    const key = (app.benchAddedBy || app.createdBy || "").toString();
+    const u = addedByIndex.get(key.toLowerCase()) || addedByIndex.get(key);
+    const name = u?.name || app.createdByName || (key.includes("@") ? key.split("@")[0] : "") || "Unknown";
+    return { name, role: u?.role };
+  };
+  // Admins can browse the whole team's bench; this powers the "Added by" filter.
+  const adderNames = isAdmin
+    ? [...new Set(applications.map((a) => resolveAdder(a).name).filter(Boolean))].sort()
+    : [];
+
   const filteredApplications = applications.filter((app) => {
     const myEmail = user?.email;
     const myId    = user?.id;
     const addedBy = app.benchAddedBy || app.createdBy;
-    const matchesOwnership = !!addedBy && (addedBy === myEmail || addedBy === myId);
+    // Admins see every team member's bench; everyone else sees only what they added.
+    const matchesOwnership = isAdmin || (!!addedBy && (addedBy === myEmail || addedBy === myId));
+    const matchesOwner = !isAdmin || ownerFilter === "all" || resolveAdder(app).name === ownerFilter;
     const matchesSearch =
       (app.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -262,7 +284,7 @@ export default function TalentBenchPage() {
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesSkill = skillFilter === "all" || (app.skills?.includes(skillFilter) || false);
     const matchesAuth = authFilter === "all" || app.workAuthorization === authFilter;
-    return matchesOwnership && matchesSearch && matchesStatus && matchesSkill && matchesAuth;
+    return matchesOwnership && matchesOwner && matchesSearch && matchesStatus && matchesSkill && matchesAuth;
   });
 
   const handleStatusChange = async (appId: string, newStatus: Application["status"]) => {
@@ -1092,245 +1114,214 @@ export default function TalentBenchPage() {
   if (pageMode === "view" && selectedApplication) {
     const app = selectedApplication;
     const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
+    const initials = (app.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    const location = [app.city, app.state].filter(Boolean).join(", ");
+    const adder = isAdmin ? resolveAdder(app) : null;
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => { setPageMode("list"); setSelectedApplication(null); }}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold tracking-tight">{app.name}</h1>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium ${status.color}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`} />
-                  {status.label}
-                </span>
+      <div className="space-y-5 pb-10">
+        {/* Back */}
+        <button
+          onClick={() => { setPageMode("list"); setSelectedApplication(null); }}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to talent bench
+        </button>
+
+        {/* Header card */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 text-xl font-bold text-white shadow-sm">
+                  {initials}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900">{app.name || "Unknown"}</h1>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${status.color}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`} />
+                      {status.label}
+                    </span>
+                  </div>
+                  <p className="mt-1 font-mono text-xs text-slate-400">{app.applicationId || `ID: ${app.id.slice(0, 8)}`}</p>
+                </div>
               </div>
-              <p className="text-muted-foreground text-sm">
-                {app.applicationId || `ID: ${app.id.slice(0, 8)}`}
-              </p>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <a href={`mailto:${app.email}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50">
+                  <Mail className="h-4 w-4" /><span className="hidden sm:inline">Email</span>
+                </a>
+                {app.phone && (
+                  <a href={`tel:${app.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50">
+                    <Phone className="h-4 w-4" /><span className="hidden sm:inline">Call</span>
+                  </a>
+                )}
+                <button onClick={() => handleEditApplication(app)} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]">
+                  <Edit3 className="h-4 w-4" />Edit
+                </button>
+              </div>
+            </div>
+
+            {/* Quick facts */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4 text-slate-400" />{app.email}</span>
+              {app.phone && <span className="inline-flex items-center gap-1.5"><Phone className="h-4 w-4 text-slate-400" />{app.phone}</span>}
+              {location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-slate-400" />{location}</span>}
+              {app.workAuthorization && <span className="inline-flex items-center gap-1.5"><Shield className="h-4 w-4 text-slate-400" />{app.workAuthorization}</span>}
+              <span className="inline-flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className={`h-4 w-4 ${s <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
+                ))}
+              </span>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => handleEditApplication(app)}>
-            <Edit3 className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Contact Info */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Contact Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <a href={`mailto:${app.email}`} className="text-[var(--hz-cobalt)] hover:underline">{app.email}</a>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <p>{app.phone || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
-                    <p>{[app.city, app.state].filter(Boolean).join(", ") || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Work Authorization</p>
-                    <p>{app.workAuthorization || "-"}</p>
+        {/* Body */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {/* Left column */}
+          <div className="space-y-5 lg:col-span-2">
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <Briefcase className="h-4 w-4 text-slate-400" />Skills &amp; experience
+              </h3>
+              {app.skills && app.skills.length > 0 && (
+                <div className="mb-5">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-400">Skills</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {app.skills.map((skill) => (
+                      <span key={skill} className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-1 text-xs font-medium text-[var(--hz-cobalt)]">{skill}</span>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+              {app.experience && (
+                <div>
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">Experience</p>
+                  <p className="text-sm leading-relaxed text-slate-600">{app.experience}</p>
+                </div>
+              )}
+              {!app.skills?.length && !app.experience && (
+                <p className="text-sm text-slate-400">No skills or experience recorded yet.</p>
+              )}
+            </section>
 
-            {/* Skills & Experience */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Skills & Experience
-                </h3>
-                {app.skills && app.skills.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-muted-foreground mb-2">Skills</p>
-                    <div className="flex flex-wrap gap-2">
-                      {app.skills.map((skill) => (
-                        <span key={skill} className="px-2 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded text-sm">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {app.experience && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">Experience</p>
-                    <p className="text-sm">{app.experience}</p>
-                  </div>
-                )}
-                {!app.skills?.length && !app.experience && (
-                  <p className="text-slate-500 text-sm">No skills or experience recorded</p>
-                )}
-              </CardContent>
-            </Card>
+            {/* Notes */}
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <FileText className="h-4 w-4 text-slate-400" />Notes
+              </h3>
+              {app.notes
+                ? <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{app.notes}</p>
+                : <p className="text-sm text-slate-400">No notes added yet.</p>}
+            </section>
 
-            {/* Status Timeline */}
             {app.statusHistory && app.statusHistory.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Status Timeline
-                  </h3>
-                  <div className="relative">
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
-                    <div className="space-y-4">
-                      {[...app.statusHistory].reverse().map((entry, idx) => {
-                        const entryStatus = statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending;
-                        return (
-                          <div key={idx} className="relative pl-10">
-                            <div className={`absolute left-2.5 w-3 h-3 rounded-full ${entryStatus.dotColor} border-2 border-white shadow`} />
-                            <div className="bg-slate-50 rounded-lg p-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${entryStatus.color}`}>
-                                  {entryStatus.label}
-                                </span>
-                                <span className="text-xs text-slate-500">{formatDate(entry.changedAt)}</span>
-                              </div>
-                              {entry.changedByName && (
-                                <p className="text-xs text-slate-500">Changed by {entry.changedByName}</p>
-                              )}
-                            </div>
+              <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+                <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <History className="h-4 w-4 text-slate-400" />Status timeline
+                </h3>
+                <div className="relative pl-1">
+                  <div className="absolute bottom-1 left-[5px] top-1 w-px bg-slate-200" />
+                  <div className="space-y-4">
+                    {[...app.statusHistory].reverse().map((entry, idx) => {
+                      const entryStatus = statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending;
+                      return (
+                        <div key={idx} className="relative pl-6">
+                          <span className={`absolute left-0 top-1 h-[11px] w-[11px] rounded-full ${entryStatus.dotColor} ring-2 ring-white`} />
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${entryStatus.color}`}>{entryStatus.label}</span>
+                            <span className="text-xs text-slate-400">{formatDate(entry.changedAt)}</span>
+                            {entry.changedByName && <span className="text-xs text-slate-400">· by {entry.changedByName}</span>}
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </section>
             )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
-                <div className="space-y-2">
-                  <Select value={app.status} onValueChange={(v) => handleStatusChange(app.id, v as Application["status"])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="reviewing">Reviewing</SelectItem>
-                      <SelectItem value="submitted">Submitted</SelectItem>
-                      <SelectItem value="interview">Interview</SelectItem>
-                      <SelectItem value="hired">Hired</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <a
-                    href={`mailto:${app.email}`}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors text-sm font-medium"
-                  >
-                    <Mail className="w-4 h-4" />
-                    Send Email
-                  </a>
-                  {app.phone && (
-                    <a
-                      href={`tel:${app.phone}`}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Call
-                    </a>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-5">
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Stage</h3>
+              <select
+                value={app.status}
+                onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="submitted">Submitted</option>
+                <option value="interview">Interview</option>
+                <option value="hired">Hired</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </section>
 
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-sm font-semibold mb-4">Rating</h3>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleRatingChange(app.id, star)}
-                      className="focus:outline-none"
-                    >
-                      <Star
-                        className={`w-6 h-6 transition-colors ${
-                          star <= (app.rating || 0)
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-slate-300 hover:text-amber-300"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Resume Section */}
-            {app.resumeId && app.resumeFileName && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-sm font-semibold mb-4">Resume</h3>
-                  <div className="flex items-center gap-3 p-3 bg-[var(--hz-cobalt-100)] rounded-lg">
-                    <div className="w-10 h-10 bg-[var(--hz-cobalt-100)] rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-[var(--hz-cobalt)]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--hz-cobalt)] truncate">{app.resumeFileName}</p>
-                      <p className="text-xs text-[var(--hz-cobalt)]">Click to download</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadResume(app.resumeId!)}
-                    className="w-full mt-3 inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors text-sm font-medium"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download Resume
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Rating</h3>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => handleRatingChange(app.id, star)} className="focus:outline-none">
+                    <Star className={`h-6 w-6 transition-colors ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300"}`} />
                   </button>
-                </CardContent>
-              </Card>
-            )}
+                ))}
+              </div>
+            </section>
 
-            {app.notes && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-sm font-semibold mb-4">Notes</h3>
-                  <p className="text-sm text-slate-600">{app.notes}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-sm font-semibold mb-4">Details</h3>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Source</p>
-                    <p>{app.source || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Assigned To</p>
-                    <p>{app.ownershipName || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Added</p>
-                    <p>{formatDate(app.createdAt || app.appliedAt)}</p>
-                  </div>
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Resume</h3>
+              {app.resumeId && app.resumeFileName ? (
+                <button
+                  onClick={() => handleDownloadResume(app.resumeId!)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[#eef3fe]"
+                >
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--hz-cobalt-100)]">
+                    <FileText className="h-5 w-5 text-[var(--hz-cobalt)]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-slate-800">{app.resumeFileName}</span>
+                    <span className="text-xs text-slate-400">Click to download</span>
+                  </span>
+                  <Download className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 p-3 text-sm text-slate-400">
+                  <FileText className="h-4 w-4" />No resume on file
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Details</h3>
+              <dl className="space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-slate-400">Source</dt>
+                  <dd className="font-medium text-slate-700">{app.source || "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-slate-400">Assigned to</dt>
+                  <dd className="font-medium text-slate-700">{app.ownershipName || "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-slate-400">Added</dt>
+                  <dd className="font-medium text-slate-700">{formatDate(app.createdAt || app.appliedAt)}</dd>
+                </div>
+                {adder && (
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                    <dt className="text-slate-400">Added by</dt>
+                    <dd className="flex items-center gap-1.5 font-medium text-slate-700">
+                      {adder.name}
+                      {adder.role && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
           </div>
         </div>
       </div>
@@ -1358,7 +1349,9 @@ export default function TalentBenchPage() {
             Talent Bench
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            Candidates available for future opportunities
+            {isAdmin
+              ? "Every team member's bench — candidates added across all roles"
+              : "Candidates you've added for future opportunities"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1463,7 +1456,7 @@ export default function TalentBenchPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${
-                showFilters || statusFilter !== "all" || skillFilter !== "all" || authFilter !== "all"
+                showFilters || statusFilter !== "all" || skillFilter !== "all" || authFilter !== "all" || ownerFilter !== "all"
                   ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
                   : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
@@ -1475,7 +1468,7 @@ export default function TalentBenchPage() {
 
           {showFilters && (
             <div className="mt-3 pt-3 border-t border-slate-100">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
                   <select
@@ -1518,6 +1511,19 @@ export default function TalentBenchPage() {
                     ))}
                   </select>
                 </div>
+                {isAdmin && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Added by</label>
+                    <select
+                      value={ownerFilter}
+                      onChange={(e) => setOwnerFilter(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
+                    >
+                      <option value="all">Everyone</option>
+                      {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1537,6 +1543,7 @@ export default function TalentBenchPage() {
           {filteredApplications.length > 0 ? (
             filteredApplications.map((app) => {
               const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
+              const adder = isAdmin ? resolveAdder(app) : null;
 
               return (
                 <Card key={app.id} className="hover:border-[var(--hz-cobalt-100)] transition-all">
@@ -1601,6 +1608,17 @@ export default function TalentBenchPage() {
                             </span>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {adder && (
+                      <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3">
+                        <User className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+                        <span className="text-xs text-slate-500">Added by</span>
+                        <span className="truncate text-xs font-medium text-slate-700">{adder.name}</span>
+                        {adder.role && (
+                          <span className="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>
+                        )}
                       </div>
                     )}
 
@@ -1682,6 +1700,7 @@ export default function TalentBenchPage() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Candidate</th>
+                  {isAdmin && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Added by</th>}
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Skills</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Work Auth</th>
@@ -1694,6 +1713,7 @@ export default function TalentBenchPage() {
               <tbody className="divide-y divide-slate-100">
                 {filteredApplications.map((app) => {
                   const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
+                  const adder = isAdmin ? resolveAdder(app) : null;
                   return (
                     <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3">
@@ -1712,6 +1732,16 @@ export default function TalentBenchPage() {
                           </div>
                         </div>
                       </td>
+                      {adder && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate max-w-[120px] text-sm text-slate-700">{adder.name}</span>
+                            {adder.role && (
+                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>
+                            )}
+                          </div>
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <p className="text-sm text-slate-600">{app.email}</p>
                         <p className="text-xs text-slate-400">{app.phone || "-"}</p>

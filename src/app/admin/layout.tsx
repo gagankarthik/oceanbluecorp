@@ -119,6 +119,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const { user, signOut, hasAnyRole } = useAuth();
   const { openCommandPalette, openCandidateEditor, pageCrumb } = useAdmin();
 
@@ -567,9 +568,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-2 rounded-lg border border-transparent py-1 pl-1 pr-1.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
               >
                 <img
-                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                  src={user?.id && !avatarFailed
+                    ? `/api/users/avatar/${user.id}`
+                    : `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
                   alt={user?.name || "User"}
-                  className="w-7 h-7 rounded-full bg-[var(--hz-cobalt-100)] ring-2 ring-white shadow-sm"
+                  onError={() => setAvatarFailed(true)}
+                  className="w-7 h-7 rounded-full object-cover bg-[var(--hz-cobalt-100)] ring-2 ring-white shadow-sm"
                 />
                 <div className="hidden md:block text-left">
                   <p className="text-xs font-semibold text-slate-800 leading-tight truncate max-w-[110px]">{user?.name || "User"}</p>
@@ -582,15 +586,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
               {userMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 z-50">
-                  <div className="flex items-center gap-3 bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-4 py-3.5">
+                  <div className="flex items-center gap-3 border-b border-slate-100 px-3.5 py-3">
                     <img
-                      src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
+                      src={user?.id && !avatarFailed
+                        ? `/api/users/avatar/${user.id}`
+                        : `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email || "user")}&backgroundColor=b6e3f4`}
                       alt={user?.name || "User"}
-                      className="w-10 h-10 rounded-full bg-white/20 flex-shrink-0 ring-2 ring-white/40 shadow-sm"
+                      onError={() => setAvatarFailed(true)}
+                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover bg-slate-100 ring-1 ring-slate-200"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-                      <p className="text-[11px] text-white/75 truncate">{user?.email}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
+                      <p className="truncate text-[11px] text-slate-500">{user?.email}</p>
                     </div>
                   </div>
                   <div className="px-3 pt-2.5 pb-1.5">

@@ -39,11 +39,12 @@ DynamoDB tables (region: us-east-2):
 - `oceanblue-contacts`
 
 ### Authentication
-AWS Cognito with OIDC flow via `oidc-client-ts`:
+AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores the session). There is **no public sign-up** — the app is staff-only and invite-based.
 - **AuthContext** (`src/lib/auth/AuthContext.tsx`) - Provides `useAuth()` hook
 - **ProtectedRoute** component for route guarding
-- Role-based access: ADMIN > HR > USER (hierarchy defined in `src/lib/auth/config.ts`)
-- Cognito groups map to roles: "admin" -> ADMIN, "hr" -> HR, default -> USER
+- Four staff roles, no public "user" role: ADMIN > HR > (RECRUITER = SALES). Hierarchy in `src/lib/auth/config.ts`. `user.role` is `UserRole | null` (null = authenticated but in no staff group → no access).
+- Cognito groups map to roles: "admin" -> ADMIN, "hr" -> HR, "recruiter" -> RECRUITER, "sales" -> SALES.
+- **Invite flow**: an admin invites a teammate from `/admin/users` (email + role). `/api/users/invite` calls Cognito `AdminCreateUser` (Cognito emails a temporary password) and assigns the role group. On first sign-in Cognito raises `NEW_PASSWORD_REQUIRED`; the sign-in page collects full name, phone, and a new password, and `/api/auth/complete-invite` answers the challenge + sets those attributes.
 
 ### Key Directories
 ```
@@ -51,11 +52,9 @@ src/
 ├── app/                 # Next.js App Router pages
 │   ├── api/            # API routes (jobs, applications, contacts, resume)
 │   ├── admin/          # Admin panel (jobs, applications, contacts, users, settings)
-│   ├── auth/           # Authentication pages (signin, signup, callback, signout)
-│   └── dashboard/      # User dashboard
+│   └── auth/           # Authentication pages (signin, callback, signout) — invite-only, no sign-up
 ├── components/
 │   ├── ui/             # shadcn/ui components
-│   ├── dashboard/      # Dashboard-specific components
 │   └── providers/      # Context providers (wraps AuthProvider)
 ├── lib/
 │   ├── auth/           # Cognito auth config and context

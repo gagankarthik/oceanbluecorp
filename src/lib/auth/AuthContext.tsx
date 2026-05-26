@@ -10,11 +10,19 @@ interface AuthUser {
   email: string;
   name: string;
   phone?: string;
-  role: UserRole;
+  // null when the account is authenticated but belongs to no staff group.
+  role: UserRole | null;
   groups: string[];
   accessToken: string;
   idToken: string;
 }
+
+// signInWithCredentials either establishes a session or, for an invited user
+// signing in for the first time, surfaces the Cognito NEW_PASSWORD_REQUIRED
+// challenge so the UI can collect a permanent password (plus name/phone).
+type SignInResult =
+  | { status: "AUTHENTICATED"; user: AuthUser }
+  | { status: "NEW_PASSWORD_REQUIRED"; session: string };
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -22,8 +30,14 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   signIn: () => Promise<void>;
-  signInWithCredentials: (email: string, password: string) => Promise<AuthUser>;
-  signUp: () => Promise<void>;
+  signInWithCredentials: (email: string, password: string) => Promise<SignInResult>;
+  completeNewPassword: (params: {
+    email: string;
+    session: string;
+    name: string;
+    phone: string;
+    password: string;
+  }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -65,8 +79,9 @@ const parseUser = (oidcUser: User): AuthUser => {
   // Cognito groups are in the cognito:groups claim
   const groups: string[] = (profile as Record<string, unknown>)["cognito:groups"] as string[] || [];
 
-  // Determine role from groups (prioritize highest role)
-  let role = UserRole.USER;
+  // Determine role from groups (prioritize highest role). null = no staff
+  // group, which grants access to nothing.
+  let role: UserRole | null = null;
   if (groups.includes("admin")) {
     role = UserRole.ADMIN;
   } else if (groups.includes("hr")) {
@@ -156,19 +171,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signInWithCredentials = useCallback(async (email: string, password: string) => {
-    const response = await fetch("/api/auth/signin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Sign in failed.");
-    }
-
+  // Turn a token bundle from our auth API into a stored OIDC session and set
+  // the current user. Shared by password sign-in and invite completion.
+  const establishSession = useCallback(async (data: {
+    accessToken: string;
+    idToken: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  }): Promise<AuthUser> => {
     // Decode the IdToken payload (base64url → JSON) to get profile claims
     const payloadB64 = data.idToken.split(".")[1];
     const payloadJson = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
@@ -191,18 +201,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authUser;
   }, []);
 
-  const signUp = useCallback(async () => {
-    try {
-      const userManager = getUserManager();
-      // For Cognito, we use the same authorize endpoint but can add a signup hint
-      // The Cognito Hosted UI will show signup by navigating to the signup URL directly
-      const signUpUrl = `${process.env.NEXT_PUBLIC_COGNITO_DOMAIN}/signup?client_id=${process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID}&response_type=code&scope=openid+email+phone&redirect_uri=${encodeURIComponent(window.location.origin + "/auth/callback")}`;
-      window.location.href = signUpUrl;
-    } catch (err) {
-      console.error("Sign up error:", err);
-      setError(err instanceof Error ? err.message : "Failed to sign up");
+  const signInWithCredentials = useCallback(async (email: string, password: string): Promise<SignInResult> => {
+    const response = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Sign in failed.");
     }
-  }, []);
+
+    // First sign-in for an invited user: Cognito asks for a permanent password.
+    if (data.challenge === "NEW_PASSWORD_REQUIRED") {
+      return { status: "NEW_PASSWORD_REQUIRED", session: data.session };
+    }
+
+    const user = await establishSession(data);
+    return { status: "AUTHENTICATED", user };
+  }, [establishSession]);
+
+  // Answer the NEW_PASSWORD_REQUIRED challenge: set the permanent password and
+  // store the user's full name + phone, then establish the session.
+  const completeNewPassword = useCallback(async ({
+    email, session, name, phone, password,
+  }: { email: string; session: string; name: string; phone: string; password: string }): Promise<AuthUser> => {
+    const response = await fetch("/api/auth/complete-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, session, name, phone, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not complete your account setup.");
+    }
+
+    return establishSession(data);
+  }, [establishSession]);
 
   const signOut = useCallback(async () => {
     // Always clear the local session first, so the app reads as signed-out
@@ -246,11 +285,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const hasAnyRole = useCallback((roles: UserRole[]): boolean => {
-    return user ? roles.includes(user.role) : false;
+    return user?.role ? roles.includes(user.role) : false;
   }, [user]);
 
   const hasMinimumRole = useCallback((minimumRole: UserRole): boolean => {
-    if (!user) return false;
+    if (!user?.role) return false;
     return roleHierarchy[user.role] >= roleHierarchy[minimumRole];
   }, [user]);
 
@@ -261,7 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     signIn,
     signInWithCredentials,
-    signUp,
+    completeNewPassword,
     signOut,
     hasRole,
     hasAnyRole,

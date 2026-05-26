@@ -442,10 +442,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   )}
                   <div className="mt-6">
                     <Link
-                      href="/dashboard"
+                      href="/careers/search"
                       className="px-8 py-4 bg-white text-green-600 font-semibold rounded-xl hover:shadow-lg transition-all inline-flex items-center gap-2"
                     >
-                      View My Applications
+                      Browse more openings
                     </Link>
                   </div>
                 </>

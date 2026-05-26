@@ -23,7 +23,6 @@ export default function robots(): MetadataRoute.Robots {
           "/admin/",      // Private HR/admin panel
           "/api/",        // API routes — never index
           "/auth/",       // Auth flows
-          "/dashboard/",  // Authenticated user dashboard
           "/_next/",      // Next.js internals
         ],
       },

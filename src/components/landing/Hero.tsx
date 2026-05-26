@@ -115,11 +115,11 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           <span className="hz-eyebrow text-white/55">Technology partners</span>
           <div className="flex flex-wrap items-center gap-x-9 gap-y-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/AWS-Partner.png" alt="AWS Partner" className="h-16 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 md:h-20" />
+            <img src="/logos/partners/AWS-Partner.png" alt="AWS Partner" className="h-16 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 md:h-20" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/snowflake.svg" alt="Snowflake" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
+            <img src="/logos/partners/snowflake.svg" alt="Snowflake" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/databricks.svg" alt="Databricks" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
+            <img src="/logos/partners/databricks.svg" alt="Databricks" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
           </div>
         </motion.div>
 

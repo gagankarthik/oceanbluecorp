@@ -74,15 +74,6 @@ const roleConfigs: Record<string, RoleConfig> = {
     icon: Briefcase,
     level: roleHierarchy[UserRole.SALES],
   },
-  [UserRole.USER]: {
-    name: "User",
-    description: "Basic access to personal dashboard and job applications",
-    color: "text-[var(--hz-cobalt)]",
-    bgColor: "bg-[var(--hz-cobalt-100)]",
-    borderColor: "border-[var(--hz-cobalt-100)]",
-    icon: Users,
-    level: roleHierarchy[UserRole.USER],
-  },
 };
 
 interface RouteConfig {
@@ -103,10 +94,9 @@ const routes: RouteConfig[] = [
   { path: "/admin/clients", name: "Clients", icon: Building },
   { path: "/admin/vendors", name: "Vendors", icon: UsersRound },
   { path: "/admin/settings", name: "Settings", icon: Settings },
-  { path: "/dashboard", name: "User Dashboard", icon: LayoutDashboard },
 ];
 
-const roles = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.USER];
+const roles = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 
 function hasAccess(route: string, role: UserRole): boolean {
   const allowedRoles = routeAccess[route];
@@ -130,8 +120,8 @@ export default function RolesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Total Roles", value: totalRoles, icon: Shield, color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
-          { label: "Admin Routes", value: routes.filter(r => r.path.startsWith("/admin")).length, icon: LayoutDashboard, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
-          { label: "User Routes", value: routes.filter(r => !r.path.startsWith("/admin")).length, icon: Users, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
+          { label: "Admin-only Routes", value: routes.filter(r => routeAccess[r.path]?.length === 1).length, icon: Shield, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
+          { label: "Shared Routes", value: routes.filter(r => (routeAccess[r.path]?.length ?? 0) > 1).length, icon: Users, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
           { label: "Total Routes", value: totalRoutes, icon: Settings, color: "text-violet-700", bg: "bg-violet-50 border-violet-200" },
         ].map(stat => (
           <div key={stat.label} className={`${stat.bg} border rounded-xl p-4 shadow-sm`}>
@@ -156,7 +146,7 @@ export default function RolesPage() {
             <CardDescription>System roles ordered by hierarchy level</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {roles.map((role, index) => {
                 const config = roleConfigs[role];
                 const Icon = config.icon;

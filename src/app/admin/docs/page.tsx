@@ -741,12 +741,12 @@ export default function AdminDocsPage() {
               />
             </SubSection>
 
-            <SubSection title="Adding a New Admin User">
+            <SubSection title="Inviting a Team Member">
               <ol className="text-sm text-slate-600 space-y-1.5 list-decimal list-inside ml-1 leading-relaxed">
                 <li>Go to <strong>/admin/users</strong> → click <strong>Invite User</strong></li>
-                <li>Enter the email address — Cognito sends a temporary password</li>
-                <li>After the user signs in and resets their password, assign their role group</li>
-                <li>Select the appropriate group: <code className="bg-slate-100 px-1 rounded text-xs">admin</code>, <code className="bg-slate-100 px-1 rounded text-xs">hr</code>, <code className="bg-slate-100 px-1 rounded text-xs">recruiter</code>, or <code className="bg-slate-100 px-1 rounded text-xs">sales</code></li>
+                <li>Enter the email address and select the role: <code className="bg-slate-100 px-1 rounded text-xs">admin</code>, <code className="bg-slate-100 px-1 rounded text-xs">hr</code>, <code className="bg-slate-100 px-1 rounded text-xs">recruiter</code>, or <code className="bg-slate-100 px-1 rounded text-xs">sales</code></li>
+                <li>Cognito emails the invite with a temporary password</li>
+                <li>On first sign-in they&apos;re prompted to set their full name, phone number, and a permanent password</li>
               </ol>
             </SubSection>
           </section>

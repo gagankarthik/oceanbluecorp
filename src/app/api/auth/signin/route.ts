@@ -31,6 +31,17 @@ export async function POST(request: Request) {
     });
 
     const response = await client.send(command);
+
+    // First sign-in for an invited user: Cognito requires a permanent password
+    // before issuing tokens. Hand the session back so the client can collect a
+    // new password (plus name + phone) and complete the challenge.
+    if (response.ChallengeName === "NEW_PASSWORD_REQUIRED") {
+      return NextResponse.json({
+        challenge: "NEW_PASSWORD_REQUIRED",
+        session: response.Session,
+      });
+    }
+
     const result = response.AuthenticationResult;
 
     if (!result?.AccessToken || !result?.IdToken) {

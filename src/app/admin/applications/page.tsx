@@ -664,7 +664,7 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
             </thead>
             <tbody className="divide-y divide-slate-100">
               {apps.map((app) => (
-                <tr key={app.id} className={cn("hover:bg-slate-50 transition-colors group", selected.includes(app.id) && "bg-[var(--hz-cobalt-100)]/40")}>
+                <tr key={app.id} className={cn("transition-colors group hover:bg-[var(--hz-cobalt-100)]/30", selected.includes(app.id) && "bg-[var(--hz-cobalt-100)]/40")}>
                   <td className="py-3.5 px-4">
                     <input type="checkbox" checked={selected.includes(app.id)}
                       onChange={(e) => onSelect(app.id, e.target.checked)}
@@ -674,11 +674,19 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     <div className="flex items-center gap-3">
                       <Avatar name={app.name} email={app.email} size="sm" />
                       <div className="min-w-0">
-                        <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-[var(--hz-cobalt)] transition-colors text-left block truncate max-w-[160px]">
+                        <button onClick={() => shared.onView(app.id)} className="text-sm font-semibold text-slate-900 hover:text-[var(--hz-cobalt)] transition-colors text-left block truncate max-w-[180px]">
                           {app.name || "—"}
                         </button>
-                        <p className="text-xs text-slate-400 truncate max-w-[160px]">{app.email}</p>
-                        {app.applicationId && <span className="font-mono text-[10px] text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-1 py-0.5 rounded">{app.applicationId}</span>}
+                        <p className="text-xs text-slate-400 truncate max-w-[180px]">{app.email}</p>
+                        {app.phone && <p className="text-[11px] text-slate-400 truncate max-w-[180px]">{app.phone}</p>}
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          {app.applicationId && <span className="font-mono text-[10px] text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-1 py-0.5 rounded">{app.applicationId}</span>}
+                          {app.addToTalentBench && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                              <BookmarkCheck className="h-2.5 w-2.5" />Bench
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -696,6 +704,7 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     {app.source
                       ? <span className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full font-medium">{app.source}</span>
                       : <span className="text-slate-300 text-sm">—</span>}
+                    {app.workAuthorization && <p className="mt-1 truncate max-w-[130px] text-[11px] text-slate-400">{app.workAuthorization}</p>}
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 tabular-nums">
@@ -707,7 +716,17 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <RowMenu app={app} {...shared} />
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button onClick={() => shared.onView(app.id)} title="View profile" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => shared.onEdit(app)} title="Edit" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => shared.onDelete(app.id)} title="Delete" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -716,26 +735,6 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
         </div>
       )}
     </AdminCard>
-  );
-}
-
-function RowMenu({ app, onView, onEdit, onDelete }: RowActions & { app: App }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="p-1.5 text-slate-300 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-white border border-slate-200 shadow-lg rounded-xl w-44">
-        <DropdownMenuItem onClick={() => onView(app.id)} className="text-sm rounded-lg cursor-pointer"><Eye className="h-4 w-4 mr-2 text-slate-400" />View Profile</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEdit(app)} className="text-sm rounded-lg cursor-pointer"><Edit3 className="h-4 w-4 mr-2 text-slate-400" />Edit</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onDelete(app.id)} className="text-sm rounded-lg text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer">
-          <Trash2 className="h-4 w-4 mr-2" />Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

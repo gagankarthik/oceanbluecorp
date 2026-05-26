@@ -27,7 +27,7 @@ export default function CallToAction({ content = {} }: { content?: Record<string
           </h2>
           <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[18px]">
             {content.ctaBody ||
-              "Staffing, enterprise solutions, or managed operations — start with a conversation, and we'll stand behind the result."}
+              "Staffing, enterprise solutions, or managed services — start with a conversation, and we'll stand behind the result."}
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">

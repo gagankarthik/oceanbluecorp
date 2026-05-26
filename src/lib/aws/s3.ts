@@ -246,3 +246,81 @@ export function validateResumeFile(
 
   return { valid: true };
 }
+
+/* ============================================================
+   PROFILE PHOTOS (avatars)
+   Stored at a stable per-user key so each upload overwrites the
+   previous photo. The private object is served through the app's
+   /api/users/avatar/[userId] route, not a public S3 URL.
+   ============================================================ */
+
+export const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
+
+export function generateAvatarKey(userId: string): string {
+  const safe = userId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `avatars/${safe}`;
+}
+
+export function validateAvatarFile(
+  file: { type: string; size: number }
+): { valid: boolean; error?: string } {
+  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    return { valid: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+  if (file.size > MAX_AVATAR_SIZE) {
+    return { valid: false, error: "Image too large. Maximum size is 2MB." };
+  }
+  return { valid: true };
+}
+
+export async function uploadAvatar(
+  file: Buffer,
+  key: string,
+  contentType: string
+): Promise<{ success: boolean; key?: string; error?: string }> {
+  try {
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+        Body: file,
+        ContentType: contentType,
+      })
+    );
+    return { success: true, key };
+  } catch (error) {
+    console.error("Error uploading avatar to S3:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to upload avatar" };
+  }
+}
+
+export async function getAvatarObject(
+  key: string
+): Promise<{ success: boolean; body?: Uint8Array; contentType?: string; notFound?: boolean; error?: string }> {
+  try {
+    const res = await s3Client.send(
+      new GetObjectCommand({ Bucket: s3Config.bucketName, Key: key })
+    );
+    const body = await res.Body?.transformToByteArray();
+    if (!body) return { success: false, notFound: true };
+    return { success: true, body, contentType: res.ContentType };
+  } catch (error) {
+    const name = (error as { name?: string }).name;
+    if (name === "NoSuchKey" || name === "NotFound") {
+      return { success: false, notFound: true };
+    }
+    console.error("Error fetching avatar from S3:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch avatar" };
+  }
+}
+
+export async function deleteAvatar(key: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await s3Client.send(new DeleteObjectCommand({ Bucket: s3Config.bucketName, Key: key }));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting avatar from S3:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete avatar" };
+  }
+}

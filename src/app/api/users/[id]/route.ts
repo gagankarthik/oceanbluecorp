@@ -5,6 +5,8 @@ import {
   enableUser,
   disableUser,
   deleteUser,
+  STAFF_ROLES,
+  type StaffRole,
 } from "@/lib/aws/cognito";
 
 // GET /api/users/[id] - Get a single user
@@ -46,15 +48,14 @@ export async function PATCH(
 
     // Update role if provided
     if (role) {
-      const validRoles = ["admin", "hr", "recruiter", "sales", "user"];
-      if (!validRoles.includes(role)) {
+      if (!STAFF_ROLES.includes(role as StaffRole)) {
         return NextResponse.json(
-          { error: "Invalid role. Must be 'admin', 'hr', 'recruiter', 'sales', or 'user'" },
+          { error: `Invalid role. Must be one of: ${STAFF_ROLES.join(", ")}.` },
           { status: 400 }
         );
       }
 
-      const roleResult = await updateUserRole(id, role);
+      const roleResult = await updateUserRole(id, role as StaffRole);
       if (!roleResult.success) {
         return NextResponse.json(
           { error: roleResult.error || "Failed to update role" },
