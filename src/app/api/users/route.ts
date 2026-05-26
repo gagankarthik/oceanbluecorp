@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listCognitoUsers } from "@/lib/aws/cognito";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/users - List all users
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const role = searchParams.get("role");

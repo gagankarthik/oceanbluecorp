@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResumeDownloadUrl, deleteResumeFromS3 } from "@/lib/aws";
+import { requireStaff } from "@/lib/auth/verify";
 
 function decodeKey(id: string): string {
   return Buffer.from(id, "base64url").toString("utf8");
@@ -10,6 +11,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireStaff(_request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const fileKey = decodeKey(id);
@@ -31,6 +34,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireStaff(_request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const fileKey = decodeKey(id);

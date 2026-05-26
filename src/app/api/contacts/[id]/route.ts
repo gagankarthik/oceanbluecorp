@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContact, updateContactStatus, deleteContact, Contact } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/contacts/[id] - Get a single contact
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const result = await getContact(id);
@@ -39,6 +42,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -85,6 +90,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

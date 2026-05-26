@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateApiKey, deleteApiKey } from "@/lib/aws/dynamodb";
+import { requireAdmin } from "@/lib/auth/verify";
 
 // PUT /api/admin/api-keys/[id] - Update name, description, or toggle active
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -31,6 +34,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const result = await deleteApiKey(id);

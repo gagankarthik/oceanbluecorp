@@ -8,12 +8,15 @@ import {
   NoteEntry,
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/applications/[id] - Get a specific application
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 
@@ -48,6 +51,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -257,6 +262,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

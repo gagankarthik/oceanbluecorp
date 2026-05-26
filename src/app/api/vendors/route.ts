@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllVendors, createVendor, Vendor } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/vendors - Get all vendors
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const vendorLeadRole = searchParams.get("vendorLeadRole") as "hr" | "admin" | null;
@@ -34,6 +37,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/vendors - Create a new vendor
 export async function POST(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
 

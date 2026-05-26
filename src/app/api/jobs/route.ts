@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllJobs, createJob, createNotification, getNextPostingId, Job } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -39,6 +40,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/jobs - Create a new job
 export async function POST(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
 

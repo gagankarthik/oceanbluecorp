@@ -6,6 +6,7 @@ import {
   listResumeBankObjects,
   parseResumeBankKey,
 } from "@/lib/aws";
+import { requireStaff } from "@/lib/auth/verify";
 
 function deriveFileType(fileName: string): string {
   const ext = fileName.split(".").pop()?.toLowerCase();
@@ -16,7 +17,9 @@ function deriveFileType(fileName: string): string {
 }
 
 // GET — list all resume bank items from S3 (no DynamoDB)
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const result = await listResumeBankObjects();
     if (!result.success) {
@@ -51,6 +54,8 @@ export async function GET() {
 // because AWS Amplify's SSR compute layer does not reliably forward the multipart Content-Type
 // (boundary) to the function, which makes request.formData() throw.
 export async function POST(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const rawFileName = request.headers.get("x-file-name");
     const rawUploadedBy = request.headers.get("x-uploaded-by");

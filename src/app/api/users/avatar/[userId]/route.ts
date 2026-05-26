@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAvatarKey, getAvatarObject, deleteAvatar } from "@/lib/aws/s3";
+import { requireStaff } from "@/lib/auth/verify";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  const auth = await requireStaff(_request);
+  if (!auth.ok) return auth.response;
   const { userId } = await params;
   const result = await getAvatarObject(generateAvatarKey(userId));
 
@@ -35,6 +38,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  const auth = await requireStaff(_request);
+  if (!auth.ok) return auth.response;
   const { userId } = await params;
   const result = await deleteAvatar(generateAvatarKey(userId));
   if (!result.success) {

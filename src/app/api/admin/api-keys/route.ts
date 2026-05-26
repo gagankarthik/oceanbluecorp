@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllApiKeys, createApiKey, ApiKey } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import { requireAdmin } from "@/lib/auth/verify";
 
 function generateApiKey(): string {
   return "obk_live_" + crypto.randomBytes(32).toString("hex");
 }
 
 // GET /api/admin/api-keys - List all API keys
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const result = await getAllApiKeys();
     if (!result.success) {
@@ -28,6 +31,8 @@ export async function GET() {
 
 // POST /api/admin/api-keys - Create a new API key
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
     if (!body.name) {

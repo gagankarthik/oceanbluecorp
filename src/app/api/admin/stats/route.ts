@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAllJobs, getAllApplications } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/admin/stats - Get dashboard statistics
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     // Fetch all data in parallel
     const [jobsResult, applicationsResult] = await Promise.all([

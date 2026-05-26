@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, updateJob, deleteJob, Job } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/jobs/[id] - Get a specific job
 export async function GET(
@@ -40,6 +41,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -109,6 +112,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

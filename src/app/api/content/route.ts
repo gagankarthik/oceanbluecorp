@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getAllContentBlocks, upsertContentBlock } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/content — fetch all content blocks
 export async function GET() {
@@ -18,6 +19,8 @@ export async function GET() {
 
 // PUT /api/content — upsert a content block
 export async function PUT(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
     const { id, fields, updatedBy, updatedByName } = body;

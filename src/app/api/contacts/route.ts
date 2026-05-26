@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { sendContactNotificationEmail } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // ── Spam heuristics (no external dependencies) ──────────────────────────────
 // A "token" is treated as random/bot-generated if it's long and either has no
@@ -31,8 +32,10 @@ function isLikelySpam(b: { firstName?: string; lastName?: string; company?: stri
   return randomWords >= 2;
 }
 
-// GET /api/contacts - Get all contacts (admin only)
+// GET /api/contacts - Get all contacts (staff only)
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as Contact["status"] | null;

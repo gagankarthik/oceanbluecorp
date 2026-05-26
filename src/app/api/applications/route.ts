@@ -15,9 +15,12 @@ import {
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/applications - Get applications (with optional filters)
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");

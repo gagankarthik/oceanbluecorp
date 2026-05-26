@@ -8,12 +8,15 @@ import {
   STAFF_ROLES,
   type StaffRole,
 } from "@/lib/aws/cognito";
+import { requireStaff, requireAdmin } from "@/lib/auth/verify";
 
 // GET /api/users/[id] - Get a single user
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 
@@ -41,6 +44,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -106,6 +111,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

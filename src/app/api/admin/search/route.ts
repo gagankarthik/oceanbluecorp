@@ -7,6 +7,7 @@ import {
   Application,
   Contact,
 } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 interface SearchResult {
   type: "job" | "application" | "contact";
@@ -19,6 +20,8 @@ interface SearchResult {
 
 // GET /api/admin/search - Search across all admin data
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q")?.toLowerCase().trim();

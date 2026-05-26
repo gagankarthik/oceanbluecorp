@@ -5,12 +5,15 @@ import {
   deleteResume,
   deleteResumeFromS3,
 } from "@/lib/aws";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET - Get resume download URL
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 
@@ -51,6 +54,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllClients, createClient, Client } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/clients - Get all clients
 export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as Client["status"] | null;
@@ -34,6 +37,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/clients - Create a new client
 export async function POST(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
 

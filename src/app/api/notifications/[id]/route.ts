@@ -3,12 +3,15 @@ import {
   markNotificationAsRead,
   deleteNotification,
 } from "@/lib/aws/dynamodb";
+import { requireStaff } from "@/lib/auth/verify";
 
 // PUT /api/notifications/[id] - Mark a notification as read
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 
@@ -36,6 +39,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 

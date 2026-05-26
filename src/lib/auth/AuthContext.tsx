@@ -104,6 +104,33 @@ const parseUser = (oidcUser: User): AuthUser => {
   };
 };
 
+// Mirror the client OIDC session into an httpOnly cookie that authorizes the
+// internal API (verified server-side in src/lib/auth/verify.ts). Called whenever
+// a session is established or renewed; cleared on sign-out. This is what lets the
+// existing admin fetch calls stay unchanged — the browser sends the cookie
+// automatically.
+async function syncServerSession(idToken: string | undefined, expiresIn?: number) {
+  if (!idToken) return;
+  try {
+    await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: idToken, expiresIn }),
+    });
+  } catch {
+    // Non-fatal: user stays signed in client-side; API calls 401 until the next
+    // successful sync, which prompts a re-auth.
+  }
+}
+
+async function clearServerSession() {
+  try {
+    await fetch("/api/auth/session", { method: "DELETE" });
+  } catch {
+    // ignore
+  }
+}
+
 // Singleton UserManager instance
 let userManagerInstance: UserManager | null = null;
 
@@ -126,8 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userManager = getUserManager();
 
     // Check for existing session
-    userManager.getUser().then((oidcUser) => {
+    userManager.getUser().then(async (oidcUser) => {
       if (oidcUser && !oidcUser.expired) {
+        // Set the server cookie before flagging the user as authenticated, so
+        // gated admin pages never fire their first fetch without credentials.
+        await syncServerSession(oidcUser.id_token, oidcUser.expires_in);
         setUser(parseUser(oidcUser));
       }
       setIsLoading(false);
@@ -138,10 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Handle token refresh events
     const handleUserLoaded = (oidcUser: User) => {
+      void syncServerSession(oidcUser.id_token, oidcUser.expires_in);
       setUser(parseUser(oidcUser));
     };
 
     const handleUserUnloaded = () => {
+      void clearServerSession();
       setUser(null);
     };
 
@@ -196,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     await userManager.storeUser(oidcUser);
+    await syncServerSession(data.idToken, data.expiresIn);
     const authUser = parseUser(oidcUser);
     setUser(authUser);
     return authUser;
@@ -255,6 +288,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("removeUser failed (continuing sign-out):", err);
     }
     setUser(null);
+
+    // Clear the server session cookie too (guarded; never blocks sign-out).
+    await clearServerSession();
 
     try {
       // Clear all oidc.* entries from both storages

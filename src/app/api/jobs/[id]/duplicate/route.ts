@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, createJob, getNextPostingId, Job } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { requireStaff } from "@/lib/auth/verify";
 
 // POST /api/jobs/[id]/duplicate - Duplicate a job posting
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
 
