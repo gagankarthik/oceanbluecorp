@@ -17,7 +17,7 @@ const products: Product[] = [
     category: "AI & Intelligence",
     desc: "Our AI platform for turning enterprise data into faster, clearer decisions — built and operated in-house.",
     logo: "/logos/products/Blue-iq.png",
-    link: "http://blue-iq.ai/",
+    link: "#",
   },
   {
     id: "inytes",
