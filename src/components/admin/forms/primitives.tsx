@@ -33,9 +33,9 @@ export function FormSection({
   const t = tones[tone];
   return (
     <section className={cn("overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm", className)}>
-      <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <div className="flex items-start gap-3">
-          <span className={cn("mt-0.5 grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg", t.bg)}>
+      <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <div className="flex items-start gap-2.5">
+          <span className={cn("mt-0.5 grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg", t.bg)}>
             <Icon className={cn("h-4 w-4", t.text)} strokeWidth={2} />
           </span>
           <div className="min-w-0">
@@ -45,7 +45,7 @@ export function FormSection({
         </div>
         {action}
       </header>
-      <div className="p-5">{children}</div>
+      <div className="p-4">{children}</div>
     </section>
   );
 }
@@ -94,7 +94,7 @@ export const FormInput = React.forwardRef<
     <input
       ref={ref}
       {...props}
-      className={cn(controlBase, "px-3 py-2.5", className)}
+      className={cn(controlBase, "px-3 py-2", className)}
     />
   );
 });

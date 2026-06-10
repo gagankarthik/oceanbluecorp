@@ -23,13 +23,51 @@ function looksRandom(token: string): boolean {
 function isLikelySpam(b: { firstName?: string; lastName?: string; company?: string; message?: string }): boolean {
   const linkRe = /(https?:\/\/|www\.|\[url|<a\s|href=)/i;
   const name = `${b.firstName || ""} ${b.lastName || ""}`;
+  const message = b.message || "";
   // Links in the name/company field are a strong spam signal
   if (linkRe.test(name) || linkRe.test(b.company || "")) return true;
   // A random-looking first or last name is almost certainly a bot
   if (looksRandom(b.firstName || "") || looksRandom(b.lastName || "")) return true;
+  // Link-farm message — a few links is plausible, four+ is spam
+  if ((message.match(/(https?:\/\/|www\.)/gi)?.length ?? 0) >= 4) return true;
+  // Bloat: the same character repeated 30+ times (e.g. "aaaaaaaa…")
+  if (/(.)\1{29,}/.test(message)) return true;
   // Two or more random tokens in the message
-  const randomWords = (b.message || "").split(/\s+/).filter((w) => looksRandom(w)).length;
+  const randomWords = message.split(/\s+/).filter((w) => looksRandom(w)).length;
   return randomWords >= 2;
+}
+
+// ── Field length caps (anti-bloat) + format regexes ─────────────────────────
+// Keeps payloads small and well-formed. Separate from the spam heuristics above:
+// a malformed-but-honest submission gets a real 400 so the person can fix it,
+// whereas spam signals get a silent fake-success so bots don't adapt.
+const LIMITS: Record<string, number> = {
+  firstName: 60, lastName: 60, email: 254, phone: 30,
+  company: 120, jobTitle: 120, inquiryType: 60, message: 4000,
+};
+
+const NAME_RE    = /^[\p{L}][\p{L}\p{M} .'-]{0,59}$/u;   // letters + space . ' - ; must start with a letter
+const EMAIL_RE   = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;       // local@domain.tld
+const PHONE_RE   = /^\+?[\d\s().-]{7,20}$/;               // digits + common separators
+const INQUIRY_RE = /^[A-Za-z0-9 &/+.-]{2,60}$/;           // short label only
+
+function validateContact(b: Record<string, unknown>): string | null {
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+  // Length caps first — reject bloat before any other work
+  for (const [field, max] of Object.entries(LIMITS)) {
+    if (str(b[field]).length > max) return `${field} is too long (max ${max} characters).`;
+  }
+
+  if (!NAME_RE.test(str(b.firstName))) return "Please enter a valid first name.";
+  if (!NAME_RE.test(str(b.lastName)))  return "Please enter a valid last name.";
+  if (!EMAIL_RE.test(str(b.email)))    return "Please enter a valid email address.";
+  if (str(b.phone) && !PHONE_RE.test(str(b.phone))) return "Please enter a valid phone number.";
+  if (!str(b.company))                 return "Company is required.";
+  if (!INQUIRY_RE.test(str(b.inquiryType))) return "Please choose a valid inquiry type.";
+  if (str(b.message).length < 10)      return "Please include a short message (at least 10 characters).";
+
+  return null;
 }
 
 // GET /api/contacts - Get all contacts (staff only)
@@ -83,24 +121,11 @@ export async function POST(request: NextRequest) {
     // 3) Gibberish names / link spam
     if (isLikelySpam(body)) return fakeSuccess;
 
-    // Validate required fields
-    const requiredFields = ["firstName", "lastName", "email", "company", "inquiryType", "message"];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { error: `Missing required field: ${field}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
+    // Validate required fields, formats, and length caps (anti-bloat). Honest
+    // formatting mistakes get a real 400 so the visitor can correct them.
+    const validationError = validateContact(body);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
     const contact: Contact = {

@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
-import { tones, type Tone } from "./theme";
+import { tones, SERIES, type Tone } from "./theme";
+import { Sparkline } from "./sparkline";
 import { cn } from "@/lib/utils";
+
+const sparkColors: Partial<Record<Tone, string>> = {
+  blue: SERIES.primary, emerald: SERIES.success, amber: SERIES.warning,
+  rose: SERIES.danger, violet: "#8b5cf6", slate: SERIES.neutral,
+};
 
 interface StatCardProps {
   label: string;
@@ -13,6 +19,8 @@ interface StatCardProps {
   /** Optional period-over-period delta chip. */
   delta?: { value: string; direction: "up" | "down" | "flat" };
   hint?: string;
+  /** Recent per-period values — renders a subtle sparkline under the value. */
+  trend?: number[];
   /** If set, the whole card becomes a link and gains a hover lift. */
   href?: string;
   /** "sm" is a more compact variant for dense list-page headers. */
@@ -24,14 +32,14 @@ interface StatCardProps {
  * Premium KPI card for the admin dashboard and list headers.
  * Soft tinted icon chip + large tabular number + label + optional delta.
  */
-export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint, href, size = "default", className }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint, trend, href, size = "default", className }: StatCardProps) {
   const t = tones[tone];
   const sm = size === "sm";
   const body = (
     <div
       className={cn(
         "group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        sm ? "gap-2.5 p-4" : "gap-4 p-5",
+        sm ? "gap-2 p-3.5" : "gap-3 p-4",
         href && "hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-md",
         className,
       )}
@@ -58,10 +66,13 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
         )}
       </div>
       <div>
-        <div className={cn("font-bold leading-none tracking-tight tabular-nums text-slate-900", sm ? "text-[22px]" : "text-[28px]")}>{value}</div>
+        <div className={cn("font-bold leading-none tracking-tight tabular-nums text-slate-900", sm ? "text-[20px]" : "text-[25px]")}>{value}</div>
         <div className={cn("font-medium text-slate-500", sm ? "mt-1.5 text-[12px]" : "mt-2 text-[13px]")}>{label}</div>
         {hint && <div className="mt-0.5 text-[11px] text-slate-400">{hint}</div>}
       </div>
+      {trend && trend.length > 1 && (
+        <Sparkline data={trend} color={sparkColors[tone] ?? SERIES.primary} height={sm ? 20 : 26} className="-mb-1 mt-auto" />
+      )}
     </div>
   );
   return href ? (

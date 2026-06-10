@@ -1251,3 +1251,64 @@
 @media (prefers-reduced-motion: reduce) {
   .hz-marquee { animation: none; }
 }
+
+/* ============================================================
+   ADMIN — semantic design tokens (the only values admin UI may
+   reference). Components consume these; pages consume components.
+   Aliases the brand --hz-* primitives so the brand can be retuned
+   in one place without touching admin code. See DESIGN_SYSTEM.md.
+   ============================================================ */
+
+:root {
+  /* Accent (single brand accent — cobalt; never introduce a second) */
+  --adm-accent:        var(--hz-cobalt);      /* primary actions, active nav, links */
+  --adm-accent-strong: var(--hz-cobalt-600);  /* hover/pressed on primary */
+  --adm-accent-soft:   var(--hz-cobalt-100);  /* tinted chips, icon wells, selected pills */
+  --adm-accent-tint:   #eef3fe;               /* row hover / selected-row wash */
+  --adm-focus-ring:    rgba(29, 78, 216, 0.2);/* 2px ring on every focusable control */
+
+  /* Surfaces & lines (one neutral family: slate) */
+  --adm-canvas:    #f8fafc;                   /* page background (slate-50) */
+  --adm-surface:   #ffffff;                   /* cards, panels, popovers */
+  --adm-line:      rgba(226, 232, 240, 0.8);  /* card borders (slate-200/80) */
+  --adm-line-soft: #f1f5f9;                   /* internal dividers (slate-100) */
+
+  /* Ink */
+  --adm-ink:        #0f172a;                  /* headings, primary values (slate-900) */
+  --adm-ink-mute:   #64748b;                  /* labels, secondary text (slate-500) */
+  --adm-ink-subtle: #94a3b8;                  /* hints, timestamps (slate-400) */
+
+  /* Status (match tones in components/admin/theme.ts) */
+  --adm-success: #059669;
+  --adm-warning: #d97706;
+  --adm-danger:  #e11d48;
+  --adm-info:    #4f46e5;
+
+  /* Categorical chart palette — use IN ORDER, max 7 series per chart.
+     Series 1 is always the brand accent; emerald is reserved for
+     "hired/success" series, rose for "rejected/failure". */
+  --adm-chart-1: #1d4ed8;  /* cobalt — primary series */
+  --adm-chart-2: #8b5cf6;  /* violet */
+  --adm-chart-3: #06b6d4;  /* cyan */
+  --adm-chart-4: #10b981;  /* emerald — success series */
+  --adm-chart-5: #f59e0b;  /* amber */
+  --adm-chart-6: #ec4899;  /* pink */
+  --adm-chart-7: #94a3b8;  /* slate — "other"/neutral series */
+
+  /* Elevation (cool-tinted, slate-based) */
+  --adm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --adm-shadow-md: 0 8px 24px -4px rgba(15, 23, 42, 0.12);
+  --adm-shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.18);
+
+  /* Motion (one easing, three speeds) */
+  --adm-ease:        cubic-bezier(0.22, 1, 0.36, 1);
+  --adm-duration-fast:   150ms;   /* hovers, toggles */
+  --adm-duration-base:   300ms;   /* lifts, reveals */
+  --adm-duration-slow:   700ms;   /* progress bars, chart draws */
+
+  /* Radius scale: 8px controls · 10px inputs/buttons · 12px chips/wells · 16px cards */
+  --adm-radius-control: 8px;
+  --adm-radius-input:   10px;
+  --adm-radius-chip:    12px;
+  --adm-radius-card:    16px;
+}

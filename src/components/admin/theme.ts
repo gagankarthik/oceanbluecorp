@@ -59,6 +59,30 @@ export const SOURCE_OPTIONS = [
   "LinkedIn", "Indeed", "Company Website", "Referral", "Agency", "Career Portal", "Other",
 ];
 
+/**
+ * Categorical chart palette — consume IN ORDER, max 7 series per chart.
+ * Mirrors the --adm-chart-* tokens in globals.css (recharts needs literal
+ * values, not CSS vars, for SVG fills/strokes in all browsers).
+ */
+export const CHART_COLORS = [
+  "#1d4ed8", // cobalt — primary series
+  "#8b5cf6", // violet
+  "#06b6d4", // cyan
+  "#10b981", // emerald — success series
+  "#f59e0b", // amber
+  "#ec4899", // pink
+  "#94a3b8", // slate — "other"/neutral
+] as const;
+
+/** Semantic series colors — fixed meanings across every admin chart. */
+export const SERIES = {
+  primary: "#1d4ed8", // volume / main metric
+  success: "#10b981", // hired, completed
+  warning: "#f59e0b", // offered, at-risk
+  danger:  "#f43f5e", // rejected, failed
+  neutral: "#94a3b8", // unstarted / other
+} as const;
+
 export const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
   "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",

@@ -3,8 +3,6 @@ import ClientLogos from "@/components/landing/ClientLogos";
 import Services from "@/components/landing/Services";
 import ImpactStats from "@/components/landing/ImpactStats";
 import Certifications from "@/components/landing/Certifications";
-import Insights from "@/components/landing/Insights";
-import CaseStudy from "@/components/landing/CaseStudy";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
 import { getSiteContent } from "@/lib/content";
@@ -16,10 +14,11 @@ export const revalidate = 60;
 /* ============================================================
    LANDING — consulting-firm direction (EY / Deloitte / Accenture).
    Light, editorial, photography-led, bold statement type, content
-   cards in grids, an Insights section, one decisive Ocean-Blue
-   accent, a flat sticky header, and a bold image-backed CTA.
-   Order: Hero(image) · Clients · Services · Impact · Insights ·
-   Case Study · CTA.
+   cards in grids, one decisive Ocean-Blue accent, a flat sticky
+   header, and a bold image-backed CTA. (Insights / Case Study
+   sections removed until the Resources content exists.)
+   Order: Hero(image) · Clients · Services · Impact · Certifications ·
+   Testimonials · CTA.
    ============================================================ */
 
 export default async function Home() {
@@ -31,8 +30,6 @@ export default async function Home() {
       <Services />
       <ImpactStats content={content} />
       <Certifications />
-      <Insights />
-      <CaseStudy />
       <Testimonials />
       <CallToAction content={content} />
     </div>

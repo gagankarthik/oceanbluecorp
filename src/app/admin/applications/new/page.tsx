@@ -109,15 +109,14 @@ function NewApplicationInner() {
     if (!resumeFile) return null;
     setResumeUploading(true);
     try {
-      const res = await fetch("/api/resume/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, fileName: resumeFile.name, fileType: resumeFile.type, fileSize: resumeFile.size }),
-      });
+      // The route uploads to S3 server-side (multipart/form-data) to avoid
+      // browser→S3 CORS issues — send the file itself, not a presign request.
+      const fd = new FormData();
+      fd.append("file", resumeFile);
+      fd.append("userId", userId);
+      const res = await fetch("/api/resume/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      const s3 = await fetch(data.uploadUrl, { method: "PUT", body: resumeFile, headers: { "Content-Type": resumeFile.type } });
-      if (!s3.ok) throw new Error("S3 upload failed");
       return { resumeId: data.resumeId, fileName: resumeFile.name, fileKey: data.fileKey };
     } catch (err) {
       setResumeError(err instanceof Error ? err.message : "Upload failed");

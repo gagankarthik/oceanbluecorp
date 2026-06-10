@@ -3,11 +3,15 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { AdminCard } from "@/components/admin/admin-card";
+import { StatCard } from "@/components/admin/stat-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
+import { FilterChips } from "@/components/admin/filter-chips";
+import { FormSelect } from "@/components/admin/forms/primitives";
 
 import { useState, useEffect } from "react";
 import {
-  Search,
-  Filter,
   Download,
   Mail,
   Phone,
@@ -206,60 +210,45 @@ export default function ContactsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "Total", value: stats.total, icon: MessageSquare, gradient: "from-[var(--hz-cobalt)] to-cyan-500" },
-          { label: "New", value: stats.new, icon: Inbox, gradient: "from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)]" },
-          { label: "Read", value: stats.read, icon: MailOpen, gradient: "from-amber-400 to-orange-500" },
-          { label: "Responded", value: stats.responded, icon: CheckCircle2, gradient: "from-emerald-400 to-emerald-600" },
-        ].map(stat => (
-          <div key={stat.label} className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center flex-shrink-0`}>
-                <stat.icon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-xs text-slate-500">{stat.label}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+        <StatCard size="sm" label="Total" value={stats.total} icon={MessageSquare} tone="blue" />
+        <StatCard size="sm" label="New" value={stats.new} icon={Inbox} tone="indigo" />
+        <StatCard size="sm" label="Read" value={stats.read} icon={MailOpen} tone="amber" />
+        <StatCard size="sm" label="Responded" value={stats.responded} icon={CheckCircle2} tone="emerald" />
       </div>
 
-      {/* Filters */}
-      <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-4">
+      {/* Toolbar */}
+      <AdminCard className="space-y-3 p-3">
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" placeholder="Search contacts..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]" />
-          </div>
-          <button onClick={() => setShowFilters(!showFilters)} className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${showFilters || statusFilter !== "all" || inquiryFilter !== "all" ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filters</span>
-            {(statusFilter !== "all" || inquiryFilter !== "all") && (
-              <span className="w-4 h-4 rounded-full bg-[var(--hz-cobalt)] text-white text-[10px] flex items-center justify-center font-medium">{[statusFilter !== "all", inquiryFilter !== "all"].filter(Boolean).length}</span>
-            )}
-          </button>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, email, company, message…" />
+          <FilterToggle
+            open={showFilters}
+            activeCount={[statusFilter !== "all", inquiryFilter !== "all"].filter(Boolean).length}
+            onClick={() => setShowFilters(!showFilters)}
+          />
         </div>
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-3">
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700">
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FormSelect value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option value="all">All Status</option>
               <option value="new">New</option>
               <option value="read">Read</option>
               <option value="responded">Responded</option>
               <option value="archived">Archived</option>
-            </select>
-            <select value={inquiryFilter} onChange={e => setInquiryFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700">
+            </FormSelect>
+            <FormSelect value={inquiryFilter} onChange={e => setInquiryFilter(e.target.value)}>
               <option value="all">All Inquiry Types</option>
               {inquiryTypes.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {(statusFilter !== "all" || inquiryFilter !== "all") && (
-              <button onClick={() => { setStatusFilter("all"); setInquiryFilter("all"); }} className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium">Clear filters</button>
-            )}
+            </FormSelect>
           </div>
         )}
-      </div>
+        <FilterChips
+          chips={[
+            ...(statusFilter !== "all" ? [{ key: "status", label: "Status", value: statusConfig[statusFilter as keyof typeof statusConfig]?.label ?? statusFilter, onRemove: () => setStatusFilter("all") }] : []),
+            ...(inquiryFilter !== "all" ? [{ key: "inquiry", label: "Type", value: inquiryFilter, onRemove: () => setInquiryFilter("all") }] : []),
+          ]}
+          onClearAll={() => { setStatusFilter("all"); setInquiryFilter("all"); }}
+        />
+      </AdminCard>
 
       <p className="text-xs text-slate-400">{filteredContacts.length} of {contacts.length} contacts</p>
 
@@ -306,11 +295,14 @@ export default function ContactsPage() {
             </div>
           );
         }) : (
-          <div className="border border-slate-200 rounded-xl bg-white p-16 text-center">
-            <MessageSquare className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">No contacts found</h3>
-            <p className="text-slate-500 text-sm">{contacts.length === 0 ? "No contact submissions yet" : "No contacts match your search criteria"}</p>
-          </div>
+          <AdminCard>
+            <EmptyState
+              icon={MessageSquare}
+              tone="blue"
+              title="No contacts found"
+              description={contacts.length === 0 ? "Submissions from the website contact form will appear here." : "No contacts match your search — try clearing a filter."}
+            />
+          </AdminCard>
         )}
       </div>
 

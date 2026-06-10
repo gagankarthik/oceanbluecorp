@@ -283,7 +283,7 @@ export default function JobsPage() {
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm transition-colors focus:border-[var(--hz-cobalt)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
               />
             </div>
-            <div className="hidden items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 lg:flex">
+            <div className="hidden items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 xl:flex">
               {(["compact", "detailed"] as const).map((v, i) => (
                 <button key={v} onClick={() => setTableView(v)}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors ${i > 0 ? "border-l border-slate-200" : ""} ${tableView === v ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100"}`}>
@@ -342,8 +342,9 @@ export default function JobsPage() {
         )}
       </div>
 
-      {/* ── Mobile / tablet cards ── */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+      {/* ── Mobile / tablet cards (phones 1-col, tablets/small laptops 2-col;
+             the wide table only takes over at xl where it has room) ── */}
+      <div className="grid gap-3 md:grid-cols-2 xl:hidden">
         {filteredJobs.length > 0 ? filteredJobs.map((job, i) => {
           const jv = job as Job & { vendorName?: string };
           return (
@@ -425,14 +426,14 @@ export default function JobsPage() {
             </motion.div>
           );
         }) : (
-          <div className="sm:col-span-2">
+          <div className="md:col-span-2">
             <AdminCard>{empty}</AdminCard>
           </div>
         )}
       </div>
 
-      {/* ── Desktop table ── */}
-      <motion.div {...fadeUp(2)} className="hidden lg:block">
+      {/* ── Desktop table (xl+ only — needs the horizontal room) ── */}
+      <motion.div {...fadeUp(2)} className="hidden xl:block">
         <AdminCard className="overflow-hidden">
           {tableView === "compact" ? (
             <div className="overflow-x-auto">

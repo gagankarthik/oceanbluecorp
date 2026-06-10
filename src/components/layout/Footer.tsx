@@ -18,7 +18,6 @@ const footerLinks = {
     { name: "Our Team", href: "/team" },
     { name: "Careers", href: "/careers" },
     { name: "Open Positions", href: "/careers/search" },
-    { name: "Insights", href: "/resources/blog" },
     { name: "Contact", href: "/contact" },
   ],
   Developers: [

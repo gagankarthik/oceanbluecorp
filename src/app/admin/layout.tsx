@@ -285,7 +285,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <aside
         className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-slate-200/80 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${sidebarCollapsed ? "lg:w-[68px]" : "lg:w-60"} w-60`}
+        } ${sidebarCollapsed ? "lg:w-[64px]" : "lg:w-56"} w-56`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -402,7 +402,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:pl-[68px]" : "lg:pl-60"}`}>
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56"}`}>
         {/* Top header */}
         <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5">
           <div className="flex items-center gap-3">
@@ -634,7 +634,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-5 min-h-[calc(100vh-3.5rem)]">{children}</main>
+        <main className="p-3 lg:p-4 min-h-[calc(100vh-3.5rem)]">{children}</main>
       </div>
     </div>
   );

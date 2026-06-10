@@ -676,10 +676,10 @@ export default function AdminDocsPage() {
                   { label: "Replied",  color: "bg-emerald-100 text-emerald-700" },
                   { label: "Archived", color: "bg-slate-100 text-slate-600" },
                 ].map((s, i, arr) => (
-                  <>
-                    <Badge key={s.label} label={s.label} color={s.color} />
-                    {i < arr.length - 1 && <ChevronRight key={`c-${i}`} className="w-3.5 h-3.5 text-slate-300 self-center" />}
-                  </>
+                  <Fragment key={s.label}>
+                    <Badge label={s.label} color={s.color} />
+                    {i < arr.length - 1 && <ChevronRight className="w-3.5 h-3.5 text-slate-300 self-center" />}
+                  </Fragment>
                 ))}
               </div>
               <p className="text-sm text-slate-600">All contact submissions arrive as <strong>New</strong>. Mark as <em>Replied</em> after responding, or <em>Archived</em> to hide from active view.</p>

@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Sitemap",
-  description: "A directory of every page on the Ocean Blue Corporation website — services, careers, resources, and more.",
+  description: "A directory of every page on the Ocean Blue Corporation website — services, careers, products, and more.",
   alternates: { canonical: "https://oceanbluecorp.com/sitemap" },
 };
 
@@ -38,15 +38,6 @@ const SECTIONS: { group: string; links: { name: string; href: string }[] }[] = [
     links: [
       { name: "Careers", href: "/careers" },
       { name: "Open Positions", href: "/careers/search" },
-    ],
-  },
-  {
-    group: "Resources",
-    links: [
-      { name: "Resources", href: "/resources" },
-      { name: "Blog", href: "/resources/blog" },
-      { name: "Case Studies", href: "/resources/case-studies" },
-      { name: "Ebooks", href: "/resources/ebook" },
     ],
   },
   {

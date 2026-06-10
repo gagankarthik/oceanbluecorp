@@ -21,7 +21,7 @@ import { StatCard } from "@/components/admin/stat-card";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { type AppStatus } from "@/components/admin/theme";
+import { CHART_COLORS, type AppStatus } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
 
 interface DashboardStats {
@@ -45,8 +45,8 @@ interface DashboardStats {
 
 const STALE_DAYS = 7;
 const OFFER_STALE_DAYS = 5;
-const SOURCE_COLORS = ["#1d4ed8", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"];
-const JOB_COLORS   = ["#1d4ed8", "#6366f1", "#8b5cf6", "#06b6d4", "#10b981"];
+const SOURCE_COLORS = CHART_COLORS.slice(0, 6);
+const JOB_COLORS   = CHART_COLORS.slice(0, 5);
 
 // ── motion presets (respect reduced-motion via useReducedMotion at call site) ───
 const SPRING_EASE = [0.22, 1, 0.36, 1] as const;
@@ -464,6 +464,18 @@ export default function AdminDashboard() {
     return [...map.entries()].map(([name, count]) => ({ name, count, pct: (count / total) * 100 })).sort((a, b) => b.count - a.count).slice(0, 6);
   }, [applications, total]);
 
+  // Daily application counts for the past 14 days — KPI-card sparkline.
+  const appsTrend = useMemo(() => {
+    const days = 14;
+    const counts = new Array<number>(days).fill(0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (const a of applications) {
+      const diff = Math.floor((today.getTime() - new Date(a.appliedAt).setHours(0, 0, 0, 0)) / 86400000);
+      if (diff >= 0 && diff < days) counts[days - 1 - diff]++;
+    }
+    return counts;
+  }, [applications]);
+
   const velocity = useMemo(() => {
     const now = Date.now();
     const last7 = applications.filter((a) => now - new Date(a.appliedAt).getTime() < 7 * 86400000).length;
@@ -587,6 +599,7 @@ export default function AdminDashboard() {
             tone="blue"
             delta={velocityDelta}
             hint={velocity.delta !== 0 ? `${Math.abs(velocity.delta)} ${velocity.delta > 0 ? "more" : "fewer"} vs last week` : "Steady vs last week"}
+            trend={appsTrend}
             href="/admin/applications"
           />
         </motion.div>

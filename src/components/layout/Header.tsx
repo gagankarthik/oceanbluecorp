@@ -18,8 +18,6 @@ import {
   BarChart3,
   Settings,
   Headphones,
-  BookOpen,
-  FileText,
   Briefcase,
   LogOut,
   LayoutDashboard,
@@ -47,12 +45,6 @@ const servicesFeature = {
   href:  "/services",
   cta:   "Explore all services",
 };
-
-const resources = [
-  { name: "Ebooks",       href: "/resources/ebook",        icon: BookOpen,  description: "Free guides & whitepapers"   },
-  { name: "Blog",         href: "/resources/blog",         icon: FileText,  description: "Latest insights & articles"  },
-  { name: "Case Studies", href: "/resources/case-studies", icon: Briefcase, description: "Success stories & results"   },
-];
 
 const aboutItems = [
   { name: "About Us",  href: "/about",      icon: Building,   description: "Our story, principles, and how we work." },
@@ -202,34 +194,6 @@ function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function ResourcesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#ffffff] shadow-[var(--reg-shadow-xl)]">
-      <div className="p-6">
-        <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
-          Insights &amp; research
-        </p>
-        <div className="space-y-0.5">
-          {resources.map((it) => (
-            <MenuTile key={it.name} {...it} onClick={onNavigate} />
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-[#f8fafc] px-6 py-3">
-        <span className="text-[12px] text-[var(--hz-text-mute)]">New brief every fortnight</span>
-        <Link
-          href="/resources"
-          onClick={onNavigate}
-          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-text)] hover:text-[var(--hz-cobalt)]"
-        >
-          Browse all
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 export default function Header({ topOffset = "top-0" }: { topOffset?: string }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -319,7 +283,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   const getDropdownItems = (type: string) => {
     if (type === "services") return services;
     if (type === "about") return aboutItems;
-    return resources;
+    return [];
   };
 
   const toggleMobileDropdown = (type: string) => {
@@ -389,10 +353,8 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                         >
                           {item.dropdownType === "services" ? (
                             <ServicesMegaMenu onNavigate={() => setActiveDropdown(null)} />
-                          ) : item.dropdownType === "about" ? (
-                            <AboutMegaMenu onNavigate={() => setActiveDropdown(null)} />
                           ) : (
-                            <ResourcesMegaMenu onNavigate={() => setActiveDropdown(null)} />
+                            <AboutMegaMenu onNavigate={() => setActiveDropdown(null)} />
                           )}
                         </motion.div>
                       )}
@@ -604,9 +566,9 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                   </Link>
                                 ))}
 
-                                {item.dropdownType !== "about" && (
+                                {item.dropdownType === "services" && (
                                   <Link
-                                    href={item.dropdownType === "services" ? "/services" : "/resources"}
+                                    href="/services"
                                     className="flex items-center justify-between p-3 rounded-xl bg-[var(--hz-cobalt-100)] hover:brightness-95 transition-all mt-2"
                                     onClick={() => {
                                       setMobileMenuOpen(false);
