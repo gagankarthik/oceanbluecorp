@@ -3,11 +3,15 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { StatCard } from "@/components/admin/stat-card";
+import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
+import { FilterChips } from "@/components/admin/filter-chips";
+import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
 
 import { useState, useEffect } from "react";
 import {
-  Search,
-  Filter,
   Download,
   Plus,
   Users,
@@ -308,6 +312,7 @@ export default function VendorsPage() {
       <PageHeader
         title="Vendor Management"
         subtitle="Manage your vendor records"
+        icon={UserCog}
         actions={
           <>
             <PageHeaderButton variant="secondary" onClick={handleExportCSV} disabled={filteredVendors.length === 0}>
@@ -330,105 +335,41 @@ export default function VendorsPage() {
         }
       />
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center">
-              <UserCog className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Vendors</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.hr}</p>
-              <p className="text-xs text-slate-500">HR Lead</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.admin}</p>
-              <p className="text-xs text-slate-500">Admin Lead</p>
-            </div>
-          </div>
-        </div>
+        <StatCard size="sm" label="Total vendors" value={stats.total} icon={UserCog} tone="blue" />
+        <StatCard size="sm" label="HR lead" value={stats.hr} icon={Users} tone="violet" />
+        <StatCard size="sm" label="Admin lead" value={stats.admin} icon={Shield} tone="amber" />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl border border-slate-200/80">
-        <div className="p-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search vendors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${
-                showFilters || vendorLeadFilter !== "all"
-                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filters</span>
-              {vendorLeadFilter !== "all" && (
-                <span className="w-5 h-5 rounded-full bg-[var(--hz-cobalt)] text-white text-xs flex items-center justify-center font-medium">
-                  1
-                </span>
-              )}
-            </button>
-          </div>
-
-          {showFilters && (
-            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-3">
-              <select
-                value={vendorLeadFilter}
-                onChange={(e) => setVendorLeadFilter(e.target.value)}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-              >
-                <option value="all">All Vendor Leads</option>
-                <option value="hr">HR</option>
-                <option value="admin">Admin</option>
-              </select>
-              {vendorLeadFilter !== "all" && (
-                <button
-                  onClick={() => setVendorLeadFilter("all")}
-                  className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium"
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
-          )}
+      {/* Toolbar */}
+      <AdminCard className="space-y-3 p-3">
+        <div className="flex gap-2">
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, contact, email, location…" />
+          <FilterToggle
+            open={showFilters}
+            activeCount={vendorLeadFilter !== "all" ? 1 : 0}
+            onClick={() => setShowFilters(!showFilters)}
+          />
         </div>
-      </div>
+        {showFilters && (
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-3">
+            <FormSelect value={vendorLeadFilter} onChange={(e) => setVendorLeadFilter(e.target.value)}>
+              <option value="all">All vendor leads</option>
+              <option value="hr">HR</option>
+              <option value="admin">Admin</option>
+            </FormSelect>
+          </div>
+        )}
+        <FilterChips
+          chips={vendorLeadFilter !== "all" ? [{ key: "lead", label: "Lead", value: vendorLeadFilter === "hr" ? "HR" : "Admin", onRemove: () => setVendorLeadFilter("all") }] : []}
+        />
+      </AdminCard>
 
       {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">
-          {filteredVendors.length} of {vendors.length} vendors
-        </p>
-      </div>
+      <p className="text-xs text-slate-500">
+        {filteredVendors.length} of {vendors.length} vendors
+      </p>
 
       {/* Vendor Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
@@ -533,14 +474,18 @@ export default function VendorsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <UserCog className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-1">No vendors found</h3>
-                    <p className="text-slate-500 text-sm">
-                      {vendors.length === 0
-                        ? "Add your first vendor to get started"
-                        : "No vendors match your search criteria"}
-                    </p>
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={UserCog}
+                      tone="blue"
+                      title="No vendors found"
+                      description={vendors.length === 0 ? "Add your first vendor to start tracking partners." : "No vendors match your search — try clearing a filter."}
+                      action={vendors.length === 0 ? (
+                        <PageHeaderButton variant="primary" onClick={() => { setEditingVendor(null); setFormData(initialFormData); setFormErrors({}); setShowForm(true); }}>
+                          <Plus className="w-3.5 h-3.5" /> Add vendor
+                        </PageHeaderButton>
+                      ) : undefined}
+                    />
                   </td>
                 </tr>
               )}
@@ -554,9 +499,9 @@ export default function VendorsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-[var(--hz-cobalt-100)] to-cyan-50">
-              <h2 className="text-xl font-bold text-slate-900">
-                {editingVendor ? "Edit Vendor" : "Add New Vendor"}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">
+                {editingVendor ? "Edit vendor" : "Add new vendor"}
               </h2>
               <button
                 onClick={() => {
@@ -581,45 +526,30 @@ export default function VendorsPage() {
                     Required Information
                   </h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Vendor Name <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        type="text"
+                    <Field label="Vendor name" required>
+                      <FormInput
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
-                          formErrors.name ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
                         placeholder="Enter vendor name"
+                        className={formErrors.name ? "border-rose-300 bg-rose-50" : ""}
                       />
-                      {formErrors.name && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Vendor Lead <span className="text-rose-500">*</span>
-                      </label>
-                      <select
+                      {formErrors.name && <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>}
+                    </Field>
+                    <Field label="Vendor lead" required>
+                      <FormSelect
                         value={formData.vendorLeadId}
                         onChange={(e) => handleVendorLeadSelect(e.target.value)}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none bg-white ${
-                          formErrors.vendorLead ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
+                        className={formErrors.vendorLead ? "border-rose-300 bg-rose-50" : ""}
                       >
-                        <option value="">Select a vendor lead...</option>
+                        <option value="">Select a vendor lead…</option>
                         {hrUsers.map((user) => (
                           <option key={user.id} value={user.id}>
                             {user.name || user.email} ({(user.role || "").toUpperCase()})
                           </option>
                         ))}
-                      </select>
-                      {formErrors.vendorLead && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.vendorLead}</p>
-                      )}
-                    </div>
+                      </FormSelect>
+                      {formErrors.vendorLead && <p className="mt-1.5 text-sm text-rose-600">{formErrors.vendorLead}</p>}
+                    </Field>
                   </div>
                 </div>
 
@@ -627,31 +557,23 @@ export default function VendorsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-700 mb-4">Contact Information</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Contact Person</label>
-                      <input
-                        type="text"
+                    <Field label="Contact person">
+                      <FormInput
                         value={formData.contactPerson}
                         onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="Contact person name"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-                      <input
+                    </Field>
+                    <Field label="Email">
+                      <FormInput
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
-                          formErrors.email ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
                         placeholder="vendor@example.com"
+                        className={formErrors.email ? "border-rose-300 bg-rose-50" : ""}
                       />
-                      {formErrors.email && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>
-                      )}
-                    </div>
+                      {formErrors.email && <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>}
+                    </Field>
                   </div>
                 </div>
 
@@ -659,26 +581,12 @@ export default function VendorsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-700 mb-4">Location</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">State</label>
-                      <input
-                        type="text"
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
-                        placeholder="State"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">ZIP Code</label>
-                      <input
-                        type="text"
-                        value={formData.zipCode}
-                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
-                        placeholder="12345"
-                      />
-                    </div>
+                    <Field label="State">
+                      <FormInput value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                    </Field>
+                    <Field label="ZIP code">
+                      <FormInput value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
+                    </Field>
                   </div>
                 </div>
               </div>

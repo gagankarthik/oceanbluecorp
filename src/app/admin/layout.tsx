@@ -27,15 +27,16 @@ import {
   Boxes,
   Shield,
   FolderOpen,
-  BookOpen,
-  Activity,
-  KeyRound,
+  Code2,
+  HelpCircle,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, UserRole, routeAccess } from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
+import { HeaderSearch } from "@/components/admin/header-search";
 import { Toaster } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface Notification {
   id: string;
@@ -55,51 +56,25 @@ type NavItem = {
   roles: UserRole[];
 };
 
-const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
-  {
-    label: null,
-    items: [
-      { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-    ],
-  },
-  {
-    label: "Recruitment",
-    items: [
-      { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-      { name: "Applications", href: "/admin/applications", icon: Users,      roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-      { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,      roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-      { name: "Resumes",      href: "/admin/resumes",      icon: FolderOpen, roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-    ],
-  },
-  {
-    label: "CRM",
-    items: [
-      { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, roles: [UserRole.ADMIN, UserRole.HR] },
-      { name: "Clients",  href: "/admin/clients",  icon: Building,      roles: [UserRole.ADMIN, UserRole.HR] },
-      { name: "Vendors",  href: "/admin/vendors",  icon: UsersRound,    roles: [UserRole.ADMIN, UserRole.HR] },
-    ],
-  },
-  {
-    label: "Administration",
-    items: [
-      { name: "Users",    href: "/admin/users",     icon: UserCog,  roles: [UserRole.ADMIN] },
-      { name: "Roles",    href: "/admin/roles",     icon: Shield,   roles: [UserRole.ADMIN] },
-      { name: "API Keys", href: "/admin/api-keys",  icon: KeyRound, roles: [UserRole.ADMIN] },
-      { name: "Content",  href: "/admin/content",   icon: FileText, roles: [UserRole.ADMIN] },
-      { name: "Settings", href: "/admin/settings",  icon: Settings, roles: [UserRole.ADMIN] },
-    ],
-  },
-  {
-    label: "Resources",
-    items: [
-      { name: "Docs",   href: "/admin/docs",   icon: BookOpen,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-      { name: "Status", href: "/status",        icon: Activity,  roles: [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES] },
-    ],
-  },
+const ALL_ROLES = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
+
+// Flat sidebar — no category labels. API Keys + Docs live on the Developer page
+// (top-bar link); Settings lives in the user menu.
+const NAV_ITEMS: NavItem[] = [
+  { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard,  roles: ALL_ROLES },
+  { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,        roles: ALL_ROLES },
+  { name: "Applications", href: "/admin/applications", icon: Users,            roles: ALL_ROLES },
+  { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,            roles: ALL_ROLES },
+  { name: "Resumes",      href: "/admin/resumes",      icon: FolderOpen,       roles: ALL_ROLES },
+  { name: "Contacts",     href: "/admin/contacts",     icon: MessageSquare,    roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Clients",      href: "/admin/clients",      icon: Building,         roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Vendors",      href: "/admin/vendors",      icon: UsersRound,       roles: [UserRole.ADMIN, UserRole.HR] },
+  { name: "Content",      href: "/admin/content",      icon: FileText,         roles: [UserRole.ADMIN] },
+  { name: "Users",        href: "/admin/users",        icon: UserCog,          roles: [UserRole.ADMIN] },
 ];
 
-// Flat list still needed for page-title lookup
-const navigation = NAV_GROUPS.flatMap((g) => g.items);
+// Used for the top-nav breadcrumb section lookup.
+const navigation = NAV_ITEMS;
 
 const notificationIcons = {
   job_posted: Briefcase,
@@ -260,6 +235,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     // Sections with pages but no nav item of their own map to their parent.
     const aliases: Record<string, { name: string; href: string }> = {
       "/admin/candidates": { name: "Applications", href: "/admin/applications" },
+      "/admin/roles":      { name: "Roles",        href: "/admin/roles" },
+      "/admin/settings":   { name: "Settings",     href: "/admin/settings" },
+      "/admin/api-keys":   { name: "API Keys",     href: "/admin/api-keys" },
     };
     for (const [prefix, info] of Object.entries(aliases)) {
       if (pathname === prefix || pathname.startsWith(prefix + "/")) return info;
@@ -271,8 +249,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
   const section = getCurrentSection();
 
+  // ── RBAC: does the current role have access to this route? (longest-prefix match) ──
+  const routeAllowed = (() => {
+    if (!user?.role) return false;
+    const match = Object.keys(routeAccess)
+      .filter((p) => pathname === p || pathname.startsWith(p + "/"))
+      .sort((a, b) => b.length - a.length)[0];
+    return match ? routeAccess[match].includes(user.role) : true;
+  })();
+
   return (
     <div className="min-h-screen bg-slate-50/50">
+      {/* Skip link — keyboard users jump past the nav straight to content (a11y) */}
+      <a
+        href="#adm-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-[var(--hz-cobalt)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+      >
+        Skip to content
+      </a>
+
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -314,69 +309,40 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-2 overflow-y-auto px-2 space-y-1">
-            {NAV_GROUPS.map((group) => {
-              const visibleItems = group.items.filter((item) => hasAnyRole(item.roles));
-              if (visibleItems.length === 0) return null;
+          {/* Navigation — flat, no category labels */}
+          <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-px">
+            {NAV_ITEMS.filter((item) => hasAnyRole(item.roles)).map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
               return (
-                <div key={group.label ?? "top"}>
-                  {/* Group label */}
-                  {group.label && !sidebarCollapsed && (
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 pt-3 pb-1">
-                      {group.label}
-                    </p>
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  title={sidebarCollapsed ? item.name : undefined}
+                  onClick={() => setSidebarOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "group relative flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
+                    sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]",
+                    isActive
+                      ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]",
                   )}
-                  {group.label && sidebarCollapsed && (
-                    <div className="my-1 border-t border-slate-100 mx-1" />
+                >
+                  {/* Active accent bar */}
+                  {isActive && !sidebarCollapsed && (
+                    <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--hz-cobalt)]" />
                   )}
-                  <div className="space-y-px">
-                    {visibleItems.map((item) => {
-                      const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
-                      return (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          title={sidebarCollapsed ? item.name : undefined}
-                          onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                            sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
-                          } ${
-                            isActive
-                              ? "bg-[var(--hz-cobalt)] text-white shadow-sm"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-[15px] h-[15px]"}`} />
-                          {!sidebarCollapsed && <span>{item.name}</span>}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
+                  <item.icon
+                    className={cn(
+                      "flex-shrink-0 transition-transform duration-200",
+                      sidebarCollapsed ? "h-[18px] w-[18px]" : "h-[15px] w-[15px]",
+                      !isActive && "group-hover:scale-110",
+                    )}
+                  />
+                  {!sidebarCollapsed && <span>{item.name}</span>}
+                </Link>
               );
             })}
-
-            {/* Website link */}
-            <div>
-              {!sidebarCollapsed && (
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 pt-3 pb-1">
-                  External
-                </p>
-              )}
-              {sidebarCollapsed && <div className="my-1 border-t border-slate-100 mx-1" />}
-              <Link
-                href="/"
-                target="_blank"
-                title={sidebarCollapsed ? "View Website" : undefined}
-                className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all ${
-                  sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-[7px]"
-                }`}
-              >
-                <Home className={`flex-shrink-0 ${sidebarCollapsed ? "w-[18px] h-[18px]" : "w-[15px] h-[15px]"}`} />
-                {!sidebarCollapsed && <span>View Website</span>}
-              </Link>
-            </div>
           </nav>
 
           {/* Collapse Toggle */}
@@ -404,7 +370,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56"}`}>
         {/* Top header */}
-        <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5">
+        <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5 relative">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <button
@@ -414,43 +380,37 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Breadcrumb */}
-            <nav className="hidden sm:flex items-center gap-1 text-sm">
-              <Link href="/admin" className="text-slate-400 hover:text-[var(--hz-cobalt)] transition-colors">
-                Admin
+            {/* Breadcrumb — home icon › page (› sub-page) */}
+            <nav className="hidden min-w-0 items-center gap-1.5 whitespace-nowrap text-sm sm:flex">
+              <Link href="/admin" title="Dashboard" className="inline-flex flex-shrink-0 items-center text-slate-400 transition-colors hover:text-[var(--hz-cobalt)]">
+                <Home className="h-4 w-4" />
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-              {pageCrumb ? (
+              <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-slate-300" />
+              {pathname === "/admin" ? (
+                <span className="font-semibold text-slate-900">Dashboard</span>
+              ) : pageCrumb ? (
                 <>
-                  <Link href={section.href} className="text-slate-400 hover:text-[var(--hz-cobalt)] transition-colors">
+                  <Link href={section.href} className="flex-shrink-0 font-medium text-slate-500 transition-colors hover:text-[var(--hz-cobalt)]">
                     {section.name}
                   </Link>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-                  <span className="font-medium text-slate-800">{pageCrumb}</span>
+                  <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-slate-300" />
+                  <span className="truncate font-semibold text-slate-900">{pageCrumb}</span>
                 </>
               ) : (
-                <span className="font-medium text-slate-800">{section.name}</span>
+                <span className="font-semibold text-slate-900">{section.name}</span>
               )}
             </nav>
 
             {/* Mobile Title */}
-            <h1 className="sm:hidden font-semibold text-slate-800">{pageCrumb || section.name}</h1>
+            <h1 className="sm:hidden font-semibold text-slate-800">{pathname === "/admin" ? "Dashboard" : (pageCrumb || section.name)}</h1>
+          </div>
+
+          {/* Centered inline search bar (⌘K command palette still available for power users) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <HeaderSearch />
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Command palette trigger — replaces inline search */}
-            <button
-              type="button"
-              onClick={openCommandPalette}
-              className="hidden md:inline-flex items-center gap-2 w-56 lg:w-72 pl-2.5 pr-1.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg hover:bg-white hover:border-slate-300 transition-colors group"
-            >
-              <Search className="w-4 h-4 text-slate-400" />
-              <span className="text-slate-400 flex-1 text-left">Search or jump to…</span>
-              <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-[0_1px_0_rgba(0,0,0,0.04)]">
-                ⌘K
-              </kbd>
-            </button>
-
             {/* Mobile search */}
             <button
               type="button"
@@ -459,6 +419,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             >
               <Search className="w-5 h-5" />
             </button>
+
+            
 
             {/* Notifications */}
             <div ref={notificationsRef} className="relative">
@@ -558,6 +520,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
+            {/* Help & team directory */}
+            <Link
+              href="/admin/help"
+              title="Help & team"
+              className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Link>
+
             {/* Divider */}
             <div className="hidden md:block w-px h-5 bg-slate-200 mx-0.5" />
 
@@ -606,13 +577,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     </span>
                   </div>
                   <div className="py-1">
-                    <Link href="/admin" onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
-                      <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard
-                    </Link>
                     <Link href="/admin/settings" onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
                       <Settings className="w-4 h-4 text-slate-400" /> Settings
+                    </Link>
+                    <Link href="/admin/docs" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
+                      <Code2 className="w-4 h-4 text-slate-400" /> Developer
                     </Link>
                     <Link href="/" target="_blank" onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
@@ -634,7 +605,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="p-3 lg:p-4 min-h-[calc(100vh-3.5rem)]">{children}</main>
+        <main id="adm-main" className="p-3 lg:p-4 min-h-[calc(100vh-3.5rem)]">
+          {routeAllowed ? children : (
+            <div className="flex min-h-[70vh] items-center justify-center">
+              <div className="max-w-sm text-center">
+                <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-rose-50">
+                  <Shield className="h-7 w-7 text-rose-500" />
+                </div>
+                <p className="text-base font-bold text-slate-900">Access restricted</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Your role ({user?.role}) doesn&apos;t have access to this page. Contact an administrator if you think this is a mistake.
+                </p>
+                <Link href="/admin" className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]">
+                  Back to dashboard
+                </Link>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

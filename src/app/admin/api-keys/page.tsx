@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
-  RefreshCw,
   X,
   Globe,
 } from "lucide-react";
@@ -313,13 +312,6 @@ export default function ApiKeysPage() {
           <p className="text-sm font-medium text-slate-700">
             {keys.length} {keys.length === 1 ? "key" : "keys"}
           </p>
-          <button
-            onClick={fetchKeys}
-            disabled={loading}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
         </div>
 
         {loading ? (

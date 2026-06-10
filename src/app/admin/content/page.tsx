@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Save,
   Eye,
+  FileText,
   Home,
   Info,
   Briefcase,
@@ -20,9 +21,9 @@ import {
   Trash2,
   Globe,
   Mail,
-  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { PageHeader } from "@/components/admin/page-header";
 
 // ─── Schema ────────────────────────────────────────────────────────────────
 
@@ -254,45 +255,41 @@ export default function ContentPage() {
   const saveError = errorPages[activePage];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Content Management</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Edit and publish website content — changes save directly to the database.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
-          >
-            <Eye className="w-4 h-4" />Preview
-          </a>
-          <button
-            onClick={() => savePage(activePage)}
-            disabled={isSaving}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isSaved
-                ? "bg-emerald-600 text-white"
-                : saveError
-                ? "bg-rose-600 text-white"
-                : "bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white"
-            } disabled:opacity-60`}
-          >
-            {isSaving ? (
-              <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
-            ) : isSaved ? (
-              <><CheckCircle2 className="w-4 h-4" />Saved!</>
-            ) : saveError ? (
-              <><AlertCircle className="w-4 h-4" />Retry</>
-            ) : (
-              <><Save className="w-4 h-4" />Save Changes</>
-            )}
-          </button>
-        </div>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Content"
+        subtitle="Edit and publish website copy — changes save straight to the database."
+        icon={FileText}
+        actions={
+          <>
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:scale-[0.98]"
+            >
+              <Eye className="w-4 h-4" />Preview
+            </a>
+            <button
+              onClick={() => savePage(activePage)}
+              disabled={isSaving}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 ${
+                isSaved ? "bg-emerald-600" : saveError ? "bg-rose-600" : "bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)]"
+              }`}
+            >
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
+              ) : isSaved ? (
+                <><CheckCircle2 className="w-4 h-4" />Saved</>
+              ) : saveError ? (
+                <><AlertCircle className="w-4 h-4" />Retry</>
+              ) : (
+                <><Save className="w-4 h-4" />Save changes</>
+              )}
+            </button>
+          </>
+        }
+      />
 
       {fetching ? (
         <div className="flex items-center justify-center py-24">

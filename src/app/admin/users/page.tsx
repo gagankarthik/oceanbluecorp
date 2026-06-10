@@ -1,7 +1,10 @@
 "use client";
 import { toast } from "sonner";
+import Link from "next/link";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminRowsSkeleton } from "@/components/admin/skeletons";
+import { SearchInput } from "@/components/admin/toolbar";
+import { FormSelect } from "@/components/admin/forms/primitives";
 
 import { useState, useEffect } from "react";
 import {
@@ -17,11 +20,12 @@ import {
   X,
   AlertCircle,
   Loader2,
-  RefreshCw,
   Users,
   UserPlus,
   Send,
+  Check,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Role = "admin" | "hr" | "recruiter" | "sales";
 
@@ -54,6 +58,13 @@ const roleConfig: Record<Role, { label: string; bg: string }> = {
   sales: { label: "Sales", bg: "bg-amber-100 text-amber-800" },
 };
 const noRoleConfig = { label: "No role", bg: "bg-slate-100 text-slate-600" };
+
+const roleIcon: Record<Role, typeof Shield> = {
+  admin: Shield,
+  hr: Users,
+  recruiter: UserCheck,
+  sales: UserCheck,
+};
 
 const statusConfig: Record<string, { label: string; bg: string; dot: string }> = {
   active: { label: "Active", bg: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
@@ -216,9 +227,12 @@ export default function UsersPage() {
         meta={<span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{users.length} total</span>}
         actions={
           <>
-            <PageHeaderButton variant="secondary" onClick={fetchUsers} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
-            </PageHeaderButton>
+            <Link
+              href="/admin/roles"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:scale-[0.98]"
+            >
+              <Shield className="w-4 h-4" /> Roles
+            </Link>
             <PageHeaderButton variant="primary" onClick={() => setShowInviteModal(true)}>
               <UserPlus className="w-4 h-4" /> Invite User
             </PageHeaderButton>
@@ -275,26 +289,22 @@ export default function UsersPage() {
 
         {/* Search + status */}
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name or email…"
-              value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]"
-            />
+          <SearchInput
+            value={searchQuery}
+            onChange={v => { setSearchQuery(v); setCurrentPage(1); }}
+            placeholder="Search by name or email…"
+          />
+          <div className="sm:w-44">
+            <FormSelect
+              value={selectedStatus}
+              onChange={e => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="pending">Invited</option>
+            </FormSelect>
           </div>
-          <select
-            value={selectedStatus}
-            onChange={e => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="pending">Invited</option>
-          </select>
         </div>
 
         {/* Loading */}
@@ -456,30 +466,68 @@ export default function UsersPage() {
 
       {/* Change Role Modal */}
       {showRoleModal && userToEdit && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Change User Role</h2>
-              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header — who you're editing */}
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-[var(--hz-cobalt-100)] text-sm font-bold text-[var(--hz-cobalt)]">
+                  {(userToEdit.name || userToEdit.email || "?").charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-900">{userToEdit.name || "Unnamed"}</p>
+                  <p className="truncate text-xs text-slate-500">{userToEdit.email}</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" /></button>
             </div>
-            <div className="p-6">
-              <p className="text-sm text-slate-600 mb-4">Change role for <span className="font-semibold text-slate-900">{userToEdit.name}</span></p>
-              <div className="space-y-3">
-                {ROLE_OPTIONS.map(({ role, desc }) => (
-                  <label key={role} className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${newRole === role ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]" : "border-slate-200 hover:border-slate-300"}`}>
-                    <input type="radio" name="role" value={role} checked={newRole === role} onChange={e => setNewRole(e.target.value)} className="w-4 h-4 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
-                    <div>
-                      <p className="font-medium text-slate-900">{roleConfig[role].label}</p>
-                      <p className="text-xs text-slate-500">{desc}</p>
-                    </div>
-                  </label>
-                ))}
+
+            <div className="p-5">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Select a role</p>
+              <div className="space-y-2">
+                {ROLE_OPTIONS.map(({ role, desc }) => {
+                  const cfg = roleConfig[role];
+                  const Icon = roleIcon[role];
+                  const selected = newRole === role;
+                  const current = userToEdit.role === role;
+                  return (
+                    <button
+                      type="button"
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all",
+                        selected
+                          ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]/50 ring-1 ring-[var(--hz-cobalt)]"
+                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                      )}
+                    >
+                      <span className={cn("grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg", cfg.bg)}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-slate-900">{cfg.label}</p>
+                          {current && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">Current</span>}
+                        </div>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{desc}</p>
+                      </div>
+                      <span className={cn(
+                        "mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-colors",
+                        selected ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt)]" : "border-slate-300",
+                      )}>
+                        {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
-              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
-              <button onClick={handleUpdateRole} disabled={updating || newRole === userToEdit.role || !newRole} className="px-5 py-2 text-sm font-medium bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors disabled:opacity-50 flex items-center gap-2">
-                {updating && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
+
+            <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200">Cancel</button>
+              <button onClick={handleUpdateRole} disabled={updating || newRole === userToEdit.role || !newRole} className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.98] disabled:opacity-50">
+                {updating && <Loader2 className="h-4 w-4 animate-spin" />} Save role
               </button>
             </div>
           </div>

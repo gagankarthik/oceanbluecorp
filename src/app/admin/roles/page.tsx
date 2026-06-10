@@ -1,38 +1,20 @@
 "use client";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 
-import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import {
-  Shield,
-  Users,
-  Briefcase,
-  FileText,
-  MessageSquare,
-  Building,
-  UsersRound,
-  Settings,
-  LayoutDashboard,
-  Boxes,
-  UserStar,
-  Info,
-  Check,
-  X,
+  Shield, Users, Briefcase, FileText, MessageSquare, Building,
+  UsersRound, Settings, LayoutDashboard, Boxes, UserStar, Info, Check, Minus,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
+import { PageHeader } from "@/components/admin/page-header";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { tones, type Tone } from "@/components/admin/theme";
+import { cn } from "@/lib/utils";
 
 interface RoleConfig {
   name: string;
   description: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
+  tone: Tone;
   icon: typeof Shield;
   level: number;
 }
@@ -40,242 +22,160 @@ interface RoleConfig {
 const roleConfigs: Record<string, RoleConfig> = {
   [UserRole.ADMIN]: {
     name: "Administrator",
-    description: "Full access to all features, settings, and user management",
-    color: "text-rose-700",
-    bgColor: "bg-rose-50",
-    borderColor: "border-rose-200",
+    description: "Full access to every feature, setting, and user.",
+    tone: "rose",
     icon: Shield,
     level: roleHierarchy[UserRole.ADMIN],
   },
   [UserRole.HR]: {
     name: "HR Manager",
-    description: "Access to HR features including jobs, applications, candidates, clients, vendors, and contacts",
-    color: "text-violet-700",
-    bgColor: "bg-violet-50",
-    borderColor: "border-violet-200",
+    description: "Jobs, applications, candidates, clients, vendors, and contacts.",
+    tone: "violet",
     icon: Users,
     level: roleHierarchy[UserRole.HR],
   },
   [UserRole.RECRUITER]: {
     name: "Recruiter",
-    description: "View-only access to jobs, plus applications, candidates, and bench. No access to clients, vendors, or contacts",
-    color: "text-teal-700",
-    bgColor: "bg-teal-50",
-    borderColor: "border-teal-200",
+    description: "Jobs (view), applications, candidates, and bench. No CRM.",
+    tone: "teal",
     icon: UserStar,
     level: roleHierarchy[UserRole.RECRUITER],
   },
   [UserRole.SALES]: {
     name: "Sales",
-    description: "Can create/edit job postings, access applications, candidates, and bench. No access to clients, vendors, or contacts",
-    color: "text-amber-700",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
+    description: "Create/edit jobs, applications, candidates, and bench. No CRM.",
+    tone: "amber",
     icon: Briefcase,
     level: roleHierarchy[UserRole.SALES],
   },
 };
 
-interface RouteConfig {
-  path: string;
-  name: string;
-  icon: typeof Shield;
-}
-
-const routes: RouteConfig[] = [
-  { path: "/admin", name: "Admin Home", icon: LayoutDashboard },
-  { path: "/admin", name: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/roles", name: "Roles", icon: Shield },
-  { path: "/admin/jobs", name: "Job Postings", icon: Briefcase },
-  { path: "/admin/applications", name: "Applications", icon: FileText },
-  { path: "/admin/candidates", name: "Candidates", icon: UserStar },
-  { path: "/admin/bench", name: "Talent Bench", icon: Boxes },
-  { path: "/admin/contacts", name: "Contacts", icon: MessageSquare },
-  { path: "/admin/clients", name: "Clients", icon: Building },
-  { path: "/admin/vendors", name: "Vendors", icon: UsersRound },
-  { path: "/admin/settings", name: "Settings", icon: Settings },
-];
-
 const roles = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 
+// One row per route — paths are unique (the duplicate "/admin" entry was the
+// source of a React key collision).
+const routes: { path: string; name: string; icon: typeof Shield }[] = [
+  { path: "/admin",              name: "Dashboard",    icon: LayoutDashboard },
+  { path: "/admin/jobs",         name: "Job Postings", icon: Briefcase },
+  { path: "/admin/applications", name: "Applications", icon: FileText },
+  { path: "/admin/candidates",   name: "Candidates",   icon: UserStar },
+  { path: "/admin/bench",        name: "Talent Bench", icon: Boxes },
+  { path: "/admin/contacts",     name: "Contacts",     icon: MessageSquare },
+  { path: "/admin/clients",      name: "Clients",      icon: Building },
+  { path: "/admin/vendors",      name: "Vendors",      icon: UsersRound },
+  { path: "/admin/content",      name: "Content",      icon: FileText },
+  { path: "/admin/users",        name: "Users",        icon: Users },
+  { path: "/admin/roles",        name: "Roles",        icon: Shield },
+  { path: "/admin/settings",     name: "Settings",     icon: Settings },
+];
+
 function hasAccess(route: string, role: UserRole): boolean {
-  const allowedRoles = routeAccess[route];
-  if (!allowedRoles) return false;
-  return allowedRoles.includes(role);
+  return routeAccess[route]?.includes(role) ?? false;
 }
 
 export default function RolesPage() {
-  const totalRoles = Object.keys(roleConfigs).length;
-  const totalRoutes = routes.length;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title="Roles & Permissions"
-        subtitle="View role hierarchy and route access permissions"
+        subtitle="Who can access what. Read-only — assignments are managed in Cognito."
         icon={Shield}
+        actions={
+          <Link
+            href="/admin/users"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:scale-[0.98]"
+          >
+            <Users className="h-4 w-4" /> Users
+          </Link>
+        }
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "Total Roles", value: totalRoles, icon: Shield, color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
-          { label: "Admin-only Routes", value: routes.filter(r => routeAccess[r.path]?.length === 1).length, icon: Shield, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
-          { label: "Shared Routes", value: routes.filter(r => (routeAccess[r.path]?.length ?? 0) > 1).length, icon: Users, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
-          { label: "Total Routes", value: totalRoutes, icon: Settings, color: "text-violet-700", bg: "bg-violet-50 border-violet-200" },
-        ].map(stat => (
-          <div key={stat.label} className={`${stat.bg} border rounded-xl p-4 shadow-sm`}>
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`w-4 h-4 ${stat.color}`} />
-            </div>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
+      {/* Roles, ordered by access level */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {roles.map((role) => {
+          const c = roleConfigs[role];
+          const t = tones[c.tone];
+          const Icon = c.icon;
+          return (
+            <AdminCard key={role} className="p-4">
+              <div className="flex items-center justify-between">
+                <span className={cn("grid h-10 w-10 place-items-center rounded-xl", t.bg)}>
+                  <Icon className={cn("h-5 w-5", t.text)} strokeWidth={2} />
+                </span>
+                <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", t.bg, t.text)}>
+                  Level {c.level}
+                </span>
+              </div>
+              <h3 className="mt-3 text-sm font-bold text-slate-900">{c.name}</h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">{c.description}</p>
+            </AdminCard>
+          );
+        })}
       </div>
 
-      {/* Role Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="shadow-sm border-slate-100">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Role Hierarchy</CardTitle>
-            <CardDescription>System roles ordered by hierarchy level</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {roles.map((role, index) => {
-                const config = roleConfigs[role];
-                const Icon = config.icon;
+      {/* Permissions matrix */}
+      <AdminCard className="overflow-hidden">
+        <AdminCardHeader icon={Shield} tone="blue" title="Route access" count={routes.length} />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                <th className="sticky left-0 z-10 bg-slate-50/60 px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Route
+                </th>
+                {roles.map((role) => (
+                  <th key={role} className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    {roleConfigs[role].name.split(" ")[0]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {routes.map((route) => {
+                const Icon = route.icon;
                 return (
-                  <motion.div
-                    key={role}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 hover:shadow-md transition-shadow`}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-lg ${config.bgColor} ${config.borderColor} border flex items-center justify-center`}>
-                        <Icon className={`w-5 h-5 ${config.color}`} />
-                      </div>
-                      <div>
-                        <h3 className={`font-semibold ${config.color}`}>{config.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${config.bgColor} ${config.borderColor} border ${config.color} font-medium`}>
-                          Level {config.level}
+                  <tr key={route.path} className="transition-colors hover:bg-[var(--adm-accent-tint)]">
+                    <td className="sticky left-0 z-10 bg-inherit px-5 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg bg-slate-100">
+                          <Icon className="h-3.5 w-3.5 text-slate-500" />
                         </span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900">{route.name}</p>
+                          <p className="font-mono text-[11px] text-slate-400">{route.path}</p>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      {config.description}
-                    </p>
-                  </motion.div>
+                    </td>
+                    {roles.map((role) => (
+                      <td key={`${route.path}-${role}`} className="px-3 py-3 text-center">
+                        {hasAccess(route.path, role) ? (
+                          <span className="inline-grid h-6 w-6 place-items-center rounded-full bg-emerald-50">
+                            <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
+                          </span>
+                        ) : (
+                          <span className="inline-grid h-6 w-6 place-items-center rounded-full bg-slate-100">
+                            <Minus className="h-3.5 w-3.5 text-slate-300" />
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
                 );
               })}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Permissions Matrix */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Card className="shadow-sm border-slate-100">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Permissions Matrix</CardTitle>
-            <CardDescription>Route access by role (read-only view)</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide sticky left-0 bg-slate-50 z-10">
-                      Route
-                    </th>
-                    {roles.map(role => {
-                      const config = roleConfigs[role];
-                      return (
-                        <th key={role} className="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide min-w-[100px]">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full ${config.bgColor} ${config.color}`}>
-                            {config.name}
-                          </span>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {routes.map((route, index) => {
-                    const Icon = route.icon;
-                    return (
-                      <tr key={route.path} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                        <td className="py-3 px-4 sticky left-0 bg-inherit z-10">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-4 h-4 text-slate-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-slate-900">{route.name}</p>
-                              <p className="text-xs text-slate-400 font-mono">{route.path}</p>
-                            </div>
-                          </div>
-                        </td>
-                        {roles.map(role => {
-                          const access = hasAccess(route.path, role);
-                          return (
-                            <td key={`${route.path}-${role}`} className="py-3 px-4 text-center">
-                              {access ? (
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100">
-                                  <Check className="w-4 h-4 text-emerald-600" />
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100">
-                                  <X className="w-4 h-4 text-slate-400" />
-                                </span>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Info Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex items-start gap-4 p-4 bg-[var(--hz-cobalt-100)] border border-[var(--hz-cobalt-100)] rounded-xl">
-          <div className="w-10 h-10 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
-            <Info className="w-5 h-5 text-[var(--hz-cobalt)]" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-[var(--hz-cobalt)]">Configuration Note</h3>
-            <p className="text-sm text-[var(--hz-cobalt)] mt-1">
-              Permissions are managed in the code configuration at{" "}
-              <code className="px-1.5 py-0.5 bg-[var(--hz-cobalt-100)] rounded text-xs font-mono">
-                src/lib/auth/config.ts
-              </code>
-              . Role assignments are managed through AWS Cognito user groups. To change a user&apos;s role,
-              use the Users Management page or AWS Cognito console.
-            </p>
-          </div>
+            </tbody>
+          </table>
         </div>
-      </motion.div>
+      </AdminCard>
+
+      {/* Note */}
+      <div className="flex items-start gap-3 rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]/40 p-4">
+        <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--hz-cobalt)]" />
+        <p className="text-xs leading-relaxed text-slate-600">
+          Permissions are defined in <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-700">src/lib/auth/config.ts</code>.
+          Role assignments live in AWS Cognito groups — change a teammate&apos;s role from the{" "}
+          <Link href="/admin/users" className="font-semibold text-[var(--hz-cobalt)] hover:underline">Users</Link> page.
+        </p>
+      </div>
     </div>
   );
 }

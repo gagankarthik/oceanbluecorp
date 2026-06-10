@@ -166,10 +166,13 @@ then delete — no parallel duplicates.
 
 **Migration backlog** (legacy → system, in this order of payoff):
 1. Replace hand-rolled search/filter toolbars with the `toolbar.tsx` kit —
-   remaining: jobs, applications, clients, vendors, bench, resumes, users, jobs/[id].
-2. Replace inline empty states with `EmptyState`.
-3. Replace ad-hoc tables with `DataTable` where columns are simple cells.
+   DONE across all pages: contacts, clients, vendors, resumes, users, applications,
+   jobs, bench, jobs/[id] (SearchInput/FilterToggle/ViewSwitcher/BulkBar/FilterChips).
+2. Replace inline empty states with `EmptyState` — DONE on migrated pages (incl. jobs/[id]).
+3. Replace ad-hoc tables with `DataTable` where columns are simple cells (optional; the
+   complex multi-view tables on applications/jobs/bench keep their bespoke rendering).
 4. Replace remaining `--hz-*` references in admin pages with `--adm-*`.
+5. Modal forms on `Field`/`FormInput`/`FormSelect` — DONE: clients, vendors.
 
 **Health metrics.** Adoption = count of hand-rolled search inputs remaining
 (`grep 'placeholder="Search' src/app/admin` → should trend to 0); consistency = no new

@@ -21,6 +21,7 @@ const STATIC: Entry[] = [
   { url: `${BASE}/terms`, changefreq: "yearly", priority: 0.2 },
   { url: `${BASE}/cookies`, changefreq: "yearly", priority: 0.1 },
   { url: `${BASE}/accessibility`, changefreq: "yearly", priority: 0.2 },
+  { url: `${BASE}/data-deletion`, changefreq: "yearly", priority: 0.2 },
 ];
 
 // Re-build at most hourly (active job listings change).

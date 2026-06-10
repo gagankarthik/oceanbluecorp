@@ -1,12 +1,11 @@
 "use client";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search,
-  Filter,
   Download,
   Mail,
   Phone,
@@ -1443,27 +1442,12 @@ export default function TalentBenchPage() {
       <div className="bg-white rounded-lg border border-slate-200">
         <div className="p-3">
           <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, email, skills, or position..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none"
-              />
-            </div>
-            <button
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by name, email, skills, or position…" />
+            <FilterToggle
+              open={showFilters}
+              activeCount={[statusFilter, skillFilter, authFilter, ownerFilter].filter((f) => f !== "all").length}
               onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${
-                showFilters || statusFilter !== "all" || skillFilter !== "all" || authFilter !== "all" || ownerFilter !== "all"
-                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filters</span>
-            </button>
+            />
           </div>
 
           {showFilters && (

@@ -101,10 +101,6 @@ export default function PrivacyPage() {
             Back to Home
           </Link>
 
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-3 py-1 text-xs font-semibold text-[var(--hz-cobalt)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--hz-cobalt)]" />
-            Legal
-          </div>
 
           <h1
             className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 sm:text-[2.6rem] md:text-5xl"

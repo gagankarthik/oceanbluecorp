@@ -46,18 +46,27 @@ export const getCognitoUrls = () => {
   };
 };
 
-// Route access configuration
+// Route access configuration — enforced in the admin layout (RBAC). Matched by
+// longest path prefix, so detail routes (e.g. /admin/jobs/123) inherit their
+// section's access. Every admin route should have an entry here.
+const ALL_STAFF = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 export const routeAccess: Record<string, UserRole[]> = {
-  "/admin": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
-  "/admin/roles": [UserRole.ADMIN],
-  "/admin/jobs": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
-  "/admin/applications": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
-  "/admin/candidates": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
-  "/admin/bench": [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES],
+  "/admin": ALL_STAFF,
+  "/admin/jobs": ALL_STAFF,
+  "/admin/applications": ALL_STAFF,
+  "/admin/candidates": ALL_STAFF,
+  "/admin/bench": ALL_STAFF,
+  "/admin/resumes": ALL_STAFF,
   "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/content": [UserRole.ADMIN],
+  "/admin/users": [UserRole.ADMIN],
+  "/admin/roles": [UserRole.ADMIN],
+  "/admin/api-keys": [UserRole.ADMIN],
   "/admin/settings": [UserRole.ADMIN],
+  "/admin/docs": ALL_STAFF,
+  "/admin/help": ALL_STAFF,
+  "/admin/notifications": ALL_STAFF,
   "/hr": [UserRole.ADMIN, UserRole.HR],
 };

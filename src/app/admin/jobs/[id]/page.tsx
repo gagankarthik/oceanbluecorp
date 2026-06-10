@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Edit3, Download, MapPin, DollarSign, Users, Briefcase,
-  Building2, Calendar, AlertTriangle, Plus, Search,
+  Building2, Calendar, AlertTriangle, Plus,
   FileText, Hash, Check, Copy, UserCheck, Truck,
   ChevronDown, ExternalLink, ArrowLeft,
 } from "lucide-react";
@@ -19,6 +19,8 @@ import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { SearchInput } from "@/components/admin/toolbar";
 import { Avatar } from "@/components/admin/avatar";
 import { tones, statusMeta, type Tone } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
@@ -41,7 +43,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [applications, setApplications]   = useState<Application[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<Tab>("info");
+  const [activeTab, setActiveTab]         = useState<Tab>("applicants");
   const [search, setSearch]               = useState("");
   const [statusFilter, setStatusFilter]   = useState("all");
   const [copied, setCopied]               = useState(false);
@@ -255,8 +257,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         {/* Tab bar */}
         <div className="flex border-b border-slate-200 px-1">
           {([
-            { id: "info" as Tab,       label: "Job Info",   count: undefined,            icon: FileText },
             { id: "applicants" as Tab, label: "Applicants", count: applications.length,  icon: Users    },
+            { id: "info" as Tab,       label: "About job",  count: undefined,            icon: FileText },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -418,37 +420,25 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
             {/* Search */}
             <div className="border-b border-slate-100 px-5 py-3">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name or email…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm transition-colors focus:border-[var(--hz-cobalt)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
-                />
-              </div>
+              <SearchInput value={search} onChange={setSearch} placeholder="Search by name or email…" />
             </div>
 
             {/* Rows or empty state */}
             {filteredApps.length === 0 ? (
-              <div className="py-16 text-center">
-                <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100">
-                  <Users className="h-7 w-7 text-slate-300" />
-                </div>
-                <p className="mb-1 text-base font-bold text-slate-700">No applicants yet</p>
-                <p className="mb-5 text-sm text-slate-400">
-                  {applications.length === 0 ? "Add the first applicant for this role." : "No applicants match your filter."}
-                </p>
-                {applications.length === 0 && (
+              <EmptyState
+                icon={Users}
+                tone="blue"
+                title="No applicants yet"
+                description={applications.length === 0 ? "Add the first applicant for this role." : "No applicants match your filter."}
+                action={applications.length === 0 ? (
                   <button
                     onClick={() => router.push(`/admin/applications/new?jobId=${jobId}`)}
                     className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--hz-cobalt-600)]"
                   >
-                    <Plus className="h-4 w-4" />Add Applicant
+                    <Plus className="h-4 w-4" />Add applicant
                   </button>
-                )}
-              </div>
+                ) : undefined}
+              />
             ) : (
               <div className="divide-y divide-slate-100">
                 {filteredApps.map((app) => (

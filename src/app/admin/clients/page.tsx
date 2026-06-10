@@ -3,11 +3,15 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { StatCard } from "@/components/admin/stat-card";
+import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
+import { FilterChips } from "@/components/admin/filter-chips";
+import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
 
 import { useState, useEffect } from "react";
 import {
-  Search,
-  Filter,
   Download,
   Plus,
   Building2,
@@ -302,105 +306,41 @@ export default function ClientsPage() {
         }
       />
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Clients</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
-              <p className="text-xs text-slate-500">Active</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{stats.inactive}</p>
-              <p className="text-xs text-slate-500">Inactive</p>
-            </div>
-          </div>
-        </div>
+        <StatCard size="sm" label="Total clients" value={stats.total} icon={Building2} tone="blue" />
+        <StatCard size="sm" label="Active" value={stats.active} icon={CheckCircle2} tone="emerald" />
+        <StatCard size="sm" label="Inactive" value={stats.inactive} icon={XCircle} tone="slate" />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl border border-slate-200/80">
-        <div className="p-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-all whitespace-nowrap ${
-                showFilters || statusFilter !== "all"
-                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filters</span>
-              {statusFilter !== "all" && (
-                <span className="w-5 h-5 rounded-full bg-[var(--hz-cobalt)] text-white text-xs flex items-center justify-center font-medium">
-                  1
-                </span>
-              )}
-            </button>
-          </div>
-
-          {showFilters && (
-            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-3">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              {statusFilter !== "all" && (
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium"
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
-          )}
+      {/* Toolbar */}
+      <AdminCard className="space-y-3 p-3">
+        <div className="flex gap-2">
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, website, email, location…" />
+          <FilterToggle
+            open={showFilters}
+            activeCount={statusFilter !== "all" ? 1 : 0}
+            onClick={() => setShowFilters(!showFilters)}
+          />
         </div>
-      </div>
+        {showFilters && (
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-3">
+            <FormSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">All status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </FormSelect>
+          </div>
+        )}
+        <FilterChips
+          chips={statusFilter !== "all" ? [{ key: "status", label: "Status", value: statusFilter, onRemove: () => setStatusFilter("all") }] : []}
+        />
+      </AdminCard>
 
       {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">
-          {filteredClients.length} of {clients.length} clients
-        </p>
-      </div>
+      <p className="text-xs text-slate-500">
+        {filteredClients.length} of {clients.length} clients
+      </p>
 
       {/* Client Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
@@ -510,14 +450,18 @@ export default function ClientsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-1">No clients found</h3>
-                    <p className="text-slate-500 text-sm">
-                      {clients.length === 0
-                        ? "Add your first client to get started"
-                        : "No clients match your search criteria"}
-                    </p>
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={Building2}
+                      tone="blue"
+                      title="No clients found"
+                      description={clients.length === 0 ? "Add your first client to start tracking accounts." : "No clients match your search — try clearing a filter."}
+                      action={clients.length === 0 ? (
+                        <PageHeaderButton variant="primary" onClick={() => { setEditingClient(null); setFormData(initialFormData); setFormErrors({}); setShowForm(true); }}>
+                          <Plus className="w-3.5 h-3.5" /> Add client
+                        </PageHeaderButton>
+                      ) : undefined}
+                    />
                   </td>
                 </tr>
               )}
@@ -531,9 +475,9 @@ export default function ClientsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-[var(--hz-cobalt-100)] to-cyan-50">
-              <h2 className="text-xl font-bold text-slate-900">
-                {editingClient ? "Edit Client" : "Add New Client"}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">
+                {editingClient ? "Edit client" : "Add new client"}
               </h2>
               <button
                 onClick={() => {
@@ -558,58 +502,36 @@ export default function ClientsPage() {
                     Required Information
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Client Name <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        type="text"
+                    <Field label="Client name" required>
+                      <FormInput
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
-                          formErrors.name ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
                         placeholder="Enter client name"
+                        className={formErrors.name ? "border-rose-300 bg-rose-50" : ""}
                       />
-                      {formErrors.name && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Website URL <span className="text-rose-500">*</span>
-                      </label>
-                      <input
+                      {formErrors.name && <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>}
+                    </Field>
+                    <Field label="Website URL" required>
+                      <FormInput
                         type="url"
                         value={formData.websiteUrl}
                         onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
-                          formErrors.websiteUrl ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
                         placeholder="https://example.com"
+                        className={formErrors.websiteUrl ? "border-rose-300 bg-rose-50" : ""}
                       />
-                      {formErrors.websiteUrl && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.websiteUrl}</p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Status <span className="text-rose-500">*</span>
-                      </label>
-                      <select
+                      {formErrors.websiteUrl && <p className="mt-1.5 text-sm text-rose-600">{formErrors.websiteUrl}</p>}
+                    </Field>
+                    <Field label="Status" required fullWidth>
+                      <FormSelect
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as "active" | "inactive" })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none bg-white ${
-                          formErrors.status ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
+                        className={formErrors.status ? "border-rose-300 bg-rose-50" : ""}
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
-                      </select>
-                      {formErrors.status && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.status}</p>
-                      )}
-                    </div>
+                      </FormSelect>
+                      {formErrors.status && <p className="mt-1.5 text-sm text-rose-600">{formErrors.status}</p>}
+                    </Field>
                   </div>
                 </div>
 
@@ -617,31 +539,24 @@ export default function ClientsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-700 mb-4">Contact Information</h3>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-                      <input
+                    <Field label="Email">
+                      <FormInput
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none ${
-                          formErrors.email ? "border-rose-300 bg-rose-50" : "border-slate-200"
-                        }`}
                         placeholder="client@example.com"
+                        className={formErrors.email ? "border-rose-300 bg-rose-50" : ""}
                       />
-                      {formErrors.email && (
-                        <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
-                      <input
+                      {formErrors.email && <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>}
+                    </Field>
+                    <Field label="Phone number">
+                      <FormInput
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="(123) 456-7890"
                       />
-                    </div>
+                    </Field>
                   </div>
                 </div>
 
@@ -649,47 +564,23 @@ export default function ClientsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-700 mb-4">Address</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Street Address</label>
-                      <input
-                        type="text"
+                    <Field label="Street address">
+                      <FormInput
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
                         placeholder="123 Main Street"
                       />
-                    </div>
+                    </Field>
                     <div className="grid md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">City</label>
-                        <input
-                          type="text"
-                          value={formData.city}
-                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
-                          placeholder="City"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">State</label>
-                        <input
-                          type="text"
-                          value={formData.state}
-                          onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
-                          placeholder="State"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">ZIP Code</label>
-                        <input
-                          type="text"
-                          value={formData.zipCode}
-                          onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] outline-none"
-                          placeholder="12345"
-                        />
-                      </div>
+                      <Field label="City">
+                        <FormInput value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
+                      </Field>
+                      <Field label="State">
+                        <FormInput value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                      </Field>
+                      <Field label="ZIP code">
+                        <FormInput value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
+                      </Field>
                     </div>
                   </div>
                 </div>

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import {
   Briefcase, Users, UserPlus, AlertTriangle, Clock,
-  Plus, Mail, RefreshCcw, CheckCircle2, BarChart3, ArrowRight,
+  Plus, Mail, CheckCircle2, BarChart3, ArrowRight,
   TrendingUp, Filter, PieChart, Radar, Activity, Trophy,
 } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Application, Job } from "@/lib/aws/dynamodb";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatCard } from "@/components/admin/stat-card";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -145,14 +145,14 @@ function DonutRing({ segs, size = 160, thick = 20 }: {
 }
 
 // ── funnel chart (true tapering funnel) ─────────────────────────────────────────
-function FunnelChart({ stats, total }: { stats: DashboardStats; total: number }) {
+function FunnelChart({ stats, total, onSelect }: { stats: DashboardStats; total: number; onSelect?: (status?: string) => void }) {
   const stages = [
-    { label: "Applied",   count: total,                       color: "#1d4ed8" },
-    { label: "Screening", count: stats.reviewingApplications, color: "#3b5bd4" },
-    { label: "Submitted", count: stats.submittedApplications, color: "#4f46e5" },
-    { label: "Interview", count: stats.interviewApplications, color: "#7c3aed" },
-    { label: "Offered",   count: stats.offeredApplications,   color: "#d97706" },
-    { label: "Hired",     count: stats.hiredApplications,     color: "#059669" },
+    { label: "Applied",   count: total,                       color: "#1d4ed8", status: undefined as string | undefined },
+    { label: "Screening", count: stats.reviewingApplications, color: "#3b5bd4", status: "reviewing" },
+    { label: "Submitted", count: stats.submittedApplications, color: "#4f46e5", status: "submitted" },
+    { label: "Interview", count: stats.interviewApplications, color: "#7c3aed", status: "interview" },
+    { label: "Offered",   count: stats.offeredApplications,   color: "#d97706", status: "offered"   },
+    { label: "Hired",     count: stats.hiredApplications,     color: "#059669", status: "hired"     },
   ];
   const max = stages[0].count || 1;
   const FLOOR = 30; // min segment width (%) so labels stay legible even at tiny counts
@@ -176,15 +176,18 @@ function FunnelChart({ stats, total }: { stats: DashboardStats; total: number })
                   </span>
                 </div>
               )}
-              <div
-                className="flex h-[52px] items-center justify-center text-white shadow-sm"
+              <button
+                type="button"
+                onClick={() => onSelect?.(st.status)}
+                title={`View ${st.label.toLowerCase()} candidates`}
+                className="flex h-[52px] w-full items-center justify-center text-white shadow-sm transition-[filter,transform] hover:brightness-110 active:scale-[0.99]"
                 style={{ clipPath: clip, background: st.color }}
               >
                 <div className="flex items-center gap-2 leading-none">
                   <span className="text-[11px] font-semibold">{st.label}</span>
                   <span className="text-[13px] font-bold tabular-nums">{st.count.toLocaleString()}</span>
                 </div>
-              </div>
+              </button>
             </div>
           );
         })}
@@ -207,33 +210,39 @@ function AttentionItem({ icon: Icon, color, title, desc, href, apps }: {
 }) {
   const router = useRouter();
   return (
-    <div className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+    <div className="relative flex h-full flex-col gap-3 p-5 transition-colors hover:bg-slate-50/60">
+      {/* severity accent */}
+      <span className="absolute inset-y-4 left-0 w-1 rounded-r-full" style={{ background: color }} />
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: color + "18" }}>
-          <span style={{ color }}><Icon className="w-4 h-4" /></span>
+        <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl" style={{ background: color + "1a", color }}>
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold leading-snug text-slate-900">{title}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{desc}</p>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-slate-900">{title}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{desc}</p>
-          {apps && apps.length > 0 && (
-            <div className="flex gap-1 mt-2 flex-wrap">
-              {apps.slice(0, 4).map((c) => (
-                <button key={c.id} onClick={() => router.push(`/admin/candidates/${c.id}`)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-[var(--hz-cobalt-100)] rounded-md transition-colors">
-                  <Avatar name={c.name || c.email} size="xs" />
-                  <span className="text-[10px] font-semibold text-slate-700 max-w-[72px] truncate">{c.name || "—"}</span>
-                </button>
-              ))}
-              {apps.length > 4 && <span className="text-[10px] text-slate-400 px-1 self-center">+{apps.length - 4}</span>}
-            </div>
-          )}
-        </div>
-        {href && (
-          <Link href={href} className="flex-shrink-0 inline-flex items-center gap-0.5 text-[11px] font-semibold hover:opacity-80" style={{ color }}>
-            View <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
       </div>
+      {apps && apps.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {apps.slice(0, 4).map((c) => (
+            <button key={c.id} onClick={() => router.push(`/admin/candidates/${c.id}`)}
+              className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 transition-colors hover:bg-[var(--hz-cobalt-100)]">
+              <Avatar name={c.name || c.email} size="xs" />
+              <span className="max-w-[72px] truncate text-[10px] font-semibold text-slate-700">{c.name || "—"}</span>
+            </button>
+          ))}
+          {apps.length > 4 && <span className="self-center px-1 text-[10px] text-slate-400">+{apps.length - 4}</span>}
+        </div>
+      )}
+      {href && (
+        <Link
+          href={href}
+          className="mt-auto inline-flex w-fit items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all hover:gap-1.5"
+          style={{ color, background: color + "14" }}
+        >
+          Review <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -263,7 +272,7 @@ function Skel({ className }: { className?: string }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-5 pb-10">
       {/* header */}
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
@@ -511,14 +520,20 @@ export default function AdminDashboard() {
   }, [applications, period]);
 
   const donutSegs = useMemo(() => [
-    { label: "New",       value: pipelineCounts.pending   || 0, color: "#94a3b8" },
-    { label: "Screening", value: pipelineCounts.reviewing || 0, color: "#1d4ed8" },
-    { label: "Submitted", value: pipelineCounts.submitted || 0, color: "#4f46e5" },
-    { label: "Interview", value: pipelineCounts.interview || 0, color: "#8b5cf6" },
-    { label: "Offered",   value: pipelineCounts.offered   || 0, color: "#f59e0b" },
-    { label: "Hired",     value: pipelineCounts.hired     || 0, color: "#10b981" },
-    { label: "Rejected",  value: pipelineCounts.rejected  || 0, color: "#f43f5e" },
+    { label: "New",       value: pipelineCounts.pending   || 0, color: "#94a3b8", status: "pending"   },
+    { label: "Screening", value: pipelineCounts.reviewing || 0, color: "#1d4ed8", status: "reviewing" },
+    { label: "Submitted", value: pipelineCounts.submitted || 0, color: "#4f46e5", status: "submitted" },
+    { label: "Interview", value: pipelineCounts.interview || 0, color: "#8b5cf6", status: "interview" },
+    { label: "Offered",   value: pipelineCounts.offered   || 0, color: "#f59e0b", status: "offered"   },
+    { label: "Hired",     value: pipelineCounts.hired     || 0, color: "#10b981", status: "hired"     },
+    { label: "Rejected",  value: pipelineCounts.rejected  || 0, color: "#f43f5e", status: "rejected"  },
   ], [pipelineCounts]);
+
+  // Drill-through: jump to the Applications list pre-filtered by pipeline stage.
+  const drillToStatus = useCallback(
+    (status?: string) => router.push(`/admin/applications${status ? `?status=${status}` : ""}`),
+    [router],
+  );
 
   const healthy = staleCandidates.length === 0 && offersAtRisk.length === 0;
 
@@ -548,43 +563,30 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-5 pb-10">
 
-      {/* ── header ── */}
-      <PageHeader
-        title="Dashboard"
-        subtitle={`${greeting()}, ${user?.name?.split(" ")[0] || "there"}. Here's your recruiting overview.`}
-        meta={
-          <div className="flex flex-wrap items-center gap-2.5">
-            {healthy ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Pipeline healthy
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" /> Needs attention
-              </span>
-            )}
-            <span className="text-[11px] text-slate-400">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </span>
-          </div>
-        }
-        actions={
-          <>
-            <button onClick={fetchAll} title="Refresh"
-              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors active:scale-[0.97]">
-              <RefreshCcw className="w-4 h-4" />
-            </button>
-            <PageHeaderButton variant="secondary" onClick={() => router.push("/admin/jobs/new")}>
-              <Briefcase className="w-3.5 h-3.5" /> Post job
-            </PageHeaderButton>
-            <PageHeaderButton variant="primary" onClick={() => openCandidateEditor()}>
-              <Plus className="w-3.5 h-3.5" /> Add candidate
-            </PageHeaderButton>
-          </>
-        }
-      />
+      {/* ── welcome header ── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[26px]">
+            Welcome back, {user?.name?.split(" ")[0] || "there"}!
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            You have <span className="font-semibold text-slate-900">{inPipeline}</span> candidate{inPipeline === 1 ? "" : "s"} in your pipeline
+            {offersAtRisk.length > 0
+              ? <> and <span className="font-semibold text-amber-600">{offersAtRisk.length}</span> offer{offersAtRisk.length > 1 ? "s" : ""} to follow up.</>
+              : "."}
+          </p>
+        </div>
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <Button variant="outline" onClick={() => router.push("/admin/jobs/new")}>
+            <Briefcase className="h-4 w-4" /> Post job
+          </Button>
+          <Button onClick={() => openCandidateEditor()} className="bg-[var(--hz-cobalt)] text-white hover:bg-[var(--hz-cobalt-600)]">
+            <Plus className="h-4 w-4" /> Add candidate
+          </Button>
+        </div>
+      </div>
 
       {/* ── KPI cards ── */}
       <motion.div
@@ -633,6 +635,48 @@ export default function AdminDashboard() {
           />
         </motion.div>
       </motion.div>
+
+      {/* ── needs attention — the action center, surfaced first when there's work ── */}
+      {(!healthy || unassignedActive > 0) && (
+        <motion.div variants={item} initial="hidden" animate="show">
+          <AdminCard className="overflow-hidden ring-1 ring-amber-200/70">
+            <div className="flex items-center justify-between gap-2 border-b border-amber-100 bg-amber-50/40 px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-amber-100">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" strokeWidth={2} />
+                </span>
+                <h3 className="text-sm font-bold text-slate-900">Needs attention</h3>
+                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 tabular-nums">
+                  {(offersAtRisk.length > 0 ? 1 : 0) + (staleCandidates.length > 0 ? 1 : 0) + (unassignedActive > 0 ? 1 : 0)}
+                </span>
+              </div>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" /> Action needed
+              </span>
+            </div>
+            <div className="grid divide-y divide-slate-100 sm:grid-cols-2 sm:divide-y-0 sm:[&>:nth-child(odd)]:border-r sm:[&>*]:border-slate-100 lg:grid-cols-3 lg:[&>*]:border-r lg:[&>:last-child]:border-r-0">
+              {offersAtRisk.length > 0 && (
+                <AttentionItem icon={Mail} color="#f59e0b"
+                  title={`${offersAtRisk.length} offer${offersAtRisk.length > 1 ? "s" : ""} pending response`}
+                  desc={`${OFFER_STALE_DAYS}+ days without reply — follow up now`}
+                  href="/admin/applications?status=offered" />
+              )}
+              {staleCandidates.length > 0 && (
+                <AttentionItem icon={Clock} color="#f43f5e"
+                  title={`${staleCandidates.length} stale candidate${staleCandidates.length > 1 ? "s" : ""}`}
+                  desc={`Stuck in early stages for ${STALE_DAYS}+ days`}
+                  apps={staleCandidates} />
+              )}
+              {unassignedActive > 0 && (
+                <AttentionItem icon={UserPlus} color="#1d4ed8"
+                  title={`${unassignedActive} unassigned candidate${unassignedActive > 1 ? "s" : ""}`}
+                  desc="Active candidates without an assigned recruiter"
+                  href="/admin/applications" />
+              )}
+            </div>
+          </AdminCard>
+        </motion.div>
+      )}
 
       {/* ── charts row ── */}
       <motion.div
@@ -712,13 +756,19 @@ export default function AdminDashboard() {
             <AdminCardHeader icon={PieChart} tone="violet" title="Pipeline distribution" />
             <div className="flex flex-1 flex-col items-center gap-4 p-5">
               <DonutRing segs={donutSegs} size={164} thick={22} />
-              <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 w-full">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 w-full">
                 {donutSegs.filter((s) => s.value > 0).map((seg) => (
-                  <div key={seg.label} className="flex items-center gap-1.5">
+                  <button
+                    key={seg.label}
+                    type="button"
+                    onClick={() => drillToStatus(seg.status)}
+                    title={`View ${seg.label.toLowerCase()} candidates`}
+                    className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-slate-50"
+                  >
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }} />
                     <span className="text-[11px] text-slate-600 font-medium">{seg.label}</span>
                     <span className="text-[11px] font-bold text-slate-800 ml-auto tabular-nums">{seg.value}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -737,8 +787,8 @@ export default function AdminDashboard() {
           <AdminCard className="h-full">
             <AdminCardHeader icon={Filter} tone="indigo" title="Hiring funnel" />
             <div className="p-5">
-              <p className="-mt-1 mb-4 text-xs text-slate-400">Conversion through each stage</p>
-              <FunnelChart stats={stats} total={total} />
+              <p className="-mt-1 mb-4 text-xs text-slate-400">Conversion through each stage · click to drill in</p>
+              <FunnelChart stats={stats} total={total} onSelect={drillToStatus} />
             </div>
           </AdminCard>
         </motion.div>
@@ -911,15 +961,11 @@ export default function AdminDashboard() {
         </AdminCard>
       </motion.div>
 
-      {/* ── bottom row ── */}
-      <motion.div
-        variants={container} initial="hidden" animate="show"
-        className="grid gap-4 lg:grid-cols-2"
-      >
+      {/* ── recent applications (full width) ── */}
+      <motion.div variants={container} initial="hidden" animate="show">
 
-        {/* recent applications */}
         <motion.div variants={item}>
-          <AdminCard className="h-full overflow-hidden">
+          <AdminCard className="overflow-hidden">
             <AdminCardHeader
               icon={Activity}
               tone="blue"
@@ -931,10 +977,10 @@ export default function AdminDashboard() {
               }
             />
             {recentApps.length > 0 ? (
-              <div className="divide-y divide-slate-100">
+              <div className="grid sm:grid-cols-2">
                 {recentApps.map((app) => (
                   <Link key={app.id} href={`/admin/candidates/${app.id}`}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-[#eef3fe] transition-colors group">
+                    className="group flex items-center gap-3 border-b border-slate-100 px-5 py-3 transition-colors hover:bg-[#eef3fe] last:border-b-0 sm:odd:border-r sm:[&:nth-last-child(2)]:border-b-0">
                     <Avatar name={app.name || app.email} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-slate-900 truncate group-hover:text-[var(--hz-cobalt)] transition-colors">
@@ -960,51 +1006,6 @@ export default function AdminDashboard() {
           </AdminCard>
         </motion.div>
 
-        {/* needs attention */}
-        <motion.div variants={item}>
-          <AdminCard className="h-full overflow-hidden">
-            <AdminCardHeader
-              icon={healthy ? CheckCircle2 : AlertTriangle}
-              tone={healthy ? "emerald" : "amber"}
-              title="Needs attention"
-              action={
-                healthy
-                  ? <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">All clear</span>
-                  : <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Action needed</span>
-              }
-            />
-            {healthy && unassignedActive === 0 ? (
-              <div className="flex flex-col items-center px-5 py-9 text-center">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-500" strokeWidth={1.5} />
-                </span>
-                <p className="mt-3 text-sm font-medium text-slate-600">Pipeline is healthy</p>
-                <p className="text-xs text-slate-400 mt-1">No stale candidates or pending offers at risk</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {offersAtRisk.length > 0 && (
-                  <AttentionItem icon={Mail} color="#f59e0b"
-                    title={`${offersAtRisk.length} offer${offersAtRisk.length > 1 ? "s" : ""} pending response`}
-                    desc={`${OFFER_STALE_DAYS}+ days without reply — follow up now`}
-                    href="/admin/applications?status=offered" />
-                )}
-                {staleCandidates.length > 0 && (
-                  <AttentionItem icon={Clock} color="#f43f5e"
-                    title={`${staleCandidates.length} stale candidate${staleCandidates.length > 1 ? "s" : ""}`}
-                    desc={`Stuck in early stages for ${STALE_DAYS}+ days`}
-                    apps={staleCandidates} />
-                )}
-                {unassignedActive > 0 && (
-                  <AttentionItem icon={UserPlus} color="#1d4ed8"
-                    title={`${unassignedActive} unassigned candidate${unassignedActive > 1 ? "s" : ""}`}
-                    desc="Active candidates without an assigned recruiter"
-                    href="/admin/applications" />
-                )}
-              </div>
-            )}
-          </AdminCard>
-        </motion.div>
       </motion.div>
     </div>
   );

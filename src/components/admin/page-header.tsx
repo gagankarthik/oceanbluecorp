@@ -16,8 +16,8 @@ export function PageHeader({ title, subtitle, icon: Icon, actions, meta, classNa
     <div className={cn("flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4", className)}>
       <div className="flex items-start gap-3 min-w-0">
         {Icon && (
-          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 items-center justify-center shadow-sm shadow-[rgba(29,78,216,0.2)] flex-shrink-0">
-            <Icon className="w-[18px] h-[18px] text-white" />
+          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] items-center justify-center flex-shrink-0">
+            <Icon className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" />
           </div>
         )}
         <div className="min-w-0">
@@ -53,5 +53,5 @@ export function PageHeaderButton({
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "variant"> & { variant?: "primary" | "secondary" | "ghost" }) {
   const v = headerButtonVariant[variant];
-  return <Button variant={v.variant} className={cn("font-semibold", v.className, className)} {...props} />;
+  return <Button variant={v.variant} className={cn("font-semibold transition-all active:scale-[0.98]", v.className, className)} {...props} />;
 }

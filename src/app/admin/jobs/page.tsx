@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Plus, Search, Edit3, Trash2, Users, MapPin, Briefcase,
+  Plus, Edit3, Trash2, Users, MapPin, Briefcase,
   CheckCircle2, Copy, Loader2, DollarSign, Download, Eye,
   MoreHorizontal, Building2, LayoutList, AlignJustify, Truck,
   Calendar, PauseCircle, FileText, AlertTriangle, X,
@@ -17,6 +17,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { AdminCard } from "@/components/admin/admin-card";
 import { StatCard } from "@/components/admin/stat-card";
+import { SearchInput, ViewMenu } from "@/components/admin/toolbar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import JobsLoading from "./loading";
@@ -273,25 +274,16 @@ export default function JobsPage() {
       <motion.div {...fadeUp(1)}>
         <AdminCard className="p-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search title, client, location…"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm transition-colors focus:border-[var(--hz-cobalt)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
-              />
-            </div>
-            <div className="hidden items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 xl:flex">
-              {(["compact", "detailed"] as const).map((v, i) => (
-                <button key={v} onClick={() => setTableView(v)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors ${i > 0 ? "border-l border-slate-200" : ""} ${tableView === v ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100"}`}>
-                  {v === "compact" ? <LayoutList className="h-3.5 w-3.5" /> : <AlignJustify className="h-3.5 w-3.5" />}
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </button>
-              ))}
-            </div>
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search title, client, location…" />
+            <ViewMenu
+              className="hidden xl:inline-flex"
+              options={[
+                { value: "compact",  label: "Compact",  icon: LayoutList },
+                { value: "detailed", label: "Detailed", icon: AlignJustify },
+              ]}
+              value={tableView}
+              onChange={setTableView}
+            />
           </div>
 
           {/* Status pill tabs */}

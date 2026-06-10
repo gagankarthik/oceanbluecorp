@@ -2,13 +2,17 @@
 import { toast } from "sonner";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminRowsSkeleton } from "@/components/admin/skeletons";
+import { AdminCard } from "@/components/admin/admin-card";
+import { SearchInput, FilterToggle, ViewSwitcher } from "@/components/admin/toolbar";
+import { FilterChips } from "@/components/admin/filter-chips";
+import { FormSelect } from "@/components/admin/forms/primitives";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Search, Upload, Download, Trash2, FileText, File, Eye,
   LayoutGrid, LayoutList, X, User2,
-  Calendar, Loader2, AlertTriangle, CheckCircle2, ChevronDown,
-  FolderOpen, SlidersHorizontal, RefreshCcw,
+  Calendar, Loader2, AlertTriangle, CheckCircle2,
+  FolderOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -264,14 +268,9 @@ export default function ResumeBankPage() {
         title="Resume Bank"
         subtitle={`${stats.total} files · ${stats.pdfs} PDF · ${stats.words} Word · ${stats.size} total`}
         actions={
-          <>
-            <PageHeaderButton variant="secondary" onClick={load} title="Refresh">
-              <RefreshCcw className="w-4 h-4" />
-            </PageHeaderButton>
-            <PageHeaderButton variant="primary" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4" />Upload Resumes
-            </PageHeaderButton>
-          </>
+          <PageHeaderButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="w-4 h-4" />Upload Resumes
+          </PageHeaderButton>
         }
       />
 
@@ -373,14 +372,11 @@ export default function ResumeBankPage() {
       )}
 
       {/* Toolbar */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-3 space-y-3">
+      <AdminCard className="space-y-3 p-3">
         <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <input type="text" placeholder="Search by name, candidate, uploader…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] transition-colors" />
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by file, candidate, uploader…" />
 
+          {/* File-type segmented control */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
             {(["all", "pdf", "word"] as FileTypeFilter[]).map(t => (
               <button key={t} onClick={() => setTypeFilter(t)}
@@ -390,43 +386,35 @@ export default function ResumeBankPage() {
             ))}
           </div>
 
-          <button onClick={() => setFiltersOpen(v => !v)}
-            className={cn("inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg font-medium transition-colors",
-              filtersOpen || uploaderFilter !== "all" ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt)] text-[var(--hz-cobalt)]" : "border-slate-200 text-slate-600 hover:bg-slate-50")}>
-            <SlidersHorizontal className="w-4 h-4" />Filters
-            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", filtersOpen && "rotate-180")} />
-          </button>
+          <FilterToggle
+            open={filtersOpen}
+            activeCount={uploaderFilter !== "all" ? 1 : 0}
+            onClick={() => setFiltersOpen(v => !v)}
+          />
 
-          <div className="flex items-center rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
-            <button onClick={() => setView("grid")}
-              className={cn("px-3 py-2 transition-colors", view === "grid" ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-500 hover:bg-slate-100")}>
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => setView("list")}
-              className={cn("px-3 py-2 border-l border-slate-200 transition-colors", view === "list" ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-500 hover:bg-slate-100")}>
-              <LayoutList className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <ViewSwitcher
+            options={[
+              { value: "grid", label: "Grid", icon: LayoutGrid },
+              { value: "list", label: "List", icon: LayoutList },
+            ]}
+            value={view}
+            onChange={setView}
+          />
         </div>
 
         {filtersOpen && (
-          <div className="border-t border-slate-100 pt-3">
-            <div className="flex items-center gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Uploaded by</label>
-                <select value={uploaderFilter} onChange={e => setUploaderFilter(e.target.value)}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] text-slate-700">
-                  <option value="all">All recruiters</option>
-                  {uploaders.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              </div>
-              {uploaderFilter !== "all" && (
-                <button onClick={() => setUploaderFilter("all")} className="mt-5 text-xs text-rose-500 hover:underline font-semibold">Clear</button>
-              )}
-            </div>
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-3">
+            <FormSelect value={uploaderFilter} onChange={e => setUploaderFilter(e.target.value)}>
+              <option value="all">All recruiters</option>
+              {uploaders.map(u => <option key={u} value={u}>{u}</option>)}
+            </FormSelect>
           </div>
         )}
-      </div>
+
+        <FilterChips
+          chips={uploaderFilter !== "all" ? [{ key: "uploader", label: "Uploaded by", value: uploaderFilter, onRemove: () => setUploaderFilter("all") }] : []}
+        />
+      </AdminCard>
 
       {/* Content */}
       {loading ? (

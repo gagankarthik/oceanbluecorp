@@ -6,11 +6,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Search, Download, Calendar, Eye, Star, X, Trash2, Plus, Edit3, Users,
-  MoreHorizontal, AlertTriangle, ChevronDown, ArrowRight,
+  Download, Calendar, Eye, Star, X, Trash2, Plus, Edit3, Users,
+  MoreHorizontal, AlertTriangle, Filter, ChevronDown,
   LayoutList, Columns, AlignJustify, BookmarkCheck,
-  SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown,
-  Clock, MessageSquare, CheckCircle2, XCircle,
+  ArrowUpDown, ArrowUp, ArrowDown, XCircle,
 } from "lucide-react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { AdminCard } from "@/components/admin/admin-card";
-import { StatCard } from "@/components/admin/stat-card";
+import { SearchInput, FilterToggle, ViewMenu, BulkBar } from "@/components/admin/toolbar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
@@ -46,6 +45,17 @@ type SortDir   = "asc" | "desc";
 const PIPELINE = ["pending", "reviewing", "submitted", "interview", "offered", "hired"] as const;
 const KANBAN_COLS = [...PIPELINE, "rejected"] as const;
 const ALL_STATUSES = [...KANBAN_COLS] as string[];
+
+// Stage hex colors for the pipeline flow (gradients/inline styles need hex, not classes).
+const STAGE_COLOR: Record<string, string> = {
+  pending:   "#94a3b8",
+  reviewing: "#1d4ed8",
+  submitted: "#4f46e5",
+  interview: "#8b5cf6",
+  offered:   "#f59e0b",
+  hired:     "#10b981",
+  rejected:  "#f43f5e",
+};
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -88,12 +98,23 @@ export default function ApplicationsPage() {
   const [dateFrom, setDateFrom]         = useState("");
   const [dateTo, setDateTo]             = useState("");
   const [filtersOpen, setFiltersOpen]   = useState(false);
+  const [pipelineOpen, setPipelineOpen] = useState(true);
 
   // ── Selection + modals
   const [selected, setSelected]             = useState<string[]>([]);
   const [deleteId, setDeleteId]             = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleting, setDeleting]             = useState(false);
+
+  // ── Deep-link filters (dashboard drill-through: ?status=…&view=…) ───────────
+  // Read straight from the URL on mount so we don't need a Suspense boundary.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const status = sp.get("status");
+    if (status) setStatusFilter(status);
+    const v = sp.get("view");
+    if (v === "table" || v === "kanban" || v === "list") setView(v as ViewMode);
+  }, []);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
@@ -160,15 +181,6 @@ export default function ApplicationsPage() {
     Object.fromEntries(ALL_STATUSES.map((s) => [s, applications.filter((a) => a.status === s).length])),
   [applications]);
   const pipelineMax = Math.max(1, ...PIPELINE.map((k) => pipelineCounts[k] || 0));
-
-  // KPI strip
-  const kpi = useMemo(() => {
-    const total = applications.length;
-    const pending = applications.filter((a) => a.status === "pending").length;
-    const interview = applications.filter((a) => a.status === "interview").length;
-    const hired = applications.filter((a) => a.status === "hired").length;
-    return { total, pending, interview, hired };
-  }, [applications]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -285,77 +297,112 @@ export default function ApplicationsPage() {
         }
       />
 
-      {/* ── KPI strip ── */}
-      <motion.div className="grid grid-cols-2 gap-3 md:grid-cols-4" {...fade(0.02)}>
-        <StatCard size="sm" label="Total candidates" value={kpi.total} icon={Users} tone="blue" />
-        <StatCard size="sm" label="New / pending" value={kpi.pending} icon={Clock} tone="slate" />
-        <StatCard size="sm" label="In interview" value={kpi.interview} icon={MessageSquare} tone="violet" />
-        <StatCard size="sm" label="Hired" value={kpi.hired} icon={CheckCircle2} tone="emerald" />
-      </motion.div>
-
-      {/* ── Pipeline overview ── */}
+      {/* ── Pipeline flow ── */}
       <motion.div {...fade(0.06)}>
-        <AdminCard className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hiring pipeline</h3>
-            <span className="text-[11px] font-medium text-slate-400">{applications.length} total · click a stage to filter</span>
+        <AdminCard className="overflow-hidden">
+          <div className={cn("flex items-center justify-between gap-2 px-4 py-3", pipelineOpen && "border-b border-slate-100")}>
+            <button
+              type="button"
+              onClick={() => setPipelineOpen((o) => !o)}
+              aria-expanded={pipelineOpen}
+              className="flex min-w-0 items-center gap-2.5 text-left"
+            >
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--hz-cobalt-100)]">
+                <Filter className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={2} />
+              </span>
+              <h3 className="text-sm font-bold text-slate-900">Hiring pipeline</h3>
+              <span className="hidden text-[11px] text-slate-400 sm:inline">{applications.length} candidates</span>
+              <ChevronDown className={cn("h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200", !pipelineOpen && "-rotate-90")} />
+            </button>
+            {statusFilter !== "all" && (
+              <button onClick={() => setStatusFilter("all")} className="inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-bold text-[var(--hz-cobalt)] hover:underline">
+                <X className="h-3 w-3" /> Clear
+              </button>
+            )}
           </div>
-          <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1 sm:gap-2">
+
+          {pipelineOpen && (
+          <div className="flex items-stretch overflow-x-auto px-4 py-5">
             {PIPELINE.map((key, i) => {
               const meta = statusMeta[key as AppStatus];
               const Icon = meta.icon;
-              const t = tones[meta.tone];
+              const color = STAGE_COLOR[key];
               const count = pipelineCounts[key] || 0;
               const active = statusFilter === key;
+              const dim = statusFilter !== "all" && !active;
               const pct = Math.round(((count || 0) / pipelineMax) * 100);
+              const prev = i > 0 ? (pipelineCounts[PIPELINE[i - 1]] || 0) : null;
+              const conv = prev && prev > 0 ? Math.round((count / prev) * 100) : null;
               return (
-                <div key={key} className="flex min-w-[88px] flex-1 items-center gap-1.5 sm:gap-2">
+                <React.Fragment key={key}>
+                  {/* connector */}
+                  {i > 0 && (
+                    <div className="flex w-7 flex-shrink-0 flex-col items-center justify-center sm:w-10">
+                      <div className="relative h-[3px] w-full rounded-full" style={{ background: `linear-gradient(90deg, ${STAGE_COLOR[PIPELINE[i - 1]]}, ${color})` }}>
+                        <span className="absolute -right-[3px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rotate-45 rounded-[1px]" style={{ background: color }} />
+                      </div>
+                      {conv !== null && (
+                        <span className="mt-1.5 rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-slate-500 shadow-sm ring-1 ring-slate-100">{conv}%</span>
+                      )}
+                    </div>
+                  )}
+                  {/* node */}
                   <button
                     onClick={() => setStatusFilter(active ? "all" : key)}
                     title={`Filter by ${meta.label}`}
+                    style={active
+                      ? { borderColor: color, boxShadow: `0 12px 28px -10px ${color}80`, background: `${color}0a` }
+                      : undefined}
                     className={cn(
-                      "group w-full rounded-xl border p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                      active
-                        ? cn(t.bg, "border-transparent ring-1", t.ring)
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm",
+                      "group relative flex min-w-[100px] flex-1 flex-col rounded-2xl border-2 p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                      active ? "-translate-y-0.5" : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md",
+                      dim && "opacity-55 hover:opacity-100",
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={cn("grid h-7 w-7 place-items-center rounded-lg", t.bg)}>
-                        <Icon className={cn("h-3.5 w-3.5", t.text)} />
+                      <span className="grid h-8 w-8 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110" style={{ background: color + "1f", color }}>
+                        <Icon className="h-4 w-4" />
                       </span>
-                      <span className={cn("text-2xl font-bold leading-none tracking-tight tabular-nums", active ? t.text : "text-slate-900")}>{count}</span>
+                      <span className="text-[26px] font-bold leading-none tracking-tight tabular-nums" style={{ color: active ? color : "#0f172a" }}>{count}</span>
                     </div>
-                    <p className="mt-2 truncate text-[11px] font-semibold text-slate-500">{meta.label}</p>
-                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div className={cn("h-full rounded-full transition-all duration-500", t.dot)} style={{ width: `${pct}%` }} />
+                    <p className="mt-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">{meta.label}</p>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ width: `${pct}%`, background: color }} />
                     </div>
                   </button>
-                  {i < PIPELINE.length - 1 && <ArrowRight className="hidden h-3.5 w-3.5 flex-shrink-0 text-slate-300 sm:block" />}
-                </div>
+                </React.Fragment>
               );
             })}
-            <div className="mx-1 hidden w-px self-stretch bg-slate-200 sm:block" />
-            <button
-              onClick={() => setStatusFilter(statusFilter === "rejected" ? "all" : "rejected")}
-              title="Filter by Rejected"
-              className={cn(
-                "min-w-[88px] flex-shrink-0 rounded-xl border p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                statusFilter === "rejected"
-                  ? "border-transparent bg-rose-50 ring-1 ring-rose-200"
-                  : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm",
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <span className="grid h-7 w-7 place-items-center rounded-lg bg-rose-50">
-                  <XCircle className="h-3.5 w-3.5 text-rose-600" strokeWidth={2} />
-                </span>
-                <span className={cn("text-2xl font-bold leading-none tracking-tight tabular-nums", statusFilter === "rejected" ? "text-rose-700" : "text-slate-900")}>{pipelineCounts.rejected || 0}</span>
-              </div>
-              <p className="mt-2 text-[11px] font-semibold text-slate-500">Rejected</p>
-              <div className="mt-2 h-1 w-full rounded-full bg-rose-100/70" />
-            </button>
+
+            {/* rejected — terminal, off the main flow */}
+            <div className="ml-2 flex flex-shrink-0 items-center sm:ml-3">
+              <div className="mx-1 h-14 w-px bg-slate-200 sm:mx-2" />
+              <button
+                onClick={() => setStatusFilter(statusFilter === "rejected" ? "all" : "rejected")}
+                title="Filter by Rejected"
+                style={statusFilter === "rejected"
+                  ? { borderColor: STAGE_COLOR.rejected, boxShadow: `0 12px 28px -10px ${STAGE_COLOR.rejected}80`, background: `${STAGE_COLOR.rejected}0a` }
+                  : undefined}
+                className={cn(
+                  "group relative flex min-w-[100px] flex-col rounded-2xl border-2 p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  statusFilter === "rejected" ? "-translate-y-0.5" : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md",
+                  statusFilter !== "all" && statusFilter !== "rejected" && "opacity-55 hover:opacity-100",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="grid h-8 w-8 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110" style={{ background: STAGE_COLOR.rejected + "1f" }}>
+                    <XCircle className="h-4 w-4" style={{ color: STAGE_COLOR.rejected }} strokeWidth={2} />
+                  </span>
+                  <span className="text-[26px] font-bold leading-none tracking-tight tabular-nums" style={{ color: statusFilter === "rejected" ? STAGE_COLOR.rejected : "#0f172a" }}>{pipelineCounts.rejected || 0}</span>
+                </div>
+                <p className="mt-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">Rejected</p>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full" style={{ width: `${Math.round(((pipelineCounts.rejected || 0) / pipelineMax) * 100)}%`, background: STAGE_COLOR.rejected }} />
+                </div>
+              </button>
+            </div>
           </div>
+          )}
         </AdminCard>
       </motion.div>
 
@@ -363,77 +410,32 @@ export default function ApplicationsPage() {
       <motion.div {...fade(0.1)}>
         <AdminCard className="p-3 space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search name, email, job, ID…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-9 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] transition-colors placeholder:text-slate-400"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-700 rounded">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search name, email, job, ID…" />
 
-            {/* Filters toggle */}
-            <button
+            <FilterToggle
+              open={filtersOpen}
+              activeCount={activeFilterCount}
               onClick={() => setFiltersOpen((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg font-medium transition-colors",
-                filtersOpen || activeFilterCount > 0
-                  ? "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt)] text-[var(--hz-cobalt)]"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50",
-              )}
-            >
-              <SlidersHorizontal className="w-4 h-4" />Filters
-              {activeFilterCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[var(--hz-cobalt)] text-white rounded-full leading-none">{activeFilterCount}</span>
-              )}
-              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", filtersOpen && "rotate-180")} />
-            </button>
+            />
 
-            {/* View switcher */}
-            <div className="flex items-center rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
-              {([
-                { mode: "table",  Icon: LayoutList,   title: "Table" },
-                { mode: "kanban", Icon: Columns,      title: "Kanban" },
-                { mode: "list",   Icon: AlignJustify, title: "List" },
-              ] as const).map(({ mode, Icon, title }, i) => (
-                <button
-                  key={mode}
-                  title={title}
-                  onClick={() => setView(mode)}
-                  className={cn(
-                    "px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5",
-                    i > 0 && "border-l border-slate-200",
-                    view === mode ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100",
-                  )}
-                >
-                  <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{title}</span>
-                </button>
-              ))}
-            </div>
+            <ViewMenu
+              options={[
+                { value: "table",  label: "Table",  icon: LayoutList },
+                { value: "kanban", label: "Kanban", icon: Columns },
+                { value: "list",   label: "List",   icon: AlignJustify },
+              ]}
+              value={view}
+              onChange={setView}
+            />
 
-            {/* Bulk actions */}
-            {selected.length > 0 && (
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-slate-500 font-medium tabular-nums">{selected.length} selected</span>
-                <button
-                  onClick={() => setBulkDeleteOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />Delete
-                </button>
-                <button onClick={() => setSelected([])} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            <BulkBar count={selected.length} onClear={() => setSelected([])}>
+              <button
+                onClick={() => setBulkDeleteOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />Delete
+              </button>
+            </BulkBar>
           </div>
 
           {/* Expandable filters */}
@@ -613,6 +615,43 @@ interface SharedProps extends RowActions {
   apps: App[];
 }
 
+// Shared 3-dot (kebab) row actions for the table & list views.
+function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange }: {
+  app: App;
+  onView: (id: string) => void;
+  onEdit: (app: App) => void;
+  onDelete: (id: string) => void;
+  onStatusChange: (id: string, s: Application["status"]) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button title="Actions" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44 rounded-xl border border-slate-200 bg-white shadow-lg">
+        <DropdownMenuItem onClick={() => onView(app.id)} className="cursor-pointer rounded-lg text-sm"><Eye className="mr-2 h-4 w-4 text-slate-400" />View profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(app)} className="cursor-pointer rounded-lg text-sm"><Edit3 className="mr-2 h-4 w-4 text-slate-400" />Edit</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="px-2 py-1">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Move to</p>
+          {KANBAN_COLS.filter((c) => c !== app.status).map((c) => (
+            <button key={c} onClick={() => onStatusChange(app.id, c as Application["status"])}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs text-slate-700 transition-colors hover:bg-slate-50">
+              <span className={cn("h-1.5 w-1.5 flex-shrink-0 rounded-full", tones[sTone(c)].dot)} />{sLabel(c)}
+            </button>
+          ))}
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onDelete(app.id)} className="cursor-pointer rounded-lg text-sm text-rose-600 focus:bg-rose-50 focus:text-rose-600">
+          <Trash2 className="mr-2 h-4 w-4" />Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortField, sortDir, onSort, empty, onAdd, ...shared }: SharedProps & {
   allSelected: boolean; selected: string[];
   onSelectAll: (all: boolean) => void;
@@ -716,16 +755,8 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-0.5">
-                      <button onClick={() => shared.onView(app.id)} title="View profile" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => shared.onEdit(app)} title="Edit" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                        <Edit3 className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => shared.onDelete(app.id)} title="Delete" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    <div className="flex items-center justify-end">
+                      <RowActionsMenu app={app} onView={shared.onView} onEdit={shared.onEdit} onDelete={shared.onDelete} onStatusChange={shared.onStatusChange} />
                     </div>
                   </td>
                 </tr>
@@ -939,16 +970,8 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => shared.onView(app.id)} className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="View profile">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => shared.onEdit(app)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => shared.onDelete(app.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="flex flex-shrink-0 items-center">
+                  <RowActionsMenu app={app} onView={shared.onView} onEdit={shared.onEdit} onDelete={shared.onDelete} onStatusChange={shared.onStatusChange} />
                 </div>
               </div>
             );

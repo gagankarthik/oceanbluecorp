@@ -2,8 +2,11 @@
 
 import * as React from "react";
 import type { LucideIcon } from "lucide-react";
-import { Search, SlidersHorizontal, ChevronDown, X } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * List-page toolbar patterns. Composition (search + filters + view switcher
@@ -121,6 +124,55 @@ export function ViewSwitcher<V extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/** Dropdown variant of the view switcher — a "View" button that opens the options. */
+export function ViewMenu<V extends string>({
+  options,
+  value,
+  onChange,
+  className,
+}: {
+  options: readonly ViewOption<V>[];
+  value: V;
+  onChange: (value: V) => void;
+  className?: string;
+}) {
+  const current = options.find((o) => o.value === value) ?? options[0];
+  const CurrentIcon = current.icon;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 data-[state=open]:bg-slate-50",
+            className,
+          )}
+        >
+          <CurrentIcon className="h-4 w-4 text-slate-500" />
+          <span className="hidden sm:inline">{current.label}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40 rounded-xl border border-slate-200 bg-white shadow-lg">
+        {options.map(({ value: v, label, icon: Icon }) => {
+          const active = v === value;
+          return (
+            <DropdownMenuItem
+              key={v}
+              onClick={() => onChange(v)}
+              className={cn("cursor-pointer rounded-lg text-sm", active && "font-semibold text-[var(--hz-cobalt)]")}
+            >
+              <Icon className={cn("mr-2 h-4 w-4", active ? "text-[var(--hz-cobalt)]" : "text-slate-400")} />
+              {label}
+              {active && <Check className="ml-auto h-3.5 w-3.5 text-[var(--hz-cobalt)]" />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

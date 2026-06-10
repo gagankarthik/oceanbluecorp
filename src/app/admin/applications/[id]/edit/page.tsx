@@ -248,8 +248,8 @@ function EditApplicationInner() {
       </div>
 
       <div className="flex items-start gap-3">
-        <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 items-center justify-center shadow-sm shadow-[rgba(29,78,216,0.2)] flex-shrink-0">
-          <Edit3 className="w-5 h-5 text-white" />
+        <div className="hidden sm:flex w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] items-center justify-center flex-shrink-0">
+          <Edit3 className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" strokeWidth={2} />
         </div>
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900 leading-tight">Edit Applicant</h1>

@@ -11,7 +11,6 @@ import {
   MessageSquare,
   CheckCircle2,
   Loader2,
-  RefreshCw,
   Trash2,
   Filter,
   ChevronRight,
@@ -180,17 +179,12 @@ export default function NotificationsPage() {
           </span>
         ) : undefined}
         actions={
-          <>
-            <PageHeaderButton variant="secondary" onClick={fetchNotifications} title="Refresh">
-              <RefreshCw className="w-4 h-4" />
+          unreadCount > 0 ? (
+            <PageHeaderButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
+              {markingAllRead ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              Mark all as read
             </PageHeaderButton>
-            {unreadCount > 0 && (
-              <PageHeaderButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
-                {markingAllRead ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Mark all as read
-              </PageHeaderButton>
-            )}
-          </>
+          ) : undefined
         }
       />
 

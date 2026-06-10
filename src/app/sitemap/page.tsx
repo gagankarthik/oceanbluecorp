@@ -54,6 +54,7 @@ const SECTIONS: { group: string; links: { name: string; href: string }[] }[] = [
       { name: "Privacy Policy", href: "/privacy" },
       { name: "Terms of Service", href: "/terms" },
       { name: "Cookie Policy", href: "/cookies" },
+      { name: "Data Deletion", href: "/data-deletion" },
       { name: "Accessibility", href: "/accessibility" },
     ],
   },
