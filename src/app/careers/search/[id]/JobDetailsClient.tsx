@@ -175,6 +175,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           phone: formData.phone,
           coverLetter: formData.coverLetter,
           resumeId: resumeId,
+          resumeFileName: resumeFile?.name,
         }),
       });
 

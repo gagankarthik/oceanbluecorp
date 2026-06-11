@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   getAllApplications,
   getApplicationsByJob,
@@ -16,6 +16,11 @@ import {
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
+
+// Resume analysis runs after the response via after(); give the invocation room
+// for the LLM pipeline (30–90s) without delaying the applicant's response.
+export const maxDuration = 120;
 
 // GET /api/applications - Get applications (with optional filters)
 export async function GET(request: NextRequest) {
@@ -139,6 +144,10 @@ export async function POST(request: NextRequest) {
       jobId: body.jobId || undefined,
       jobTitle: body.jobTitle || job?.title || undefined,
       resumeId: body.resumeId || undefined,
+      resumeFileName: body.resumeFileName || undefined,
+      // Queue resume analysis when a resume is attached; the background task
+      // below flips this to processing/completed/failed.
+      resumeAnalysisStatus: body.resumeId ? "pending" : undefined,
       status: body.status || "pending",
       appliedAt: now,
       createdAt: now,
@@ -180,6 +189,20 @@ export async function POST(request: NextRequest) {
         { error: result.error || "Failed to create application" },
         { status: 500 }
       );
+    }
+
+    // Parse the resume automatically once the application is created. after()
+    // runs this AFTER the response is sent but keeps the serverless function
+    // alive until it finishes, so analysis reliably completes without making the
+    // applicant wait. The candidate page also exposes a manual re-analyze action.
+    if (application.resumeId) {
+      after(async () => {
+        try {
+          await analyzeApplicationResume(application.id);
+        } catch (err) {
+          console.error("Automatic resume analysis failed:", err);
+        }
+      });
     }
 
     // Only increment job applications count for portal applications

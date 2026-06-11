@@ -11,6 +11,8 @@ import {
   PlayCircle, Globe, Trash2, Edit3, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { UserRole } from "@/lib/auth";
 
 // ── Sidebar config ─────────────────────────────────────────────────────────────
 
@@ -225,6 +227,7 @@ export default function AdminDocsPage() {
   };
 
   return (
+    <ProtectedRoute requiredRoles={[UserRole.ADMIN]}>
     <div className="fixed inset-0 z-[60] flex bg-slate-50">
 
       {/* ── Sidebar ── */}
@@ -1083,5 +1086,6 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   );
 }

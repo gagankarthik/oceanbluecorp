@@ -121,6 +121,151 @@ export interface Resume {
 }
 
 
+// ===========================================
+// Resume Analysis (output of the resume-extraction Lambda)
+// Personal information is intentionally NOT stored here — the candidate's own
+// name/email/phone on the Application are the source of truth and never changed.
+// ===========================================
+
+export interface ResumeWorkExperience {
+  company_name?: string | null;
+  job_title?: string | null;
+  employment_type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean | null;
+  duration?: string | null;
+  location?: string | null;
+  remote?: boolean | null;
+  department?: string | null;
+  reporting_to?: string | null;
+  team_size?: number | null;
+  responsibilities?: string[];
+  achievements?: string[];
+  technologies_used?: string[];
+  description?: string | null;
+}
+
+export interface ResumeEducation {
+  institution_name?: string | null;
+  degree?: string | null;
+  degree_type?: string | null;
+  field_of_study?: string | null;
+  major?: string | null;
+  minor?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean | null;
+  gpa?: number | null;
+  percentage?: number | null;
+  grade?: string | null;
+  honors?: string[];
+  relevant_coursework?: string[];
+  thesis_title?: string | null;
+  location?: string | null;
+  activities?: string[];
+  description?: string | null;
+}
+
+export interface ResumeSkills {
+  all_skills_raw?: string[];
+  technical_skills?: string[];
+  soft_skills?: string[];
+  programming_languages?: string[];
+  frameworks_and_libraries?: string[];
+  databases?: string[];
+  cloud_platforms?: string[];
+  tools_and_platforms?: string[];
+  operating_systems?: string[];
+  methodologies?: string[];
+  domain_skills?: string[];
+  design_skills?: string[];
+  languages_spoken?: string[];
+  other_skills?: string[];
+  categories?: Array<{ name?: string | null; skills?: string[] }>;
+}
+
+export interface ResumeCertification {
+  name?: string | null;
+  issuing_organization?: string | null;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  credential_id?: string | null;
+  credential_url?: string | null;
+  description?: string | null;
+}
+
+export interface ResumeProject {
+  name?: string | null;
+  description?: string | null;
+  role?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean | null;
+  technologies?: string[];
+  url?: string | null;
+  repository_url?: string | null;
+  highlights?: string[];
+  team_size?: number | null;
+  type?: string | null;
+}
+
+export interface ResumeAward {
+  title?: string | null;
+  issuer?: string | null;
+  date?: string | null;
+  description?: string | null;
+  level?: string | null;
+}
+
+export interface ResumeLanguage {
+  language?: string | null;
+  proficiency?: string | null;
+  reading?: string | null;
+  writing?: string | null;
+  speaking?: string | null;
+}
+
+export interface ResumeAnalytics {
+  total_years_of_experience?: number | null;
+  total_months_of_experience?: number | null;
+  career_level?: string | null;
+  primary_industry?: string | null;
+  secondary_industries?: string[];
+  job_functions?: string[];
+  highest_education_level?: string | null;
+  number_of_companies?: number | null;
+  number_of_roles?: number | null;
+  average_tenure_months?: number | null;
+  has_international_experience?: boolean | null;
+  primary_location?: string | null;
+  salary_mentioned?: string | null;
+  resume_language?: string | null;
+}
+
+export interface ResumeAnalysis {
+  professional_summary?: string | null;
+  objective?: string | null;
+  work_experience?: ResumeWorkExperience[];
+  education?: ResumeEducation[];
+  skills?: ResumeSkills;
+  certifications?: ResumeCertification[];
+  projects?: ResumeProject[];
+  awards_and_honors?: ResumeAward[];
+  languages?: ResumeLanguage[];
+  interests_and_hobbies?: string[];
+  publications?: Array<Record<string, unknown>>;
+  volunteer_experience?: Array<Record<string, unknown>>;
+  courses?: Array<Record<string, unknown>>;
+  training?: Array<Record<string, unknown>>;
+  professional_memberships?: Array<Record<string, unknown>>;
+  conferences_and_talks?: Array<Record<string, unknown>>;
+  patents?: Array<Record<string, unknown>>;
+  references?: Array<Record<string, unknown>>;
+  analytics?: ResumeAnalytics;
+  _metadata?: Record<string, unknown>;
+}
+
 // Unified Application interface - supports both portal applications and HR-created applications
 export interface Application {
   id: string; // PK (UUID)
@@ -178,6 +323,12 @@ export interface Application {
 
   // Talent bench flag
   addToTalentBench?: boolean;
+
+  // Resume analysis (parsed by the resume-extraction Lambda)
+  resumeAnalysis?: ResumeAnalysis;
+  resumeAnalyzedAt?: string;          // ISO timestamp of last successful analysis
+  resumeAnalysisStatus?: "pending" | "processing" | "completed" | "failed";
+  resumeAnalysisError?: string;       // last failure message, if any
 
   // Status history for timeline
   statusHistory?: Array<{

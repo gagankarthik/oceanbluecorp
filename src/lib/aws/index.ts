@@ -6,6 +6,7 @@ export {
   uploadResume,
   getResumeDownloadUrl,
   getResumeUploadUrl,
+  getResumeObject,
   deleteResume as deleteResumeFromS3,
   resumeExists,
   validateResumeFile,
@@ -18,7 +19,7 @@ export {
 } from "./s3";
 
 // DynamoDB Operations
-export type { Resume, Application, Job } from "./dynamodb";
+export type { Resume, Application, Job, ResumeAnalysis } from "./dynamodb";
 export {
   // Resume operations
   createResume,
@@ -31,6 +32,7 @@ export {
   getApplicationsByUser,
   getApplicationsByJob,
   getAllApplications,
+  updateApplication,
   updateApplicationStatus,
   // Job operations
   createJob,

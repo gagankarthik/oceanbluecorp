@@ -144,7 +144,8 @@ export async function PUT(
       body.city || body.state || body.workAuthorization || body.source ||
       body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
       body.resumeId !== undefined || body.resumeFileName !== undefined ||
-      body.addToTalentBench !== undefined || body.benchAddedBy !== undefined;
+      body.addToTalentBench !== undefined || body.benchAddedBy !== undefined ||
+      body.resumeAnalysis !== undefined;
 
     if (hasFullUpdateFields) {
       // Full application update
@@ -203,6 +204,13 @@ export async function PUT(
       // Resume fields
       if (body.resumeId !== undefined) updates.resumeId = body.resumeId;
       if (body.resumeFileName !== undefined) updates.resumeFileName = body.resumeFileName;
+
+      // Resume analysis (manual edits from the candidate page)
+      if (body.resumeAnalysis !== undefined) {
+        updates.resumeAnalysis = body.resumeAnalysis;
+        updates.resumeAnalysisStatus = "completed";
+        updates.resumeAnalyzedAt = body.resumeAnalyzedAt || new Date().toISOString();
+      }
 
       // Handle status history for status changes
       if (isStatusChange) {

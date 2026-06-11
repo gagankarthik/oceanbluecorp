@@ -154,6 +154,28 @@ export async function getResumeDownloadUrl(
   }
 }
 
+// Fetch the raw resume bytes from S3 (used by the resume-analysis pipeline,
+// which forwards the file to the extraction Lambda).
+export async function getResumeObject(
+  key: string
+): Promise<{ success: boolean; body?: Uint8Array; contentType?: string; notFound?: boolean; error?: string }> {
+  try {
+    const res = await s3Client.send(
+      new GetObjectCommand({ Bucket: s3Config.bucketName, Key: key })
+    );
+    const body = await res.Body?.transformToByteArray();
+    if (!body) return { success: false, notFound: true };
+    return { success: true, body, contentType: res.ContentType };
+  } catch (error) {
+    const name = (error as { name?: string }).name;
+    if (name === "NoSuchKey" || name === "NotFound") {
+      return { success: false, notFound: true };
+    }
+    console.error("Error fetching resume from S3:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch resume" };
+  }
+}
+
 // Get a signed URL for uploading a resume (client-side upload)
 export async function getResumeUploadUrl(
   key: string,
