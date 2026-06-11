@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   MapPin,
   DollarSign,
@@ -26,7 +27,7 @@ import {
   Calendar,
   Heart,
 } from "lucide-react";
-import type { Job } from "@/lib/aws/dynamodb";
+import type { PublicJob } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth";
 
 // Format job type for display
@@ -71,7 +72,7 @@ const getTimeAgo = (date: Date): string => {
 };
 
 interface JobDetailsClientProps {
-  job: Job;
+  job: PublicJob;
   jobId: string;
 }
 
@@ -187,8 +188,9 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
       setApplicationSubmitted(true);
       setHasApplied(true);
       setApplicationStatus("pending");
+      toast.success("Application submitted! Check your email for confirmation.");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to submit application");
+      toast.error(err instanceof Error ? err.message : "Failed to submit application. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -212,17 +214,16 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
       try {
         await navigator.share({
           title: job?.title,
-          text: `Check out this job opening: ${job?.title} at Ocean Blue Solutions`,
+          text: `Check out this job opening: ${job?.title} at Ocean Blue Corporation`,
           url: window.location.href,
         });
       } catch (err) {
-        // User cancelled
+        // User cancelled the native share sheet — not an error worth surfacing.
         console.error("Failed to share job link:", err);
-        alert("Failed to share job link");
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      toast.success("Link copied to clipboard!");
     }
   };
 

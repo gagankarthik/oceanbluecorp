@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getJob } from "@/lib/aws/dynamodb";
+import { getJob, toPublicJob } from "@/lib/aws/dynamodb";
 import JobDetailsClient from "./JobDetailsClient";
 
 interface Props {
@@ -89,7 +89,9 @@ export default async function JobDetailsPage({ params }: Props) {
       notFound();
     }
 
-    return <JobDetailsClient job={result.data} jobId={id} />;
+    // Strip internal fields (rates, client/recruiter info) before sending to the
+    // public client component.
+    return <JobDetailsClient job={toPublicJob(result.data)} jobId={id} />;
   } catch (error) {
     console.error("Error fetching job:", error);
     notFound();

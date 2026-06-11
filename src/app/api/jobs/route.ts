@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllJobs, createJob, createNotification, getNextPostingId, Job } from "@/lib/aws/dynamodb";
+import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, getClaims } from "@/lib/auth/verify";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -26,8 +26,15 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
+    // This endpoint is public (the careers site lists jobs anonymously). Only
+    // staff get the full records — everyone else receives a sanitized projection
+    // that strips pay/bill rates, client/vendor info, recruiter emails, etc.
+    const claims = await getClaims(request);
+    const isStaff = !!claims?.groups?.some((g) => ["admin", "hr", "recruiter", "sales"].includes(g));
+    const payload = isStaff ? jobs : jobs.map(toPublicJob);
+
     console.log("API /api/jobs GET - success, count:", jobs.length);
-    return NextResponse.json({ jobs });
+    return NextResponse.json({ jobs: payload });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("API /api/jobs GET - exception:", errorMessage, error);

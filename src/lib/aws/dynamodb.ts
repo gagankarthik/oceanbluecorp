@@ -401,6 +401,37 @@ export interface Job {
   notificationSentAt?: string;
 }
 
+// Public-safe projection of a Job — strips internal fields (pay/bill rates,
+// client & vendor info, recruiter assignments, emails, creator) before a job is
+// served to anonymous visitors on the careers site.
+export type PublicJob = Pick<
+  Job,
+  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type"
+  | "description" | "requirements" | "responsibilities" | "salary" | "status"
+  | "submissionDueDate" | "createdAt" | "updatedAt" | "applicationsCount"
+>;
+
+export function toPublicJob(job: Job): PublicJob {
+  return {
+    id: job.id,
+    postingId: job.postingId,
+    title: job.title,
+    department: job.department,
+    location: job.location,
+    state: job.state,
+    type: job.type,
+    description: job.description,
+    requirements: job.requirements,
+    responsibilities: job.responsibilities,
+    salary: job.salary,
+    status: job.status,
+    submissionDueDate: job.submissionDueDate,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    applicationsCount: job.applicationsCount,
+  };
+}
+
 export interface Contact {
   id: string; // PK
   firstName: string;

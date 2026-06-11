@@ -35,7 +35,6 @@ import { useAuth, UserRole, routeAccess } from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 import { HeaderSearch } from "@/components/admin/header-search";
-import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -639,12 +638,6 @@ export default function AdminLayout({
     <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES]}>
       <AdminProvider>
         <AdminLayoutContent>{children}</AdminLayoutContent>
-        <Toaster
-          position="bottom-right"
-          richColors
-          closeButton
-          toastOptions={{ style: { fontFamily: "var(--font-geist-sans)" } }}
-        />
       </AdminProvider>
     </ProtectedRoute>
   );

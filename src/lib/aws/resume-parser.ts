@@ -44,8 +44,10 @@ export async function parseResumeBuffer(
 
   try {
     const form = new FormData();
-    // Wrap the bytes in a Blob so fetch builds a proper multipart body.
-    const blob = new Blob([bytes as Uint8Array], {
+    // Wrap the bytes in a Blob so fetch builds a proper multipart body. Cast to
+    // BlobPart: a Uint8Array is a valid BlobPart at runtime, but TS's strict lib
+    // types reject the ArrayBufferLike generic.
+    const blob = new Blob([bytes as unknown as BlobPart], {
       type: contentType || "application/octet-stream",
     });
     form.append("file", blob, fileName || "resume");
