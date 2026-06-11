@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Fragment } from "react";
 import Link from "next/link";
 import {
   CheckCircle2, AlertTriangle, XCircle, RefreshCw,
-  ExternalLink, Clock, Database, HardDrive, Mail,
+  Clock, Database, HardDrive, Mail,
   Shield, Zap, Search, Loader2, ChevronDown, ChevronUp,
   Activity, Globe, Info, ArrowLeft,
 } from "lucide-react";
@@ -44,7 +44,6 @@ interface StatusData {
   activeIncidents: Incident[];
   totalEvents: number;
   ohioEvents: number;
-  feedSource?: string;
   error?: string;
 }
 
@@ -70,11 +69,11 @@ const ST: Record<S, {
 };
 
 const BANNER: Record<S, { gradient: string; heading: string; sub: string }> = {
-  operational:  { gradient: "from-emerald-600 to-emerald-500", heading: "All Systems Operational",  sub: "All tracked AWS services are running normally in US East (Ohio)." },
-  investigating:{ gradient: "from-blue-600   to-blue-500",     heading: "Investigating an Issue",   sub: "We are monitoring a potential issue in US East (Ohio)." },
-  degraded:     { gradient: "from-amber-600  to-amber-500",    heading: "Partial Service Degradation", sub: "Some services are experiencing degraded performance in US East (Ohio)." },
-  outage:       { gradient: "from-rose-700   to-rose-600",     heading: "Service Disruption",       sub: "One or more services have a significant outage in US East (Ohio)." },
-  unknown:      { gradient: "from-gray-600   to-gray-500",     heading: "Status Unknown",           sub: "Unable to retrieve live AWS status data right now." },
+  operational:  { gradient: "from-emerald-600 to-emerald-500", heading: "All Systems Operational",  sub: "All platform services are running normally." },
+  investigating:{ gradient: "from-blue-600   to-blue-500",     heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
+  degraded:     { gradient: "from-amber-600  to-amber-500",    heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
+  outage:       { gradient: "from-rose-700   to-rose-600",     heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
+  unknown:      { gradient: "from-gray-600   to-gray-500",     heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -142,7 +141,7 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{svc.label}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{svc.category} · us-east-2</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{svc.category} · US East (Ohio)</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Dot status={svc.status} pulse />
@@ -324,7 +323,7 @@ export default function StatusContent() {
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5">
               <Globe className="w-3.5 h-3.5 text-white/80" />
-              <span className="text-white/90 text-xs font-medium">Region: us-east-2 (Ohio)</span>
+              <span className="text-white/90 text-xs font-medium">Region: US East (Ohio)</span>
             </div>
             {data && (
               <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5">
@@ -347,8 +346,8 @@ export default function StatusContent() {
         {/* Header row */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">AWS Services</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Tracked services in us-east-2</p>
+            <h2 className="text-base font-bold text-gray-900">Platform Services</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Tracked platform services</p>
           </div>
           <div className="flex items-center gap-2.5 text-xs text-gray-500">
             <span className="flex items-center gap-1">
@@ -378,7 +377,7 @@ export default function StatusContent() {
           <div className="bg-white border border-rose-200 rounded-2xl p-8 text-center">
             <XCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-700">Could not load status data</p>
-            <p className="text-xs text-gray-400 mt-1">The AWS status feed may be temporarily unavailable.</p>
+            <p className="text-xs text-gray-400 mt-1">The status feed may be temporarily unavailable.</p>
             <button onClick={() => void load(true)} className="mt-4 text-xs text-blue-600 underline">Try again</button>
           </div>
         ) : (
@@ -414,7 +413,7 @@ export default function StatusContent() {
             <div>
               <p className="text-sm font-semibold text-gray-900">No active incidents</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                No events reported for US East (Ohio) in the AWS Service Health Dashboard.
+                No active events reported for the US East (Ohio) region.
               </p>
             </div>
           </div>
@@ -427,15 +426,7 @@ export default function StatusContent() {
               <Clock className="w-3 h-3" />
               Last checked: {new Date(data.checkedAt).toLocaleString()}
             </span>
-            <Link
-              href={data.feedSource ?? "https://status.aws.amazon.com"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-gray-600 transition-colors"
-            >
-              Data: AWS Service Health Dashboard
-              <ExternalLink className="w-3 h-3" />
-            </Link>
+            <span>Status refreshes automatically every {REFRESH}s</span>
           </div>
         )}
       </div>

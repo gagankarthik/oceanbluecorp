@@ -581,10 +581,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
                       <Settings className="w-4 h-4 text-slate-400" /> Settings
                     </Link>
-                    <Link href="/admin/docs" onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
-                      <Code2 className="w-4 h-4 text-slate-400" /> Developer
-                    </Link>
+                    {user?.role === UserRole.ADMIN && (
+                      <Link href="/admin/docs" onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
+                        <Code2 className="w-4 h-4 text-slate-400" /> Developer
+                      </Link>
+                    )}
                     <Link href="/" target="_blank" onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors">
                       <Home className="w-4 h-4 text-slate-400" /> View website

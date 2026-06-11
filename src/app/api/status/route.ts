@@ -25,12 +25,14 @@ interface AwsEvent {
   impacted_services: Record<string, ImpactedService>;
 }
 
+// `key` matches the upstream feed (internal only, never rendered). `label` and
+// `category` are public-facing and intentionally describe function, not vendor.
 const TRACKED_SERVICES = [
-  { id: "dynamodb", key: "dynamodb-us-east-2", label: "Amazon DynamoDB", category: "Database" },
-  { id: "s3",       key: "s3-us-east-2",        label: "Amazon S3",       category: "Storage" },
-  { id: "cognito",  key: "cognito-us-east-2",    label: "Amazon Cognito",  category: "Auth" },
-  { id: "ses",      key: "ses-us-east-2",        label: "Amazon SES",      category: "Email" },
-  { id: "amplify",  key: "amplify-us-east-2",    label: "AWS Amplify",     category: "Hosting" },
+  { id: "dynamodb", key: "dynamodb-us-east-2", label: "Database",        category: "Data" },
+  { id: "s3",       key: "s3-us-east-2",        label: "File Storage",    category: "Storage" },
+  { id: "cognito",  key: "cognito-us-east-2",    label: "Authentication", category: "Identity" },
+  { id: "ses",      key: "ses-us-east-2",        label: "Email Delivery",  category: "Messaging" },
+  { id: "amplify",  key: "amplify-us-east-2",    label: "Web Hosting",     category: "Platform" },
 ] as const;
 
 // Try multiple URLs in order — AWS redirects the legacy URL
@@ -200,7 +202,6 @@ export async function GET() {
         activeIncidents,
         totalEvents: events.length,
         ohioEvents: ohioEvents.length,
-        feedSource: "https://status.aws.amazon.com",
       },
       {
         headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30" },

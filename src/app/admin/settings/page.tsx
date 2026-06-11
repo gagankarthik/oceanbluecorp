@@ -32,24 +32,28 @@ const tabs = [
     name: "Profile",
     icon: User,
     description: "Your personal information",
+    adminOnly: false,
   },
   {
     id: "notifications",
     name: "Notifications",
     icon: Bell,
     description: "Alert preferences",
+    adminOnly: false,
   },
   {
     id: "security",
     name: "Security",
     icon: Shield,
     description: "Password & access",
+    adminOnly: false,
   },
   {
     id: "site",
     name: "System",
     icon: Globe,
     description: "Site configuration",
+    adminOnly: true,
   },
 ];
 
@@ -106,6 +110,8 @@ function InputField({
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAdmin);
   const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -141,6 +147,14 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  // If the active tab is admin-only and this user isn't an admin (e.g. role
+  // resolved after mount), fall back to Profile.
+  useEffect(() => {
+    if (!isAdmin && tabs.find((t) => t.id === activeTab)?.adminOnly) {
+      setActiveTab("profile");
+    }
+  }, [isAdmin, activeTab]);
 
   useEffect(() => {
     if (user) {
@@ -355,7 +369,7 @@ export default function SettingsPage() {
         {/* Section rail */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const active = activeTab === tab.id;
               return (
                 <button
@@ -596,7 +610,7 @@ export default function SettingsPage() {
           <div className="p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Change Password</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Update your Cognito account password below.</p>
+              <p className="text-sm text-slate-500 mt-0.5">Update your account password below.</p>
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
@@ -642,7 +656,7 @@ export default function SettingsPage() {
             <div>
               <h2 className="text-base font-semibold text-slate-900">System Information</h2>
               <p className="text-sm text-slate-500 mt-0.5">
-                Read-only site configuration — managed via environment variables and AWS console.
+                Read-only site configuration.
               </p>
             </div>
 

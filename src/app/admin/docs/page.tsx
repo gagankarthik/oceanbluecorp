@@ -346,8 +346,8 @@ export default function AdminDocsPage() {
                   ["/admin/contacts", "Contacts", <Badge key="g" label="Admin · HR" color="bg-purple-100 text-purple-700" />],
                   ["/admin/users", "User Management", <Badge key="h" label="Admin only" color="bg-rose-100 text-rose-700" />],
                   ["/admin/content", "CMS Content", <Badge key="i" label="Admin only" color="bg-rose-100 text-rose-700" />],
-                  ["/admin/settings", "Settings", <Badge key="j" label="Admin only" color="bg-rose-100 text-rose-700" />],
-                  ["/admin/docs", "This Page", <Badge key="k" label="All Admin Roles" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
+                  ["/admin/settings", "Settings", <Badge key="j" label="All Roles · System tab: Admin" color="bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" />],
+                  ["/admin/docs", "Developer Docs", <Badge key="k" label="Admin only" color="bg-rose-100 text-rose-700" />],
                 ]}
               />
             </SubSection>
@@ -367,10 +367,13 @@ export default function AdminDocsPage() {
             <SubSection title="Authentication">
               <div className="space-y-3">
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  The admin panel uses <strong>AWS Cognito OIDC</strong> for authentication. Click <em>Sign In</em> on the login page and you&apos;ll be redirected to the Cognito Hosted UI. After authenticating, you&apos;re redirected back and your session is stored locally.
+                  The admin panel is <strong>staff-only and invite-based</strong> — there is no public sign-up. Sign in with your email and password directly on <code className="bg-slate-100 px-1 rounded text-xs">/auth/signin</code>; the form posts to <code className="bg-slate-100 px-1 rounded text-xs">/api/auth/signin</code>, which authenticates against Cognito and returns your tokens. There is no Cognito Hosted UI redirect.
                 </p>
                 <InfoCard variant="info">
-                  Sessions are stored in browser localStorage via the OIDC client. Closing the browser tab does not sign you out — use the <strong>Sign Out</strong> button in the sidebar or header.
+                  Sessions are stored in browser localStorage. Closing the browser tab does not sign you out — use the <strong>Sign Out</strong> button in the sidebar or header.
+                </InfoCard>
+                <InfoCard variant="tip">
+                  On your <strong>first sign-in</strong> after an invite, Cognito raises a one-time password change. The sign-in page switches to a &ldquo;Complete your account&rdquo; step where you set your full name, phone, and a permanent password before any tokens are issued.
                 </InfoCard>
               </div>
             </SubSection>
@@ -399,13 +402,11 @@ export default function AdminDocsPage() {
                     "2",
                     "Same as Recruiter — clients and vendors read-only",
                   ],
-                  [
-                    <Badge key="5" label="USER" color="bg-slate-100 text-slate-600" />,
-                    "1",
-                    "Portal only — apply for jobs, upload resume, view own applications",
-                  ],
                 ]}
               />
+              <InfoCard variant="info">
+                These four staff groups are the only roles. There is no public &ldquo;user&rdquo; account — job applicants submit anonymously through <code className="bg-slate-100 px-1 rounded text-xs">/careers/search</code> with no login required.
+              </InfoCard>
             </SubSection>
 
             <SubSection title="Keyboard Shortcuts">
@@ -731,19 +732,20 @@ export default function AdminDocsPage() {
 
             <SubSection title="Role Permission Matrix">
               <DataTable
-                headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "User"]}
+                headers={["Feature", "Admin", "HR", "Recruiter", "Sales"]}
                 rows={[
-                  ["Dashboard", "✅", "✅", "✅", "✅", "❌"],
-                  ["Jobs (R/W)", "✅", "✅", "✅", "✅", "❌"],
-                  ["Applications (R/W)", "✅", "✅", "✅", "✅", "❌"],
-                  ["Talent Bench", "✅", "✅", "✅", "✅", "❌"],
-                  ["Clients / Vendors", "✅", "✅", "❌", "❌", "❌"],
-                  ["Contacts", "✅", "✅", "❌", "❌", "❌"],
-                  ["Resume Bank", "✅", "✅", "✅", "❌", "❌"],
-                  ["User Management", "✅", "❌", "❌", "❌", "❌"],
-                  ["CMS Content", "✅", "❌", "❌", "❌", "❌"],
-                  ["Settings", "✅", "❌", "❌", "❌", "❌"],
-                  ["Portal (apply/upload)", "❌", "❌", "❌", "❌", "✅"],
+                  ["Dashboard", "✅", "✅", "✅", "✅"],
+                  ["Jobs (R/W)", "✅", "✅", "✅", "✅"],
+                  ["Applications (R/W)", "✅", "✅", "✅", "✅"],
+                  ["Talent Bench", "✅", "✅", "✅", "✅"],
+                  ["Clients / Vendors", "✅", "✅", "❌", "❌"],
+                  ["Contacts", "✅", "✅", "❌", "❌"],
+                  ["Resume Bank", "✅", "✅", "✅", "❌"],
+                  ["Settings — Profile / Security / Notifications", "✅", "✅", "✅", "✅"],
+                  ["Settings — System tab", "✅", "❌", "❌", "❌"],
+                  ["User Management", "✅", "❌", "❌", "❌"],
+                  ["CMS Content", "✅", "❌", "❌", "❌"],
+                  ["Developer / API Docs", "✅", "❌", "❌", "❌"],
                 ]}
               />
             </SubSection>
@@ -1038,10 +1040,9 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
             <SubSection title="Authentication Flow">
               <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
                 <ol className="list-decimal list-inside space-y-2 ml-1">
-                  <li>User clicks <strong>Sign In</strong> → redirected to Cognito Hosted UI</li>
-                  <li>Cognito authenticates via email/password or SSO</li>
-                  <li>Authorization code returned to <code className="bg-slate-100 px-1 rounded text-xs">/auth/callback</code></li>
-                  <li>OIDC client exchanges code for ID token + access token</li>
+                  <li>User enters email + password on <code className="bg-slate-100 px-1 rounded text-xs">/auth/signin</code> and submits to <code className="bg-slate-100 px-1 rounded text-xs">/api/auth/signin</code></li>
+                  <li>The route runs Cognito <code className="bg-slate-100 px-1 rounded text-xs">USER_PASSWORD_AUTH</code> and returns ID + access + refresh tokens</li>
+                  <li>First-time invited users get a <code className="bg-slate-100 px-1 rounded text-xs">NEW_PASSWORD_REQUIRED</code> challenge, completed via <code className="bg-slate-100 px-1 rounded text-xs">/api/auth/complete-invite</code> before tokens are issued</li>
                   <li>Tokens stored in localStorage — user object decoded from JWT claims</li>
                   <li>Cognito groups in JWT claims map to app roles (admin → ADMIN, hr → HR, etc.)</li>
                 </ol>
