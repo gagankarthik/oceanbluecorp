@@ -26,12 +26,16 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    // This endpoint is public (the careers site lists jobs anonymously). Only
-    // staff get the full records — everyone else receives a sanitized projection
-    // that strips pay/bill rates, client/vendor info, recruiter emails, etc.
+    // Staff get full records for all statuses. Public visitors only see
+    // active/open jobs with internal fields stripped — drafts, on-hold, and
+    // closed postings are never exposed outside the admin.
     const claims = await getClaims(request);
     const isStaff = !!claims?.groups?.some((g) => ["admin", "hr", "recruiter", "sales"].includes(g));
-    const payload = isStaff ? jobs : jobs.map(toPublicJob);
+    const payload = isStaff
+      ? jobs
+      : jobs
+          .filter((j) => j.status === "active" || j.status === "open")
+          .map(toPublicJob);
 
     console.log("API /api/jobs GET - success, count:", jobs.length);
     return NextResponse.json({ jobs: payload });

@@ -108,6 +108,28 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     return () => { cancelled = true; };
   }, [candidate?.jobId]);
 
+  // Poll every 5 s while the background resume analysis is running.
+  useEffect(() => {
+    const status = candidate?.resumeAnalysisStatus;
+    if (status !== "pending" && status !== "processing") return;
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/applications/${id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const updated = data.application as CandidateDetail;
+        setCandidate((prev) => (prev ? { ...prev, ...updated } : prev));
+        if (updated.resumeAnalysisStatus === "completed" || updated.resumeAnalysisStatus === "failed") {
+          clearInterval(timer);
+          if (updated.resumeAnalysisStatus === "completed") {
+            toast.success("Resume analyzed — results are ready");
+          }
+        }
+      } catch { /* non-fatal */ }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [candidate?.resumeAnalysisStatus, id]);
+
   // Show the application code (e.g. APP-2026-0103) as the top-nav breadcrumb.
   usePageCrumb(candidate?.applicationId);
 
@@ -529,26 +551,36 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </>
               ) : candidate.resumeId ? (
                 <AdminCard className="px-6 py-12 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-3">
-                    <Sparkles className="w-6 h-6 text-[var(--hz-cobalt)]" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {candidate.resumeAnalysisStatus === "processing"
-                      ? "Analysis in progress…"
-                      : candidate.resumeAnalysisStatus === "failed"
-                        ? "Last analysis didn't finish"
-                        : "Resume not analyzed yet"}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                    {candidate.resumeAnalysisStatus === "failed" && candidate.resumeAnalysisError
-                      ? candidate.resumeAnalysisError
-                      : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."}
-                  </p>
-                  <button onClick={handleAnalyze} disabled={analyzing}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
-                    {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
-                  </button>
+                  {(candidate.resumeAnalysisStatus === "pending" || candidate.resumeAnalysisStatus === "processing") ? (
+                    <>
+                      <div className="w-12 h-12 rounded-2xl bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-3">
+                        <Loader2 className="w-6 h-6 text-[var(--hz-cobalt)] animate-spin" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">Analyzing resume…</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        Extracting experience, education, skills and more. This usually takes under a minute — the page will update automatically.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-2xl bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-3">
+                        <Sparkles className="w-6 h-6 text-[var(--hz-cobalt)]" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">
+                        {candidate.resumeAnalysisStatus === "failed" ? "Last analysis didn't finish" : "Resume not analyzed yet"}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        {candidate.resumeAnalysisStatus === "failed" && candidate.resumeAnalysisError
+                          ? candidate.resumeAnalysisError
+                          : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."}
+                      </p>
+                      <button onClick={handleAnalyze} disabled={analyzing}
+                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
+                        {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
+                      </button>
+                    </>
+                  )}
                 </AdminCard>
               ) : (
                 <AdminCard className="px-6 py-12 text-center">

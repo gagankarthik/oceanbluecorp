@@ -56,22 +56,49 @@ interface FieldProps {
   label: string;
   required?: boolean;
   hint?: string;
+  /** Validation error message — shown below the control in rose text. */
+  error?: string;
+  /** Helper text shown below the control (only if no error). */
+  helper?: string;
+  /** Unique id forwarded to the label's htmlFor — improves screen-reader pairing. */
+  htmlFor?: string;
   children: React.ReactNode;
   className?: string;
   fullWidth?: boolean;
 }
 
-export function Field({ label, required, hint, children, className, fullWidth }: FieldProps) {
+export function Field({ label, required, hint, error, helper, htmlFor, children, className, fullWidth }: FieldProps) {
+  const fieldId = htmlFor;
+  const errorId = error && fieldId ? `${fieldId}-error` : undefined;
   return (
     <div className={cn(fullWidth && "col-span-full", className)}>
-      <label className="mb-1.5 flex items-baseline justify-between gap-2">
+      <label
+        htmlFor={fieldId}
+        className="mb-1.5 flex items-baseline justify-between gap-2"
+      >
         <span className="text-sm font-medium text-slate-700">
           {label}
-          {required && <span className="ml-0.5 text-rose-500">*</span>}
+          {required && (
+            <span className="ml-0.5 text-rose-500" aria-label="required">
+              *
+            </span>
+          )}
         </span>
         {hint && <span className="text-[11px] font-normal text-slate-400">{hint}</span>}
       </label>
       {children}
+      {error ? (
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-rose-600"
+        >
+          <span aria-hidden="true">⚠</span>
+          {error}
+        </p>
+      ) : helper ? (
+        <p className="mt-1.5 text-[11px] text-slate-400">{helper}</p>
+      ) : null}
     </div>
   );
 }
@@ -82,22 +109,28 @@ const controlBase =
   "w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-900 shadow-sm transition-colors " +
   "placeholder:text-slate-400 " +
   "focus:outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] " +
-  "hover:border-slate-300 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "hover:border-slate-300 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 " +
+  "aria-[invalid=true]:border-rose-400 aria-[invalid=true]:focus:ring-rose-200";
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
-export const FormInput = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(function FormInput({ className, ...props }, ref) {
-  return (
-    <input
-      ref={ref}
-      {...props}
-      className={cn(controlBase, "px-3 py-2", className)}
-    />
-  );
-});
+interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** When true, applies rose error ring. Pass the error message id to aria-describedby. */
+  invalid?: boolean;
+}
+
+export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
+  function FormInput({ className, invalid, ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        aria-invalid={invalid || undefined}
+        {...props}
+        className={cn(controlBase, "px-3 py-2", className)}
+      />
+    );
+  },
+);
 
 // ── Money input (with $ prefix) ───────────────────────────────────────────────
 
