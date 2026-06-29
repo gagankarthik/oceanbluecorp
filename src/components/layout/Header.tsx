@@ -453,6 +453,17 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                 <LayoutDashboard className="h-4 w-4 text-slate-400" strokeWidth={2} />
                                 Dashboard
                               </Link>
+                              {/* SSO hand-off: the shared Cognito cookies are
+                                  already set, so this lands signed-in. */}
+                              <a
+                                href="https://hr.oceanbluecorp.com/"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                              >
+                                <Building className="h-4 w-4 text-slate-400" strokeWidth={2} />
+                                HR Portal
+                                <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-slate-400" />
+                              </a>
                               {hasAnyRole([UserRole.ADMIN]) && (
                                 <Link
                                   href="/admin/settings"
@@ -624,6 +635,15 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                           <LayoutDashboard className="w-5 h-5 text-gray-400" />
                           <span className="font-medium text-sm">Dashboard</span>
                         </Link>
+                        <a
+                          href="https://hr.oceanbluecorp.com/"
+                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Building className="w-5 h-5 text-gray-400" />
+                          <span className="font-medium text-sm">HR Portal</span>
+                          <ArrowUpRight className="ml-auto w-4 h-4 text-gray-400" />
+                        </a>
                         <button
                           onClick={() => {
                             setMobileMenuOpen(false);

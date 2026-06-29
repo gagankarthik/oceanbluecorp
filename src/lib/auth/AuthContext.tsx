@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { UserManager, User, WebStorageStateStore } from "oidc-client-ts";
 import type { UserProfile } from "oidc-client-ts";
 import { UserRole, roleHierarchy } from "./config";
+import { writeHrPortalSession, clearHrPortalSession } from "./hrPortalSession";
 
 interface AuthUser {
   id: string;
@@ -158,6 +159,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Set the server cookie before flagging the user as authenticated, so
         // gated admin pages never fire their first fetch without credentials.
         await syncServerSession(oidcUser.id_token, oidcUser.expires_in);
+        // Mirror into the shared HR-portal session cookies so a click-through to
+        // hr.oceanbluecorp.com lands already signed in.
+        writeHrPortalSession({
+          idToken: oidcUser.id_token || "",
+          accessToken: oidcUser.access_token,
+          refreshToken: oidcUser.refresh_token,
+        });
         setUser(parseUser(oidcUser));
       }
       setIsLoading(false);
@@ -169,11 +177,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Handle token refresh events
     const handleUserLoaded = (oidcUser: User) => {
       void syncServerSession(oidcUser.id_token, oidcUser.expires_in);
+      writeHrPortalSession({
+        idToken: oidcUser.id_token || "",
+        accessToken: oidcUser.access_token,
+        refreshToken: oidcUser.refresh_token,
+      });
       setUser(parseUser(oidcUser));
     };
 
     const handleUserUnloaded = () => {
       void clearServerSession();
+      clearHrPortalSession();
       setUser(null);
     };
 
@@ -229,6 +243,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await userManager.storeUser(oidcUser);
     await syncServerSession(data.idToken, data.expiresIn);
+    writeHrPortalSession({
+      idToken: data.idToken,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+    });
     const authUser = parseUser(oidcUser);
     setUser(authUser);
     return authUser;
@@ -291,6 +310,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Clear the server session cookie too (guarded; never blocks sign-out).
     await clearServerSession();
+    // Tear down the shared HR-portal cookies so the user is signed out there too.
+    clearHrPortalSession();
 
     try {
       // Clear all oidc.* entries from both storages
