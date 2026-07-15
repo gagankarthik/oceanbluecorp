@@ -107,7 +107,7 @@ export default function Testimonials() {
                 onClick={() => setI(idx)}
                 aria-label={`Show testimonial ${idx + 1}`}
                 aria-current={idx === i}
-                className="group flex h-10 items-center px-1.5"
+                className="group flex h-10 min-w-[40px] items-center justify-center px-1.5"
               >
                 <span
                   className="block h-2 rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-[var(--hz-cobalt)]"

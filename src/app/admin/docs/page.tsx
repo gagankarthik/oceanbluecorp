@@ -8,7 +8,7 @@ import {
   ChevronRight, Hash, Zap, Shield, Database, Cloud,
   Mail, Key, Info, CheckCircle2, AlertCircle, Circle,
   Copy, Check, Layers, FileText, Settings, BookOpen,
-  PlayCircle, Globe, Trash2, Edit3, Plus,
+  PlayCircle, Globe, Trash2, Edit3, Plus, Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -196,6 +196,7 @@ function StatusDot({ color }: { color: string }) {
 export default function AdminDocsPage() {
   const router = useRouter();
   const [activeId, setActiveId] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -224,14 +225,35 @@ export default function AdminDocsPage() {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     setActiveId(id);
+    setSidebarOpen(false);
   };
 
   return (
     <ProtectedRoute requiredRoles={[UserRole.ADMIN]}>
     <div className="fixed inset-0 z-[60] flex bg-slate-50">
 
+      {/* Mobile drawer backdrop */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 h-screen overflow-y-auto">
+      <aside
+        className={cn(
+          "w-64 flex-shrink-0 bg-white border-r border-slate-200 h-screen overflow-y-auto z-50 transition-transform duration-300 ease-out",
+          "fixed inset-y-0 left-0 lg:static lg:translate-x-0",
+          sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:shadow-none"
+        )}
+      >
+        <div className="flex items-center justify-end px-4 pt-3 lg:hidden">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close navigation"
+            className="grid h-10 w-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         {/* Sidebar header */}
         <div className="px-4 pt-4 pb-3 border-b border-slate-100">
           <button
@@ -304,7 +326,18 @@ export default function AdminDocsPage() {
 
       {/* ── Main content ── */}
       <main className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-10 space-y-16">
+        {/* Mobile top bar with drawer toggle */}
+        <div className="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open docs navigation"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-semibold text-slate-700">Developer Docs</span>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
 
           {/* ═══════════════════════════════════════════════════════════════
                OVERVIEW

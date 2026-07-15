@@ -282,11 +282,11 @@ export default function ContactsPage() {
                   </div>
                   <p className="text-sm text-slate-600 mt-2 line-clamp-2">{contact.message}</p>
                   {/* Quick Actions */}
-                  <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a href={`mailto:${contact.email}?subject=Re: ${contact.inquiryType} Inquiry`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-lg text-xs font-medium hover:bg-[var(--hz-cobalt-100)] transition-colors">
+                  <div className="flex items-center gap-2 mt-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <a href={`mailto:${contact.email}?subject=Re: ${contact.inquiryType} Inquiry`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-lg text-xs font-medium hover:bg-[var(--hz-cobalt-100)] transition-colors">
                       <Send className="w-3 h-3" /> Reply
                     </a>
-                    <button onClick={e => { e.stopPropagation(); setPendingDelete(contact.id); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-rose-600 rounded-lg text-xs font-medium hover:bg-rose-50 transition-colors">
+                    <button onClick={e => { e.stopPropagation(); setPendingDelete(contact.id); }} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-rose-600 rounded-lg text-xs font-medium hover:bg-rose-50 transition-colors">
                       <Trash2 className="w-3 h-3" /> Delete
                     </button>
                   </div>

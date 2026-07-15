@@ -117,7 +117,7 @@ function Sidebar({
           <Link href="/admin" className="flex items-center gap-2">
             {collapsed ? (
               <div className="w-8 h-8 flex items-center justify-center">
-                <Image src="/logo.ico" alt="Logo" width={32} height={32} className="w-8 h-8" />
+                <Image src="/logo.png" alt="Logo" width={32} height={32} className="w-8 h-8" />
               </div>
             ) : (
               <Image
@@ -578,7 +578,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div className={cn("transition-all duration-300", sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56")}>
         {/* Top header */}
         <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5 relative">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
@@ -615,7 +615,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </nav>
 
             {/* Mobile title */}
-            <h1 className="sm:hidden font-semibold text-slate-800">
+            <h1 className="sm:hidden truncate font-semibold text-slate-800">
               {pathname === "/admin" ? "Dashboard" : (pageCrumb ?? section.name)}
             </h1>
           </div>

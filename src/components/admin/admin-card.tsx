@@ -46,13 +46,13 @@ export function AdminCardHeader({
   const t = tones[tone];
   return (
     <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
         {Icon && (
           <span className={cn("grid h-7 w-7 place-items-center rounded-lg", t.bg)}>
             <Icon className={cn("h-4 w-4", t.text)} strokeWidth={2} />
           </span>
         )}
-        <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+        <h3 className="truncate text-sm font-bold text-slate-900">{title}</h3>
         {count !== undefined && count > 0 && (
           <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{count}</span>
         )}

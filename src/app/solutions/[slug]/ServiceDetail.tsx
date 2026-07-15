@@ -80,7 +80,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               </span>
               <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-cyan-400)]">{data.eyebrow}</span>
             </div>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[3.75rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[3.75rem]">
               {data.title}
             </h1>
             <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">{data.lede}</p>

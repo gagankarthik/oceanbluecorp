@@ -246,7 +246,7 @@ export function CandidateEditDrawer({
             {activeTab === "profile" && (
               <>
                 <FormSection icon={User2} title="Personal Info">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="First name" required>
                       <FormInput value={form.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="Jane" />
                     </Field>
@@ -263,7 +263,7 @@ export function CandidateEditDrawer({
                 </FormSection>
 
                 <FormSection icon={MapPin} title="Location">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="City">
                       <FormInput value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Austin" />
                     </Field>
@@ -277,7 +277,7 @@ export function CandidateEditDrawer({
                 </FormSection>
 
                 <FormSection icon={Briefcase} title="Position & Pipeline">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Pipeline status">
                       <FormSelect value={form.status} onChange={(e) => set("status", e.target.value as AppStatus)}>
                         {Object.entries(statusMeta)

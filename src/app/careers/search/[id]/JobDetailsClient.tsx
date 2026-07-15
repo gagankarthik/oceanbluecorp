@@ -390,7 +390,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
                           <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
-                        <span className="text-gray-600 text-lg">{item}</span>
+                        <span className="min-w-0 text-gray-600 text-lg break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -415,7 +415,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
                           <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
-                        <span className="text-gray-600 text-lg">{item}</span>
+                        <span className="min-w-0 text-gray-600 text-lg break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -577,28 +577,28 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 <h4 className="font-semibold text-gray-900 mb-4">Job Details</h4>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <Briefcase className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <Briefcase className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">Employment Type</p>
                       <p className="font-medium text-gray-900">{formatJobType(job.type)}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">Location</p>
                       <p className="font-medium text-gray-900">{job.location}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <Building2 className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">Department</p>
                       <p className="font-medium text-gray-900">{job.department}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <Clock className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">Posted</p>
                       <p className="font-medium text-gray-900">{postedAgo}</p>

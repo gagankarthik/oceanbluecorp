@@ -151,7 +151,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.name}
-                className="grid h-9 w-9 place-items-center rounded-full text-[var(--hz-text-mute)] transition-all duration-300 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text-mute)] transition-all duration-300 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <s.icon className="h-4 w-4" strokeWidth={1.5} />
               </a>

@@ -125,7 +125,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Our solutions</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
               {content.servicesTitle || "Talent, engineering, technology, and managed services."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
@@ -162,7 +162,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
                   <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 45%, rgba(5,12,28,0.78) 100%)" }} />
                   <div className="absolute inset-x-7 bottom-7">
                     <span className="hz-eyebrow text-[var(--hz-cyan-400)]">{p.tag}</span>
-                    <p className="hz-display mt-2 text-[2.4rem] leading-none text-white">{p.name}</p>
+                    <p className="hz-display mt-2 text-[2rem] sm:text-[2.4rem] leading-none text-white">{p.name}</p>
                   </div>
                   <span className="absolute left-6 top-6 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-[13px] font-semibold text-white backdrop-blur-sm">
                     {String(i + 1).padStart(2, "0")}

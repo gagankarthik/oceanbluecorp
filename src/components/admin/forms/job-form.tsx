@@ -342,7 +342,7 @@ export function JobForm({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Field label="Department" required>
                 <FormSelect required value={data.department} onChange={(e) => set("department", e.target.value)}>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -404,7 +404,7 @@ export function JobForm({
         {/* ── Compensation ── */}
         <motion.div {...section(2)}>
         <FormSection icon={DollarSign} title="Compensation" tone="emerald" description="Optional rate and salary details — leave blank if not applicable.">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
             <Field label="Bill Rate ($/hr)">
               <MoneyInput value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
             </Field>
@@ -578,7 +578,7 @@ function AddClientModal({
           <Field label="Website URL" required>
             <FormInput required type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Email">
               <FormInput type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
             </Field>

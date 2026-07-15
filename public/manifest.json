@@ -8,13 +8,13 @@
 	"theme_color": "#0066cc",
 	"icons": [
 		{
-			"src": "/ocean_blue_solutions_inc_logo.jpg",
+			"src": "/images/ocean_blue_solutions_inc_logo.jpg",
 			"sizes": "192x192",
 			"type": "image/jpeg",
 			"purpose": "any"
 		},
 		{
-			"src": "/ocean_blue_solutions_inc_logo.jpg",
+			"src": "/images/ocean_blue_solutions_inc_logo.jpg",
 			"sizes": "512x512",
 			"type": "image/jpeg",
 			"purpose": "any"

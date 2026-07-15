@@ -362,9 +362,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                 width={150}
                 height={40}
                 priority
-                className={`w-auto object-contain transition-[height] duration-300 ease-out ${
-                  scrolled ? "h-6 md:h-7" : "h-7 md:h-9"
-                }`}
+                className="h-7 w-auto object-contain md:h-9"
               />
             </Link>
 
@@ -561,7 +559,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
             {/* Mobile menu button - Always visible */}
             <button
               type="button"
-              className="lg:hidden p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              className="lg:hidden grid h-11 w-11 place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
             >
@@ -586,7 +584,11 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                 }}
               />
               {/* Menu Panel */}
-              <div className="lg:hidden fixed top-20 md:top-24 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-white z-[9999] overflow-y-auto shadow-2xl rounded-3xl border border-gray-100 max-h-[calc(100vh-6rem)]">
+              <div className={`lg:hidden fixed left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-white z-[9999] overflow-y-auto shadow-2xl rounded-3xl border border-gray-100 ${
+                topOffset === "top-0"
+                  ? "top-20 md:top-24 max-h-[calc(100dvh-6rem)]"
+                  : "top-[7.5rem] md:top-[8.5rem] max-h-[calc(100dvh-9rem)]"
+              }`}>
                 <div className="px-4 sm:px-6 py-6">
                   <div className="space-y-1">
                     {navigation.map((item) => (

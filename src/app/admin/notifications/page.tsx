@@ -268,7 +268,7 @@ export default function NotificationsPage() {
                       {!notification.isRead && (
                         <button
                           onClick={() => handleMarkAsRead(notification.id)}
-                          className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
+                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
                           title="Mark as read"
                         >
                           <CheckCircle2 className="w-4 h-4" />
@@ -276,14 +276,14 @@ export default function NotificationsPage() {
                       )}
                       <button
                         onClick={() => handleDeleteNotification(notification.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <Link
                         href={link}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                         title="View details"
                       >
                         <ChevronRight className="w-4 h-4" />

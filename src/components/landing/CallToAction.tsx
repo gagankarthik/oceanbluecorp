@@ -22,7 +22,7 @@ export default function CallToAction({ content = {} }: { content?: Record<string
 
       <div className="relative z-10 mx-auto max-w-4xl px-6 py-28 text-center sm:px-8 sm:py-36">
         <Reveal className="flex flex-col items-center">
-          <h2 className="hz-display max-w-[18ch] text-[2.5rem] text-white sm:text-[3.5rem]">
+          <h2 className="hz-display max-w-[18ch] text-[2.1rem] break-words text-white sm:text-[3.5rem] 2xl:text-[4rem]">
             {content.ctaHeading || "Tell us what you're building. We'll put the right team on it."}
           </h2>
           <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[18px]">

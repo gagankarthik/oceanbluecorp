@@ -92,7 +92,7 @@ export const metadata: Metadata = {
       "IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for enterprises and government agencies.",
     images: [
       {
-        url: "/Logo_400x400.jpg",
+        url: "/Logo_400x400.png",
         width: 400,
         height: 400,
         alt: "Ocean Blue Solutions",
@@ -104,7 +104,7 @@ export const metadata: Metadata = {
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
       "IT staffing, enterprise solutions, and managed services for enterprises and government agencies — ERP, cloud, cybersecurity, AI, and Salesforce.",
-    images: ["/Logo_400x400.jpg"],
+    images: ["/Logo_400x400.png"],
     creator: "@oceanbluecorp",
   },
   alternates: {
@@ -120,7 +120,7 @@ const jsonLd = {
   name: "Ocean Blue Corporation",
   alternateName: "OceanBlueCorp",
   url: "https://oceanbluecorp.com",
-  logo: "https://oceanbluecorp.com/Logo_400x400.jpg",
+  logo: "https://oceanbluecorp.com/Logo_400x400.png",
   description:
     "IT staffing, enterprise solutions, and managed services provider — ERP, cloud, cybersecurity, AI & data, and Salesforce — serving enterprises and state government agencies across North America.",
   foundingDate: "2013",

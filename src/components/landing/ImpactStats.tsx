@@ -50,7 +50,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
 
   return (
     <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-32">
-      <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
+      <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">
         {/* Heading — left */}
         <Reveal className="lg:col-span-5">
           <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
@@ -68,11 +68,11 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
           {stats.map((s, i) => (
             <StaggerItem
               key={s.label}
-              className={`group p-6 transition-colors duration-300 hover:bg-white sm:p-8 ${
+              className={`group p-4 transition-colors duration-300 hover:bg-white sm:p-8 ${
                 i % 2 === 0 ? "border-r border-slate-200/80" : ""
               } ${i < 2 ? "border-b border-slate-200/80" : ""}`}
             >
-              <p className="hz-display hz-tnum text-[2.75rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
+              <p className="hz-display hz-tnum text-[2.15rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
                 <Counter target={s.value} run={inView} />
                 <span className="text-[var(--hz-amber)]">{s.suffix}</span>
               </p>

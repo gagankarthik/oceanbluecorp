@@ -351,7 +351,7 @@ export default function CareersSearchPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => { setRemoteOnly(!remoteOnly); setCurrentPage(1); }}
-                    className={`w-11 h-6 rounded-full transition-colors relative ${remoteOnly ? "bg-[var(--hz-cobalt)]" : "bg-gray-200"}`}
+                    className={`w-11 h-6 py-2 -my-2 rounded-full transition-colors relative ${remoteOnly ? "bg-[var(--hz-cobalt)]" : "bg-gray-200"}`}
                   >
                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${remoteOnly ? "left-6" : "left-1"}`} />
                   </button>
@@ -386,7 +386,7 @@ export default function CareersSearchPage() {
                         className="bg-white rounded-2xl border border-gray-200 p-6 transition-all hover:border-gray-300 hover:shadow-md"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <Link href={`/careers/search/${job.id}`} className="flex-1 group cursor-pointer">
+                          <Link href={`/careers/search/${job.id}`} className="flex-1 group cursor-pointer min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                               {appliedJobIds.has(job.id) && (
                                 <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium flex items-center gap-1">
@@ -418,7 +418,7 @@ export default function CareersSearchPage() {
                                 );
                               })()}
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-[var(--hz-cobalt)] transition-colors">{job.title}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-[var(--hz-cobalt)] transition-colors break-words">{job.title}</h3>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1.5">
                                 <MapPin className="w-4 h-4" />
@@ -450,7 +450,7 @@ export default function CareersSearchPage() {
                   </div>
 
                   {/* Pagination + Per-page */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
                     <p className="text-sm text-gray-500">
                       Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredJobs.length)}–{Math.min(currentPage * itemsPerPage, filteredJobs.length)} of {filteredJobs.length} positions
                     </p>
@@ -460,7 +460,7 @@ export default function CareersSearchPage() {
                         <button
                           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronLeft className="w-5 h-5" />
                         </button>
@@ -479,7 +479,7 @@ export default function CareersSearchPage() {
                         <button
                           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronRight className="w-5 h-5" />
                         </button>
@@ -494,7 +494,7 @@ export default function CareersSearchPage() {
                           <button
                             key={n}
                             onClick={() => { setItemsPerPage(n); setCurrentPage(1); }}
-                            className={`w-9 h-9 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}
                           >
                             {n}
                           </button>

@@ -47,7 +47,7 @@ export default function CareersPage() {
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
           <Reveal>
-            <h1 className="hz-display max-w-[16ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display max-w-[16ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
               Build your career with our team.
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
@@ -56,7 +56,7 @@ export default function CareersPage() {
             <div className="mt-10">
               <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
             </div>
-            <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-x-4 gap-y-6 border-t border-white/15 pt-8">
+            <dl className="mt-14 grid max-w-2xl grid-cols-1 min-[400px]:grid-cols-3 gap-x-4 gap-y-6 border-t border-white/15 pt-8">
               {facts.map((f) => (
                 <div key={f.k}>
                   <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>

@@ -74,8 +74,8 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         }}
       />
 
-      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-24 sm:px-8">
-        <h1 className="hz-display max-w-[20ch] text-[2.6rem] text-white sm:text-[3.5rem] lg:text-[4.5rem]">
+      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-24 sm:px-8 2xl:max-w-[96rem]">
+        <h1 className="hz-display max-w-[20ch] text-[2.2rem] break-words text-white sm:text-[3.5rem] lg:text-[4.5rem] 2xl:text-[5.5rem]">
           {content.heroTitle ? (
             <WordsReveal text={content.heroTitle} delay={0.12} />
           ) : (
@@ -133,7 +133,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
               key={s.src}
               onClick={() => setSlide(idx)}
               aria-label={`Show slide ${idx + 1}`}
-              className="group flex h-10 items-center px-1.5"
+              className="group flex h-10 min-w-[40px] items-center justify-center px-1.5"
             >
               <span
                 className="block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white"

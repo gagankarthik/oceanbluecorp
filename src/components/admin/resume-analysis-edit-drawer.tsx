@@ -169,7 +169,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
           {/* Analytics */}
           <FormSection icon={TrendingUp} title="Profile metrics">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Career level">
                 <select
                   value={draft.analytics?.career_level || ""}
@@ -199,7 +199,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               <Field label="Technical skills">
                 <FormTextarea rows={2} value={skillsText.technical} onChange={(e) => setSkillsText((s) => ({ ...s, technical: e.target.value }))} placeholder="React, Node.js, AWS…" />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Programming languages">
                   <FormTextarea rows={2} value={skillsText.programming} onChange={(e) => setSkillsText((s) => ({ ...s, programming: e.target.value }))} placeholder="Python, Java…" />
                 </Field>
@@ -230,7 +230,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                   <button type="button" onClick={() => removeWork(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                  <div className="grid grid-cols-2 gap-2.5 pr-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Company"><FormInput value={w.company_name || ""} onChange={(e) => setWork(i, "company_name", e.target.value)} /></Field>
                     <Field label="Title"><FormInput value={w.job_title || ""} onChange={(e) => setWork(i, "job_title", e.target.value)} /></Field>
                     <Field label="Start"><FormInput value={w.start_date || ""} onChange={(e) => setWork(i, "start_date", e.target.value)} placeholder="Jan 2020" /></Field>
@@ -265,7 +265,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                   <button type="button" onClick={() => removeEdu(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                  <div className="grid grid-cols-2 gap-2.5 pr-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Institution" className="col-span-2"><FormInput value={e.institution_name || ""} onChange={(ev) => setEdu(i, "institution_name", ev.target.value)} /></Field>
                     <Field label="Degree"><FormInput value={e.degree_type || ""} onChange={(ev) => setEdu(i, "degree_type", ev.target.value)} placeholder="B.S." /></Field>
                     <Field label="Field of study"><FormInput value={e.field_of_study || ""} onChange={(ev) => setEdu(i, "field_of_study", ev.target.value)} placeholder="Computer Science" /></Field>
@@ -295,7 +295,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                   <button type="button" onClick={() => removeCert(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                  <div className="grid grid-cols-2 gap-2.5 pr-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Name" className="col-span-2"><FormInput value={c.name || ""} onChange={(e) => setCert(i, "name", e.target.value)} /></Field>
                     <Field label="Issuer"><FormInput value={c.issuing_organization || ""} onChange={(e) => setCert(i, "issuing_organization", e.target.value)} /></Field>
                     <Field label="Issued"><FormInput value={c.issue_date || ""} onChange={(e) => setCert(i, "issue_date", e.target.value)} /></Field>

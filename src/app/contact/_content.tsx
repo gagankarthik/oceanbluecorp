@@ -106,7 +106,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-28 pt-32 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Contact us</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[16ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
               {content.contactTitle || "Let's start a conversation."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
@@ -300,7 +300,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                   <div className="mt-4 space-y-2.5 border-t border-black/[0.07] pt-4 text-[13.5px]">
                     <p className="flex items-start gap-2 text-[var(--hz-text-mute)]">
                       <MapPin className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                      <span>{office.address}</span>
+                      <span className="min-w-0 break-words">{office.address}</span>
                     </p>
                     <p className="flex items-center gap-2">
                       <Phone className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />

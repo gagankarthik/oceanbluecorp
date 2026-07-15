@@ -368,11 +368,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                 { label: "Posted by",    value: job.postedByName, icon: UserCheck  },
                 { label: "Client notes", value: job.clientNotes,  icon: FileText   },
               ].filter((d) => d.value).map((d) => (
-                <div key={d.label}>
+                <div key={d.label} className="min-w-0">
                   <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     <d.icon className="h-3.5 w-3.5" />{d.label}
                   </div>
-                  <p className="text-sm text-slate-700">{d.value}</p>
+                  <p className="text-sm text-slate-700 break-words">{d.value}</p>
                 </div>
               ))}
             </div>

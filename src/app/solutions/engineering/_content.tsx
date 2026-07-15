@@ -82,7 +82,7 @@ export default function EngineeringContent() {
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Engineering talent &amp; services</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
               The engineers behind what you design, test, and build.
             </h1>
             <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">

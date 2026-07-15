@@ -514,17 +514,17 @@ function GridView({ resumes, onPreview, onDownload, onDelete }: {
           className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[var(--hz-cobalt-100)] transition-all group flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <FileTypeIcon type={r.fileType} size="lg" />
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
               <button onClick={() => onPreview(r)} title="Preview"
-                className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors">
+                className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors">
                 <Eye className="w-4 h-4" />
               </button>
               <button onClick={() => onDownload(r)} title="Download"
-                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                 <Download className="w-4 h-4" />
               </button>
               <button onClick={() => onDelete(r.id)} title="Delete"
-                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -600,17 +600,17 @@ function ListView({ resumes, onPreview, onDownload, onDelete }: {
                   <p className="text-[10px] text-slate-400 mt-0.5">{fmtSize(r.fileSize)}</p>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onPreview(r)}
-                    className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Preview">
+                    className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Preview">
                     <Eye className="w-4 h-4" />
                   </button>
                   <button onClick={() => onDownload(r)}
-                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download">
+                    className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download">
                     <Download className="w-4 h-4" />
                   </button>
                   <button onClick={() => onDelete(r.id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                    className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

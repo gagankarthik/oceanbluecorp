@@ -346,9 +346,9 @@ export default function UsersPage() {
                             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                               {getInitials(user.name)}
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-                              <p className="text-xs text-slate-400 lg:hidden">{user.email}</p>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
+                              <p className="text-xs text-slate-400 lg:hidden truncate">{user.email}</p>
                             </div>
                           </div>
                         </td>
@@ -375,7 +375,7 @@ export default function UsersPage() {
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center justify-end">
-                            <button onClick={() => { setUserToDelete(user.id); setShowDeleteModal(true); }} aria-label="Delete user" className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                            <button onClick={() => { setUserToDelete(user.id); setShowDeleteModal(true); }} aria-label="Delete user" className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
                               <Trash2 className="w-4 h-4" aria-hidden="true" />
                             </button>
                           </div>

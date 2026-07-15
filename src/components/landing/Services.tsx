@@ -95,10 +95,10 @@ function ServiceCard({ s }: { s: Service }) {
 export default function Services() {
   return (
     <section id="services" className="relative w-full bg-[var(--hz-canvas)] py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">
+            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem] 2xl:text-[3.5rem]">
               One partner for talent, engineering, technology, and operations.
             </h2>
           </div>

@@ -350,7 +350,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 {/* contact links */}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm">
                   <a href={`mailto:${candidate.email}`}
-                    className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors font-medium">
+                    className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors font-medium min-w-0 break-all">
                     <Mail className="w-4 h-4 text-slate-400" /> {candidate.email}
                   </a>
                   {candidate.phone && (

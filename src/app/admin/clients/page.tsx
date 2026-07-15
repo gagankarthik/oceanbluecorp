@@ -432,7 +432,7 @@ export default function ClientsPage() {
                           <button
                             onClick={() => handleEdit(client)}
                             aria-label="Edit client"
-                            className="p-2 text-slate-500 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
+                            className="p-2.5 text-slate-500 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" aria-hidden="true" />
@@ -440,7 +440,7 @@ export default function ClientsPage() {
                           <button
                             onClick={() => setPendingDelete(client.id)}
                             aria-label="Delete client"
-                            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" aria-hidden="true" />

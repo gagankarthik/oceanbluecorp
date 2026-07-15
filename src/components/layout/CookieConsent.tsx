@@ -42,7 +42,7 @@ export default function CookieConsent() {
         {/* Main row */}
         <div className="flex items-start gap-3 p-4 sm:p-5">
           <div className="w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Cookie className="w-4.5 h-4.5 text-[var(--hz-cobalt)]" aria-hidden="true" />
+            <Cookie className="h-[18px] w-[18px] text-[var(--hz-cobalt)]" aria-hidden="true" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -58,7 +58,7 @@ export default function CookieConsent() {
             {/* Details toggle */}
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mt-1.5 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mt-1.5 -my-1 py-1.5 transition-colors"
               aria-expanded={showDetails}
             >
               {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -69,7 +69,7 @@ export default function CookieConsent() {
           <button
             onClick={() => save("essential")}
             aria-label="Dismiss and accept essential cookies only"
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            className="grid h-10 w-10 flex-shrink-0 place-items-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

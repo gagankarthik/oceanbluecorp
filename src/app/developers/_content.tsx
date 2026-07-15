@@ -245,7 +245,7 @@ export default function DevelopersContent() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{item.title}</p>
-                    <p className="text-sm text-slate-800 mt-0.5 font-mono">{item.desc}</p>
+                    <p className="text-sm text-slate-800 mt-0.5 font-mono break-all">{item.desc}</p>
                   </div>
                 </div>
               ))}

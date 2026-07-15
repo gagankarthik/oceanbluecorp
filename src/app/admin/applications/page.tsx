@@ -626,7 +626,7 @@ function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange }: {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button title="Actions" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700">
+        <button title="Actions" className="rounded-lg p-2.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700">
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
@@ -865,7 +865,7 @@ function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, i
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button aria-label="Application actions" className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+            <button aria-label="Application actions" className="p-2.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors opacity-0 group-hover:opacity-100">
               <MoreHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>

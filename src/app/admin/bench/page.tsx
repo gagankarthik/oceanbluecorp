@@ -1636,14 +1636,14 @@ export default function TalentBenchPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleViewApplication(app)}
-                          className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleEditApplication(app)}
-                          className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                           title="Edit"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -1651,7 +1651,7 @@ export default function TalentBenchPage() {
                         {app.resumeId && (
                           <button
                             onClick={() => handleDownloadResume(app.resumeId!)}
-                            className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
+                            className="p-2.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
                             title="Download Resume"
                           >
                             <FileText className="w-4 h-4" />
@@ -1659,14 +1659,14 @@ export default function TalentBenchPage() {
                         )}
                         <a
                           href={`mailto:${app.email}`}
-                          className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                           title="Send Email"
                         >
                           <Mail className="w-4 h-4" />
                         </a>
                         <button
                           onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                          className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                           title="Remove from Bench"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1724,10 +1724,10 @@ export default function TalentBenchPage() {
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center text-white font-semibold text-xs">
                             {(app.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <button
                               onClick={() => handleViewApplication(app)}
-                              className="text-sm font-medium text-slate-900 hover:text-[var(--hz-cobalt)]"
+                              className="truncate text-sm font-medium text-slate-900 hover:text-[var(--hz-cobalt)]"
                             >
                               {app.name || "Unknown"}
                             </button>
@@ -1746,7 +1746,7 @@ export default function TalentBenchPage() {
                         </td>
                       )}
                       <td className="px-4 py-3">
-                        <p className="text-sm text-slate-600">{app.email}</p>
+                        <p className="truncate text-sm text-slate-600">{app.email}</p>
                         <p className="text-xs text-slate-400">{app.phone || "-"}</p>
                       </td>
                       <td className="px-4 py-3">
@@ -1808,14 +1808,14 @@ export default function TalentBenchPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleViewApplication(app)}
-                            className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEditApplication(app)}
-                            className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                             title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -1823,7 +1823,7 @@ export default function TalentBenchPage() {
                           {app.resumeId && (
                             <button
                               onClick={() => handleDownloadResume(app.resumeId!)}
-                              className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
+                              className="p-2.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
                               title="Download Resume"
                             >
                               <FileText className="w-4 h-4" />
@@ -1831,14 +1831,14 @@ export default function TalentBenchPage() {
                           )}
                           <a
                             href={`mailto:${app.email}`}
-                            className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
+                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
                             title="Send Email"
                           >
                             <Mail className="w-4 h-4" />
                           </a>
                           <button
                             onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                            className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                             title="Remove from Bench"
                           >
                             <Trash2 className="w-4 h-4" />
