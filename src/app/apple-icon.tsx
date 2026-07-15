@@ -10,8 +10,8 @@ export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 export default async function AppleIcon() {
-  const data = await readFile(join(process.cwd(), "public", "images", "ocean_blue_solutions_inc_logo.jpg"));
-  const src = `data:image/jpeg;base64,${data.toString("base64")}`;
+  const data = await readFile(join(process.cwd(), "public", "Logo_400x400.png"));
+  const src = `data:image/png;base64,${data.toString("base64")}`;
   return new ImageResponse(
     (
       <div

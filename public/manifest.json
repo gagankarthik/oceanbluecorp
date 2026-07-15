@@ -8,15 +8,15 @@
 	"theme_color": "#0066cc",
 	"icons": [
 		{
-			"src": "/images/ocean_blue_solutions_inc_logo.jpg",
+			"src": "/Logo_400x400.png",
 			"sizes": "192x192",
-			"type": "image/jpeg",
+			"type": "image/png",
 			"purpose": "any"
 		},
 		{
-			"src": "/images/ocean_blue_solutions_inc_logo.jpg",
+			"src": "/Logo_400x400.png",
 			"sizes": "512x512",
-			"type": "image/jpeg",
+			"type": "image/png",
 			"purpose": "any"
 		}
 	]

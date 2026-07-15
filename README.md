@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/images/Logo_400x400.jpg" alt="Ocean Blue Solutions" width="200" />
+<img src="public/Logo_400x400.png" alt="Ocean Blue Solutions" width="200" />
 
 # Ocean Blue Corporation
 
