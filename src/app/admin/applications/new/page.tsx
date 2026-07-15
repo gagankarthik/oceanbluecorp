@@ -191,9 +191,10 @@ function NewApplicationInner() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
+            aria-label="Go back"
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           </button>
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Link href="/admin/applications" className="hover:text-[var(--hz-cobalt)] transition-colors font-medium">Applications</Link>
@@ -315,9 +316,10 @@ function NewApplicationInner() {
                   <button
                     type="button"
                     onClick={() => addSkill(skillInput)}
+                    aria-label="Add skill"
                     className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </Field>
@@ -327,8 +329,8 @@ function NewApplicationInner() {
                   {skills.map((s) => (
                     <span key={s} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-semibold rounded-full">
                       {s}
-                      <button type="button" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
-                        <X className="w-3 h-3" />
+                      <button type="button" aria-label="Remove skill" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
+                        <X className="w-3 h-3" aria-hidden="true" />
                       </button>
                     </span>
                   ))}
@@ -370,9 +372,9 @@ function NewApplicationInner() {
                     <p className="text-sm font-semibold text-slate-800 truncate">{resumeFile.name}</p>
                     <p className="text-xs text-slate-400 tabular-nums">{(resumeFile.size / 1024).toFixed(0)} KB</p>
                   </div>
-                  <button type="button" onClick={() => setResumeFile(null)}
+                  <button type="button" aria-label="Remove resume" onClick={() => setResumeFile(null)}
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               ) : (

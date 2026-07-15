@@ -247,7 +247,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               Open positions
             </Link>
             <span className="text-gray-300">/</span>
-            <span className="text-gray-900 font-medium truncate">{job.title}</span>
+            <span className="min-w-0 text-gray-900 font-medium truncate">{job.title}</span>
           </div>
         </div>
       </div>
@@ -347,7 +347,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">{job.description}</p>
+                <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap break-words">{job.description}</p>
               </motion.div>
             )}
 
@@ -382,7 +382,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">What you'll do</h2>
                 {typeof job.responsibilities === 'string' ? (
-                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap font-sans">{job.responsibilities}</pre>
+                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap break-words font-sans">{job.responsibilities}</pre>
                 ) : (
                   <ul className="space-y-4">
                     {job.responsibilities.map((item, i) => (
@@ -407,7 +407,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">What we're looking for</h2>
                 {typeof job.requirements === 'string' ? (
-                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap font-sans">{job.requirements}</pre>
+                  <pre className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap break-words font-sans">{job.requirements}</pre>
                 ) : (
                   <ul className="space-y-4">
                     {job.requirements.map((item, i) => (
@@ -543,10 +543,12 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
                 <Link
                   href="https://oceanbluecorp.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium text-sm"
                 >
                   Learn more about us
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" focusable="false" />
                 </Link>
 
                 <div className="border-t border-gray-100 mt-6 pt-6 space-y-4">
@@ -660,11 +662,12 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 </motion.div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1.5">First Name *</label>
                       <input
                         type="text"
+                        autoComplete="given-name"
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
@@ -676,6 +679,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                       <label className="block text-xs font-medium text-gray-700 mb-1.5">Last Name *</label>
                       <input
                         type="text"
+                        autoComplete="family-name"
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -685,11 +689,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1.5">Email *</label>
                       <input
                         type="email"
+                        autoComplete="email"
+                        inputMode="email"
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -701,6 +707,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                       <label className="block text-xs font-medium text-gray-700 mb-1.5">Phone</label>
                       <input
                         type="tel"
+                        autoComplete="tel"
+                        inputMode="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
@@ -753,6 +761,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Cover Letter (Optional)</label>
                     <textarea
                       rows={3}
+                      autoComplete="off"
                       value={formData.coverLetter}
                       onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
                       className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] resize-none bg-white"

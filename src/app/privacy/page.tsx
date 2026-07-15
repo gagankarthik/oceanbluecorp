@@ -402,7 +402,7 @@ export default function PrivacyPage() {
               </P>
             </Section>
 
-            <Section id="california" number="12" title="California Residents — CCPA Rights">
+            <Section id="california" number="12" title="California Residents: CCPA Rights">
               <P>
                 If you are a California resident, the California Consumer Privacy Act (CCPA) and the
                 California Privacy Rights Act (CPRA) grant you specific rights regarding your personal

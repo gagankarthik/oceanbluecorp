@@ -92,19 +92,19 @@ export const metadata: Metadata = {
       "IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for enterprises and government agencies.",
     images: [
       {
-        url: "/logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Ocean Blue Corporation - Enterprise IT Solutions",
+        url: "/Logo_400x400.jpg",
+        width: 400,
+        height: 400,
+        alt: "Ocean Blue Solutions",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
       "IT staffing, enterprise solutions, and managed services for enterprises and government agencies — ERP, cloud, cybersecurity, AI, and Salesforce.",
-    images: ["/logo.png"],
+    images: ["/Logo_400x400.jpg"],
     creator: "@oceanbluecorp",
   },
   alternates: {
@@ -120,7 +120,7 @@ const jsonLd = {
   name: "Ocean Blue Corporation",
   alternateName: "OceanBlueCorp",
   url: "https://oceanbluecorp.com",
-  logo: "/logo.png",
+  logo: "https://oceanbluecorp.com/Logo_400x400.jpg",
   description:
     "IT staffing, enterprise solutions, and managed services provider — ERP, cloud, cybersecurity, AI & data, and Salesforce — serving enterprises and state government agencies across North America.",
   foundingDate: "2013",
@@ -155,7 +155,7 @@ const jsonLd = {
     {
       "@type": "Service",
       name: "IT Staffing & Talent",
-      description: "Vetted IT specialists — contract, contract-to-hire, direct, and managed teams",
+      description: "Vetted IT specialists embedded into your team on flexible or permanent terms, or as managed teams",
     },
     {
       "@type": "Service",
@@ -215,14 +215,8 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
-        {/* ADA / WCAG 2.1 — skip to main content */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[99999] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
-        >
-          Skip to main content
-        </a>
-
+        {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
+            and the admin layout (→ #adm-main), so none is needed here. */}
         <Providers>
           <LayoutWrapper announcement={announcement.text} announcementHref={announcement.href} announcementScroll={announcement.scroll}>
             {children}

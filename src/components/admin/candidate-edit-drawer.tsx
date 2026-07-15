@@ -206,8 +206,8 @@ export function CandidateEditDrawer({
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={() => onOpenChange(false)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-            <X className="w-4 h-4" />
+          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -308,7 +308,7 @@ export function CandidateEditDrawer({
                     </Field>
                     <Field label="Add to talent bench">
                       <label className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                        <input type="checkbox" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-slate-300 text-[var(--hz-cobalt)]" />
+                        <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-slate-300 text-[var(--hz-cobalt)]" />
                         <span className="text-sm text-slate-700">Add to bench</span>
                       </label>
                     </Field>
@@ -336,9 +336,10 @@ export function CandidateEditDrawer({
                       <button
                         type="button"
                         onClick={() => addSkill(form.skillInput)}
+                        aria-label="Add skill"
                         className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
 
@@ -348,8 +349,8 @@ export function CandidateEditDrawer({
                         {form.skills.map((skill) => (
                           <span key={skill} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium rounded-full">
                             {skill}
-                            <button type="button" onClick={() => removeSkill(skill)} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
-                              <X className="w-3 h-3" />
+                            <button type="button" onClick={() => removeSkill(skill)} aria-label="Remove skill" className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
+                              <X className="w-3 h-3" aria-hidden="true" />
                             </button>
                           </span>
                         ))}
@@ -405,6 +406,7 @@ export function CandidateEditDrawer({
                     <label className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
                       <input
                         type="checkbox"
+                        autoComplete="off"
                         checked={form.visaSponsorshipRequired}
                         onChange={(e) => set("visaSponsorshipRequired", e.target.checked)}
                         className="rounded border-slate-300 text-[var(--hz-cobalt)]"

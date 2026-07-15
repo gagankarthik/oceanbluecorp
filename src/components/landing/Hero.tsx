@@ -51,6 +51,9 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             key={s.src}
             src={s.src}
             alt=""
+            width={1600}
+            height={1067}
+            decoding="async"
             initial={false}
             animate={{ opacity: slide === idx ? 1 : 0 }}
             transition={{ duration: 1.4, ease: "easeInOut" }}
@@ -115,11 +118,11 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           <span className="hz-eyebrow text-white/55">Technology partners</span>
           <div className="flex flex-wrap items-center gap-x-9 gap-y-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/AWS-Partner.png" alt="AWS Partner" className="h-16 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 md:h-20" />
+            <img src="/logos/partners/AWS-Partner.png" alt="AWS Partner" width={160} height={80} loading="lazy" decoding="async" className="h-16 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 md:h-20" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/snowflake.svg" alt="Snowflake" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
+            <img src="/logos/partners/snowflake.svg" alt="Snowflake" width={120} height={32} loading="lazy" decoding="async" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/databricks.svg" alt="Databricks" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
+            <img src="/logos/partners/databricks.svg" alt="Databricks" width={120} height={32} loading="lazy" decoding="async" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
           </div>
         </motion.div>
 
@@ -130,7 +133,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
               key={s.src}
               onClick={() => setSlide(idx)}
               aria-label={`Show slide ${idx + 1}`}
-              className="group py-2"
+              className="group flex h-10 items-center px-1.5"
             >
               <span
                 className="block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white"

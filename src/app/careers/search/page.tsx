@@ -23,7 +23,7 @@ import {
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth";
 
-const departments = ["All Departments", "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce", "IT Staffing", "Training", "PMO"];
+const departments = ["All Departments", "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce", "Engineering", "IT Staffing", "Training", "PMO"];
 const jobTypes = ["All Types", "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams", "remote"];
 
 // Format job type for display
@@ -278,7 +278,9 @@ export default function CareersSearchPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
-                      type="text"
+                      type="search"
+                      autoComplete="off"
+                      aria-label="Search jobs by title or keyword"
                       placeholder="Job title or keyword..."
                       value={searchQuery}
                       onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}

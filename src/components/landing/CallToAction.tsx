@@ -32,7 +32,7 @@ export default function CallToAction({ content = {} }: { content?: Record<string
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
             <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.ctaButton || "Book a discovery call"}</Cta>
-            <Cta href="/services" variant="ghostDark">Explore services</Cta>
+            <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
           </div>
         </Reveal>
       </div>

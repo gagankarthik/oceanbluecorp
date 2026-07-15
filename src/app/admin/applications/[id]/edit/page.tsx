@@ -314,9 +314,9 @@ function EditApplicationInner() {
                       if (e.key === ",") { e.preventDefault(); addSkill(skillInput); }
                     }}
                     placeholder="Type a skill and press Enter…" />
-                  <button type="button" onClick={() => addSkill(skillInput)}
+                  <button type="button" onClick={() => addSkill(skillInput)} aria-label="Add skill"
                     className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0">
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </Field>
@@ -325,8 +325,8 @@ function EditApplicationInner() {
                   {skills.map((s) => (
                     <span key={s} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-semibold rounded-full">
                       {s}
-                      <button type="button" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
-                        <X className="w-3 h-3" />
+                      <button type="button" aria-label="Remove skill" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
+                        <X className="w-3 h-3" aria-hidden="true" />
                       </button>
                     </span>
                   ))}
@@ -363,13 +363,13 @@ function EditApplicationInner() {
                     <p className="text-sm font-semibold text-slate-800 truncate">{existingResume.fileName}</p>
                     <p className="text-xs text-slate-400">Attached resume</p>
                   </div>
-                  <button type="button" onClick={handleDownloadResume}
+                  <button type="button" onClick={handleDownloadResume} aria-label="Download resume"
                     className="p-1.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Download">
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => setExistingResume(null)}
+                  <button type="button" onClick={() => setExistingResume(null)} aria-label="Remove resume"
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remove">
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               )}
@@ -384,9 +384,9 @@ function EditApplicationInner() {
                     <p className="text-sm font-semibold text-slate-800 truncate">{resumeFile.name}</p>
                     <p className="text-xs text-emerald-600 font-medium">Will overwrite current resume on save</p>
                   </div>
-                  <button type="button" onClick={() => setResumeFile(null)}
+                  <button type="button" onClick={() => setResumeFile(null)} aria-label="Remove resume"
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               )}

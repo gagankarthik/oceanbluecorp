@@ -298,8 +298,8 @@ export default function ResumeBankPage() {
               {queue.some(q => q.status === "done") && (
                 <button onClick={clearDone} className="text-xs text-slate-400 hover:text-slate-700 font-medium">Clear done</button>
               )}
-              <button onClick={() => setPanelOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
-                <X className="w-4 h-4" />
+              <button onClick={() => setPanelOpen(false)} aria-label="Close upload panel" className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -321,6 +321,7 @@ export default function ResumeBankPage() {
                     {item.status === "pending" && (
                       <input
                         type="text"
+                        autoComplete="off"
                         placeholder="Candidate name (optional)"
                         value={item.candidateName}
                         onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
@@ -344,8 +345,8 @@ export default function ResumeBankPage() {
                   </div>
 
                   {item.status !== "uploading" && item.status !== "done" && (
-                    <button onClick={() => removeFromQueue(item.id)} className="p-1 text-slate-400 hover:text-rose-500 rounded-lg flex-shrink-0">
-                      <X className="w-3.5 h-3.5" />
+                    <button onClick={() => removeFromQueue(item.id)} aria-label="Remove from queue" className="p-1 text-slate-400 hover:text-rose-500 rounded-lg flex-shrink-0">
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -483,8 +484,9 @@ export default function ResumeBankPage() {
                 <Download className="w-3.5 h-3.5" />Download
               </a>
               <button onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
+                aria-label="Close preview"
                 className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>

@@ -178,31 +178,31 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
                       <label htmlFor="firstName" className={labelClass}>First name *</label>
-                      <input type="text" id="firstName" name="firstName" required maxLength={60} value={formData.firstName} onChange={handleChange} className={inputClass} placeholder="Jordan" />
+                      <input type="text" id="firstName" name="firstName" autoComplete="given-name" required maxLength={60} value={formData.firstName} onChange={handleChange} className={inputClass} placeholder="Jordan" />
                     </div>
                     <div>
                       <label htmlFor="lastName" className={labelClass}>Last name *</label>
-                      <input type="text" id="lastName" name="lastName" required maxLength={60} value={formData.lastName} onChange={handleChange} className={inputClass} placeholder="Reyes" />
+                      <input type="text" id="lastName" name="lastName" autoComplete="family-name" required maxLength={60} value={formData.lastName} onChange={handleChange} className={inputClass} placeholder="Reyes" />
                     </div>
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
                       <label htmlFor="email" className={labelClass}>Work email *</label>
-                      <input type="email" id="email" name="email" required maxLength={254} value={formData.email} onChange={handleChange} className={inputClass} placeholder="jordan@company.com" />
+                      <input type="email" id="email" name="email" autoComplete="email" inputMode="email" required maxLength={254} value={formData.email} onChange={handleChange} className={inputClass} placeholder="jordan@company.com" />
                     </div>
                     <div>
                       <label htmlFor="phone" className={labelClass}>Phone number</label>
-                      <input type="tel" id="phone" name="phone" maxLength={30} pattern="\+?[\d\s().\-]{7,20}" value={formData.phone} onChange={handleChange} className={inputClass} placeholder="+1 (555) 000-0000" />
+                      <input type="tel" id="phone" name="phone" autoComplete="tel" inputMode="tel" maxLength={30} pattern="\+?[\d\s().\-]{7,20}" value={formData.phone} onChange={handleChange} className={inputClass} placeholder="+1 (555) 000-0000" />
                     </div>
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
                       <label htmlFor="company" className={labelClass}>Company *</label>
-                      <input type="text" id="company" name="company" required maxLength={120} value={formData.company} onChange={handleChange} className={inputClass} placeholder="Company name" />
+                      <input type="text" id="company" name="company" autoComplete="organization" required maxLength={120} value={formData.company} onChange={handleChange} className={inputClass} placeholder="Company name" />
                     </div>
                     <div>
                       <label htmlFor="jobTitle" className={labelClass}>Job title</label>
-                      <input type="text" id="jobTitle" name="jobTitle" maxLength={120} value={formData.jobTitle} onChange={handleChange} className={inputClass} placeholder="Your role" />
+                      <input type="text" id="jobTitle" name="jobTitle" autoComplete="organization-title" maxLength={120} value={formData.jobTitle} onChange={handleChange} className={inputClass} placeholder="Your role" />
                     </div>
                   </div>
                   <div>

@@ -63,18 +63,21 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
           </p>
         </Reveal>
 
-        {/* Stat cards — right, 2×2 */}
-        <Stagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:col-span-7" gap={0.1}>
-          {stats.map((s) => (
-            <StaggerItem key={s.label}>
-              <div className="group h-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-slate-300/80 hover:shadow-md sm:p-7">
-                <p className="hz-display hz-tnum text-[2.75rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
-                  <Counter target={s.value} run={inView} />
-                  <span className="text-[var(--hz-amber)]">{s.suffix}</span>
-                </p>
-                <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)]">{s.label}</p>
-                <p className="mt-1.5 text-[13px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>
-              </div>
+        {/* Stat tiles — right, a connected 2×2 grid with hairline borders only */}
+        <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/40 lg:col-span-7" gap={0.1}>
+          {stats.map((s, i) => (
+            <StaggerItem
+              key={s.label}
+              className={`group p-6 transition-colors duration-300 hover:bg-white sm:p-8 ${
+                i % 2 === 0 ? "border-r border-slate-200/80" : ""
+              } ${i < 2 ? "border-b border-slate-200/80" : ""}`}
+            >
+              <p className="hz-display hz-tnum text-[2.75rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
+                <Counter target={s.value} run={inView} />
+                <span className="text-[var(--hz-amber)]">{s.suffix}</span>
+              </p>
+              <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)]">{s.label}</p>
+              <p className="mt-1.5 text-[13px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>
             </StaggerItem>
           ))}
         </Stagger>

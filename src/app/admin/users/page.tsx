@@ -375,8 +375,8 @@ export default function UsersPage() {
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center justify-end">
-                            <button onClick={() => { setUserToDelete(user.id); setShowDeleteModal(true); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" />
+                            <button onClick={() => { setUserToDelete(user.id); setShowDeleteModal(true); }} aria-label="Delete user" className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                              <Trash2 className="w-4 h-4" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -405,14 +405,14 @@ export default function UsersPage() {
                   Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
                 </p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <ChevronLeft className="w-4 h-4" />
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page" className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
                     <button key={page} onClick={() => setCurrentPage(page)} className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${currentPage === page ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100"}`}>{page}</button>
                   ))}
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <ChevronRight className="w-4 h-4" />
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} aria-label="Next page" className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -427,13 +427,13 @@ export default function UsersPage() {
           <form onSubmit={handleInvite} className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-900">Invite a teammate</h2>
-              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" aria-hidden="true" /></button>
             </div>
             <div className="p-6 space-y-5">
               <div className="space-y-1.5">
                 <label htmlFor="inviteEmail" className="block text-sm font-medium text-slate-700">Email address</label>
                 <input
-                  id="inviteEmail" type="email" required autoFocus value={inviteEmail}
+                  id="inviteEmail" type="email" required autoFocus autoComplete="off" value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
                   className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]"
                 />
@@ -479,7 +479,7 @@ export default function UsersPage() {
                   <p className="truncate text-xs text-slate-500">{userToEdit.email}</p>
                 </div>
               </div>
-              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" /></button>
+              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} aria-label="Close" className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
 
             <div className="p-5">

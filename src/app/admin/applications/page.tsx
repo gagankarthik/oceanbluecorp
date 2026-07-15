@@ -444,21 +444,21 @@ export default function ApplicationsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Position</label>
-                  <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className={selectCls}>
+                  <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} autoComplete="off" className={selectCls}>
                     <option value="all">All Positions</option>
                     {positions.map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Source</label>
-                  <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={selectCls}>
+                  <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} autoComplete="off" className={selectCls}>
                     <option value="all">All Sources</option>
                     {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Work Auth</label>
-                  <select value={authFilter} onChange={(e) => setAuthFilter(e.target.value)} className={selectCls}>
+                  <select value={authFilter} onChange={(e) => setAuthFilter(e.target.value)} autoComplete="off" className={selectCls}>
                     <option value="all">All</option>
                     {WORK_AUTH_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
@@ -467,19 +467,19 @@ export default function ApplicationsPage() {
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Min Rating</label>
                   <div className="flex items-center gap-1 py-1">
                     {[1, 2, 3, 4, 5].map((n) => (
-                      <button key={n} type="button" onClick={() => setMinRating(n === minRating ? 0 : n)}>
-                        <Star className={cn("w-5 h-5 transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300")} />
+                      <button key={n} type="button" aria-label="Set minimum rating" onClick={() => setMinRating(n === minRating ? 0 : n)}>
+                        <Star aria-hidden="true" className={cn("w-5 h-5 transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300")} />
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Applied From</label>
-                  <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={selectCls} />
+                  <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} autoComplete="off" className={selectCls} />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Applied To</label>
-                  <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={selectCls} />
+                  <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} autoComplete="off" className={selectCls} />
                 </div>
               </div>
             </div>
@@ -734,7 +734,7 @@ function TableView({ apps, allSelected, selected, onSelectAll, onSelect, sortFie
                     {app.jobDepartment && <p className="text-xs text-slate-400 mt-0.5">{app.jobDepartment}</p>}
                   </td>
                   <td className="py-3.5 px-4">
-                    <select value={app.status} onChange={(e) => shared.onStatusChange(app.id, e.target.value as Application["status"])}
+                    <select value={app.status} onChange={(e) => shared.onStatusChange(app.id, e.target.value as Application["status"])} autoComplete="off"
                       className="text-xs px-2 py-1.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700 cursor-pointer">
                       {ALL_STATUSES.map((s) => <option key={s} value={s}>{sLabel(s)}</option>)}
                     </select>
@@ -865,8 +865,8 @@ function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, i
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors opacity-0 group-hover:opacity-100">
-              <MoreHorizontal className="w-3.5 h-3.5" />
+            <button aria-label="Application actions" className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+              <MoreHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white border border-slate-200 shadow-lg rounded-xl w-44">

@@ -4,7 +4,7 @@ import ProductsPage from "./_content";
 export const metadata: Metadata = {
   title: "Products",
   description:
-    "Discover Ocean Blue Corporation's enterprise software and solution products — purpose-built tools for workforce management, ERP integration, and digital operations.",
+    "Enterprise software and products from Ocean Blue Corporation: purpose-built tools for workforce management, ERP integration, and digital operations.",
   openGraph: {
     title: "Products | Ocean Blue Corporation",
     description:

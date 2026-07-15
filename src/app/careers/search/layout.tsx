@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Search Jobs",
   description:
-    "Browse and search open roles at Ocean Blue Corporation — contract, contract-to-hire, direct-hire, and managed-team positions across IT, cloud, security, and data.",
+    "Browse and search open roles at Ocean Blue Corporation across IT, cloud, security, and data. Flexible, permanent, and managed-team positions.",
   alternates: { canonical: "https://oceanbluecorp.com/careers/search" },
   openGraph: {
     title: "Search Jobs | Ocean Blue Corporation",

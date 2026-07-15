@@ -321,7 +321,7 @@ export default function ContactsPage() {
                   <p className="text-slate-500 text-sm">{selectedContact.company}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedContact(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setSelectedContact(null)} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" aria-hidden="true" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
@@ -355,7 +355,7 @@ export default function ContactsPage() {
                   <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status & Actions</h3>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-600">Update Status</label>
-                    <select value={selectedContact.status} onChange={e => handleStatusChange(selectedContact.id, e.target.value as Contact["status"])} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] bg-white">
+                    <select value={selectedContact.status} autoComplete="off" onChange={e => handleStatusChange(selectedContact.id, e.target.value as Contact["status"])} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] bg-white">
                       <option value="new">New</option>
                       <option value="read">Read</option>
                       <option value="responded">Responded</option>

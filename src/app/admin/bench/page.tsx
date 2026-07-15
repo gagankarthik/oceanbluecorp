@@ -690,8 +690,8 @@ export default function TalentBenchPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => { setPageMode("list"); resetForm(); }}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Back to list" onClick={() => { setPageMode("list"); resetForm(); }}>
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -719,6 +719,7 @@ export default function TalentBenchPage() {
                     <Input
                       id="firstName"
                       required
+                      autoComplete="off"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       placeholder="John"
@@ -729,6 +730,7 @@ export default function TalentBenchPage() {
                     <Input
                       id="lastName"
                       required
+                      autoComplete="off"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       placeholder="Doe"
@@ -744,6 +746,7 @@ export default function TalentBenchPage() {
                       <Input
                         id="phone"
                         type="tel"
+                        autoComplete="off"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="(555) 123-4567"
@@ -759,6 +762,7 @@ export default function TalentBenchPage() {
                         id="email"
                         required
                         type="email"
+                        autoComplete="off"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="john.doe@example.com"
@@ -782,6 +786,7 @@ export default function TalentBenchPage() {
                   <Label htmlFor="address">Address</Label>
                   <Input
                     id="address"
+                    autoComplete="off"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="123 Main Street"
@@ -793,6 +798,7 @@ export default function TalentBenchPage() {
                     <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
+                      autoComplete="off"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       placeholder="New York"
@@ -813,6 +819,7 @@ export default function TalentBenchPage() {
                     <Label htmlFor="zipCode">ZIP Code</Label>
                     <Input
                       id="zipCode"
+                      autoComplete="off"
                       value={formData.zipCode}
                       onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
                       placeholder="10001"
@@ -835,12 +842,13 @@ export default function TalentBenchPage() {
                   <div className="flex gap-2">
                     <Input
                       value={skillInput}
+                      autoComplete="off"
                       onChange={(e) => setSkillInput(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSkill())}
                       placeholder="Add a skill (e.g., React, Python, AWS)"
                     />
-                    <Button type="button" variant="outline" onClick={handleAddSkill}>
-                      <Plus className="h-4 w-4" />
+                    <Button type="button" variant="outline" aria-label="Add skill" onClick={handleAddSkill}>
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                   {formData.skills.length > 0 && (
@@ -851,8 +859,8 @@ export default function TalentBenchPage() {
                           className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-md text-sm"
                         >
                           {skill}
-                          <button type="button" onClick={() => handleRemoveSkill(skill)}>
-                            <X className="h-3 w-3" />
+                          <button type="button" aria-label="Remove skill" onClick={() => handleRemoveSkill(skill)}>
+                            <X className="h-3 w-3" aria-hidden="true" />
                           </button>
                         </span>
                       ))}
@@ -864,6 +872,7 @@ export default function TalentBenchPage() {
                   <Label htmlFor="experience">Experience Summary</Label>
                   <textarea
                     id="experience"
+                    autoComplete="off"
                     value={formData.experience}
                     onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
@@ -1053,12 +1062,14 @@ export default function TalentBenchPage() {
                       <button
                         key={star}
                         type="button"
+                        aria-label={`Rate ${star} stars`}
                         onClick={() => setFormData({ ...formData, rating: star })}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
                         className="focus:outline-none"
                       >
                         <Star
+                          aria-hidden="true"
                           className={`w-8 h-8 transition-colors ${
                             star <= (hoverRating || formData.rating)
                               ? "fill-amber-400 text-amber-400"
@@ -1083,6 +1094,7 @@ export default function TalentBenchPage() {
                   <Label htmlFor="notes">Notes</Label>
                   <textarea
                     id="notes"
+                    autoComplete="off"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
@@ -1248,6 +1260,7 @@ export default function TalentBenchPage() {
               <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Stage</h3>
               <select
                 value={app.status}
+                autoComplete="off"
                 onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
               >
@@ -1265,8 +1278,8 @@ export default function TalentBenchPage() {
               <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Rating</h3>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => handleRatingChange(app.id, star)} className="focus:outline-none">
-                    <Star className={`h-6 w-6 transition-colors ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300"}`} />
+                  <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)} className="focus:outline-none">
+                    <Star aria-hidden="true" className={`h-6 w-6 transition-colors ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300"}`} />
                   </button>
                 ))}
               </div>
@@ -1357,19 +1370,21 @@ export default function TalentBenchPage() {
           <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("cards")}
+              aria-label="Card view"
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "cards" ? "bg-white shadow-sm text-[var(--hz-cobalt)]" : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => setViewMode("table")}
+              aria-label="Table view"
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "table" ? "bg-white shadow-sm text-[var(--hz-cobalt)]" : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
           <button
@@ -1457,6 +1472,7 @@ export default function TalentBenchPage() {
                   <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
                   <select
                     value={statusFilter}
+                    autoComplete="off"
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
                   >
@@ -1473,6 +1489,7 @@ export default function TalentBenchPage() {
                   <label className="block text-xs font-medium text-slate-500 mb-1">Skills</label>
                   <select
                     value={skillFilter}
+                    autoComplete="off"
                     onChange={(e) => setSkillFilter(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
                   >
@@ -1486,6 +1503,7 @@ export default function TalentBenchPage() {
                   <label className="block text-xs font-medium text-slate-500 mb-1">Work Authorization</label>
                   <select
                     value={authFilter}
+                    autoComplete="off"
                     onChange={(e) => setAuthFilter(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
                   >
@@ -1500,6 +1518,7 @@ export default function TalentBenchPage() {
                     <label className="block text-xs font-medium text-slate-500 mb-1">Added by</label>
                     <select
                       value={ownerFilter}
+                      autoComplete="off"
                       onChange={(e) => setOwnerFilter(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
                     >
@@ -1609,8 +1628,8 @@ export default function TalentBenchPage() {
                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <button key={star} onClick={() => handleRatingChange(app.id, star)}>
-                            <Star className={`w-4 h-4 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+                          <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)}>
+                            <Star aria-hidden="true" className={`w-4 h-4 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
                           </button>
                         ))}
                       </div>
@@ -1763,8 +1782,8 @@ export default function TalentBenchPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-0.5">
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <button key={star} onClick={() => handleRatingChange(app.id, star)}>
-                              <Star className={`w-3.5 h-3.5 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+                            <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)}>
+                              <Star aria-hidden="true" className={`w-3.5 h-3.5 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
                             </button>
                           ))}
                         </div>
@@ -1772,6 +1791,7 @@ export default function TalentBenchPage() {
                       <td className="px-4 py-3">
                         <select
                           value={app.status}
+                          autoComplete="off"
                           onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
                           className={`px-2 py-1 rounded-md text-xs font-medium border cursor-pointer ${status.color}`}
                         >

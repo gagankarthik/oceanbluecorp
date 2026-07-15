@@ -25,7 +25,7 @@ export const US_STATES = [
 ];
 
 export const DEPARTMENTS = [
-  "ERP Solutions","Cloud Services","Data & AI","Salesforce",
+  "ERP Solutions","Cloud Services","Data & AI","Salesforce","Engineering",
   "Information and Computers","Training","PMO","Operations",
 ];
 

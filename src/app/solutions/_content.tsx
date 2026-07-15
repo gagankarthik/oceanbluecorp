@@ -15,7 +15,7 @@ const SERVICES: Record<string, Service> = {
   staffing: {
     icon: Users,
     title: "IT Staffing & Talent",
-    desc: "Vetted specialists who integrate into your team and deliver from the first sprint — contract, contract-to-hire, direct, or managed teams.",
+    desc: "Vetted specialists who integrate into your team and deliver from the first sprint, on flexible or permanent terms, or as a managed team.",
     capabilities: ["Cloud, data & security engineers", "ERP & Salesforce specialists", "AI/ML engineers & program managers", "Shortlists in 48 hours"],
   },
   cloud: {
@@ -62,10 +62,20 @@ const SERVICES: Record<string, Service> = {
   },
 };
 
-type Pillar = { name: string; tag: string; desc: string; img: string; ids: string[] };
+type Pillar = { name: string; tag: string; desc: string; img: string; ids?: string[]; href?: string; points?: string[] };
 
+// All four practices live here, in one place. Engineering has its own
+// dedicated page, so its pillar links out rather than listing sub-services.
 const pillars: Pillar[] = [
   { name: "Talent", tag: "People who deliver", img: IMG.serviceTalent, desc: "The specialists who join your team and own the work.", ids: ["staffing"] },
+  {
+    name: "Engineering",
+    tag: "Engineers, embedded fast",
+    img: IMG.serviceEngineering,
+    desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers for the industries that build things.",
+    href: "/solutions/engineering",
+    points: ["Nine engineering disciplines", "Automotive, aerospace, power and manufacturing", "Flexible, permanent, or managed teams"],
+  },
   { name: "Solutions", tag: "Engineering the core", img: IMG.serviceSolutions, desc: "Platform and product work, delivered securely and without disruption.", ids: ["cloud", "cybersecurity", "erp", "salesforce", "ai", "transformation"] },
   { name: "Managed", tag: "Run & optimize", img: IMG.serviceManaged, desc: "We operate and improve your systems around the clock, on one SLA.", ids: ["managed"] },
 ];
@@ -82,12 +92,12 @@ function ServiceDetail({ id }: { id: string }) {
   const Icon = s.icon;
   return (
     <div id={id} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
-      <div className="flex items-center gap-3">
+      <a href={`/solutions/${id}`} className="group flex items-center gap-3">
         <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
           <Icon className="h-5 w-5" strokeWidth={1.5} />
         </span>
-        <h3 className="hz-display text-[1.25rem] text-[var(--hz-text)]">{s.title}</h3>
-      </div>
+        <h3 className="hz-display text-[1.25rem] text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">{s.title}</h3>
+      </a>
       <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{s.desc}</p>
       <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
         {s.capabilities.map((c) => (
@@ -97,6 +107,10 @@ function ServiceDetail({ id }: { id: string }) {
           </li>
         ))}
       </ul>
+      <a href={`/solutions/${id}`} className="group mt-5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-cobalt)] hover:opacity-80">
+        Explore {s.title}
+        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+      </a>
     </div>
   );
 }
@@ -106,17 +120,17 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
       <section className="relative isolate flex min-h-[64vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.servicesHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <Photo src={IMG.servicesHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
           <Reveal>
-            <Eyebrow tone="dark">Our services</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[18ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
-              {content.servicesTitle || "Talent, technology, and managed services."}
+            <Eyebrow tone="dark">Our solutions</Eyebrow>
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">
+              {content.servicesTitle || "Talent, engineering, technology, and managed services."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               {content.servicesSubtitle ||
-                "From specialized staffing to enterprise-grade technology services — eight practices across three connected service lines, one accountable team. Serving enterprises and state government agencies across North America."}
+                "From specialized staffing and engineering talent to enterprise-grade technology and managed services — four connected practices, one accountable team. Serving enterprises and state government agencies across North America."}
             </p>
             <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-white/55 sm:text-[15px]">
               Trusted by Fortune 500 enterprises and state government agencies — from large-scale IT modernization programs to mission-critical managed operations.
@@ -158,13 +172,32 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
 
               {/* Detail */}
               <Reveal delay={0.08} className={reversed ? "lg:order-1" : ""}>
-                <Eyebrow>{p.name} services</Eyebrow>
+                <Eyebrow>{p.name}</Eyebrow>
                 <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">{p.desc}</p>
-                <div className="mt-8">
-                  {p.ids.map((id) => (
-                    <ServiceDetail key={id} id={id} />
-                  ))}
-                </div>
+                {p.href ? (
+                  <div className="mt-8">
+                    {p.points && (
+                      <ul className="space-y-2.5">
+                        {p.points.map((pt) => (
+                          <li key={pt} className="flex items-start gap-2.5 text-[14px] text-[var(--hz-text)]">
+                            <span className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full bg-[var(--hz-cobalt)]" />
+                            {pt}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <a href={p.href} className="group mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-cobalt)] hover:opacity-80">
+                      Explore {p.name}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="mt-8">
+                    {p.ids?.map((id) => (
+                      <ServiceDetail key={id} id={id} />
+                    ))}
+                  </div>
+                )}
               </Reveal>
             </div>
           </section>

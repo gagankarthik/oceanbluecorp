@@ -15,13 +15,25 @@ export default function Photo({
   alt = "",
   className = "",
   fallback = "linear-gradient(135deg, #dbe6fe 0%, #eef2fb 100%)",
+  sizes = "100vw",
+  priority = false,
 }: {
   src: string;
   alt?: string;
   className?: string;
   fallback?: string;
+  sizes?: string;
+  priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
+
+  // Build a responsive srcSet for Unsplash-hosted images by swapping the
+  // `w=` query param. Non-Unsplash / local images fall back to plain src.
+  const isUnsplash = src.includes("images.unsplash.com") && /[?&]w=\d+/.test(src);
+  const srcSet = isUnsplash
+    ? [640, 960, 1280, 1600].map((w) => `${src.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`).join(", ")
+    : undefined;
+
   return (
     <span
       className={`absolute inset-0 block ${className}`}
@@ -32,8 +44,14 @@ export default function Photo({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
+          srcSet={srcSet}
+          sizes={srcSet ? sizes : undefined}
           alt={alt}
-          loading="lazy"
+          width={1600}
+          height={1067}
+          decoding="async"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
           onError={() => setFailed(true)}
           className="absolute inset-0 h-full w-full object-cover"
         />

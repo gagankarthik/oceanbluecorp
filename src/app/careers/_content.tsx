@@ -56,7 +56,7 @@ export default function CareersPage() {
             <div className="mt-10">
               <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
             </div>
-            <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-y-6 border-t border-white/15 pt-8">
+            <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-x-4 gap-y-6 border-t border-white/15 pt-8">
               {facts.map((f) => (
                 <div key={f.k}>
                   <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>

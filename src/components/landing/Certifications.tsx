@@ -18,15 +18,15 @@ export default function Certifications() {
           <p className="text-[14px] text-[var(--hz-text-subtle)]">
             A certified minority- and women-owned business.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-16">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-16">
             {certs.map((c) => (
-              <div key={c.name} className="relative h-14 w-24 sm:h-16 sm:w-28">
+              <div key={c.name} className="relative h-16 w-24 sm:h-20 sm:w-32">
                 <Image
                   src={c.logo}
                   alt={`${c.name} certification`}
                   fill
-                  className="object-contain opacity-75 transition-opacity duration-300 hover:opacity-100"
-                  sizes="120px"
+                  className="object-contain"
+                  sizes="(max-width: 640px) 96px, 128px"
                 />
               </div>
             ))}

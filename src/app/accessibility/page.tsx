@@ -5,7 +5,7 @@ import { ArrowLeft, Accessibility, Check, Mail, Phone } from "lucide-react";
 export const metadata: Metadata = {
   title: "Accessibility Statement",
   description:
-    "Ocean Blue Corporation is committed to digital accessibility for people with disabilities. Read our accessibility statement, WCAG conformance, and how to request help.",
+    "Ocean Blue Corporation is committed to digital accessibility for people with disabilities. Read our WCAG conformance and how to get help.",
   openGraph: {
     title: "Accessibility Statement | Ocean Blue Corporation",
     description: "Our commitment to an accessible, inclusive experience for everyone.",

@@ -82,7 +82,7 @@ function PhoneInput({
           )}
         </AnimatePresence>
       </div>
-      <input type="tel" required value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder={prefix === "+1" ? "2025551234" : "9876543210"} maxLength={10} className="flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none" />
+      <input type="tel" autoComplete="tel-national" inputMode="numeric" required value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder={prefix === "+1" ? "2025551234" : "9876543210"} maxLength={10} className="flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none" />
     </div>
   );
 }

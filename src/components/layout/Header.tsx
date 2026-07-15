@@ -19,6 +19,7 @@ import {
   Settings,
   Headphones,
   Briefcase,
+  Wrench,
   LogOut,
   LayoutDashboard,
   ArrowRight,
@@ -26,25 +27,44 @@ import {
 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
 
-// Flat list (still used by mobile menu)
-const services = [
-  { name: "IT Staffing & Talent", href: "/services#staffing",      icon: Users,      description: "Specialists, embedded fast"   },
-  { name: "Cloud Engineering",    href: "/services#cloud",         icon: Cloud,      description: "Migrate, modernize, scale"    },
-  { name: "Cybersecurity",        href: "/services#cybersecurity", icon: Shield,     description: "Protect what matters"         },
-  { name: "ERP Solutions",        href: "/services#erp",           icon: BarChart3,  description: "SAP, Oracle, Dynamics"        },
-  { name: "Salesforce Services",  href: "/services#salesforce",    icon: Settings,   description: "CRM that fits your business"  },
-  { name: "AI & Data Intelligence", href: "/services#ai",          icon: Cpu,        description: "Practical AI & analytics"     },
-  { name: "Managed Services",     href: "/services#managed",       icon: Headphones, description: "24/7 operations, one SLA"     },
-  { name: "Digital Transformation", href: "/services#transformation", icon: Lightbulb, description: "Strategy & execution"       },
+// Flat list (still used by the mobile menu)
+const solutions = [
+  { name: "IT Staffing & Talent",         href: "/solutions/staffing",       icon: Users,      description: "Specialists, embedded fast"   },
+  { name: "Engineering Talent & Services", href: "/solutions/engineering",            icon: Wrench,     description: "Mechanical, electrical, aerospace" },
+  { name: "Cloud Engineering",            href: "/solutions/cloud",          icon: Cloud,      description: "Migrate, modernize, scale"    },
+  { name: "Cybersecurity",                href: "/solutions/cybersecurity",  icon: Shield,     description: "Protect what matters"         },
+  { name: "ERP Solutions",                href: "/solutions/erp",            icon: BarChart3,  description: "SAP, Oracle, Dynamics"        },
+  { name: "Salesforce Services",          href: "/solutions/salesforce",     icon: Settings,   description: "CRM that fits your business"  },
+  { name: "AI & Data Intelligence",       href: "/solutions/ai",             icon: Cpu,        description: "Practical AI & analytics"     },
+  { name: "Digital Transformation",       href: "/solutions/transformation", icon: Lightbulb,  description: "Strategy & execution"        },
+  { name: "Managed Services",             href: "/solutions/managed",        icon: Headphones, description: "24/7 operations, one SLA"     },
 ];
 
-const servicesFeature = {
-  eyebrow: "One partner",
-  title: "Talent, technology, and managed services",
-  body:  "Bring us a roster gap, a platform to modernize, or a system to keep running — we cover it end to end, to one accountable standard.",
-  href:  "/services",
-  cta:   "Explore all services",
-};
+// Two tidy columns for the desktop dropdown — minimal, no icon chips or blurbs.
+const solutionGroups: {
+  label: string;
+  items: { name: string; href: string; icon: typeof Cloud; badge?: string }[];
+}[] = [
+  {
+    label: "Talent & Engineering",
+    items: [
+      { name: "IT Staffing & Talent",          href: "/solutions/staffing", icon: Users },
+      { name: "Engineering Talent & Services", href: "/solutions/engineering", icon: Wrench },
+      { name: "Managed Services",              href: "/solutions/managed",  icon: Headphones },
+    ],
+  },
+  {
+    label: "Technology Solutions",
+    items: [
+      { name: "Cloud Engineering",      href: "/solutions/cloud",          icon: Cloud },
+      { name: "Cybersecurity",          href: "/solutions/cybersecurity",  icon: Shield },
+      { name: "ERP Solutions",          href: "/solutions/erp",            icon: BarChart3 },
+      { name: "Salesforce Services",    href: "/solutions/salesforce",     icon: Settings },
+      { name: "AI & Data Intelligence", href: "/solutions/ai",             icon: Cpu },
+      { name: "Digital Transformation", href: "/solutions/transformation", icon: Lightbulb },
+    ],
+  },
+];
 
 const aboutItems = [
   { name: "About Us",  href: "/about",      icon: Building,   description: "Our story, principles, and how we work." },
@@ -61,9 +81,9 @@ const aboutFeature = {
 };
 
 const navigation = [
-  { name: "Services", href: "/services", hasDropdown: true, dropdownType: "services" },
-  { name: "Products", href: "/products" },
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
+  { name: "Solutions", href: "/solutions", hasDropdown: true, dropdownType: "solutions" },
+  { name: "Products", href: "/products" },
   { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
@@ -132,38 +152,68 @@ function FeaturePanel({
   );
 }
 
-function ServicesMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+// Compact single-line link for the minimal Solutions dropdown.
+function MenuLink({
+  name, href, icon: Icon, badge, onClick,
+}: {
+  name: string;
+  href: string;
+  icon: typeof Cloud;
+  badge?: string;
+  onClick?: () => void;
+}) {
   return (
-    <div className="w-[720px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-12">
-        {/* All services — balanced two-column tile grid */}
-        <div className="col-span-12 p-4 md:col-span-8">
-          <p className="px-2.5 pb-2 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
-            All services
-          </p>
-          <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2">
-            {services.map((it) => (
-              <MenuTile key={it.name} {...it} onClick={onNavigate} />
-            ))}
+    <Link
+      href={href}
+      onClick={onClick}
+      className="group flex items-center gap-2.5 rounded-lg px-2.5 py-[9px] transition-colors hover:bg-slate-50"
+    >
+      <Icon
+        className="h-[17px] w-[17px] flex-none text-[var(--hz-text-subtle)] transition-colors group-hover:text-[var(--hz-cobalt)]"
+        strokeWidth={1.75}
+      />
+      <span className="flex-1 truncate text-[13.5px] font-medium text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
+        {name}
+      </span>
+      {badge && (
+        <span className="flex-none rounded-full bg-[var(--hz-cobalt-100)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--hz-cobalt)]">
+          {badge}
+        </span>
+      )}
+      <ArrowRight className="h-3.5 w-3.5 flex-none -translate-x-1 text-[var(--hz-cobalt)] opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+    </Link>
+  );
+}
+
+function SolutionsMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
+      <div className="grid grid-cols-2 gap-x-6 p-3.5">
+        {solutionGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--hz-text-subtle)]">
+              {group.label}
+            </p>
+            <div className="mt-0.5">
+              {group.items.map((it) => (
+                <MenuLink key={it.name} {...it} onClick={onNavigate} />
+              ))}
+            </div>
           </div>
-        </div>
-        {/* Feature */}
-        <div className="col-span-12 bg-[#f8fafc] p-4 md:col-span-4">
-          <FeaturePanel {...servicesFeature} onClick={onNavigate} />
-        </div>
+        ))}
       </div>
 
-      <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-[#f8fafc] px-5 py-2.5">
+      <div className="flex items-center justify-between border-t border-[#eef2f6] bg-[#f8fafc] px-4 py-2.5">
         <div className="flex items-center gap-2 text-[12px] text-[var(--hz-text-mute)]">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-          <span>Single accountable SLA · quarterly reviews</span>
+          <span>One accountable SLA</span>
         </div>
         <Link
-          href="/services"
+          href="/solutions"
           onClick={onNavigate}
           className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-cobalt)] hover:opacity-80"
         >
-          View all services
+          View all solutions
           <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </Link>
       </div>
@@ -281,7 +331,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   }, [mobileMenuOpen]);
 
   const getDropdownItems = (type: string) => {
-    if (type === "services") return services;
+    if (type === "solutions") return solutions;
     if (type === "about") return aboutItems;
     return [];
   };
@@ -304,15 +354,17 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
           aria-label="Global"
         >
           <div className="flex items-center justify-between h-16 md:h-[72px]">
-            {/* Logo - Always visible with proper contrast */}
-            <Link href="/" className="flex items-center">
+            {/* Logo — shrinks slightly on scroll while the nav backdrop blurs */}
+            <Link href="/" aria-label="Ocean Blue Corporation, home" className="flex items-center">
               <Image
-                src="/logo.png"
+                src="/logo.webp"
                 alt="Ocean Blue Corporation"
-                width={140}
+                width={150}
                 height={40}
-                className="h-7 md:h-8 w-auto"
                 priority
+                className={`w-auto object-contain transition-[height] duration-300 ease-out ${
+                  scrolled ? "h-6 md:h-7" : "h-7 md:h-9"
+                }`}
               />
             </Link>
 
@@ -351,8 +403,8 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                           className="absolute left-1/2 top-full -translate-x-1/2 pt-2.5"
                         >
-                          {item.dropdownType === "services" ? (
-                            <ServicesMegaMenu onNavigate={() => setActiveDropdown(null)} />
+                          {item.dropdownType === "solutions" ? (
+                            <SolutionsMegaMenu onNavigate={() => setActiveDropdown(null)} />
                           ) : (
                             <AboutMegaMenu onNavigate={() => setActiveDropdown(null)} />
                           )}
@@ -457,6 +509,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                   already set, so this lands signed-in. */}
                               <a
                                 href="https://hr.oceanbluecorp.com/"
+                                rel="noopener noreferrer"
                                 onClick={() => setUserMenuOpen(false)}
                                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
                               >
@@ -577,9 +630,9 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                   </Link>
                                 ))}
 
-                                {item.dropdownType === "services" && (
+                                {item.dropdownType === "solutions" && (
                                   <Link
-                                    href="/services"
+                                    href="/solutions"
                                     className="flex items-center justify-between p-3 rounded-xl bg-[var(--hz-cobalt-100)] hover:brightness-95 transition-all mt-2"
                                     onClick={() => {
                                       setMobileMenuOpen(false);
@@ -587,7 +640,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                     }}
                                   >
                                     <span className="text-sm font-medium text-[var(--hz-cobalt)]">
-                                      View all {item.dropdownType}
+                                      View all solutions
                                     </span>
                                     <ArrowRight className="w-4 h-4 text-[var(--hz-cobalt)]" />
                                   </Link>
@@ -637,6 +690,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                         </Link>
                         <a
                           href="https://hr.oceanbluecorp.com/"
+                          rel="noopener noreferrer"
                           className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >

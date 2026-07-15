@@ -67,6 +67,7 @@ function InputField({
   placeholder,
   hint,
   icon: Icon,
+  autoComplete = "off",
 }: {
   label: string;
   id: string;
@@ -77,6 +78,7 @@ function InputField({
   placeholder?: string;
   hint?: string;
   icon?: React.ComponentType<{ className?: string }>;
+  autoComplete?: string;
 }) {
   return (
     <div className="space-y-1.5">
@@ -90,6 +92,7 @@ function InputField({
         <input
           id={id}
           type={type}
+          autoComplete={autoComplete}
           value={value}
           onChange={onChange}
           disabled={disabled}
@@ -375,7 +378,7 @@ export default function SettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); }}
-                  className={`group flex w-full flex-none items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                  className={`group flex w-auto flex-none items-start gap-3 rounded-xl border p-3 text-left transition-all lg:w-full ${
                     active
                       ? "border-[var(--hz-cobalt-100)] bg-[#eef3fe]"
                       : "border-transparent hover:border-slate-200 hover:bg-slate-50"
@@ -423,6 +426,10 @@ export default function SettingsPage() {
                     <img
                       src={`/api/users/avatar/${user.id}?v=${photoVersion}`}
                       alt={user?.name || "Profile photo"}
+                      width={96}
+                      height={96}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                       onLoad={() => setHasPhoto(true)}
                       onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
@@ -489,6 +496,7 @@ export default function SettingsPage() {
                 <InputField
                   label="First Name"
                   id="firstName"
+                  autoComplete="given-name"
                   value={profileForm.firstName}
                   onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
                   placeholder="John"
@@ -497,6 +505,7 @@ export default function SettingsPage() {
                 <InputField
                   label="Last Name"
                   id="lastName"
+                  autoComplete="family-name"
                   value={profileForm.lastName}
                   onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
                   placeholder="Doe"
@@ -505,6 +514,7 @@ export default function SettingsPage() {
                   label="Email Address"
                   id="email"
                   type="email"
+                  autoComplete="email"
                   value={profileForm.email}
                   disabled
                   icon={Mail}
@@ -514,6 +524,7 @@ export default function SettingsPage() {
                   label="Phone Number"
                   id="phone"
                   type="tel"
+                  autoComplete="tel"
                   value={profileForm.phone}
                   onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                   placeholder="+1 (555) 000-0000"
@@ -622,9 +633,9 @@ export default function SettingsPage() {
 
             <div className="space-y-4 max-w-md">
               {[
-                { label: "Current Password", key: "currentPassword" as const, show: showCurrentPassword, toggle: () => setShowCurrentPassword(!showCurrentPassword) },
-                { label: "New Password", key: "newPassword" as const, show: showNewPassword, toggle: () => setShowNewPassword(!showNewPassword) },
-                { label: "Confirm New Password", key: "confirmPassword" as const, show: showConfirmPassword, toggle: () => setShowConfirmPassword(!showConfirmPassword) },
+                { label: "Current Password", key: "currentPassword" as const, ac: "current-password", show: showCurrentPassword, toggle: () => setShowCurrentPassword(!showCurrentPassword) },
+                { label: "New Password", key: "newPassword" as const, ac: "new-password", show: showNewPassword, toggle: () => setShowNewPassword(!showNewPassword) },
+                { label: "Confirm New Password", key: "confirmPassword" as const, ac: "new-password", show: showConfirmPassword, toggle: () => setShowConfirmPassword(!showConfirmPassword) },
               ].map((field) => (
                 <div key={field.key} className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">{field.label}</label>
@@ -632,6 +643,7 @@ export default function SettingsPage() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <input
                       type={field.show ? "text" : "password"}
+                      autoComplete={field.ac}
                       value={passwordForm[field.key]}
                       onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
                       className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pl-9 pr-10 text-sm text-slate-900 outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] transition-all"
@@ -639,9 +651,10 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={field.toggle}
+                      aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      {field.show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {field.show ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                     </button>
                   </div>
                 </div>

@@ -285,7 +285,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
             <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Work with a team that owns the outcome.</h2>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
               <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
-              <Cta href="/services" variant="ghostDark">Explore services</Cta>
+              <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
             </div>
           </Reveal>
         </div>

@@ -15,12 +15,13 @@ function XLogo(props: SVGProps<SVGSVGElement>) {
 }
 
 const footerLinks = {
-  Services: [
-    { name: "IT Staffing & Talent", href: "/services#staffing" },
-    { name: "Cloud Engineering", href: "/services#cloud" },
-    { name: "Managed Services", href: "/services#managed" },
-    { name: "AI & Data Intelligence", href: "/services#ai" },
-    { name: "Salesforce Services", href: "/services#salesforce" },
+  Solutions: [
+    { name: "IT Staffing & Talent", href: "/solutions/staffing" },
+    { name: "Engineering Talent", href: "/solutions/engineering" },
+    { name: "Cloud Engineering", href: "/solutions/cloud" },
+    { name: "Managed Services", href: "/solutions/managed" },
+    { name: "AI & Data Intelligence", href: "/solutions/ai" },
+    { name: "Salesforce Services", href: "/solutions/salesforce" },
   ],
   Company: [
     { name: "About Us", href: "/about" },

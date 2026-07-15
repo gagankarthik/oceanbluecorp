@@ -18,16 +18,28 @@ const services: Service[] = [
   {
     name: "IT Staffing & Talent",
     title: "Specialists, embedded fast",
-    desc: "Pre-vetted engineers who join your team and own the work — contract, contract-to-hire, direct, or fully managed.",
-    href: "/services#staffing",
+    desc: "Pre-vetted engineers who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
+    href: "/solutions/staffing",
     img: IMG.serviceTalent,
     items: ["Cloud, data & security engineers", "ERP & Salesforce specialists", "Shortlists in 48 hours"],
+  },
+  {
+    name: "Engineering Talent & Services",
+    title: "Engineers, embedded fast",
+    desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
+    href: "/solutions/engineering",
+    img: IMG.serviceEngineering,
+    items: [
+      "Automotive, MFG, aerospace, power",
+      "Flexible, permanent, or managed teams",
+      "Shortlists in 48 hours",
+    ],
   },
   {
     name: "Enterprise Solutions",
     title: "Platforms, modernized",
     desc: "Cloud migration, security, and production AI — engineered and shipped without stopping the business.",
-    href: "/services#cloud",
+    href: "/solutions/cloud",
     img: IMG.serviceSolutions,
     items: [
       "Cloud migration · AWS, Azure, GCP",
@@ -43,7 +55,7 @@ const services: Service[] = [
     name: "Managed Services",
     title: "Run, 24/7",
     desc: "Monitoring, support, and continuous optimization around the clock — one team, one SLA, one number to call.",
-    href: "/services#managed",
+    href: "/solutions/managed",
     img: IMG.serviceManaged,
     items: ["24/7 monitoring & response", "Helpdesk & application support", "Quarterly business reviews"],
   },
@@ -87,16 +99,16 @@ export default function Services() {
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">
-              One partner for talent, technology, and operations.
+              One partner for talent, engineering, technology, and operations.
             </h2>
           </div>
           <p className="max-w-sm text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-            Three connected practices, one accountable team — so the people who build
+            Four connected practices, one accountable team — so the people who build
             your systems are the people who keep them running.
           </p>
         </Reveal>
 
-        <Stagger className="mt-16 grid gap-x-8 gap-y-12 md:grid-cols-3" gap={0.12}>
+        <Stagger className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
           {services.map((s) => (
             <StaggerItem key={s.name} className="h-full">
               <ServiceCard s={s} />

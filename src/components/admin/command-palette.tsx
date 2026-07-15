@@ -144,6 +144,14 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
 
   React.useEffect(() => { setActiveIndex(0); }, [query]);
 
+  // Close on Escape even when focus has left the search input.
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onOpenChange(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onOpenChange]);
+
   if (!open) return null;
 
   return (
@@ -152,14 +160,19 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
       <div className="fixed inset-0 z-[90]" onClick={() => onOpenChange(false)} />
       {/* Anchored under the top bar (h-14) on the search side — not a centered modal */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         onClick={(e) => e.stopPropagation()}
         className="fixed right-3 top-[3.75rem] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--reg-shadow-xl)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-5"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
-          <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
+          <Search className="w-5 h-5 text-slate-400 flex-shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
+            autoComplete="off"
+            aria-label="Search jobs, applications, candidates, or jump to a page"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

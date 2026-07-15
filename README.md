@@ -1,103 +1,108 @@
+<div align="center">
+
+<img src="public/Logo_400x400.jpg" alt="Ocean Blue Solutions" width="200" />
+
 # Ocean Blue Corporation
 
-The corporate website and operations platform for Ocean Blue Solutions Inc., an IT staffing, enterprise solutions, and managed-services firm. It is a single Next.js application that runs the public marketing site, a careers portal, an internal back office for recruiting and account management, and a public Job Feed API. Content shown to visitors is editable in the admin panel and goes live without a redeploy.
+**One accountable partner for talent, engineering, technology, and operations.**
 
-## What's inside
+[![Website](https://img.shields.io/badge/Website-oceanbluecorp.com-1d4ed8?style=flat-square)](https://oceanbluecorp.com)
+[![Founded](https://img.shields.io/badge/Since-2013-0b1b2b?style=flat-square)](https://oceanbluecorp.com/about)
+[![Certified](https://img.shields.io/badge/Certified-Minority%20%26%20Women%20Owned-16a34a?style=flat-square)](https://oceanbluecorp.com)
 
-The codebase is one app that serves four distinct products:
+[Website](https://oceanbluecorp.com) ·
+[About](https://oceanbluecorp.com/about) ·
+[Solutions](https://oceanbluecorp.com/solutions) ·
+[Careers](https://oceanbluecorp.com/careers) ·
+[Contact](https://oceanbluecorp.com/contact)
 
-1. **Public marketing site** — company pages (about, services, products, team, developers, resources, contact) plus legal, accessibility, and brand pages. Landing-page copy and the announcement bar are CMS-driven.
-2. **Careers portal** — job search, listings, individual job detail pages, and an application flow that uploads a resume and emails a confirmation.
-3. **Admin back office (ATS)** — a role-gated applicant tracking and account-management system covering jobs, applications, candidates, the talent bench, clients, vendors, contacts, users and roles, the resume bank, notifications, content, settings, and API keys.
-4. **Job Feed API (v1)** — a public, read-only jobs endpoint secured by per-client API keys, so partners and job boards can pull active postings.
+</div>
 
-## Key features
+---
 
-**Public site**
-- Marketing pages composed from reusable landing sections (hero, services, impact stats, insights, case study, testimonials, certifications, client logos, call to action).
-- A content CMS: admins edit content blocks at `/admin/content`, and pages read them through a server reader (`getSiteContent`) with ISR (`revalidate` 60s), so edits appear within a minute without a rebuild.
-- SEO and metadata: `robots.txt`, a dynamic `/sitemap.xml` plus a human-readable `/sitemap` page, and per-job OpenGraph images.
-- Accessibility statement, cookie consent, and a sitewide announcement bar.
-- Security headers set at the framework level: HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+## About us
 
-**Careers**
-- Job search and listings backed by DynamoDB, with individual job detail pages.
-- Application submission that stores the record, uploads the resume file to S3, and sends the applicant a confirmation email while notifying recruiters of the new application.
+**Ocean Blue Corporation** (legally *Ocean Blue Solutions, Inc.*) is a certified minority- and women-owned enterprise technology partner, founded in **2013** and headquartered in **Powell, Ohio**. We help Fortune 500 enterprises and state government agencies across North America hire the right people, build and modernize their technology, and keep it all running — under a single accountable standard.
 
-**Admin (ATS)**
-- Role-based access enforced both on routes and in the UI, with the hierarchy ADMIN > HR > RECRUITER / SALES > USER mapped from Cognito groups.
-- Modules for jobs, applications, candidates, the talent bench, clients, vendors, contacts, users and roles, resume bank, notifications, content CMS, settings, and API key management.
-- Transactional email throughout the recruiting workflow: job-posted and job-updated notifications, interview invites, status updates, and HR/recruiter alerts.
+We are deliberately built to be **one partner you can hold to the outcome**, not a stack of vendors pointing fingers. From the first conversation to the quarterly review, one team owns the result.
 
-**API**
-- `GET /api/v1/jobs` and `GET /api/v1/jobs/:id` return sanitized, paginated job data.
-- Authentication via an `X-API-Key` header (or `api_key` query parameter); keys are validated against DynamoDB, can be disabled, and have their last-used timestamp tracked.
+---
 
-## Tech stack
+## What we do
 
-| Area | Choice |
+Four connected practices, one accountable team:
+
+### 🧑‍💻 IT Staffing & Talent
+
+Pre-vetted specialists — cloud, data, security, ERP, Salesforce, and AI engineers — who join your team and deliver from the first sprint. Flexible or permanent hiring, or a fully managed team. Shortlists in 48 hours.
+
+### 🛠️ Engineering Talent & Services
+
+Mechanical, electrical, structural, aerospace, controls, and manufacturing engineers for the industries that build things — automotive, aerospace & defense, power & utilities, manufacturing, and communications.
+
+### ☁️ Enterprise Technology Solutions
+
+Cloud engineering (AWS · Azure · GCP), cybersecurity, ERP (SAP · Oracle · Dynamics), Salesforce, AI & data intelligence, and digital transformation — engineered and shipped without stopping the business.
+
+### 🎧 Managed Services
+
+24/7 monitoring, helpdesk, application and infrastructure support, and continuous optimization — one team, one SLA, one number to call.
+
+---
+
+## Industries we serve
+
+Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Communications · Healthcare · Financial Services · Government & Public Sector · Retail · Technology
+
+---
+
+## Why Ocean Blue
+
+- **One accountable partner** — a single point of ownership across talent, engineering, technology, and operations.
+- **A decade of delivery** — serving enterprises and government agencies since 2013, held to one standard.
+- **Fast, curated shortlists** — a pre-vetted network, matched to the role, typically within 48 hours.
+- **Supplier-diversity value** — a certified minority- and women-owned business (MBE / WBE, NMSDC).
+- **Global delivery** — teams across the **United States · India · United Kingdom**.
+
+---
+
+## Certifications
+
+- Certified **Minority Business Enterprise (MBE)**
+- Certified **Women's Business Enterprise (WBE)**
+- **NMSDC** member
+- Ohio MBE / WBE
+
+---
+
+## Get in touch
+
+|  |  |
 | --- | --- |
-| Framework | Next.js 16 (App Router) |
-| UI runtime | React 19, TypeScript |
-| Styling | Tailwind CSS 4 |
-| Components | shadcn/ui (new-york style) on Radix UI |
-| Animation | framer-motion |
-| Icons | Lucide |
-| Fonts | Geist |
-| Auth | Amazon Cognito via OIDC (`oidc-client-ts`) |
-| Data | Amazon DynamoDB |
-| File storage | Amazon S3 |
-| Email | Amazon SES |
-| Hosting | AWS Amplify |
+| 🌐 Website | [oceanbluecorp.com](https://oceanbluecorp.com) |
+| 📞 Phone | +1 (614) 844-6925 |
+| 📍 Headquarters | 9775 Fairway Drive, Suite C, Powell, OH 43065, USA |
+| 💬 Start a conversation | [oceanbluecorp.com/contact](https://oceanbluecorp.com/contact) |
+| 💼 Open roles | [oceanbluecorp.com/careers](https://oceanbluecorp.com/careers) |
 
-## Architecture
+### Connect with us
 
-The frontend and all backend logic live in one Next.js app. Server-side route handlers under `src/app/api` talk to AWS through typed clients in `src/lib/aws`. AWS credentials and table/bucket names are read at runtime through getter functions, so secrets stay server-side and never ship to the browser.
+[LinkedIn](https://www.linkedin.com/company/ocean-blue-solutions-inc/) ·
+[X (Twitter)](https://x.com/OceanBlueSol) ·
+[Instagram](https://www.instagram.com/oceanbluesolutions) ·
+[YouTube](https://www.youtube.com/@OceanBlueSolutions)
 
-- **Authentication** — Amazon Cognito with an OIDC code flow. Cognito group membership maps to application roles (ADMIN, HR, RECRUITER, SALES, USER), and a role hierarchy gates admin routes. An auth context (`src/lib/auth`) exposes the current user and role to the client, and a `ProtectedRoute` component guards pages.
-- **Data** — Amazon DynamoDB is the primary datastore (region `us-east-2`). All reads and writes go through `src/lib/aws/dynamodb.ts`. Sequential, human-readable IDs (for example application and posting numbers) are issued from a counters table.
-- **Files** — resume and document uploads are stored in Amazon S3 (`src/lib/aws/s3.ts`).
-- **Email** — Amazon SES (`src/lib/aws/ses.ts`) sends transactional mail: application confirmations to candidates, new-application and job-posting notifications to recruiters and HR, job-update notices, interview invites, status updates, and contact-form notifications.
-- **Content** — the CMS stores editable content blocks in DynamoDB; the public site reads them server-side with ISR so changes publish without a deploy.
-- **Hosting** — deployed on AWS Amplify, which injects environment variables at build time.
+---
 
-### DynamoDB tables
+<div align="center">
+<sub>© Ocean Blue Corporation · Ocean Blue Solutions, Inc. — Powell, Ohio, USA</sub>
+</div>
 
-All in region `us-east-2`:
-
-`oceanblue-jobs` · `oceanblue-applications` · `oceanblue-resumes` · `oceanblue-candidates` · `oceanblue-contacts` · `oceanblue-clients` · `oceanblue-vendors` · `oceanblue-content` (CMS) · `oceanblue-notifications` · `oceanblue-counters` · `oceanblue-api-keys`
-
-## Project structure
-
-```
-src/
-  app/                     App Router routes
-    (marketing)            about, services, team, products, developers,
-                           resources, contact, careers, brand-kit, legal pages
-    api/                   Route handlers — jobs, applications, contacts,
-                           content, users, vendors, clients, notifications,
-                           resume, admin/*, v1/* (public API)
-    admin/                 Admin back office
-    auth/                  Cognito auth — signin, signup, callback, signout
-    dashboard/             User dashboard
-  components/
-    layout/                Header, Footer, AnnouncementBar, LayoutWrapper,
-                           CookieConsent
-    landing/               Landing sections — Hero, Services, ImpactStats,
-                           Insights, CaseStudy, Testimonials, Certifications,
-                           ClientLogos, CallToAction
-    admin/                 Admin-specific components
-    ui/                    shadcn/ui primitives
-    auth/                  ProtectedRoute
-    providers/             Context providers
-  lib/
-    aws/                   AWS clients — config, dynamodb, s3, ses, cognito
-    auth/                  Cognito auth context and config
-    content.ts             CMS content reader
-  hooks/                   Custom hooks
-```
-
-## Documentation
-
-- `CLAUDE.md` — repository conventions, architecture notes, and guidance for working in the codebase.
-- `AWS.md` — AWS resource setup and deployment.
+<!--
+─────────────────────────────────────────────────────────────
+For developers: this repository holds the Ocean Blue Corporation
+website and internal platform (Next.js 16, React 19, TypeScript,
+Tailwind CSS 4, AWS). Setup, architecture, and conventions live in
+CLAUDE.md and AWS.md.
+─────────────────────────────────────────────────────────────
+-->

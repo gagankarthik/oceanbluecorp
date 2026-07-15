@@ -439,6 +439,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               <button
                 onClick={() => handleStageClick("rejected")}
                 disabled={statusSaving}
+                aria-label="Reject candidate"
                 className={cn(
                   "h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border flex-shrink-0",
                   isRejected
@@ -614,6 +615,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                   <textarea
                     rows={3}
                     value={newNote}
+                    autoComplete="off"
                     onChange={(e) => setNewNote(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddNote(); }}
                     placeholder="Interview feedback, next steps, anything the team should know…"

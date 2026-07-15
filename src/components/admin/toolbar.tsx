@@ -27,7 +27,8 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
     <div className={cn("relative min-w-[200px] flex-1", className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input
-        type="text"
+        type="search"
+        autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         {...props}

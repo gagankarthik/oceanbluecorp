@@ -4,7 +4,7 @@ import CareersPage from "./_content";
 export const metadata: Metadata = {
   title: "Careers",
   description:
-    "Explore career opportunities at Ocean Blue Corporation. We connect top IT talent with enterprise roles in ERP, cloud, AI, Salesforce, and more. Search and apply for open positions today.",
+    "Explore IT careers at Ocean Blue Corporation. Enterprise roles in ERP, cloud, AI, Salesforce, and staffing. Search and apply for open positions today.",
   openGraph: {
     title: "IT Career Opportunities | Ocean Blue Corporation",
     description:

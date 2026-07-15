@@ -11,7 +11,8 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/about",
-          "/services",
+          "/solutions",
+          "/solutions/engineering",
           "/products",
           "/careers",
           "/careers/search",

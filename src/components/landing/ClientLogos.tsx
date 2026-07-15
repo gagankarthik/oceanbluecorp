@@ -36,15 +36,14 @@ const clients: Logo[] = [
 const HALF: Logo[] = [...clients, ...clients, ...clients];
 
 function LogoMark({ l }: { l: Logo }) {
-  const cls =
-    `h-8 w-auto object-contain opacity-90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:opacity-100${
-      l.dark ? " brightness-0" : ""
-    }`;
+  // Full-colour logos, no hover fade. `dark` is kept only for the near-white
+  // wordmark that would otherwise be invisible on the white marquee.
+  const cls = `h-8 w-auto object-contain${l.dark ? " brightness-0" : ""}`;
   return (
     <div className="flex shrink-0 items-center px-10" style={{ minWidth: l.w }}>
       {l.remote ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={l.logo} alt={l.name} className={cls} style={{ maxWidth: l.w }} />
+        <img src={l.logo} alt={l.name} width={l.w} height={36} loading="lazy" decoding="async" className={cls} style={{ maxWidth: l.w }} />
       ) : (
         <Image src={l.logo} alt={l.name} width={l.w} height={36} className={cls} />
       )}

@@ -396,19 +396,19 @@ export default function JobsPage() {
                     <Users className="h-3 w-3" /><span className="tabular-nums">{job.applicationsCount || 0}</span> applicants
                   </span>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => router.push(`/admin/jobs/${job.id}`)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
-                      <Eye className="h-4 w-4" />
+                    <button onClick={() => router.push(`/admin/jobs/${job.id}`)} aria-label="View job" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
+                      <Eye className="h-4 w-4" aria-hidden="true" />
                     </button>
                     {canEdit && (
                       <>
-                        <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                          <Edit3 className="h-4 w-4" />
+                        <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} aria-label="Edit job" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                          <Edit3 className="h-4 w-4" aria-hidden="true" />
                         </button>
-                        <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50">
-                          {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                        <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} aria-label="Duplicate job" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50">
+                          {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                         </button>
-                        <button onClick={() => setShowDeleteConfirm(job.id)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
-                          <Trash2 className="h-4 w-4" />
+                        <button onClick={() => setShowDeleteConfirm(job.id)} aria-label="Delete job" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </>
                     )}

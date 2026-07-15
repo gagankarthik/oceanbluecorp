@@ -18,6 +18,7 @@ export const IMG = {
   serviceTalent: u("1521737604893-d14cc237f11d"), // team collaborating
   serviceSolutions: u("1504384308090-c894fdcc538d"), // server racks
   serviceManaged: u("1451187580459-43490279c0fa"), // network / earth
+  serviceEngineering: u("1581091226825-a6a2a5aee158"), // engineer at work
   insightHiring: u("1497366811353-6870744d04b2"), // meeting room
   insightCloud: u("1454165804606-c3d57bc86b40"), // analytics on screen
   insightSupport: u("1573164713988-8665fc963095"), // working at computer

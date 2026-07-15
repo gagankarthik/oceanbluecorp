@@ -574,10 +574,11 @@ function ApplicantRow({
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Change status"
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
               title="Change status"
             >
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-white border border-slate-200/80 rounded-2xl shadow-lg overflow-hidden">
@@ -599,10 +600,11 @@ function ApplicantRow({
           {/* Open/edit */}
           <button
             onClick={() => onEdit(app)}
+            aria-label="Edit applicant"
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
             title="Edit applicant"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>

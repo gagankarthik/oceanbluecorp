@@ -929,7 +929,7 @@ export default function AdminDocsPage() {
               />
             </SubSection>
 
-            <SubSection title="Job Feed API (v1 — Partner Platforms)">
+            <SubSection title="Job Feed API v1 (Partner Platforms)">
               <InfoCard variant="tip">
                 These are public-facing routes authenticated by API keys (not Cognito). Manage keys at{" "}
                 <strong>/admin/api-keys</strong>. Public docs at <strong>/developers</strong>.

@@ -5,6 +5,17 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
 
+  // ── Redirects ─────────────────────────────────────────────────────────────
+  // /services was renamed to /solutions — forward old URLs (and any indexed
+  // per-service pages) permanently.
+  async redirects() {
+    return [
+      { source: "/services", destination: "/solutions", permanent: true },
+      { source: "/engineering", destination: "/solutions/engineering", permanent: true },
+      { source: "/services/:slug", destination: "/solutions/:slug", permanent: true },
+    ];
+  },
+
   // ── Security headers ──────────────────────────────────────────────────────
   async headers() {
     return [

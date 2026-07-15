@@ -124,6 +124,10 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
     return (
       <input
         ref={ref}
+        // Default off — admin forms mostly capture third-party data (candidates,
+        // clients), so the staffer's own browser autofill must not leak in.
+        // Call sites for the user's OWN data can override with a real token.
+        autoComplete="off"
         aria-invalid={invalid || undefined}
         {...props}
         className={cn(controlBase, "px-3 py-2", className)}
@@ -162,6 +166,7 @@ export function FormSelect({
   return (
     <div className="group relative">
       <select
+        autoComplete="off"
         {...props}
         className={cn(controlBase, "peer cursor-pointer appearance-none px-3 py-2.5 pr-11", className)}
       >
@@ -184,6 +189,7 @@ export function FormTextarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
+      autoComplete="off"
       {...props}
       className={cn(controlBase, "resize-y px-3 py-2.5 leading-relaxed", className)}
     />
@@ -230,6 +236,8 @@ export function AssigneePicker({
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
+          autoComplete="off"
+          aria-label="Search team members"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}

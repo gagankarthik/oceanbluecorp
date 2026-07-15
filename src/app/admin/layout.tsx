@@ -394,6 +394,10 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
         <img
           src={avatarSrc}
           alt={user?.name ?? "User"}
+          width={28}
+          height={28}
+          loading="lazy"
+          decoding="async"
           onError={() => setAvatarFailed(true)}
           className="w-7 h-7 rounded-full object-cover bg-[var(--hz-cobalt-100)] ring-2 ring-white shadow-sm"
         />
@@ -421,6 +425,10 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
             <img
               src={avatarSrc}
               alt={user?.name ?? "User"}
+              width={36}
+              height={36}
+              loading="lazy"
+              decoding="async"
               onError={() => setAvatarFailed(true)}
               className="h-9 w-9 flex-shrink-0 rounded-full object-cover bg-slate-100 ring-1 ring-slate-200"
             />

@@ -142,8 +142,8 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={() => onOpenChange(false)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-            <X className="w-4 h-4" />
+          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -173,6 +173,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               <Field label="Career level">
                 <select
                   value={draft.analytics?.career_level || ""}
+                  autoComplete="off"
                   onChange={(e) => setAnalytics("career_level", e.target.value || null)}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
                 >

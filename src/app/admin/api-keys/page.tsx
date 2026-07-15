@@ -210,10 +210,11 @@ export default function ApiKeysPage() {
                 </div>
                 <button
                   onClick={() => setShowKey((v) => !v)}
+                  aria-label="Show key"
                   className="p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
                   title={showKey ? "Hide" : "Reveal"}
                 >
-                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showKey ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => handleCopy(newKey.key)}
@@ -224,8 +225,8 @@ export default function ApiKeysPage() {
                 </button>
               </div>
             </div>
-            <button onClick={() => setNewKey(null)} className="p-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors">
-              <X className="w-4 h-4" />
+            <button onClick={() => setNewKey(null)} aria-label="Dismiss" className="p-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors">
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -242,8 +243,8 @@ export default function ApiKeysPage() {
                 </div>
                 <h2 className="text-base font-semibold text-slate-900">New API Key</h2>
               </div>
-              <button onClick={() => setShowCreateForm(false)} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowCreateForm(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg">
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -253,6 +254,7 @@ export default function ApiKeysPage() {
                 </label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. Indeed, LinkedIn, Internal Portal"
@@ -267,6 +269,7 @@ export default function ApiKeysPage() {
                 </label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="e.g. Used for job syndication feed"
@@ -300,8 +303,8 @@ export default function ApiKeysPage() {
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center gap-2 text-sm text-rose-700">
           <XCircle className="w-4 h-4 flex-shrink-0" />
           {error}
-          <button onClick={() => setError(null)} className="ml-auto p-1 hover:bg-rose-100 rounded">
-            <X className="w-3 h-3" />
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto p-1 hover:bg-rose-100 rounded">
+            <X className="w-3 h-3" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -381,13 +384,14 @@ export default function ApiKeysPage() {
                   <button
                     onClick={() => handleDelete(k.id)}
                     disabled={deletingId === k.id}
+                    aria-label="Delete key"
                     title="Delete key permanently"
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {deletingId === k.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                     ) : (
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     )}
                   </button>
                 </div>
