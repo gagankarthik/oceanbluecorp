@@ -97,7 +97,7 @@ export default function Footer() {
               <Image src="/logo.png" alt="Ocean Blue Corporation" width={170} height={40} className="h-8 w-auto" />
             </Link>
             <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
-              IT staffing, enterprise solutions, and managed services — one
+              IT staffing, enterprise solutions, and managed services. One
               accountable partner for enterprises and government agencies.
             </p>
             <div className="mt-8 space-y-3 text-[14px]">

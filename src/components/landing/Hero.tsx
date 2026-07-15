@@ -13,6 +13,12 @@ const slides = [
   { src: IMG.heroSlides[2], alt: "Managed infrastructure" },
 ];
 
+const partners = [
+  { src: "/logos/partners/AWS-Partner.png", alt: "AWS Partner", cls: "h-10 md:h-12" },
+  { src: "/logos/partners/snowflake.svg", alt: "Snowflake", cls: "h-6 md:h-7" },
+  { src: "/logos/partners/databricks.svg", alt: "Databricks", cls: "h-6 md:h-7" },
+];
+
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function Hero({ content = {} }: { content?: Record<string, string> }) {
@@ -24,7 +30,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
   const imgScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.18]);
   const imgY = useTransform(scrollYProgress, [0, 1], [0, 90]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 70]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
 
   useEffect(() => {
     if (reduce) return;
@@ -33,7 +39,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
   }, [reduce]);
 
   return (
-    <section ref={ref} className="relative isolate flex min-h-[92vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
+    <section ref={ref} className="relative isolate flex min-h-[92vh] w-full flex-col overflow-hidden" style={{ background: "#07142b" }}>
       {/* Living mesh — sits behind the photos; shows through when no image is set */}
       <div
         aria-hidden
@@ -70,77 +76,93 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         className="absolute inset-0 z-[1]"
         style={{
           background:
-            "linear-gradient(100deg, rgba(5,12,28,0.9) 0%, rgba(6,16,36,0.66) 42%, rgba(7,20,43,0.34) 76%, rgba(7,20,43,0.15) 100%), linear-gradient(0deg, rgba(5,12,28,0.6) 0%, transparent 32%)",
+            "linear-gradient(100deg, rgba(5,12,28,0.9) 0%, rgba(6,16,36,0.66) 42%, rgba(7,20,43,0.34) 76%, rgba(7,20,43,0.15) 100%), linear-gradient(0deg, rgba(5,12,28,0.72) 0%, transparent 34%)",
         }}
       />
 
-      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-24 sm:px-8 2xl:max-w-[96rem]">
-        <h1 className="hz-display max-w-[20ch] text-[2.2rem] break-words text-white sm:text-[3.5rem] lg:text-[4.5rem] 2xl:text-[5.5rem]">
-          {content.heroTitle ? (
-            <WordsReveal text={content.heroTitle} delay={0.12} />
-          ) : (
-            <>
-              <WordsReveal text="The people and platforms behind" delay={0.12} />{" "}
-              <span className="text-[var(--hz-cyan-400)]">
-                <WordsReveal text="enterprises and government agencies." delay={0.6} />
-              </span>
-            </>
-          )}
-        </h1>
+      {/* ── Focal block — vertically centered ──────────────── */}
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity }}
+        className="relative z-10 flex flex-1 items-center"
+      >
+        <div className="mx-auto w-full max-w-7xl px-6 pt-28 pb-10 sm:px-8 2xl:max-w-[96rem]">
+          <h1 className="hz-display max-w-[16ch] text-[1.4rem] break-words text-white sm:text-[2.6rem] lg:text-[3.6rem] 2xl:text-[4.4rem]">
+            {content.heroTitle ? (
+              <WordsReveal text={content.heroTitle} delay={0.12} />
+            ) : (
+              <>
+                <WordsReveal text="The people and platforms behind" delay={0.12} />{" "}
+                <span className="text-[var(--hz-cyan-400)]">
+                  <WordsReveal text="enterprises and government agencies." delay={0.6} />
+                </span>
+              </>
+            )}
+          </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.9, delay: 0.85, ease: EASE }}
-          className="mt-8 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]"
-        >
-          {content.heroSubtitle ||
-            "IT staffing, enterprise solutions, and managed services — delivered by one accountable partner, one accountable standard."}
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.9, delay: 0.85, ease: EASE }}
+            className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[19px]"
+          >
+            {content.heroSubtitle ||
+              "IT staffing, enterprise solutions, and managed services delivered by one accountable partner, one accountable standard."}
+          </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1, ease: EASE }}
-          className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
-        >
-          <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.heroCtaText || "Start a conversation"}</Cta>
-          <Cta href="#services" variant="ghostDark">{content.heroCtaSecondary || "Explore what we do"}</Cta>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1, ease: EASE }}
+            className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
+          >
+            <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.heroCtaText || "Start a conversation"}</Cta>
+            <Cta href="#services" variant="ghostDark">{content.heroCtaSecondary || "Explore what we do"}</Cta>
+          </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Technology partners */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 1.15, ease: EASE }}
-          className="mt-12 flex flex-col gap-4 border-t border-white/15 pt-7 sm:max-w-md"
-        >
-          <span className="hz-eyebrow text-white/55">Technology partners</span>
-          <div className="flex flex-wrap items-center gap-x-9 gap-y-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/AWS-Partner.png" alt="AWS Partner" width={160} height={80} loading="lazy" decoding="async" className="h-16 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 md:h-20" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/snowflake.svg" alt="Snowflake" width={120} height={32} loading="lazy" decoding="async" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logos/partners/databricks.svg" alt="Databricks" width={120} height={32} loading="lazy" decoding="async" className="h-7 w-auto object-contain opacity-80 transition-opacity hover:opacity-100 md:h-8" />
+      {/* ── Bottom bar — partners (left) + slide indicators (right) ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 1.15, ease: EASE }}
+        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-10 sm:px-8 2xl:max-w-[96rem]"
+      >
+        <div className="flex flex-col gap-6 border-t border-white/15 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          {/* Technology partners */}
+          <div className="flex flex-col gap-3">
+            <span className="hz-eyebrow text-white/55">Technology partners</span>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+              {partners.map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={p.alt}
+                  src={p.src}
+                  alt={p.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className={`${p.cls} w-auto object-contain opacity-85 transition-opacity duration-300 hover:opacity-100`}
+                />
+              ))}
+            </div>
           </div>
-        </motion.div>
 
-        {/* Slide indicators */}
-        <div className="mt-14 flex items-center gap-2">
-          {slides.map((s, idx) => (
-            <button
-              key={s.src}
-              onClick={() => setSlide(idx)}
-              aria-label={`Show slide ${idx + 1}`}
-              className="group flex h-10 min-w-[40px] items-center justify-center px-1.5"
-            >
-              <span
-                className="block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white"
-                style={{ width: slide === idx ? 34 : 16, background: slide === idx ? "var(--hz-cyan-400)" : "rgba(255,255,255,0.45)" }}
-              />
-            </button>
-          ))}
+          {/* Slide indicators */}
+          <div className="flex items-center gap-2">
+            {slides.map((s, idx) => (
+              <button
+                key={s.src}
+                onClick={() => setSlide(idx)}
+                aria-label={`Show slide ${idx + 1}`}
+                className="group flex h-10 min-w-[40px] items-center justify-center px-1.5"
+              >
+                <span
+                  className="block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white"
+                  style={{ width: slide === idx ? 34 : 16, background: slide === idx ? "var(--hz-cyan-400)" : "rgba(255,255,255,0.45)" }}
+                />
+              </button>
+            ))}
+          </div>
         </div>
       </motion.div>
     </section>

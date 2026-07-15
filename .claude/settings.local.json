@@ -55,7 +55,8 @@
       "Bash(git rm *)",
       "Bash(node -e \"const fs=require\\('fs'\\);for\\(const f of ['public/favicon.png','public/logo.png','public/logo.webp']\\){try{const b=fs.readFileSync\\(f\\);if\\(f.endsWith\\('.png'\\)\\){const w=b.readUInt32BE\\(16\\),h=b.readUInt32BE\\(20\\);console.log\\(f,w+'x'+h,Math.round\\(b.length/1024\\)+'KB'\\);}else{console.log\\(f,Math.round\\(b.length/1024\\)+'KB \\(webp\\)'\\);}}catch\\(e\\){console.log\\(f,'ERR',e.message\\)}}\")",
       "PowerShell(npm run *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "mcp__magic__21st_magic_component_builder"
     ]
   }
 }
