@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, type SVGProps } from "react";
+import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Linkedin, Youtube, Instagram } from "lucide-react";
 
 // Official X (formerly Twitter) brand mark — lucide's `X` is the close/cross icon.
@@ -86,54 +87,76 @@ function FooterStatus() {
   );
 }
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+const reveal = {
+  hidden: { opacity: 0, y: 24 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.7, delay: i * 0.08, ease: EASE } }),
+};
+
 export default function Footer() {
   return (
-    <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-surface)]">
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
+    <footer className="relative w-full overflow-hidden border-t border-black/[0.08] bg-[var(--hz-surface)]">
+      {/* Top accent hairline */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(29,78,216,0.5), transparent)" }}
+      />
+
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-10% 0px" }}
+          className="grid gap-10 lg:grid-cols-[1.4fr_2fr] lg:gap-16"
+        >
           {/* Brand + contact */}
-          <div>
+          <motion.div custom={0} variants={reveal}>
             <Link href="/" className="inline-block">
               <Image src="/logo.png" alt="Ocean Blue Corporation" width={170} height={40} className="h-8 w-auto" />
             </Link>
-            <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
+            <p className="mt-5 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
               IT staffing, enterprise solutions, and managed services — one
               accountable partner for enterprises and government agencies.
             </p>
-            <div className="mt-8 space-y-3 text-[14px]">
-              <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
-                <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={1.5} />
+            <div className="mt-6 space-y-2.5 text-[14px]">
+              <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-2.5 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
+                <Mail className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
                 hr@oceanbluecorp.com
               </a>
-              <a href="tel:+16148446925" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
-                <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={1.5} />
+              <a href="tel:+16148446925" className="flex items-center gap-2.5 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
+                <Phone className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
                 +1 (614) 844-6925
               </a>
-              <p className="flex items-start gap-3 text-[var(--hz-text-subtle)]">
+              <p className="flex items-start gap-2.5 text-[var(--hz-text-subtle)]">
                 <MapPin className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                9775 Fairway Drive, Suite C<br />Powell, OH 43065
+                9775 Fairway Drive, Suite C, Powell, OH 43065
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Link columns */}
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-            {Object.entries(footerLinks).map(([heading, links]) => (
-              <div key={heading}>
+            {Object.entries(footerLinks).map(([heading, links], idx) => (
+              <motion.div key={heading} custom={idx + 1} variants={reveal}>
                 <h3 className="hz-eyebrow text-[var(--hz-text-subtle)]">{heading}</h3>
                 <ul className="mt-5 space-y-3">
                   {links.map((l) => (
                     <li key={l.name}>
-                      <Link href={l.href} className="text-[14px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
+                      <Link
+                        href={l.href}
+                        className="group inline-flex items-center text-[14px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
+                      >
+                        <span className="mr-0 h-px w-0 bg-[var(--hz-cobalt)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:mr-2 group-hover:w-4" />
                         {l.name}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Bottom bar */}
@@ -151,7 +174,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.name}
-                className="grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text-mute)] transition-all duration-300 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text-mute)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <s.icon className="h-4 w-4" strokeWidth={1.5} />
               </a>

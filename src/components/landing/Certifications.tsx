@@ -13,14 +13,17 @@ const certs = [
 export default function Certifications() {
   return (
     <section className="relative w-full bg-[var(--hz-canvas)] py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
-        <Reveal className="flex flex-col items-center gap-8 text-center">
+      <div className="mx-auto max-w-5xl px-6 sm:px-8">
+        <Reveal className="flex flex-col items-center gap-9 rounded-[1.75rem] border border-slate-200/70 bg-[var(--hz-surface)] px-6 py-12 text-center sm:px-12">
           <p className="text-[14px] text-[var(--hz-text-subtle)]">
             A certified minority- and women-owned business.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-16">
             {certs.map((c) => (
-              <div key={c.name} className="relative h-16 w-24 sm:h-20 sm:w-32">
+              <div
+                key={c.name}
+                className="relative h-16 w-24 transition-transform duration-500 hover:scale-105 sm:h-20 sm:w-32"
+              >
                 <Image
                   src={c.logo}
                   alt={`${c.name} certification`}

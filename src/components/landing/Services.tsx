@@ -1,9 +1,12 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
+import { Reveal } from "./motion/Primitives";
 import Photo from "./Photo";
 import { IMG } from "./media";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 type Service = {
   name: string;
@@ -29,27 +32,15 @@ const services: Service[] = [
     desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
     href: "/solutions/engineering",
     img: IMG.serviceEngineering,
-    items: [
-      "Automotive, MFG, aerospace, power",
-      "Flexible, permanent, or managed teams",
-      "Shortlists in 48 hours",
-    ],
+    items: ["Automotive, MFG, aerospace, power", "Flexible, permanent, or managed teams", "Shortlists in 48 hours"],
   },
   {
-    name: "Enterprise Solutions",
+    name: "IT Solutions",
     title: "Platforms, modernized",
     desc: "Cloud migration, security, and production AI — engineered and shipped without stopping the business.",
     href: "/solutions/cloud",
     img: IMG.serviceSolutions,
-    items: [
-      "Cloud migration · AWS, Azure, GCP",
-      "DevOps, CI/CD & automation",
-      "AI & data intelligence",
-      "Cybersecurity & compliance",
-      "ERP · SAP, Oracle, Dynamics",
-      "Salesforce implementation & support",
-      "Digital transformation & roadmaps",
-    ],
+    items: ["Cloud migration · AWS, Azure, GCP", "AI, data & cybersecurity", "ERP & Salesforce delivery"],
   },
   {
     name: "Managed Services",
@@ -61,9 +52,17 @@ const services: Service[] = [
   },
 ];
 
-function ServiceCard({ s }: { s: Service }) {
+function ServiceCard({ s, i }: { s: Service; i: number }) {
+  const reduce = useReducedMotion();
   return (
-    <a href={s.href} className="group flex h-full flex-col">
+    <motion.a
+      href={s.href}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 44, filter: "blur(12px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-10% 0px" }}
+      transition={{ duration: 0.8, delay: (i % 4) * 0.08, ease: EASE }}
+      className="group flex h-full flex-col"
+    >
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
         <Photo src={s.img} className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105" />
         <span className="absolute left-0 top-6 z-10 h-8 w-1 rounded-r bg-[var(--hz-cobalt)]" />
@@ -88,33 +87,30 @@ function ServiceCard({ s }: { s: Service }) {
           <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1" strokeWidth={1.75} />
         </span>
       </div>
-    </a>
+    </motion.a>
   );
 }
 
 export default function Services() {
   return (
     <section id="services" className="relative w-full bg-[var(--hz-canvas)] py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[92rem]">
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem] 2xl:text-[3.5rem]">
-              One partner for talent, engineering, technology, and operations.
-            </h2>
-          </div>
+          <h2 className="hz-display max-w-2xl text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem] 2xl:text-[3.5rem]">
+            One partner for talent, engineering, technology, and operations.
+          </h2>
           <p className="max-w-sm text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
             Four connected practices, one accountable team — so the people who build
             your systems are the people who keep them running.
           </p>
         </Reveal>
 
-        <Stagger className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
-          {services.map((s) => (
-            <StaggerItem key={s.name} className="h-full">
-              <ServiceCard s={s} />
-            </StaggerItem>
+        {/* All four in one row — each dissolves in on scroll */}
+        <div className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          {services.map((s, i) => (
+            <ServiceCard key={s.name} s={s} i={i} />
           ))}
-        </Stagger>
+        </div>
       </div>
     </section>
   );

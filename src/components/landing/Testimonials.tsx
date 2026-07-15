@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Quote } from "lucide-react";
 import { Reveal } from "./motion/Primitives";
 
@@ -31,92 +31,100 @@ const testimonials: T[] = [
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+const initials = (name: string) => name.split(" ").map((n) => n[0]).slice(0, 2).join("");
+
 export default function Testimonials() {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const reduce = useReducedMotion();
+  const t = testimonials[i];
 
-  // Auto-advancing carousel — advances on a timer, pauses on hover/focus, and
-  // stops entirely when the visitor prefers reduced motion.
   useEffect(() => {
     if (paused || reduce) return;
-    const id = setInterval(() => setI((p) => (p + 1) % testimonials.length), 5500);
+    const id = setInterval(() => setI((p) => (p + 1) % testimonials.length), 6000);
     return () => clearInterval(id);
   }, [paused, reduce]);
 
   return (
-    <section className="relative w-full overflow-hidden bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-ivory)] py-24 sm:py-32">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(45% 55% at 50% 0%, rgba(29,78,216,0.05), transparent 60%)" }}
+        style={{ background: "radial-gradient(48% 55% at 50% 0%, rgba(29,78,216,0.05), transparent 62%)" }}
       />
       <div
-        className="relative mx-auto max-w-4xl px-5 text-center sm:px-8"
-        role="group"
-        aria-roledescription="carousel"
-        aria-label="Client testimonials"
+        className="relative mx-auto max-w-5xl px-6 sm:px-8"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocusCapture={() => setPaused(true)}
         onBlurCapture={() => setPaused(false)}
       >
-        <Reveal>
-          <Quote className="mx-auto h-9 w-9 text-[var(--hz-cobalt)] sm:h-10 sm:w-10" strokeWidth={1.5} aria-hidden="true" />
+        <Reveal className="flex flex-col items-center text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-[var(--hz-cobalt)] shadow-[0_10px_30px_-12px_rgba(10,37,64,0.25)] ring-1 ring-black/[0.04]">
+            <Quote className="h-7 w-7" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <h2 className="hz-display mt-7 text-[1.6rem] text-[var(--hz-text)] sm:text-[2rem]">
+            Trusted by the teams we work alongside.
+          </h2>
+        </Reveal>
 
-          {/* Sliding track — one testimonial per slide */}
-          <div className="mt-6 overflow-hidden">
-            <div
-              className="flex"
-              style={{
-                transform: `translateX(-${i * 100}%)`,
-                transition: reduce ? "none" : "transform 0.7s cubic-bezier(0.22,1,0.36,1)",
-              }}
+        {/* Crossfading quote */}
+        <div className="relative mt-10 min-h-[220px] sm:min-h-[200px]" role="group" aria-roledescription="carousel" aria-label="Client testimonials">
+          <AnimatePresence mode="wait">
+            <motion.figure
+              key={i}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -16, filter: "blur(6px)" }}
+              transition={{ duration: 0.6, ease: EASE }}
+              className="flex flex-col items-center text-center"
             >
-              {testimonials.map((t, idx) => (
-                <figure
-                  key={t.author}
-                  className="flex w-full shrink-0 flex-col px-1 sm:px-4"
-                  aria-roledescription="slide"
-                  aria-label={`${idx + 1} of ${testimonials.length}`}
-                  aria-hidden={idx !== i}
-                >
-                  <blockquote className="hz-display text-[1.35rem] font-medium leading-[1.35] text-[var(--hz-text)] sm:text-[1.75rem] lg:text-[2.1rem]">
-                    {t.quote}
-                  </blockquote>
-                  <figcaption className="mt-7 flex flex-col items-center sm:mt-8">
-                    <span
-                      className="grid h-11 w-11 place-items-center rounded-full bg-[var(--hz-cobalt)] text-[13px] font-semibold text-white sm:h-12 sm:w-12"
-                      style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.3)" }}
-                    >
-                      {t.author.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-                    </span>
-                    <span className="mt-3 text-[14.5px] font-semibold text-[var(--hz-text)]">{t.author}</span>
-                    <span className="text-[13px] text-[var(--hz-text-mute)]">{t.role} · {t.company}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
+              <blockquote className="hz-display mx-auto max-w-3xl text-[1.4rem] font-medium leading-[1.35] text-[var(--hz-text)] sm:text-[1.95rem] lg:text-[2.15rem]">
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+              <figcaption className="mt-8 text-[14px]">
+                <span className="font-semibold text-[var(--hz-text)]">{t.author}</span>
+                <span className="text-[var(--hz-text-mute)]"> · {t.role}, {t.company}</span>
+              </figcaption>
+            </motion.figure>
+          </AnimatePresence>
+        </div>
 
-          {/* Dots */}
-          <div className="mt-9 flex items-center justify-center gap-2.5">
-            {testimonials.map((t, idx) => (
+        {/* Interactive author rail */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+          {testimonials.map((item, idx) => {
+            const isActive = idx === i;
+            return (
               <button
-                key={t.author}
+                key={item.author}
                 onClick={() => setI(idx)}
-                aria-label={`Show testimonial ${idx + 1}`}
-                aria-current={idx === i}
-                className="group flex h-10 min-w-[40px] items-center justify-center px-1.5"
+                aria-label={`Show testimonial from ${item.author}`}
+                aria-current={isActive}
+                className={`group flex items-center gap-3 rounded-full border py-2 pl-2 pr-4 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  isActive
+                    ? "border-transparent bg-white shadow-[0_14px_30px_-16px_rgba(10,37,64,0.35)]"
+                    : "border-slate-200/80 bg-white/40 hover:bg-white/80"
+                }`}
               >
                 <span
-                  className="block h-2 rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-[var(--hz-cobalt)]"
-                  style={{ width: idx === i ? 26 : 8, background: idx === i ? "var(--hz-cobalt)" : "rgba(15,23,42,0.2)" }}
-                />
+                  className={`grid h-9 w-9 place-items-center rounded-full text-[12px] font-semibold transition-colors duration-300 ${
+                    isActive ? "bg-[var(--hz-cobalt)] text-white" : "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
+                  }`}
+                  style={isActive ? { boxShadow: "inset 0 1px 1px rgba(255,255,255,0.3)" } : undefined}
+                >
+                  {initials(item.author)}
+                </span>
+                <span className="flex flex-col items-start leading-tight">
+                  <span className={`text-[13px] font-semibold ${isActive ? "text-[var(--hz-text)]" : "text-[var(--hz-text-mute)]"}`}>
+                    {item.author}
+                  </span>
+                  <span className="text-[11.5px] text-[var(--hz-text-subtle)]">{item.company}</span>
+                </span>
               </button>
-            ))}
-          </div>
-        </Reveal>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

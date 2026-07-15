@@ -36,9 +36,9 @@ const clients: Logo[] = [
 const HALF: Logo[] = [...clients, ...clients, ...clients];
 
 function LogoMark({ l }: { l: Logo }) {
-  // Full-colour logos, no hover fade. `dark` is kept only for the near-white
-  // wordmark that would otherwise be invisible on the white marquee.
-  const cls = `h-8 w-auto object-contain${l.dark ? " brightness-0" : ""}`;
+  const cls = `h-8 w-auto object-contain transition-transform duration-500 hover:scale-105${
+    l.dark ? " brightness-0" : ""
+  }`;
   return (
     <div className="flex shrink-0 items-center px-10" style={{ minWidth: l.w }}>
       {l.remote ? (
@@ -53,32 +53,34 @@ function LogoMark({ l }: { l: Logo }) {
 
 export default function ClientLogos() {
   return (
-    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] py-24 sm:py-28">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[92rem]">
         <Reveal className="flex flex-col items-center gap-5 text-center">
+          <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Trusted across North America</p>
           <h2 className="hz-display max-w-2xl text-[1.7rem] text-[var(--hz-text)] sm:text-[2.1rem]">
-            Relied on by enterprises and state government agencies across North America.
+            Relied on by enterprises and state government agencies.
           </h2>
         </Reveal>
-      </div>
 
-      <div
-        className="relative mt-16"
-        style={{
-          maskImage: "linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent)",
-        }}
-      >
-        {/* Each half is the client set repeated enough to exceed any viewport, so
-            the -50% loop never reveals a gap. Two identical halves = seamless. */}
-        <div className="hz-marquee flex w-max items-center">
-          {[...HALF, ...HALF].map((l, i) => (
-            <LogoMark key={`${l.name}-${i}`} l={l} />
-          ))}
-        </div>
+        {/* Machined marquee panel */}
+        <Reveal delay={0.1} className="mt-14 rounded-[1.75rem] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.05]">
+          <div
+            className="relative overflow-hidden rounded-[calc(1.75rem-0.375rem)] bg-[var(--hz-canvas)] py-8"
+            style={{
+              boxShadow: "inset 0 1px 1px rgba(255,255,255,0.7)",
+              maskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)",
+              WebkitMaskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)",
+            }}
+          >
+            {/* Two identical halves = seamless -50% loop on any viewport. */}
+            <div className="hz-marquee flex w-max items-center">
+              {[...HALF, ...HALF].map((l, i) => (
+                <LogoMark key={`${l.name}-${i}`} l={l} />
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </div>
-
     </section>
   );
 }
-

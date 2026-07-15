@@ -12,10 +12,7 @@ import {
   Cloud,
   Users,
   Cpu,
-  Shield,
-  Lightbulb,
   Building,
-  BarChart3,
   Settings,
   Headphones,
   Briefcase,
@@ -27,43 +24,12 @@ import {
 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
 
-// Flat list (still used by the mobile menu)
+// Four core practices — used by both the desktop dropdown and the mobile menu.
 const solutions = [
-  { name: "IT Staffing & Talent",         href: "/solutions/staffing",       icon: Users,      description: "Specialists, embedded fast"   },
-  { name: "Engineering Talent & Services", href: "/solutions/engineering",            icon: Wrench,     description: "Mechanical, electrical, aerospace" },
-  { name: "Cloud Engineering",            href: "/solutions/cloud",          icon: Cloud,      description: "Migrate, modernize, scale"    },
-  { name: "Cybersecurity",                href: "/solutions/cybersecurity",  icon: Shield,     description: "Protect what matters"         },
-  { name: "ERP Solutions",                href: "/solutions/erp",            icon: BarChart3,  description: "SAP, Oracle, Dynamics"        },
-  { name: "Salesforce Services",          href: "/solutions/salesforce",     icon: Settings,   description: "CRM that fits your business"  },
-  { name: "AI & Data Intelligence",       href: "/solutions/ai",             icon: Cpu,        description: "Practical AI & analytics"     },
-  { name: "Digital Transformation",       href: "/solutions/transformation", icon: Lightbulb,  description: "Strategy & execution"        },
-  { name: "Managed Services",             href: "/solutions/managed",        icon: Headphones, description: "24/7 operations, one SLA"     },
-];
-
-// Two tidy columns for the desktop dropdown — minimal, no icon chips or blurbs.
-const solutionGroups: {
-  label: string;
-  items: { name: string; href: string; icon: typeof Cloud; badge?: string }[];
-}[] = [
-  {
-    label: "Talent & Engineering",
-    items: [
-      { name: "IT Staffing & Talent",          href: "/solutions/staffing", icon: Users },
-      { name: "Engineering Talent & Services", href: "/solutions/engineering", icon: Wrench },
-      { name: "Managed Services",              href: "/solutions/managed",  icon: Headphones },
-    ],
-  },
-  {
-    label: "Technology Solutions",
-    items: [
-      { name: "Cloud Engineering",      href: "/solutions/cloud",          icon: Cloud },
-      { name: "Cybersecurity",          href: "/solutions/cybersecurity",  icon: Shield },
-      { name: "ERP Solutions",          href: "/solutions/erp",            icon: BarChart3 },
-      { name: "Salesforce Services",    href: "/solutions/salesforce",     icon: Settings },
-      { name: "AI & Data Intelligence", href: "/solutions/ai",             icon: Cpu },
-      { name: "Digital Transformation", href: "/solutions/transformation", icon: Lightbulb },
-    ],
-  },
+  { name: "IT Staffing & Talent",          href: "/solutions/staffing",    icon: Users,      description: "Specialists, embedded fast" },
+  { name: "Engineering Talent & Services", href: "/solutions/engineering", icon: Wrench,     description: "Mechanical, electrical, aerospace" },
+  { name: "IT Solutions",                  href: "/solutions/cloud",       icon: Cpu,        description: "Cloud, AI, security & ERP" },
+  { name: "Managed Services",              href: "/solutions/managed",     icon: Headphones, description: "24/7 operations, one SLA" },
 ];
 
 const aboutItems = [
@@ -152,54 +118,12 @@ function FeaturePanel({
   );
 }
 
-// Compact single-line link for the minimal Solutions dropdown.
-function MenuLink({
-  name, href, icon: Icon, badge, onClick,
-}: {
-  name: string;
-  href: string;
-  icon: typeof Cloud;
-  badge?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="group flex items-center gap-2.5 rounded-lg px-2.5 py-[9px] transition-colors hover:bg-slate-50"
-    >
-      <Icon
-        className="h-[17px] w-[17px] flex-none text-[var(--hz-text-subtle)] transition-colors group-hover:text-[var(--hz-cobalt)]"
-        strokeWidth={1.75}
-      />
-      <span className="flex-1 truncate text-[13.5px] font-medium text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
-        {name}
-      </span>
-      {badge && (
-        <span className="flex-none rounded-full bg-[var(--hz-cobalt-100)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--hz-cobalt)]">
-          {badge}
-        </span>
-      )}
-      <ArrowRight className="h-3.5 w-3.5 flex-none -translate-x-1 text-[var(--hz-cobalt)] opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-    </Link>
-  );
-}
-
 function SolutionsMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-2 gap-x-6 p-3.5">
-        {solutionGroups.map((group) => (
-          <div key={group.label}>
-            <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--hz-text-subtle)]">
-              {group.label}
-            </p>
-            <div className="mt-0.5">
-              {group.items.map((it) => (
-                <MenuLink key={it.name} {...it} onClick={onNavigate} />
-              ))}
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-1 p-3.5">
+        {solutions.map((it) => (
+          <MenuTile key={it.name} {...it} onClick={onNavigate} />
         ))}
       </div>
 

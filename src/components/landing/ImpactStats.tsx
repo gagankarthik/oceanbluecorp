@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion } from "framer-motion";
-import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { Reveal } from "./motion/Primitives";
 
 type Stat = { value: number; suffix?: string; label: string; sub: string };
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Parse a CMS value like "50+", "98%", "1,200" into { value, suffix } for the
 // count-up. Falls back to the provided defaults when empty/non-numeric.
@@ -23,7 +25,7 @@ function Counter({ target, run }: { target: number; run: boolean }) {
       setN(target);
       return;
     }
-    const dur = 1500;
+    const dur = 1600;
     const t0 = performance.now();
     let raf = 0;
     const tick = (now: number) => {
@@ -45,42 +47,60 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
     { ...parseStatValue(content.statYears, 13, "+"),     label: "Years delivering",  sub: "Since 2013, without a missed SLA" },
     { ...parseStatValue(content.statClients, 50, "+"),   label: "Enterprise clients", sub: "Across North America" },
     { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention",  sub: "Year over year" },
-    { ...parseStatValue(content.statOffices, 4, ""),     label: "Global offices",    sub: "US · India · UK delivery centers" },
+    { ...parseStatValue(content.statOffices, 4, ""),     label: "Global offices",    sub: "US · India · UK centers" },
   ];
 
   return (
     <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-32">
-      <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">
-        {/* Heading — left */}
-        <Reveal className="lg:col-span-5">
-          <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-          <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(60% 60% at 50% 0%, rgba(29,78,216,0.05), transparent 65%)" }}
+      />
+      <div ref={ref} className="relative mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[92rem]">
+        <Reveal className="max-w-3xl">
+          <h2 className="hz-display text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.85rem]">
             {content.statsHeading || "Over a decade of delivery, one accountable team."}
           </h2>
-          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
+          <p className="mt-6 max-w-2xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
             {content.statsSubtitle ||
               "Headquartered in Powell, Ohio — trusted by enterprises and state government agencies across North America, held to one standard of delivery."}
           </p>
         </Reveal>
 
-        {/* Stat tiles — right, a connected 2×2 grid with hairline borders only */}
-        <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/40 lg:col-span-7" gap={0.1}>
+        {/* Stat ribbon — big numbers with scroll-animated accent bars */}
+        <div className="mt-16 grid grid-cols-1 gap-y-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0">
           {stats.map((s, i) => (
-            <StaggerItem
+            <motion.div
               key={s.label}
-              className={`group p-4 transition-colors duration-300 hover:bg-white sm:p-8 ${
-                i % 2 === 0 ? "border-r border-slate-200/80" : ""
-              } ${i < 2 ? "border-b border-slate-200/80" : ""}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-12% 0px" }}
+              transition={{ duration: 0.7, delay: i * 0.1, ease: EASE }}
+              className="relative lg:px-8 lg:first:pl-0"
             >
-              <p className="hz-display hz-tnum text-[2.15rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
+              {/* Vertical hairline between columns on large screens */}
+              {i > 0 && (
+                <span aria-hidden className="absolute left-0 top-2 hidden h-[calc(100%-0.5rem)] w-px bg-slate-200/80 lg:block" />
+              )}
+              {/* Animated top accent bar */}
+              <motion.span
+                aria-hidden
+                className="block h-[3px] w-14 origin-left rounded-full bg-[var(--hz-cobalt)]"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true, margin: "-12% 0px" }}
+                transition={{ duration: 0.8, delay: 0.2 + i * 0.1, ease: EASE }}
+              />
+              <p className="hz-display hz-tnum mt-6 text-[3rem] leading-none text-[var(--hz-text)] sm:text-[4rem]">
                 <Counter target={s.value} run={inView} />
                 <span className="text-[var(--hz-amber)]">{s.suffix}</span>
               </p>
-              <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)]">{s.label}</p>
-              <p className="mt-1.5 text-[13px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>
-            </StaggerItem>
+              <p className="mt-5 text-[14px] font-semibold text-[var(--hz-text)]">{s.label}</p>
+              <p className="mt-1.5 text-[13.5px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>
+            </motion.div>
           ))}
-        </Stagger>
+        </div>
       </div>
     </section>
   );
