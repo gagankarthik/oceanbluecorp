@@ -1,37 +1,75 @@
 "use client";
-import JobDetailLoading from "./loading";
 
 import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import {
-  Edit3, Download, MapPin, DollarSign, Users, Briefcase,
-  Building2, Calendar, AlertTriangle, Plus,
-  FileText, Hash, Check, Copy, UserCheck, Truck,
-  ChevronDown, ExternalLink, ArrowLeft,
+  Check, ChevronLeft, MoreHorizontal, Plus, X,
 } from "lucide-react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
+import JobDetailLoading from "./loading";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb } from "@/components/admin/admin-provider";
+import { WorkspaceButton } from "@/components/admin/workspace";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { StatCard, KpiStrip } from "@/components/admin/stat-card";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import { ChartPanel, FunnelChart, BreakdownBars, type BreakdownItem } from "@/components/admin/charts";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { AdminCard } from "@/components/admin/admin-card";
-import { EmptyState } from "@/components/admin/empty-state";
 import { SearchInput } from "@/components/admin/toolbar";
 import { Avatar } from "@/components/admin/avatar";
-import { tones, statusMeta, type Tone } from "@/components/admin/theme";
+import {
+  IconRequisition, IconPipeline, IconConversion, IconSource,
+  IconWarning, IconChart, IconBuilding, IconCalendar, IconCopy, IconMoney,
+  IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
+  IconUserCheck, IconGroup, IconClock,
+} from "@/components/admin/icons";
+import { statusMeta, PIPELINE_STAGES, SERIES, type AppStatus } from "@/components/admin/theme";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 type Tab = "info" | "applicants";
 
-// Status → tone + a top color stripe for the header card.
-const JOB_TONE: Record<string, Tone> = {
-  active: "emerald", open: "emerald", draft: "slate",
-  "on-hold": "amber", paused: "amber", closed: "rose",
-};
+const DAY = 86400000;
+
+const APP_STATUSES: { value: Application["status"]; label: string }[] = [
+  { value: "pending",   label: "New"       },
+  { value: "reviewing", label: "Screening" },
+  { value: "submitted", label: "Submitted" },
+  { value: "interview", label: "Interview" },
+  { value: "offered",   label: "Offered"   },
+  { value: "hired",     label: "Hired"     },
+  { value: "rejected",  label: "Rejected"  },
+];
+
+const STATUS_FILTERS = [
+  { key: "all", label: "All" },
+  ...APP_STATUSES.map((s) => ({ key: s.value as string, label: s.label })),
+];
+
+/** Empty-cell placeholder — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+}
+
+/** Right-aligned metadata row used by the sidebar panels. */
+function MetaRow({ label, value }: { label: string; value?: React.ReactNode }) {
+  const empty = value === undefined || value === null || value === "";
+  return (
+    <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
+      <dt className="flex-none text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-[13px] text-[var(--adm-ink)]">
+        {empty ? <Blank /> : value}
+      </dd>
+    </div>
+  );
+}
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
@@ -51,7 +89,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [editingApp, setEditingApp]       = useState<Application | null>(null);
 
   const debouncedSearch = useDebouncedValue(search, 250);
-  const reduceMotion = useReducedMotion();
 
   const fetchData = useCallback(async () => {
     try {
@@ -87,20 +124,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     } catch { void fetchData(); }
   };
 
-  const handleExport = () => {
-    const headers = ["Name", "Email", "Phone", "Status", "Applied", "Source", "Work Auth"];
-    const rows = filteredApps.map((a) => [
-      a.name, a.email, a.phone || "", a.status,
-      new Date(a.appliedAt).toLocaleDateString(),
-      a.source || "", a.workAuthorization || "",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `${job?.title?.replace(/\s+/g, "_") || "job"}_applicants.csv`;
-    a.click();
-  };
-
   const copyLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -114,6 +137,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     return matchQ && matchS;
   });
 
+  const handleExport = () => downloadCsv(
+    `${job?.title?.replace(/\s+/g, "_") || "job"}_applicants`,
+    ["Name", "Email", "Phone", "Status", "Applied", "Source", "Work Auth"],
+    filteredApps.map((a) => [
+      a.name, a.email, a.phone || "", a.status,
+      fmtDate(a.appliedAt), a.source || "", a.workAuthorization || "",
+    ]),
+  );
+
   const pipelineCounts = applications.reduce((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1;
     return acc;
@@ -123,345 +155,486 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
   if (error || !job) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-3">
-          <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
-          <p className="text-sm text-rose-600">{error || "Job not found"}</p>
-          <button onClick={() => router.push("/admin/jobs")} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]">
-            Back to Jobs
-          </button>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
+          <p className="text-sm text-[var(--adm-danger)]">{error || "Job not found"}</p>
+          <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs")}>Back to Jobs</WorkspaceButton>
         </div>
       </div>
     );
   }
 
-  const tone = JOB_TONE[job.status] || "slate";
-  const t = tones[tone];
-  const statusLabel = statusMeta[job.status as keyof typeof statusMeta]?.label || job.status;
+  const statusLabel = statusMeta[job.status as AppStatus]?.label || job.status;
 
-  const fadeUp = (i: number) =>
-    reduceMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 12 },
-          animate: { opacity: 1, y: 0 },
-          transition: { delay: 0.06 * i, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
-        };
+  // ── summary figures ─────────────────────────────────────────────────────────
+  const hired      = pipelineCounts["hired"] || 0;
+  const rejected   = pipelineCounts["rejected"] || 0;
+  const inPipeline = applications.length - hired - rejected;
+  const daysOpen   = Math.max(0, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / DAY));
+  const daysToDue  = job.submissionDueDate
+    ? Math.ceil((new Date(job.submissionDueDate).getTime() - Date.now()) / DAY)
+    : null;
+
+  /** Stage drop-off for this requisition — the ordered hiring flow. */
+  const funnelStages = PIPELINE_STAGES.map((s) => ({
+    label: s.label,
+    value: pipelineCounts[s.key] || 0,
+    onClick: () => { setActiveTab("applicants"); setStatusFilter(s.key); },
+  }));
+
+  /** Channel attribution, capped at the five categorical slots. */
+  const sourceItems: BreakdownItem[] = (() => {
+    const map = new Map<string, number>();
+    for (const a of applications) {
+      const s = a.source || "Unknown";
+      map.set(s, (map.get(s) || 0) + 1);
+    }
+    const ranked = [...map.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+    if (ranked.length <= 5) return ranked;
+    const head = ranked.slice(0, 4);
+    const tail = ranked.slice(4).reduce((s, r) => s + r.value, 0);
+    return [...head, { label: `Other (${ranked.length - 4})`, value: tail, color: SERIES.neutral }];
+  })();
+
+  // ── applicant grid ──────────────────────────────────────────────────────────
+  const columns: DataTableColumn<Application>[] = [
+    {
+      key: "name", header: "Applicant", sortValue: (a) => a.name || a.email,
+      cell: (a) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={a.name} email={a.email} size="sm" />
+          <div className="min-w-0 max-w-[200px]">
+            <span className="block truncate font-semibold text-[var(--adm-ink)]">{a.name || "—"}</span>
+            <span className="block truncate text-xs text-[var(--adm-ink-subtle)]">{a.email}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "location", header: "Location", sortValue: (a) => a.city || "", hideBelow: "lg",
+      cell: (a) => a.city ? (
+        <span className="inline-flex items-center gap-1.5 text-[var(--adm-ink-mute)]">
+          <IconLocation className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+          {a.city}{a.state ? `, ${a.state}` : ""}
+        </span>
+      ) : <Blank />,
+    },
+    {
+      key: "source", header: "Source", sortValue: (a) => a.source || "", hideBelow: "xl",
+      cell: (a) => a.source
+        ? <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-xs font-medium text-[var(--adm-ink-mute)]">{a.source}</span>
+        : <Blank />,
+    },
+    {
+      key: "skills", header: "Skills", hideBelow: "xl",
+      cell: (a) => {
+        const skills = a.skills || [];
+        if (skills.length === 0) return <Blank />;
+        return (
+          <div className="flex max-w-[180px] flex-wrap items-center gap-1">
+            {skills.slice(0, 2).map((s) => (
+              <span key={s} className="rounded-[4px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--adm-accent)]">
+                {s}
+              </span>
+            ))}
+            {skills.length > 2 && (
+              <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--adm-ink-subtle)]">
+                +{skills.length - 2}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "status", header: "Stage", sortValue: (a) => a.status,
+      cell: (a) => (
+        <select
+          value={a.status}
+          autoComplete="off"
+          aria-label={`Stage for ${a.name || a.email}`}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => handleStatusChange(a.id, e.target.value as Application["status"])}
+          className="cursor-pointer rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1.5 text-xs text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        >
+          {APP_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+      ),
+    },
+    {
+      key: "appliedAt", header: "Applied", sortValue: (a) => new Date(a.appliedAt).getTime(), hideBelow: "md",
+      cell: (a) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(a.appliedAt)}</span>,
+    },
+    {
+      key: "actions", header: "", align: "right",
+      cell: (a) => (
+        <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label={`Actions for ${a.name || a.email}`}
+                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink-mute)]"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg">
+              <DropdownMenuItem onClick={() => router.push(`/admin/candidates/${a.id}`)} className="cursor-pointer rounded-[4px] text-sm">
+                <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setEditingApp(a); setDrawerOpen(true); }} className="cursor-pointer rounded-[4px] text-sm">
+                <IconEdit className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Edit applicant
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Move to</p>
+                {APP_STATUSES.filter((s) => s.value !== a.status).map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => handleStatusChange(a.id, s.value)}
+                    className="flex w-full items-center gap-2 rounded-[4px] px-2 py-1 text-left text-xs text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+
+  const requirements = job.requirements
+    ? (Array.isArray(job.requirements) ? job.requirements : [job.requirements])
+    : [];
+  const responsibilities = job.responsibilities
+    ? (Array.isArray(job.responsibilities) ? job.responsibilities : [job.responsibilities])
+    : [];
+  const assignees = job.assignedToNames || [];
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-5 pb-10">
 
-      {/* ── Back (breadcrumb lives in the top nav) ── */}
-      <button onClick={() => router.push("/admin/jobs")}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-sm font-semibold text-slate-500 transition-all hover:border-slate-200 hover:bg-white hover:text-slate-900">
-        <ArrowLeft className="h-4 w-4" /> Back to jobs
-      </button>
+      {/* ── Record header ──
+          Plain on the canvas: no white band, no bottom rule, and no tinted
+          icon tile beside the title. The tile repeated the icon the sidebar's
+          active row already shows. */}
+      <div>
+        <button
+          onClick={() => router.push("/admin/jobs")}
+          className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          <ChevronLeft className="h-4 w-4" /> Back to jobs
+        </button>
 
-      {/* ── Header card ── */}
-      <motion.div {...fadeUp(0)}>
-      <AdminCard className="overflow-hidden">
-        {/* Status color stripe */}
-        <div className={cn("h-[3px]", t.dot)} />
-
-        <div className="p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            {/* Left: title + meta */}
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <StatusBadge status={job.status} label={statusLabel} size="md" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="hidden">
+              <IconRequisition className="h-5 w-5 text-[var(--adm-accent)]" />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-[20px] font-bold leading-tight tracking-tight text-[var(--adm-ink)]">{job.title}</h1>
                 {job.postingId && (
-                  <span className="inline-flex items-center gap-1 rounded border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-                    <Hash className="h-3 w-3" />{job.postingId}
+                  <span className="inline-flex items-center gap-1 rounded-[4px] bg-[var(--adm-accent-soft)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">
+                    <IconHash className="h-3 w-3" />{job.postingId}
                   </span>
                 )}
+                <StatusBadge status={job.status} label={statusLabel} size="md" />
               </div>
-              <h1 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-slate-900">{job.title}</h1>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--adm-ink-subtle)]">
                 {job.department && (
-                  <span className="flex items-center gap-1.5">
-                    <Briefcase className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                    {job.department}
+                  <span className="inline-flex items-center gap-1.5">
+                    <IconRequisition className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{job.department}
                   </span>
                 )}
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+                <span className="inline-flex items-center gap-1.5">
+                  <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
                   {job.location}{job.state ? `, ${job.state}` : ""}
                 </span>
+                {job.clientName && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{job.clientName}
+                  </span>
+                )}
                 {job.type && (
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-600">
+                  <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium capitalize text-[var(--adm-ink-mute)]">
                     {job.type.replace(/-/g, " ")}
                   </span>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Right: actions */}
-            <div className="flex flex-shrink-0 items-center gap-2">
-              <button onClick={copyLink} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
-              </button>
-              <button onClick={handleExport} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Export</span>
-              </button>
-              {canEdit && (
-                <Link href={`/admin/jobs/${jobId}/edit`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-[rgba(29,78,216,0.2)] transition active:scale-[0.99] hover:bg-[var(--hz-cobalt-600)]">
-                  <Edit3 className="h-3.5 w-3.5" />Edit
-                </Link>
+          <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
+            <WorkspaceButton onClick={copyLink}>
+              {copied ? <Check className="h-4 w-4 text-[var(--adm-success)]" /> : <IconCopy className="h-4 w-4" />}
+              <span className="hidden sm:inline">{copied ? "Copied" : "Copy link"}</span>
+            </WorkspaceButton>
+            <WorkspaceButton onClick={handleExport}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
+            {canEdit && (
+              <WorkspaceButton onClick={() => router.push(`/admin/jobs/${jobId}/edit`)}>
+                <IconEdit className="h-4 w-4" />Edit
+              </WorkspaceButton>
+            )}
+            <WorkspaceButton variant="primary" onClick={() => router.push(`/admin/applications/new?jobId=${jobId}`)}>
+              <Plus className="h-4 w-4" />Add Applicant
+            </WorkspaceButton>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Summary strip ── */}
+      <KpiStrip cols={5}>
+        <StatCard size="sm" label="Applicants"   value={applications.length} icon={IconGroup}           tone="slate" />
+        <StatCard size="sm" label="In pipeline"  value={inPipeline}          icon={IconPipeline}    tone="slate" hint={`${rejected} rejected`} />
+        <StatCard size="sm" label="Hired"        value={hired}               icon={IconConversion}  tone="slate"
+          hint={applications.length > 0 ? `${Math.round((hired / applications.length) * 100)}% of applicants` : "No applicants yet"} />
+        <StatCard size="sm" label="Days open"    value={daysOpen}            icon={IconClock}           tone="slate" hint={`Posted ${fmtDate(job.createdAt)}`} />
+        <StatCard
+          size="sm"
+          label="Days to deadline"
+          value={daysToDue === null ? "—" : daysToDue}
+          icon={IconCalendar}
+          tone="slate"
+          hint={job.submissionDueDate
+            ? (daysToDue !== null && daysToDue < 0 ? `Overdue since ${fmtDate(job.submissionDueDate)}` : `Due ${fmtDate(job.submissionDueDate)}`)
+            : "No deadline set"}
+        />
+      </KpiStrip>
+
+      {/* ── Analytics — only where there is something to plot ── */}
+      {applications.length > 0 && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartPanel icon={IconChart} title="Applicant pipeline" subtitle="Click a stage to filter the list">
+            <FunnelChart stages={funnelStages} />
+          </ChartPanel>
+          <ChartPanel icon={IconSource} title="Source mix" subtitle="Where these applicants came from">
+            <BreakdownBars items={sourceItems} emptyMessage="No source data yet" />
+          </ChartPanel>
+        </div>
+      )}
+
+      {/* ── Body: main + sidebar ── */}
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+
+        {/* Main column */}
+        <AdminCard className="overflow-hidden lg:col-span-2">
+          {/* Tab bar */}
+          <div className="flex border-b border-[var(--adm-line)] px-2">
+            {([
+              { id: "applicants" as Tab, label: "Applicants", count: applications.length, icon: IconGroup    },
+              { id: "info" as Tab,       label: "About job",  count: undefined,           icon: IconFile },
+            ] as const).map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-[13.5px] font-semibold transition-colors",
+                    isActive
+                      ? "border-[var(--adm-accent)] text-[var(--adm-accent)]"
+                      : "border-transparent text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
+                  )}
+                >
+                  <tab.icon className="h-4 w-4 flex-none" />
+                  {tab.label}
+                  {tab.count !== undefined && (
+                    <span className={cn(
+                      "rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
+                      isActive ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
+                    )}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── About job ── */}
+          {activeTab === "info" && (
+            <div className="space-y-6 p-5">
+              {job.description ? (
+                <section>
+                  <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Description</h3>
+                  <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{job.description}</p>
+                </section>
+              ) : null}
+
+              {requirements.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Requirements</h3>
+                  <ul className="space-y-2">
+                    {requirements.map((req, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-[13.5px] text-[var(--adm-ink-mute)]">
+                        <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--adm-accent)]" />
+                        {req}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {responsibilities.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Responsibilities</h3>
+                  <ul className="space-y-2">
+                    {responsibilities.map((r, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-[13.5px] text-[var(--adm-ink-mute)]">
+                        <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--adm-ink-subtle)]" />
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {!job.description && requirements.length === 0 && responsibilities.length === 0 && (
+                <p className="py-6 text-center text-[13px] text-[var(--adm-ink-subtle)]">No posting copy recorded for this role.</p>
               )}
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Stats strip */}
-        <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 border-t border-slate-100 sm:grid-cols-4 sm:divide-y-0">
-          {([
-            { icon: Users,      label: "Applicants", tone: "blue" as Tone,    value: applications.length.toString() },
-            {
-              icon: DollarSign,
-              label: "Pay / Bill",
-              tone: "emerald" as Tone,
-              value: job.payRate
-                ? `$${job.payRate}/hr${job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}`
-                : "—",
-            },
-            { icon: Building2, label: "Client", tone: "violet" as Tone, value: job.clientName || "—" },
-            {
-              icon: Calendar,
-              label: "Deadline",
-              tone: "amber" as Tone,
-              value: job.submissionDueDate ? fmtDate(job.submissionDueDate) : "No deadline",
-            },
-          ]).map((item) => {
-            const it = tones[item.tone];
-            return (
-              <div key={item.label} className="px-5 py-4">
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className={cn("grid h-6 w-6 place-items-center rounded-md", it.bg)}>
-                    <item.icon className={cn("h-3.5 w-3.5", it.text)} />
-                  </span>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{item.label}</span>
+          {/* ── Applicants ── */}
+          {activeTab === "applicants" && (
+            <div>
+              {/* Stage filter */}
+              {applications.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 border-b border-[var(--adm-line-soft)] px-5 py-3">
+                  {STATUS_FILTERS.map((s) => {
+                    const count = s.key === "all" ? applications.length : pipelineCounts[s.key] || 0;
+                    const isActive = statusFilter === s.key;
+                    return (
+                      <button
+                        key={s.key}
+                        onClick={() => setStatusFilter(s.key)}
+                        aria-pressed={isActive}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-colors",
+                          isActive ? "bg-[var(--adm-accent)] text-white" : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
+                        )}
+                      >
+                        {s.label}
+                        <span className={cn(
+                          "rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
+                          isActive ? "bg-white/25 text-white" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
+                        )}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="truncate text-sm font-semibold tabular-nums text-slate-800">{item.value}</p>
+              )}
+
+              {/* Search */}
+              <div className="flex flex-wrap items-center gap-3 border-b border-[var(--adm-line-soft)] px-5 py-3">
+                <SearchInput value={search} onChange={setSearch} placeholder="Search by name or email…" />
+                <span className="flex-none text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span className="font-semibold text-[var(--adm-ink-mute)]">{filteredApps.length}</span> of {applications.length}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      </AdminCard>
-      </motion.div>
 
-      {/* ── Tabs card ── */}
-      <motion.div {...fadeUp(1)}>
-      <AdminCard className="overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex border-b border-slate-200 px-1">
-          {([
-            { id: "applicants" as Tab, label: "Applicants", count: applications.length,  icon: Users    },
-            { id: "info" as Tab,       label: "About job",  count: undefined,            icon: FileText },
-          ] as const).map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3.5 text-sm font-semibold transition-colors",
-                  isActive
-                    ? "border-[var(--hz-cobalt)] text-[var(--hz-cobalt)]"
-                    : "border-transparent text-slate-500 hover:border-slate-200 hover:text-slate-700",
-                )}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
-                    isActive ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" : "bg-slate-100 text-slate-500",
-                  )}>
-                    {tab.count}
+              <DataTable
+                columns={columns}
+                rows={filteredApps}
+                rowKey={(a) => a.id}
+                onRowClick={(a) => router.push(`/admin/candidates/${a.id}`)}
+                pageSize={25}
+                initialSort={{ key: "appliedAt", dir: "desc" }}
+                empty={{
+                  icon: IconGroup,
+                  title: applications.length === 0 ? "No applicants yet" : "No applicants match your filters",
+                  description: applications.length === 0
+                    ? "Add the first applicant for this role."
+                    : "Try adjusting your search or stage filter.",
+                  action: applications.length === 0 ? (
+                    <WorkspaceButton variant="primary" onClick={() => router.push(`/admin/applications/new?jobId=${jobId}`)}>
+                      <Plus className="h-4 w-4" />Add applicant
+                    </WorkspaceButton>
+                  ) : (
+                    <WorkspaceButton onClick={() => { setSearch(""); setStatusFilter("all"); }}>
+                      <X className="h-4 w-4" />Clear filters
+                    </WorkspaceButton>
+                  ),
+                }}
+              />
+            </div>
+          )}
+        </AdminCard>
+
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Commercials + provenance */}
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader icon={IconBuilding} title="Role details" />
+            <dl className="divide-y divide-[var(--adm-line-soft)]">
+              <MetaRow label="Client" value={job.clientName} />
+              <MetaRow label="Vendor" value={job.vendorName ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <IconTruck className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{job.vendorName}
+                </span>
+              ) : undefined} />
+              <MetaRow label="Pay rate" value={job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined} />
+              <MetaRow label="Bill rate" value={job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined} />
+              <MetaRow
+                label="Salary range"
+                value={job.salary ? (
+                  <span className="inline-flex items-center gap-1.5 tabular-nums">
+                    <IconMoney className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                    {job.salary.min.toLocaleString()} – {job.salary.max.toLocaleString()}
                   </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── Job Info ── */}
-        {activeTab === "info" && (
-          <div className="space-y-6 p-6">
-            {job.description && (
-              <section>
-                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Description</h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{job.description}</p>
-              </section>
-            )}
-
-            {job.requirements && job.requirements.length > 0 && (
-              <section>
-                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Requirements</h3>
-                <ul className="space-y-2">
-                  {(Array.isArray(job.requirements) ? job.requirements : [job.requirements]).map((req, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
-                      <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
-                      {req}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {job.responsibilities && job.responsibilities.length > 0 && (
-              <section>
-                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Responsibilities</h3>
-                <ul className="space-y-2">
-                  {(Array.isArray(job.responsibilities) ? job.responsibilities : [job.responsibilities]).map((r, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
-                      <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {(job.recruitmentManagerName || (job.assignedToNames && job.assignedToNames.length > 0)) && (
-              <section>
-                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <UserCheck className="h-3.5 w-3.5" />Team
-                </h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {job.recruitmentManagerName && (
-                    <div className="flex items-center gap-2.5 rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-3 py-2.5">
-                      <Avatar name={job.recruitmentManagerName} size="sm" />
-                      <div>
-                        <p className="text-xs font-semibold text-[var(--hz-cobalt)]">{job.recruitmentManagerName}</p>
-                        <p className="text-[10px] text-[var(--hz-cobalt)]">Recruitment Manager</p>
-                      </div>
-                    </div>
-                  )}
-                  {(job.assignedToNames || []).map((name, i) => (
-                    <div key={i} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <Avatar name={name} size="sm" />
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">{name}</p>
-                        <p className="text-[10px] text-slate-400">Assignee</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-100 pt-5 lg:grid-cols-3">
-              {[
-                { label: "Client",       value: job.clientName,   icon: Building2  },
-                { label: "Vendor",       value: job.vendorName,   icon: Truck      },
-                {
-                  label: "Salary range",
-                  value: job.salary
-                    ? `$${job.salary.min.toLocaleString()} – $${job.salary.max.toLocaleString()}`
-                    : undefined,
-                  icon: DollarSign,
-                },
-                { label: "Created",      value: fmtDate(job.createdAt), icon: Calendar  },
-                { label: "Posted by",    value: job.postedByName, icon: UserCheck  },
-                { label: "Client notes", value: job.clientNotes,  icon: FileText   },
-              ].filter((d) => d.value).map((d) => (
-                <div key={d.label} className="min-w-0">
-                  <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    <d.icon className="h-3.5 w-3.5" />{d.label}
-                  </div>
-                  <p className="text-sm text-slate-700 break-words">{d.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Applicants ── */}
-        {activeTab === "applicants" && (
-          <div>
-            {/* Pipeline filter */}
-            {applications.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 border-b border-slate-100 px-5 pb-3 pt-4">
-                {[
-                  { key: "all",       label: "All",       count: applications.length            },
-                  { key: "pending",   label: "New",       count: pipelineCounts["pending"]   || 0 },
-                  { key: "reviewing", label: "Screening", count: pipelineCounts["reviewing"] || 0 },
-                  { key: "submitted", label: "Submitted", count: pipelineCounts["submitted"] || 0 },
-                  { key: "interview", label: "Interview", count: pipelineCounts["interview"] || 0 },
-                  { key: "offered",   label: "Offered",   count: pipelineCounts["offered"]   || 0 },
-                  { key: "hired",     label: "Hired",     count: pipelineCounts["hired"]     || 0 },
-                  { key: "rejected",  label: "Rejected",  count: pipelineCounts["rejected"]  || 0 },
-                ].map((s) => {
-                  const isActive = statusFilter === s.key;
-                  return (
-                    <button
-                      key={s.key}
-                      onClick={() => setStatusFilter(s.key)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                        isActive ? "bg-[var(--hz-cobalt)] text-white shadow-sm shadow-[rgba(29,78,216,0.2)]" : "text-slate-600 hover:bg-slate-100",
-                      )}
-                    >
-                      {s.label}
-                      <span className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
-                        isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600",
-                      )}>
-                        {s.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Search */}
-            <div className="border-b border-slate-100 px-5 py-3">
-              <SearchInput value={search} onChange={setSearch} placeholder="Search by name or email…" />
-            </div>
-
-            {/* Rows or empty state */}
-            {filteredApps.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                tone="blue"
-                title="No applicants yet"
-                description={applications.length === 0 ? "Add the first applicant for this role." : "No applicants match your filter."}
-                action={applications.length === 0 ? (
-                  <button
-                    onClick={() => router.push(`/admin/applications/new?jobId=${jobId}`)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--hz-cobalt-600)]"
-                  >
-                    <Plus className="h-4 w-4" />Add applicant
-                  </button>
                 ) : undefined}
               />
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {filteredApps.map((app) => (
-                  <ApplicantRow
-                    key={app.id}
-                    app={app}
-                    jobId={jobId}
-                    onStatusChange={handleStatusChange}
-                    onEdit={(a) => { setEditingApp(a); setDrawerOpen(true); }}
-                  />
+              <MetaRow label="Deadline" value={job.submissionDueDate ? fmtDate(job.submissionDueDate) : undefined} />
+              <MetaRow label="Created" value={fmtDate(job.createdAt)} />
+              <MetaRow label="Posted by" value={job.postedByName} />
+            </dl>
+          </AdminCard>
+
+          {/* Team */}
+          {(job.recruitmentManagerName || assignees.length > 0) && (
+            <AdminCard className="overflow-hidden">
+              <AdminCardHeader icon={IconUserCheck} title="Team" count={(job.recruitmentManagerName ? 1 : 0) + assignees.length} />
+              <div className="divide-y divide-[var(--adm-line-soft)]">
+                {job.recruitmentManagerName && (
+                  <div className="flex items-center gap-2.5 px-5 py-3">
+                    <Avatar name={job.recruitmentManagerName} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{job.recruitmentManagerName}</p>
+                      <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">Recruitment manager</p>
+                    </div>
+                  </div>
+                )}
+                {assignees.map((name, i) => (
+                  <div key={i} className="flex items-center gap-2.5 px-5 py-3">
+                    <Avatar name={name} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{name}</p>
+                      <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">Assignee</p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
+            </AdminCard>
+          )}
 
-            {filteredApps.length > 0 && (
-              <p className="border-t border-slate-100 px-5 py-2.5 text-xs text-slate-400">
-                <span className="font-semibold text-slate-600 tabular-nums">{filteredApps.length}</span> of {applications.length} applicants
-              </p>
-            )}
-          </div>
-        )}
-      </AdminCard>
-      </motion.div>
+          {/* Client notes */}
+          {job.clientNotes && (
+            <AdminCard className="overflow-hidden">
+              <AdminCardHeader icon={IconFile} title="Client notes" />
+              <p className="whitespace-pre-wrap px-5 py-4 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{job.clientNotes}</p>
+            </AdminCard>
+          )}
+        </div>
+      </div>
 
       {/* ── Edit existing applicant (drawer only) ── */}
       <CandidateEditDrawer
@@ -475,139 +648,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           setApplications((prev) => prev.map((a) => (a.id === saved.id ? saved : a)));
         }}
       />
-
-      {/* ── Add Applicant FAB ── */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => router.push(`/admin/applications/new?jobId=${jobId}`)}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] active:bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Add Applicant
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Applicant row ──────────────────────────────────────────────────────────────
-
-function ApplicantRow({
-  app, jobId, onStatusChange, onEdit,
-}: {
-  app: Application;
-  jobId: string;
-  onStatusChange: (id: string, status: Application["status"]) => void;
-  onEdit: (app: Application) => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const router = useRouter();
-
-  const STATUSES: { value: Application["status"]; label: string }[] = [
-    { value: "pending",   label: "New"       },
-    { value: "reviewing", label: "Screening" },
-    { value: "submitted", label: "Submitted" },
-    { value: "interview", label: "Interview" },
-    { value: "offered",   label: "Offered"   },
-    { value: "hired",     label: "Hired"     },
-    { value: "rejected",  label: "Rejected"  },
-  ];
-
-  return (
-    <div className="px-5 py-4 hover:bg-slate-50/60 transition-colors group">
-      <div className="flex items-center gap-4">
-
-        {/* Avatar + name */}
-        <button
-          onClick={() => router.push(`/admin/candidates/${app.id}`)}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left"
-        >
-          <Avatar name={app.name || app.email} size="md" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-[var(--hz-cobalt)] transition-colors">
-              {app.name || "Unnamed"}
-            </p>
-            <p className="text-xs text-slate-400 truncate">{app.email}</p>
-          </div>
-        </button>
-
-        {/* Location + source */}
-        <div className="hidden md:flex items-center gap-3 text-xs text-slate-500 flex-shrink-0">
-          {app.city && (
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              {app.city}{app.state ? `, ${app.state}` : ""}
-            </span>
-          )}
-          {app.source && (
-            <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600">{app.source}</span>
-          )}
-        </div>
-
-        {/* Skills */}
-        {app.skills && app.skills.length > 0 && (
-          <div className="hidden lg:flex items-center gap-1">
-            {app.skills.slice(0, 3).map((s) => (
-              <span key={s} className="px-2 py-0.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-[10px] font-medium rounded-full border border-[var(--hz-cobalt-100)]">
-                {s}
-              </span>
-            ))}
-            {app.skills.length > 3 && (
-              <span className="text-[10px] text-slate-400">+{app.skills.length - 3}</span>
-            )}
-          </div>
-        )}
-
-        {/* Status badge */}
-        <div className="flex-shrink-0">
-          <StatusBadge status={app.status} />
-        </div>
-
-        {/* Date */}
-        <span className="hidden flex-shrink-0 text-xs tabular-nums text-slate-400 sm:block">
-          {fmtDate(app.appliedAt)}
-        </span>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-          {/* Status change dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Change status"
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Change status"
-            >
-              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-white border border-slate-200/80 rounded-2xl shadow-lg overflow-hidden">
-                {STATUSES.map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => { onStatusChange(app.id, s.value); setMenuOpen(false); }}
-                    className={cn(
-                      "w-full px-3 py-2 text-xs text-left transition-colors hover:bg-slate-50",
-                      app.status === s.value ? "font-semibold text-[var(--hz-cobalt)] bg-[#eef3fe]" : "text-slate-700",
-                    )}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Open/edit */}
-          <button
-            onClick={() => onEdit(app)}
-            aria-label="Edit applicant"
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Edit applicant"
-          >
-            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -172,7 +172,7 @@ export default function DevelopersContent() {
           </h1>
           <p className="text-lg text-slate-300 max-w-2xl mb-8 leading-relaxed">
             Pull Ocean Blue Corporation&apos;s live job listings directly into your platform.
-            Real-time REST API — authenticated with API keys, versioned, and ready to integrate.
+            Real-time REST API, authenticated with API keys, versioned, and ready to integrate.
           </p>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
@@ -235,7 +235,7 @@ export default function DevelopersContent() {
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 { icon: Globe, title: "Base URL", desc: "https://oceanbluecorp.com/api/v1" },
-                { icon: Terminal, title: "Format", desc: "JSON — all requests and responses" },
+                { icon: Terminal, title: "Format", desc: "JSON, all requests and responses" },
                 { icon: Lock, title: "Auth", desc: "API key via X-API-Key header" },
                 { icon: BookOpen, title: "Versioning", desc: "Current version: v1" },
               ].map((item) => (
@@ -262,7 +262,7 @@ export default function DevelopersContent() {
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800">
                 Keep your API key secret. Do not expose it in client-side code or public repositories.
-                Contact us immediately if a key is compromised — we can disable it instantly.
+                Contact us immediately if a key is compromised, we can disable it instantly.
               </p>
             </div>
             <CodeBlock lang="bash">{`# Recommended: header
@@ -428,13 +428,13 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {[
-                    ["id", "string", "UUID — use this to fetch by /api/v1/jobs/:id"],
+                    ["id", "string", "UUID, use this to fetch by /api/v1/jobs/:id"],
                     ["postingId", "string | null", "Human-readable ID, e.g. OB-2025-0042"],
                     ["title", "string", "Job title"],
                     ["department", "string", "Business unit / practice area"],
                     ["location", "string", "City and state, e.g. Columbus, OH"],
                     ["state", "string | null", "Two-letter state code"],
-                    ["type", "string", "Employment type — see filtering table above"],
+                    ["type", "string", "Employment type, see filtering table above"],
                     ["description", "string", "Full job description text"],
                     ["requirements", "string[]", "Array of requirement bullet points"],
                     ["responsibilities", "string[]", "Array of responsibility bullet points"],
@@ -478,7 +478,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
                 <tbody className="divide-y divide-slate-100">
                   {[
                     ["401", "Missing or invalid API key", "Check that X-API-Key is set and correct"],
-                    ["403", "API key disabled", "Contact us — your key may have been revoked"],
+                    ["403", "API key disabled", "Contact us, your key may have been revoked"],
                     ["404", "Job not found", "The job ID does not exist or was removed"],
                     ["500", "Internal server error", "Retry after a moment; contact us if persistent"],
                   ].map(([code, meaning, action]) => (

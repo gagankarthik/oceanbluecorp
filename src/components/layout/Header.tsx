@@ -278,7 +278,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
           aria-label="Global"
         >
           <div className="flex items-center justify-between h-16 md:h-[72px]">
-            {/* Logo — shrinks slightly on scroll while the nav backdrop blurs */}
+            {/* Logo, shrinks slightly on scroll while the nav backdrop blurs */}
             <Link href="/" aria-label="Ocean Blue Corporation, home" className="flex items-center">
               <Image
                 src="/logo.webp"
@@ -313,7 +313,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                       }`} />
                     </button>
 
-                    {/* Mega-menu — wide enterprise dropdown */}
+                    {/* Mega-menu, wide enterprise dropdown */}
                     <AnimatePresence>
                       {activeDropdown === item.dropdownType && (
                         <motion.div

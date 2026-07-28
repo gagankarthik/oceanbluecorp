@@ -42,7 +42,7 @@ export function FilterChips({
       {chips.map((chip) => (
         <span
           key={chip.key}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] py-1 pl-2.5 pr-1.5 text-xs font-medium text-[var(--adm-accent)]"
+          className="inline-flex items-center gap-1 rounded-[4px] border border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] py-1 pl-2.5 pr-1.5 text-xs font-medium text-[var(--adm-accent)]"
         >
           <span className="text-[var(--adm-accent)]/70">{chip.label}:</span>
           {chip.value}
@@ -50,7 +50,7 @@ export function FilterChips({
             type="button"
             onClick={chip.onRemove}
             aria-label={`Remove ${chip.label}: ${chip.value} filter`}
-            className="rounded-full p-0.5 transition-colors hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-[var(--adm-accent)] focus:ring-offset-1"
+            className="rounded-[4px] p-0.5 transition-colors hover:bg-[var(--adm-accent)]/15 focus:outline-none focus:ring-2 focus:ring-[var(--adm-accent)] focus:ring-offset-1"
           >
             <X className="h-3 w-3" aria-hidden="true" />
           </button>
@@ -61,7 +61,7 @@ export function FilterChips({
           type="button"
           onClick={onClearAll}
           aria-label="Clear all active filters"
-          className="px-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 rounded"
+          className="rounded-[4px] px-1.5 text-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
         >
           Clear all
         </button>

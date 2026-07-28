@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
-import { statusMeta, SOURCE_OPTIONS, US_STATES, type AppStatus } from "./theme";
+import { statusMeta, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS, type AppStatus , WORK_AUTH_GROUPS } from "./theme";
 import { FormSection, Field, FormInput, FormSelect, FormTextarea } from "./forms/primitives";
 import { StarRating } from "./star-rating";
 
@@ -25,19 +25,6 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 // ── Visa status options ────────────────────────────────────────────────────────
-
-const VISA_OPTIONS = [
-  "US Citizen", "Green Card", "H1-B", "H4 EAD", "OPT", "CPT", "TN Visa", "E3 Visa",
-  "L1 Visa", "O1 Visa", "Other",
-];
-
-// ── Common skill tags ──────────────────────────────────────────────────────────
-
-const COMMON_SKILLS = [
-  "React", "TypeScript", "JavaScript", "Node.js", "Python", "Java", "C#", ".NET",
-  "AWS", "Azure", "GCP", "SQL", "PostgreSQL", "MongoDB", "Docker", "Kubernetes",
-  "SAP", "Salesforce", "Oracle", "Excel", "Power BI", "Tableau", "Agile", "Scrum",
-];
 
 // ── Default form ───────────────────────────────────────────────────────────────
 
@@ -190,29 +177,29 @@ export function CandidateEditDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[580px] p-0 flex flex-col gap-0 bg-slate-50/30">
+      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[580px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center">
-              <User2 className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" />
+            <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center">
+              <User2 className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
             </div>
             <div>
-              <SheetTitle className="text-[15px] font-bold text-slate-900">
+              <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">
                 {mode === "create" ? "Add Applicant" : "Edit Applicant"}
               </SheetTitle>
-              <SheetDescription className="text-xs text-slate-500 mt-0.5">
+              <SheetDescription className="text-xs text-[var(--adm-ink-subtle)] mt-0.5">
                 {mode === "create" ? "Enter applicant details below" : "Update applicant information"}
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] rounded-[6px] transition-colors">
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
         {/* Tab nav */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 px-4">
+        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-4">
           <div className="flex gap-0.5">
             {TABS.map((tab) => (
               <button
@@ -222,8 +209,8 @@ export function CandidateEditDrawer({
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-colors border-b-2",
                   activeTab === tab.id
-                    ? "text-[var(--hz-cobalt)] border-[var(--hz-cobalt)]"
-                    : "text-slate-500 border-transparent hover:text-slate-700",
+                    ? "text-[var(--adm-accent)] border-[var(--adm-accent)]"
+                    : "text-[var(--adm-ink-subtle)] border-transparent hover:text-[var(--adm-ink-mute)]",
                 )}
               >
                 <tab.icon className="w-3.5 h-3.5" />
@@ -236,9 +223,9 @@ export function CandidateEditDrawer({
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-5">
             {error && (
-              <div className="flex items-start gap-2.5 p-3 bg-rose-50 border border-rose-200 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-rose-700 leading-relaxed">{error}</p>
+              <div className="flex items-start gap-2.5 p-3 bg-[var(--adm-danger-soft)] border border-[var(--adm-danger)] rounded-[6px]">
+                <AlertTriangle className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[var(--adm-danger)] leading-relaxed">{error}</p>
               </div>
             )}
 
@@ -270,7 +257,7 @@ export function CandidateEditDrawer({
                     <Field label="State">
                       <FormSelect value={form.state} onChange={(e) => set("state", e.target.value)}>
                         <option value="">Select state…</option>
-                        {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {US_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                       </FormSelect>
                     </Field>
                   </div>
@@ -307,9 +294,9 @@ export function CandidateEditDrawer({
                       </FormSelect>
                     </Field>
                     <Field label="Add to talent bench">
-                      <label className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                        <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-slate-300 text-[var(--hz-cobalt)]" />
-                        <span className="text-sm text-slate-700">Add to bench</span>
+                      <label className="flex items-center gap-2 px-3 py-2 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)] cursor-pointer hover:bg-[var(--adm-row-hover)] transition-colors">
+                        <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-[var(--adm-line)] text-[var(--adm-accent)]" />
+                        <span className="text-sm text-[var(--adm-ink-mute)]">Add to bench</span>
                       </label>
                     </Field>
                   </div>
@@ -337,7 +324,7 @@ export function CandidateEditDrawer({
                         type="button"
                         onClick={() => addSkill(form.skillInput)}
                         aria-label="Add skill"
-                        className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0"
+                        className="px-3 py-2 bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] transition flex-shrink-0"
                       >
                         <Plus className="w-4 h-4" aria-hidden="true" />
                       </button>
@@ -347,9 +334,9 @@ export function CandidateEditDrawer({
                     {form.skills.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {form.skills.map((skill) => (
-                          <span key={skill} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium rounded-full">
+                          <span key={skill} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-[var(--adm-accent-soft)] text-[var(--adm-accent)] text-xs font-medium rounded-[4px]">
                             {skill}
-                            <button type="button" onClick={() => removeSkill(skill)} aria-label="Remove skill" className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
+                            <button type="button" onClick={() => removeSkill(skill)} aria-label="Remove skill" className="p-0.5 hover:bg-white/60 rounded-[4px] transition-colors">
                               <X className="w-3 h-3" aria-hidden="true" />
                             </button>
                           </span>
@@ -359,14 +346,14 @@ export function CandidateEditDrawer({
 
                     {/* Common skill suggestions */}
                     <div>
-                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Common skills</p>
+                      <p className="text-[11px] font-semibold text-[var(--adm-ink-subtle)] uppercase tracking-wider mb-2">Common skills</p>
                       <div className="flex flex-wrap gap-1.5">
                         {COMMON_SKILLS.filter((s) => !form.skills.includes(s)).map((skill) => (
                           <button
                             key={skill}
                             type="button"
                             onClick={() => addSkill(skill)}
-                            className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)] rounded-full border border-slate-200 hover:border-[var(--hz-cobalt-100)] transition-colors"
+                            className="px-2.5 py-1 text-xs text-[var(--adm-ink-mute)] bg-[var(--adm-surface-2)] hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)] rounded-[4px] border border-[var(--adm-line)] hover:border-[var(--adm-accent-soft)] transition-colors"
                           >
                             + {skill}
                           </button>
@@ -391,7 +378,11 @@ export function CandidateEditDrawer({
                   <Field label="Work Authorization / Visa Status">
                     <FormSelect value={form.workAuthorization} onChange={(e) => set("workAuthorization", e.target.value)}>
                       <option value="">Select status…</option>
-                      {VISA_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                      {WORK_AUTH_GROUPS.map((g) => (
+                        <optgroup key={g.label} label={g.label}>
+                          {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </optgroup>
+                      ))}
                     </FormSelect>
                   </Field>
 
@@ -403,17 +394,17 @@ export function CandidateEditDrawer({
                   )}
 
                   <Field label="Sponsorship">
-                    <label className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                    <label className="flex items-center gap-3 px-3 py-2.5 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)] cursor-pointer hover:bg-[var(--adm-row-hover)] transition-colors">
                       <input
                         type="checkbox"
                         autoComplete="off"
                         checked={form.visaSponsorshipRequired}
                         onChange={(e) => set("visaSponsorshipRequired", e.target.checked)}
-                        className="rounded border-slate-300 text-[var(--hz-cobalt)]"
+                        className="rounded border-[var(--adm-line)] text-[var(--adm-accent)]"
                       />
                       <div>
-                        <p className="text-sm font-medium text-slate-700">Requires sponsorship</p>
-                        <p className="text-xs text-slate-400">Candidate will need H-1B or similar sponsorship</p>
+                        <p className="text-sm font-medium text-[var(--adm-ink-mute)]">Requires sponsorship</p>
+                        <p className="text-xs text-[var(--adm-ink-subtle)]">Candidate will need H-1B or similar sponsorship</p>
                       </div>
                     </label>
                   </Field>
@@ -421,10 +412,10 @@ export function CandidateEditDrawer({
                   {/* Authorization status info box */}
                   {form.workAuthorization && (
                     <div className={cn(
-                      "rounded-lg p-3 text-xs",
+                      "rounded-[6px] p-3 text-xs",
                       ["US Citizen", "Green Card"].includes(form.workAuthorization)
-                        ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-                        : "bg-amber-50 border border-amber-200 text-amber-700",
+                        ? "bg-[var(--adm-success-soft)] border border-[var(--adm-success)] text-[var(--adm-success)]"
+                        : "bg-[var(--adm-warning-soft)] border border-[var(--adm-warning)] text-[var(--adm-warning)]",
                     )}>
                       {["US Citizen", "Green Card"].includes(form.workAuthorization)
                         ? "✓ This candidate has permanent work authorization in the US."
@@ -444,10 +435,10 @@ export function CandidateEditDrawer({
               <>
                 <FormSection icon={Star} title="Rating">
                   <Field label="Candidate rating">
-                    <div className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 rounded-lg bg-white">
+                    <div className="flex items-center gap-2 px-3 py-2.5 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)]">
                       <StarRating rating={form.rating} onRate={(n) => set("rating", n === form.rating ? 0 : n)} size="md" />
                       {form.rating > 0 && (
-                        <span className="text-xs text-slate-500 ml-1 tabular-nums">{form.rating}/5</span>
+                        <span className="text-xs text-[var(--adm-ink-subtle)] ml-1 tabular-nums">{form.rating}/5</span>
                       )}
                     </div>
                   </Field>
@@ -463,11 +454,11 @@ export function CandidateEditDrawer({
           </div>
 
           {/* Sticky footer */}
-          <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-5 py-3 flex items-center gap-3">
-            <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+          <div className="sticky bottom-0 left-0 right-0 bg-[var(--adm-surface)] border-t border-[var(--adm-line)] px-5 py-3 flex items-center gap-3">
+            <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-[var(--adm-line)] text-[var(--adm-ink-mute)] rounded-[8px] hover:bg-[var(--adm-row-hover)] transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
+            <button type="submit" disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] disabled:opacity-60 transition">
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "create" ? "Add Applicant" : "Save Changes"}
             </button>

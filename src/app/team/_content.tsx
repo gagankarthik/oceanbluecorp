@@ -14,7 +14,7 @@ const leadership = [
 ];
 
 const values = [
-  { title: "Senior by default", desc: "Engagements are led by people who have done the work before — not learning on your time." },
+  { title: "Senior by default", desc: "Engagements are led by people who have done the work before, not learning on your time." },
   { title: "Accountable, end to end", desc: "One team owns the outcome, from the first conversation to the quarterly review." },
   { title: "Human-centered", desc: "Clear communication and collaborative execution. No black boxes, no surprises." },
 ];
@@ -26,14 +26,14 @@ export default function TeamPage() {
       <section className="relative isolate flex min-h-[58vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.teamHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Our team</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
               The people behind the work.
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              Senior practitioners who lead from the front — and a delivery bench that
+              Senior practitioners who lead from the front, and a delivery bench that
               integrates with your team from day one.
             </p>
           </Reveal>
@@ -41,11 +41,11 @@ export default function TeamPage() {
       </section>
 
       {/* Leadership */}
-      <section className="relative w-full py-24 sm:py-32">
+      <section className="relative w-full py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <Eyebrow>Leadership</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Meet the people who run it.</h2>
+            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">Meet the people who run it.</h2>
           </Reveal>
           <Stagger className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" gap={0.08}>
             {leadership.map((l) => {
@@ -76,11 +76,11 @@ export default function TeamPage() {
       </section>
 
       {/* How the team works */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-surface-2)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <Eyebrow>How we operate</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">A team you can hold to the outcome.</h2>
+            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">A team you can hold to the outcome.</h2>
           </Reveal>
           <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
             {values.map((v, i) => (
@@ -100,10 +100,10 @@ export default function TeamPage() {
       <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Join us</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Build your career with our team.</h2>
+            <h2 className="hz-display mt-7 max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">Build your career with our team.</h2>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
               <Cta href="/careers" variant="primary" icon={ArrowRight}>View open roles</Cta>
               <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>

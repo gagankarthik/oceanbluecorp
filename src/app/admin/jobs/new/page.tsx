@@ -1,14 +1,15 @@
 "use client";
-import { toast } from "sonner";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth, UserRole } from "@/lib/auth";
 import type { Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload,
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
+import { AdminFormSkeleton } from "@/components/admin/skeletons";
 
 export default function NewJobPage() {
   const { user } = useAuth();
@@ -17,6 +18,9 @@ export default function NewJobPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Recruiters cannot create requisitions — bounce them back to the list.
+  const isRecruiter = user?.role === UserRole.RECRUITER;
 
   useEffect(() => {
     if (user?.role === UserRole.RECRUITER) router.replace("/admin/jobs");
@@ -33,7 +37,10 @@ export default function NewJobPage() {
           ),
         );
       }),
-    ]).catch(console.error);
+    ]).catch((err) => {
+      console.error(err);
+      toast.error("Some reference data failed to load — client, vendor and assignee lists may be incomplete.");
+    });
   }, []);
 
   const handleSubmit = async (data: JobFormData) => {
@@ -74,8 +81,12 @@ export default function NewJobPage() {
     return json.client;
   };
 
+  // Hold the skeleton rather than flashing an editable form the redirect is
+  // about to take away.
+  if (isRecruiter) return <AdminFormSkeleton />;
+
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="pb-10">
       <JobForm
         mode="create"
         initialData={DEFAULT_JOB_FORM}

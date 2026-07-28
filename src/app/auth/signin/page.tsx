@@ -179,7 +179,7 @@ export default function SignInPage() {
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-white/65">
             {step === "complete"
-              ? "Finish setting up your team account — choose a password and confirm your details."
+              ? "Finish setting up your team account, choose a password and confirm your details."
               : "Sign in to manage applications, track hiring progress, and connect with top talent."}
           </p>
           <div className="mt-9 space-y-3.5">

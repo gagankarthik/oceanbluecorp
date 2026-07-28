@@ -1,10 +1,108 @@
 import { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
-import { getJob, toPublicJob } from "@/lib/aws/dynamodb";
+import { getJob, toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import JobDetailsClient from "./JobDetailsClient";
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+/**
+ * generateMetadata and the page component both need the job, which meant two
+ * DynamoDB reads for every request. React's cache() dedupes them to one per
+ * render pass.
+ */
+const loadJob = cache(getJob);
+
+/**
+ * Serialize JSON-LD for embedding in a <script> tag.
+ *
+ * JSON.stringify escapes quotes but NOT `<`, so a job description containing
+ * "</script>" would close the tag early and let the remainder be parsed as
+ * markup — stored XSS via the admin job editor. Escaping `<` (and the JS line
+ * terminators U+2028/U+2029, which are literal in JSON but illegal in JS
+ * string literals) makes the payload inert while staying valid JSON-LD.
+ */
+function safeJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/[\u2028\u2029]/g, (c) =>
+      c === "\u2028" ? "\\u2028" : "\\u2029",
+    );
+}
+
+// Google maps its own employmentType vocabulary, not ours.
+const EMPLOYMENT_TYPE: Record<string, string> = {
+  "full-time": "FULL_TIME",
+  "part-time": "PART_TIME",
+  contract: "CONTRACTOR",
+  "contract-to-hire": "CONTRACTOR",
+  "direct-hire": "FULL_TIME",
+  "managed-teams": "CONTRACTOR",
+  remote: "FULL_TIME",
+};
+
+/**
+ * JobPosting structured data. Without this, listings cannot appear in Google
+ * Jobs at all — the single largest source of organic traffic for a careers
+ * board. Only fields we genuinely hold are emitted; Google penalises padded
+ * or invented values.
+ */
+function jobPostingLd(job: PublicJob, id: string) {
+  const remote = /remote/i.test(job.location) || job.type === "remote";
+  return {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description,
+    identifier: {
+      "@type": "PropertyValue",
+      name: "Ocean Blue Corporation",
+      value: job.postingId || id,
+    },
+    datePosted: job.createdAt,
+    ...(job.submissionDueDate ? { validThrough: job.submissionDueDate } : {}),
+    employmentType: EMPLOYMENT_TYPE[job.type] ?? "OTHER",
+    hiringOrganization: {
+      "@type": "Organization",
+      name: "Ocean Blue Corporation",
+      sameAs: "https://oceanbluecorp.com",
+      logo: "https://oceanbluecorp.com/Logo_400x400.png",
+    },
+    ...(job.department ? { industry: job.department } : {}),
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.location,
+        ...(job.state ? { addressRegion: job.state } : {}),
+        addressCountry: "US",
+      },
+    },
+    // Required by Google whenever the role is remote.
+    ...(remote
+      ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "USA" } }
+      : {}),
+    ...(job.salary
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: job.salary.currency || "USD",
+            value: {
+              "@type": "QuantitativeValue",
+              minValue: job.salary.min,
+              maxValue: job.salary.max,
+              unitText: "YEAR",
+            },
+          },
+        }
+      : {}),
+    ...(job.responsibilities?.length ? { responsibilities: job.responsibilities.join(" ") } : {}),
+    ...(job.requirements?.length ? { qualifications: job.requirements.join(" ") } : {}),
+    directApply: true,
+    url: `https://oceanbluecorp.com/careers/search/${id}`,
+  };
 }
 
 // Format job type for metadata
@@ -25,7 +123,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
   try {
-    const result = await getJob(id);
+    const result = await loadJob(id);
 
     if (!result.success || !result.data) {
       // Bare string — the root layout template adds the " | Ocean Blue
@@ -86,7 +184,7 @@ export default async function JobDetailsPage({ params }: Props) {
   const { id } = await params;
 
   try {
-    const result = await getJob(id);
+    const result = await loadJob(id);
 
     if (!result.success || !result.data) {
       notFound();
@@ -94,7 +192,16 @@ export default async function JobDetailsPage({ params }: Props) {
 
     // Strip internal fields (rates, client/recruiter info) before sending to the
     // public client component.
-    return <JobDetailsClient job={toPublicJob(result.data)} jobId={id} />;
+    const job = toPublicJob(result.data);
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jobPostingLd(job, id)) }}
+        />
+        <JobDetailsClient job={job} jobId={id} />
+      </>
+    );
   } catch (error) {
     console.error("Error fetching job:", error);
     notFound();

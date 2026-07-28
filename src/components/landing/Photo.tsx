@@ -22,6 +22,8 @@ export default function Photo({
   alt?: string;
   className?: string;
   fallback?: string;
+  /** CSS `sizes`. Always pass the real rendered width — without it the browser
+   *  assumes 100vw and downloads the largest candidate for a 300px card. */
   sizes?: string;
   priority?: boolean;
 }) {
@@ -29,9 +31,12 @@ export default function Photo({
 
   // Build a responsive srcSet for Unsplash-hosted images by swapping the
   // `w=` query param. Non-Unsplash / local images fall back to plain src.
+  // The ladder starts low (320) so small cards and phones fetch small files.
   const isUnsplash = src.includes("images.unsplash.com") && /[?&]w=\d+/.test(src);
   const srcSet = isUnsplash
-    ? [640, 960, 1280, 1600].map((w) => `${src.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`).join(", ")
+    ? [320, 480, 640, 960, 1280, 1600]
+        .map((w) => `${src.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`)
+        .join(", ")
     : undefined;
 
   return (

@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     template: "%s | Ocean Blue Corporation",
   },
   description:
-    "Ocean Blue Corporation delivers IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for Fortune 500 enterprises and state government agencies across North America.",
+    "Ocean Blue Corporation delivers IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for Fortune 500 enterprises and state government agencies across North America.",
   keywords: [
     "enterprise IT solutions",
     "ERP implementation",
@@ -89,22 +89,16 @@ export const metadata: Metadata = {
     siteName: "Ocean Blue Corporation",
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
-      "IT staffing, enterprise solutions, and managed services — ERP, cloud, cybersecurity, AI & data, and Salesforce — for enterprises and government agencies.",
-    images: [
-      {
-        url: "/Logo_400x400.png",
-        width: 400,
-        height: 400,
-        alt: "Ocean Blue Solutions",
-      },
-    ],
+      "IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for enterprises and government agencies.",
+    // `images` is intentionally omitted: src/app/opengraph-image.tsx supplies a
+    // 1200×630 card via the file convention. Declaring images here would
+    // override it and drop us back to the small square logo.
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Ocean Blue Corporation | Enterprise IT Solutions",
     description:
-      "IT staffing, enterprise solutions, and managed services for enterprises and government agencies — ERP, cloud, cybersecurity, AI, and Salesforce.",
-    images: ["/Logo_400x400.png"],
+      "IT staffing, enterprise solutions, and managed services for enterprises and government agencies, covering ERP, cloud, cybersecurity, AI, and Salesforce.",
     creator: "@oceanbluecorp",
   },
   alternates: {
@@ -117,12 +111,15 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  // Stable node id so page-level graphs (see src/app/page.tsx) can reference
+  // this Organization instead of redeclaring it.
+  "@id": "https://oceanbluecorp.com/#organization",
   name: "Ocean Blue Corporation",
   alternateName: "OceanBlueCorp",
   url: "https://oceanbluecorp.com",
   logo: "https://oceanbluecorp.com/Logo_400x400.png",
   description:
-    "IT staffing, enterprise solutions, and managed services provider — ERP, cloud, cybersecurity, AI & data, and Salesforce — serving enterprises and state government agencies across North America.",
+    "Provider of IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce, serving enterprises and state government agencies across North America.",
   foundingDate: "2013",
   address: {
     "@type": "PostalAddress",
@@ -151,48 +148,49 @@ const jsonLd = {
     "https://x.com/OceanBlueSol",
     "https://www.instagram.com/oceanbluesolutions",
   ],
-  service: [
-    {
-      "@type": "Service",
-      name: "IT Staffing & Talent",
-      description: "Vetted IT specialists embedded into your team on flexible or permanent terms, or as managed teams",
-    },
-    {
-      "@type": "Service",
-      name: "Cloud Engineering",
-      description: "Cloud migration, modernization, and optimization across AWS, Azure, and GCP",
-    },
-    {
-      "@type": "Service",
-      name: "Cybersecurity",
-      description: "Compliance-aligned security across cloud, identity, and applications",
-    },
-    {
-      "@type": "Service",
-      name: "ERP Solutions",
-      description: "Implementations and integrations across SAP, Oracle, and Microsoft Dynamics",
-    },
-    {
-      "@type": "Service",
-      name: "Salesforce Services",
-      description: "Salesforce implementation, development, automation, and managed admin",
-    },
-    {
-      "@type": "Service",
-      name: "AI & Data Intelligence",
-      description: "Business-first AI, automation, predictive analytics, and data engineering",
-    },
-    {
-      "@type": "Service",
-      name: "Managed Services",
-      description: "24/7 monitoring, helpdesk, and infrastructure management to one standard",
-    },
-    {
-      "@type": "Service",
-      name: "Digital Transformation",
-      description: "Technology strategy, architecture, and roadmaps with measurable outcomes",
-    },
-  ],
+  // `service` is not a schema.org Organization property, so the previous list
+  // was silently discarded. `hasOfferCatalog` is the valid form.
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Solutions",
+    itemListElement: [
+      {
+        name: "IT Staffing & Talent",
+        description: "Vetted IT specialists embedded into your team on flexible or permanent terms, or as managed teams",
+      },
+      {
+        name: "Cloud Engineering",
+        description: "Cloud migration, modernization, and optimization across AWS, Azure, and GCP",
+      },
+      {
+        name: "Cybersecurity",
+        description: "Compliance-aligned security across cloud, identity, and applications",
+      },
+      {
+        name: "ERP Solutions",
+        description: "Implementations and integrations across SAP, Oracle, and Microsoft Dynamics",
+      },
+      {
+        name: "Salesforce Services",
+        description: "Salesforce implementation, development, automation, and managed admin",
+      },
+      {
+        name: "AI & Data Intelligence",
+        description: "Business-first AI, automation, predictive analytics, and data engineering",
+      },
+      {
+        name: "Managed Services",
+        description: "24/7 monitoring, helpdesk, and infrastructure management to one standard",
+      },
+      {
+        name: "Digital Transformation",
+        description: "Technology strategy, architecture, and roadmaps with measurable outcomes",
+      },
+    ].map((s) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Service", name: s.name, description: s.description },
+    })),
+  },
 };
 
 export default async function RootLayout({
@@ -207,6 +205,11 @@ export default async function RootLayout({
         {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
             are injected automatically by Next.js from the App Router file conventions. */}
         <link rel="manifest" href="/manifest.json" />
+        {/* The hero photo (the LCP element) is served from Unsplash's CDN, so
+            the connection opens during HTML parse and the image request is not
+            waiting on DNS + TLS when the preload scanner reaches it. */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -223,7 +226,7 @@ export default async function RootLayout({
           </LayoutWrapper>
         </Providers>
 
-        {/* GDPR / CCPA cookie consent — rendered outside Providers so it always shows */}
+        {/* GDPR / CCPA cookie consent, rendered outside Providers so it always shows */}
         <CookieConsent />
       </body>
     </html>

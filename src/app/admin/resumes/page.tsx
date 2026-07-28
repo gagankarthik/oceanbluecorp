@@ -1,23 +1,31 @@
 "use client";
-import { toast } from "sonner";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { AdminRowsSkeleton } from "@/components/admin/skeletons";
-import { AdminCard } from "@/components/admin/admin-card";
-import { SearchInput, FilterToggle, ViewSwitcher } from "@/components/admin/toolbar";
-import { FilterChips } from "@/components/admin/filter-chips";
-import { FormSelect } from "@/components/admin/forms/primitives";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { toast } from "sonner";
+import { LayoutGrid, LayoutList, X, Loader2 } from "lucide-react";
 import {
-  Search, Upload, Download, Trash2, FileText, File, Eye,
-  LayoutGrid, LayoutList, X, User2,
-  Calendar, Loader2, AlertTriangle, CheckCircle2,
-  FolderOpen,
-} from "lucide-react";
+  IconDownload, IconEye, IconFile, IconSuccess, IconTrash, IconUpload,
+  IconWarning,
+} from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
+import { fmtDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { AdminCard } from "@/components/admin/admin-card";
+import {
+  ViewSwitcher,
+} from "@/components/admin/toolbar";
+import { Avatar } from "@/components/admin/avatar";
+import { EmptyState } from "@/components/admin/empty-state";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminRowsSkeleton } from "@/components/admin/skeletons";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 
-// Types
+// ── types ────────────────────────────────────────────────────────────────────
 
 interface BankResume {
   id: string;
@@ -44,52 +52,64 @@ interface QueueItem {
 type ViewMode = "grid" | "list";
 type FileTypeFilter = "all" | "pdf" | "word";
 
-// Helpers
+// ── config ───────────────────────────────────────────────────────────────────
 
 const ALLOWED = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 const MAX_SIZE = 5 * 1024 * 1024;
 
+const TYPE_TABS: { key: FileTypeFilter; label: string }[] = [
+  { key: "all",  label: "All" },
+  { key: "pdf",  label: "PDF" },
+  { key: "word", label: "Word" },
+];
+
 function isPdf(type: string) { return type === "application/pdf"; }
 function isWord(type: string) { return type === "application/msword" || type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"; }
+function formatLabel(type: string) { return isPdf(type) ? "PDF" : isWord(type) ? "Word" : "Other"; }
 
+/** Byte size for a file listing. No shared equivalent — resumes is the only screen weighing files. */
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
 }
 
+/**
+ * Format marker. Flat square-cornered tile rather than a rounded chip: it is a
+ * record-type mark in a grid, not a badge.
+ */
 function FileTypeIcon({ type, size = "md" }: { type: string; size?: "sm" | "md" | "lg" }) {
-  const sz = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" }[size];
+  const sz = { sm: "h-8 w-8 text-[10px]", md: "h-10 w-10 text-[11px]", lg: "h-12 w-12 text-[13px]" }[size];
   if (isPdf(type)) {
     return (
-      <div className={cn("rounded-xl flex flex-col items-center justify-center font-bold bg-rose-100 text-rose-600 flex-shrink-0", sz)}>
+      <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-danger-soft)] font-bold tracking-wide text-[var(--adm-danger)]", sz)}>
         PDF
-      </div>
+      </span>
     );
   }
   if (isWord(type)) {
     return (
-      <div className={cn("rounded-xl flex flex-col items-center justify-center font-bold bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] flex-shrink-0", sz)}>
+      <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-accent-soft)] font-bold tracking-wide text-[var(--adm-accent)]", sz)}>
         DOC
-      </div>
+      </span>
     );
   }
   return (
-    <div className={cn("rounded-xl flex flex-col items-center justify-center font-bold bg-slate-100 text-slate-500 flex-shrink-0", sz)}>
-      <File className="w-4 h-4" />
-    </div>
+    <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-surface-2)] font-bold text-[var(--adm-ink-subtle)]", sz)}>
+      <IconFile className="h-4 w-4" />
+    </span>
   );
 }
 
-// Page
+// ── page ─────────────────────────────────────────────────────────────────────
 
 export default function ResumeBankPage() {
   const { user } = useAuth();
-  const dropZoneRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [resumes, setResumes]     = useState<BankResume[]>([]);
@@ -100,11 +120,10 @@ export default function ResumeBankPage() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-  const [view, setView]             = useState<ViewMode>("grid");
+  const [view, setView]             = useState<ViewMode>("list");
   const [search, setSearch]         = useState("");
   const [typeFilter, setTypeFilter] = useState<FileTypeFilter>("all");
   const [uploaderFilter, setUploaderFilter] = useState("all");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -129,6 +148,8 @@ export default function ResumeBankPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // ── derived ───────────────────────────────────────────────────────────────
+
   const uploaders = useMemo(() => [...new Set(resumes.map(r => r.uploaderEmail))], [resumes]);
 
   const filtered = useMemo(() => resumes.filter(r => {
@@ -140,12 +161,13 @@ export default function ResumeBankPage() {
     return true;
   }), [resumes, search, typeFilter, uploaderFilter]);
 
-  const stats = useMemo(() => ({
-    total: resumes.length,
-    pdfs:  resumes.filter(r => isPdf(r.fileType)).length,
-    words: resumes.filter(r => isWord(r.fileType)).length,
-    size:  fmtSize(resumes.reduce((s, r) => s + (r.fileSize || 0), 0)),
+  const typeCounts = useMemo(() => ({
+    all:  resumes.length,
+    pdf:  resumes.filter(r => isPdf(r.fileType)).length,
+    word: resumes.filter(r => isWord(r.fileType)).length,
   }), [resumes]);
+
+  // ── upload queue ──────────────────────────────────────────────────────────
 
   const addFiles = (files: FileList | File[]) => {
     const arr = Array.from(files);
@@ -219,6 +241,8 @@ export default function ResumeBankPage() {
   const clearDone = () => setQueue(q => q.filter(item => item.status !== "done"));
   const removeFromQueue = (id: string) => setQueue(q => q.filter(item => item.id !== id));
 
+  // ── record actions ────────────────────────────────────────────────────────
+
   const getDownloadUrl = async (id: string): Promise<string | null> => {
     const res = await fetch(`/api/resume-bank/${id}`);
     const data = await res.json();
@@ -250,414 +274,416 @@ export default function ResumeBankPage() {
     setDeleting(false);
   };
 
+  const exportCSV = () => downloadCsv(
+    "resumes",
+    ["File", "Format", "Candidate", "Uploaded By", "Size", "Uploaded"],
+    filtered.map((r) => [
+      r.fileName,
+      formatLabel(r.fileType),
+      r.candidateName || "",
+      r.uploaderEmail,
+      fmtSize(r.fileSize || 0),
+      fmtDate(r.uploadedAt),
+    ]),
+  );
+
+  const { monthCount, unnamedCount, storageUsed } = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    return {
+      monthCount:  resumes.filter((r) => new Date(r.uploadedAt).getTime() >= start.getTime()).length,
+      unnamedCount: resumes.filter((r) => !r.candidateName?.trim()).length,
+      storageUsed: fmtSize(resumes.reduce((s, r) => s + (r.fileSize || 0), 0)),
+    };
+  }, [resumes]);
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.resumes.density", "default");
+
+  const hasActiveFilters = typeFilter !== "all" || uploaderFilter !== "all" || search.trim() !== "";
+  const clearFilters = () => { setTypeFilter("all"); setUploaderFilter("all"); setSearch(""); };
+
   const pendingCount = queue.filter(q => q.status === "pending").length;
   const anyUploading = queue.some(q => q.status === "uploading");
 
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const rowActions = (r: BankResume) => (
+    <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
+      <button onClick={() => handlePreview(r)} title="Preview" aria-label={`Preview ${r.fileName}`}
+        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]">
+        <IconEye className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <button onClick={() => handleDownload(r)} title="Download" aria-label={`Download ${r.fileName}`}
+        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
+        <IconDownload className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <button onClick={() => setDeleteId(r.id)} title="Delete" aria-label={`Delete ${r.fileName}`}
+        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
+        <IconTrash className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+
+  const columns: DataTableColumn<BankResume>[] = [
+    {
+      key: "fileName", header: "File", sortValue: (r) => r.fileName,
+      cell: (r) => (
+        <span className="font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
+      ),
+    },
+    {
+      // The format mark is the cell — a coloured PDF/DOC tile says it without
+      // repeating the word next to a filename that already ends in ".pdf".
+      key: "type", header: "Type", sortValue: (r) => formatLabel(r.fileType), hideBelow: "md",
+      cell: (r) => <FileTypeIcon type={r.fileType} size="sm" />,
+    },
+    {
+      key: "candidate", header: "Candidate", sortValue: (r) => r.candidateName || "", hideBelow: "md",
+      cell: (r) => r.candidateName
+        ? <span className="font-medium text-[var(--adm-ink)]">{r.candidateName}</span>
+        : <Blank />,
+    },
+    {
+      key: "uploader", header: "Uploaded by", sortValue: (r) => r.uploaderEmail, hideBelow: "lg",
+      cell: (r) => (
+        <div className="flex items-center gap-2">
+          <Avatar email={r.uploaderEmail} size="xs" />
+          <span className="truncate text-xs text-[var(--adm-ink-mute)]">{r.uploaderEmail}</span>
+        </div>
+      ),
+    },
+    {
+      key: "size", header: "Size", align: "right", sortValue: (r) => r.fileSize || 0, hideBelow: "sm",
+      cell: (r) => <span className="tabular-nums text-[var(--adm-ink-mute)]">{fmtSize(r.fileSize || 0)}</span>,
+    },
+    {
+      key: "uploadedAt", header: "Uploaded", sortValue: (r) => new Date(r.uploadedAt).getTime(), hideBelow: "sm",
+      cell: (r) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(r.uploadedAt)}</span>,
+    },
+    {
+      key: "actions", header: "", align: "right",
+      cell: (r) => rowActions(r),
+    },
+  ];
+
+  // ── render ────────────────────────────────────────────────────────────────
+
   return (
     <div
-      className={cn("space-y-4 min-h-[60vh]", dragActive && "outline-4 outline-dashed outline-[var(--hz-cobalt)] outline-offset-4 rounded-2xl")}
+      className={cn(
+        "space-y-5 pb-10",
+        dragActive && "rounded-[6px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
+      )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      ref={dropZoneRef}
     >
       <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx"
         onChange={handleFileInput} className="hidden" />
 
-      <PageHeader
-        title="Resume Bank"
-        subtitle={`${stats.total} files · ${stats.pdfs} PDF · ${stats.words} Word · ${stats.size} total`}
-        actions={
-          <PageHeaderButton variant="primary" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="w-4 h-4" />Upload Resumes
-          </PageHeaderButton>
-        }
-      />
-
-      {/* Drop overlay */}
+      {/* ── drop overlay ── */}
       {dragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(29,78,216,0.1)] backdrop-blur-sm pointer-events-none">
-          <div className="bg-white border-2 border-dashed border-[var(--hz-cobalt)] rounded-3xl px-16 py-12 text-center shadow-2xl">
-            <Upload className="w-12 h-12 text-[var(--hz-cobalt)] mx-auto mb-3" />
-            <p className="text-2xl font-bold text-[var(--hz-cobalt)]">Drop resumes here</p>
-            <p className="text-sm text-slate-500 mt-1">PDF or Word &middot; max 5MB each</p>
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[rgba(29,78,216,0.08)] backdrop-blur-sm">
+          <div className="rounded-[6px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-14 py-10 text-center shadow-[var(--adm-shadow-lg)]">
+            <IconUpload className="mx-auto mb-3 h-10 w-10 text-[var(--adm-accent)]" strokeWidth={1.5} />
+            <p className="text-lg font-bold text-[var(--adm-ink)]">Drop resumes here</p>
+            <p className="mt-1 text-[13px] text-[var(--adm-ink-subtle)]">PDF or Word &middot; max 5MB each</p>
           </div>
         </div>
       )}
 
-      {/* Upload panel */}
+      {/* The KPI strip is gone. "Total files" is the footer count, "Named" was
+          a share bar over a denominator nothing acts on, and "Storage used"
+          is not a number anyone can do anything about from this screen. */}
+
+      {/* ── upload queue ── */}
       {panelOpen && queue.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <Upload className="w-4 h-4 text-[var(--hz-cobalt)]" />
-              <h3 className="text-sm font-bold text-slate-900">Upload Queue</h3>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full">{queue.length}</span>
+        <AdminCard className="overflow-hidden">
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <IconUpload className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
+              <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Upload queue</h3>
+              <span className="rounded-full bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-semibold tabular-nums text-[var(--adm-ink-mute)]">
+                {queue.length}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-none items-center gap-2">
               {queue.some(q => q.status === "done") && (
-                <button onClick={clearDone} className="text-xs text-slate-400 hover:text-slate-700 font-medium">Clear done</button>
+                <button onClick={clearDone} className="text-[11.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]">
+                  Clear done
+                </button>
               )}
-              <button onClick={() => setPanelOpen(false)} aria-label="Close upload panel" className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
-                <X className="w-4 h-4" aria-hidden="true" />
+              <button onClick={() => setPanelOpen(false)} aria-label="Close upload panel"
+                className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
 
-          <div className="divide-y divide-slate-50 max-h-[420px] overflow-y-auto">
+          <div className="max-h-[420px] divide-y divide-[var(--adm-line-soft)] overflow-y-auto">
             {queue.map(item => (
-              <div key={item.id} className="px-5 py-4">
-                <div className="flex items-start gap-3">
-                  <FileTypeIcon type={item.file.type} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{item.file.name}</p>
-                      <span className="text-[10px] text-slate-400 flex-shrink-0">{fmtSize(item.file.size)}</span>
-                      {item.status === "done"      && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-                      {item.status === "uploading" && <Loader2 className="w-4 h-4 text-[var(--hz-cobalt)] animate-spin flex-shrink-0" />}
-                      {item.status === "error"     && <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0" />}
-                    </div>
-
-                    {item.status === "pending" && (
-                      <input
-                        type="text"
-                        autoComplete="off"
-                        placeholder="Candidate name (optional)"
-                        value={item.candidateName}
-                        onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
-                        className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] text-slate-700"
-                      />
-                    )}
-
-                    {item.status === "uploading" && (
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                        <div className="h-full bg-[var(--hz-cobalt)] rounded-full transition-all duration-500" style={{ width: `${item.progress}%` }} />
-                      </div>
-                    )}
-
-                    {item.status === "error" && (
-                      <p className="text-xs text-rose-600 mt-1">{item.error}</p>
-                    )}
-
-                    {item.status === "done" && (
-                      <p className="text-xs text-emerald-600 font-medium mt-1">Uploaded successfully</p>
-                    )}
+              <div key={item.id} className="flex items-start gap-3 px-5 py-3.5">
+                <FileTypeIcon type={item.file.type} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{item.file.name}</p>
+                    <span className="flex-none text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtSize(item.file.size)}</span>
+                    {item.status === "done"      && <IconSuccess className="h-4 w-4 flex-none text-[var(--adm-success)]" />}
+                    {item.status === "uploading" && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />}
+                    {item.status === "error"     && <IconWarning className="h-4 w-4 flex-none text-[var(--adm-danger)]" />}
                   </div>
 
-                  {item.status !== "uploading" && item.status !== "done" && (
-                    <button onClick={() => removeFromQueue(item.id)} aria-label="Remove from queue" className="p-1 text-slate-400 hover:text-rose-500 rounded-lg flex-shrink-0">
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
+                  {item.status === "pending" && (
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Candidate name (optional)"
+                      value={item.candidateName}
+                      onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
+                      className="w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-xs text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                    />
                   )}
+
+                  {item.status === "uploading" && (
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-[2px] bg-[var(--adm-surface-2)]">
+                      <div className="h-full rounded-[2px] bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
+                    </div>
+                  )}
+
+                  {item.status === "error" && <p className="mt-1 text-xs text-[var(--adm-danger)]">{item.error}</p>}
+                  {item.status === "done"  && <p className="mt-1 text-xs font-medium text-[var(--adm-success)]">Uploaded successfully</p>}
                 </div>
+
+                {item.status !== "uploading" && item.status !== "done" && (
+                  <button onClick={() => removeFromQueue(item.id)} aria-label="Remove from queue"
+                    className="flex-none rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
 
           {(pendingCount > 0 || anyUploading) && (
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <p className="text-xs text-slate-500">
+            <div className="flex items-center justify-between border-t border-[var(--adm-line)] bg-[var(--adm-zebra)] px-5 py-3">
+              <p className="text-[13px] text-[var(--adm-ink-subtle)]">
                 {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
               </p>
-              <button
-                onClick={uploadAll}
-                disabled={anyUploading || pendingCount === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] disabled:opacity-60 transition-colors"
-              >
-                {anyUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
+                {anyUploading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
-              </button>
+              </WorkspaceButton>
             </div>
           )}
-        </div>
+        </AdminCard>
       )}
 
-      {/* Toolbar */}
-      <AdminCard className="space-y-3 p-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search by file, candidate, uploader…" />
+      <WorkspaceTitle
+        title="Resume bank"
+        meta={`${resumes.length} files`}
+        actions={
+          <>
+            <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+              <IconUpload className="h-4 w-4" />Upload
+            </WorkspaceButton>
+          </>
+        }
+      />
+      <KpiRow
+        items={[
+          { label: "Uploaded this month", value: monthCount, icon: IconUpload },
+          { label: "Not linked to a candidate", value: unnamedCount, icon: IconFile,
+            tone: unnamedCount > 0 ? "warning" : "default",
+            hint: unnamedCount > 0 ? "No candidate name recorded" : "All linked" },
+          { label: "Storage used", value: storageUsed, icon: IconFile },
+        ]}
+      />
 
-          {/* File-type segmented control */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-            {(["all", "pdf", "word"] as FileTypeFilter[]).map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)}
-                className={cn("px-3 py-1 text-xs font-semibold rounded-md transition-colors", typeFilter === t ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-                {t === "all" ? "All" : t.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <FilterToggle
-            open={filtersOpen}
-            activeCount={uploaderFilter !== "all" ? 1 : 0}
-            onClick={() => setFiltersOpen(v => !v)}
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={search}
+              onChange={setSearch}
+              placeholder="Filter resumes by file name or candidate"
+            />
+          }
+          trailing={
+            <>
+              <ViewSwitcher
+                options={[
+                  { value: "list", label: "List", icon: LayoutList },
+                  { value: "grid", label: "Grid", icon: LayoutGrid },
+                ]}
+                value={view}
+                onChange={setView}
+                className="h-10 rounded-[8px]"
+              />
+              {view === "list" && (
+                <DensityMenu value={density} onChange={setDensity} />
+              )}
+            </>
+          }
+        >
+          <FilterPill
+            label="Type"
+            icon={FilterIcon.type}
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={TYPE_TABS.map((t) => ({ value: t.key, label: t.label, count: typeCounts[t.key] }))}
           />
-
-          <ViewSwitcher
+          <FilterPill
+            label="Uploaded by"
+            icon={FilterIcon.person}
+            value={uploaderFilter}
+            onChange={setUploaderFilter}
             options={[
-              { value: "grid", label: "Grid", icon: LayoutGrid },
-              { value: "list", label: "List", icon: LayoutList },
+              { value: "all", label: "All recruiters", count: resumes.length },
+              ...uploaders.map((u) => ({
+                value: u,
+                label: u,
+                count: resumes.filter((r) => r.uploaderEmail === u).length,
+              })),
             ]}
-            value={view}
-            onChange={setView}
+          />
+        </WorkspaceToolbar>
+
+        <ActiveFilters
+          chips={[
+            ...(typeFilter !== "all"
+              ? [{ label: `Type: ${TYPE_TABS.find((t) => t.key === typeFilter)?.label ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
+              : []),
+            ...(uploaderFilter !== "all"
+              ? [{ label: `Uploaded by: ${uploaderFilter}`, onClear: () => setUploaderFilter("all") }]
+              : []),
+          ]}
+          onClearAll={clearFilters}
+        />
+
+      {/* ── records ── */}
+      {loading ? (
+        <AdminRowsSkeleton rows={6} />
+      ) : error ? (
+        <div>
+          <EmptyState
+            variant="error"
+            title="Could not load the resume bank"
+            description={error}
+            action={<WorkspaceButton variant="primary" onClick={load}>Retry</WorkspaceButton>}
           />
         </div>
-
-        {filtersOpen && (
-          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-3">
-            <FormSelect value={uploaderFilter} onChange={e => setUploaderFilter(e.target.value)}>
-              <option value="all">All recruiters</option>
-              {uploaders.map(u => <option key={u} value={u}>{u}</option>)}
-            </FormSelect>
-          </div>
-        )}
-
-        <FilterChips
-          chips={uploaderFilter !== "all" ? [{ key: "uploader", label: "Uploaded by", value: uploaderFilter, onRemove: () => setUploaderFilter("all") }] : []}
-        />
-      </AdminCard>
-
-      {/* Content */}
-      {loading ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-          <AdminRowsSkeleton rows={6} />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="text-center space-y-3">
-            <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
-            <p className="text-sm text-rose-600">{error}</p>
-            <button onClick={load} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg">Retry</button>
-          </div>
-        </div>
+      ) : view === "list" ? (
+          <DataTable
+            noun="resumes"
+            storageKey="resumes"
+            columns={columns}
+            rows={filtered}
+            rowKey={(r) => r.id}
+            onRowClick={handlePreview}
+            density={density}
+            initialSort={{ key: "uploadedAt", dir: "desc" }}
+            empty={{
+              icon: IconFile,
+              title: resumes.length === 0 ? "No resumes yet" : "No files match your filters",
+              description: resumes.length === 0
+                ? "Drag & drop files anywhere on this page, or upload from the header."
+                : "Try adjusting your search or filters.",
+              action: resumes.length === 0
+                ? <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Upload resumes</WorkspaceButton>
+                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
+            }}
+          />
       ) : filtered.length === 0 ? (
-        <EmptyState
-          hasResumes={resumes.length > 0}
-          onUpload={() => fileInputRef.current?.click()}
-        />
-      ) : view === "grid" ? (
-        <GridView
-          resumes={filtered}
-          onPreview={handlePreview}
-          onDownload={handleDownload}
-          onDelete={setDeleteId}
-        />
+        <div>
+          <EmptyState
+            variant={resumes.length === 0 ? "fresh" : "filtered"}
+            icon={IconFile}
+            title={resumes.length === 0 ? "No resumes yet" : "No files match your filters"}
+            description={resumes.length === 0
+              ? "Drag & drop files anywhere on this page, or upload from the header."
+              : "Try adjusting your search or filters."}
+            action={resumes.length === 0
+              ? <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Upload resumes</WorkspaceButton>
+              : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>}
+          />
+        </div>
       ) : (
-        <ListView
-          resumes={filtered}
-          onPreview={handlePreview}
-          onDownload={handleDownload}
-          onDelete={setDeleteId}
-        />
-      )}
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto p-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {filtered.map(r => (
+            <AdminCard key={r.id} hover className="group flex flex-col gap-3 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <FileTypeIcon type={r.fileType} size="lg" />
+                <div className="transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                  {rowActions(r)}
+                </div>
+              </div>
 
-      {/* Delete confirm */}
-      {deleteId && (
-        <Modal>
-          <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-5 h-5 text-rose-600" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900 text-center mb-1">Delete resume?</h3>
-          <p className="text-sm text-slate-500 text-center mb-6">This will permanently remove the file from storage.</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-60">
-              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Delete
-            </button>
-          </div>
-        </Modal>
-      )}
+              <div className="min-w-0 flex-1">
+                <button
+                  onClick={() => handlePreview(r)}
+                  className="block w-full truncate text-left text-sm font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                  title={r.fileName}
+                >
+                  {r.fileName}
+                </button>
+                <p className="mt-0.5 truncate text-xs text-[var(--adm-ink-subtle)]">{r.candidateName || "—"}</p>
+              </div>
 
-      {/* PDF Preview */}
+              <div className="space-y-1.5 border-t border-[var(--adm-line-soft)] pt-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--adm-ink-subtle)]">
+                  <Avatar email={r.uploaderEmail} size="xs" className="h-4 w-4 text-[8px] ring-0 shadow-none" />
+                  <span className="truncate">{r.uploaderEmail}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span>{fmtDate(r.uploadedAt)}</span>
+                  <span>{fmtSize(r.fileSize || 0)}</span>
+                </div>
+              </div>
+            </AdminCard>
+          ))}
+        </div>
+      )}
+      </Workspace>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete resume?"
+        body="This will permanently remove the file from storage."
+        confirmLabel="Delete"
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      {/* ── PDF preview ── */}
       {previewUrl && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-rose-600" />
-              <span className="text-sm font-semibold text-slate-800 truncate max-w-[40vw] sm:max-w-[400px]">{previewName}</span>
+        <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/60 backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <IconFile className="h-4 w-4 flex-none text-[var(--adm-danger)]" />
+              <span className="truncate text-sm font-semibold text-[var(--adm-ink)]">{previewName}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-none items-center gap-2">
               <a href={previewUrl} download={previewName || "resume"}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)]">
-                <Download className="w-3.5 h-3.5" />Download
+                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[var(--adm-accent)] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]">
+                <IconDownload className="h-3.5 w-3.5" />Download
               </a>
               <button onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
                 aria-label="Close preview"
-                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
-                <X className="w-4 h-4" aria-hidden="true" />
+                className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]">
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
           <div className="flex-1 overflow-hidden">
-            <iframe src={previewUrl} className="w-full h-full border-0" title={previewName || "Resume preview"} />
+            <iframe src={previewUrl} className="h-full w-full border-0" title={previewName || "Resume preview"} />
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// Grid View
-
-function GridView({ resumes, onPreview, onDownload, onDelete }: {
-  resumes: BankResume[];
-  onPreview: (r: BankResume) => void;
-  onDownload: (r: BankResume) => void;
-  onDelete: (id: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-      {resumes.map(r => (
-        <div key={r.id}
-          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[var(--hz-cobalt-100)] transition-all group flex flex-col gap-3">
-          <div className="flex items-start justify-between">
-            <FileTypeIcon type={r.fileType} size="lg" />
-            <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-              <button onClick={() => onPreview(r)} title="Preview"
-                className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors">
-                <Eye className="w-4 h-4" />
-              </button>
-              <button onClick={() => onDownload(r)} title="Download"
-                className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
-              </button>
-              <button onClick={() => onDelete(r.id)} title="Delete"
-                className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate" title={r.fileName}>{r.fileName}</p>
-            {r.candidateName && (
-              <p className="text-xs text-[var(--hz-cobalt)] font-medium mt-0.5 truncate">{r.candidateName}</p>
-            )}
-          </div>
-
-          <div className="border-t border-slate-100 pt-2 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] text-slate-400">
-              <User2 className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{r.uploaderEmail}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                <Calendar className="w-3 h-3 flex-shrink-0" />
-                {fmtDate(r.uploadedAt)}
-              </div>
-              <span className="text-[10px] text-slate-400">{fmtSize(r.fileSize)}</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// List View
-
-function ListView({ resumes, onPreview, onDownload, onDelete }: {
-  resumes: BankResume[];
-  onPreview: (r: BankResume) => void;
-  onDownload: (r: BankResume) => void;
-  onDelete: (id: string) => void;
-}) {
-  return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <div className="min-w-[540px]">
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-2.5 bg-slate-50 border-b border-slate-200">
-            {["File", "Candidate", "Uploaded by", "Date / Size", ""].map((h, i) => (
-              <div key={i} className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{h}</div>
-            ))}
-          </div>
-          <div className="divide-y divide-slate-100">
-            {resumes.map(r => (
-              <div key={r.id}
-                className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center hover:bg-[#eef3fe] transition-colors group">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileTypeIcon type={r.fileType} size="sm" />
-                  <p className="text-sm font-semibold text-slate-800 truncate">{r.fileName}</p>
-                </div>
-
-                <div className="min-w-0">
-                  {r.candidateName
-                    ? <span className="text-sm text-[var(--hz-cobalt)] font-semibold truncate block">{r.candidateName}</span>
-                    : <span className="text-xs text-slate-300 italic">—</span>}
-                </div>
-
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                    {r.uploaderEmail.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs text-slate-600 truncate">{r.uploaderEmail}</span>
-                </div>
-
-                <div>
-                  <p className="text-xs text-slate-700 font-medium">{fmtDate(r.uploadedAt)}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{fmtSize(r.fileSize)}</p>
-                </div>
-
-                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onPreview(r)}
-                    className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors" title="Preview">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => onDownload(r)}
-                    className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download">
-                    <Download className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => onDelete(r.id)}
-                    className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Empty State
-
-function EmptyState({ hasResumes, onUpload }: { hasResumes: boolean; onUpload: () => void }) {
-  if (hasResumes) {
-    return (
-      <div className="bg-white border border-slate-200/80 rounded-2xl py-16 text-center shadow-sm">
-        <Search className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-slate-600">No results</p>
-        <p className="text-xs text-slate-400 mt-1">Try adjusting your search or filters</p>
-      </div>
-    );
-  }
-  return (
-    <button
-      onClick={onUpload}
-      className="w-full bg-white border-2 border-dashed border-slate-300 hover:border-[var(--hz-cobalt)] hover:bg-[#eef3fe] rounded-2xl py-20 text-center transition-colors group"
-    >
-      <div className="w-16 h-16 rounded-2xl bg-[var(--hz-cobalt-100)] group-hover:bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-4 transition-colors">
-        <FolderOpen className="w-8 h-8 text-[var(--hz-cobalt)]" />
-      </div>
-      <h3 className="text-base font-semibold text-slate-700 mb-1">No resumes yet</h3>
-      <p className="text-sm text-slate-400 mb-4">Drag &amp; drop files anywhere, or click to browse</p>
-      <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-xl shadow-sm">
-        <Upload className="w-4 h-4" />Upload Resumes
-      </div>
-    </button>
-  );
-}
-
-// Modal
-
-function Modal({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">{children}</div>
     </div>
   );
 }

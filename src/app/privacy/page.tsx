@@ -451,7 +451,7 @@ export default function PrivacyPage() {
               </P>
               <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50/60 p-6">
                 <p className="mb-4 text-sm font-semibold text-gray-800" style={{ fontFamily: "var(--font-display)" }}>
-                  Ocean Blue Corporation — Privacy Team
+                  Ocean Blue Corporation, Privacy Team
                 </p>
                 <div className="space-y-2.5 text-sm text-gray-600">
                   <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">

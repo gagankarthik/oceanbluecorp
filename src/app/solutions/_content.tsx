@@ -22,7 +22,7 @@ const SERVICES: Record<string, Service> = {
     icon: Cloud,
     title: "Cloud Engineering",
     desc: "Migrate, optimize, and scale cloud environments with security and performance at the core.",
-    capabilities: ["Migration — AWS, Azure, GCP", "Infrastructure modernization", "DevOps & CI/CD automation", "Observability & performance tuning"],
+    capabilities: ["Migration, AWS, Azure, GCP", "Infrastructure modernization", "DevOps & CI/CD automation", "Observability & performance tuning"],
   },
   cybersecurity: {
     icon: Shield,
@@ -45,19 +45,19 @@ const SERVICES: Record<string, Service> = {
   ai: {
     icon: Cpu,
     title: "AI & Data Intelligence",
-    desc: "Secure, business-first AI and automation — from document processing to predictive analytics.",
+    desc: "Secure, business-first AI and automation, from document processing to predictive analytics.",
     capabilities: ["Workflow & document automation", "Predictive analytics", "LLM integrations", "Data engineering & BI"],
   },
   managed: {
     icon: Headphones,
     title: "Managed Services",
-    desc: "We keep systems running with monitoring, support, and performance management — one accountable SLA.",
+    desc: "We keep systems running with monitoring, support, and performance management, one accountable SLA.",
     capabilities: ["24/7 monitoring & response", "Helpdesk & application support", "Cloud & infrastructure management", "Security monitoring"],
   },
   transformation: {
     icon: Lightbulb,
     title: "Digital Transformation",
-    desc: "We modernize processes, improve workflows, and adopt the right technologies — with a clear roadmap and measurable outcomes.",
+    desc: "We modernize processes, improve workflows, and adopt the right technologies, with a clear roadmap and measurable outcomes.",
     capabilities: ["Technology strategy", "Architecture & roadmaps", "Process optimization", "Change management & training"],
   },
 };
@@ -81,9 +81,9 @@ const pillars: Pillar[] = [
 ];
 
 const steps = [
-  { no: "01", icon: Search, title: "Discovery", desc: "We learn the business, the constraints, and the outcome that matters — before proposing anything." },
+  { no: "01", icon: Search, title: "Discovery", desc: "We learn the business, the constraints, and the outcome that matters, before proposing anything." },
   { no: "02", icon: Compass, title: "Strategy", desc: "We design the solution and the roadmap together, with success metrics agreed up front." },
-  { no: "03", icon: Rocket, title: "Implementation", desc: "We execute in agile increments — shipping working software and integrated talent." },
+  { no: "03", icon: Rocket, title: "Implementation", desc: "We execute in agile increments, shipping working software and integrated talent." },
   { no: "04", icon: RefreshCw, title: "Optimization", desc: "We monitor, review, and improve continuously against the SLA, in quarterly reviews." },
 ];
 
@@ -122,18 +122,18 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       <section className="relative isolate flex min-h-[64vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.servicesHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Our solutions</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
               {content.servicesTitle || "Talent, engineering, technology, and managed services."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               {content.servicesSubtitle ||
-                "From specialized staffing and engineering talent to enterprise-grade technology and managed services — four connected practices, one accountable team. Serving enterprises and state government agencies across North America."}
+                "From specialized staffing and engineering talent to enterprise-grade technology and managed services, four connected practices, one accountable team. Serving enterprises and state government agencies across North America."}
             </p>
             <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-white/55 sm:text-[15px]">
-              Trusted by Fortune 500 enterprises and state government agencies — from large-scale IT modernization programs to mission-critical managed operations.
+              Trusted by Fortune 500 enterprises and state government agencies, from large-scale IT modernization programs to mission-critical managed operations.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
@@ -145,7 +145,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         </div>
       </section>
 
-      {/* Service lines — image-led, alternating */}
+      {/* Service lines, image-led, alternating */}
       {pillars.map((p, i) => {
         const reversed = i % 2 === 1;
         return (
@@ -205,11 +205,11 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       })}
 
       {/* Process */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-surface-2)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <Eyebrow>How we work</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">A method you can hold us to.</h2>
+            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">A method you can hold us to.</h2>
           </Reveal>
           <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4" gap={0.1}>
             {steps.map((st) => {
@@ -237,10 +237,10 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Tell us what you&apos;re building.</h2>
+            <h2 className="hz-display mt-7 max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">Tell us what you&apos;re building.</h2>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
               We&apos;ll put the right specialists on it and stand behind the result.
             </p>

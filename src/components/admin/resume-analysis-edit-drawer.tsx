@@ -128,30 +128,30 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[640px] p-0 flex flex-col gap-0 bg-slate-50/30">
+      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[640px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center">
-              <Sparkles className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" />
+            <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center">
+              <Sparkles className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
             </div>
             <div>
-              <SheetTitle className="text-[15px] font-bold text-slate-900">Edit resume analysis</SheetTitle>
-              <SheetDescription className="text-xs text-slate-500 mt-0.5">
+              <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">Edit resume analysis</SheetTitle>
+              <SheetDescription className="text-xs text-[var(--adm-ink-subtle)] mt-0.5">
                 Correct anything the parser got wrong. Personal contact details are not changed here.
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] rounded-[6px] transition-colors">
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {error && (
-            <div className="flex items-start gap-2.5 p-3 bg-rose-50 border border-rose-200 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-rose-700 leading-relaxed">{error}</p>
+            <div className="flex items-start gap-2.5 p-3 bg-[var(--adm-danger-soft)] border border-[var(--adm-danger)] rounded-[6px]">
+              <AlertTriangle className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[var(--adm-danger)] leading-relaxed">{error}</p>
             </div>
           )}
 
@@ -175,7 +175,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                   value={draft.analytics?.career_level || ""}
                   autoComplete="off"
                   onChange={(e) => setAnalytics("career_level", e.target.value || null)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
+                  className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink)] focus:outline-none focus:border-[var(--adm-accent)] focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 >
                   <option value="">—</option>
                   {CAREER_LEVELS.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -218,16 +218,16 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
             icon={Briefcase}
             title="Work experience"
             action={
-              <button type="button" onClick={addWork} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md transition-colors">
+              <button type="button" onClick={addWork} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
                 <Plus className="w-3 h-3" /> Add
               </button>
             }
           >
             <div className="space-y-4">
-              {work.length === 0 && <p className="text-xs text-slate-400 italic">No entries. Click Add to create one.</p>}
+              {work.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries. Click Add to create one.</p>}
               {work.map((w, i) => (
-                <div key={i} className="rounded-xl border border-slate-200 p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeWork(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
+                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
+                  <button type="button" onClick={() => removeWork(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
@@ -253,16 +253,16 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
             icon={GraduationCap}
             title="Education"
             action={
-              <button type="button" onClick={addEdu} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md transition-colors">
+              <button type="button" onClick={addEdu} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
                 <Plus className="w-3 h-3" /> Add
               </button>
             }
           >
             <div className="space-y-4">
-              {edu.length === 0 && <p className="text-xs text-slate-400 italic">No entries.</p>}
+              {edu.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries.</p>}
               {edu.map((e, i) => (
-                <div key={i} className="rounded-xl border border-slate-200 p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeEdu(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
+                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
+                  <button type="button" onClick={() => removeEdu(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
@@ -283,16 +283,16 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
             title="Certifications"
             tone="emerald"
             action={
-              <button type="button" onClick={addCert} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md transition-colors">
+              <button type="button" onClick={addCert} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
                 <Plus className="w-3 h-3" /> Add
               </button>
             }
           >
             <div className="space-y-4">
-              {certs.length === 0 && <p className="text-xs text-slate-400 italic">No entries.</p>}
+              {certs.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries.</p>}
               {certs.map((c, i) => (
-                <div key={i} className="rounded-xl border border-slate-200 p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeCert(i)} className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remove">
+                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
+                  <button type="button" onClick={() => removeCert(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
@@ -307,15 +307,15 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
         </div>
 
         {/* Sticky footer */}
-        <div className="flex-shrink-0 bg-white border-t border-slate-200 px-5 py-3 flex items-center gap-3">
-          <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-t border-[var(--adm-line)] px-5 py-3 flex items-center gap-3">
+          <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-[var(--adm-line)] text-[var(--adm-ink-mute)] rounded-[8px] hover:bg-[var(--adm-row-hover)] transition-colors">
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className={cn("flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]")}
+            className={cn("flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] disabled:opacity-60 transition")}
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             Save changes

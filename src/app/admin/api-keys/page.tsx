@@ -1,22 +1,28 @@
 "use client";
-import { AdminRowsSkeleton } from "@/components/admin/skeletons";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Loader2, X } from "lucide-react";
 import {
-  Key,
-  Plus,
-  Trash2,
-  Copy,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Eye,
-  EyeOff,
-  AlertTriangle,
-  X,
-  Globe,
-} from "lucide-react";
+  IconKey,
+  IconTrash,
+  IconCopy,
+  IconSuccess,
+  IconError,
+  IconEye,
+  IconEyeOff,
+  IconWarning,
+  IconGlobe,
+  IconBlocked,
+  IconClock,
+} from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth";
+import { fmtDate, fmtRelative } from "@/lib/format";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { StatCard, KpiStrip } from "@/components/admin/stat-card";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Avatar } from "@/components/admin/avatar";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 
 interface ApiKeyRecord {
   id: string;
@@ -34,6 +40,11 @@ interface NewKeyData {
   id: string;
   key: string;
   name: string;
+}
+
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">&mdash;</span>;
 }
 
 export default function ApiKeysPage() {
@@ -136,270 +147,308 @@ export default function ApiKeysPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  }
+  // ── derived ───────────────────────────────────────────────────────────────
 
-  function formatRelative(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  }
+  const stats = useMemo(() => {
+    const used = keys
+      .map((k) => k.lastUsedAt)
+      .filter((d): d is string => !!d)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    return {
+      total:    keys.length,
+      active:   keys.filter((k) => k.isActive).length,
+      disabled: keys.filter((k) => !k.isActive).length,
+      lastUsed: used.length > 0 ? fmtRelative(used[0]) : "Never",
+    };
+  }, [keys]);
+
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const columns: DataTableColumn<ApiKeyRecord>[] = [
+    {
+      key: "name",
+      header: "Platform",
+      sortValue: (k) => k.name,
+      cell: (k) => (
+        <div className="max-w-[240px]">
+          <span className="block truncate font-semibold text-[var(--adm-ink)]">{k.name}</span>
+          <span className="mt-0.5 block truncate text-xs text-[var(--adm-ink-subtle)]">
+            {k.description || "—"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "keyPreview",
+      header: "Key",
+      cell: (k) => (
+        // Only the first 12 characters are ever returned by the API — the
+        // secret itself is shown once, at creation, and never again.
+        <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-[11px] text-[var(--adm-ink-subtle)]">
+          {k.keyPreview}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortValue: (k) => (k.isActive ? 1 : 0),
+      cell: (k) => <StatusBadge status={k.isActive ? "active" : "inactive"} />,
+    },
+    {
+      key: "createdBy",
+      header: "Created by",
+      hideBelow: "xl",
+      sortValue: (k) => k.createdByName || "",
+      cell: (k) => k.createdByName ? (
+        <div className="flex items-center gap-2">
+          <Avatar name={k.createdByName} size="xs" />
+          <span className="max-w-[120px] truncate text-xs text-[var(--adm-ink-mute)]">{k.createdByName}</span>
+        </div>
+      ) : <Blank />,
+    },
+    {
+      key: "created",
+      header: "Created",
+      hideBelow: "lg",
+      sortValue: (k) => new Date(k.createdAt).getTime(),
+      cell: (k) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(k.createdAt)}</span>,
+    },
+    {
+      key: "lastUsed",
+      header: "Last used",
+      hideBelow: "lg",
+      sortValue: (k) => (k.lastUsedAt ? new Date(k.lastUsedAt).getTime() : 0),
+      cell: (k) => k.lastUsedAt
+        ? <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(k.lastUsedAt)}</span>
+        : <span className="text-xs text-[var(--adm-ink-subtle)]">Never used</span>,
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (k) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => handleToggle(k.id, k.isActive)}
+            disabled={togglingId === k.id}
+            title={k.isActive ? "Disable key" : "Enable key"}
+            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-xs font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+          >
+            {togglingId === k.id ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : k.isActive ? (
+              <IconError className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <IconSuccess className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            {k.isActive ? "Disable" : "Enable"}
+          </button>
+          <button
+            onClick={() => handleDelete(k.id)}
+            disabled={deletingId === k.id}
+            aria-label={`Revoke ${k.name}`}
+            title="Revoke key permanently"
+            className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)] disabled:opacity-50"
+          >
+            {deletingId === k.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <IconTrash className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold text-slate-900">API Keys</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Manage API keys for partner platforms to pull your job listings via the public Job Feed API.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white text-sm font-medium rounded-lg transition-colors shadow-sm flex-shrink-0 whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4" />
-          New API Key
-        </button>
-      </div>
+    <div className="space-y-5 pb-10">
+      <PageHeader
+        title="API Keys"
+        subtitle="Keys partner platforms use to pull your job listings via the public Job Feed API."
+        icon={IconKey}
+        actions={
+          <PageHeaderButton variant="primary" onClick={() => setShowCreateForm(true)}>
+            <Plus className="h-4 w-4" />New API Key
+          </PageHeaderButton>
+        }
+      />
 
-      {/* API Reference Banner */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
-            <Globe className="w-4 h-4 text-[var(--hz-cobalt)]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800">Job Feed API</p>
-            <p className="text-xs text-slate-500 mt-0.5 mb-2">
-              Partner platforms authenticate with <code className="bg-slate-200 px-1 rounded text-xs">X-API-Key: &lt;key&gt;</code> header.
-            </p>
-            <div className="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span className="bg-white border border-slate-200 rounded px-2 py-1 text-slate-600">
-                GET /api/v1/jobs
-              </span>
-              <span className="bg-white border border-slate-200 rounded px-2 py-1 text-slate-600">
-                GET /api/v1/jobs/:id
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-2">
-              Query params: <code className="bg-slate-200 px-1 rounded">status</code> · <code className="bg-slate-200 px-1 rounded">department</code> · <code className="bg-slate-200 px-1 rounded">type</code> · <code className="bg-slate-200 px-1 rounded">page</code> · <code className="bg-slate-200 px-1 rounded">limit</code>
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* ── KPI strip ── */}
+      <KpiStrip cols={4}>
+        <StatCard size="sm" tone="slate" label="Total keys" value={stats.total}    icon={IconKey} />
+        <StatCard size="sm" tone="slate" label="Active"     value={stats.active}   icon={IconSuccess} />
+        <StatCard size="sm" tone="slate" label="Disabled"   value={stats.disabled} icon={IconBlocked} />
+        <StatCard size="sm" tone="slate" label="Last used"  value={stats.lastUsed} icon={IconClock} hint="Most recent call across all keys" />
+      </KpiStrip>
 
-      {/* Newly created key reveal */}
+      {/* ── Newly created key reveal ── */}
       {newKey && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
+        <div className="rounded-[6px] border border-amber-300 bg-[var(--adm-warning-soft)] p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-amber-800">Copy your API key now — it won&apos;t be shown again</p>
-              <p className="text-xs text-amber-700 mt-0.5 mb-3">Platform: <strong>{newKey.name}</strong></p>
+            <IconWarning className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--adm-warning)]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-[var(--adm-warning)]">Copy your API key now, it won&apos;t be shown again</p>
+              <p className="mb-3 mt-0.5 text-xs text-[var(--adm-warning)]">Platform: <strong>{newKey.name}</strong></p>
               <div className="flex items-center gap-2">
-                <div className="flex-1 bg-white border border-amber-200 rounded-lg px-3 py-2 font-mono text-sm text-slate-800 truncate select-all">
+                <div className="flex-1 select-all truncate rounded-[6px] border border-amber-200 bg-[var(--adm-surface)] px-3 py-2 font-mono text-sm text-[var(--adm-ink)]">
                   {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
                 </div>
                 <button
                   onClick={() => setShowKey((v) => !v)}
                   aria-label="Show key"
-                  className="p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
+                  className="rounded-[6px] p-2 text-[var(--adm-warning)] transition-colors hover:bg-[var(--adm-warning-soft)]"
                   title={showKey ? "Hide" : "Reveal"}
                 >
-                  {showKey ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
+                  {showKey ? <IconEyeOff className="h-4 w-4" aria-hidden="true" /> : <IconEye className="h-4 w-4" aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => handleCopy(newKey.key)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-[6px] bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
                 >
-                  {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <IconSuccess className="h-4 w-4" /> : <IconCopy className="h-4 w-4" />}
                   {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
             </div>
-            <button onClick={() => setNewKey(null)} aria-label="Dismiss" className="p-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors">
-              <X className="w-4 h-4" aria-hidden="true" />
+            <button
+              onClick={() => setNewKey(null)}
+              aria-label="Dismiss"
+              className="rounded-[6px] p-1 text-[var(--adm-warning)] transition-colors hover:bg-[var(--adm-warning-soft)]"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Create form modal */}
+      {/* ── Error ── */}
+      {error && (
+        <div className="flex items-center gap-2 rounded-[6px] border border-rose-200 bg-[var(--adm-danger-soft)] p-3 text-sm text-[var(--adm-danger)]">
+          <IconError className="h-4 w-4 flex-shrink-0" />
+          {error}
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto rounded-[4px] p-1 hover:bg-[var(--adm-danger-soft)]">
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {/* ── Key ledger ── */}
+      <AdminCard className="overflow-hidden">
+        <AdminCardHeader icon={IconKey} tone="blue" title="Issued keys" count={keys.length} />
+        <DataTable
+          columns={columns}
+          rows={keys}
+          rowKey={(k) => k.id}
+          loading={loading}
+          pageSize={25}
+          initialSort={{ key: "created", dir: "desc" }}
+          empty={{
+            icon: IconKey,
+            title: "No API keys yet",
+            description: "Create one to share with a partner platform.",
+            action: (
+              <PageHeaderButton onClick={() => setShowCreateForm(true)}>
+                <Plus className="h-4 w-4" />New API Key
+              </PageHeaderButton>
+            ),
+          }}
+        />
+      </AdminCard>
+
+      {/* ── Job Feed API reference ── */}
+      <AdminCard>
+        <AdminCardHeader icon={IconGlobe} tone="blue" title="Job Feed API" />
+        <div className="space-y-3 p-5">
+          <p className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+            Partner platforms authenticate with an{" "}
+            <code className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--adm-ink-mute)]">X-API-Key: &lt;key&gt;</code>{" "}
+            header.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {["GET /api/v1/jobs", "GET /api/v1/jobs/:id"].map((route) => (
+              <span
+                key={route}
+                className="rounded-[4px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1 font-mono text-[11px] text-[var(--adm-ink-mute)]"
+              >
+                {route}
+              </span>
+            ))}
+          </div>
+          <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
+            Query params:{" "}
+            {["status", "department", "type", "page", "limit"].map((p, i) => (
+              <span key={p}>
+                {i > 0 && " · "}
+                <code className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--adm-ink-mute)]">{p}</code>
+              </span>
+            ))}
+          </p>
+        </div>
+      </AdminCard>
+
+      {/* ── Create form modal ── */}
       {showCreateForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] flex items-center justify-center">
-                  <Key className="w-4 h-4 text-[var(--hz-cobalt)]" />
-                </div>
-                <h2 className="text-base font-semibold text-slate-900">New API Key</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
+              <div className="flex items-center gap-2">
+                <IconKey className="h-[18px] w-[18px] text-[var(--adm-accent)]" strokeWidth={1.75} />
+                <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">New API Key</h2>
               </div>
-              <button onClick={() => setShowCreateForm(false)} aria-label="Close" className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg">
-                <X className="w-4 h-4" aria-hidden="true" />
+              <button
+                onClick={() => setShowCreateForm(false)}
+                aria-label="Close"
+                className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4 p-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Platform Name <span className="text-rose-500">*</span>
+                <label htmlFor="apikey-name" className="mb-1.5 block text-[13px] font-semibold text-[var(--adm-ink-mute)]">
+                  Platform Name <span className="text-[var(--adm-danger)]">*</span>
                 </label>
                 <input
+                  id="apikey-name"
                   type="text"
                   autoComplete="off"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. Indeed, LinkedIn, Internal Portal"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                  className="w-full rounded-[8px] border border-[var(--adm-line)] px-3 py-2 text-sm transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                   required
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Description <span className="text-slate-400 font-normal">(optional)</span>
+                <label htmlFor="apikey-desc" className="mb-1.5 block text-[13px] font-semibold text-[var(--adm-ink-mute)]">
+                  Description <span className="font-normal text-[var(--adm-ink-subtle)]">(optional)</span>
                 </label>
                 <input
+                  id="apikey-desc"
                   type="text"
                   autoComplete="off"
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="e.g. Used for job syndication feed"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                  className="w-full rounded-[8px] border border-[var(--adm-line)] px-3 py-2 text-sm transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 />
               </div>
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                >
+              <div className="flex justify-end gap-2 pt-1">
+                <PageHeaderButton type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating || !formName.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
-                  {creating ? "Generating..." : "Generate Key"}
-                </button>
+                </PageHeaderButton>
+                <PageHeaderButton type="submit" variant="primary" disabled={creating || !formName.trim()}>
+                  {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconKey className="h-4 w-4" />}
+                  {creating ? "Generating…" : "Generate Key"}
+                </PageHeaderButton>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Error */}
-      {error && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center gap-2 text-sm text-rose-700">
-          <XCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
-          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto p-1 hover:bg-rose-100 rounded">
-            <X className="w-3 h-3" aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-medium text-slate-700">
-            {keys.length} {keys.length === 1 ? "key" : "keys"}
-          </p>
-        </div>
-
-        {loading ? (
-          <AdminRowsSkeleton rows={5} />
-        ) : keys.length === 0 ? (
-          <div className="py-16 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-              <Key className="w-6 h-6 text-slate-400" />
-            </div>
-            <p className="text-sm font-medium text-slate-600">No API keys yet</p>
-            <p className="text-xs text-slate-400 mt-1">Create one to share with a partner platform.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {keys.map((k) => (
-              <div key={k.id} className="flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/50 transition-colors">
-                {/* Status dot */}
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${k.isActive ? "bg-green-500" : "bg-slate-300"}`} />
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-slate-900">{k.name}</span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
-                        k.isActive
-                          ? "bg-green-50 text-green-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {k.isActive ? "Active" : "Disabled"}
-                    </span>
-                  </div>
-                  {k.description && (
-                    <p className="text-xs text-slate-500 mt-0.5">{k.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    <code className="text-[11px] text-slate-400 font-mono">{k.keyPreview}</code>
-                    <span className="text-[11px] text-slate-400">Created {formatDate(k.createdAt)}</span>
-                    {k.lastUsedAt && (
-                      <span className="text-[11px] text-slate-400">Last used {formatRelative(k.lastUsedAt)}</span>
-                    )}
-                    {!k.lastUsedAt && (
-                      <span className="text-[11px] text-slate-300 italic">Never used</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => handleToggle(k.id, k.isActive)}
-                    disabled={togglingId === k.id}
-                    title={k.isActive ? "Disable key" : "Enable key"}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors disabled:opacity-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  >
-                    {togglingId === k.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : k.isActive ? (
-                      <XCircle className="w-3.5 h-3.5" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    )}
-                    {k.isActive ? "Disable" : "Enable"}
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(k.id)}
-                    disabled={deletingId === k.id}
-                    aria-label="Delete key"
-                    title="Delete key permanently"
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {deletingId === k.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

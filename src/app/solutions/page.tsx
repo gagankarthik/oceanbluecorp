@@ -7,7 +7,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Solutions",
   description:
-    "Explore Ocean Blue Corporation's solutions — IT staffing, engineering talent, cloud, cybersecurity, ERP, Salesforce, AI & data, managed services, and digital transformation. Serving Fortune 500 enterprises and state government agencies across North America.",
+    "Explore Ocean Blue Corporation's solutions, IT staffing, engineering talent, cloud, cybersecurity, ERP, Salesforce, AI & data, managed services, and digital transformation. Serving Fortune 500 enterprises and state government agencies across North America.",
   openGraph: {
     title: "Enterprise Solutions | Ocean Blue Corporation",
     description:

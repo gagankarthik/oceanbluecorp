@@ -2,27 +2,21 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft, Loader2, DollarSign, Calendar, Building2, UserCheck,
   X, Briefcase, FileText, Truck, Save, Eye, Hash, Clock, MapPin,
 } from "lucide-react";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { fmtDate } from "@/lib/format";
-import { FormSection, Field, FormInput, MoneyInput, FormSelect, FormTextarea, AssigneePicker, AssigneeUser } from "./primitives";
+import { US_STATES, normalizeState } from "@/components/admin/theme";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { PageHeader } from "@/components/admin/page-header";
+import { WorkspaceButton } from "@/components/admin/workspace";
+import { Field, FormInput, MoneyInput, FormSelect, FormTextarea, AssigneePicker, AssigneeUser } from "./primitives";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { renderRichText } from "@/lib/rich-text";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-export const US_STATES = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-  "Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
-  "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan",
-  "Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire",
-  "New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio",
-  "Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota",
-  "Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia",
-  "Wisconsin","Wyoming","Remote",
-];
 
 export const DEPARTMENTS = [
   "ERP Solutions","Cloud Services","Data & AI","Salesforce","Engineering",
@@ -103,7 +97,10 @@ export function jobToFormData(job: Job): JobFormData {
     department: job.department || DEPARTMENTS[0],
     type: job.type || "full-time",
     location: job.location || "",
-    state: job.state || "",
+    // Legacy records store the full name ("California"); the canonical stored
+    // value is now the 2-letter code, so coerce on read or the picker blanks.
+    // A legacy `state: "Remote"` normalises to "" — Remote is a job *type*.
+    state: normalizeState(job.state),
     clientId: job.clientId || "",
     clientName: job.clientName || "",
     clientNotes: job.clientNotes || "",
@@ -173,6 +170,11 @@ interface JobFormProps {
   formId?: string;
 }
 
+/** Lead-in line for a panel — replaces FormSection's header `description`. */
+function PanelNote({ children }: { children: React.ReactNode }) {
+  return <p className="mb-4 text-[13px] leading-relaxed text-[var(--adm-ink-subtle)]">{children}</p>;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function JobForm({
@@ -238,275 +240,267 @@ export function JobForm({
   };
 
   const statusColor: Record<string, string> = {
-    draft: "text-slate-700", open: "text-emerald-700", active: "text-[var(--hz-cobalt)]",
-    "on-hold": "text-amber-700", paused: "text-amber-700", closed: "text-rose-700",
+    draft: "text-[var(--adm-ink-mute)]", open: "text-[var(--adm-success)]", active: "text-[var(--adm-accent)]",
+    "on-hold": "text-[var(--adm-warning)]", paused: "text-[var(--adm-warning)]", closed: "text-[var(--adm-danger)]",
   };
 
   const typeLabel = JOB_TYPES.find((t) => t.value === data.type)?.label || data.type;
 
-  const reduceMotion = useReducedMotion();
-  const section = (i: number) =>
-    reduceMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 12 },
-          animate: { opacity: 1, y: 0 },
-          transition: { delay: 0.04 * i, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
-        };
-
   return (
     <>
-      {/* ── Header ── */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="mt-0.5 grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-4.5 w-4.5" />
-          </button>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-[22px] font-bold leading-tight tracking-tight text-slate-900">
-                {mode === "create" ? "Create Job Posting" : "Edit Job Posting"}
-              </h1>
-              {mode === "edit" && job?.postingId && (
-                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-                  <Hash className="h-3 w-3" />{job.postingId}
-                </span>
-              )}
-            </div>
-            <p className="mt-0.5 text-sm leading-relaxed text-slate-500">
-              {mode === "create"
-                ? "Fill in the details to create a new job listing"
-                : `Editing: ${job?.title || ""}`}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowPreview(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            disabled={submitting}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-[rgba(29,78,216,0.2)] transition active:scale-[0.99] hover:bg-[var(--hz-cobalt-600)] disabled:opacity-50"
-          >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {mode === "create" ? "Create Job" : "Save Changes"}
-          </button>
-        </div>
-      </div>
+      {/* ── Header band ──
+          Owned here rather than by /admin/jobs/new and /admin/jobs/[id]/edit:
+          the form is the thing that knows the mode, the posting id and the
+          submit state, and two pages rendering their own PageHeader on top of
+          this one would duplicate the title and the toolbar. */}
+      <PageHeader
+        title={mode === "create" ? "Create Job Posting" : "Edit Job Posting"}
+        subtitle={
+          mode === "create"
+            ? "Fill in the details to create a new job listing"
+            : `Editing ${job?.title || "—"}`
+        }
+        icon={Briefcase}
+        meta={mode === "edit" && job?.postingId ? (
+          <span className="inline-flex items-center gap-1 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2 py-1 font-mono text-[12px] font-semibold text-[var(--adm-accent)]">
+            <Hash className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+            {job.postingId}
+          </span>
+        ) : undefined}
+        actions={
+          <>
+            {/* "Back" and "Cancel" both called router.back(), so the header
+                offered the same escape twice under two names. One stays. */}
+            <WorkspaceButton type="button" variant="ghost" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />Cancel
+            </WorkspaceButton>
+            <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
+              <Eye className="h-4 w-4" />Preview
+            </WorkspaceButton>
+            {/* House pattern: the primary action sits in the header band and
+                reaches the form below it through form=. */}
+            <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {mode === "create" ? "Create Job" : "Save Changes"}
+            </WorkspaceButton>
+          </>
+        }
+      />
 
-      <form id={formId} onSubmit={handleSubmit} className="space-y-5">
+      {/* The measure is constrained here, not by the calling page. PageHeader
+          breaks out of the main region's padding with -mx-5/-mx-6 to draw a
+          full-bleed band, so a max-width wrapper around the whole component
+          would leave the band sticking out past the form column on wide
+          screens. Header spans, body is measured. */}
+      <form id={formId} onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-4">
         {/* ── Job Details ── */}
-        <motion.div {...section(0)}>
-        <FormSection icon={Briefcase} title="Job Details" tone="blue" description="The role title, category, and where it's based.">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2">
-                <Field label="Job Title" required>
-                  <FormInput
-                    required
-                    value={data.title}
-                    onChange={(e) => set("title", e.target.value)}
-                    placeholder="e.g. Senior Software Engineer"
-                  />
+        <AdminCard>
+          <AdminCardHeader icon={Briefcase} title="Job details" />
+          <div className="p-5">
+            <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <Field label="Job Title" required htmlFor="job-title">
+                    <FormInput
+                      id="job-title"
+                      required
+                      value={data.title}
+                      onChange={(e) => set("title", e.target.value)}
+                      placeholder="e.g. Senior Software Engineer"
+                    />
+                  </Field>
+                </div>
+                <Field label="Status" htmlFor="job-status">
+                  <FormSelect
+                    id="job-status"
+                    value={data.status}
+                    onChange={(e) => set("status", e.target.value as Job["status"])}
+                    className={statusColor[data.status]}
+                  >
+                    {JOB_STATUSES.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </FormSelect>
                 </Field>
               </div>
-              <Field label="Status">
-                <FormSelect
-                  value={data.status}
-                  onChange={(e) => set("status", e.target.value as Job["status"])}
-                  className={statusColor[data.status]}
-                >
-                  {JOB_STATUSES.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="Department" required htmlFor="job-department">
+                  <FormSelect id="job-department" required value={data.department} onChange={(e) => set("department", e.target.value)}>
+                    {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="Job Type" required htmlFor="job-type">
+                  <FormSelect id="job-type" required value={data.type} onChange={(e) => set("type", e.target.value as Job["type"])}>
+                    {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="City / Location" required htmlFor="job-location">
+                  <FormInput id="job-location" required value={data.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Columbus" />
+                </Field>
+                <Field label="State" htmlFor="job-state">
+                  {/* Stores the 2-letter code; the shared list is the single
+                      source of truth shared with Applications and the bench. */}
+                  <FormSelect id="job-state" value={data.state} onChange={(e) => set("state", e.target.value)}>
+                    <option value="">Select state…</option>
+                    {US_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+                  </FormSelect>
+                </Field>
+              </div>
+            </div>
+          </div>
+        </AdminCard>
+
+        {/* ── Client / Vendor / Deadline ── */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <AdminCard>
+            <AdminCardHeader icon={Building2} title="Client" />
+            <div className="p-5">
+              <FormSelect aria-label="Client" value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
+                <option value="">Select client</option>
+                <option value="add-new">+ Add New Client</option>
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </FormSelect>
+              {data.clientId && data.clientId !== "add-new" && (
+                <FormInput
+                  aria-label="Client notes"
+                  className="mt-2"
+                  value={data.clientNotes}
+                  onChange={(e) => set("clientNotes", e.target.value)}
+                  placeholder="Client notes…"
+                />
+              )}
+            </div>
+          </AdminCard>
+
+          <AdminCard>
+            <AdminCardHeader icon={Truck} title="Vendor" />
+            <div className="p-5">
+              <FormSelect aria-label="Vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
+                <option value="none">No vendor</option>
+                {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </FormSelect>
+            </div>
+          </AdminCard>
+
+          <AdminCard>
+            <AdminCardHeader icon={Calendar} title="Submission deadline" />
+            <div className="p-5">
+              <FormInput
+                aria-label="Submission deadline"
+                type="date"
+                value={data.submissionDueDate}
+                onChange={(e) => set("submissionDueDate", e.target.value)}
+              />
+            </div>
+          </AdminCard>
+        </div>
+
+        {/* ── Compensation ── */}
+        <AdminCard>
+          <AdminCardHeader icon={DollarSign} title="Compensation" />
+          <div className="p-5">
+            <PanelNote>Optional rate and salary details — leave blank if not applicable.</PanelNote>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Bill Rate ($/hr)" htmlFor="job-bill-rate">
+                <MoneyInput id="job-bill-rate" value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
+              </Field>
+              <Field label="Pay Rate ($/hr)" htmlFor="job-pay-rate">
+                <MoneyInput id="job-pay-rate" value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
+              </Field>
+              <Field label="Min Salary (Annual)" htmlFor="job-salary-min">
+                <MoneyInput id="job-salary-min" value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
+              </Field>
+              <Field label="Max Salary (Annual)" htmlFor="job-salary-max">
+                <MoneyInput id="job-salary-max" value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder="120,000" />
+              </Field>
+            </div>
+          </div>
+        </AdminCard>
+
+        {/* ── Team Assignments ── */}
+        <AdminCard>
+          <AdminCardHeader icon={UserCheck} title="Team assignments" count={data.assignedToIds.length} />
+          <div className="p-5">
+            <PanelNote>Assign team members to receive notifications for this job posting.</PanelNote>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <Field label="Recruitment Manager" htmlFor="job-manager">
+                <FormSelect id="job-manager" value={data.recruitmentManagerId} onChange={(e) => handleManagerSelect(e.target.value)}>
+                  <option value="">Select manager</option>
+                  {hrUsers.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name || u.email} ({u.role})</option>
                   ))}
                 </FormSelect>
               </Field>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Field label="Department" required>
-                <FormSelect required value={data.department} onChange={(e) => set("department", e.target.value)}>
-                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </FormSelect>
-              </Field>
-              <Field label="Job Type" required>
-                <FormSelect required value={data.type} onChange={(e) => set("type", e.target.value as Job["type"])}>
-                  {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </FormSelect>
-              </Field>
-              <Field label="City / Location" required>
-                <FormInput required value={data.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Columbus" />
-              </Field>
-              <Field label="State">
-                <FormSelect value={data.state} onChange={(e) => set("state", e.target.value)}>
-                  <option value="">Select state</option>
-                  {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </FormSelect>
+              <Field label="Additional Assignees">
+                <AssigneePicker
+                  users={hrUsers}
+                  selectedIds={data.assignedToIds}
+                  selectedNames={data.assignedToNames}
+                  selectedEmails={data.assignedToEmails}
+                  onToggle={toggleAssignee}
+                />
               </Field>
             </div>
           </div>
-        </FormSection>
-        </motion.div>
-
-        {/* ── Client / Vendor / Deadline ── */}
-        <motion.div {...section(1)} className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <FormSection icon={Building2} title="Client" tone="violet">
-            <FormSelect value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
-              <option value="">Select client</option>
-              <option value="add-new">+ Add New Client</option>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </FormSelect>
-            {data.clientId && data.clientId !== "add-new" && (
-              <FormInput
-                className="mt-2"
-                value={data.clientNotes}
-                onChange={(e) => set("clientNotes", e.target.value)}
-                placeholder="Client notes…"
-              />
-            )}
-          </FormSection>
-
-          <FormSection icon={Truck} title="Vendor" tone="teal">
-            <FormSelect value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
-              <option value="none">No vendor</option>
-              {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </FormSelect>
-          </FormSection>
-
-          <FormSection icon={Calendar} title="Submission Deadline" tone="amber">
-            <FormInput
-              type="date"
-              value={data.submissionDueDate}
-              onChange={(e) => set("submissionDueDate", e.target.value)}
-            />
-          </FormSection>
-        </motion.div>
-
-        {/* ── Compensation ── */}
-        <motion.div {...section(2)}>
-        <FormSection icon={DollarSign} title="Compensation" tone="emerald" description="Optional rate and salary details — leave blank if not applicable.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-            <Field label="Bill Rate ($/hr)">
-              <MoneyInput value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
-            </Field>
-            <Field label="Pay Rate ($/hr)">
-              <MoneyInput value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
-            </Field>
-            <Field label="Min Salary (Annual)">
-              <MoneyInput value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
-            </Field>
-            <Field label="Max Salary (Annual)">
-              <MoneyInput value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder="120,000" />
-            </Field>
-          </div>
-        </FormSection>
-        </motion.div>
-
-        {/* ── Team Assignments ── */}
-        <motion.div {...section(3)}>
-        <FormSection
-          icon={UserCheck}
-          title="Team Assignments"
-          tone="indigo"
-          description="Assign team members to receive notifications for this job posting."
-        >
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Field label="Recruitment Manager">
-              <FormSelect value={data.recruitmentManagerId} onChange={(e) => handleManagerSelect(e.target.value)}>
-                <option value="">Select manager</option>
-                {hrUsers.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name || u.email} ({u.role})</option>
-                ))}
-              </FormSelect>
-            </Field>
-            <Field label="Additional Assignees">
-              <AssigneePicker
-                users={hrUsers}
-                selectedIds={data.assignedToIds}
-                selectedNames={data.assignedToNames}
-                selectedEmails={data.assignedToEmails}
-                onToggle={toggleAssignee}
-              />
-            </Field>
-          </div>
-        </FormSection>
-        </motion.div>
+        </AdminCard>
 
         {/* ── Job Description ── */}
-        <motion.div {...section(4)}>
-        <FormSection icon={FileText} title="Job Description" tone="sky" description="What candidates see — describe the role, then list requirements and responsibilities.">
-          <div className="space-y-4">
-            <Field label="Description" required>
-              <FormTextarea
-                required
-                rows={6}
-                value={data.description}
-                onChange={(e) => set("description", e.target.value)}
-                placeholder="Describe the role, team, and what makes this opportunity exciting…"
-              />
-            </Field>
-            <Field label="Requirements" hint="One item per line">
-              <FormTextarea
-                rows={6}
-                value={data.requirements}
-                onChange={(e) => set("requirements", e.target.value)}
-                placeholder={"Bachelor's degree in Computer Science\n5+ years of experience\nProficiency in React and Node.js"}
-              />
-            </Field>
-            <Field label="Responsibilities" hint="One item per line">
-              <FormTextarea
-                rows={6}
-                value={data.responsibilities}
-                onChange={(e) => set("responsibilities", e.target.value)}
-                placeholder={"Design and implement new features\nCollaborate with cross-functional teams\nConduct code reviews"}
-              />
-            </Field>
+        <AdminCard>
+          <AdminCardHeader icon={FileText} title="Job description" />
+          <div className="p-5">
+            <PanelNote>
+              What candidates see — describe the role, then list requirements and responsibilities.
+            </PanelNote>
+            <div className="space-y-4">
+              <Field label="Description" required htmlFor="job-description">
+                <RichTextEditor
+                  id="job-description"
+                  required
+                  value={data.description}
+                  onChange={(html) => set("description", html)}
+                  placeholder="Describe the role, team, and what makes this opportunity exciting…"
+                />
+              </Field>
+              <Field label="Requirements" hint="One item per line" htmlFor="job-requirements">
+                <FormTextarea
+                  id="job-requirements"
+                  rows={6}
+                  value={data.requirements}
+                  onChange={(e) => set("requirements", e.target.value)}
+                  placeholder={"Bachelor's degree in Computer Science\n5+ years of experience\nProficiency in React and Node.js"}
+                />
+              </Field>
+              <Field label="Responsibilities" hint="One item per line" htmlFor="job-responsibilities">
+                <FormTextarea
+                  id="job-responsibilities"
+                  rows={6}
+                  value={data.responsibilities}
+                  onChange={(e) => set("responsibilities", e.target.value)}
+                  placeholder={"Design and implement new features\nCollaborate with cross-functional teams\nConduct code reviews"}
+                />
+              </Field>
+            </div>
           </div>
-        </FormSection>
-        </motion.div>
+        </AdminCard>
 
-        {/* ── Created / Posted by ── */}
+        {/* ── Record footer ── */}
         {mode === "edit" && job && (
-          <motion.div
-            {...section(5)}
-            className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500"
-          >
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-xs text-[var(--adm-ink-mute)]">
             <span className="inline-flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Created</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Created</span>
               {fmtDate(job.createdAt)}
             </span>
-            {job.updatedAt && (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Updated</span>
-                {fmtDate(job.updatedAt)}
-              </span>
-            )}
-            {job.postedByName && (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Posted by</span>
-                {job.postedByName}
-              </span>
-            )}
-          </motion.div>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Updated</span>
+              {fmtDate(job.updatedAt)}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Posted by</span>
+              {job.postedByName || "—"}
+            </span>
+          </div>
         )}
       </form>
 
@@ -529,6 +523,20 @@ export function JobForm({
     </>
   );
 }
+
+// ── Shared modal button classes ────────────────────────────────────────────────
+
+const modalPrimaryBtn =
+  "inline-flex items-center gap-2 rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white " +
+  "transition-colors hover:bg-[var(--adm-accent-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50";
+
+const modalGhostBtn =
+  "rounded-[8px] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] " +
+  "focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
+
+const modalCloseBtn =
+  "rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)] " +
+  "focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
 
 // ── Add Client Modal ───────────────────────────────────────────────────────────
 
@@ -557,38 +565,38 @@ function AddClientModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="flex items-center gap-2.5 text-base font-bold text-slate-900">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-50">
-              <Building2 className="h-4 w-4 text-violet-600" />
-            </span>
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
+          <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+            <Building2 className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
             Add New Client
           </h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
+          <button type="button" onClick={onClose} className={modalCloseBtn} aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-5">
-          {error && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-600">{error}</p>}
-          <Field label="Client Name" required>
-            <FormInput required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corporation" />
+          {error && (
+            <p role="alert" className="rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2 text-xs text-[var(--adm-danger)]">{error}</p>
+          )}
+          <Field label="Client Name" required htmlFor="client-name">
+            <FormInput id="client-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corporation" />
           </Field>
-          <Field label="Website URL" required>
-            <FormInput required type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
+          <Field label="Website URL" required htmlFor="client-website">
+            <FormInput id="client-website" required type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
           </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Email">
-              <FormInput type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Email" htmlFor="client-email">
+              <FormInput id="client-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
             </Field>
-            <Field label="Phone">
-              <FormInput type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
+            <Field label="Phone" htmlFor="client-phone">
+              <FormInput id="client-phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
             </Field>
           </div>
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">Cancel</button>
-            <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-[rgba(29,78,216,0.2)] transition active:scale-[0.99] hover:bg-[var(--hz-cobalt-600)] disabled:opacity-50">
+            <button type="button" onClick={onClose} className={modalGhostBtn}>Cancel</button>
+            <button type="submit" disabled={submitting} className={modalPrimaryBtn}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}Add Client
             </button>
           </div>
@@ -602,69 +610,77 @@ function AddClientModal({
 
 function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLabel: string; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-slate-900/50 py-8 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-slate-100 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--hz-cobalt-100)]">
-              <Eye className="h-4 w-4 text-[var(--hz-cobalt)]" />
-            </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Public Preview</h2>
-              <p className="text-xs text-slate-500">How this job appears to candidates</p>
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-slate-900/50 py-8" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="my-auto w-full max-w-4xl overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <Eye className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
+            <div className="min-w-0">
+              <h2 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">Public Preview</h2>
+              <p className="truncate text-xs text-[var(--adm-ink-subtle)]">How this job appears to candidates</p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
-            <X className="h-5 w-5" />
+          <button type="button" onClick={onClose} className={modalCloseBtn} aria-label="Close">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="bg-white rounded-xl p-6 border border-slate-200">
-            <h1 className="text-2xl font-bold text-slate-900 mb-4">{data.title || "Job Title"}</h1>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full text-sm font-medium">
-                <Briefcase className="w-4 h-4" />{typeLabel}
+        <div className="space-y-4 p-5">
+          <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
+            <h1 className="mb-4 text-2xl font-bold text-[var(--adm-ink)]">{data.title || "—"}</h1>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2.5 py-1 text-[13px] font-semibold text-[var(--adm-accent)]">
+                <Briefcase className="h-3.5 w-3.5 flex-none" aria-hidden="true" />{typeLabel}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
-                <MapPin className="w-4 h-4" />{data.location || "Location"}{data.state ? `, ${data.state}` : ""}
+              <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
+                <MapPin className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                {data.location || "—"}{data.state ? `, ${data.state}` : ""}
               </span>
               {data.submissionDueDate && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-full text-sm font-medium">
-                  <Clock className="w-4 h-4" />Due {new Date(data.submissionDueDate).toLocaleDateString()}
+                <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-warning)]">
+                  <Clock className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Due {fmtDate(data.submissionDueDate)}
                 </span>
               )}
             </div>
             {data.salaryMin && data.salaryMax && (
-              <p className="text-lg font-semibold text-emerald-600">
+              <p className="text-lg font-semibold tabular-nums text-[var(--adm-success)]">
                 ${parseInt(data.salaryMin).toLocaleString()} – ${parseInt(data.salaryMax).toLocaleString()}
               </p>
             )}
           </div>
+
           {data.description && (
-            <div className="bg-white rounded-xl p-6 border border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 mb-3">About This Role</h2>
-              <p className="text-slate-600 whitespace-pre-wrap text-sm leading-relaxed">{data.description}</p>
+            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
+              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">About This Role</h2>
+              <div
+                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={renderRichText(data.description)}
+              />
             </div>
           )}
           {data.responsibilities && (
-            <div className="bg-white rounded-xl p-6 border border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 mb-3">Responsibilities</h2>
-              <pre className="text-slate-600 whitespace-pre-wrap font-sans text-sm leading-relaxed">{data.responsibilities}</pre>
+            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
+              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Responsibilities</h2>
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--adm-ink-mute)]">{data.responsibilities}</pre>
             </div>
           )}
           {data.requirements && (
-            <div className="bg-white rounded-xl p-6 border border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 mb-3">Requirements</h2>
-              <pre className="text-slate-600 whitespace-pre-wrap font-sans text-sm leading-relaxed">{data.requirements}</pre>
+            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
+              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Requirements</h2>
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--adm-ink-mute)]">{data.requirements}</pre>
             </div>
           )}
-          <div className="bg-gradient-to-r from-[var(--hz-cobalt)] to-cyan-600 rounded-xl p-6 text-center">
-            <h3 className="text-xl font-bold text-white mb-2">Ready to apply?</h3>
-            <p className="text-[var(--hz-cobalt-100)] mb-4 text-sm">Join our team and help shape the future of enterprise IT.</p>
-            <button className="px-6 py-3 bg-white text-[var(--hz-cobalt)] font-semibold rounded-lg shadow-lg cursor-default text-sm">
+
+          {/* Flat re-cut of the old cobalt→cyan gradient banner. */}
+          <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6 text-center">
+            <h3 className="text-[17px] font-bold text-[var(--adm-ink)]">Ready to apply?</h3>
+            <p className="mt-1 text-sm text-[var(--adm-ink-subtle)]">Join our team and help shape the future of enterprise IT.</p>
+            <span
+              aria-hidden="true"
+              className="mt-4 inline-flex cursor-default items-center rounded-[8px] bg-[var(--adm-accent)] px-5 py-2.5 text-sm font-semibold text-white"
+            >
               Apply for this position
-            </button>
+            </span>
           </div>
         </div>
       </div>

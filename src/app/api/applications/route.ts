@@ -165,6 +165,10 @@ export async function POST(request: NextRequest) {
       coverLetter: body.coverLetter,
       source: body.source || (isPortalApplication ? "Career Portal" : "Other"),
       workAuthorization: body.workAuthorization,
+      // Visa details — both forms collect these; the client omits visaExpiry
+      // when blank, so it stays undefined rather than writing an empty string.
+      visaSponsorshipRequired: body.visaSponsorshipRequired || false,
+      visaExpiry: body.visaExpiry || undefined,
       ownership: body.ownership,
       ownershipName: body.ownershipName,
       createdBy: body.createdBy,

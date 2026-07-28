@@ -64,8 +64,17 @@ export const routeAccess: Record<string, UserRole[]> = {
   "/admin/users": [UserRole.ADMIN],
   "/admin/roles": [UserRole.ADMIN],
   "/admin/api-keys": [UserRole.ADMIN],
-  "/admin/settings": [UserRole.ADMIN],
-  "/admin/docs": ALL_STAFF,
+  // Settings is PERSONAL for every staff member (Profile / Notifications /
+  // Security); the admin-only "System" tab is gated inside the page itself
+  // (visibleTabs filter + `activeTab === "site" && isAdmin`). So the route is
+  // all-staff — locking it to ADMIN wrongly denied everyone else their own
+  // profile.
+  "/admin/settings": ALL_STAFF,
+  // Admin-only: the page itself wraps in ProtectedRoute[ADMIN] and the layout's
+  // "Developer" link is admin-gated, so ALL_STAFF here was the odd one out — a
+  // recruiter following a direct link got past the layout check only to hit the
+  // page's own guard. Both gates now agree.
+  "/admin/docs": [UserRole.ADMIN],
   "/admin/help": ALL_STAFF,
   "/admin/notifications": ALL_STAFF,
   "/hr": [UserRole.ADMIN, UserRole.HR],

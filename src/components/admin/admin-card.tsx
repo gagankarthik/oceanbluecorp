@@ -1,10 +1,13 @@
-import type { LucideIcon } from "lucide-react";
 import { tones, type Tone } from "./theme";
 import { cn } from "@/lib/utils";
 
 /**
- * Canonical admin surface — replaces the per-page repeated
- * `rounded-2xl border border-slate-200/80 bg-white shadow-sm` blocks.
+ * Canonical admin panel.
+ *
+ * Reworked from a soft 16px-radius, shadowed card to a flat business-system
+ * panel: near-square corners, a solid (not translucent) border, and no resting
+ * shadow. In a dense screen a dozen lifting cards read as a consumer dashboard;
+ * a business application wants sheets of record separated by rules.
  */
 export function AdminCard({
   className,
@@ -18,9 +21,11 @@ export function AdminCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-200/80 bg-white shadow-sm",
+        "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        // Interactive panels change border + wash instead of translating; the
+        // grid must not shift under the pointer.
         hover &&
-          "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-md",
+          "transition-colors duration-150 hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]",
         className,
       )}
     >
@@ -29,7 +34,7 @@ export function AdminCard({
   );
 }
 
-/** Section header for an AdminCard — tinted icon chip + title + optional action slot. */
+/** Section header for an AdminCard — a titled band, as in a report subsection. */
 export function AdminCardHeader({
   icon: Icon,
   title,
@@ -37,7 +42,7 @@ export function AdminCardHeader({
   count,
   action,
 }: {
-  icon?: LucideIcon;
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
   tone?: Tone;
   count?: number;
@@ -45,16 +50,16 @@ export function AdminCardHeader({
 }) {
   const t = tones[tone];
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-6 py-4">
       <div className="flex min-w-0 items-center gap-2.5">
-        {Icon && (
-          <span className={cn("grid h-7 w-7 place-items-center rounded-lg", t.bg)}>
-            <Icon className={cn("h-4 w-4", t.text)} strokeWidth={2} />
-          </span>
-        )}
-        <h3 className="truncate text-sm font-bold text-slate-900">{title}</h3>
+        {Icon && <Icon className={cn("h-[18px] w-[18px] flex-none", t.text)} strokeWidth={1.75} />}
+        <h3 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">
+          {title}
+        </h3>
         {count !== undefined && count > 0 && (
-          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{count}</span>
+          <span className="rounded-full bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-semibold tabular-nums text-[var(--adm-ink-mute)]">
+            {count}
+          </span>
         )}
       </div>
       {action}

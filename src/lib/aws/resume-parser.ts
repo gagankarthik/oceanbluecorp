@@ -81,7 +81,7 @@ export async function parseResumeBuffer(
     return {
       success: false,
       error: aborted
-        ? "Resume analysis timed out. The document may be unusually long — try again."
+        ? "Resume analysis timed out. The document may be unusually long, try again."
         : err instanceof Error
           ? err.message
           : "Failed to reach the resume extraction service.",

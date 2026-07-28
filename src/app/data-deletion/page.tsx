@@ -43,8 +43,8 @@ export default function DataDeletionPage() {
             Data deletion request
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-500">
-            You can ask us to delete the personal data we hold about you — such as your contact form
-            submissions, job application, resume, and account details — at any time.
+            You can ask us to delete the personal data we hold about you, such as your contact form
+            submissions, job application, resume, and account details, at any time.
           </p>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function DataDeletionPage() {
             <h3 className="mt-3 text-sm font-bold text-gray-900">What we delete</h3>
             <p className="mt-1 text-sm leading-relaxed text-gray-600">
               Your contact submissions, job applications, uploaded resumes, candidate profile, and any
-              account credentials — across our database and file storage.
+              account credentials, across our database and file storage.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-5">

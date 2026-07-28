@@ -14,6 +14,7 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import {
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -22,6 +23,24 @@ import {
 } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+/* Reveals animate opacity + transform ONLY. An animated `filter: blur()`
+   repaints the whole subtree every frame, which is what made these stutter on
+   scroll; transform/opacity stay on the compositor and run at 60fps. */
+
+/** True when the viewport is below `px`. Used to shorten travel distances on
+ *  phones, where a 28px rise reads as a lurch and costs more paint area. */
+function useIsNarrow(px = 640) {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${px - 1}px)`);
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [px]);
+  return narrow;
+}
 
 /* Reveal — fade + rise on scroll into view. */
 export function Reveal({
@@ -40,14 +59,20 @@ export function Reveal({
   once?: boolean;
 }) {
   const reduce = useReducedMotion();
+  const narrow = useIsNarrow();
+  const dy = narrow ? Math.min(y, 16) : y;
   const MotionTag = motion[as as keyof typeof motion] as typeof motion.div;
   return (
     <MotionTag
       className={className}
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y, filter: "blur(8px)" }}
-      whileInView={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once, margin: "-12% 0px -10% 0px" }}
-      transition={{ duration: 0.85, delay, ease: EASE }}
+      style={{ willChange: "transform, opacity" }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: dy }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once, margin: narrow ? "-8% 0px -6% 0px" : "-12% 0px -10% 0px" }}
+      transition={{
+        opacity: { duration: 0.6, delay, ease: "easeOut" },
+        y: { duration: 0.9, delay, ease: EASE },
+      }}
     >
       {children}
     </MotionTag>
@@ -66,13 +91,19 @@ export function Stagger({
   gap?: number;
   once?: boolean;
 }) {
+  const narrow = useIsNarrow();
   return (
     <motion.div
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once, margin: "-10% 0px" }}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: gap, delayChildren: 0.05 } } }}
+      viewport={{ once, margin: narrow ? "-6% 0px" : "-10% 0px" }}
+      variants={{
+        hidden: {},
+        // On phones the cards stack vertically, so a long stagger means the last
+        // card is still hidden well after it scrolls in — tighten it there.
+        show: { transition: { staggerChildren: narrow ? gap * 0.5 : gap, delayChildren: 0.05 } },
+      }}
     >
       {children}
     </motion.div>
@@ -89,12 +120,22 @@ export function StaggerItem({
   y?: number;
 }) {
   const reduce = useReducedMotion();
+  const narrow = useIsNarrow();
+  const dy = narrow ? Math.min(y, 14) : y;
   return (
     <motion.div
       className={className}
+      style={{ willChange: "transform, opacity" }}
       variants={{
-        hidden: reduce ? { opacity: 0 } : { opacity: 0, y, filter: "blur(6px)" },
-        show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.75, ease: EASE } },
+        hidden: reduce ? { opacity: 0 } : { opacity: 0, y: dy },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            opacity: { duration: 0.5, ease: "easeOut" },
+            y: { duration: 0.8, ease: EASE },
+          },
+        },
       }}
     >
       {children}
@@ -180,7 +221,11 @@ export function WordsReveal({
   delay?: number;
 }) {
   const reduce = useReducedMotion();
+  const narrow = useIsNarrow();
   const words = text.split(" ");
+  // A headline wraps to many more lines on a phone, so the same per-word delay
+  // would leave the last words arriving ~2s in. Tighten the cadence there.
+  const step = narrow ? 0.035 : 0.06;
   return (
     <span className={className}>
       {words.map((w, i) => (
@@ -189,10 +234,14 @@ export function WordsReveal({
           style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top" }}
         >
           <motion.span
-            style={{ display: "inline-block", willChange: "transform" }}
+            style={{ display: "inline-block", willChange: "transform, opacity" }}
             initial={reduce ? { opacity: 0 } : { y: "110%", opacity: 0 }}
             animate={reduce ? { opacity: 1 } : { y: "0%", opacity: 1 }}
-            transition={{ duration: 0.85, delay: delay + i * 0.06, ease: EASE }}
+            transition={{
+              duration: narrow ? 0.7 : 0.85,
+              delay: (narrow ? delay * 0.6 : delay) + i * step,
+              ease: EASE,
+            }}
           >
             {w}
           </motion.span>

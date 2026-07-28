@@ -214,19 +214,19 @@ export default function CookiesPage() {
                     <p>
                       Allow our website to remember choices you make (such as language, region, or cookie consent) and provide enhanced, more personal features. Disabling these may affect your experience.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-green-700">Optional — enabled by default</p>
+                    <p className="mt-2 text-xs font-medium text-green-700">Optional, enabled by default</p>
                   </CookieCard>
                   <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-slate-200 bg-slate-50">
                     <p>
                       Help us understand how visitors interact with our website by collecting and reporting information anonymously. We use Google Analytics 4 for this purpose. No personally identifiable information is transmitted.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-slate-600">Optional — requires consent</p>
+                    <p className="mt-2 text-xs font-medium text-slate-600">Optional, requires consent</p>
                   </CookieCard>
                   <CookieCard icon={ExternalLink} title="Marketing / Targeting" color="border-rose-100 bg-rose-50/50">
                     <p>
                       Used to deliver advertisements and track campaign performance across websites. These cookies are placed by our advertising partners to build a profile of your interests and show relevant ads.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-rose-700">Optional — requires consent</p>
+                    <p className="mt-2 text-xs font-medium text-rose-700">Optional, requires consent</p>
                   </CookieCard>
                 </div>
               </Section>
@@ -278,8 +278,8 @@ export default function CookiesPage() {
               <Section id="duration" number="05" title="Cookie Duration">
                 <P>Cookies can remain on your device for different periods of time. We use two types based on duration:</P>
                 <UL items={[
-                  <><strong className="text-gray-800">Session cookies</strong> — These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
-                  <><strong className="text-gray-800">Persistent cookies</strong> — These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
+                  <><strong className="text-gray-800">Session cookies</strong>, These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
+                  <><strong className="text-gray-800">Persistent cookies</strong>, These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
                 ]} />
               </Section>
 

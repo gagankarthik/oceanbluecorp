@@ -49,35 +49,37 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   ];
 
   return (
-    <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-32">
-      <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">
-        {/* Heading — left */}
+    <section className="relative w-full overflow-hidden border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
+      <div ref={ref} className="relative mx-auto grid max-w-7xl items-center gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">
+        {/* Heading, left */}
         <Reveal className="lg:col-span-5">
           <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-          <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
+          <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.4vw,2.75rem)] leading-[1.08] text-[var(--hz-text)] sm:mt-7">
             {content.statsHeading || "Over a decade of delivery, one accountable team."}
           </h2>
-          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
+          <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-[var(--hz-text-mute)] sm:mt-6 sm:text-[16px]">
             {content.statsSubtitle ||
-              "Headquartered in Powell, Ohio — trusted by enterprises and state government agencies across North America, held to one standard of delivery."}
+              "Headquartered in Powell, Ohio. Trusted by enterprises and state government agencies across North America, and held to one standard of delivery."}
           </p>
         </Reveal>
 
-        {/* Stat tiles — right, a connected 2×2 grid with hairline borders only */}
-        <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/40 lg:col-span-7" gap={0.1}>
+        {/* Stat tiles, right, a connected 2×2 grid with hairline borders only */}
+        <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-[var(--hz-band-line)] bg-white/70 lg:col-span-7" gap={0.1}>
           {stats.map((s, i) => (
             <StaggerItem
               key={s.label}
-              className={`group p-4 transition-colors duration-300 hover:bg-white sm:p-8 ${
-                i % 2 === 0 ? "border-r border-slate-200/80" : ""
-              } ${i < 2 ? "border-b border-slate-200/80" : ""}`}
+              className={`group p-5 transition-colors duration-300 hover:bg-white sm:p-8 ${
+                i % 2 === 0 ? "border-r border-[var(--hz-band-line)]" : ""
+              } ${i < 2 ? "border-b border-[var(--hz-band-line)]" : ""}`}
             >
-              <p className="hz-display hz-tnum text-[2.15rem] leading-none text-[var(--hz-text)] sm:text-[3.25rem]">
+              <p className="hz-display hz-tnum text-[clamp(2rem,6vw,3.25rem)] leading-none text-[var(--hz-text)]">
                 <Counter target={s.value} run={inView} />
                 <span className="text-[var(--hz-amber)]">{s.suffix}</span>
               </p>
-              <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)]">{s.label}</p>
-              <p className="mt-1.5 text-[13px] leading-snug text-[var(--hz-text-mute)]">{s.sub}</p>
+              <p className="mt-3.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)] sm:text-[13px]">
+                {s.label}
+              </p>
+              <p className="mt-1.5 text-[12.5px] leading-snug text-[var(--hz-text-mute)] sm:text-[13px]">{s.sub}</p>
             </StaggerItem>
           ))}
         </Stagger>

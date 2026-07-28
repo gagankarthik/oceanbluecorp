@@ -4,30 +4,30 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft, User2, MapPin, Briefcase, Shield, FileText,
-  Plus, X, Loader2, AlertTriangle, BookmarkPlus,
-  BookmarkCheck, ChevronRight, Upload, File, ExternalLink, Star,
+  ArrowLeft, Plus, X, Loader2, ExternalLink,
 } from "lucide-react";
+import {
+  IconUser, IconLocation, IconJob, IconShield, IconFile, IconPipeline,
+  IconWarning, IconUpload, IconStar, IconUserPlus, IconSave,
+} from "@/components/admin/icons";
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { statusMeta, SOURCE_OPTIONS, US_STATES, type AppStatus } from "@/components/admin/theme";
-import { FormSection, Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
+import {
+  PIPELINE_STAGES, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS,
+  WORK_AUTH_OPTIONS, WORK_AUTH_GROUPS, workAuthExpires, workAuthNeedsSponsorship,
+  type AppStatus,
+} from "@/components/admin/theme";
+import { PageHeader } from "@/components/admin/page-header";
+import { WorkspaceButton } from "@/components/admin/workspace";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
 import { StarRating } from "@/components/admin/star-rating";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-const VISA_OPTIONS = [
-  "US Citizen", "Green Card", "H1-B", "H4 EAD", "OPT", "CPT",
-  "TN Visa", "E3 Visa", "L1 Visa", "O1 Visa", "Other",
-];
+/** Ties the header / action-bar submit buttons to the form they sit outside of. */
+const FORM_ID = "applicant-form";
 
-const COMMON_SKILLS = [
-  "React", "TypeScript", "JavaScript", "Node.js", "Python", "Java",
-  "C#", ".NET", "AWS", "Azure", "GCP", "SQL", "PostgreSQL", "MongoDB",
-  "Docker", "Kubernetes", "SAP", "Salesforce", "Oracle", "Excel",
-  "Power BI", "Tableau", "Agile", "Scrum",
-];
-
-const PIPELINE_OPTIONS: AppStatus[] = ["pending", "reviewing", "submitted", "interview", "offered", "hired"];
 
 function NewApplicationInner() {
   const router = useRouter();
@@ -156,6 +156,8 @@ function NewApplicationInner() {
         jobTitle:          jobTitle  || job?.title || undefined,
         source:            source    || undefined,
         workAuthorization: workAuth  || undefined,
+        visaSponsorshipRequired: needsSponsorship,
+        ...(visaExpiry && { visaExpiry }),
         city, state, skills, experience, notes,
         rating: rating || undefined,
         addToTalentBench,
@@ -181,130 +183,93 @@ function NewApplicationInner() {
     }
   };
 
-  const isPermanent = ["US Citizen", "Green Card"].includes(workAuth);
+  // Sponsorship and expiry are properties of the authorization type, so they
+  // come from the shared table rather than a hardcoded pair of values.
+  const isPermanent = !workAuthNeedsSponsorship(workAuth);
+  const showExpiry  = workAuthExpires(workAuth);
+  const busy = submitting || resumeUploading;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="space-y-5">
 
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Link href="/admin/applications" className="hover:text-[var(--hz-cobalt)] transition-colors font-medium">Applications</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-700 font-semibold">New Applicant</span>
-          </div>
-        </div>
+      <PageHeader
+        title="New Applicant"
+        subtitle="Create a candidate record and place it on the pipeline"
+        icon={IconUserPlus}
+        meta={jobId && jobTitle ? (
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2 py-1 text-[12px] font-semibold text-[var(--adm-accent)]">
+            <IconJob className="h-3.5 w-3.5 flex-none" />
+            <span className="truncate">Applying for {jobTitle}</span>
+            <Link
+              href={`/admin/jobs/${jobId}`}
+              className="inline-flex flex-none items-center gap-1 border-l border-[var(--adm-line)] pl-1.5 hover:underline"
+            >
+              View job<ExternalLink className="h-3 w-3" />
+            </Link>
+          </span>
+        ) : undefined}
+        // Save and Cancel are in the anchored bar at the foot of the form
+        // and were ALSO repeated up here, so a long form offered two
+        // identical commits at once. Only the back link stays.
+        actions={
+          <WorkspaceButton type="button" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />Back
+          </WorkspaceButton>
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin/applications"
-            className="px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || resumeUploading}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]"
-          >
-            {(submitting || resumeUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
-            {resumeUploading ? "Uploading…" : "Add Applicant"}
-          </button>
-        </div>
-      </div>
-
-      {/* Page title */}
-      <div className="flex items-start gap-3">
-        <div className="hidden sm:flex w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] items-center justify-center flex-shrink-0">
-          <User2 className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" strokeWidth={2} />
-        </div>
-        <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-slate-900 leading-tight">Add New Applicant</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Fill in the details below to create a new candidate record.</p>
-        </div>
-      </div>
-
-      {/* Job context banner — shown when navigating from a specific job */}
-      {jobId && jobTitle && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-[var(--hz-cobalt-100)]/60 border border-[var(--hz-cobalt-100)] rounded-xl">
-          <div className="w-8 h-8 bg-[var(--hz-cobalt-100)] rounded-lg flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-4 h-4 text-[var(--hz-cobalt)]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-[var(--hz-cobalt)] uppercase tracking-wider">Applying for</p>
-            <p className="text-sm font-semibold text-[var(--hz-cobalt)] truncate">{jobTitle}</p>
-          </div>
-          <Link
-            href={`/admin/jobs/${jobId}`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--hz-cobalt)] hover:gap-1.5 transition-all flex-shrink-0"
-          >
-            View job <ExternalLink className="w-3 h-3" />
-          </Link>
-        </div>
-      )}
-
-      {/* Error banner */}
       {error && (
-        <div className="flex items-start gap-2.5 p-4 bg-rose-50 border border-rose-200 rounded-xl">
-          <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-rose-700">{error}</p>
+        <div role="alert" className="flex items-start gap-2.5 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+          <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger)]" aria-hidden="true" />
+          <p className="text-sm text-[var(--adm-danger)]">{error}</p>
         </div>
       )}
 
-      {/* ── Body grid ── */}
-      <div className="grid lg:grid-cols-3 gap-5 items-start">
+      <form id={FORM_ID} onSubmit={handleSubmit} className="grid items-start gap-4 lg:grid-cols-3">
 
-        {/* ── Left column (main) ── */}
-        <div className="lg:col-span-2 space-y-5">
+        {/* ── Primary record ── */}
+        <div className="space-y-4 lg:col-span-2">
 
-          {/* Personal Info */}
-          <FormSection icon={User2} title="Personal Information">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="First Name" required>
-                <FormInput value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" autoFocus />
+          <AdminCard>
+            <AdminCardHeader icon={IconUser} title="Candidate details" />
+            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
+              <Field label="First name" required htmlFor="firstName">
+                <FormInput id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" autoFocus />
               </Field>
-              <Field label="Last Name">
-                <FormInput value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" />
+              <Field label="Last name" htmlFor="lastName">
+                <FormInput id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" />
               </Field>
-              <Field label="Email Address" required>
-                <FormInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
+              <Field label="Email address" required htmlFor="email">
+                <FormInput id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
               </Field>
-              <Field label="Phone Number">
-                <FormInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+              <Field label="Phone number" htmlFor="phone">
+                <FormInput id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
               </Field>
             </div>
-          </FormSection>
+          </AdminCard>
 
-          {/* Location */}
-          <FormSection icon={MapPin} title="Location">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="City">
-                <FormInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="Austin" />
+          <AdminCard>
+            <AdminCardHeader icon={IconLocation} title="Location" />
+            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
+              <Field label="City" htmlFor="city">
+                <FormInput id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Austin" />
               </Field>
-              <Field label="State">
-                <FormSelect value={state} onChange={(e) => setState(e.target.value)}>
+              <Field label="State" htmlFor="state">
+                <FormSelect id="state" value={state} onChange={(e) => setState(e.target.value)}>
                   <option value="">Select state…</option>
-                  {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {US_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                 </FormSelect>
               </Field>
             </div>
-          </FormSection>
+          </AdminCard>
 
-          {/* Skills & Experience */}
-          <FormSection icon={Briefcase} title="Skills & Experience">
-            <div className="space-y-5">
-              <Field label="Skills">
+          <AdminCard>
+            <AdminCardHeader icon={IconJob} title="Skills & experience" count={skills.length} />
+            <div className="space-y-5 p-5">
+              <Field label="Skills" htmlFor="skillInput" helper="Press Enter or comma to add">
                 <div className="flex gap-2">
                   <FormInput
+                    id="skillInput"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -317,9 +282,9 @@ function NewApplicationInner() {
                     type="button"
                     onClick={() => addSkill(skillInput)}
                     aria-label="Add skill"
-                    className="px-3 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition flex-shrink-0"
+                    className="flex-none rounded-[8px] bg-[var(--adm-accent)] px-3 text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
                   >
-                    <Plus className="w-4 h-4" aria-hidden="true" />
+                    <Plus className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </Field>
@@ -327,10 +292,15 @@ function NewApplicationInner() {
               {skills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {skills.map((s) => (
-                    <span key={s} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-semibold rounded-full">
+                    <span key={s} className="inline-flex items-center gap-1 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] py-1 pl-2.5 pr-1.5 text-xs font-semibold text-[var(--adm-accent)]">
                       {s}
-                      <button type="button" aria-label="Remove skill" onClick={() => setSkills((p) => p.filter((x) => x !== s))} className="p-0.5 hover:bg-[var(--hz-cobalt)]/15 rounded-full transition-colors">
-                        <X className="w-3 h-3" aria-hidden="true" />
+                      <button
+                        type="button"
+                        aria-label={`Remove ${s}`}
+                        onClick={() => setSkills((p) => p.filter((x) => x !== s))}
+                        className="rounded-[4px] p-0.5 transition-colors hover:bg-[var(--adm-surface)]/70"
+                      >
+                        <X className="h-3 w-3" aria-hidden="true" />
                       </button>
                     </span>
                   ))}
@@ -338,19 +308,24 @@ function NewApplicationInner() {
               )}
 
               <div>
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Quick add</p>
+                <p className="mb-2 text-[11.5px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Quick add</p>
                 <div className="flex flex-wrap gap-1.5">
                   {COMMON_SKILLS.filter((s) => !skills.includes(s)).map((s) => (
-                    <button key={s} type="button" onClick={() => addSkill(s)}
-                      className="px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)] rounded-full border border-slate-200 hover:border-[var(--hz-cobalt-100)] transition-colors">
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => addSkill(s)}
+                      className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1 text-xs text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]"
+                    >
                       + {s}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <Field label="Experience Summary">
+              <Field label="Experience summary" htmlFor="experience">
                 <FormTextarea
+                  id="experience"
                   rows={4}
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
@@ -358,53 +333,58 @@ function NewApplicationInner() {
                 />
               </Field>
             </div>
-          </FormSection>
+          </AdminCard>
 
-          {/* Resume */}
-          <FormSection icon={FileText} title="Resume">
-            <div className="space-y-3">
+          <AdminCard>
+            <AdminCardHeader icon={IconFile} title="Documents" />
+            <div className="space-y-3 p-5">
               {resumeFile ? (
-                <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <File className="w-4 h-4 text-emerald-600" />
+                <div className="flex items-center gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
+                  <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                    <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{resumeFile.name}</p>
+                    <p className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{(resumeFile.size / 1024).toFixed(0)} KB</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{resumeFile.name}</p>
-                    <p className="text-xs text-slate-400 tabular-nums">{(resumeFile.size / 1024).toFixed(0)} KB</p>
-                  </div>
-                  <button type="button" aria-label="Remove resume" onClick={() => setResumeFile(null)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                    <X className="w-4 h-4" aria-hidden="true" />
+                  <button
+                    type="button"
+                    aria-label="Remove resume"
+                    onClick={() => setResumeFile(null)}
+                    className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]/40 hover:bg-[var(--hz-cobalt-100)]/60 rounded-xl p-6 cursor-pointer transition-colors">
-                  <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeSelect} className="hidden" />
-                  <Upload className="w-6 h-6 text-[var(--hz-cobalt)]" />
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-slate-700">Upload resume</p>
-                    <p className="text-xs text-slate-400 mt-0.5">PDF or Word · max 5MB</p>
-                  </div>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-6 transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
+                  <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeSelect} className="sr-only" />
+                  <IconUpload className="h-5 w-5 text-[var(--adm-ink-subtle)]" />
+                  <span className="text-center">
+                    <span className="block text-sm font-semibold text-[var(--adm-ink-mute)]">Upload resume</span>
+                    <span className="mt-0.5 block text-xs text-[var(--adm-ink-subtle)]">PDF or Word · max 5MB</span>
+                  </span>
                 </label>
               )}
               {resumeError && (
-                <div className="flex items-center gap-2 p-2 bg-rose-50 border border-rose-200 rounded-lg">
-                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
-                  <p className="text-xs text-rose-600">{resumeError}</p>
-                </div>
+                <p role="alert" className="flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-2.5 py-2 text-xs text-[var(--adm-danger)]">
+                  <IconWarning className="h-3.5 w-3.5 flex-none text-[var(--adm-danger)]" aria-hidden="true" />
+                  {resumeError}
+                </p>
               )}
             </div>
-          </FormSection>
+          </AdminCard>
         </div>
 
-        {/* ── Right sidebar ── */}
-        <div className="space-y-5">
+        {/* ── Placement & assessment ── */}
+        <div className="space-y-4">
 
-          {/* Position & Pipeline */}
-          <FormSection icon={Briefcase} title="Position & Pipeline">
-            <div className="space-y-3">
-              <Field label="Job Posting">
+          <AdminCard>
+            <AdminCardHeader icon={IconPipeline} title="Position & pipeline" />
+            <div className="space-y-4 p-5">
+              <Field label="Job posting" htmlFor="jobId">
                 <FormSelect
+                  id="jobId"
                   value={jobId}
                   onChange={(e) => {
                     const j = jobs.find((x) => x.id === e.target.value);
@@ -419,126 +399,122 @@ function NewApplicationInner() {
                 </FormSelect>
               </Field>
 
-              <Field label="Pipeline Stage">
-                <FormSelect value={status} onChange={(e) => setStatus(e.target.value as AppStatus)}>
-                  {PIPELINE_OPTIONS.map((k) => (
-                    <option key={k} value={k}>{statusMeta[k].label}</option>
+              <Field label="Pipeline stage" htmlFor="status">
+                <FormSelect id="status" value={status} onChange={(e) => setStatus(e.target.value as AppStatus)}>
+                  {PIPELINE_STAGES.map((s) => (
+                    <option key={s.key} value={s.key}>{s.label}</option>
                   ))}
                 </FormSelect>
               </Field>
 
-              <Field label="Source">
-                <FormSelect value={source} onChange={(e) => setSource(e.target.value)}>
+              <Field label="Source" htmlFor="source">
+                <FormSelect id="source" value={source} onChange={(e) => setSource(e.target.value)}>
                   <option value="">Select…</option>
                   {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </FormSelect>
               </Field>
 
-              <button
-                type="button"
-                onClick={() => setAddToTalentBench((v) => !v)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all",
-                  addToTalentBench
-                    ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-white",
-                )}
+              <label
+                htmlFor="addToTalentBench"
+                className="flex cursor-pointer items-start gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5"
               >
-                {addToTalentBench
-                  ? <BookmarkCheck className="w-4 h-4" />
-                  : <BookmarkPlus  className="w-4 h-4" />}
-                {addToTalentBench ? "In talent bench" : "Add to talent bench"}
-              </button>
+                <Checkbox
+                  id="addToTalentBench"
+                  checked={addToTalentBench}
+                  onCheckedChange={(v) => setAddToTalentBench(v === true)}
+                  className="mt-0.5 border-[var(--adm-line)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]"
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-[var(--adm-ink)]">Add to talent bench</span>
+                  <span className="mt-0.5 block text-[11px] text-[var(--adm-ink-subtle)]">Keep this candidate available for future requisitions.</span>
+                </span>
+              </label>
             </div>
-          </FormSection>
+          </AdminCard>
 
-          {/* Work Authorization */}
-          <FormSection icon={Shield} title="Work Authorization">
-            <div className="space-y-3">
-              <Field label="Visa / Authorization">
-                <FormSelect value={workAuth} onChange={(e) => setWorkAuth(e.target.value)}>
+          <AdminCard>
+            <AdminCardHeader icon={IconShield} title="Work authorization" />
+            <div className="space-y-4 p-5">
+              <Field label="Visa / authorization" htmlFor="workAuth">
+                <FormSelect id="workAuth" value={workAuth} onChange={(e) => setWorkAuth(e.target.value)}>
                   <option value="">Select…</option>
-                  {VISA_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                  {WORK_AUTH_GROUPS.map((g) => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </optgroup>
+                  ))}
                 </FormSelect>
               </Field>
 
-              {workAuth && !isPermanent && (
-                <Field label="Expiry Date">
-                  <FormInput type="date" value={visaExpiry} onChange={(e) => setVisaExpiry(e.target.value)} />
+              {showExpiry && (
+                <Field label="Expiry date" htmlFor="visaExpiry">
+                  <FormInput id="visaExpiry" type="date" value={visaExpiry} onChange={(e) => setVisaExpiry(e.target.value)} className="tabular-nums" />
                 </Field>
               )}
 
-              <label className="flex items-center gap-2.5 cursor-pointer py-1">
-                <input
-                  type="checkbox"
+              <label htmlFor="needsSponsorship" className="flex cursor-pointer items-center gap-2.5">
+                <Checkbox
+                  id="needsSponsorship"
                   checked={needsSponsorship}
-                  onChange={(e) => setNeedsSponsorship(e.target.checked)}
-                  className="rounded border-slate-300 text-[var(--hz-cobalt)] w-4 h-4 flex-shrink-0"
+                  onCheckedChange={(v) => setNeedsSponsorship(v === true)}
+                  className="border-[var(--adm-line)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]"
                 />
-                <span className="text-sm text-slate-700">Requires sponsorship</span>
+                <span className="text-sm text-[var(--adm-ink-mute)]">Requires sponsorship</span>
               </label>
 
               {workAuth && (
-                <div className={cn(
-                  "rounded-xl p-3 text-xs leading-relaxed",
+                <p className={cn(
+                  "rounded-[6px] border p-3 text-xs leading-relaxed",
                   isPermanent
-                    ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-                    : "bg-amber-50 border border-amber-200 text-amber-700",
+                    ? "border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] text-[var(--adm-success)]"
+                    : "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning)]",
                 )}>
                   {isPermanent
-                    ? "✓ Permanent US work authorization."
+                    ? "Permanent US work authorization."
                     : workAuth === "H1-B"
                       ? "H-1B requires employer sponsorship."
                       : ["OPT", "CPT"].includes(workAuth)
-                        ? "OPT/CPT is time-limited — verify expiry before extending an offer."
+                        ? "OPT/CPT is time-limited, verify expiry before extending an offer."
                         : "Verify authorization docs before extending an offer."}
-                </div>
+                </p>
               )}
             </div>
-          </FormSection>
+          </AdminCard>
 
-          {/* Rating & Notes */}
-          <FormSection icon={Star} title="Rating & Notes">
-            <div className="space-y-3">
-              <Field label="Candidate Rating">
-                <div className="flex items-center gap-1.5 py-1">
+          <AdminCard>
+            <AdminCardHeader icon={IconStar} title="Rating & notes" />
+            <div className="space-y-4 p-5">
+              <Field label="Candidate rating">
+                <div className="flex items-center gap-2 py-1">
                   <StarRating rating={rating} onRate={(n) => setRating(n === rating ? 0 : n)} size="lg" />
-                  {rating > 0 && <span className="text-xs text-slate-400 ml-1 tabular-nums">{rating}/5</span>}
+                  <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{rating > 0 ? `${rating}/5` : "—"}</span>
                 </div>
               </Field>
 
-              <Field label="Internal Notes">
+              <Field label="Internal notes" htmlFor="notes" helper="Visible to staff only">
                 <FormTextarea
+                  id="notes"
                   rows={5}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Interview impressions, concerns, next steps… (internal only)"
+                  placeholder="Interview impressions, concerns, next steps…"
                 />
               </Field>
             </div>
-          </FormSection>
+          </AdminCard>
         </div>
-      </div>
+      </form>
 
-      {/* Bottom save bar */}
-      <div className="sticky bottom-4 flex justify-end">
-        <div className="bg-white/90 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg px-4 py-3 flex items-center gap-3">
-          {error && (
-            <p className="text-xs text-rose-600 font-medium">{error}</p>
-          )}
-          <Link href="/admin/applications" className="px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
-            Cancel
-          </Link>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || resumeUploading}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--hz-cobalt)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]"
-          >
-            {(submitting || resumeUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
-            {resumeUploading ? "Uploading…" : "Add Applicant"}
-          </button>
-        </div>
+      {/* ── Anchored action bar — Save stays reachable on a long form ── */}
+      <div className="sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/90 px-5 py-3 backdrop-blur lg:-mx-6 lg:-mb-6 lg:px-6">
+        {error && <p className="mr-auto text-[13px] font-medium text-[var(--adm-danger)]">{error}</p>}
+        <WorkspaceButton type="button" onClick={() => router.push("/admin/applications")}>
+          Cancel
+        </WorkspaceButton>
+        <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={busy}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSave className="h-4 w-4" />}
+          {resumeUploading ? "Uploading…" : "Add Applicant"}
+        </WorkspaceButton>
       </div>
     </div>
   );

@@ -29,10 +29,10 @@ function Chips({ items, tone = "cobalt" }: { items?: string[]; tone?: "cobalt" |
         <span
           key={`${it}-${i}`}
           className={cn(
-            "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
+            "inline-flex items-center px-2.5 py-1 rounded-[4px] text-xs font-medium",
             tone === "cobalt"
-              ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-              : "bg-slate-100 text-slate-600",
+              ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+              : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
           )}
         >
           {it}
@@ -45,9 +45,9 @@ function Chips({ items, tone = "cobalt" }: { items?: string[]; tone?: "cobalt" |
 function Stat({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-3">
-      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
-      <p className="mt-0.5 text-sm font-bold text-slate-900">{value}</p>
+    <div className="rounded-[4px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3.5 py-3">
+      <p className="text-[11px] font-semibold text-[var(--adm-ink-subtle)] uppercase tracking-wider">{label}</p>
+      <p className="mt-0.5 text-sm font-bold text-[var(--adm-ink)]">{value}</p>
     </div>
   );
 }
@@ -81,18 +81,18 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
   const range = dateRange(w.start_date, w.end_date, w.is_current);
   return (
     <li className="relative pl-6 pb-5 last:pb-0">
-      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--hz-cobalt)] ring-4 ring-[var(--hz-cobalt-100)]" />
-      <span className="absolute left-[5px] top-4 bottom-0 w-px bg-slate-100 last:hidden" />
+      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--adm-accent)] ring-4 ring-[var(--adm-accent-soft)]" />
+      <span className="absolute left-[5px] top-4 bottom-0 w-px bg-[var(--adm-line-soft)] last:hidden" />
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-900">{w.job_title || "Role"}</p>
-          <p className="text-sm text-slate-600 flex items-center gap-1.5 flex-wrap">
-            {w.company_name && <span className="inline-flex items-center gap-1"><Building2 className="w-3.5 h-3.5 text-slate-400" />{w.company_name}</span>}
-            {w.location && <span className="inline-flex items-center gap-1 text-slate-400"><MapPin className="w-3 h-3" />{w.location}</span>}
+          <p className="text-sm font-bold text-[var(--adm-ink)]">{w.job_title || "Role"}</p>
+          <p className="text-sm text-[var(--adm-ink-mute)] flex items-center gap-1.5 flex-wrap">
+            {w.company_name && <span className="inline-flex items-center gap-1"><Building2 className="w-3.5 h-3.5 text-[var(--adm-ink-subtle)]" />{w.company_name}</span>}
+            {w.location && <span className="inline-flex items-center gap-1 text-[var(--adm-ink-subtle)]"><MapPin className="w-3 h-3" />{w.location}</span>}
           </p>
         </div>
         {range && (
-          <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 tabular-nums flex-shrink-0">
+          <span className="inline-flex items-center gap-1 text-[11px] text-[var(--adm-ink-subtle)] tabular-nums flex-shrink-0">
             <Calendar className="w-3 h-3" />{range}
           </span>
         )}
@@ -100,7 +100,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       {!!(w.responsibilities && w.responsibilities.length) && (
         <ul className="mt-2 space-y-1">
           {w.responsibilities.map((r, i) => (
-            <li key={i} className="text-xs text-slate-600 leading-relaxed pl-3.5 relative before:absolute before:left-0 before:top-[7px] before:h-1 before:w-1 before:rounded-full before:bg-slate-300">
+            <li key={i} className="text-xs text-[var(--adm-ink-mute)] leading-relaxed pl-3.5 relative before:absolute before:left-0 before:top-[7px] before:h-1 before:w-1 before:rounded-full before:bg-[var(--adm-line-strong)]">
               {r}
             </li>
           ))}
@@ -109,7 +109,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       {!!(w.achievements && w.achievements.length) && (
         <ul className="mt-2 space-y-1">
           {w.achievements.map((a, i) => (
-            <li key={i} className="text-xs text-emerald-700 leading-relaxed pl-4 relative before:absolute before:left-0 before:top-0 before:content-['★'] before:text-[9px]">
+            <li key={i} className="text-xs text-[var(--adm-success)] leading-relaxed pl-4 relative before:absolute before:left-0 before:top-0 before:content-['★'] before:text-[9px]">
               {a}
             </li>
           ))}
@@ -126,17 +126,17 @@ function EduEntry({ e }: { e: ResumeEducation }) {
   const range = dateRange(e.start_date, e.end_date, e.is_current);
   const degree = [e.degree_type || e.degree, e.field_of_study || e.major].filter(Boolean).join(", ");
   return (
-    <li className="flex items-start justify-between gap-3 py-2.5 border-b border-slate-50 last:border-0">
+    <li className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--adm-line-soft)] last:border-0">
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-900">{e.institution_name || "Institution"}</p>
-        {degree && <p className="text-xs text-slate-600 mt-0.5">{degree}</p>}
+        <p className="text-sm font-semibold text-[var(--adm-ink)]">{e.institution_name || "Institution"}</p>
+        {degree && <p className="text-xs text-[var(--adm-ink-mute)] mt-0.5">{degree}</p>}
         {(e.gpa || e.grade || e.percentage) && (
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-[var(--adm-ink-subtle)] mt-0.5">
             {e.gpa ? `GPA ${e.gpa}` : e.percentage ? `${e.percentage}%` : e.grade}
           </p>
         )}
       </div>
-      {range && <span className="text-[11px] text-slate-400 tabular-nums flex-shrink-0">{range}</span>}
+      {range && <span className="text-[11px] text-[var(--adm-ink-subtle)] tabular-nums flex-shrink-0">{range}</span>}
     </li>
   );
 }
@@ -171,7 +171,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
           </div>
           {!!(a.job_functions && a.job_functions.length) && (
             <div className="px-4 pb-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Job functions</p>
+              <p className="text-[11px] font-semibold text-[var(--adm-ink-subtle)] uppercase tracking-wider mb-2">Job functions</p>
               <Chips items={a.job_functions} tone="slate" />
             </div>
           )}
@@ -184,10 +184,10 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
           <AdminCardHeader icon={Sparkles} title="Professional summary" tone="blue" />
           <div className="px-5 py-4 space-y-3">
             {analysis.professional_summary && (
-              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{analysis.professional_summary}</p>
+              <p className="text-sm text-[var(--adm-ink-mute)] leading-relaxed whitespace-pre-line">{analysis.professional_summary}</p>
             )}
             {analysis.objective && (
-              <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-line italic">{analysis.objective}</p>
+              <p className="text-sm text-[var(--adm-ink-subtle)] leading-relaxed whitespace-pre-line italic">{analysis.objective}</p>
             )}
           </div>
         </AdminCard>
@@ -212,7 +212,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
             {skills?.categories && skills.categories.length > 0 ? (
               skills.categories.map((c, i) => (
                 <div key={i}>
-                  {c.name && <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">{c.name}</p>}
+                  {c.name && <p className="text-[11px] font-semibold text-[var(--adm-ink-subtle)] uppercase tracking-wider mb-1.5">{c.name}</p>}
                   <Chips items={c.skills} />
                 </div>
               ))
@@ -222,7 +222,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
                 if (!items.length) return null;
                 return (
                   <div key={g.key}>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">{g.label}</p>
+                    <p className="text-[11px] font-semibold text-[var(--adm-ink-subtle)] uppercase tracking-wider mb-1.5">{g.label}</p>
                     <Chips items={items} />
                   </div>
                 );
@@ -253,13 +253,13 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
           <div className="px-5 py-2">
             <ul>
               {certs.map((c, i) => (
-                <li key={i} className="flex items-start justify-between gap-3 py-2.5 border-b border-slate-50 last:border-0">
+                <li key={i} className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--adm-line-soft)] last:border-0">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{c.name}</p>
-                    {c.issuing_organization && <p className="text-xs text-slate-500 mt-0.5">{c.issuing_organization}</p>}
+                    <p className="text-sm font-semibold text-[var(--adm-ink)]">{c.name}</p>
+                    {c.issuing_organization && <p className="text-xs text-[var(--adm-ink-subtle)] mt-0.5">{c.issuing_organization}</p>}
                   </div>
                   {(c.issue_date || c.expiry_date) && (
-                    <span className="text-[11px] text-slate-400 tabular-nums flex-shrink-0">
+                    <span className="text-[11px] text-[var(--adm-ink-subtle)] tabular-nums flex-shrink-0">
                       {dateRange(c.issue_date, c.expiry_date)}
                     </span>
                   )}
@@ -278,16 +278,16 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
             {projects.map((p, i) => (
               <div key={i} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm font-bold text-slate-900">{p.name}</p>
+                  <p className="text-sm font-bold text-[var(--adm-ink)]">{p.name}</p>
                   {dateRange(p.start_date, p.end_date, p.is_current) && (
-                    <span className="text-[11px] text-slate-400 tabular-nums">{dateRange(p.start_date, p.end_date, p.is_current)}</span>
+                    <span className="text-[11px] text-[var(--adm-ink-subtle)] tabular-nums">{dateRange(p.start_date, p.end_date, p.is_current)}</span>
                   )}
                 </div>
-                {p.description && <p className="text-xs text-slate-600 leading-relaxed">{p.description}</p>}
+                {p.description && <p className="text-xs text-[var(--adm-ink-mute)] leading-relaxed">{p.description}</p>}
                 {!!(p.highlights && p.highlights.length) && (
                   <ul className="space-y-1">
                     {p.highlights.map((h, j) => (
-                      <li key={j} className="text-xs text-slate-600 pl-3.5 relative before:absolute before:left-0 before:top-[7px] before:h-1 before:w-1 before:rounded-full before:bg-slate-300">{h}</li>
+                      <li key={j} className="text-xs text-[var(--adm-ink-mute)] pl-3.5 relative before:absolute before:left-0 before:top-[7px] before:h-1 before:w-1 before:rounded-full before:bg-[var(--adm-line-strong)]">{h}</li>
                     ))}
                   </ul>
                 )}
@@ -307,9 +307,9 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               <div className="px-5 py-2">
                 <ul>
                   {awards.map((aw, i) => (
-                    <li key={i} className="py-2 border-b border-slate-50 last:border-0">
-                      <p className="text-sm font-semibold text-slate-900">{aw.title}</p>
-                      {(aw.issuer || aw.date) && <p className="text-xs text-slate-500 mt-0.5">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>}
+                    <li key={i} className="py-2 border-b border-[var(--adm-line-soft)] last:border-0">
+                      <p className="text-sm font-semibold text-[var(--adm-ink)]">{aw.title}</p>
+                      {(aw.issuer || aw.date) && <p className="text-xs text-[var(--adm-ink-subtle)] mt-0.5">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>}
                     </li>
                   ))}
                 </ul>
@@ -321,9 +321,9 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               <AdminCardHeader icon={LanguagesIcon} title="Languages" count={langs.length} />
               <div className="px-5 py-3 flex flex-wrap gap-2">
                 {langs.map((l, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                    <span className="font-semibold text-slate-800">{l.language}</span>
-                    {l.proficiency && <span className="text-slate-400">{l.proficiency}</span>}
+                  <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[var(--adm-surface-sunken)] border border-[var(--adm-line)] text-xs">
+                    <span className="font-semibold text-[var(--adm-ink)]">{l.language}</span>
+                    {l.proficiency && <span className="text-[var(--adm-ink-subtle)]">{l.proficiency}</span>}
                   </span>
                 ))}
               </div>

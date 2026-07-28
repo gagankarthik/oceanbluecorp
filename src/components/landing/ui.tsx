@@ -9,14 +9,28 @@ import type { ReactNode } from "react";
    - Cta     : button-in-button pill with magnetic hover physics
    ============================================================ */
 
-/* Kicker labels removed site-wide per design direction — Eyebrow renders nothing.
-   (Kept as a no-op so existing call sites don't break.) */
-export function Eyebrow(_props: {
+/* Section kicker. This was stubbed out to `return null`, which left ~27 call
+   sites rendering nothing while their siblings kept the `mt-6`/`mt-7` spacing
+   meant to sit below a label — so pages opened with a band of dead space. It
+   now renders the same mono kicker the landing sections use. */
+export function Eyebrow({
+  children,
+  tone = "light",
+  className = "",
+}: {
   children: ReactNode;
   tone?: "light" | "dark";
   className?: string;
 }) {
-  return null;
+  return (
+    <span
+      className={`hz-eyebrow block ${
+        tone === "dark" ? "text-white/60" : "text-[var(--hz-amber)]"
+      } ${className}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function Bezel({

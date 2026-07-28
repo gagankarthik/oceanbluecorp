@@ -1,46 +1,14 @@
 "use client";
-import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Download,
-  Mail,
-  Phone,
-  FileText,
-  Eye,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Star,
-  Briefcase,
-  Loader2,
-  LayoutGrid,
-  LayoutList,
-  User,
-  Trash2,
-  Edit3,
-  Boxes,
-  History,
-  MapPin,
-  Shield,
-  Plus,
-  ArrowLeft,
-  X,
-  Upload,
-  File,
-  AlertCircle,
-} from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { toast } from "sonner";
+import { ArrowLeft, LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import BenchLoading from "./loading";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -48,8 +16,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { AdminCard } from "@/components/admin/admin-card";
+import {
+  ViewMenu,
+} from "@/components/admin/toolbar";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { StarRating } from "@/components/admin/star-rating";
+import { Avatar } from "@/components/admin/avatar";
+import { EmptyState } from "@/components/admin/empty-state";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { InlineSelect, Empty as BlankCell } from "@/components/admin/list-panel";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import {
+  statusMeta, tones, US_STATES, normalizeState,
+  WORK_AUTH_OPTIONS, SOURCE_OPTIONS, type AppStatus,
+} from "@/components/admin/theme";
+import {
+  IconAlert, IconBoxes, IconConversion, IconDownload, IconEdit, IconEye,
+  IconFile, IconHistory, IconJob, IconLocation, IconMail, IconPhone,
+  IconPipeline, IconShield, IconSuccess, IconTrash, IconUpload, IconUser,
+  IconWarning,
+} from "@/components/admin/icons";
+
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { fmtDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
+import { cn } from "@/lib/utils";
+
+// ── types ────────────────────────────────────────────────────────────────────
 
 interface ApplicationWithJob extends Application {
   jobDepartment?: string;
@@ -58,68 +58,6 @@ interface ApplicationWithJob extends Application {
   resumeFileKey?: string;
 }
 
-const statusConfig = {
-  pending: {
-    label: "Pending",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    dotColor: "bg-amber-500",
-  },
-  reviewing: {
-    label: "Reviewing",
-    color: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] border-[var(--hz-cobalt-100)]",
-    dotColor: "bg-[var(--hz-cobalt)]",
-  },
-  submitted: {
-    label: "Submitted",
-    color: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    dotColor: "bg-indigo-500",
-  },
-  interview: {
-    label: "Interview",
-    color: "bg-purple-50 text-purple-700 border-purple-200",
-    dotColor: "bg-purple-500",
-  },
-  offered: {
-    label: "Offered",
-    color: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    dotColor: "bg-cyan-500",
-  },
-  hired: {
-    label: "Hired",
-    color: "bg-green-50 text-green-700 border-green-200",
-    dotColor: "bg-green-500",
-  },
-  rejected: {
-    label: "Rejected",
-    color: "bg-red-50 text-red-700 border-red-200",
-    dotColor: "bg-red-500",
-  },
-  active: {
-    label: "Active",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dotColor: "bg-emerald-500",
-  },
-  inactive: {
-    label: "Inactive",
-    color: "bg-slate-50 text-slate-700 border-slate-200",
-    dotColor: "bg-slate-500",
-  },
-};
-
-const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
-
-type ViewMode = "table" | "cards";
-type PageMode = "list" | "create" | "edit" | "view";
-
 interface CognitoUser {
   id: string;
   email: string;
@@ -127,12 +65,82 @@ interface CognitoUser {
   role: string;
 }
 
+type ViewMode = "table" | "cards";
+type PageMode = "list" | "create" | "edit" | "view";
+
+// ── config ───────────────────────────────────────────────────────────────────
+
+/**
+ * The stages a bench record can sit in.
+ *
+ * There used to be three disagreeing copies of this list on the page — the row
+ * select carried seven stages, the filter dropdown dropped "inactive", and the
+ * create form dropped "hired" — so a candidate could be set to a state the
+ * filter could never find again. One list now feeds the tabs, the row select,
+ * the detail select and the form.
+ */
+const BENCH_STATUSES = [
+  "active", "pending", "reviewing", "submitted", "interview", "hired", "inactive",
+] as const;
+
+const STATUS_TABS = [
+  { key: "all", label: "All" },
+  ...BENCH_STATUSES.map((s) => ({ key: s as string, label: statusMeta[s].label })),
+];
+
+// These used to be narrower private lists, because the Application unions were
+// narrower than the theme lists and the write path cast around the mismatch.
+// Both unions have since been widened to match the pickers, so the shared lists
+// are now the correct source and a third copy is just drift waiting to happen.
+const WORK_AUTH_CHOICES = WORK_AUTH_OPTIONS as NonNullable<Application["workAuthorization"]>[];
+const SOURCE_CHOICES = SOURCE_OPTIONS as NonNullable<Application["source"]>[];
+
+/**
+ * A bench record's state as a canonical 2-letter code, for grouping, export and
+ * display. Legacy rows stored the full name ("Texas"), so everything that reads
+ * `state` goes through here to land in the same bucket as a row saved as "TX".
+ * Anything `normalizeState` doesn't recognise passes through untouched rather
+ * than disappearing.
+ */
+function stateOf(value?: string | null): string {
+  return normalizeState(value) || value || "";
+}
+
+const selectCls =
+  "w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-sm text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
+
+const textareaCls =
+  "w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink-mute)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] resize-none";
+
+const skillChip =
+  "inline-flex items-center gap-1 rounded-[4px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--adm-accent)]";
+
+/** How long a record has been sitting on the bench, in whole days. */
+function daysOnBench(app: Application): number | null {
+  const d = new Date(app.createdAt || app.appliedAt);
+  if (isNaN(d.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+
+/** Section heading inside the create/edit form. */
+function SectionTitle({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
+  return (
+    <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+      <Icon className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />
+      {children}
+    </h3>
+  );
+}
+
+// ── page ─────────────────────────────────────────────────────────────────────
+
 export default function TalentBenchPage() {
   const { user, hasRole } = useAuth();
   const isAdmin = hasRole(UserRole.ADMIN);
-  const router = useRouter();
+
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // Jobs are fetched only to resolve each bench record's job title/department.
+  const [, setJobs] = useState<Job[]>([]);
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,20 +151,23 @@ export default function TalentBenchPage() {
   const [authFilter, setAuthFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
-  const [showFilters, setShowFilters] = useState(false);
+
+  const debouncedSearch = useDebouncedValue(searchQuery, 250);
 
   // Form states
   const [pageMode, setPageMode] = useState<PageMode>("list");
   const [selectedApplication, setSelectedApplication] = useState<ApplicationWithJob | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [hoverRating, setHoverRating] = useState(0);
   const [skillInput, setSkillInput] = useState("");
 
   // Resume upload states
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeFile, setResumeFile] = useState<globalThis.File | null>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [existingResume, setExistingResume] = useState<{ id: string; fileName: string } | null>(null);
+
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -183,14 +194,12 @@ export default function TalentBenchPage() {
     resumeFileKey: "",
   });
 
-  useEffect(() => {
-    fetchData();
-    fetchUsers();
-  }, []);
+  // ── data ──────────────────────────────────────────────────────────────────
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [appsResponse, jobsResponse] = await Promise.all([
         fetch("/api/applications"),
         fetch("/api/jobs"),
@@ -231,9 +240,9 @@ export default function TalentBenchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch("/api/users");
       const data = await response.json();
@@ -245,46 +254,114 @@ export default function TalentBenchPage() {
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
-  };
+  }, []);
 
-  const allSkills = [...new Set(applications.flatMap((a) => a.skills || []))];
-  const workAuthorizations = [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[];
+  useEffect(() => {
+    void fetchData();
+    void fetchUsers();
+  }, [fetchData, fetchUsers]);
+
+  // ── derived ───────────────────────────────────────────────────────────────
+
+  const allSkills = useMemo(
+    () => [...new Set(applications.flatMap((a) => a.skills || []))].sort(),
+    [applications],
+  );
+  const workAuthorizations = useMemo(
+    () => [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[],
+    [applications],
+  );
 
   // Resolve who added a bench entry (benchAddedBy/createdBy holds an email or id).
-  const addedByIndex = new Map<string, CognitoUser>();
-  for (const u of allUsers) {
-    if (u.email) addedByIndex.set(u.email.toLowerCase(), u);
-    if (u.id) addedByIndex.set(u.id, u);
-  }
-  const resolveAdder = (app: ApplicationWithJob): { name: string; role?: string } => {
+  const addedByIndex = useMemo(() => {
+    const index = new Map<string, CognitoUser>();
+    for (const u of allUsers) {
+      if (u.email) index.set(u.email.toLowerCase(), u);
+      if (u.id) index.set(u.id, u);
+    }
+    return index;
+  }, [allUsers]);
+
+  const resolveAdder = useCallback((app: ApplicationWithJob): { name: string; role?: string } => {
     const key = (app.benchAddedBy || app.createdBy || "").toString();
     const u = addedByIndex.get(key.toLowerCase()) || addedByIndex.get(key);
     const name = u?.name || app.createdByName || (key.includes("@") ? key.split("@")[0] : "") || "Unknown";
     return { name, role: u?.role };
-  };
-  // Admins can browse the whole team's bench; this powers the "Added by" filter.
-  const adderNames = isAdmin
-    ? [...new Set(applications.map((a) => resolveAdder(a).name).filter(Boolean))].sort()
-    : [];
+  }, [addedByIndex]);
 
-  const filteredApplications = applications.filter((app) => {
-    const myEmail = user?.email;
-    const myId    = user?.id;
+  // Admins can browse the whole team's bench; this powers the "Added by" filter.
+  const adderNames = useMemo(
+    () => (isAdmin
+      ? [...new Set(applications.map((a) => resolveAdder(a).name).filter(Boolean))].sort()
+      : []),
+    [isAdmin, applications, resolveAdder],
+  );
+
+  /**
+   * The bench this viewer is allowed to see: admins get every team member's
+   * records, everyone else only what they themselves added. The KPI strip and
+   * the grid are built from this list, never from the raw fetch.
+   */
+  const scopedApplications = useMemo(() => applications.filter((app) => {
     const addedBy = app.benchAddedBy || app.createdBy;
-    // Admins see every team member's bench; everyone else sees only what they added.
-    const matchesOwnership = isAdmin || (!!addedBy && (addedBy === myEmail || addedBy === myId));
+    const matchesOwnership = isAdmin || (!!addedBy && (addedBy === user?.email || addedBy === user?.id));
     const matchesOwner = !isAdmin || ownerFilter === "all" || resolveAdder(app).name === ownerFilter;
-    const matchesSearch =
-      (app.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (app.applicationId?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-      (app.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-      (app.skills?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) || false);
+    return matchesOwnership && matchesOwner;
+  }), [applications, isAdmin, user?.email, user?.id, ownerFilter, resolveAdder]);
+
+  const filteredApplications = useMemo(() => scopedApplications.filter((app) => {
+    const q = debouncedSearch.toLowerCase();
+    const matchesSearch = !q
+      || [app.name, app.email, app.applicationId, app.jobTitle].some((f) => f?.toLowerCase().includes(q))
+      || (app.skills?.some((s) => s.toLowerCase().includes(q)) ?? false);
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesSkill = skillFilter === "all" || (app.skills?.includes(skillFilter) || false);
     const matchesAuth = authFilter === "all" || app.workAuthorization === authFilter;
-    return matchesOwnership && matchesOwner && matchesSearch && matchesStatus && matchesSkill && matchesAuth;
-  });
+    return matchesSearch && matchesStatus && matchesSkill && matchesAuth;
+  }), [scopedApplications, debouncedSearch, statusFilter, skillFilter, authFilter]);
+
+  const statusCounts = useMemo(
+    () => Object.fromEntries(
+      STATUS_TABS.map((t) => [
+        t.key,
+        t.key === "all" ? scopedApplications.length : scopedApplications.filter((a) => a.status === t.key).length,
+      ]),
+    ) as Record<string, number>,
+    [scopedApplications],
+  );
+
+  const kpis = useMemo(() => {
+    return {
+      total: scopedApplications.length,
+      available: scopedApplications.filter((a) => a.status === "active" || a.status === "pending").length,
+      inProcess: scopedApplications.filter((a) => ["reviewing", "submitted", "interview"].includes(a.status)).length,
+      placed: scopedApplications.filter((a) => a.status === "hired").length,
+    };
+  }, [scopedApplications]);
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.bench.density", "default");
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.bench.hiddenCols", []);
+
+  /** On the bench a month or more without moving — the re-engagement list. */
+  const staleBench = useMemo(
+    () => scopedApplications.filter(
+      (a) => (Date.now() - new Date(a.appliedAt).getTime()) / 86_400_000 >= 30,
+    ).length,
+    [scopedApplications],
+  );
+
+  const hasActiveFilters = [statusFilter, skillFilter, authFilter, ownerFilter].some((f) => f !== "all")
+    || debouncedSearch.trim() !== "";
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setSkillFilter("all");
+    setAuthFilter("all");
+    setOwnerFilter("all");
+  };
+
+  // ── mutations ─────────────────────────────────────────────────────────────
 
   const handleStatusChange = async (appId: string, newStatus: Application["status"]) => {
     try {
@@ -300,7 +377,7 @@ export default function TalentBenchPage() {
 
       if (!response.ok) throw new Error("Failed to update status");
       await fetchData();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update application status");
     }
   };
@@ -318,13 +395,10 @@ export default function TalentBenchPage() {
       setApplications((prev) =>
         prev.map((app) => (app.id === appId ? { ...app, rating } : app))
       );
-    } catch (err) {
+    } catch {
       toast.error("Failed to update rating");
     }
   };
-
-  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
-  const [removing, setRemoving] = useState(false);
 
   const performRemoveFromBench = async () => {
     if (!pendingRemove) return;
@@ -346,46 +420,31 @@ export default function TalentBenchPage() {
     }
   };
 
-  const handleExportCSV = () => {
-    const headers = [
+  const handleExportCSV = () => downloadCsv(
+    "bench",
+    [
       "App ID", "Name", "Email", "Phone", "Last Position", "Status",
-      "Work Authorization", "Skills", "Rating", "City", "State", "Has Resume", "Notes"
-    ];
-    const rows = filteredApplications.map((app) => [
-      `"${app.applicationId || app.id.slice(0, 8)}"`,
-      `"${app.name || "Unknown"}"`,
-      `"${app.email}"`,
-      `"${app.phone || ""}"`,
-      `"${app.jobTitle || ""}"`,
-      `"${app.status}"`,
-      `"${app.workAuthorization || ""}"`,
-      `"${app.skills?.join(", ") || ""}"`,
-      `"${app.rating?.toString() || ""}"`,
-      `"${app.city || ""}"`,
-      `"${app.state || ""}"`,
-      `"${app.resumeId ? "Yes" : "No"}"`,
-      `"${(app.notes || "").replace(/"/g, '""')}"`,
-    ]);
+      "Work Authorization", "Skills", "Rating", "City", "State", "Has Resume", "Notes",
+    ],
+    filteredApplications.map((app) => [
+      app.applicationId || app.id.slice(0, 8),
+      app.name || "Unknown",
+      app.email,
+      app.phone || "",
+      app.jobTitle || "",
+      app.status,
+      app.workAuthorization || "",
+      app.skills?.join(", ") || "",
+      app.rating?.toString() || "",
+      app.city || "",
+      stateOf(app.state),
+      app.resumeId ? "Yes" : "No",
+      app.notes || "",
+    ]),
+  );
 
-    const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `talent_bench_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  // ── form handlers ─────────────────────────────────────────────────────────
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  // Form handlers
   const resetForm = () => {
     setFormData({
       firstName: "",
@@ -411,7 +470,6 @@ export default function TalentBenchPage() {
       resumeFileName: "",
       resumeFileKey: "",
     });
-    setHoverRating(0);
     setSkillInput("");
     setResumeFile(null);
     setResumeError(null);
@@ -436,7 +494,9 @@ export default function TalentBenchPage() {
       email: app.email,
       address: app.address || "",
       city: app.city || "",
-      state: app.state || "",
+      // Legacy rows hold a full state name; the picker submits codes, so
+      // normalise on load or the select would render blank.
+      state: normalizeState(app.state),
       zipCode: app.zipCode || "",
       source: app.source || "",
       status: app.status,
@@ -486,7 +546,7 @@ export default function TalentBenchPage() {
   };
 
   const handleRemoveSkill = (skill: string) => {
-    setFormData({ ...formData, skills: formData.skills.filter(s => s !== skill) });
+    setFormData({ ...formData, skills: formData.skills.filter((s) => s !== skill) });
   };
 
   // Resume handlers
@@ -563,7 +623,7 @@ export default function TalentBenchPage() {
 
       const data = await response.json();
       window.open(data.downloadUrl, "_blank");
-    } catch (err) {
+    } catch {
       toast.error("Failed to download resume");
     }
   };
@@ -660,23 +720,172 @@ export default function TalentBenchPage() {
     }
   };
 
-  const stats = {
-    total: filteredApplications.length,
-    available: filteredApplications.filter((a) => a.status === "active" || a.status === "pending").length,
-    inProcess: filteredApplications.filter((a) => a.status === "reviewing" || a.status === "submitted" || a.status === "interview").length,
-    topRated: filteredApplications.filter((a) => (a.rating || 0) >= 4).length,
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const candidateCol: DataTableColumn<ApplicationWithJob> = {
+    key: "candidate",
+    header: "Candidate",
+    sortValue: (a) => a.name || a.email,
+    cell: (a) => (
+      <span className="inline-flex max-w-full items-center gap-2.5 align-middle">
+        <Avatar name={a.name} email={a.email} size="sm" />
+        <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]">{a.name || "Unknown"}</span>
+      </span>
+    ),
   };
+
+  const addedByCol: DataTableColumn<ApplicationWithJob> = {
+    key: "addedBy",
+    header: "Added by",
+    hideBelow: "xl",
+    sortValue: (a) => resolveAdder(a).name,
+    cell: (a) => {
+      const adder = resolveAdder(a);
+      return (
+        <span className="inline-flex max-w-full items-center gap-2 align-middle">
+          <Avatar name={adder.name} size="xs" />
+          <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink-mute)]">{adder.name}</span>
+        </span>
+      );
+    },
+  };
+
+  const emailCol: DataTableColumn<ApplicationWithJob> = {
+    key: "email",
+    header: "Email",
+    hideBelow: "lg",
+    sortValue: (a) => a.email,
+    cell: (a) => <span className="text-[13px] text-[var(--adm-ink-mute)]">{a.email}</span>,
+  };
+
+  const skillsCol: DataTableColumn<ApplicationWithJob> = {
+    key: "skills",
+    header: "Skills",
+    hideBelow: "md",
+    sortValue: (a) => a.skills?.length || 0,
+    cell: (a) => {
+      const skills = a.skills || [];
+      if (skills.length === 0) return <BlankCell />;
+      return (
+        <span className="inline-flex max-w-full items-center gap-1 align-middle">
+          {skills.slice(0, 2).map((skill) => (
+            <span key={skill} className={cn(skillChip, "min-w-0 truncate")}>{skill}</span>
+          ))}
+          {skills.length > 2 && (
+            <span className="flex-none rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+              +{skills.length - 2}
+            </span>
+          )}
+        </span>
+      );
+    },
+  };
+
+  const ageCol: DataTableColumn<ApplicationWithJob> = {
+    key: "age",
+    header: "On bench",
+    align: "right",
+    hideBelow: "xl",
+    sortValue: (a) => daysOnBench(a) ?? -1,
+    cell: (a) => {
+      const d = daysOnBench(a);
+      if (d === null) return <BlankCell />;
+      return (
+        <span className={cn("tabular-nums", d > 90 ? "font-semibold text-[var(--adm-warning)]" : "text-[var(--adm-ink-mute)]")}>
+          {d}d
+        </span>
+      );
+    },
+  };
+
+  const ratingCol: DataTableColumn<ApplicationWithJob> = {
+    key: "rating",
+    header: "Rating",
+    hideBelow: "sm",
+    sortValue: (a) => a.rating || 0,
+    cell: (a) => (
+      <div onClick={(e) => e.stopPropagation()}>
+        <StarRating rating={a.rating || 0} onRate={(r) => handleRatingChange(a.id, r)} />
+      </div>
+    ),
+  };
+
+  const statusCol: DataTableColumn<ApplicationWithJob> = {
+    key: "status",
+    header: "Stage",
+    sortValue: (a) => a.status,
+    cell: (a) => {
+      const t = tones[statusMeta[a.status as AppStatus]?.tone ?? "slate"];
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <InlineSelect
+            value={a.status}
+            aria-label={`Stage for ${a.name || a.email}`}
+            onChange={(e) => handleStatusChange(a.id, e.target.value as Application["status"])}
+            className={cn(t.bg, t.text, "border-transparent")}
+          >
+            {BENCH_STATUSES.map((s) => (
+              <option key={s} value={s}>{statusMeta[s].label}</option>
+            ))}
+          </InlineSelect>
+        </div>
+      );
+    },
+  };
+
+  const actionsCol: DataTableColumn<ApplicationWithJob> = {
+    key: "actions",
+    header: "",
+    align: "right",
+    cell: (a) => (
+      <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
+        <RowAction label="Edit profile" onClick={() => handleEditApplication(a)}>
+          <IconEdit className="h-4 w-4" />
+        </RowAction>
+        <RowAction label="Send email" href={`mailto:${a.email}`}>
+          <IconMail className="h-4 w-4" />
+        </RowAction>
+        <RowAction
+          label="Remove from bench"
+          danger
+          onClick={() => setPendingRemove({ id: a.id, name: a.name || "this candidate" })}
+        >
+          <IconTrash className="h-4 w-4" />
+        </RowAction>
+      </div>
+    ),
+  };
+
+  /**
+   * Eight columns for an admin, seven for everyone else. It was eleven, several
+   * of them stacking two facts on top of each other; phone, work authorisation,
+   * the application ID and the resume link all still live on the record itself,
+   * which is one click away, and work auth is already a filter on the toolbar.
+   */
+  const columns: DataTableColumn<ApplicationWithJob>[] = [
+    candidateCol,
+    ...(isAdmin ? [addedByCol] : []),
+    emailCol,
+    skillsCol,
+    ageCol,
+    ratingCol,
+    statusCol,
+    actionsCol,
+  ];
+
+  // ── states ────────────────────────────────────────────────────────────────
 
   if (loading) return <BenchLoading />;
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-rose-500 text-sm mb-3">{error}</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
+          <p className="text-sm text-[var(--adm-danger)]">{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors"
+            onClick={() => void fetchData()}
+            className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
           >
             Retry
           </button>
@@ -685,664 +894,606 @@ export default function TalentBenchPage() {
     );
   }
 
-  // Render Create/Edit Form
+  // ── create / edit form ────────────────────────────────────────────────────
+
   if (pageMode === "create" || pageMode === "edit") {
+    const closeForm = () => { setPageMode("list"); resetForm(); };
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" aria-label="Back to list" onClick={() => { setPageMode("list"); resetForm(); }}>
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {pageMode === "create" ? "Add to Talent Bench" : "Edit Bench Profile"}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {pageMode === "create" ? "Add a new candidate profile for future opportunities" : `Editing: ${selectedApplication?.name}`}
-            </p>
-          </div>
-        </div>
+      <div className="space-y-5 pb-10">
+        <PageHeader
+          title={pageMode === "create" ? "Add to Talent Bench" : "Edit Bench Profile"}
+          subtitle={pageMode === "edit" ? selectedApplication?.name || undefined : undefined}
+          icon={IconBoxes}
+          actions={
+            <PageHeaderButton variant="secondary" onClick={closeForm}>
+              <ArrowLeft className="h-4 w-4" />Back
+            </PageHeaderButton>
+          }
+        />
 
-        <Card>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Personal Information
-                </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Personal information */}
+          <AdminCard className="space-y-4 p-5">
+            <SectionTitle icon={IconUser}>Personal information</SectionTitle>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      required
-                      autoComplete="off"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      placeholder="John"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      required
-                      autoComplete="off"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        autoComplete="off"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="(555) 123-4567"
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        required
-                        type="email"
-                        autoComplete="off"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="john.doe@example.com"
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  required
+                  autoComplete="off"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  placeholder="John"
+                />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  required
+                  autoComplete="off"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
 
-              <Separator />
-
-              {/* Address */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Location
-                </h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <div className="relative">
+                  <IconPhone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
                   <Input
-                    id="address"
+                    id="phone"
+                    type="tel"
                     autoComplete="off"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="123 Main Street"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                    className="pl-9"
                   />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      autoComplete="off"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="New York"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>State</Label>
-                    <Select value={formData.state} onValueChange={(v) => setFormData({ ...formData, state: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                      <SelectContent>
-                        {US_STATES.map((state) => (
-                          <SelectItem key={state} value={state}>{state}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input
-                      id="zipCode"
-                      autoComplete="off"
-                      value={formData.zipCode}
-                      onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                      placeholder="10001"
-                    />
-                  </div>
-                </div>
               </div>
-
-              <Separator />
-
-              {/* Skills & Experience */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Skills & Experience
-                </h3>
-
-                <div className="space-y-2">
-                  <Label>Skills</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={skillInput}
-                      autoComplete="off"
-                      onChange={(e) => setSkillInput(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSkill())}
-                      placeholder="Add a skill (e.g., React, Python, AWS)"
-                    />
-                    <Button type="button" variant="outline" aria-label="Add skill" onClick={handleAddSkill}>
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                  {formData.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-md text-sm"
-                        >
-                          {skill}
-                          <button type="button" aria-label="Remove skill" onClick={() => handleRemoveSkill(skill)}>
-                            <X className="h-3 w-3" aria-hidden="true" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Experience Summary</Label>
-                  <textarea
-                    id="experience"
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <div className="relative">
+                  <IconMail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
+                  <Input
+                    id="email"
+                    required
+                    type="email"
                     autoComplete="off"
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
-                    placeholder="Brief summary of experience and background..."
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="john.doe@example.com"
+                    className="pl-9"
                   />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Work Authorization</Label>
-                    <Select
-                      value={formData.workAuthorization}
-                      onValueChange={(v) => setFormData({ ...formData, workAuthorization: v as Application["workAuthorization"] })}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Select authorization" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="US Citizen">US Citizen</SelectItem>
-                        <SelectItem value="Green Card">Green Card</SelectItem>
-                        <SelectItem value="H1-B">H1-B</SelectItem>
-                        <SelectItem value="OPT/CPT">OPT/CPT</SelectItem>
-                        <SelectItem value="TN Visa">TN Visa</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Source</Label>
-                    <Select
-                      value={formData.source}
-                      onValueChange={(v) => setFormData({ ...formData, source: v as Application["source"] })}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                        <SelectItem value="Indeed">Indeed</SelectItem>
-                        <SelectItem value="Referral">Referral</SelectItem>
-                        <SelectItem value="Agency">Agency</SelectItem>
-                        <SelectItem value="Company Website">Company Website</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Application["status"] })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="reviewing">Reviewing</SelectItem>
-                        <SelectItem value="submitted">Submitted</SelectItem>
-                        <SelectItem value="interview">Interview</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Assigned To</Label>
-                    <Select value={formData.ownership} onValueChange={handleOwnershipSelect}>
-                      <SelectTrigger><SelectValue placeholder="Assign to team member" /></SelectTrigger>
-                      <SelectContent>
-                        {hrUsers.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.name || u.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
               </div>
+            </div>
+          </AdminCard>
 
-              <Separator />
+          {/* Location */}
+          <AdminCard className="space-y-4 p-5">
+            <SectionTitle icon={IconLocation}>Location</SectionTitle>
 
-              {/* Resume Upload */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Resume
-                </h3>
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                autoComplete="off"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="123 Main Street"
+              />
+            </div>
 
-                <div className="space-y-3">
-                  {/* Existing Resume Display */}
-                  {existingResume && !resumeFile && (
-                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <File className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-green-800">{existingResume.fileName}</p>
-                          <p className="text-xs text-green-600">Current resume on file</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadResume(existingResume.id)}
-                          className="p-2 text-green-600 hover:bg-green-100 rounded-md transition-colors"
-                          title="Download Resume"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRemoveExistingResume}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title="Remove Resume"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* New Resume Selected */}
-                  {resumeFile && (
-                    <div className="flex items-center justify-between p-3 bg-[var(--hz-cobalt-100)] border border-[var(--hz-cobalt-100)] rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[var(--hz-cobalt-100)] rounded-lg flex items-center justify-center">
-                          <File className="w-5 h-5 text-[var(--hz-cobalt)]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-[var(--hz-cobalt)]">{resumeFile.name}</p>
-                          <p className="text-xs text-[var(--hz-cobalt)]">
-                            {(resumeFile.size / 1024).toFixed(1)} KB - Ready to upload
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleRemoveResume}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        title="Remove"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Upload Input */}
-                  {!resumeFile && (
-                    <div className="relative">
-                      <input
-                        type="file"
-                        id="resume-upload"
-                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        onChange={handleResumeSelect}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[var(--hz-cobalt)] hover:bg-[#eef3fe] transition-colors">
-                        <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-slate-700">
-                          {existingResume ? "Upload a new resume to replace" : "Click to upload resume"}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">PDF, DOC, or DOCX (max 5MB)</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error Message */}
-                  {resumeError && (
-                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                      <p className="text-sm text-red-700">{resumeError}</p>
-                    </div>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  autoComplete="off"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="New York"
+                />
               </div>
-
-              <Separator />
-
-              {/* Rating & Notes */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Rating & Notes
-                </h3>
-
-                <div className="space-y-2">
-                  <Label>Rating</Label>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        aria-label={`Rate ${star} stars`}
-                        onClick={() => setFormData({ ...formData, rating: star })}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="focus:outline-none"
-                      >
-                        <Star
-                          aria-hidden="true"
-                          className={`w-8 h-8 transition-colors ${
-                            star <= (hoverRating || formData.rating)
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-slate-300 hover:text-amber-300"
-                          }`}
-                        />
-                      </button>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Select value={formData.state} onValueChange={(v) => setFormData({ ...formData, state: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                  <SelectContent>
+                    {US_STATES.map((s) => (
+                      <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>
                     ))}
-                    {formData.rating > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, rating: 0 })}
-                        className="ml-2 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Clear
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zipCode">ZIP Code</Label>
+                <Input
+                  id="zipCode"
+                  autoComplete="off"
+                  value={formData.zipCode}
+                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                  placeholder="10001"
+                />
+              </div>
+            </div>
+          </AdminCard>
+
+          {/* Skills & experience */}
+          <AdminCard className="space-y-4 p-5">
+            <SectionTitle icon={IconJob}>Skills &amp; experience</SectionTitle>
+
+            <div className="space-y-2">
+              <Label>Skills</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={skillInput}
+                  autoComplete="off"
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); }
+                  }}
+                  placeholder="Add a skill (e.g., React, Python, AWS)"
+                />
+                <button
+                  type="button"
+                  aria-label="Add skill"
+                  onClick={handleAddSkill}
+                  className="inline-flex h-9 flex-none items-center justify-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+              {formData.skills.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {formData.skills.map((skill) => (
+                    <span key={skill} className={cn(skillChip, "text-[12px]")}>
+                      {skill}
+                      <button type="button" aria-label={`Remove ${skill}`} onClick={() => handleRemoveSkill(skill)}>
+                        <X className="h-3 w-3" aria-hidden="true" />
                       </button>
-                    )}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="experience">Experience Summary</Label>
+              <textarea
+                id="experience"
+                autoComplete="off"
+                value={formData.experience}
+                onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                className={cn(textareaCls, "min-h-[80px]")}
+                placeholder="Brief summary of experience and background..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Work Authorization</Label>
+                <Select
+                  value={formData.workAuthorization}
+                  onValueChange={(v) => setFormData({ ...formData, workAuthorization: v as Application["workAuthorization"] })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select authorization" /></SelectTrigger>
+                  <SelectContent>
+                    {WORK_AUTH_CHOICES.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Source</Label>
+                <Select
+                  value={formData.source}
+                  onValueChange={(v) => setFormData({ ...formData, source: v as Application["source"] })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_CHOICES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Application["status"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BENCH_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>{statusMeta[s].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Assigned To</Label>
+                <Select value={formData.ownership} onValueChange={handleOwnershipSelect}>
+                  <SelectTrigger><SelectValue placeholder="Assign to team member" /></SelectTrigger>
+                  <SelectContent>
+                    {hrUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name || u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </AdminCard>
+
+          {/* Resume */}
+          <AdminCard className="space-y-4 p-5">
+            <SectionTitle icon={IconUpload}>Resume</SectionTitle>
+
+            <div className="space-y-3">
+              {existingResume && !resumeFile && (
+                <div className="flex items-center justify-between rounded-[6px] border border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-success-soft)]">
+                      <IconFile className="h-4 w-4 text-[var(--adm-success)]" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[var(--adm-success)]">{existingResume.fileName}</p>
+                      <p className="text-xs text-[var(--adm-success)]">Current resume on file</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-none items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void handleDownloadResume(existingResume.id)}
+                      className="rounded-[6px] p-2 text-[var(--adm-success)] transition-colors hover:bg-[var(--adm-success-soft)]"
+                      title="Download resume"
+                    >
+                      <IconDownload className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveExistingResume}
+                      className="rounded-[6px] p-2 text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+                      title="Remove resume"
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <textarea
-                    id="notes"
-                    autoComplete="off"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring resize-none"
-                    placeholder="Additional notes about this candidate..."
-                  />
+              {resumeFile && (
+                <div className="flex items-center justify-between rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                      <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[var(--adm-ink)]">{resumeFile.name}</p>
+                      <p className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">
+                        {(resumeFile.size / 1024).toFixed(1)} KB &middot; ready to upload
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveResume}
+                    className="rounded-[6px] p-2 text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+                    title="Remove"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-              </div>
+              )}
 
-              <Separator />
+              {!resumeFile && (
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="resume-upload"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={handleResumeSelect}
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                  />
+                  <div className="rounded-[6px] border border-dashed border-[var(--adm-line)] p-6 text-center transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
+                    <IconUpload className="mx-auto mb-2 h-7 w-7 text-[var(--adm-ink-subtle)]" />
+                    <p className="text-sm font-medium text-[var(--adm-ink-mute)]">
+                      {existingResume ? "Upload a new resume to replace" : "Click to upload resume"}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--adm-ink-subtle)]">PDF, DOC, or DOCX (max 5MB)</p>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex items-center justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => { setPageMode("list"); resetForm(); }}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={submitting || resumeUploading}>
-                  {(submitting || resumeUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {resumeUploading ? "Uploading Resume..." : pageMode === "create" ? "Add to Bench" : "Save Changes"}
-                </Button>
+              {resumeError && (
+                <div className="flex items-center gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] p-3">
+                  <IconAlert className="h-4 w-4 flex-none text-[var(--adm-danger)]" />
+                  <p className="text-sm text-[var(--adm-danger)]">{resumeError}</p>
+                </div>
+              )}
+            </div>
+          </AdminCard>
+
+          {/* Rating & notes */}
+          <AdminCard className="space-y-4 p-5">
+            <SectionTitle icon={IconFile}>Rating &amp; notes</SectionTitle>
+
+            <div className="space-y-2">
+              <Label>Rating</Label>
+              <div className="flex items-center gap-3">
+                <StarRating
+                  size="lg"
+                  rating={formData.rating}
+                  onRate={(n) => setFormData({ ...formData, rating: n })}
+                />
+                {formData.rating > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, rating: 0 })}
+                    className="text-xs font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                id="notes"
+                autoComplete="off"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className={cn(textareaCls, "min-h-[100px]")}
+                placeholder="Additional notes about this candidate..."
+              />
+            </div>
+          </AdminCard>
+
+          <div className="flex items-center justify-end gap-2">
+            <PageHeaderButton type="button" variant="secondary" onClick={closeForm}>
+              Cancel
+            </PageHeaderButton>
+            <PageHeaderButton type="submit" variant="primary" disabled={submitting || resumeUploading}>
+              {(submitting || resumeUploading) && <Loader2 className="h-4 w-4 animate-spin" />}
+              {resumeUploading ? "Uploading Resume…" : pageMode === "create" ? "Add to Bench" : "Save Changes"}
+            </PageHeaderButton>
+          </div>
+        </form>
       </div>
     );
   }
 
-  // Render View Details
+  // ── record detail ─────────────────────────────────────────────────────────
+
   if (pageMode === "view" && selectedApplication) {
     const app = selectedApplication;
-    const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
-    const initials = (app.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-    const location = [app.city, app.state].filter(Boolean).join(", ");
+    const location = [app.city, stateOf(app.state)].filter(Boolean).join(", ");
     const adder = isAdmin ? resolveAdder(app) : null;
+    const age = daysOnBench(app);
 
     return (
       <div className="space-y-5 pb-10">
-        {/* Back */}
-        <button
-          onClick={() => { setPageMode("list"); setSelectedApplication(null); }}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to talent bench
-        </button>
-
-        {/* Header card */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 text-xl font-bold text-white shadow-sm">
-                  {initials}
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900">{app.name || "Unknown"}</h1>
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${status.color}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`} />
-                      {status.label}
-                    </span>
-                  </div>
-                  <p className="mt-1 font-mono text-xs text-slate-400">{app.applicationId || `ID: ${app.id.slice(0, 8)}`}</p>
-                </div>
-              </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                <a href={`mailto:${app.email}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50">
-                  <Mail className="h-4 w-4" /><span className="hidden sm:inline">Email</span>
+        <PageHeader
+          title={app.name || "Unknown"}
+          subtitle={app.applicationId || `ID: ${app.id.slice(0, 8)}`}
+          icon={IconUser}
+          meta={
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={app.status} size="md" />
+              {age !== null && (
+                <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">{age}d on bench</span>
+              )}
+            </div>
+          }
+          actions={
+            <>
+              <PageHeaderButton
+                variant="secondary"
+                onClick={() => { setPageMode("list"); setSelectedApplication(null); }}
+              >
+                <ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">Back</span>
+              </PageHeaderButton>
+              <a
+                href={`mailto:${app.email}`}
+                className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              >
+                <IconMail className="h-4 w-4" /><span className="hidden sm:inline">Email</span>
+              </a>
+              {app.phone && (
+                <a
+                  href={`tel:${app.phone}`}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
+                >
+                  <IconPhone className="h-4 w-4" /><span className="hidden sm:inline">Call</span>
                 </a>
-                {app.phone && (
-                  <a href={`tel:${app.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50">
-                    <Phone className="h-4 w-4" /><span className="hidden sm:inline">Call</span>
-                  </a>
-                )}
-                <button onClick={() => handleEditApplication(app)} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]">
-                  <Edit3 className="h-4 w-4" />Edit
-                </button>
-              </div>
-            </div>
+              )}
+              <PageHeaderButton variant="primary" onClick={() => handleEditApplication(app)}>
+                <IconEdit className="h-4 w-4" />Edit
+              </PageHeaderButton>
+            </>
+          }
+        />
 
-            {/* Quick facts */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
-              <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4 text-slate-400" />{app.email}</span>
-              {app.phone && <span className="inline-flex items-center gap-1.5"><Phone className="h-4 w-4 text-slate-400" />{app.phone}</span>}
-              {location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-slate-400" />{location}</span>}
-              {app.workAuthorization && <span className="inline-flex items-center gap-1.5"><Shield className="h-4 w-4 text-slate-400" />{app.workAuthorization}</span>}
-              <span className="inline-flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className={`h-4 w-4 ${s <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
-                ))}
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Identity band — the facts a recruiter reads first, on one rule. */}
+        <AdminCard className="flex flex-wrap items-center gap-x-6 gap-y-3 p-4 text-[13px] text-[var(--adm-ink-mute)]">
+          <Avatar name={app.name} email={app.email} size="md" />
+          <span className="inline-flex items-center gap-1.5"><IconMail className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.email}</span>
+          {app.phone && <span className="inline-flex items-center gap-1.5"><IconPhone className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.phone}</span>}
+          {location && <span className="inline-flex items-center gap-1.5"><IconLocation className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{location}</span>}
+          {app.workAuthorization && <span className="inline-flex items-center gap-1.5"><IconShield className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.workAuthorization}</span>}
+          <span className="ml-auto"><StarRating rating={app.rating || 0} size="md" /></span>
+        </AdminCard>
 
-        {/* Body */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* Left column */}
-          <div className="space-y-5 lg:col-span-2">
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Briefcase className="h-4 w-4 text-slate-400" />Skills &amp; experience
+          <div className="space-y-4 lg:col-span-2">
+            <AdminCard className="p-5">
+              <h3 className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+                <IconJob className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Skills &amp; experience
               </h3>
               {app.skills && app.skills.length > 0 && (
                 <div className="mb-5">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-400">Skills</p>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Skills</p>
                   <div className="flex flex-wrap gap-1.5">
                     {app.skills.map((skill) => (
-                      <span key={skill} className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-1 text-xs font-medium text-[var(--hz-cobalt)]">{skill}</span>
+                      <span key={skill} className={cn(skillChip, "text-[12px]")}>{skill}</span>
                     ))}
                   </div>
                 </div>
               )}
               {app.experience && (
                 <div>
-                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">Experience</p>
-                  <p className="text-sm leading-relaxed text-slate-600">{app.experience}</p>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Experience</p>
+                  <p className="text-sm leading-relaxed text-[var(--adm-ink-mute)]">{app.experience}</p>
                 </div>
               )}
               {!app.skills?.length && !app.experience && (
-                <p className="text-sm text-slate-400">No skills or experience recorded yet.</p>
+                <p className="text-sm text-[var(--adm-ink-subtle)]">No skills or experience recorded yet.</p>
               )}
-            </section>
+            </AdminCard>
 
-            {/* Notes */}
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <FileText className="h-4 w-4 text-slate-400" />Notes
+            <AdminCard className="p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+                <IconFile className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Notes
               </h3>
               {app.notes
-                ? <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{app.notes}</p>
-                : <p className="text-sm text-slate-400">No notes added yet.</p>}
-            </section>
+                ? <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--adm-ink-mute)]">{app.notes}</p>
+                : <p className="text-sm text-[var(--adm-ink-subtle)]">No notes added yet.</p>}
+            </AdminCard>
 
             {app.statusHistory && app.statusHistory.length > 0 && (
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <History className="h-4 w-4 text-slate-400" />Status timeline
+              <AdminCard className="p-5">
+                <h3 className="mb-5 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+                  <IconHistory className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Stage timeline
                 </h3>
                 <div className="relative pl-1">
-                  <div className="absolute bottom-1 left-[5px] top-1 w-px bg-slate-200" />
+                  <div className="absolute bottom-1 left-[5px] top-1 w-px bg-[var(--adm-line)]" />
                   <div className="space-y-4">
                     {[...app.statusHistory].reverse().map((entry, idx) => {
-                      const entryStatus = statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending;
+                      const meta = statusMeta[entry.status as AppStatus] ?? statusMeta.pending;
                       return (
                         <div key={idx} className="relative pl-6">
-                          <span className={`absolute left-0 top-1 h-[11px] w-[11px] rounded-full ${entryStatus.dotColor} ring-2 ring-white`} />
+                          <span className={cn("absolute left-0 top-1 h-[11px] w-[11px] rounded-full ring-2 ring-[var(--adm-surface)]", tones[meta.tone].dot)} />
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${entryStatus.color}`}>{entryStatus.label}</span>
-                            <span className="text-xs text-slate-400">{formatDate(entry.changedAt)}</span>
-                            {entry.changedByName && <span className="text-xs text-slate-400">· by {entry.changedByName}</span>}
+                            <StatusBadge status={entry.status} />
+                            <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(entry.changedAt)}</span>
+                            {entry.changedByName && <span className="text-xs text-[var(--adm-ink-subtle)]">&middot; by {entry.changedByName}</span>}
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-              </section>
+              </AdminCard>
             )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-5">
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-              <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Stage</h3>
+          <div className="space-y-4">
+            <AdminCard className="p-5">
+              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Stage</h3>
               <select
                 value={app.status}
                 autoComplete="off"
-                onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
+                aria-label="Stage"
+                onChange={(e) => void handleStatusChange(app.id, e.target.value as Application["status"])}
+                className={selectCls}
               >
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="reviewing">Reviewing</option>
-                <option value="submitted">Submitted</option>
-                <option value="interview">Interview</option>
-                <option value="hired">Hired</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-              <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Rating</h3>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)} className="focus:outline-none">
-                    <Star aria-hidden="true" className={`h-6 w-6 transition-colors ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-200 hover:text-amber-300"}`} />
-                  </button>
+                {BENCH_STATUSES.map((s) => (
+                  <option key={s} value={s}>{statusMeta[s].label}</option>
                 ))}
-              </div>
-            </section>
+              </select>
+            </AdminCard>
 
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Resume</h3>
+            <AdminCard className="p-5">
+              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Rating</h3>
+              <StarRating
+                size="lg"
+                rating={app.rating || 0}
+                onRate={(n) => void handleRatingChange(app.id, n)}
+              />
+            </AdminCard>
+
+            <AdminCard className="p-5">
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Resume</h3>
               {app.resumeId && app.resumeFileName ? (
                 <button
-                  onClick={() => handleDownloadResume(app.resumeId!)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[#eef3fe]"
+                  onClick={() => void handleDownloadResume(app.resumeId!)}
+                  className="flex w-full items-center gap-3 rounded-[6px] border border-[var(--adm-line)] p-3 text-left transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]"
                 >
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--hz-cobalt-100)]">
-                    <FileText className="h-5 w-5 text-[var(--hz-cobalt)]" />
+                  <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                    <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-slate-800">{app.resumeFileName}</span>
-                    <span className="text-xs text-slate-400">Click to download</span>
+                    <span className="block truncate text-sm font-medium text-[var(--adm-ink)]">{app.resumeFileName}</span>
+                    <span className="text-xs text-[var(--adm-ink-subtle)]">Click to download</span>
                   </span>
-                  <Download className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                  <IconDownload className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
                 </button>
               ) : (
-                <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 p-3 text-sm text-slate-400">
-                  <FileText className="h-4 w-4" />No resume on file
+                <div className="flex items-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] p-3 text-sm text-[var(--adm-ink-subtle)]">
+                  <IconFile className="h-4 w-4" />No resume on file
                 </div>
               )}
-            </section>
+            </AdminCard>
 
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Details</h3>
+            <AdminCard className="p-5">
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Details</h3>
               <dl className="space-y-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-slate-400">Source</dt>
-                  <dd className="font-medium text-slate-700">{app.source || "—"}</dd>
+                  <dt className="text-[var(--adm-ink-subtle)]">Source</dt>
+                  <dd className="font-medium text-[var(--adm-ink-mute)]">{app.source || <BlankCell />}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-slate-400">Assigned to</dt>
-                  <dd className="font-medium text-slate-700">{app.ownershipName || "—"}</dd>
+                  <dt className="text-[var(--adm-ink-subtle)]">Last position</dt>
+                  <dd className="max-w-[60%] truncate font-medium text-[var(--adm-ink-mute)]">{app.jobTitle || <BlankCell />}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-slate-400">Added</dt>
-                  <dd className="font-medium text-slate-700">{formatDate(app.createdAt || app.appliedAt)}</dd>
+                  <dt className="text-[var(--adm-ink-subtle)]">Assigned to</dt>
+                  <dd className="font-medium text-[var(--adm-ink-mute)]">{app.ownershipName || <BlankCell />}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[var(--adm-ink-subtle)]">Added</dt>
+                  <dd className="font-medium tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(app.createdAt || app.appliedAt)}</dd>
                 </div>
                 {adder && (
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <dt className="text-slate-400">Added by</dt>
-                    <dd className="flex items-center gap-1.5 font-medium text-slate-700">
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line-soft)] pt-3">
+                    <dt className="text-[var(--adm-ink-subtle)]">Added by</dt>
+                    <dd className="flex items-center gap-1.5 font-medium text-[var(--adm-ink-mute)]">
                       {adder.name}
-                      {adder.role && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>}
+                      {adder.role && (
+                        <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-[var(--adm-ink-mute)]">
+                          {adder.role}
+                        </span>
+                      )}
                     </dd>
                   </div>
                 )}
               </dl>
-            </section>
+            </AdminCard>
           </div>
         </div>
       </div>
     );
   }
 
-  // Render List View
+  // ── list ──────────────────────────────────────────────────────────────────
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-10">
       <ConfirmDialog
         open={!!pendingRemove}
         title="Remove from talent bench?"
@@ -1353,523 +1504,306 @@ export default function TalentBenchPage() {
         onConfirm={performRemoveFromBench}
         onCancel={() => setPendingRemove(null)}
       />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Boxes className="w-6 h-6 text-[var(--hz-cobalt)]" />
-            Talent Bench
-          </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            {isAdmin
-              ? "Every team member's bench — candidates added across all roles"
-              : "Candidates you've added for future opportunities"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setViewMode("cards")}
-              aria-label="Card view"
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "cards" ? "bg-white shadow-sm text-[var(--hz-cobalt)]" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <button
-              onClick={() => setViewMode("table")}
-              aria-label="Table view"
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "table" ? "bg-white shadow-sm text-[var(--hz-cobalt)]" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <LayoutList className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-          <button
-            onClick={handleExportCSV}
-            disabled={filteredApplications.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button
-            onClick={handleCreateNew}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Profile</span>
-          </button>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center">
-              <Boxes className="w-4 h-4 text-[var(--hz-cobalt)]" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total in Bench</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900">{stats.available}</p>
-              <p className="text-xs text-slate-500">Available</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-              <Clock className="w-4 h-4 text-violet-600" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900">{stats.inProcess}</p>
-              <p className="text-xs text-slate-500">In Process</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
-              <Star className="w-4 h-4 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900">{stats.topRated}</p>
-              <p className="text-xs text-slate-500">Top Rated (4+)</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Every tile is either a state you can filter to or an ageing figure
+          the grid cannot show at a glance. The old strip drew proportion bars
+          of "On bench", which the footer already counts. */}
+      <WorkspaceTitle
+        title="Talent bench"
+        meta={`${scopedApplications.length} candidates`}
+        actions={
+          <>
+            <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={handleCreateNew}>
+              <Plus className="h-4 w-4" />Add profile
+            </WorkspaceButton>
+          </>
+        }
+      />
+      <KpiRow
+        items={[
+          { label: "Available now", value: kpis.available, icon: IconSuccess,
+            hint: "Not currently in a process" },
+          { label: "In process", value: kpis.inProcess, icon: IconPipeline },
+          { label: "Placed", value: kpis.placed, icon: IconConversion, tone: "success" },
+          { label: "On bench 30+ days", value: staleBench, icon: IconBoxes,
+            tone: staleBench > 0 ? "warning" : "default",
+            hint: staleBench > 0 ? "Worth re-engaging" : "All recently added" },
+        ]}
+      />
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-3">
-          <div className="flex gap-2">
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by name, email, skills, or position…" />
-            <FilterToggle
-              open={showFilters}
-              activeCount={[statusFilter, skillFilter, authFilter, ownerFilter].filter((f) => f !== "all").length}
-              onClick={() => setShowFilters(!showFilters)}
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter bench by name, email or skill"
             />
-          </div>
-
-          {showFilters && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
-                  <select
-                    value={statusFilter}
-                    autoComplete="off"
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="reviewing">Reviewing</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="interview">Interview</option>
-                    <option value="hired">Hired</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Skills</label>
-                  <select
-                    value={skillFilter}
-                    autoComplete="off"
-                    onChange={(e) => setSkillFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-                  >
-                    <option value="all">All Skills</option>
-                    {allSkills.map((skill) => (
-                      <option key={skill} value={skill}>{skill}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Work Authorization</label>
-                  <select
-                    value={authFilter}
-                    autoComplete="off"
-                    onChange={(e) => setAuthFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-                  >
-                    <option value="all">All</option>
-                    {workAuthorizations.map((auth) => (
-                      <option key={auth} value={auth}>{auth}</option>
-                    ))}
-                  </select>
-                </div>
-                {isAdmin && (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Added by</label>
-                    <select
-                      value={ownerFilter}
-                      autoComplete="off"
-                      onChange={(e) => setOwnerFilter(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[var(--hz-cobalt)] focus:border-[var(--hz-cobalt)] outline-none bg-white"
-                    >
-                      <option value="all">Everyone</option>
-                      {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
+          }
+          trailing={
+            <>
+              <ViewMenu
+                options={[
+                  { value: "table", label: "Table", icon: LayoutList },
+                  { value: "cards", label: "Cards", icon: LayoutGrid },
+                ]}
+                value={viewMode}
+                onChange={setViewMode}
+                className="h-10 rounded-[8px] px-3 py-0 text-[14px]"
+              />
+              {viewMode === "table" && (
+                <>
+                  <ColumnsMenu
+                    columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                    hidden={hiddenColumns}
+                    onChange={setHiddenColumns}
+                  />
+                  <DensityMenu value={density} onChange={setDensity} />
+                </>
+              )}
+            </>
+          }
+        >
+          <FilterPill
+            label="Stage"
+            icon={FilterIcon.stage}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_TABS.map((t) => ({
+              value: t.key,
+              label: t.label,
+              count: statusCounts[t.key] || 0,
+            }))}
+          />
+          <FilterPill
+            label="Skill"
+            icon={FilterIcon.skill}
+            value={skillFilter}
+            onChange={setSkillFilter}
+            options={[
+              { value: "all", label: "All skills" },
+              ...allSkills.map((skill) => ({ value: skill, label: skill })),
+            ]}
+          />
+          <FilterPill
+            label="Work auth"
+            icon={FilterIcon.workAuth}
+            value={authFilter}
+            onChange={setAuthFilter}
+            options={[
+              { value: "all", label: "All" },
+              ...workAuthorizations.map((auth) => ({ value: auth, label: auth })),
+            ]}
+          />
+          {/* Only admins see the whole team's bench, so only they get to slice
+              it by who added a record. */}
+          {isAdmin && (
+            <FilterPill
+              label="Added by"
+              icon={FilterIcon.person}
+              value={ownerFilter}
+              onChange={setOwnerFilter}
+              options={[
+                { value: "all", label: "Everyone" },
+                ...adderNames.map((n) => ({ value: n, label: n })),
+              ]}
+            />
           )}
-        </div>
-      </div>
+        </WorkspaceToolbar>
 
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">
-          {filteredApplications.length} of {applications.length} candidates
-        </p>
-      </div>
+        <ActiveFilters
+          chips={[
+            ...(statusFilter !== "all" ? [{ label: `Stage: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
+            ...(skillFilter !== "all" ? [{ label: `Skill: ${skillFilter}`, onClear: () => setSkillFilter("all") }] : []),
+            ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
+            ...(ownerFilter !== "all" ? [{ label: `Added by: ${ownerFilter}`, onClear: () => setOwnerFilter("all") }] : []),
+          ]}
+          onClearAll={clearFilters}
+        />
 
-      {/* Cards View */}
+      {/* ── record grid ── */}
+      {viewMode === "table" && (
+          <DataTable
+            noun="candidates"
+            storageKey="bench"
+            columns={columns}
+            rows={filteredApplications}
+            rowKey={(a) => a.id}
+            onRowClick={handleViewApplication}
+            density={density}
+            hiddenColumns={hiddenColumns}
+            empty={{
+              icon: IconBoxes,
+              title: scopedApplications.length === 0 ? "No candidates on the bench yet" : "No candidates match your filters",
+              description: scopedApplications.length === 0
+                ? "Add a profile to keep strong candidates warm for future roles."
+                : "Try adjusting your search or filters.",
+              action: scopedApplications.length === 0
+                ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
+                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
+            }}
+          />
+      )}
+
       {viewMode === "cards" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredApplications.length > 0 ? (
-            filteredApplications.map((app) => {
-              const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
+        filteredApplications.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3 overflow-y-auto p-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredApplications.map((app) => {
               const adder = isAdmin ? resolveAdder(app) : null;
-
+              const age = daysOnBench(app);
               return (
-                <Card key={app.id} className="hover:border-[var(--hz-cobalt-100)] transition-all">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center text-white font-semibold text-sm">
-                          {(app.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => handleViewApplication(app)}
-                            className="font-medium text-slate-900 hover:text-[var(--hz-cobalt)] text-sm text-left"
-                          >
-                            {app.name || "Unknown"}
-                          </button>
-                          <p className="text-xs text-slate-500 font-mono">{app.applicationId || app.id.slice(0, 8)}</p>
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium ${status.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`} />
-                        {status.label}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="truncate">{app.email}</span>
-                      </div>
-                      {app.phone && (
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Phone className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{app.phone}</span>
-                        </div>
-                      )}
-                      {app.workAuthorization && (
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Shield className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{app.workAuthorization}</span>
-                        </div>
-                      )}
-                      {app.resumeId && (
-                        <div className="flex items-center gap-2 text-green-600">
-                          <FileText className="w-3.5 h-3.5 text-green-500" />
-                          <span className="text-xs">Resume on file</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {app.skills && app.skills.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
-                        <div className="flex flex-wrap gap-1">
-                          {app.skills.slice(0, 4).map((skill) => (
-                            <span key={skill} className="px-1.5 py-0.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded text-xs">
-                              {skill}
-                            </span>
-                          ))}
-                          {app.skills.length > 4 && (
-                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
-                              +{app.skills.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {adder && (
-                      <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3">
-                        <User className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                        <span className="text-xs text-slate-500">Added by</span>
-                        <span className="truncate text-xs font-medium text-slate-700">{adder.name}</span>
-                        {adder.role && (
-                          <span className="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)}>
-                            <Star aria-hidden="true" className={`w-4 h-4 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-1">
+                <AdminCard key={app.id} hover className="flex h-full flex-col p-4">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar name={app.name} email={app.email} size="md" />
+                      <div className="min-w-0">
                         <button
                           onClick={() => handleViewApplication(app)}
-                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                          title="View Details"
+                          className="block max-w-full truncate text-left text-sm font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                         >
-                          <Eye className="w-4 h-4" />
+                          {app.name || "Unknown"}
                         </button>
-                        <button
-                          onClick={() => handleEditApplication(app)}
-                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        {app.resumeId && (
-                          <button
-                            onClick={() => handleDownloadResume(app.resumeId!)}
-                            className="p-2.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
-                            title="Download Resume"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </button>
-                        )}
-                        <a
-                          href={`mailto:${app.email}`}
-                          className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                          title="Send Email"
-                        >
-                          <Mail className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
-                          className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                          title="Remove from Bench"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <p className="truncate font-mono text-[11px] text-[var(--adm-ink-subtle)]">
+                          {app.applicationId || app.id.slice(0, 8)}
+                        </p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          ) : (
-            <div className="col-span-full bg-white rounded-lg border border-slate-200 p-8 text-center">
-              <Boxes className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">
-                {applications.length === 0 ? "No candidates in the talent bench yet" : "No candidates match your filters"}
-              </p>
-              <button
-                onClick={handleCreateNew}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]"
-              >
-                <Plus className="w-4 h-4" />
-                Add First Profile
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+                    <StatusBadge status={app.status} size="md" />
+                  </div>
 
-      {/* Table View */}
-      {viewMode === "table" && filteredApplications.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Candidate</th>
-                  {isAdmin && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Added by</th>}
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Skills</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Work Auth</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Resume</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Rating</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredApplications.map((app) => {
-                  const status = statusConfig[app.status as keyof typeof statusConfig] || statusConfig.pending;
-                  const adder = isAdmin ? resolveAdder(app) : null;
-                  return (
-                    <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-500 flex items-center justify-center text-white font-semibold text-xs">
-                            {(app.name || "NA").split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                          </div>
-                          <div className="min-w-0">
-                            <button
-                              onClick={() => handleViewApplication(app)}
-                              className="truncate text-sm font-medium text-slate-900 hover:text-[var(--hz-cobalt)]"
-                            >
-                              {app.name || "Unknown"}
-                            </button>
-                            <p className="text-xs text-slate-500 font-mono">{app.applicationId || app.id.slice(0, 8)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {adder && (
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate max-w-[120px] text-sm text-slate-700">{adder.name}</span>
-                            {adder.role && (
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{adder.role}</span>
-                            )}
-                          </div>
-                        </td>
+                  <div className="space-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+                    <div className="flex items-center gap-2">
+                      <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                      <span className="truncate">{app.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                      <span className="tabular-nums">{app.phone || <BlankCell />}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IconShield className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                      <span className="truncate">{app.workAuthorization || <BlankCell />}</span>
+                    </div>
+                    {app.resumeId && (
+                      <button
+                        onClick={() => void handleDownloadResume(app.resumeId!)}
+                        className="inline-flex items-center gap-2 text-[var(--adm-success)] transition-colors hover:text-[var(--adm-success)]"
+                      >
+                        <IconFile className="h-3.5 w-3.5 flex-none text-[var(--adm-success)]" />
+                        <span className="text-[12px] font-medium">Resume on file</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {app.skills && app.skills.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1 border-t border-[var(--adm-line-soft)] pt-3">
+                      {app.skills.slice(0, 4).map((skill) => (
+                        <span key={skill} className={skillChip}>{skill}</span>
+                      ))}
+                      {app.skills.length > 4 && (
+                        <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                          +{app.skills.length - 4}
+                        </span>
                       )}
-                      <td className="px-4 py-3">
-                        <p className="truncate text-sm text-slate-600">{app.email}</p>
-                        <p className="text-xs text-slate-400">{app.phone || "-"}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {app.skills?.slice(0, 2).map((skill) => (
-                            <span key={skill} className="px-1.5 py-0.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded text-xs">
-                              {skill}
-                            </span>
-                          ))}
-                          {(app.skills?.length || 0) > 2 && (
-                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
-                              +{(app.skills?.length || 0) - 2}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-slate-600">{app.workAuthorization || "-"}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {app.resumeId ? (
-                          <button
-                            onClick={() => handleDownloadResume(app.resumeId!)}
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 transition-colors"
-                          >
-                            <FileText className="w-3 h-3" />
-                            View
-                          </button>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button key={star} aria-label={`Rate ${star} stars`} onClick={() => handleRatingChange(app.id, star)}>
-                              <Star aria-hidden="true" className={`w-3.5 h-3.5 ${star <= (app.rating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
-                            </button>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={app.status}
-                          autoComplete="off"
-                          onChange={(e) => handleStatusChange(app.id, e.target.value as Application["status"])}
-                          className={`px-2 py-1 rounded-md text-xs font-medium border cursor-pointer ${status.color}`}
-                        >
-                          <option value="active">Active</option>
-                          <option value="pending">Pending</option>
-                          <option value="reviewing">Reviewing</option>
-                          <option value="submitted">Submitted</option>
-                          <option value="interview">Interview</option>
-                          <option value="hired">Hired</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleViewApplication(app)}
-                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEditApplication(app)}
-                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                            title="Edit"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          {app.resumeId && (
-                            <button
-                              onClick={() => handleDownloadResume(app.resumeId!)}
-                              className="p-2.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md"
-                              title="Download Resume"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
-                          )}
-                          <a
-                            href={`mailto:${app.email}`}
-                            className="p-2.5 text-slate-400 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-md"
-                            title="Send Email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </a>
-                          <button
-                            onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
-                            className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                            title="Remove from Bench"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                    </div>
+                  )}
 
-      {/* Empty State for Table View */}
-      {viewMode === "table" && filteredApplications.length === 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
-          <Boxes className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 text-sm">
-            {applications.length === 0 ? "No candidates in the talent bench yet" : "No candidates match your filters"}
-          </p>
-          <button
-            onClick={handleCreateNew}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]"
-          >
-            <Plus className="w-4 h-4" />
-            Add First Profile
-          </button>
-        </div>
+                  {adder && (
+                    <div className="mt-3 flex items-center gap-1.5 border-t border-[var(--adm-line-soft)] pt-3">
+                      <Avatar name={adder.name} size="xs" />
+                      <span className="truncate text-[12px] text-[var(--adm-ink-subtle)]">Added by</span>
+                      <span className="truncate text-[12px] font-medium text-[var(--adm-ink-mute)]">{adder.name}</span>
+                      {adder.role && (
+                        <span className="ml-auto rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-[var(--adm-ink-mute)]">
+                          {adder.role}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--adm-line-soft)] pt-3">
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={app.rating || 0} onRate={(n) => void handleRatingChange(app.id, n)} />
+                      {age !== null && (
+                        <span className="text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">{age}d</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <RowAction label="View details" onClick={() => handleViewApplication(app)}>
+                        <IconEye className="h-4 w-4" />
+                      </RowAction>
+                      <RowAction label="Edit profile" onClick={() => handleEditApplication(app)}>
+                        <IconEdit className="h-4 w-4" />
+                      </RowAction>
+                      <RowAction label="Send email" href={`mailto:${app.email}`}>
+                        <IconMail className="h-4 w-4" />
+                      </RowAction>
+                      <RowAction
+                        label="Remove from bench"
+                        danger
+                        onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </RowAction>
+                    </div>
+                  </div>
+                </AdminCard>
+              );
+            })}
+          </div>
+        ) : (
+          <div>
+            <EmptyState
+              icon={IconBoxes}
+              variant={scopedApplications.length === 0 ? "fresh" : "filtered"}
+              title={scopedApplications.length === 0 ? "No candidates on the bench yet" : "No candidates match your filters"}
+              description={scopedApplications.length === 0
+                ? "Add a profile to keep strong candidates warm for future roles."
+                : "Try adjusting your search or filters."}
+              action={scopedApplications.length === 0
+                ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
+                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>}
+            />
+          </div>
+        )
       )}
+      </Workspace>
     </div>
+  );
+}
+
+// ── row action button ────────────────────────────────────────────────────────
+
+/**
+ * Icon action in a grid row or card footer. Same hit area and hover wash
+ * whether it navigates (anchor) or mutates (button), so a row of them reads
+ * as one control group.
+ */
+function RowAction({
+  label,
+  href,
+  danger = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  href?: string;
+  danger?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const cls = cn(
+    "rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors",
+    danger
+      ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+      : "hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]",
+  );
+  return href ? (
+    <a href={href} title={label} aria-label={label} className={cls}>{children}</a>
+  ) : (
+    <button type="button" title={label} aria-label={label} onClick={onClick} className={cls}>{children}</button>
   );
 }

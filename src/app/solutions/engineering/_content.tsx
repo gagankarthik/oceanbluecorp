@@ -55,19 +55,19 @@ const models: Model[] = [
 ];
 
 const steps = [
-  { no: "01", icon: Search,        title: "Scope",     desc: "We learn the program, the disciplines, and the standards that matter — before we source anyone." },
+  { no: "01", icon: Search,        title: "Scope",     desc: "We learn the program, the disciplines, and the standards that matter, before we source anyone." },
   { no: "02", icon: ClipboardCheck, title: "Vet",      desc: "Technical screening, background and reference checks, credential verification on request." },
-  { no: "03", icon: Users,         title: "Shortlist", desc: "A curated shortlist of pre-vetted engineers — typically within 48 hours of an agreed scope." },
+  { no: "03", icon: Users,         title: "Shortlist", desc: "A curated shortlist of pre-vetted engineers, typically within 48 hours of an agreed scope." },
   { no: "04", icon: LifeBuoy,      title: "Support",   desc: "We stay accountable through onboarding, delivery, and the length of the engagement." },
 ];
 
 type Why = { icon: LucideIcon; title: string; desc: string };
 
 const why: Why[] = [
-  { icon: Layers,      title: "Multi-discipline depth",   desc: "Mechanical to controls to RF — one partner across the disciplines your program touches." },
-  { icon: Factory,     title: "Industry fluency",         desc: "We speak automotive, aerospace, power, and manufacturing — standards and cadence included." },
-  { icon: Handshake,   title: "One accountable partner",  desc: "A single point of ownership from scope to delivery — not a résumé firehose." },
-  { icon: Clock,       title: "Fast, curated shortlists", desc: "A pre-vetted engineering network, shortlisted to fit — not padded to volume." },
+  { icon: Layers,      title: "Multi-discipline depth",   desc: "Mechanical to controls to RF, one partner across the disciplines your program touches." },
+  { icon: Factory,     title: "Industry fluency",         desc: "We speak automotive, aerospace, power, and manufacturing, standards and cadence included." },
+  { icon: Handshake,   title: "One accountable partner",  desc: "A single point of ownership from scope to delivery, not a resume firehose." },
+  { icon: Clock,       title: "Fast, curated shortlists", desc: "A pre-vetted engineering network, shortlisted to fit, not padded to volume." },
   { icon: ShieldCheck, title: "Quality & compliance",     desc: "Vetting, NDAs, and secure handling built into how we work, aligned to your standards." },
   { icon: Award,       title: "MWBE differentiation",     desc: "A certified minority- and women-owned partner that adds to your supplier-diversity goals." },
 ];
@@ -79,15 +79,15 @@ export default function EngineeringContent() {
       <section className="relative isolate flex min-h-[68vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.serviceEngineering} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Engineering talent &amp; services</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
               The engineers behind what you design, test, and build.
             </h1>
             <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who
-              join your program and own the work — across automotive, manufacturing, aerospace,
+              join your program and own the work, across automotive, manufacturing, aerospace,
               power, and communications.
             </p>
             <div className="mt-6 flex flex-wrap gap-2.5">
@@ -125,15 +125,15 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Disciplines grid (9) ---------- */}
-      <section id="disciplines" className="relative w-full scroll-mt-24 bg-[var(--hz-canvas)] py-24 sm:py-32">
+      <section id="disciplines" className="relative w-full scroll-mt-24 bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-            <h2 className="hz-display mt-7 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">
+            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Nine disciplines, real depth in each.
             </h2>
             <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              We shortlist for the specific discipline and the standards behind it — so the engineers
+              We shortlist for the specific discipline and the standards behind it, so the engineers
               who arrive can own the work from day one.
             </p>
           </Reveal>
@@ -155,12 +155,12 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Industries (dark, with standards) ---------- */}
-      <section className="relative isolate w-full overflow-hidden py-24 sm:py-32" style={{ background: "#07142b" }}>
+      <section className="relative isolate w-full overflow-hidden py-20 sm:py-28 lg:py-32" style={{ background: "#07142b" }}>
         <div aria-hidden className="absolute inset-0 z-0" style={{ background: "radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.28), transparent 60%)" }} />
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cyan-400)]" />
-            <h2 className="hz-display mt-7 text-[2.25rem] text-white sm:text-[3rem]">
+            <h2 className="hz-display mt-7 text-[clamp(1.9rem,4.6vw,3rem)] text-white">
               Fluent in the industries and their standards.
             </h2>
             <p className="mt-6 text-[16px] leading-relaxed text-white/70">
@@ -185,7 +185,7 @@ export default function EngineeringContent() {
           <Reveal>
             <p className="mt-10 max-w-3xl text-[12.5px] leading-relaxed text-white/45">
               &dagger; Standards are shown as market context and reflect the frameworks common to each
-              industry — not company-level certifications. &ldquo;ITAR-aware&rdquo; indicates familiarity with
+              industry, not company-level certifications. &ldquo;ITAR-aware&rdquo; indicates familiarity with
               export-control requirements; cleared-personnel access is confirmed per engagement.
             </p>
           </Reveal>
@@ -193,11 +193,11 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Engagement models ---------- */}
-      <section className="relative w-full bg-[var(--hz-canvas)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-            <h2 className="hz-display mt-7 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">
+            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Four ways to engage the talent.
             </h2>
           </Reveal>
@@ -219,15 +219,15 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- How we deliver ---------- */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-surface-2)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-            <h2 className="hz-display mt-7 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">
+            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Scope. Vet. Shortlist. Support.
             </h2>
             <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              A method you can hold us to — the same discipline behind a decade of delivery without a missed SLA.
+              A method you can hold us to, the same discipline behind a decade of delivery without a missed SLA.
             </p>
           </Reveal>
           <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4" gap={0.1}>
@@ -250,7 +250,7 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Why Ocean Blue + stats ---------- */}
-      <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-32">
+      <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-5 lg:sticky lg:top-28">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
@@ -258,7 +258,7 @@ export default function EngineeringContent() {
               Why teams bring engineering to Ocean Blue.
             </h2>
             <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              One accountable partner across disciplines and industries — with the MWBE
+              One accountable partner across disciplines and industries, with the MWBE
               differentiation the large engineering firms can&apos;t claim.
             </p>
             <div className="mt-8">
@@ -286,14 +286,14 @@ export default function EngineeringContent() {
       <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[18ch] text-[2.25rem] text-white sm:text-[3rem]">
+            <h2 className="hz-display mt-7 max-w-[18ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">
               Tell us what you&apos;re engineering.
             </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
-              We&apos;ll put the right engineers on it and stand behind the result — one accountable partner.
+              We&apos;ll put the right engineers on it and stand behind the result, one accountable partner.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
               <Cta href="/contact" variant="primary" icon={ArrowRight}>Book a discovery call</Cta>

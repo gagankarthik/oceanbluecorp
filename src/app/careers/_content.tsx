@@ -1,12 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import {
-  Clock, Users, Calendar, Heart, Landmark, GraduationCap, ArrowRight, type LucideIcon,
+  MapPin, ArrowRight, ArrowUpRight,
+  Heart, Landmark, Calendar, type LucideIcon,
 } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
+
+/* ============================================================
+   Careers.
+
+   Everything here traces to a real source:
+     · facts + offices        → the contact page and company record
+     · practices              → the department list the job board filters on
+     · culture + benefits     → copy supplied and confirmed by the business
+     · EEO statement          → pre-existing legal copy
+
+   An earlier draft of this file invented benefits detail (a 401(k)
+   match "from your first month", paid certifications with scheduled
+   study time). That was removed — anything stated here should be
+   something a new hire can hold us to on day one.
+   ============================================================ */
 
 const facts = [
   { v: "50+", k: "Team members" },
@@ -14,10 +31,30 @@ const facts = [
   { v: "Since 2013", k: "Growing" },
 ];
 
-const culture: { icon: LucideIcon; title: string; desc: string }[] = [
-  { icon: GraduationCap, title: "Professional growth", desc: "We invest in your development through training, mentorship, and work on cutting-edge projects." },
-  { icon: Clock, title: "Work-life balance", desc: "Flexible working arrangements and a culture that respects your time outside work." },
-  { icon: Users, title: "Inclusive environment", desc: "A supportive workplace where every voice is heard and diversity is celebrated." },
+// Mirrors the `departments` filter on /careers/search, so every chip resolves
+// to a real, populated search rather than an empty result.
+const practices = [
+  { name: "IT Staffing", desc: "Recruiters and delivery leads placing specialists with enterprise clients." },
+  { name: "Cloud Services", desc: "Migration, DevOps, and platform engineering across AWS, Azure, and GCP." },
+  { name: "Engineering", desc: "Mechanical, electrical, controls, and manufacturing engineers." },
+  { name: "ERP Solutions", desc: "SAP, Oracle, and Microsoft Dynamics implementation and support." },
+  { name: "Data & AI", desc: "Data engineering, analytics, and production machine learning." },
+  { name: "Salesforce", desc: "Implementation, Apex and LWC development, and managed admin." },
+  { name: "PMO", desc: "Programme and project managers running delivery across accounts." },
+  { name: "Training", desc: "Enablement and upskilling for client and internal teams." },
+];
+
+/* Culture and benefits copy is the company's own, supplied and confirmed by
+   the business. Presented in the page's editorial layout rather than the two
+   flat icon-card grids it used to live in. */
+// Culture cards lead with a photo (not an icon) — imagery carries "growth /
+// balance / inclusion" more warmly than a glyph. Sourced from the shared IMG
+// registry so they're real, valid Unsplash shots; swap for company photos when
+// available.
+const culture: { img: string; title: string; desc: string }[] = [
+  { img: IMG.serviceEngineering, title: "Professional growth", desc: "We invest in your development through training, mentorship, and work on cutting-edge projects." },
+  { img: IMG.aboutHero, title: "Work-life balance", desc: "Flexible working arrangements and a culture that respects your time outside work." },
+  { img: IMG.serviceTalent, title: "Inclusive environment", desc: "A supportive workplace where every voice is heard and diversity is celebrated." },
 ];
 
 const benefits: { icon: LucideIcon; title: string; desc: string }[] = [
@@ -26,37 +63,43 @@ const benefits: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: Calendar, title: "Paid time off", desc: "Generous vacation and sick leave so you have time to rest and recharge." },
 ];
 
-function Card({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
-  return (
-    <div className="hz-card h-full p-8">
-      <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-        <Icon className="h-6 w-6" strokeWidth={1.5} />
-      </div>
-      <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{title}</h3>
-      <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{desc}</p>
-    </div>
-  );
-}
+const offices = [
+  { city: "Powell, Ohio", country: "United States" },
+  { city: "Hyderabad", country: "India" },
+  { city: "Vizianagaram", country: "India" },
+  { city: "London", country: "United Kingdom" },
+];
 
 export default function CareersPage() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
+      {/* ── Hero ───────────────────────────────────────────── */}
       <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.heroSlides[1]} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <Photo
+          src={IMG.heroSlides[1]}
+          className="z-0"
+          fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)"
+          priority
+          sizes="100vw"
+        />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:px-8 sm:pt-32 sm:pb-20">
           <Reveal>
-            <h1 className="hz-display max-w-[16ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <span className="hz-eyebrow text-white/55">Careers</span>
+            <h1 className="hz-display mt-5 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
               Build your career with our team.
             </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              Join the engineers, recruiters, and problem-solvers shaping enterprise IT — and grow with a partner that backs its people.
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-7 sm:text-[18px]">
+              We place engineers, recruiters, and delivery leads with enterprises and
+              government agencies across North America, and we hire for the same
+              disciplines ourselves.
             </p>
-            <div className="mt-10">
+            <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+              <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
             </div>
-            <dl className="mt-14 grid max-w-2xl grid-cols-1 min-[400px]:grid-cols-3 gap-x-4 gap-y-6 border-t border-white/15 pt-8">
+
+            <dl className="mt-12 grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 border-t border-white/15 pt-8 min-[400px]:grid-cols-3 sm:mt-14">
               {facts.map((f) => (
                 <div key={f.k}>
                   <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>
@@ -68,59 +111,176 @@ export default function CareersPage() {
         </div>
       </section>
 
-      {/* Culture */}
-      <section className="relative w-full py-24 sm:py-28">
+      {/* ── Practices, every chip is a real job-board department ── */}
+      <section className="relative w-full border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">A culture of growth and collaboration.</h2>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              We foster a supportive, inclusive environment built on continuous learning and real impact for our clients.
-            </p>
+          <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-2xl">
+              <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d fit</span>
+              <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
+                The practices we hire into.
+              </h2>
+            </div>
+            <Link
+              href="/careers/search"
+              className="group inline-flex flex-none items-center gap-2 text-[14px] font-semibold text-[var(--hz-cobalt)]"
+            >
+              Browse every role
+              <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1" strokeWidth={1.75} />
+            </Link>
           </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
-            {culture.map((c) => (
-              <StaggerItem key={c.title} className="h-full"><Card {...c} /></StaggerItem>
+
+          <Stagger className="mt-12 grid gap-4 sm:mt-14 sm:grid-cols-2 lg:grid-cols-4" gap={0.06}>
+            {practices.map((p) => (
+              <StaggerItem key={p.name} className="h-full">
+                <Link
+                  href={`/careers/search?department=${encodeURIComponent(p.name)}`}
+                  className="group flex h-full flex-col rounded-2xl border border-[var(--hz-band-line)] bg-white p-6 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="hz-display text-[1.15rem] text-[var(--hz-text)]">{p.name}</h3>
+                    <ArrowUpRight
+                      className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-text-subtle)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--hz-cobalt)]"
+                      strokeWidth={1.75}
+                    />
+                  </div>
+                  <p className="mt-2.5 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{p.desc}</p>
+                </Link>
+              </StaggerItem>
             ))}
           </Stagger>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-28">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <h2 className="hz-display text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Benefits that have your back.</h2>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              A competitive package supporting the well-being and financial security of every team member.
-            </p>
+      {/* ── Culture, sticky heading, hairline rows ────────── */}
+      <section className="relative w-full py-20 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
+          <Reveal className="lg:col-span-5">
+            <div className="lg:sticky lg:top-28">
+              <span className="hz-eyebrow text-[var(--hz-amber)]">Our culture</span>
+              <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
+                A culture of growth and collaboration.
+              </h2>
+              <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-[var(--hz-text-mute)]">
+                We foster a supportive, inclusive environment built on continuous learning
+                and real impact for our clients.
+              </p>
+            </div>
           </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" gap={0.1}>
-            {benefits.map((b) => (
-              <StaggerItem key={b.title} className="h-full"><Card {...b} /></StaggerItem>
+
+          <Stagger className="lg:col-span-7" gap={0.08}>
+            {culture.map((c) => (
+              <StaggerItem key={c.title}>
+                <div className="flex gap-5 border-t border-[var(--hz-band-line)] py-7 first:border-t-0 first:pt-0 sm:gap-6">
+                  <div className="mt-0.5 h-16 w-16 flex-none overflow-hidden rounded-xl ring-1 ring-[var(--hz-band-line)] sm:h-20 sm:w-20">
+                    <Photo
+                      src={c.img}
+                      alt={c.title}
+                      className="h-full w-full object-cover"
+                      sizes="80px"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="hz-display text-[1.2rem] text-[var(--hz-text)] sm:text-[1.35rem]">{c.title}</h3>
+                    <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{c.desc}</p>
+                  </div>
+                </div>
+              </StaggerItem>
             ))}
           </Stagger>
+        </div>
+      </section>
 
+      {/* ── Benefits ───────────────────────────────────────── */}
+      <section className="relative w-full border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <Reveal className="max-w-2xl">
+            <span className="hz-eyebrow text-[var(--hz-amber)]">Benefits</span>
+            <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
+              Benefits that have your back.
+            </h2>
+            <p className="mt-5 text-[15.5px] leading-relaxed text-[var(--hz-text-mute)]">
+              A competitive package supporting the well-being and financial security of
+              every team member.
+            </p>
+          </Reveal>
+
+          <Stagger className="mt-12 grid gap-5 sm:mt-14 md:grid-cols-3" gap={0.09}>
+            {benefits.map((b) => (
+              <StaggerItem key={b.title} className="h-full">
+                <div className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+                    <b.icon className="h-6 w-6" strokeWidth={1.5} />
+                  </span>
+                  <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{b.title}</h3>
+                  <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{b.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* ── Offices ────────────────────────────────────────── */}
+      <section className="relative w-full py-20 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
+          <Reveal className="lg:col-span-5">
+            <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d work</span>
+            <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
+              Four offices, three countries.
+            </h2>
+            <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-[var(--hz-text-mute)]">
+              Headquartered in Powell, Ohio, with delivery centers in India and the UK.
+              Individual roles list their own location and working arrangement on the
+              posting.
+            </p>
+          </Reveal>
+
+          <Stagger className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-[var(--hz-band-line)] bg-[var(--hz-band-line)] sm:grid-cols-2 lg:col-span-7" gap={0.08}>
+            {offices.map((o) => (
+              <StaggerItem key={o.city} className="bg-white">
+                <div className="group h-full p-6 transition-colors duration-300 hover:bg-[var(--hz-band)] sm:p-7">
+                  <MapPin className="h-5 w-5 text-[var(--hz-cobalt)]" strokeWidth={1.5} />
+                  <h3 className="hz-display mt-4 text-[1.15rem] text-[var(--hz-text)]">{o.city}</h3>
+                  <p className="mt-1 text-[13.5px] text-[var(--hz-text-mute)]">{o.country}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* ── Equal opportunity ──────────────────────────────── */}
+      <section className="relative w-full py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal>
-            <div className="mt-12 rounded-2xl border border-black/[0.08] bg-white p-8 text-center sm:p-10">
-              <h3 className="hz-display text-[1.4rem] text-[var(--hz-text)] sm:text-[1.75rem]">An equal opportunity employer</h3>
-              <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-                We celebrate diversity and are committed to an inclusive environment for all. We do not discriminate based on
-                race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-7 sm:p-9">
+              <h2 className="hz-display text-[1.25rem] text-[var(--hz-text)] sm:text-[1.5rem]">
+                An equal opportunity employer
+              </h2>
+              <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
+                We do not discriminate on the basis of race, color, religion, sex, sexual
+                orientation, gender identity, national origin, disability, or veteran
+                status. If you need an accommodation at any point in the hiring process,
+                tell your recruiter and we will arrange it.
               </p>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── CTA ────────────────────────────────────────────── */}
       <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
+        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" sizes="100vw" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
-            <h2 className="hz-display max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Ready to join our team?</h2>
+            <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">
+              Ready to join our team?
+            </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
-              We&apos;re always looking for talented people to help us drive innovation and impact.
+              See what is open right now, or send us your resume and we will keep it on
+              file for roles that match.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
               <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>

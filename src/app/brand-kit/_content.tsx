@@ -9,9 +9,9 @@ type Swatch = { name: string; hex: string; varName: string; note?: string; dark?
 
 const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
   {
-    group: "Brand — Ocean Blue",
+    group: "Brand, Ocean Blue",
     colors: [
-      { name: "Cobalt", hex: "#1d4ed8", varName: "--hz-cobalt", note: "Primary accent — buttons, links, active states", dark: true },
+      { name: "Cobalt", hex: "#1d4ed8", varName: "--hz-cobalt", note: "Primary accent, buttons, links, active states", dark: true },
       { name: "Cobalt 600", hex: "#1740ad", varName: "--hz-cobalt-600", note: "Hover / gradient depth", dark: true },
       { name: "Cobalt 100", hex: "#dbe6fe", varName: "--hz-cobalt-100", note: "Tints, chips, soft fills" },
     ],
@@ -27,7 +27,7 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
   {
     group: "Dark surfaces",
     colors: [
-      { name: "Ink", hex: "#050912", varName: "--hz-ink", note: "Deepest — hero / CTA", dark: true },
+      { name: "Ink", hex: "#050912", varName: "--hz-ink", note: "Deepest, hero / CTA", dark: true },
       { name: "Navy", hex: "#0a1730", varName: "--hz-navy", note: "Feature bands", dark: true },
       { name: "Navy 2", hex: "#0e2147", varName: "--hz-navy-2", note: "Raised dark surface", dark: true },
     ],
@@ -82,9 +82,9 @@ export default function BrandKitContent() {
           <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Home
           </Link>
-          <h1 className="hz-display max-w-[18ch] text-[2.5rem] text-white sm:text-[3.25rem] lg:text-[4rem]">Brand kit & design system</h1>
+          <h1 className="hz-display max-w-[18ch] text-[clamp(2rem,5vw,4rem)] text-white">Brand kit & design system</h1>
           <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-            The colors, type, logo, and components behind Ocean Blue Corporation — the single source of truth for a consistent brand.
+            The colors, type, logo, and components behind Ocean Blue Corporation, the single source of truth for a consistent brand.
           </p>
         </div>
       </section>
@@ -150,7 +150,7 @@ export default function BrandKitContent() {
 
         {/* Components */}
         <section>
-          <SectionHeading n="04" title="Components" sub="Core interactive elements — buttons, chips, and cards use the rounded, cobalt-accented language sitewide." />
+          <SectionHeading n="04" title="Components" sub="Core interactive elements, buttons, chips, and cards use the rounded, cobalt-accented language sitewide." />
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">Buttons</p>

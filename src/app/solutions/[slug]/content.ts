@@ -42,7 +42,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     tags: ["By the project", "Try before you hire", "Permanent hire", "Managed teams"],
     overviewHeading: "Talent that fits the role and the team.",
     overviewBody:
-      "We place cloud, data, security, ERP, and Salesforce specialists who own outcomes, not just seats. You get a curated shortlist matched to the skills, the seniority, and the way your team works — typically within 48 hours of an agreed scope.",
+      "We place cloud, data, security, ERP, and Salesforce specialists who own outcomes, not just seats. You get a curated shortlist matched to the skills, the seniority, and the way your team works, typically within 48 hours of an agreed scope.",
     capabilities: [
       "Cloud, data & security engineers",
       "ERP & Salesforce specialists",
@@ -52,14 +52,14 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       "Shortlists in 48 hours",
     ],
     highlights: [
-      { icon: Users, title: "Embedded specialists", desc: "Engineers who join your team and own the work — not a résumé firehose." },
+      { icon: Users, title: "Embedded specialists", desc: "Engineers who join your team and own the work, not a resume firehose." },
       { icon: Clock, title: "48-hour shortlists", desc: "A curated shortlist matched to the role, delivered fast." },
       { icon: ShieldCheck, title: "Vetted & accountable", desc: "Technical screening, reference checks, and one point of ownership." },
     ],
     approach: [
       { title: "Scope the role", desc: "We learn the skills, seniority, and team dynamics before sourcing anyone." },
       { title: "Source & vet", desc: "Technical screening, background and reference checks against your bar." },
-      { title: "Shortlist in 48h", desc: "A short, curated list that fits — not a stack of maybes." },
+      { title: "Shortlist in 48h", desc: "A short, curated list that fits, not a stack of maybes." },
       { title: "Onboard & support", desc: "We stay accountable through onboarding and the length of the engagement." },
     ],
     meta: {
@@ -80,9 +80,9 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     tags: ["AWS", "Azure", "GCP", "DevOps"],
     overviewHeading: "Cloud that is built to run, not just to launch.",
     overviewBody:
-      "We move workloads to the cloud and modernize the ones already there — with landing zones, infrastructure-as-code, and observability so nothing is a black box. Performance, cost, and security are engineering requirements, not afterthoughts.",
+      "We move workloads to the cloud and modernize the ones already there, with landing zones, infrastructure-as-code, and observability so nothing is a black box. Performance, cost, and security are engineering requirements, not afterthoughts.",
     capabilities: [
-      "Migration — AWS, Azure, GCP",
+      "Migration, AWS, Azure, GCP",
       "Infrastructure modernization",
       "DevOps & CI/CD automation",
       "Landing zones & infrastructure-as-code",
@@ -91,7 +91,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     ],
     highlights: [
       { icon: GitBranch, title: "Automated delivery", desc: "CI/CD pipelines and IaC so releases are repeatable and safe." },
-      { icon: Gauge, title: "Performance & cost", desc: "Tuned for the workload and the bill — observed, not assumed." },
+      { icon: Gauge, title: "Performance & cost", desc: "Tuned for the workload and the bill, observed, not assumed." },
       { icon: LockKeyhole, title: "Secure by default", desc: "Identity, network, and data controls built into the architecture." },
     ],
     approach: [
@@ -103,7 +103,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Cloud Engineering",
       description:
-        "Cloud migration, modernization, and DevOps across AWS, Azure, and GCP — landing zones, infrastructure-as-code, observability, and FinOps cost optimization.",
+        "Cloud migration, modernization, and DevOps across AWS, Azure, and GCP, landing zones, infrastructure-as-code, observability, and FinOps cost optimization.",
       keywords: ["cloud migration", "cloud engineering", "AWS Azure GCP", "DevOps", "infrastructure as code", "FinOps"],
     },
   },
@@ -118,7 +118,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     tags: ["HIPAA", "SOC 2", "NIST"],
     overviewHeading: "Security that is measured by risk reduced.",
     overviewBody:
-      "We assess, harden, and monitor across your cloud, identity, and application layers — aligned to the frameworks you are held to. The goal is fewer exploitable gaps and a program you can evidence to auditors and customers.",
+      "We assess, harden, and monitor across your cloud, identity, and application layers, aligned to the frameworks you are held to. The goal is fewer exploitable gaps and a program you can evidence to auditors and customers.",
     capabilities: [
       "Security assessments & hardening",
       "Identity & access management",
@@ -141,7 +141,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Cybersecurity",
       description:
-        "Proactive, compliance-aligned cybersecurity — assessments, identity & access management, vulnerability management, cloud security posture, and HIPAA / SOC 2 / NIST readiness.",
+        "Proactive, compliance-aligned cybersecurity, assessments, identity & access management, vulnerability management, cloud security posture, and HIPAA / SOC 2 / NIST readiness.",
       keywords: ["cybersecurity services", "IAM", "vulnerability management", "cloud security", "SOC 2", "HIPAA compliance", "NIST"],
     },
   },
@@ -156,7 +156,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     tags: ["SAP", "Oracle", "Dynamics"],
     overviewHeading: "From implementation to the value that follows.",
     overviewBody:
-      "We deliver ERP implementations and upgrades, integrate them with the rest of your stack, and keep them optimized. The measure of success is a system your teams actually want to use — with clean data and reporting they trust.",
+      "We deliver ERP implementations and upgrades, integrate them with the rest of your stack, and keep them optimized. The measure of success is a system your teams actually want to use, with clean data and reporting they trust.",
     capabilities: [
       "Implementations & upgrades",
       "Custom development & extensions",
@@ -167,7 +167,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     ],
     highlights: [
       { icon: Boxes, title: "Platform depth", desc: "SAP, Oracle, and Microsoft Dynamics specialists on one team." },
-      { icon: Plug, title: "Connected", desc: "Integrated cleanly with the systems around it — no islands." },
+      { icon: Plug, title: "Connected", desc: "Integrated cleanly with the systems around it, no islands." },
       { icon: LineChart, title: "Reporting you trust", desc: "Clean data and analytics that inform real decisions." },
     ],
     approach: [
@@ -179,7 +179,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "ERP Solutions",
       description:
-        "ERP implementations, upgrades, integrations, and optimization across SAP, Oracle, and Microsoft Dynamics — with clean data migration, reporting, and ongoing support.",
+        "ERP implementations, upgrades, integrations, and optimization across SAP, Oracle, and Microsoft Dynamics, with clean data migration, reporting, and ongoing support.",
       keywords: ["ERP solutions", "SAP implementation", "Oracle ERP", "Microsoft Dynamics", "ERP integration", "ERP support"],
     },
   },
@@ -194,7 +194,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     tags: ["Sales Cloud", "Service Cloud", "Apex", "LWC"],
     overviewHeading: "A CRM that drives adoption, not workarounds.",
     overviewBody:
-      "From multi-cloud implementations to Apex and Lightning development, we make Salesforce fit your process — then keep it healthy with managed admin services. The result is cleaner data, useful automation, and reporting leaders act on.",
+      "From multi-cloud implementations to Apex and Lightning development, we make Salesforce fit your process, then keep it healthy with managed admin services. The result is cleaner data, useful automation, and reporting leaders act on.",
     capabilities: [
       "Multi-cloud implementations",
       "Apex & Lightning (LWC) development",
@@ -217,7 +217,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Salesforce Services",
       description:
-        "Salesforce implementation, Apex & LWC development, workflow automation, integrations, and managed admin services — for cleaner data, better adoption, and reporting you can act on.",
+        "Salesforce implementation, Apex & LWC development, workflow automation, integrations, and managed admin services, for cleaner data, better adoption, and reporting you can act on.",
       keywords: ["Salesforce services", "Salesforce implementation", "Apex development", "Lightning Web Components", "Salesforce admin", "CRM automation"],
     },
   },
@@ -255,7 +255,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "AI & Data Intelligence",
       description:
-        "Business-first AI and data services — workflow and document automation, predictive analytics, LLM integrations, data engineering, BI, and MLOps with governance and security built in.",
+        "Business-first AI and data services, workflow and document automation, predictive analytics, LLM integrations, data engineering, BI, and MLOps with governance and security built in.",
       keywords: ["AI services", "data intelligence", "predictive analytics", "LLM integration", "data engineering", "MLOps", "workflow automation"],
     },
   },
@@ -266,11 +266,11 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     image: IMG.serviceManaged,
     eyebrow: "Managed Services",
     title: "Run and optimize, 24/7, on one accountable SLA.",
-    lede: "Monitoring, support, and continuous optimization around the clock — one team, one SLA, one number to call.",
+    lede: "Monitoring, support, and continuous optimization around the clock, one team, one SLA, one number to call.",
     tags: ["24/7", "One SLA", "QBRs"],
     overviewHeading: "The people who build it are the people who run it.",
     overviewBody:
-      "We keep systems healthy with monitoring, helpdesk, and infrastructure management — then improve them through the same team that knows how they were built. You get consolidated accountability and quarterly reviews against the outcomes you set.",
+      "We keep systems healthy with monitoring, helpdesk, and infrastructure management, then improve them through the same team that knows how they were built. You get consolidated accountability and quarterly reviews against the outcomes you set.",
     capabilities: [
       "24/7 monitoring & response",
       "Helpdesk & application support",
@@ -281,7 +281,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     ],
     highlights: [
       { icon: Clock, title: "Around the clock", desc: "Monitoring and response 24/7, so issues are caught early." },
-      { icon: ShieldCheck, title: "One accountable SLA", desc: "A single team and number to call — no finger-pointing." },
+      { icon: ShieldCheck, title: "One accountable SLA", desc: "A single team and number to call, no finger-pointing." },
       { icon: RefreshCw, title: "Always improving", desc: "Continuous optimization, reviewed with you every quarter." },
     ],
     approach: [
@@ -293,7 +293,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Managed Services",
       description:
-        "24/7 managed services — monitoring, helpdesk and application support, cloud and infrastructure management, security monitoring, and quarterly business reviews on one accountable SLA.",
+        "24/7 managed services, monitoring, helpdesk and application support, cloud and infrastructure management, security monitoring, and quarterly business reviews on one accountable SLA.",
       keywords: ["managed services", "24/7 monitoring", "IT helpdesk", "infrastructure management", "application support", "managed SLA"],
     },
   },
@@ -304,11 +304,11 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     image: IMG.productsHero,
     eyebrow: "Digital Transformation",
     title: "Modernize with a roadmap and measurable outcomes.",
-    lede: "We modernize processes, improve workflows, and adopt the right technologies — with a clear plan you can hold us to.",
+    lede: "We modernize processes, improve workflows, and adopt the right technologies, with a clear plan you can hold us to.",
     tags: ["Strategy", "Architecture", "Change management"],
     overviewHeading: "Transformation, sequenced to reduce risk.",
     overviewBody:
-      "We align technology decisions to business outcomes, then sequence the work so value shows up early and risk stays low. Strategy, architecture, and change management come together — with KPIs agreed up front.",
+      "We align technology decisions to business outcomes, then sequence the work so value shows up early and risk stays low. Strategy, architecture, and change management come together, with KPIs agreed up front.",
     capabilities: [
       "Technology strategy",
       "Architecture & roadmaps",
@@ -331,7 +331,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Digital Transformation",
       description:
-        "Digital transformation with a clear roadmap — technology strategy, architecture, process optimization, modernization, and change management with KPIs agreed up front.",
+        "Digital transformation with a clear roadmap, technology strategy, architecture, process optimization, modernization, and change management with KPIs agreed up front.",
       keywords: ["digital transformation", "technology strategy", "IT roadmap", "application modernization", "process optimization", "change management"],
     },
   },

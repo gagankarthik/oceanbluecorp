@@ -923,23 +923,40 @@
 }
 .ob-spin-slow { animation: ob-spin-slow 16s linear infinite; }
 
-/* Custom scrollbar */
+/* Scrollbar.
+   Was a cyan-to-blue gradient thumb, which put a saturated decorative stripe
+   down the edge of every page (and introduced a cyan that is not in the
+   palette). A scrollbar is chrome, not brand: neutral, quiet, darkens on
+   hover. */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #0891b2, #2563eb);
-  border-radius: 4px;
+  background: #cbd5e1;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #0e7490, #1d4ed8);
+  background: #94a3b8;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 /* ============================================================
@@ -1126,8 +1143,14 @@
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;
 
-  /* Warm secondary — amber highlight + ivory surface (landing) */
-  --hz-ivory:      #faf7f1;
+  /* Alternating section band. Cool slate — the warm ivory it replaced fought
+     the cobalt accent and slate text, and read yellow next to pure white.
+     --hz-ivory is kept as an alias so existing call sites keep working. */
+  --hz-band:       #f4f7fb;
+  --hz-band-line:  #e6ecf4;
+  --hz-ivory:      var(--hz-band);
+
+  /* Amber highlight — the single warm accent (eyebrows, stat suffixes) */
   --hz-amber:      #d97706;
   --hz-amber-600:  #b45309;
   --hz-amber-100:  #fde7c9;
@@ -1252,6 +1275,13 @@
   .hz-marquee { animation: none; }
 }
 
+/* NOTE: a `.hz-defer { content-visibility: auto }` helper was tried here to
+   skip painting below-the-fold sections. It was removed because every landing
+   section reveals with framer-motion's `whileInView … once: true`: if the
+   content-visibility activation and the IntersectionObserver race, the reveal
+   can resolve before the element has a box and the section stays permanently
+   at opacity 0. Not worth the paint saving. */
+
 /* ============================================================
    ADMIN — semantic design tokens (the only values admin UI may
    reference). Components consume these; pages consume components.
@@ -1267,11 +1297,28 @@
   --adm-accent-tint:   #eef3fe;               /* row hover / selected-row wash */
   --adm-focus-ring:    rgba(29, 78, 216, 0.2);/* 2px ring on every focusable control */
 
-  /* Surfaces & lines (one neutral family: slate) */
-  --adm-canvas:    #f8fafc;                   /* page background (slate-50) */
+  /* Surfaces & lines (one neutral family: slate)
+
+     Retuned for the operations-workspace direction. The old canvas (#eef2f7)
+     was a heavy blue-grey that made white panels read as paper on a desk —
+     correct for a document system, wrong for a workspace where the grid IS
+     the screen. The canvas is now barely tinted, so the eye goes to the data
+     rather than to the frame around it, and the borders lightened to match:
+     at 40px row height a #dbe3ec rule between every row is a visible ladder. */
+  --adm-canvas:    #f7f8fa;                   /* page background */
   --adm-surface:   #ffffff;                   /* cards, panels, popovers */
-  --adm-line:      rgba(226, 232, 240, 0.8);  /* card borders (slate-200/80) */
-  --adm-line-soft: #f1f5f9;                   /* internal dividers (slate-100) */
+  --adm-surface-sunken: #f8fafc;              /* toolbars, filter bars, footers */
+  --adm-line:      #e3e8ef;                   /* panel borders */
+  --adm-line-strong: #cbd5e1;                 /* emphasis edges, pinned-column seam */
+  --adm-line-soft: #eef1f6;                   /* row dividers inside a grid */
+  --adm-line-rule: #edf0f5;                   /* column rules inside data grids */
+
+  /* Table chrome. The header band is now near-white rather than a filled grey
+     strip: in a dense grid a saturated header competes with the first rows. */
+  --adm-head:      #fbfcfd;                   /* sticky data-grid header band */
+  --adm-head-ink:  #64748b;                   /* header label ink */
+  --adm-zebra:     #fcfcfd;                   /* alternating row wash */
+  --adm-row-hover: #f5f8ff;                   /* row hover wash (quieter than accent-tint) */
 
   /* Ink */
   --adm-ink:        #0f172a;                  /* headings, primary values (slate-900) */
@@ -1295,10 +1342,33 @@
   --adm-chart-6: #ec4899;  /* pink */
   --adm-chart-7: #94a3b8;  /* slate — "other"/neutral series */
 
-  /* Elevation (cool-tinted, slate-based) */
-  --adm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
-  --adm-shadow-md: 0 8px 24px -4px rgba(15, 23, 42, 0.12);
-  --adm-shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.18);
+  /* Elevation. Still border-led, but with a hairline lift restored: against the
+     lighter canvas a pure-border panel had no edge definition at all, so the
+     whole screen flattened into one sheet.
+
+     Layered rather than single-stop: a real edge needs a tight contact shadow
+     AND a wider ambient one. A lone `0 1px 2px` reads as a printed outline;
+     two stops read as a surface sitting on another surface, which is most of
+     what separates a polished panel from a boxed one. */
+  --adm-shadow-sm:
+    0 1px 2px -1px rgba(16, 24, 40, 0.06),
+    0 1px 3px 0 rgba(16, 24, 40, 0.04);
+  --adm-shadow-md:
+    0 4px 12px -2px rgba(16, 24, 40, 0.08),
+    0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --adm-shadow-lg:
+    0 20px 48px -12px rgba(15, 23, 42, 0.24),
+    0 4px 12px -4px rgba(15, 23, 42, 0.10);
+  /* Overlay chrome that must clear the sticky grid header. */
+  --adm-shadow-pop:
+    0 12px 32px -8px rgba(16, 24, 40, 0.16),
+    0 2px 8px -3px rgba(16, 24, 40, 0.08);
+  /* Primary action: an inner top highlight plus a tinted contact shadow, so the
+     button reads as lit rather than as a flat fill of the accent colour. */
+  --adm-shadow-accent:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px 0 rgba(29, 78, 216, 0.32),
+    0 4px 10px -3px rgba(29, 78, 216, 0.28);
 
   /* Motion (one easing, three speeds) */
   --adm-ease:        cubic-bezier(0.22, 1, 0.36, 1);
@@ -1306,9 +1376,445 @@
   --adm-duration-base:   300ms;   /* lifts, reveals */
   --adm-duration-slow:   700ms;   /* progress bars, chart draws */
 
-  /* Radius scale: 8px controls · 10px inputs/buttons · 12px chips/wells · 16px cards */
-  --adm-radius-control: 8px;
-  --adm-radius-input:   10px;
-  --adm-radius-chip:    12px;
-  --adm-radius-card:    16px;
+  /* Radius scale. Ant v5 territory (6px base, 8px large) — soft enough to feel
+     current and comfortable, structured enough to still read as a business
+     application. The earlier 3px pass was too hard and made the UI feel cramped
+     and dated. */
+  --adm-radius-control: 6px;
+  --adm-radius-input:   8px;
+  --adm-radius-chip:    6px;
+  --adm-radius-card:    10px;
+
+  /* Row density for data grids — now a user-facing setting, not a constant.
+     `--adm-row-h` is overridden per-grid by the density toggle.
+
+     THREE separate passes have now been rejected for being too tight: 34px
+     ("very compact, this is very bad"), then 48px, then 40px ("too compacted
+     and clumsy"). Do not propose a tighter default again. 56px is the settled
+     value — it clears a 32px avatar with real padding either side, and lets a
+     name sit on a line with air above and below it rather than wedged between
+     two rules.
+
+     The lesson underneath the three rejections: this screen is read for
+     minutes at a time, and what makes it feel productive is being able to land
+     on a row without aiming. Records-per-screen was never the goal. Anyone who
+     genuinely wants tighter rows has the density control. */
+  --adm-row-h-compact:  44px;
+  --adm-row-h-default:  56px;
+  --adm-row-h-relaxed:  68px;
+  --adm-row-h:          var(--adm-row-h-default);
+
+  /* ── Spacing: 8px grid, 4px half-step (Ant Design convention) ──
+     Every gap, pad and margin in admin must land on one of these.
+     "Alignment" and "Proximity" only read as intentional if the
+     rhythm is quantised; ad-hoc 5px/13px/20px values are what make
+     a dense screen feel accidental. */
+  --adm-space-1: 4px;    /* icon-to-label, chip padding */
+  --adm-space-2: 8px;    /* inside a control */
+  --adm-space-3: 12px;   /* between controls in a group */
+  --adm-space-4: 16px;   /* panel padding, between panels */
+  --adm-space-6: 24px;   /* between section groups */
+  --adm-space-8: 32px;   /* major section break */
+
+  /* ── Type scale ──
+     Five sizes only. A back-office screen that invents a size per
+     component loses its hierarchy; "Contrast" comes from a small
+     number of clearly-separated steps. Sizes were nudged up a step from the
+     first pass: 11/12/13 across the board made every screen read as fine
+     print. */
+  --adm-font-xs: 11.5px; /* uppercase micro-labels, table headers */
+  --adm-font-sm: 13px;   /* secondary/meta text */
+  --adm-font-md: 14px;   /* data-grid cells, body */
+  --adm-font-lg: 15px;   /* emphasis body, form labels */
+  --adm-font-xl: 20px;   /* screen title */
+  --adm-leading:  1.5715; /* Ant's body line-height */
+}
+
+/* ============================================================
+   ADMIN — themeable console tokens (light + dark).
+
+   The admin section is a dense operations console, modelled on
+   Conduktor's data console, that ships in BOTH a light and a dark
+   theme, switchable by the viewer. Everything is driven THROUGH these
+   `--adm-*` tokens, so a component never needs to know which theme is
+   active — it styles once, against the token, and both themes come for
+   free.
+
+   Cascade (explicit choice must beat the OS preference in BOTH
+   directions):
+
+     1. `.adm-scope` below = the LIGHT token set. This is also the
+        base that provides the console's newer tokens (surface-2,
+        seg-*, *-soft, glow) to whichever theme wins. The bulk of the
+        light palette lives in the :root block above; this block only
+        adds what the console introduced.
+     2. `@media (prefers-color-scheme: dark) .adm-scope:not([data-theme="light"])`
+        = DARK, applied when the OS prefers dark AND the viewer has not
+        explicitly forced light.
+     3. `.adm-scope[data-theme="dark"]` = DARK, applied whenever the
+        viewer explicitly forces dark (wins on a light OS too).
+
+     An explicit `data-theme="light"` keeps light even on a dark OS,
+     because rule 2 excludes it and the base `.adm-scope` is light.
+     No attribute at all = follow the OS (rule 2).
+
+   The shell (admin/layout.tsx) sets `data-theme` on the `.adm-scope`
+   root from a persisted `useLocalStorage("adminTheme", "system")`
+   choice — "system" leaves the attribute off so the media query drives
+   it. The public marketing site never carries `.adm-scope`, so it is
+   entirely unaffected by any of this.
+
+   Dark palette, read off the Conduktor reference:
+     · near-black canvas (#0a0a0a), NOT pure black
+     · slightly-lighter card surfaces (#141414 / #1b1b1b)
+     · hairline borders (#262626) — structure from lines, not shadow
+     · GREEN (#22c55e) = healthy / success · BLUE (#3b82f6) = data / graph
+   ============================================================ */
+
+/* ── LIGHT (base) — the console's default theme. Adds the newer tokens and
+      re-points a few :root values to the Conduktor light look; the rest of the
+      light palette is inherited from :root above.
+
+      ACCENT = green (Conduktor's brand accent — active nav, primary actions,
+      links). A separate --adm-data = blue carries graphs/charts, so a line and
+      a "healthy" tick never collide on the same hue. Semantic --adm-success
+      stays green too; they are the same family by design. ── */
+.adm-scope {
+  /* Ocean Blue brand cobalt — matches the marketing site (--hz-cobalt). Green
+     is reserved for the "healthy/success" semantic only, so accent ≠ success. */
+  --adm-accent:        #1d4ed8;                  /* cobalt-700 — primary/brand */
+  --adm-accent-strong: #1e40af;                  /* cobalt-800 — hover/pressed */
+  --adm-accent-soft:   rgba(29, 78, 216, 0.10);  /* tinted chips, active nav pill */
+  --adm-accent-tint:   rgba(29, 78, 216, 0.07);  /* row hover / selected wash */
+  --adm-focus-ring:    rgba(29, 78, 216, 0.28);
+
+  --adm-data:          #2563eb;                  /* blue — graphs, data series, sparklines */
+  --adm-data-soft:     rgba(37, 99, 235, 0.10);
+
+  --adm-canvas:        #fafafa;                  /* page/content area (whiter) */
+  --adm-chrome:        #edeff2;                  /* sidebar + top bar — one shared, borderless surface, a touch greyer than the page */
+  --adm-line:          #ececf0;                  /* Conduktor hairline */
+
+  --adm-surface-2:    #f1f5f9;   /* raised: active segmented pill, hovered well */
+  --adm-seg-track:    #eef1f6;   /* segmented-control container */
+  --adm-seg-active:   #ffffff;   /* segmented-control active pill (lifts on light) */
+
+  --adm-success-soft: rgba(5, 150, 105, 0.10);
+  --adm-warning-soft: rgba(217, 119, 6, 0.10);
+  --adm-danger-soft:  rgba(225, 29, 72, 0.10);
+  --adm-glow:         rgba(22, 163, 74, 0.16);  /* green radial glow behind the state card */
+
+  background: var(--adm-canvas);
+  color: var(--adm-ink);
+  color-scheme: light;
+}
+
+/* ── DARK token set. Declared once as a custom-property list and applied to
+      both the media-query and the explicit-attribute selectors below. ── */
+@media (prefers-color-scheme: dark) {
+  .adm-scope:not([data-theme="light"]) {
+    /* Accent — green (brand), brightened for a dark surface. Blue graphs live
+       on --adm-data so they stay distinct from the green success/healthy hue. */
+    --adm-accent:        #22c55e;
+    --adm-accent-strong: #16a34a;
+    --adm-accent-soft:   rgba(34, 197, 94, 0.16);
+    --adm-accent-tint:   rgba(34, 197, 94, 0.10);
+    --adm-focus-ring:    rgba(34, 197, 94, 0.40);
+
+    --adm-data:          #3b82f6;
+    --adm-data-soft:     rgba(59, 130, 246, 0.16);
+
+    --adm-canvas:    #0a0a0a;
+    --adm-chrome:    #121214;
+    --adm-surface:   #141414;
+    --adm-surface-2: #1b1b1b;
+    --adm-surface-sunken: #0f0f0f;
+    --adm-line:      #262626;
+    --adm-line-strong: #363636;
+    --adm-line-soft: #1e1e1e;
+    --adm-line-rule: #1c1c1c;
+
+    --adm-head:      #121212;
+    --adm-head-ink:  #8a8a8a;
+    --adm-zebra:     #101010;
+    --adm-row-hover: #171717;
+
+    --adm-ink:        #f4f4f5;
+    --adm-ink-mute:   #a1a1aa;
+    --adm-ink-subtle: #6b7280;
+
+    --adm-success: #22c55e;
+    --adm-warning: #f59e0b;
+    --adm-danger:  #ef4444;
+    --adm-info:    #6366f1;
+
+    --adm-surface-2:    #1b1b1b;
+    --adm-seg-track:    #0f0f0f;
+    --adm-seg-active:   #262626;
+
+    --adm-success-soft: rgba(34, 197, 94, 0.14);
+    --adm-warning-soft: rgba(245, 158, 11, 0.14);
+    --adm-danger-soft:  rgba(239, 68, 68, 0.14);
+    --adm-glow:         rgba(34, 197, 94, 0.22);
+
+    --adm-chart-1: #3b82f6;
+    --adm-chart-2: #a78bfa;
+    --adm-chart-3: #22d3ee;
+    --adm-chart-4: #34d399;
+    --adm-chart-5: #fbbf24;
+    --adm-chart-6: #f472b6;
+    --adm-chart-7: #9ca3af;
+
+    --adm-shadow-sm:
+      0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --adm-shadow-md:
+      0 6px 16px -4px rgba(0, 0, 0, 0.6),
+      0 2px 4px -2px rgba(0, 0, 0, 0.5);
+    --adm-shadow-lg:
+      0 24px 56px -16px rgba(0, 0, 0, 0.7),
+      0 6px 16px -6px rgba(0, 0, 0, 0.6);
+    --adm-shadow-pop:
+      0 16px 40px -12px rgba(0, 0, 0, 0.7),
+      0 2px 8px -3px rgba(0, 0, 0, 0.5);
+    --adm-shadow-accent:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      0 1px 2px 0 rgba(0, 0, 0, 0.5),
+      0 6px 16px -6px rgba(59, 130, 246, 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit dark — wins on a light OS too. Same values as above. */
+.adm-scope[data-theme="dark"] {
+  --adm-accent:        #22c55e;
+  --adm-accent-strong: #16a34a;
+  --adm-accent-soft:   rgba(34, 197, 94, 0.16);
+  --adm-accent-tint:   rgba(34, 197, 94, 0.10);
+  --adm-focus-ring:    rgba(34, 197, 94, 0.40);
+
+  --adm-data:          #3b82f6;
+  --adm-data-soft:     rgba(59, 130, 246, 0.16);
+
+  --adm-canvas:    #0a0a0a;
+  --adm-chrome:    #121214;
+  --adm-surface:   #141414;
+  --adm-surface-2: #1b1b1b;
+  --adm-surface-sunken: #0f0f0f;
+  --adm-line:      #262626;
+  --adm-line-strong: #363636;
+  --adm-line-soft: #1e1e1e;
+  --adm-line-rule: #1c1c1c;
+
+  --adm-head:      #121212;
+  --adm-head-ink:  #8a8a8a;
+  --adm-zebra:     #101010;
+  --adm-row-hover: #171717;
+
+  --adm-ink:        #f4f4f5;
+  --adm-ink-mute:   #a1a1aa;
+  --adm-ink-subtle: #6b7280;
+
+  --adm-success: #22c55e;
+  --adm-warning: #f59e0b;
+  --adm-danger:  #ef4444;
+  --adm-info:    #6366f1;
+
+  --adm-seg-track:    #0f0f0f;
+  --adm-seg-active:   #262626;
+
+  --adm-success-soft: rgba(34, 197, 94, 0.14);
+  --adm-warning-soft: rgba(245, 158, 11, 0.14);
+  --adm-danger-soft:  rgba(239, 68, 68, 0.14);
+  --adm-glow:         rgba(34, 197, 94, 0.22);
+
+  --adm-chart-1: #3b82f6;
+  --adm-chart-2: #a78bfa;
+  --adm-chart-3: #22d3ee;
+  --adm-chart-4: #34d399;
+  --adm-chart-5: #fbbf24;
+  --adm-chart-6: #f472b6;
+  --adm-chart-7: #9ca3af;
+
+  --adm-shadow-sm:
+    0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --adm-shadow-md:
+    0 6px 16px -4px rgba(0, 0, 0, 0.6),
+    0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --adm-shadow-lg:
+    0 24px 56px -16px rgba(0, 0, 0, 0.7),
+    0 6px 16px -6px rgba(0, 0, 0, 0.6);
+  --adm-shadow-pop:
+    0 16px 40px -12px rgba(0, 0, 0, 0.7),
+    0 2px 8px -3px rgba(0, 0, 0, 0.5);
+  --adm-shadow-accent:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px 0 rgba(0, 0, 0, 0.5),
+    0 6px 16px -6px rgba(59, 130, 246, 0.5);
+
+  color-scheme: dark;
+}
+
+/* Native form controls (selects, date pickers, scrollbars) follow the theme. */
+.adm-scope input,
+.adm-scope select,
+.adm-scope textarea { color-scheme: inherit; }
+
+/* ============================================================
+   ADMIN — data-grid primitives.
+   A business system is read in columns, so the grid needs real
+   structure: a sticky filled header, column rules, tabular
+   figures, and a full-width focus row. These are utilities so
+   every table inherits them without per-page markup.
+   ============================================================ */
+
+.adm-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Sticky header band — stays put while a long ledger scrolls.
+
+   Sentence case at 12px, NOT 11px uppercase-tracked. The uppercase micro-label
+   was singled out as a main reason the dense pass read as cramped and shouty;
+   at workspace density it also costs more horizontal room per column than the
+   sentence-case equivalent, because tracking widens every heading. */
+.adm-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--adm-head);
+  color: var(--adm-head-ink);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--adm-line);
+}
+.adm-grid thead th:last-child { box-shadow: none; }
+
+/* Row dividers only. The vertical column rules were dropped: with a lighter
+   line token and 40px rows, ruling both axes turned the grid into graph paper.
+   Alignment and whitespace separate the columns; the rules separate records. */
+/* Border on the CELLS, not the row: this table is `border-collapse: separate`,
+   where `tr` borders are never painted — so the row divider must live on td. */
+.adm-grid tbody td { border-bottom: 1px solid var(--adm-line-soft); }
+.adm-grid tbody tr:last-child td { border-bottom: 0; }
+
+/* Column rules stay available for genuinely numeric ledgers, opt-in. */
+.adm-grid--ruled tbody td { box-shadow: inset -1px 0 0 var(--adm-line-rule); }
+.adm-grid--ruled tbody td:last-child { box-shadow: none; }
+
+/* ── Density. Set on the scroll container; cells read the variable so a single
+   attribute retunes the whole grid without touching any cell class. Type size
+   is deliberately NOT part of density — only vertical rhythm changes. */
+[data-density="compact"] { --adm-row-h: var(--adm-row-h-compact); }
+[data-density="default"] { --adm-row-h: var(--adm-row-h-default); }
+[data-density="relaxed"] { --adm-row-h: var(--adm-row-h-relaxed); }
+
+.adm-grid tbody td { height: var(--adm-row-h); }
+
+/* ── Pinned identity column. At workspace density a wide grid scrolls
+   horizontally, and a row whose name has scrolled off is unreadable. The first
+   column stays put and grows a seam only once content has scrolled under it. */
+.adm-grid--pinned thead th:first-child,
+.adm-grid--pinned tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: inherit;
+}
+.adm-grid--pinned thead th:first-child { z-index: 3; background: var(--adm-head); }
+.adm-grid--pinned.is-scrolled thead th:first-child,
+.adm-grid--pinned.is-scrolled tbody td:first-child {
+  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgba(16, 24, 40, 0.1);
+}
+
+/* ── Hit targets (Fitts's Law).
+   Several grid controls measured 16–28px: the selection checkboxes were
+   16x24, the sort buttons 24px tall, the rating stars 16px. Those are below
+   even the 24px minimum, so selecting a row or sorting a column needed real
+   aim — on a screen used for hours, all day.
+
+   The fix extends the CLICKABLE area without changing the visual size: a
+   transparent ::after is stretched to a comfortable target over the control
+   that is drawn. Nothing looks bigger; everything is easier to hit. */
+.adm-hit {
+  position: relative;
+}
+.adm-hit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 40px);
+  height: max(100%, 40px);
+  transform: translate(-50%, -50%);
+}
+
+/* Column headers: the whole cell sorts, not just the label's text box. */
+.adm-grid thead th button {
+  height: 100%;
+  min-height: 40px;
+}
+
+/* Numeric columns align on the decimal, as a ledger should */
+.adm-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Record identifiers read as codes, not prose */
+.adm-code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: var(--adm-ink-mute);
+}
+
+/* ── "React Immediately": every interactive control answers the keyboard.
+   focus-visible (not :focus) so pointer users never see a ring, which is
+   what lets a dense screen stay quiet while remaining operable. */
+.adm-scope :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--adm-accent);
+  outline-offset: 1px;
+  border-radius: var(--adm-radius-control);
+}
+
+/* ── "Use Transition": one duration, one curve, and only on properties the
+   compositor can animate. Anything longer reads as lag in a tool people use
+   all day; anything that animates layout makes a dense grid twitch. */
+.adm-scope :is(a, button, [role="button"]) {
+  transition:
+    background-color var(--adm-duration-fast) var(--adm-ease),
+    border-color var(--adm-duration-fast) var(--adm-ease),
+    color var(--adm-duration-fast) var(--adm-ease);
+}
+
+/* ── Smooth light⇄dark cross-fade. The shell adds `.adm-theming` to the
+   `.adm-scope` root only for the ~300ms of the switch, then removes it — so
+   every surface eases between palettes on toggle WITHOUT carrying a transition
+   on every hover or data update, which would read as lag all day. Colour and
+   shadow only; never layout. ── */
+.adm-scope.adm-theming,
+.adm-scope.adm-theming *,
+.adm-scope.adm-theming *::before,
+.adm-scope.adm-theming *::after {
+  transition:
+    background-color 280ms var(--adm-ease),
+    border-color 280ms var(--adm-ease),
+    color 280ms var(--adm-ease),
+    fill 280ms var(--adm-ease),
+    box-shadow 280ms var(--adm-ease) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-scope *,
+  .adm-scope *::before,
+  .adm-scope *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

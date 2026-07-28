@@ -11,10 +11,14 @@ import { IMG } from "./media";
 const colA = [IMG.serviceTalent, IMG.heroSlides[1], IMG.serviceSolutions];
 const colB = [IMG.serviceManaged, IMG.serviceEngineering, IMG.caseStudy];
 
+// Each tile occupies roughly half of the right-hand column — never the full
+// viewport — so the browser should fetch a small candidate, not the 1600w one.
+const TILE_SIZES = "(min-width: 1024px) 300px, (min-width: 640px) 40vw, 45vw";
+
 function Tile({ src }: { src: string }) {
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl ring-1 ring-white/10">
-      <Photo src={src} />
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10">
+      <Photo src={src} sizes={TILE_SIZES} />
       <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(5,12,28,0.4) 100%)" }} />
     </div>
   );
@@ -28,8 +32,11 @@ function MarqueeColumn({ imgs, direction, duration }: { imgs: string[]; directio
   return (
     <motion.div
       className="flex flex-1 flex-col gap-4"
+      // Promote to its own layer so the continuous loop stays on the compositor
+      // instead of repainting the tiles every frame.
+      style={{ willChange: "transform", backfaceVisibility: "hidden" }}
       animate={reduce ? undefined : { y: [from, to] }}
-      transition={{ duration, repeat: Infinity, ease: "linear" }}
+      transition={{ duration, repeat: Infinity, ease: "linear", repeatType: "loop" }}
     >
       {[...imgs, ...imgs].map((src, i) => (
         <Tile key={i} src={src} />
@@ -52,22 +59,22 @@ export default function CallToAction({ content = {} }: { content?: Record<string
       />
 
       <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-24 sm:px-8 sm:py-32 lg:grid-cols-2 lg:gap-16 2xl:max-w-[96rem]">
-        {/* ── Left half — heading, then button below ─────────── */}
+        {/* ── Left half, heading, then button below ─────────── */}
         <Reveal className="flex flex-col items-start">
-          <h2 className="hz-display max-w-[15ch] text-[2.2rem] leading-[1.05] text-white sm:text-[3.25rem] 2xl:text-[3.75rem]">
+          <h2 className="hz-display max-w-[15ch] text-[clamp(1.9rem,4.6vw,3.75rem)] leading-[1.05] text-white">
             {content.ctaHeading || "Tell us what you're building. We'll put the right team on it."}
           </h2>
-          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-white/70 sm:text-[18px]">
+          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[18px]">
             {content.ctaBody ||
-              "Staffing, enterprise solutions, or managed services — start with a conversation, and we'll stand behind the result."}
+              "Staffing, enterprise solutions, or managed services. Start with a conversation, and we'll stand behind the result."}
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-start gap-3 sm:mt-9 sm:flex-row sm:items-center">
             <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.ctaButton || "Book a discovery call"}</Cta>
             <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
           </div>
         </Reveal>
 
-        {/* ── Right half — vertical image marquees ───────────── */}
+        {/* ── Right half, vertical image marquees ───────────── */}
         <div
           className="relative h-[380px] overflow-hidden sm:h-[460px] lg:h-[520px]"
           style={{

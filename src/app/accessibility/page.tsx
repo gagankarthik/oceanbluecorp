@@ -50,7 +50,7 @@ export default function AccessibilityPage() {
             <h1 className="hz-display text-[2.25rem] text-white sm:text-[3rem]">Accessibility</h1>
           </div>
           <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-white/75">
-            We want everyone — including people with disabilities — to be able to use the Ocean Blue Corporation website with confidence.
+            We want everyone, including people with disabilities, to be able to use the Ocean Blue Corporation website with confidence.
           </p>
         </div>
       </section>
@@ -63,7 +63,7 @@ export default function AccessibilityPage() {
           <p>
             Ocean Blue Corporation is committed to ensuring digital accessibility for people with disabilities. We are
             continually improving the user experience for everyone and applying the relevant accessibility standards so
-            that our website is perceivable, operable, understandable, and robust for all users — regardless of ability,
+            that our website is perceivable, operable, understandable, and robust for all users, regardless of ability,
             assistive technology, or device.
           </p>
         </Section>
@@ -102,7 +102,7 @@ export default function AccessibilityPage() {
 
         <Section title="Known limitations">
           <p>
-            Despite our best efforts, some content may not yet be fully accessible — for example, certain third-party
+            Despite our best efforts, some content may not yet be fully accessible, for example, certain third-party
             embeds or older documents. We treat accessibility issues as defects and prioritize fixing them. If you
             encounter a barrier, please tell us so we can help and improve.
           </p>

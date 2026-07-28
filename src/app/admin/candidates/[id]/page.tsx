@@ -1,26 +1,29 @@
 "use client";
-import { toast } from "sonner";
-import { AdminDetailSkeleton } from "@/components/admin/skeletons";
 
 import { useState, useEffect, use, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { toast } from "sonner";
 import {
-  ArrowLeft, Mail, Phone, MapPin, Briefcase, FileText,
-  MessageSquareText, XCircle, Edit3, Loader2, History, Plus,
-  Building2, BookmarkPlus, BookmarkCheck, UserCheck,
-  UserX, Download, Clock, ExternalLink, Check,
-  AlertCircle, Sparkles, RefreshCw,
+  ArrowLeft, Check, ExternalLink, Loader2, Plus,
 } from "lucide-react";
 import type { Application, NoteEntry } from "@/lib/aws/dynamodb";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { AdminDetailSkeleton } from "@/components/admin/skeletons";
 import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
 import { ResumeAnalysisEditDrawer } from "@/components/admin/resume-analysis-edit-drawer";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { WorkspaceButton } from "@/components/admin/workspace";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import {
+  IconPipeline, IconAlert, IconBookmarkCheck, IconBookmarkPlus, IconJob,
+  IconBuilding, IconClock, IconDownload, IconEdit, IconFile, IconHistory,
+  IconMail, IconLocation, IconMessageText, IconPhone, IconRefresh,
+  IconSparkles, IconUserCheck, IconUserX, IconError,
+} from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
 import { tones, statusMeta, PIPELINE_STAGES, type AppStatus } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
@@ -34,14 +37,34 @@ interface CandidateDetail extends Application {
 
 type TabKey = "overview" | "activity" | "notes";
 
-// Label/value pair for the applicant details definition grid.
-function DetailItem({ label, value, mono }: { label: string; value?: React.ReactNode; mono?: boolean }) {
+/**
+ * The six in-flight stages are one ordered measure, so they take the sequential
+ * cobalt ramp rather than six categorical hues — the same ramp the funnel chart
+ * and the applications pipeline band use.
+ */
+const STAGE_RAMP = ["#93b4fb", "#6d97f7", "#4a7bef", "#2f62e0", "#1d4ed8", "#1a3fae"];
+
+/** Label/value pair for the applicant details definition grid. */
+function DetailItem({ label, value }: { label: string; value?: React.ReactNode }) {
   const empty = value === undefined || value === null || value === "";
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{label}</dt>
-      <dd className={cn("mt-1 text-sm text-slate-800 break-words", mono && "font-mono text-xs text-slate-600")}>
-        {empty ? <span className="text-slate-300">—</span> : value}
+      <dt className="text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
+      <dd className="mt-1 break-words text-[14px] text-[var(--adm-ink)]">
+        {empty ? <span className="text-[var(--adm-ink-subtle)]">—</span> : value}
+      </dd>
+    </div>
+  );
+}
+
+/** Right-aligned metadata row used by the sidebar panels. */
+function MetaRow({ label, value }: { label: string; value?: React.ReactNode }) {
+  const empty = value === undefined || value === null || value === "";
+  return (
+    <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
+      <dt className="flex-none text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-[13.5px] text-[var(--adm-ink)]">
+        {empty ? <span className="text-[var(--adm-ink-subtle)]">—</span> : value}
       </dd>
     </div>
   );
@@ -51,7 +74,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const reduce = useReducedMotion();
   const { openCandidateEditor } = useAdmin();
 
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null);
@@ -103,7 +125,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           jobLocation:   jd.job?.location,
           jobType:       jd.job?.type,
         } : p));
-      } catch { /* non-fatal — job details are supplementary */ }
+      } catch { /* non-fatal, job details are supplementary */ }
     })();
     return () => { cancelled = true; };
   }, [candidate?.jobId]);
@@ -122,7 +144,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         if (updated.resumeAnalysisStatus === "completed" || updated.resumeAnalysisStatus === "failed") {
           clearInterval(timer);
           if (updated.resumeAnalysisStatus === "completed") {
-            toast.success("Resume analyzed — results are ready");
+            toast.success("Resume analyzed, results are ready");
           }
         }
       } catch { /* non-fatal */ }
@@ -242,19 +264,18 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   if (error || !candidate) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto">
-            <AlertCircle className="w-6 h-6 text-rose-500" />
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-danger-soft)]">
+            <IconAlert className="h-6 w-6 text-[var(--adm-danger)]" />
           </div>
           <div>
-            <p className="text-slate-900 font-semibold">{error || "Candidate not found"}</p>
-            <p className="text-sm text-slate-500 mt-1">This record may have been removed.</p>
+            <p className="font-semibold text-[var(--adm-ink)]">{error || "Candidate not found"}</p>
+            <p className="mt-1 text-sm text-[var(--adm-ink-subtle)]">This record may have been removed.</p>
           </div>
-          <button onClick={() => router.push("/admin/applications")}
-            className="px-4 py-2 bg-[var(--hz-cobalt)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--hz-cobalt-600)] transition-colors">
+          <WorkspaceButton variant="primary" onClick={() => router.push("/admin/applications")}>
             Back to candidates
-          </button>
+          </WorkspaceButton>
         </div>
       </div>
     );
@@ -263,248 +284,251 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const isRejected = candidate.status === "rejected";
   const currentIdx = PIPELINE_STAGES.findIndex((s) => s.key === candidate.status);
   const notes: NoteEntry[] = candidate.notesHistory || [];
+  const history = candidate.statusHistory || [];
   const isOwner = candidate.ownership === user?.id;
-  const statusTone = statusMeta[candidate.status as AppStatus]?.tone || "slate";
   const hasAnalysis = !!candidate.resumeAnalysis;
+  const location = [candidate.city, candidate.state].filter(Boolean).join(", ");
 
-  const fade = (delay = 0) =>
-    reduce
-      ? {}
-      : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay, ease: [0.22, 1, 0.36, 1] as const } };
+  const TABS = [
+    { key: "overview" as TabKey, label: "Overview", icon: IconFile,          count: undefined as number | undefined },
+    { key: "notes"    as TabKey, label: "Notes",    icon: IconMessageText, count: notes.length },
+    { key: "activity" as TabKey, label: "Activity", icon: IconHistory,           count: history.length },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto pb-10 space-y-5">
+    <div className="space-y-5 pb-10">
 
-      {/* ── Top action bar (breadcrumb lives in the top nav) ── */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <button onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg font-medium transition-all border border-transparent hover:border-slate-200">
-          <ArrowLeft className="w-4 h-4" /> Back
+      {/* ── Record header ──
+          Plain content on the canvas. This was a full-bleed white band with a
+          bottom rule, the same treatment that was rejected across the app.
+          A record screen still states its title — that is the candidate's name,
+          which nothing else on screen carries — but it does not need a frame
+          around it to do so. */}
+      <div>
+        <button
+          onClick={() => router.back()}
+          className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <div className="flex items-center gap-2">
-          {candidate.jobId && (
-            <Link href={`/admin/jobs/${candidate.jobId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 hover:text-[var(--hz-cobalt)] hover:border-[var(--hz-cobalt)] text-xs font-semibold rounded-lg transition-colors">
-              <Briefcase className="w-3.5 h-3.5" /> View job
-            </Link>
-          )}
-          <button onClick={handleBenchToggle} disabled={benchSaving}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all disabled:opacity-60",
-              candidate.addToTalentBench
-                ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
-                : "bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50",
-            )}>
-            {benchSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
-              candidate.addToTalentBench ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-            {candidate.addToTalentBench ? "In bench" : "Add to bench"}
-          </button>
-          <button onClick={() => openCandidateEditor({ candidate })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] text-white text-xs font-semibold rounded-lg transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
-            <Edit3 className="w-3.5 h-3.5" /> Edit profile
-          </button>
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <Avatar name={candidate.name} email={candidate.email} size="lg" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
+                  {candidate.name || "Unnamed candidate"}
+                </h1>
+                {candidate.applicationId && (
+                  <span className="rounded-[4px] bg-[var(--adm-accent-soft)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">
+                    {candidate.applicationId}
+                  </span>
+                )}
+                <StatusBadge status={candidate.status} withIcon size="md" />
+                {candidate.addToTalentBench && (
+                  <span className="inline-flex items-center gap-1 rounded-[4px] border border-emerald-200 bg-[var(--adm-success-soft)] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-[var(--adm-success)]">
+                    <IconBookmarkCheck className="h-3 w-3" /> Bench
+                  </span>
+                )}
+              </div>
+
+              {candidate.jobTitle && (
+                <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[13.5px] text-[var(--adm-ink-subtle)]">
+                  <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                  {candidate.jobTitle}
+                  {candidate.jobDepartment && <span className="text-[var(--adm-ink-subtle)]">· {candidate.jobDepartment}</span>}
+                </p>
+              )}
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]">
+                <a href={`mailto:${candidate.email}`}
+                  className="inline-flex min-w-0 items-center gap-1.5 break-all text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
+                  <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{candidate.email}
+                </a>
+                {candidate.phone && (
+                  <a href={`tel:${candidate.phone}`}
+                    className="inline-flex items-center gap-1.5 text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
+                    <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{candidate.phone}
+                  </a>
+                )}
+                {location && (
+                  <span className="inline-flex items-center gap-1.5 text-[var(--adm-ink-subtle)]">
+                    <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{location}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <div className="flex flex-wrap items-center gap-2">
+              {candidate.jobId && (
+                <WorkspaceButton onClick={() => router.push(`/admin/jobs/${candidate.jobId}`)}>
+                  <IconJob className="h-4 w-4" /><span className="hidden sm:inline">View job</span>
+                </WorkspaceButton>
+              )}
+              <WorkspaceButton onClick={handleBenchToggle} disabled={benchSaving}>
+                {benchSaving
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : candidate.addToTalentBench ? <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success)]" /> : <IconBookmarkPlus className="h-4 w-4" />}
+                {candidate.addToTalentBench ? "In bench" : "Add to bench"}
+              </WorkspaceButton>
+              <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ candidate })}>
+                <IconEdit className="h-4 w-4" />Edit profile
+              </WorkspaceButton>
+            </div>
+
+            {/* Rating is a control, not a read-only figure, so it lives with the
+                toolbar rather than being duplicated as a KPI tile. */}
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-medium text-[var(--adm-ink-subtle)]">Rating</span>
+              <StarRating rating={candidate.rating || 0} onRate={handleRating} size="md" />
+              <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+                {candidate.rating ? `${candidate.rating} / 5` : "Not rated"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Hero ── */}
-      <motion.div {...fade(0.02)}>
-        <AdminCard className="overflow-hidden">
-          {/* status accent rail */}
-          <div className={cn("h-1 w-full", tones[statusTone].solid)} />
-          <div className="p-6">
-            <div className="flex items-start gap-5 flex-wrap">
-              <div className="ring-2 ring-slate-100 rounded-full shadow-sm inline-block flex-shrink-0">
-                <Avatar name={candidate.name} email={candidate.email} size="xl" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <h1 className="text-[26px] leading-tight font-bold text-slate-900 tracking-tight">
-                      {candidate.name || "Unnamed candidate"}
-                    </h1>
-                    {candidate.jobTitle && (
-                      <p className="mt-1 text-sm text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
-                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                        {candidate.jobTitle}
-                        {candidate.jobDepartment && <span className="text-slate-400">· {candidate.jobDepartment}</span>}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
-                      <StatusBadge status={candidate.status} withIcon size="md" />
-                      {candidate.addToTalentBench && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
-                          <BookmarkCheck className="w-3 h-3" /> Talent bench
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* rating */}
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Rating</span>
-                    <StarRating rating={candidate.rating || 0} onRate={handleRating} size="md" />
-                    <span className="text-[10px] text-slate-400 tabular-nums">{candidate.rating ? `${candidate.rating} / 5` : "Not rated"}</span>
-                  </div>
-                </div>
-
-                {/* contact links */}
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm">
-                  <a href={`mailto:${candidate.email}`}
-                    className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors font-medium min-w-0 break-all">
-                    <Mail className="w-4 h-4 text-slate-400" /> {candidate.email}
-                  </a>
-                  {candidate.phone && (
-                    <a href={`tel:${candidate.phone}`}
-                      className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[var(--hz-cobalt)] transition-colors font-medium">
-                      <Phone className="w-4 h-4 text-slate-400" /> {candidate.phone}
-                    </a>
-                  )}
-                  {(candidate.city || candidate.state) && (
-                    <span className="inline-flex items-center gap-1.5 text-slate-500">
-                      <MapPin className="w-4 h-4 text-slate-400" /> {[candidate.city, candidate.state].filter(Boolean).join(", ")}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* details — kept in the header so identity + details read as one block */}
-            <div className="mt-5 pt-5 border-t border-slate-100">
-              <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-                <DetailItem label="Work authorization" value={candidate.workAuthorization} />
-                <DetailItem label="Source" value={candidate.source} />
-                <DetailItem label="Street address" value={candidate.address} />
-                <DetailItem label="ZIP code" value={candidate.zipCode} />
-                <DetailItem label="Applied" value={fmtDate(candidate.appliedAt)} />
-                <DetailItem label="Added by" value={candidate.createdByName} />
-              </dl>
-            </div>
-          </div>
-        </AdminCard>
-      </motion.div>
-
-      {/* ── Pipeline card ── */}
-      <motion.div {...fade(0.04)}>
-        <AdminCard className="px-6 py-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Hiring pipeline</p>
-              {statusSaving && (
-                <span className="inline-flex items-center gap-1 text-[11px] text-[var(--hz-cobalt)] font-medium">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Saving…
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {PIPELINE_STAGES.map((stage, i) => {
-                const t = tones[stage.tone];
-                const isActive = stage.key === candidate.status;
-                const isPast   = !isRejected && currentIdx > i;
-                return (
-                  <div key={stage.key} className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <button
-                      onClick={() => handleStageClick(stage.key)}
-                      disabled={statusSaving}
-                      title={stage.label}
-                      className={cn(
-                        "flex-1 min-w-0 h-9 rounded-lg flex items-center justify-center gap-1.5 px-2 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border",
-                        isActive
-                          ? cn(t.bg, "border-transparent shadow-sm ring-2 ring-offset-1", t.ring)
-                          : isPast
-                          ? cn(t.bg, "border-transparent opacity-80")
-                          : "bg-white border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600",
-                      )}>
-                      <span className={cn(
-                        "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                        isActive || isPast ? t.dot : "bg-slate-200",
-                      )}>
-                        {isPast && <Check className="w-2.5 h-2.5 text-white" />}
-                      </span>
-                      <span className={cn(
-                        "truncate hidden sm:block",
-                        isActive || isPast ? t.text : "text-slate-400",
-                      )}>
-                        {stage.label}
-                      </span>
-                    </button>
-                    {i < PIPELINE_STAGES.length - 1 && (
-                      <div className={cn("w-3 h-0.5 flex-shrink-0 rounded-full", isPast && !isRejected ? "bg-[var(--hz-cobalt)]" : "bg-slate-200")} />
-                    )}
-                  </div>
-                );
-              })}
-
-              <div className="w-px h-6 bg-slate-200 mx-1 flex-shrink-0 hidden sm:block" />
-
+      {/* ── Stage control ──
+          One connected strip rather than six floating pills: the stages are a
+          single ordered flow, so they share a frame and a sequential ramp. */}
+      <AdminCard className="overflow-hidden">
+        <AdminCardHeader
+          icon={IconPipeline}
+          title="Hiring pipeline"
+          action={statusSaving ? (
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--adm-accent)]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+            </span>
+          ) : (
+            <span className="hidden text-[12.5px] text-[var(--adm-ink-subtle)] sm:inline">Click a stage to move this candidate</span>
+          )}
+        />
+        <div className="flex items-stretch overflow-x-auto">
+          {PIPELINE_STAGES.map((stage, i) => {
+            const isActive = stage.key === candidate.status;
+            const isPast   = !isRejected && currentIdx > i;
+            const color    = STAGE_RAMP[Math.min(i, STAGE_RAMP.length - 1)];
+            return (
               <button
-                onClick={() => handleStageClick("rejected")}
+                key={stage.key}
+                onClick={() => handleStageClick(stage.key)}
                 disabled={statusSaving}
-                aria-label="Reject candidate"
+                aria-pressed={isActive}
+                title={`Move to ${stage.label}`}
                 className={cn(
-                  "h-9 rounded-lg flex items-center justify-center gap-1.5 px-3 text-xs font-bold uppercase tracking-wide transition-all disabled:opacity-60 border flex-shrink-0",
-                  isRejected
-                    ? "bg-rose-50 border-rose-200 text-rose-700 ring-2 ring-offset-1 ring-rose-200 shadow-sm"
-                    : "bg-white border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 text-slate-400 hover:text-rose-600",
-                )}>
-                <span className={cn("w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                  isRejected ? "bg-rose-500" : "bg-slate-200")}>
-                  {isRejected && <XCircle className="w-2.5 h-2.5 text-white" />}
+                  "relative flex min-w-[104px] flex-1 items-center gap-2 border-r border-[var(--adm-line-soft)] px-3.5 py-3.5 text-left transition-colors disabled:opacity-60",
+                  isActive ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-zebra)]",
+                  isRejected && !isActive && "opacity-55 hover:opacity-100",
+                )}
+              >
+                {isActive && <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />}
+                <span
+                  className="grid h-4 w-4 flex-none place-items-center rounded-full"
+                  style={{ background: isActive || isPast ? color : "#e2e8f0" }}
+                >
+                  {isPast && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
                 </span>
-                <span className={cn("hidden sm:block", isRejected ? "text-rose-700" : "text-slate-400")}>Rejected</span>
+                <span className={cn(
+                  "truncate text-[12.5px] font-semibold",
+                  isActive ? "text-[var(--adm-ink)]" : isPast ? "text-[var(--adm-ink-mute)]" : "text-[var(--adm-ink-subtle)]",
+                )}>
+                  {stage.label}
+                </span>
               </button>
-            </div>
-        </AdminCard>
-      </motion.div>
+            );
+          })}
+
+          {/* Rejected is terminal and off the main flow, so it sits behind a
+              heavier rule rather than in the ordered ramp. */}
+          <button
+            onClick={() => handleStageClick("rejected")}
+            disabled={statusSaving}
+            aria-pressed={isRejected}
+            aria-label="Reject candidate"
+            className={cn(
+              "relative flex min-w-[104px] items-center gap-2 border-l-2 border-[var(--adm-line)] px-3.5 py-3.5 text-left transition-colors disabled:opacity-60",
+              isRejected ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-zebra)]",
+            )}
+          >
+            {isRejected && <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: "#e11d48" }} />}
+            <span
+              className="grid h-4 w-4 flex-none place-items-center rounded-full"
+              style={{ background: isRejected ? "#e11d48" : "#e2e8f0" }}
+            >
+              {isRejected && <IconError className="h-2.5 w-2.5 text-white" />}
+            </span>
+            <span className={cn("truncate text-[12.5px] font-semibold", isRejected ? "text-[var(--adm-ink)]" : "text-[var(--adm-ink-subtle)]")}>
+              Rejected
+            </span>
+          </button>
+        </div>
+      </AdminCard>
 
       {/* ── Body: main + sidebar ── */}
-      <div className="grid lg:grid-cols-3 gap-5 items-start">
+      <div className="grid items-start gap-4 lg:grid-cols-3">
 
-        {/* Left — tabs */}
-        <motion.div className="lg:col-span-2 space-y-4" {...fade(0.06)}>
+        {/* Main column */}
+        <div className="space-y-4 lg:col-span-2">
           {/* Tab bar */}
-          <AdminCard className="flex overflow-hidden">
-            {([
-              { key: "overview" as TabKey, label: "Overview", icon: FileText,          count: undefined as number | undefined },
-              { key: "notes"    as TabKey, label: "Notes",    icon: MessageSquareText, count: notes.length },
-              { key: "activity" as TabKey, label: "Activity", icon: History,           count: candidate.statusHistory?.length },
-            ]).map((tab) => {
-              const Icon   = tab.icon;
-              const active = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors relative",
-                    active
-                      ? "text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]/40"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-50",
-                  )}>
-                  {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--hz-cobalt)] rounded-full" />}
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={cn(
-                      "min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center tabular-nums",
-                      active ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" : "bg-slate-100 text-slate-600",
-                    )}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <AdminCard className="overflow-hidden">
+            <div className="flex px-2">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    aria-pressed={active}
+                    className={cn(
+                      "-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-[13.5px] font-semibold transition-colors",
+                      active
+                        ? "border-[var(--adm-accent)] text-[var(--adm-accent)]"
+                        : "border-transparent text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-none" />
+                    {tab.label}
+                    {tab.count !== undefined && tab.count > 0 && (
+                      <span className={cn(
+                        "rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
+                        active ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
+                      )}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </AdminCard>
 
           {/* Overview tab */}
           {activeTab === "overview" && (
             <div className="space-y-4">
-              {/* Experience (manual) — superseded by the parsed work history when analysis exists */}
+              {/* Applicant details */}
+              <AdminCard className="overflow-hidden">
+                <AdminCardHeader icon={IconFile} title="Applicant details" />
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 sm:grid-cols-3">
+                  <DetailItem label="Work authorization" value={candidate.workAuthorization} />
+                  <DetailItem label="Source" value={candidate.source} />
+                  <DetailItem label="Street address" value={candidate.address} />
+                  <DetailItem label="ZIP code" value={candidate.zipCode} />
+                  <DetailItem label="Applied" value={fmtDate(candidate.appliedAt)} />
+                  <DetailItem label="Added by" value={candidate.createdByName} />
+                </dl>
+              </AdminCard>
+
+              {/* Experience (manual), superseded by the parsed work history when analysis exists */}
               {!hasAnalysis && candidate.experience && (
                 <AdminCard className="overflow-hidden">
-                  <AdminCardHeader icon={Briefcase} title="Experience" />
+                  <AdminCardHeader icon={IconJob} title="Experience" />
                   <div className="px-5 py-4">
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{candidate.experience}</p>
+                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{candidate.experience}</p>
                   </div>
                 </AdminCard>
               )}
@@ -512,90 +536,86 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               {/* Cover letter */}
               {candidate.coverLetter && (
                 <AdminCard className="overflow-hidden">
-                  <AdminCardHeader icon={FileText} title="Cover letter" />
+                  <AdminCardHeader icon={IconFile} title="Cover letter" />
                   <div className="px-5 py-4">
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{candidate.coverLetter}</p>
+                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{candidate.coverLetter}</p>
                   </div>
                 </AdminCard>
               )}
 
-              {/* Résumé analysis (parsed details now live in Overview) */}
+              {/* Resume analysis (parsed details live in Overview) */}
               {candidate.resumeAnalysis ? (
                 <>
-                  <AdminCard className="px-5 py-3.5">
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-8 h-8 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="w-4 h-4 text-[var(--hz-cobalt)]" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">Résumé analysis</p>
-                          {candidate.resumeAnalyzedAt && (
-                            <p className="text-[11px] text-slate-400">Last analyzed {fmtDateTime(candidate.resumeAnalyzedAt)}</p>
-                          )}
+                  <AdminCard className="overflow-hidden">
+                    <AdminCardHeader
+                      icon={IconSparkles}
+                      title="Resume analysis"
+                      tone="blue"
+                      action={
+                        <div className="flex flex-none items-center gap-2">
+                          <button onClick={() => setAnalysisEditOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]">
+                            <IconEdit className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button onClick={handleAnalyze} disabled={analyzing}
+                            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60">
+                            {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconRefresh className="h-3.5 w-3.5" />}
+                            Re-analyze
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button onClick={() => setAnalysisEditOpen(true)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-slate-200 bg-white text-slate-700 rounded-lg hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] transition-colors">
-                          <Edit3 className="w-3.5 h-3.5" /> Edit
-                        </button>
-                        <button onClick={handleAnalyze} disabled={analyzing}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-slate-200 bg-white text-slate-700 rounded-lg hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] transition-colors disabled:opacity-60">
-                          {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                          Re-analyze
-                        </button>
-                      </div>
-                    </div>
+                      }
+                    />
+                    {candidate.resumeAnalyzedAt && (
+                      <p className="px-5 py-2.5 text-[12px] text-[var(--adm-ink-subtle)]">
+                        Last analyzed {fmtDateTime(candidate.resumeAnalyzedAt)}
+                      </p>
+                    )}
                   </AdminCard>
                   <ResumeAnalysisPanel analysis={candidate.resumeAnalysis} />
                 </>
               ) : candidate.resumeId ? (
-                <AdminCard className="px-6 py-12 text-center">
+                <AdminCard>
                   {(candidate.resumeAnalysisStatus === "pending" || candidate.resumeAnalysisStatus === "processing") ? (
-                    <>
-                      <div className="w-12 h-12 rounded-2xl bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-3">
-                        <Loader2 className="w-6 h-6 text-[var(--hz-cobalt)] animate-spin" />
-                      </div>
-                      <p className="text-sm font-semibold text-slate-700">Analyzing resume…</p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                        Extracting experience, education, skills and more. This usually takes under a minute — the page will update automatically.
+                    <div className="flex flex-col items-center px-5 py-12 text-center">
+                      <span className="grid h-12 w-12 place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                        <Loader2 className="h-6 w-6 animate-spin text-[var(--adm-accent)]" />
+                      </span>
+                      <p className="mt-3 text-sm font-medium text-[var(--adm-ink-mute)]">Analyzing resume…</p>
+                      <p className="mt-1 max-w-sm text-xs text-[var(--adm-ink-subtle)]">
+                        Extracting experience, education, skills and more. This usually takes under a minute, the page will update automatically.
                       </p>
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      <div className="w-12 h-12 rounded-2xl bg-[var(--hz-cobalt-100)] flex items-center justify-center mx-auto mb-3">
-                        <Sparkles className="w-6 h-6 text-[var(--hz-cobalt)]" />
-                      </div>
-                      <p className="text-sm font-semibold text-slate-700">
-                        {candidate.resumeAnalysisStatus === "failed" ? "Last analysis didn't finish" : "Resume not analyzed yet"}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                        {candidate.resumeAnalysisStatus === "failed" && candidate.resumeAnalysisError
+                    <EmptyState
+                      icon={IconSparkles}
+                      tone="blue"
+                      title={candidate.resumeAnalysisStatus === "failed" ? "Last analysis didn't finish" : "Resume not analyzed yet"}
+                      description={
+                        candidate.resumeAnalysisStatus === "failed" && candidate.resumeAnalysisError
                           ? candidate.resumeAnalysisError
-                          : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."}
-                      </p>
-                      <button onClick={handleAnalyze} disabled={analyzing}
-                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-60 transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
-                        {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
-                      </button>
-                    </>
+                          : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."
+                      }
+                      action={
+                        <WorkspaceButton variant="primary" onClick={handleAnalyze} disabled={analyzing}>
+                          {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSparkles className="h-4 w-4" />}
+                          {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
+                        </WorkspaceButton>
+                      }
+                    />
                   )}
                 </AdminCard>
               ) : (
-                <AdminCard className="px-6 py-12 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                    <Sparkles className="w-6 h-6 text-slate-300" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">No résumé details yet</p>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                    No resume is attached. You can add skills, experience and other details manually.
-                  </p>
-                  <button onClick={() => setAnalysisEditOpen(true)}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] transition shadow-sm shadow-[rgba(29,78,216,0.2)]">
-                    <Plus className="w-4 h-4" /> Add details manually
-                  </button>
+                <AdminCard>
+                  <EmptyState
+                    icon={IconSparkles}
+                    title="No resume details yet"
+                    description="No resume is attached. You can add skills, experience and other details manually."
+                    action={
+                      <WorkspaceButton variant="primary" onClick={() => setAnalysisEditOpen(true)}>
+                        <Plus className="h-4 w-4" /> Add details manually
+                      </WorkspaceButton>
+                    }
+                  />
                 </AdminCard>
               )}
             </div>
@@ -604,12 +624,11 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           {/* Notes tab */}
           {activeTab === "notes" && (
             <div className="space-y-4">
-              {/* Input */}
               <AdminCard className="overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
+                <div className="flex items-center gap-2 border-b border-[var(--adm-line)] px-5 py-3">
                   <Avatar name={user?.name || user?.email || "You"} size="xs" />
-                  <span className="text-sm font-semibold text-slate-700">{user?.name || user?.email || "You"}</span>
-                  <span className="text-xs text-slate-400">— add a note</span>
+                  <span className="text-[13.5px] font-semibold text-[var(--adm-ink-mute)]">{user?.name || user?.email || "You"}</span>
+                  <span className="text-[12px] text-[var(--adm-ink-subtle)]">add a note</span>
                 </div>
                 <div className="px-5 py-4">
                   <textarea
@@ -619,15 +638,15 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                     onChange={(e) => setNewNote(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddNote(); }}
                     placeholder="Interview feedback, next steps, anything the team should know…"
-                    className="w-full px-0 py-0 text-sm text-slate-800 placeholder:text-slate-400 bg-transparent border-0 outline-none resize-none leading-relaxed"
+                    className="w-full resize-none border-0 bg-transparent p-0 text-[13.5px] leading-relaxed text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
                   />
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-                    <p className="text-[11px] text-slate-400">
+                  <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-3">
+                    <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">
                       {newNote.length > 0 ? `${newNote.length} characters` : "⌘↵ to save · visible to your team"}
                     </p>
                     <button onClick={handleAddNote} disabled={!newNote.trim() || addingNote}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:opacity-50 transition shadow-sm">
-                      {addingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                      className="inline-flex items-center gap-1.5 rounded-[6px] bg-[var(--adm-accent)] px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-50">
+                      {addingNote ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                       Post note
                     </button>
                   </div>
@@ -635,27 +654,23 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               </AdminCard>
 
               {notes.length > 0 ? (
-                <div className="space-y-3">
-                  {[...notes].reverse().map((note) => (
-                    <AdminCard key={note.id} hover className="overflow-hidden">
-                      <div className="flex items-center gap-2.5 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-                        <Avatar name={note.addedByName} size="xs" />
-                        <span className="text-xs font-bold text-slate-700">{note.addedByName}</span>
-                        <span className="text-[10px] text-slate-400 ml-auto tabular-nums">{fmtDateTime(note.addedAt)}</span>
+                <AdminCard className="overflow-hidden">
+                  <div className="divide-y divide-[var(--adm-line-soft)]">
+                    {[...notes].reverse().map((note) => (
+                      <div key={note.id} className="px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={note.addedByName} size="xs" />
+                          <span className="text-[12.5px] font-semibold text-[var(--adm-ink-mute)]">{note.addedByName}</span>
+                          <span className="ml-auto text-[11.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDateTime(note.addedAt)}</span>
+                        </div>
+                        <p className="mt-2 whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{note.text}</p>
                       </div>
-                      <div className="px-5 py-4">
-                        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{note.text}</p>
-                      </div>
-                    </AdminCard>
-                  ))}
-                </div>
-              ) : (
-                <AdminCard className="py-14 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                    <MessageSquareText className="w-6 h-6 text-slate-300" />
+                    ))}
                   </div>
-                  <p className="text-sm font-semibold text-slate-500">No notes yet</p>
-                  <p className="text-xs text-slate-400 mt-1">Add the first note above</p>
+                </AdminCard>
+              ) : (
+                <AdminCard>
+                  <EmptyState icon={IconMessageText} title="No notes yet" description="Add the first note above." />
                 </AdminCard>
               )}
             </div>
@@ -664,149 +679,125 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           {/* Activity tab */}
           {activeTab === "activity" && (
             <AdminCard className="overflow-hidden">
-              <AdminCardHeader icon={History} title="Status history" count={candidate.statusHistory?.length} />
-              <div className="px-5 py-4">
-                {candidate.statusHistory && candidate.statusHistory.length > 0 ? (
-                  <ol className="space-y-0">
-                    {[...candidate.statusHistory].reverse().map((entry, i, arr) => {
-                      const meta  = (statusMeta as Record<string, typeof statusMeta.pending>)[entry.status];
-                      const t     = tones[meta?.tone || "slate"];
-                      const Icon  = meta?.icon || Clock;
-                      const isLast = i === arr.length - 1;
-                      return (
-                        <li key={i} className="flex gap-4 relative pb-5">
-                          {!isLast && <div className="absolute left-[13px] top-7 bottom-0 w-px bg-slate-100" />}
-                          <div className={cn("w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-white", t.bg)}>
-                            <Icon className={cn("w-3.5 h-3.5", t.text)} />
+              <AdminCardHeader icon={IconHistory} title="Status history" count={history.length} />
+              {history.length > 0 ? (
+                <ol className="px-5 py-4">
+                  {[...history].reverse().map((entry, i, arr) => {
+                    const meta  = (statusMeta as Record<string, typeof statusMeta.pending>)[entry.status];
+                    const t     = tones[meta?.tone || "slate"];
+                    const Icon  = meta?.icon || IconClock;
+                    const isLast = i === arr.length - 1;
+                    return (
+                      <li key={i} className="relative flex gap-4 pb-5 last:pb-0">
+                        {!isLast && <div className="absolute bottom-0 left-[13px] top-7 w-px bg-[var(--adm-line-soft)]" />}
+                        <span className={cn("grid h-7 w-7 flex-none place-items-center rounded-full", t.bg)}>
+                          <Icon className={cn("h-3.5 w-3.5", t.text)} />
+                        </span>
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <p className="text-[13.5px]">
+                              <span className="font-semibold text-[var(--adm-ink)]">Moved to {meta?.label || entry.status}</span>
+                              {entry.changedByName && (
+                                <span className="font-normal text-[var(--adm-ink-subtle)]"> by <span className="font-medium text-[var(--adm-ink-mute)]">{entry.changedByName}</span></span>
+                              )}
+                            </p>
+                            <span className="flex-none text-[11.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDateTime(entry.changedAt)}</span>
                           </div>
-                          <div className="flex-1 min-w-0 pt-0.5">
-                            <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                              <p className="text-sm">
-                                <span className="font-semibold text-slate-900">Moved to {meta?.label || entry.status}</span>
-                                {entry.changedByName && (
-                                  <span className="text-slate-500 font-normal"> by <span className="font-medium text-slate-700">{entry.changedByName}</span></span>
-                                )}
-                              </p>
-                              <span className="text-[11px] text-slate-400 flex-shrink-0 tabular-nums">{fmtDateTime(entry.changedAt)}</span>
-                            </div>
-                            {entry.notes && (
-                              <p className="text-xs text-slate-600 mt-1.5 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100 italic">
-                                &ldquo;{entry.notes}&rdquo;
-                              </p>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                ) : (
-                  <div className="text-center py-10">
-                    <History className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400 font-medium">No activity recorded yet</p>
-                  </div>
-                )}
-              </div>
+                          {entry.notes && (
+                            <p className="mt-1.5 rounded-[4px] border border-[var(--adm-line-soft)] bg-[var(--adm-zebra)] px-3 py-2 text-[12.5px] italic text-[var(--adm-ink-mute)]">
+                              &ldquo;{entry.notes}&rdquo;
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <EmptyState icon={IconHistory} title="No activity recorded yet" description="Stage changes will appear here." />
+              )}
             </AdminCard>
           )}
-        </motion.div>
+        </div>
 
-        {/* Right — sidebar */}
-        <motion.div className="space-y-4 lg:sticky lg:top-20" {...fade(0.1)}>
+        {/* Sidebar */}
+        <div className="space-y-4 lg:sticky lg:top-20">
 
           {/* Resume file */}
           <AdminCard className="overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
-              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Resume</h3>
-            </div>
+            <AdminCardHeader icon={IconFile} title="Resume" />
             <div className="p-4">
               {candidate.resumeId ? (
                 <button onClick={handleViewResume}
-                  className="w-full flex items-center gap-3 p-3 bg-slate-50 hover:bg-[var(--hz-cobalt-100)]/50 border border-slate-200 hover:border-[var(--hz-cobalt-100)] rounded-xl transition-all group text-left">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-[var(--hz-cobalt)]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-[var(--hz-cobalt)] transition-colors">
+                  className="group flex w-full items-center gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-zebra)] p-3 text-left transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
+                  <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                    <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-semibold text-[var(--adm-ink)] transition-colors group-hover:text-[var(--adm-accent)]">
                       {candidate.resumeFileName || "resume.pdf"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">View or download</p>
-                  </div>
-                  <Download className="w-4 h-4 text-slate-400 group-hover:text-[var(--hz-cobalt)] flex-shrink-0" />
+                    </span>
+                    <span className="mt-0.5 block text-[12px] text-[var(--adm-ink-subtle)]">View or download</span>
+                  </span>
+                  <IconDownload className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] group-hover:text-[var(--adm-accent)]" />
                 </button>
               ) : (
-                <div className="flex items-center gap-2.5 py-1">
-                  <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-4 h-4 text-slate-300" />
-                  </div>
-                  <p className="text-xs text-slate-400">No resume on file</p>
-                </div>
+                <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">No resume on file</p>
               )}
             </div>
           </AdminCard>
 
-          {/* Application info */}
+          {/* Application metadata */}
           <AdminCard className="overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
-              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Application</h3>
-            </div>
-            <dl className="divide-y divide-slate-100">
-              {[
-                { label: "App ID",    value: candidate.applicationId || candidate.id?.slice(0, 8), mono: true },
-                { label: "Status",    value: candidate.status, badge: true },
-                ...(candidate.updatedAt ? [{ label: "Updated", value: fmtDate(candidate.updatedAt) }] : []),
-                ...(hasAnalysis && candidate.resumeAnalyzedAt ? [{ label: "Analyzed", value: fmtDate(candidate.resumeAnalyzedAt) }] : []),
-              ].map(({ label, value, mono, badge }) => (
-                <div key={label} className="flex items-center justify-between gap-3 px-5 py-2.5">
-                  <dt className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex-shrink-0">{label}</dt>
-                  <dd className="text-right min-w-0">
-                    {badge && value ? (
-                      <StatusBadge status={value as AppStatus} size="sm" />
-                    ) : value ? (
-                      <span className={cn(
-                        "text-sm font-medium text-slate-800 truncate block",
-                        mono && "font-mono text-xs text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded",
-                      )}>
-                        {value}
+            <AdminCardHeader icon={IconClock} title="Application" />
+            <dl className="divide-y divide-[var(--adm-line-soft)]">
+              <MetaRow
+                label="App ID"
+                value={
+                  (candidate.applicationId || candidate.id?.slice(0, 8))
+                    ? <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[11.5px] text-[var(--adm-ink-mute)]">
+                        {candidate.applicationId || candidate.id?.slice(0, 8)}
                       </span>
-                    ) : (
-                      <span className="text-slate-300 text-sm">—</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
+                    : undefined
+                }
+              />
+              <MetaRow label="Status" value={<StatusBadge status={candidate.status} size="sm" />} />
+              <MetaRow label="Applied" value={fmtDate(candidate.appliedAt)} />
+              {candidate.updatedAt && <MetaRow label="Updated" value={fmtDate(candidate.updatedAt)} />}
+              {hasAnalysis && candidate.resumeAnalyzedAt && (
+                <MetaRow label="Analyzed" value={fmtDate(candidate.resumeAnalyzedAt)} />
+              )}
             </dl>
           </AdminCard>
 
           {/* Position */}
           {candidate.jobTitle && (
             <AdminCard className="overflow-hidden">
-              <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
-                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</h3>
-              </div>
+              <AdminCardHeader icon={IconJob} title="Position" />
               <div className="p-5">
                 <Link href={candidate.jobId ? `/admin/jobs/${candidate.jobId}` : "#"} className="group block">
-                  <p className="text-sm font-bold text-slate-900 group-hover:text-[var(--hz-cobalt)] transition-colors">
+                  <p className="text-[13.5px] font-semibold text-[var(--adm-ink)] transition-colors group-hover:text-[var(--adm-accent)]">
                     {candidate.jobTitle}
                   </p>
                   <div className="mt-2 space-y-1">
                     {candidate.jobDepartment && (
-                      <p className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400" />{candidate.jobDepartment}
+                      <p className="flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                        <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{candidate.jobDepartment}
                       </p>
                     )}
                     {candidate.jobLocation && (
-                      <p className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />{candidate.jobLocation}
+                      <p className="flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                        <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{candidate.jobLocation}
                       </p>
                     )}
                     {candidate.jobType && (
-                      <p className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />{candidate.jobType}
+                      <p className="flex items-center gap-1.5 text-[12.5px] capitalize text-[var(--adm-ink-subtle)]">
+                        <IconClock className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{candidate.jobType.replace(/-/g, " ")}
                       </p>
                     )}
                   </div>
-                  <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--hz-cobalt)] group-hover:gap-1.5 transition-all">
-                    View job posting <ExternalLink className="w-3 h-3" />
+                  <span className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--adm-accent)]">
+                    View job posting <ExternalLink className="h-3 w-3" />
                   </span>
                 </Link>
               </div>
@@ -815,33 +806,31 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
           {/* Owner */}
           <AdminCard className="overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
-              <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Assigned recruiter</h3>
-            </div>
+            <AdminCardHeader icon={IconUserCheck} title="Assigned recruiter" />
             <div className="p-5">
               {candidate.ownership && candidate.ownershipName ? (
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <Avatar name={candidate.ownershipName} size="sm" />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{candidate.ownershipName}</p>
+                      <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{candidate.ownershipName}</p>
                       {candidate.ownershipClaimedAt && (
-                        <p className="text-[10px] text-slate-400 mt-0.5">Since {fmtDate(candidate.ownershipClaimedAt)}</p>
+                        <p className="mt-0.5 text-[11.5px] text-[var(--adm-ink-subtle)]">Since {fmtDate(candidate.ownershipClaimedAt)}</p>
                       )}
                     </div>
                   </div>
                   {isOwner && (
                     <button onClick={handleReleaseOwnership} disabled={ownerSaving}
-                      className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50 rounded-md transition-colors border border-transparent hover:border-rose-100">
-                      {ownerSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserX className="w-3 h-3" />}
+                      className="inline-flex flex-none items-center gap-1 rounded-[4px] border border-transparent px-2 py-1 text-[11px] font-semibold text-[var(--adm-danger)] transition-colors hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] disabled:opacity-60">
+                      {ownerSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <IconUserX className="h-3 w-3" />}
                       Release
                     </button>
                   )}
                 </div>
               ) : (
                 <button onClick={handleClaimOwnership} disabled={ownerSaving}
-                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold border-2 border-dashed border-slate-200 text-slate-500 rounded-xl hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)]/40 transition-all">
-                  {ownerSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)] disabled:opacity-60">
+                  {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
                   Claim this candidate
                 </button>
               )}
@@ -852,13 +841,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           {candidate.createdByName && (
             <div className="flex items-center gap-2 px-1">
               <Avatar name={candidate.createdByName} size="xs" />
-              <p className="text-xs text-slate-400">
-                Added by <span className="font-semibold text-slate-600">{candidate.createdByName}</span>
+              <p className="text-[12px] text-[var(--adm-ink-subtle)]">
+                Added by <span className="font-semibold text-[var(--adm-ink-mute)]">{candidate.createdByName}</span>
                 {candidate.createdAt && <> · {fmtDate(candidate.createdAt)}</>}
               </p>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
 
       {/* Resume analysis editor */}

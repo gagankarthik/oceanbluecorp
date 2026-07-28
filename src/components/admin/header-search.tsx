@@ -74,7 +74,7 @@ export function HeaderSearch() {
 
   return (
     <div ref={ref} className="relative hidden w-56 md:block lg:w-72">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         type="search"
         autoComplete="off"
@@ -84,23 +84,23 @@ export function HeaderSearch() {
         onKeyDown={onKey}
         placeholder="Search jobs, candidates…"
         aria-label="Search"
-        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-8 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-[var(--hz-cobalt)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
+        className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-1.5 pl-8 pr-8 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {q && (
         <button
           type="button"
           onClick={() => { setQ(""); setHits([]); }}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-700"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[4px] p-0.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)]"
         >
           <X className="h-3.5 w-3.5" />
         </button>
       )}
 
       {showDropdown && (
-        <div className="absolute right-0 top-full z-[100] mt-1.5 w-[min(420px,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg ring-1 ring-black/5">
+        <div className="absolute right-0 top-full z-[100] mt-1.5 w-[min(420px,calc(100vw-1.5rem))] overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg ring-1 ring-black/5">
           {loading && hits.length === 0 ? (
-            <div className="px-4 py-6 text-center text-xs text-slate-400">Searching…</div>
+            <div className="px-4 py-6 text-center text-xs text-[var(--adm-ink-subtle)]">Searching…</div>
           ) : hits.length > 0 ? (
             <div className="max-h-[60vh] overflow-y-auto py-1.5">
               {hits.map((h, i) => {
@@ -114,19 +114,19 @@ export function HeaderSearch() {
                     onClick={() => go(h)}
                     className={cn(
                       "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
-                      i === active ? "bg-[var(--hz-cobalt-100)]" : "hover:bg-slate-50",
+                      i === active ? "bg-[var(--adm-accent-soft)]" : "hover:bg-[var(--adm-row-hover)]",
                     )}
                   >
                     {isPerson ? (
                       <Avatar name={h.title} size="sm" />
                     ) : (
-                      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-slate-100">
-                        <Icon className="h-4 w-4 text-slate-600" />
+                      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-[6px] bg-[var(--adm-surface-2)]">
+                        <Icon className="h-4 w-4 text-[var(--adm-ink-mute)]" />
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-slate-900">{h.title}</p>
-                      <p className="truncate text-xs text-slate-500">{h.subtitle}</p>
+                      <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{h.title}</p>
+                      <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{h.subtitle}</p>
                     </div>
                     {h.status && <StatusBadge status={h.status} />}
                   </button>
@@ -135,8 +135,8 @@ export function HeaderSearch() {
             </div>
           ) : (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm font-medium text-slate-600">No matches</p>
-              <p className="mt-0.5 text-xs text-slate-400">Try another term</p>
+              <p className="text-sm font-medium text-[var(--adm-ink-mute)]">No matches</p>
+              <p className="mt-0.5 text-xs text-[var(--adm-ink-subtle)]">Try another term</p>
             </div>
           )}
         </div>

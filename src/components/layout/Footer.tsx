@@ -30,12 +30,15 @@ const footerLinks = {
     { name: "Open Positions", href: "/careers/search" },
     { name: "Contact", href: "/contact" },
   ],
-  Developers: [
+  // Was a "Developers" column of five entries, four of which were anchors into
+  // the same page (/developers, #endpoints, #authentication, #quickstart).
+  // A staffing firm's footer does not need four links to one API doc.
+  Resources: [
+    { name: "Products", href: "/products" },
     { name: "Job Feed API", href: "/developers" },
-    { name: "API Docs", href: "/developers#endpoints" },
-    { name: "Authentication", href: "/developers#authentication" },
-    { name: "Quickstart", href: "/developers#quickstart" },
     { name: "Brand Kit", href: "/brand-kit" },
+    { name: "System Status", href: "/status" },
+    { name: "Sitemap", href: "/sitemap" },
   ],
   Legal: [
     { name: "Privacy Policy", href: "/privacy" },
@@ -43,8 +46,6 @@ const footerLinks = {
     { name: "Cookie Policy", href: "/cookies" },
     { name: "Data Deletion", href: "/data-deletion" },
     { name: "Accessibility", href: "/accessibility" },
-    { name: "Sitemap", href: "/sitemap" },
-    { name: "System Status", href: "/status" },
   ],
 };
 
@@ -89,8 +90,11 @@ function FooterStatus() {
 export default function Footer() {
   return (
     <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-surface)]">
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
+      {/* px-6 sm:px-8 matches the header and every page section, so the logo
+          lines up with the content above it. It was px-6 lg:px-8, which put
+          the footer on a different gutter at sm/md widths. */}
+      <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 sm:py-20">
+        <div className="grid gap-12 lg:grid-cols-[1.1fr_2.2fr] lg:gap-16">
           {/* Brand + contact */}
           <div>
             <Link href="/" className="inline-block">
@@ -116,15 +120,20 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          {/* Link columns, 4-up only from md. At sm they were four ~140px
+              columns, which wrapped headings like "Resources" onto two lines
+              and left the lists visibly ragged. */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 md:grid-cols-4">
             {Object.entries(footerLinks).map(([heading, links]) => (
-              <div key={heading}>
+              <div key={heading} className="min-w-0">
                 <h3 className="hz-eyebrow text-[var(--hz-text-subtle)]">{heading}</h3>
                 <ul className="mt-5 space-y-3">
                   {links.map((l) => (
                     <li key={l.name}>
-                      <Link href={l.href} className="text-[14px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
+                      <Link
+                        href={l.href}
+                        className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
+                      >
                         {l.name}
                       </Link>
                     </li>
@@ -136,14 +145,20 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar, copyright + status together on the left, social on the
+          right. Previously all three were `justify-between` children, which
+          left the status pill floating at an arbitrary point mid-row rather
+          than aligned to anything. */}
       <div className="border-t border-black/[0.07]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 sm:flex-row lg:px-8">
-          <p className="text-[13px] text-[var(--hz-text-subtle)]">
-            © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
-          </p>
-          <FooterStatus />
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-7xl flex-col-reverse items-center gap-5 px-6 py-6 sm:flex-row sm:justify-between sm:px-8">
+          <div className="flex flex-col items-center gap-x-6 gap-y-2 sm:flex-row">
+            <p className="text-[13px] text-[var(--hz-text-subtle)]">
+              © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
+            </p>
+            <FooterStatus />
+          </div>
+
+          <div className="flex items-center gap-1">
             {socialLinks.map((s) => (
               <a
                 key={s.name}

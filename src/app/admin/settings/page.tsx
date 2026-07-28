@@ -1,112 +1,123 @@
 "use client";
 
-import { PageHeader } from "@/components/admin/page-header";
 import { useState, useEffect, useRef } from "react";
+import { Check, Loader2, Twitter, Linkedin } from "lucide-react";
 import {
-  User,
-  Bell,
-  Shield,
-  Globe,
-  Save,
-  Check,
-  Loader2,
-  Eye,
-  EyeOff,
-  Mail,
-  Phone,
-  MapPin,
-  Link2,
-  Camera,
-  Server,
-  Lock,
-  AlertCircle,
-  Building2,
-  Twitter,
-  Linkedin,
-} from "lucide-react";
+  IconUser, IconBell, IconShield, IconGlobe, IconSave, IconEye, IconEyeOff,
+  IconMail, IconPhone, IconLocation, IconLink, IconCamera, IconLock, IconAlert,
+  IconBuilding, IconSettings, IconIdCard,
+} from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/admin/page-header";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { Avatar } from "@/components/admin/avatar";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Field, FormInput } from "@/components/admin/forms/primitives";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Tone } from "@/components/admin/theme";
 
 const tabs = [
   {
     id: "profile",
     name: "Profile",
-    icon: User,
+    icon: IconUser,
     description: "Your personal information",
     adminOnly: false,
   },
   {
     id: "notifications",
     name: "Notifications",
-    icon: Bell,
+    icon: IconBell,
     description: "Alert preferences",
     adminOnly: false,
   },
   {
     id: "security",
     name: "Security",
-    icon: Shield,
+    icon: IconShield,
     description: "Password & access",
     adminOnly: false,
   },
   {
     id: "site",
     name: "System",
-    icon: Globe,
+    icon: IconGlobe,
     description: "Site configuration",
     adminOnly: true,
   },
 ];
 
-function InputField({
-  label,
-  id,
-  type = "text",
-  value,
-  onChange,
-  disabled,
-  placeholder,
-  hint,
+/**
+ * Role presentation for the header chip. Replaces the two parallel gradient
+ * tables (`roleColors` + `roleHeaderConfig`) that had to be kept in sync by
+ * hand; a role is a category chip, not a decorated banner.
+ */
+const ROLE_CHIP: Record<string, { label: string; tone: Tone }> = {
+  admin:     { label: "Administrator", tone: "rose"   },
+  hr:        { label: "HR Manager",    tone: "violet" },
+  recruiter: { label: "Recruiter",     tone: "teal"   },
+  sales:     { label: "Sales",         tone: "amber"  },
+};
+const DEFAULT_ROLE_CHIP = { label: "User", tone: "slate" as Tone };
+
+/** ui/Checkbox defaults to the navy --primary; nudge it to the cobalt accent. */
+const checkboxAccent =
+  "border-[var(--adm-line)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]";
+
+const NOTIFICATION_ROWS = [
+  {
+    key: "newApplications" as const,
+    title: "New applications",
+    description: "Get notified when a candidate submits a new application",
+  },
+  {
+    key: "applicationStatusUpdates" as const,
+    title: "Application status updates",
+    description: "Notifications when an application status changes",
+  },
+  {
+    key: "weeklyReports" as const,
+    title: "Weekly reports",
+    description: "Receive a weekly summary of site and pipeline activity",
+  },
+  {
+    key: "marketingEmails" as const,
+    title: "Marketing & updates",
+    description: "Receive news about new features and platform updates",
+  },
+];
+
+const SITE_DETAILS = [
+  { label: "Site name",     value: "Ocean Blue Corporation", icon: IconBuilding },
+  { label: "Contact email", value: "hr@oceanbluecorp.com",   icon: IconMail },
+  { label: "Phone number",  value: "+1 614-844-6925",        icon: IconPhone },
+  { label: "Address",       value: "Powell, OH 43065",       icon: IconLocation },
+];
+
+const SOCIAL_LINKS = [
+  { label: "LinkedIn", value: "https://linkedin.com/company/oceanbluecorp", icon: Linkedin },
+  { label: "Twitter",  value: "https://twitter.com/oceanbluecorp",          icon: Twitter },
+  { label: "Website",  value: "https://oceanbluecorp.com",                  icon: IconLink },
+];
+
+/** Read-only record row: label rail on the left, value on the right. */
+function RecordRow({
   icon: Icon,
-  autoComplete = "off",
+  label,
+  value,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
-  id: string;
-  type?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  hint?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  autoComplete?: string;
+  value: string;
 }) {
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-5 py-3 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
+      <span className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-subtle)]">
+        <Icon className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
-      </label>
-      <div className="relative">
-        {Icon && (
-          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-        )}
-        <input
-          id={id}
-          type={type}
-          autoComplete={autoComplete}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          placeholder={placeholder}
-          className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all ${
-            Icon ? "pl-9" : ""
-          } ${
-            disabled
-              ? "bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed"
-              : "bg-white border-slate-300 text-slate-900 focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
-          }`}
-        />
-      </div>
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      </span>
+      <span className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{value || "—"}</span>
     </div>
   );
 }
@@ -299,99 +310,60 @@ export default function SettingsPage() {
     }
   };
 
-  const userInitials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : (user?.email?.[0] || "U").toUpperCase();
+  const roleChip = ROLE_CHIP[profileForm.role] || DEFAULT_ROLE_CHIP;
 
-  const roleColors: Record<string, string> = {
-    admin: "bg-rose-100 text-rose-800 border-rose-200",
-    hr: "bg-violet-100 text-violet-800 border-violet-200",
-    recruiter: "bg-teal-100 text-teal-800 border-teal-200",
-    sales: "bg-amber-100 text-amber-800 border-amber-200",
-    user: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] border-[var(--hz-cobalt-100)]",
-  };
-  const roleColor = roleColors[profileForm.role] || roleColors.user;
-
-  // Role-specific header styling
-  const roleHeaderConfig: Record<string, { gradient: string; bgGradient: string; border: string; label: string }> = {
-    admin: {
-      gradient: "from-rose-500 to-pink-600",
-      bgGradient: "from-rose-50 to-pink-50",
-      border: "border-rose-200",
-      label: "Administrator",
-    },
-    hr: {
-      gradient: "from-violet-500 to-purple-600",
-      bgGradient: "from-violet-50 to-purple-50",
-      border: "border-violet-200",
-      label: "HR Manager",
-    },
-    recruiter: {
-      gradient: "from-teal-500 to-cyan-600",
-      bgGradient: "from-teal-50 to-cyan-50",
-      border: "border-teal-200",
-      label: "Recruiter",
-    },
-    sales: {
-      gradient: "from-amber-500 to-orange-600",
-      bgGradient: "from-amber-50 to-orange-50",
-      border: "border-amber-200",
-      label: "Sales",
-    },
-    user: {
-      gradient: "from-[var(--hz-cobalt)] to-cyan-600",
-      bgGradient: "from-[var(--hz-cobalt-100)] to-cyan-50",
-      border: "border-[var(--hz-cobalt-100)]",
-      label: "User",
-    },
-  };
-  const currentRoleHeader = roleHeaderConfig[profileForm.role] || roleHeaderConfig.user;
+  const passwordFields = [
+    { label: "Current password",     id: "currentPassword", key: "currentPassword" as const, ac: "current-password", show: showCurrentPassword, toggle: () => setShowCurrentPassword(!showCurrentPassword) },
+    { label: "New password",         id: "newPassword",     key: "newPassword" as const,     ac: "new-password",     show: showNewPassword,     toggle: () => setShowNewPassword(!showNewPassword) },
+    { label: "Confirm new password", id: "confirmPassword", key: "confirmPassword" as const, ac: "new-password",     show: showConfirmPassword, toggle: () => setShowConfirmPassword(!showConfirmPassword) },
+  ];
 
   return (
-    <div className="max-w-5xl space-y-6">
-      {/* Page header */}
+    <div className="space-y-5 pb-10">
+
       <PageHeader
         title="Settings"
         subtitle="Manage your account preferences"
-        meta={
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border capitalize ${roleColor}`}>
-            {currentRoleHeader.label}
-          </span>
-        }
+        icon={IconSettings}
+        meta={<StatusBadge tone={roleChip.tone} label={roleChip.label} size="md" />}
       />
 
-      {/* Error banner */}
       {saveError && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 rounded-[6px] border border-rose-200 bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] text-[var(--adm-danger)]"
+        >
+          <IconAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
           {saveError}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[236px_1fr]">
-        {/* Section rail */}
+      <div className="grid max-w-5xl gap-4 lg:grid-cols-[212px_minmax(0,1fr)]">
+
+        {/* ── section rail ── */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+          <nav
+            aria-label="Settings sections"
+            className="flex gap-1 overflow-x-auto rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1.5 lg:flex-col lg:overflow-visible"
+          >
             {visibleTabs.map((tab) => {
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); }}
-                  className={`group flex w-auto flex-none items-start gap-3 rounded-xl border p-3 text-left transition-all lg:w-full ${
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex flex-none items-center gap-2.5 rounded-[6px] px-3 py-2.5 text-left transition-colors lg:w-full",
                     active
-                      ? "border-[var(--hz-cobalt-100)] bg-[#eef3fe]"
-                      : "border-transparent hover:border-slate-200 hover:bg-slate-50"
-                  }`}
+                      ? "bg-[var(--adm-accent-tint)] text-[var(--adm-accent)] shadow-[inset_2px_0_0_var(--adm-accent)]"
+                      : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                  )}
                 >
-                  <span className={`flex h-9 w-9 flex-none items-center justify-center rounded-lg transition-colors ${
-                    active ? "bg-[var(--hz-cobalt)] text-white" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
-                  }`}>
-                    <tab.icon className="h-4 w-4" />
-                  </span>
-                  <span className="hidden min-w-0 sm:block lg:block">
-                    <span className={`block text-sm font-semibold ${active ? "text-[var(--hz-cobalt)]" : "text-slate-700"}`}>{tab.name}</span>
-                    <span className="block text-[11px] leading-snug text-slate-400">{tab.description}</span>
+                  <tab.icon className={cn("h-4 w-4 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} strokeWidth={1.75} />
+                  <span className="min-w-0">
+                    <span className="block whitespace-nowrap text-[13.5px] font-semibold">{tab.name}</span>
+                    <span className="hidden text-[11.5px] leading-snug text-[var(--adm-ink-subtle)] lg:block">{tab.description}</span>
                   </span>
                 </button>
               );
@@ -399,353 +371,257 @@ export default function SettingsPage() {
           </nav>
         </aside>
 
-        {/* Content panel */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        {/* ── section panels ── */}
+        <div className="space-y-4">
 
-        {/* ── Profile Tab ── */}
-        {activeTab === "profile" && (
-          <div className="p-6 space-y-6">
-            {/* Avatar + info row */}
-            <div className={`flex items-center gap-5 p-4 rounded-xl border ${
-              profileForm.role === "admin" ? "bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100" :
-              profileForm.role === "hr" ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-100" :
-              profileForm.role === "recruiter" ? "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-100" :
-              profileForm.role === "sales" ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100" :
-              "bg-gradient-to-r from-[var(--hz-cobalt-100)] to-cyan-50 border-[var(--hz-cobalt-100)]"
-            }`}>
-              <div className="relative flex-shrink-0">
-                <div className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white text-xl font-bold shadow-md ${
-                  profileForm.role === "admin" ? "bg-gradient-to-br from-rose-500 to-pink-600" :
-                  profileForm.role === "hr" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
-                  profileForm.role === "recruiter" ? "bg-gradient-to-br from-teal-500 to-cyan-600" :
-                  profileForm.role === "sales" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
-                  "bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600"
-                }`}>
-                  {user?.id && !photoFailed ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`/api/users/avatar/${user.id}?v=${photoVersion}`}
-                      alt={user?.name || "Profile photo"}
-                      width={96}
-                      height={96}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover"
-                      onLoad={() => setHasPhoto(true)}
-                      onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
-                    />
-                  ) : (
-                    userInitials
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingPhoto}
-                  aria-label="Change profile photo"
-                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[var(--hz-cobalt)] text-white shadow-sm transition-colors hover:bg-[var(--hz-cobalt-600)] disabled:opacity-60"
-                >
-                  {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-slate-900 text-lg truncate">
-                  {user?.name || user?.email}
-                </p>
-                <p className="text-sm text-slate-500 truncate">{user?.email}</p>
-                <span className={`inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border capitalize ${roleColor}`}>
-                  {profileForm.role}
-                </span>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingPhoto}
-                    className="text-xs font-semibold text-[var(--hz-cobalt)] hover:underline disabled:opacity-50"
-                  >
-                    {hasPhoto ? "Change photo" : "Upload photo"}
-                  </button>
-                  {hasPhoto && (
+          {/* ── Profile ── */}
+          {activeTab === "profile" && (
+            <>
+              <AdminCard>
+                <AdminCardHeader icon={IconCamera} title="Profile photo" />
+                <div className="flex flex-wrap items-center gap-4 p-5">
+                  <div className="relative flex-shrink-0">
+                    {user?.id && !photoFailed ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/api/users/avatar/${user.id}?v=${photoVersion}`}
+                        alt={user?.name || "Profile photo"}
+                        width={96}
+                        height={96}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-16 w-16 rounded-full object-cover ring-2 ring-[var(--adm-surface)] shadow-sm"
+                        onLoad={() => setHasPhoto(true)}
+                        onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
+                      />
+                    ) : (
+                      <Avatar name={user?.name} email={user?.email} size="xl" />
+                    )}
                     <button
                       type="button"
-                      onClick={handleRemovePhoto}
+                      onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
-                      className="text-xs font-medium text-slate-400 transition-colors hover:text-rose-600 disabled:opacity-50"
+                      aria-label="Change profile photo"
+                      className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--adm-surface)] bg-[var(--adm-accent)] text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-60"
                     >
-                      Remove
+                      {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconCamera className="h-3.5 w-3.5" />}
                     </button>
-                  )}
-                  <span className="text-[11px] text-slate-400">JPG, PNG or WebP · max 2MB</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Form fields */}
-            <div>
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">
-                Personal Information
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <InputField
-                  label="First Name"
-                  id="firstName"
-                  autoComplete="given-name"
-                  value={profileForm.firstName}
-                  onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                  placeholder="John"
-                  icon={User}
-                />
-                <InputField
-                  label="Last Name"
-                  id="lastName"
-                  autoComplete="family-name"
-                  value={profileForm.lastName}
-                  onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                  placeholder="Doe"
-                />
-                <InputField
-                  label="Email Address"
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={profileForm.email}
-                  disabled
-                  icon={Mail}
-                  hint="Email is managed by your administrator and cannot be changed here."
-                />
-                <InputField
-                  label="Phone Number"
-                  id="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                  placeholder="+1 (555) 000-0000"
-                  icon={Phone}
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">
-                Account Details
-              </h3>
-              <InputField
-                label="Role"
-                id="role"
-                value={profileForm.role}
-                disabled
-                icon={Shield}
-                hint="Your role is assigned by an administrator."
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── Notifications Tab ── */}
-        {activeTab === "notifications" && (
-          <div className="p-6 space-y-2">
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-slate-900">Notification Preferences</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Choose what you want to be notified about.</p>
-            </div>
-
-            {[
-              {
-                key: "newApplications" as const,
-                title: "New Applications",
-                description: "Get notified when a candidate submits a new application",
-                icon: User,
-                color: "text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]",
-              },
-              {
-                key: "applicationStatusUpdates" as const,
-                title: "Application Status Updates",
-                description: "Notifications when an application status changes",
-                icon: Bell,
-                color: "text-purple-600 bg-purple-50",
-              },
-              {
-                key: "weeklyReports" as const,
-                title: "Weekly Reports",
-                description: "Receive a weekly summary of site and pipeline activity",
-                icon: Server,
-                color: "text-emerald-600 bg-emerald-50",
-              },
-              {
-                key: "marketingEmails" as const,
-                title: "Marketing & Updates",
-                description: "Receive news about new features and platform updates",
-                icon: Mail,
-                color: "text-amber-600 bg-amber-50",
-              },
-            ].map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
-                    <item.icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
-                  <input
-                    type="checkbox"
-                    checked={notifications[item.key]}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, [item.key]: e.target.checked })
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-[var(--hz-cobalt)] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--hz-cobalt)]" />
-                </label>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Security Tab ── */}
-        {activeTab === "security" && (
-          <div className="p-6 space-y-6">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">Change Password</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Update your account password below.</p>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700">
-                Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-w-md">
-              {[
-                { label: "Current Password", key: "currentPassword" as const, ac: "current-password", show: showCurrentPassword, toggle: () => setShowCurrentPassword(!showCurrentPassword) },
-                { label: "New Password", key: "newPassword" as const, ac: "new-password", show: showNewPassword, toggle: () => setShowNewPassword(!showNewPassword) },
-                { label: "Confirm New Password", key: "confirmPassword" as const, ac: "new-password", show: showConfirmPassword, toggle: () => setShowConfirmPassword(!showConfirmPassword) },
-              ].map((field) => (
-                <div key={field.key} className="space-y-1.5">
-                  <label className="block text-sm font-medium text-slate-700">{field.label}</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <input
-                      type={field.show ? "text" : "password"}
-                      autoComplete={field.ac}
-                      value={passwordForm[field.key]}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pl-9 pr-10 text-sm text-slate-900 outline-none focus:border-[var(--hz-cobalt)] focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] transition-all"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={handlePhotoChange}
                     />
-                    <button
-                      type="button"
-                      onClick={field.toggle}
-                      aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {field.show ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
-                    </button>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "—"}</p>
+                    <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{user?.email || "—"}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="text-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] disabled:opacity-50"
+                      >
+                        {hasPhoto ? "Change photo" : "Upload photo"}
+                      </button>
+                      {hasPhoto && (
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          disabled={uploadingPhoto}
+                          className="text-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-danger)] disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <span className="text-[11px] text-[var(--adm-ink-subtle)]">JPG, PNG or WebP · max 2MB</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </AdminCard>
 
-        {/* ── System / Site Tab ── */}
-        {activeTab === "site" && (
-          <div className="p-6 space-y-6">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">System Information</h2>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Read-only site configuration.
-              </p>
-            </div>
+              <AdminCard>
+                <AdminCardHeader icon={IconUser} title="Personal information" />
+                <div className="grid gap-4 p-5 sm:grid-cols-2">
+                  <Field label="First name" htmlFor="firstName">
+                    <FormInput
+                      id="firstName"
+                      autoComplete="given-name"
+                      value={profileForm.firstName}
+                      onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                      placeholder="John"
+                    />
+                  </Field>
+                  <Field label="Last name" htmlFor="lastName">
+                    <FormInput
+                      id="lastName"
+                      autoComplete="family-name"
+                      value={profileForm.lastName}
+                      onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                      placeholder="Doe"
+                    />
+                  </Field>
+                  <Field
+                    label="Email address"
+                    htmlFor="email"
+                    helper="Email is managed by your administrator and cannot be changed here."
+                  >
+                    <FormInput id="email" type="email" autoComplete="email" value={profileForm.email} readOnly disabled />
+                  </Field>
+                  <Field label="Phone number" htmlFor="phone">
+                    <FormInput
+                      id="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      placeholder="+1 (555) 000-0000"
+                    />
+                  </Field>
+                </div>
+              </AdminCard>
 
-            {/* Site info grid */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                Site Details
-              </h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                {[
-                  { label: "Site Name", value: "Ocean Blue Corporation", icon: Building2 },
-                  { label: "Contact Email", value: "hr@oceanbluecorp.com", icon: Mail },
-                  { label: "Phone Number", value: "+1 614-844-6925", icon: Phone },
-                  { label: "Address", value: "Powell, OH 43065", icon: MapPin },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-4 h-4 text-slate-500" />
+              <AdminCard>
+                <AdminCardHeader icon={IconIdCard} title="Account details" />
+                <div className="p-5 sm:max-w-sm">
+                  <Field label="Role" htmlFor="role" helper="Your role is assigned by an administrator.">
+                    <FormInput id="role" value={profileForm.role} readOnly disabled className="capitalize" />
+                  </Field>
+                </div>
+              </AdminCard>
+            </>
+          )}
+
+          {/* ── Notifications ── */}
+          {activeTab === "notifications" && (
+            <AdminCard>
+              <AdminCardHeader icon={IconBell} title="Notification preferences" />
+              <div>
+                {NOTIFICATION_ROWS.map((item) => {
+                  const labelId = `notify-${item.key}-label`;
+                  return (
+                    <div
+                      key={item.key}
+                      className="flex items-start gap-3 border-b border-[var(--adm-line-soft)] px-5 py-3.5 last:border-0"
+                    >
+                      <Checkbox
+                        className={cn("mt-0.5", checkboxAccent)}
+                        checked={notifications[item.key]}
+                        onCheckedChange={(v) =>
+                          setNotifications({ ...notifications, [item.key]: v === true })
+                        }
+                        aria-labelledby={labelId}
+                      />
+                      <div className="min-w-0">
+                        <p id={labelId} className="text-[14px] font-medium text-[var(--adm-ink)]">{item.title}</p>
+                        <p className="mt-0.5 text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">{item.description}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-slate-400">{item.label}</p>
-                      <p className="text-sm font-medium text-slate-800 truncate">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
+            </AdminCard>
+          )}
 
-            {/* Social links */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                Social Links
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { label: "LinkedIn", value: "https://linkedin.com/company/oceanbluecorp", icon: Linkedin, color: "text-[var(--hz-cobalt)]" },
-                  { label: "Twitter", value: "https://twitter.com/oceanbluecorp", icon: Twitter, color: "text-sky-500" },
-                  { label: "Website", value: "https://oceanbluecorp.com", icon: Link2, color: "text-slate-600" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <item.icon className={`w-4 h-4 ${item.color} flex-shrink-0`} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-400">{item.label}</p>
-                      <p className="text-sm font-medium text-slate-700 truncate">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
+          {/* ── Security ── */}
+          {activeTab === "security" && (
+            <AdminCard>
+              <AdminCardHeader icon={IconLock} title="Change password" />
+              <div className="space-y-4 p-5">
+                <div className="flex items-start gap-2.5 rounded-[6px] border border-amber-200 bg-[var(--adm-warning-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-warning)]">
+                  <IconAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
+                </div>
+
+                <div className="space-y-4 sm:max-w-md">
+                  {passwordFields.map((field) => (
+                    <Field key={field.key} label={field.label} htmlFor={field.id}>
+                      <div className="relative">
+                        <FormInput
+                          id={field.id}
+                          type={field.show ? "text" : "password"}
+                          autoComplete={field.ac}
+                          value={passwordForm[field.key]}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={field.toggle}
+                          aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]"
+                        >
+                          {field.show
+                            ? <IconEyeOff className="h-4 w-4" aria-hidden="true" />
+                            : <IconEye className="h-4 w-4" aria-hidden="true" />}
+                        </button>
+                      </div>
+                    </Field>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </AdminCard>
+          )}
 
-        {/* Footer — save */}
-        {activeTab !== "site" && (
-          <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
-            {showSaved && <span className="text-xs font-medium text-emerald-600">All changes saved</span>}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
-                showSaved
-                  ? "bg-emerald-600 text-white"
-                  : "bg-[var(--hz-cobalt)] text-white hover:bg-[var(--hz-cobalt-600)] disabled:opacity-50"
-              }`}
-            >
-              {isSaving ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
-              ) : showSaved ? (
-                <><Check className="w-4 h-4" />Saved!</>
-              ) : (
-                <><Save className="w-4 h-4" />Save Changes</>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
+          {/* ── System (admin only) ── */}
+          {activeTab === "site" && isAdmin && (
+            <>
+              <AdminCard>
+                <AdminCardHeader
+                  icon={IconGlobe}
+                  title="Site details"
+                  action={
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
+                      Read-only
+                    </span>
+                  }
+                />
+                <div>
+                  {SITE_DETAILS.map((item) => (
+                    <RecordRow key={item.label} icon={item.icon} label={item.label} value={item.value} />
+                  ))}
+                </div>
+              </AdminCard>
+
+              <AdminCard>
+                <AdminCardHeader icon={IconLink} title="Social links" />
+                <div>
+                  {SOCIAL_LINKS.map((item) => (
+                    <RecordRow key={item.label} icon={item.icon} label={item.label} value={item.value} />
+                  ))}
+                </div>
+              </AdminCard>
+            </>
+          )}
+
+          {/* ── command bar ── */}
+          {activeTab !== "site" && (
+            <div className="flex items-center justify-end gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3.5">
+              {showSaved && <span className="text-[12.5px] font-semibold text-[var(--adm-success)]">All changes saved</span>}
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={cn(
+                  "inline-flex h-10 items-center gap-2 rounded-[8px] px-4 text-[14px] font-semibold text-white transition-colors",
+                  showSaved
+                    ? "bg-emerald-600"
+                    : "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)] disabled:opacity-50",
+                )}
+              >
+                {isSaving ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
+                ) : showSaved ? (
+                  <><Check className="h-4 w-4" />Saved</>
+                ) : (
+                  <><IconSave className="h-4 w-4" />Save changes</>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

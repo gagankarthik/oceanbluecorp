@@ -17,11 +17,21 @@ export function StatusBadge({ status, tone, label, withIcon = false, size = "sm"
   const t = tones[resolvedTone];
   const Icon = withIcon && meta?.icon ? meta.icon : null;
   const text = label || meta?.label || status || "—";
-  const sizing = size === "md" ? "text-xs px-2.5 py-1" : "text-[11px] px-2 py-0.5";
+  // Square-cornered status chips read as record state in a business system;
+  // fully-rounded pills read as consumer tags.
+  const sizing = size === "md" ? "text-[11.5px] px-2 py-0.5" : "text-[10.5px] px-1.5 py-px";
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full font-semibold", t.bg, t.text, sizing, className)}>
-      {Icon ? <Icon className="w-3 h-3" /> : <span className={cn("w-1.5 h-1.5 rounded-full", t.dot)} />}
-      <span className="capitalize">{text}</span>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-[4px] font-semibold uppercase tracking-[0.03em]",
+        t.bg,
+        t.text,
+        sizing,
+        className,
+      )}
+    >
+      {Icon ? <Icon className="h-3 w-3" /> : <span className={cn("h-1.5 w-1.5 rounded-full", t.dot)} />}
+      <span>{text}</span>
     </span>
   );
 }

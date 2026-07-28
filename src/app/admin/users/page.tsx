@@ -1,31 +1,28 @@
 "use client";
-import { toast } from "sonner";
-import Link from "next/link";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { AdminRowsSkeleton } from "@/components/admin/skeletons";
-import { SearchInput } from "@/components/admin/toolbar";
-import { FormSelect } from "@/components/admin/forms/primitives";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
-  Search,
-  Mail,
-  Phone,
-  Shield,
-  Trash2,
-  UserCheck,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  AlertCircle,
-  Loader2,
-  Users,
-  UserPlus,
-  Send,
-  Check,
+  ChevronDown, X, Loader2, Check,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup,
+  IconUserPlus, IconSend, IconClock, IconUserMinus,
+} from "@/components/admin/icons";
+import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { Avatar } from "@/components/admin/avatar";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { type Tone } from "@/components/admin/theme";
 
 type Role = "admin" | "hr" | "recruiter" | "sales";
 
@@ -42,37 +39,29 @@ interface User {
   enabled: boolean;
 }
 
-// The four assignable staff roles, with the descriptions shown when changing
-// or assigning a role. Order matches the access hierarchy.
-const ROLE_OPTIONS: { role: Role; desc: string }[] = [
-  { role: "admin", desc: "Full access to all features, settings, and user management" },
-  { role: "hr", desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
-  { role: "sales", desc: "Can create/edit jobs, plus applications, candidates, and bench" },
-  { role: "recruiter", desc: "View-only jobs, plus applications, candidates, and bench" },
-];
+/**
+ * The four assignable staff roles in access-hierarchy order. One table drives
+ * the badge, the invite/change-role pickers, and the role filter — so a role
+ * can never render as two different things on the same screen.
+ */
+const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter"];
 
-const roleConfig: Record<Role, { label: string; bg: string }> = {
-  admin: { label: "Admin", bg: "bg-rose-100 text-rose-800" },
-  hr: { label: "HR", bg: "bg-purple-100 text-purple-800" },
-  recruiter: { label: "Recruiter", bg: "bg-teal-100 text-teal-800" },
-  sales: { label: "Sales", bg: "bg-amber-100 text-amber-800" },
-};
-const noRoleConfig = { label: "No role", bg: "bg-slate-100 text-slate-600" };
-
-const roleIcon: Record<Role, typeof Shield> = {
-  admin: Shield,
-  hr: Users,
-  recruiter: UserCheck,
-  sales: UserCheck,
+const ROLE_META: Record<Role, { label: string; tone: Tone; icon: LucideIcon; desc: string }> = {
+  admin:     { label: "Admin",     tone: "rose",   icon: IconShield,    desc: "Full access to all features, settings, and user management" },
+  hr:        { label: "HR",        tone: "violet", icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
+  sales:     { label: "Sales",     tone: "amber",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
+  recruiter: { label: "Recruiter", tone: "teal",   icon: IconUserCheck, desc: "View-only jobs, plus applications, candidates, and bench" },
 };
 
-const statusConfig: Record<string, { label: string; bg: string; dot: string }> = {
-  active: { label: "Active", bg: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
-  inactive: { label: "Inactive", bg: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
-  pending: { label: "Invited", bg: "bg-amber-100 text-amber-800", dot: "bg-amber-500" },
+const NO_ROLE = { label: "No role", tone: "slate" as Tone };
+
+/** Account states carry reserved status meaning, never a categorical slot. */
+const STATUS_META: Record<User["status"], { label: string; tone: Tone }> = {
+  active:   { label: "Active",   tone: "emerald" },
+  pending:  { label: "Invited",  tone: "amber"   },
+  inactive: { label: "Inactive", tone: "slate"   },
 };
 
-// Role tabs — primary segmentation so each group is easy to find
 const ROLE_TABS: { key: string; label: string }[] = [
   { key: "all",       label: "All" },
   { key: "admin",     label: "Admins" },
@@ -80,6 +69,11 @@ const ROLE_TABS: { key: string; label: string }[] = [
   { key: "sales",     label: "Sales" },
   { key: "recruiter", label: "Recruiters" },
 ];
+
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+}
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -94,14 +88,14 @@ export default function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<string>("");
   const [updating, setUpdating] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   // Invite modal
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("recruiter");
   const [inviting, setInviting] = useState(false);
+
+  // ── data ──────────────────────────────────────────────────────────────────
 
   const fetchUsers = async () => {
     try {
@@ -120,18 +114,7 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    const matchesStatus = selectedStatus === "all" || user.status === selectedStatus;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  // ── mutations ─────────────────────────────────────────────────────────────
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,285 +192,405 @@ export default function UsersPage() {
     }
   };
 
-  const stats = {
-    total: users.length,
-    active: users.filter(u => u.status === "active").length,
-    admins: users.filter(u => u.role === "admin").length,
-    pending: users.filter(u => u.status === "pending").length,
-  };
+  // ── derived ───────────────────────────────────────────────────────────────
 
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  const filteredUsers = useMemo(() => users.filter(user => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q
+      || user.name.toLowerCase().includes(q)
+      || user.email.toLowerCase().includes(q);
+    const matchesRole = selectedRole === "all" || user.role === selectedRole;
+    const matchesStatus = selectedStatus === "all" || user.status === selectedStatus;
+    return matchesSearch && matchesRole && matchesStatus;
+  }), [users, searchQuery, selectedRole, selectedStatus]);
+
+  const stats = useMemo(() => ({
+    total:    users.length,
+    active:   users.filter(u => u.status === "active").length,
+    pending:  users.filter(u => u.status === "pending").length,
+    inactive: users.filter(u => u.status === "inactive").length,
+    admins:   users.filter(u => u.role === "admin").length,
+  }), [users]);
+
+  const roleCounts = useMemo(() => ROLE_TABS.reduce((acc, tab) => {
+    acc[tab.key] = tab.key === "all" ? users.length : users.filter(u => u.role === tab.key).length;
+    return acc;
+  }, {} as Record<string, number>), [users]);
+
+  const hasActiveFilters = selectedRole !== "all" || selectedStatus !== "all" || searchQuery.trim() !== "";
+
+  /** Authenticated but in no staff group, so they can reach nothing. */
+  const noRoleCount = useMemo(() => users.filter((u) => !u.role).length, [users]);
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.users.density", "default");
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.users.hiddenCols", []);
+  const clearFilters = () => { setSelectedRole("all"); setSelectedStatus("all"); setSearchQuery(""); };
+
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const columns: DataTableColumn<User>[] = [
+    {
+      key: "name",
+      label: "Name",
+      width: "250px",
+      locked: true,
+      header: "Staff member",
+      sortValue: u => u.name || u.email,
+      cell: u => (
+        <div className="flex items-center gap-2.5">
+          <Avatar name={u.name} email={u.email} size="sm" />
+          <span className="truncate font-semibold text-[var(--adm-ink)]">{u.name || "Unnamed"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      width: "260px",
+      header: "Email",
+      hideBelow: "md",
+      sortValue: u => u.email,
+      cell: u => (
+        <a
+          href={`mailto:${u.email}`}
+          onClick={e => e.stopPropagation()}
+          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          {u.email}
+        </a>
+      ),
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      width: "160px",
+      header: "Phone",
+      hideBelow: "xl",
+      sortValue: u => u.phone || "",
+      cell: u => u.phone
+        ? <span className="block truncate tabular-nums text-[var(--adm-ink-mute)]">{u.phone}</span>
+        : <Blank />,
+    },
+    {
+      key: "role",
+      label: "Role",
+      width: "150px",
+      header: "Role",
+      sortValue: u => u.role || "",
+      cell: u => {
+        const meta = u.role ? ROLE_META[u.role] : NO_ROLE;
+        return (
+          <button
+            type="button"
+            onClick={() => { setUserToEdit(u); setNewRole(u.role || ""); setShowRoleModal(true); }}
+            aria-label={`Change role for ${u.name || u.email}`}
+            className="inline-flex items-center gap-1 rounded-[4px] transition-opacity hover:opacity-75"
+          >
+            <StatusBadge tone={meta.tone} label={meta.label} size="md" />
+            <ChevronDown className="h-3 w-3 text-[var(--adm-ink-subtle)]" />
+          </button>
+        );
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      width: "150px",
+      header: "Status",
+      hideBelow: "md",
+      sortValue: u => u.status,
+      cell: u => {
+        const meta = STATUS_META[u.status] || STATUS_META.pending;
+        return (
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(u)}
+            aria-label={`Toggle status for ${u.name || u.email}`}
+            className="rounded-[4px] transition-opacity hover:opacity-75"
+          >
+            <StatusBadge tone={meta.tone} label={meta.label} size="md" />
+          </button>
+        );
+      },
+    },
+    {
+      key: "joined",
+      label: "Joined",
+      width: "140px",
+      header: "Joined",
+      hideBelow: "xl",
+      sortValue: u => new Date(u.createdAt).getTime(),
+      cell: u => u.createdAt
+        ? <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(u.createdAt)}</span>
+        : <Blank />,
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: u => (
+        <button
+          onClick={() => { setUserToDelete(u.id); setShowDeleteModal(true); }}
+          aria-label={`Delete ${u.name || u.email}`}
+          className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+        >
+          <IconTrash className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ),
+    },
+  ];
+
+  // ── states ────────────────────────────────────────────────────────────────
+
+  if (loading) return <AdminListSkeleton stats={4} rows={8} />;
+
+  if (error) return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="space-y-3 text-center">
+        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
+        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
+        <button
+          onClick={fetchUsers}
+          className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Users Management"
-        subtitle="Invite teammates and manage their roles and access"
-        icon={Users}
-        meta={<span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{users.length} total</span>}
+    <>
+      {/* The KPI strip counted staff by role and state — the two filters in the
+          toolbar below. "Admins 4, 31%" was a share of headcount nothing
+          followed from. */}
+      <WorkspaceTitle
+        title="Users & access"
+        meta={`${users.length} staff`}
         actions={
           <>
             <Link
               href="/admin/roles"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:scale-[0.98]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3.5 text-[14px] font-semibold text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
             >
-              <Shield className="w-4 h-4" /> Roles
+              <IconShield className="h-4 w-4" />Roles
             </Link>
-            <PageHeaderButton variant="primary" onClick={() => setShowInviteModal(true)}>
-              <UserPlus className="w-4 h-4" /> Invite User
-            </PageHeaderButton>
+            <WorkspaceButton variant="primary" onClick={() => setShowInviteModal(true)}>
+              <IconUserPlus className="h-4 w-4" />Invite user
+            </WorkspaceButton>
           </>
         }
       />
+      <KpiRow
+        items={[
+          { label: "Active staff", value: stats.active, icon: IconUserCheck,
+            onClick: () => setSelectedStatus("active") },
+          { label: "Invites pending", value: stats.pending, icon: IconClock,
+            tone: stats.pending > 0 ? "warning" : "default",
+            hint: stats.pending > 0 ? "Not yet signed in" : undefined,
+            onClick: () => setSelectedStatus("pending") },
+          { label: "Admins", value: stats.admins, icon: IconShield,
+            hint: "Full access to every screen",
+            onClick: () => setSelectedRole("admin") },
+          { label: "Without a role", value: noRoleCount, icon: IconUserMinus,
+            tone: noRoleCount > 0 ? "danger" : "default",
+            hint: noRoleCount > 0 ? "Signed in but no access" : undefined },
+        ]}
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "Total Users", value: stats.total, icon: Users, color: "text-[var(--hz-cobalt)]", bg: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)]" },
-          { label: "Active", value: stats.active, icon: UserCheck, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
-          { label: "Admins", value: stats.admins, icon: Shield, color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
-          { label: "Invited", value: stats.pending, icon: Send, color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
-        ].map(stat => (
-          <div key={stat.label} className={`${stat.bg} border rounded-2xl p-4 shadow-sm`}>
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`w-4 h-4 ${stat.color}`} />
-            </div>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Table Card */}
-      <div className="border border-slate-200/80 rounded-2xl bg-white shadow-sm overflow-hidden">
-        {/* Role tabs */}
-        <div className="border-b border-slate-200 px-2">
-          <div className="flex gap-1 overflow-x-auto">
-            {ROLE_TABS.map(tab => {
-              const count = tab.key === "all" ? users.length : users.filter(u => u.role === tab.key).length;
-              const active = selectedRole === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => { setSelectedRole(tab.key); setCurrentPage(1); }}
-                  className={`relative flex items-center gap-2 whitespace-nowrap px-3.5 py-3 text-sm font-medium transition-colors ${
-                    active ? "text-[var(--hz-cobalt)]" : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
-                    active ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" : "bg-slate-100 text-slate-500"
-                  }`}>
-                    {count}
-                  </span>
-                  {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--hz-cobalt)]" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Search + status */}
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
-          <SearchInput
-            value={searchQuery}
-            onChange={v => { setSearchQuery(v); setCurrentPage(1); }}
-            placeholder="Search by name or email…"
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter staff by name or email"
+            />
+          }
+          trailing={
+            <>
+              <ColumnsMenu
+                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                hidden={hiddenColumns}
+                onChange={setHiddenColumns}
+              />
+              <DensityMenu value={density} onChange={setDensity} />
+            </>
+          }
+        >
+          <FilterPill
+            label="Role"
+            icon={FilterIcon.role}
+            value={selectedRole}
+            onChange={setSelectedRole}
+            options={ROLE_TABS.map(tab => ({
+              value: tab.key,
+              label: tab.label,
+              count: roleCounts[tab.key] || 0,
+            }))}
           />
-          <div className="sm:w-44">
-            <FormSelect
-              value={selectedStatus}
-              onChange={e => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending">Invited</option>
-            </FormSelect>
-          </div>
-        </div>
+          <FilterPill
+            label="Status"
+            icon={FilterIcon.status}
+            value={selectedStatus}
+            onChange={setSelectedStatus}
+            options={[
+              { value: "all",      label: "All",                      count: stats.total },
+              { value: "active",   label: STATUS_META.active.label,   count: stats.active },
+              { value: "inactive", label: STATUS_META.inactive.label, count: stats.inactive },
+              { value: "pending",  label: STATUS_META.pending.label,  count: stats.pending },
+            ]}
+          />
+        </WorkspaceToolbar>
 
-        {/* Loading */}
-        {loading && <AdminRowsSkeleton rows={6} />}
+        <ActiveFilters
+          chips={[
+            ...(selectedRole !== "all"
+              ? [{ label: `Role: ${ROLE_TABS.find(t => t.key === selectedRole)?.label ?? selectedRole}`, onClear: () => setSelectedRole("all") }]
+              : []),
+            ...(selectedStatus !== "all"
+              ? [{ label: `Status: ${STATUS_META[selectedStatus as keyof typeof STATUS_META]?.label ?? selectedStatus}`, onClear: () => setSelectedStatus("all") }]
+              : []),
+          ]}
+          onClearAll={clearFilters}
+        />
 
-        {/* Error */}
-        {error && !loading && (
-          <div className="py-16 text-center">
-            <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-slate-900 mb-2">Error loading users</h3>
-            <p className="text-slate-500 text-sm mb-4">{error}</p>
-            <button onClick={fetchUsers} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]">Try Again</button>
-          </div>
-        )}
+        <DataTable
+          noun="staff"
+          storageKey="users"
+          columns={columns}
+          rows={filteredUsers}
+          rowKey={u => u.id}
+          initialSort={{ key: "name", dir: "asc" }}
+          density={density}
+          hiddenColumns={hiddenColumns}
+          empty={{
+            icon: IconGroup,
+            title: users.length === 0 ? "No teammates yet" : "No users match your filters",
+            description: users.length === 0
+              ? "Invite a teammate to give them access to the console."
+              : "Try adjusting your search, role, or status filter.",
+            action: users.length === 0 ? (
+              <WorkspaceButton variant="primary" onClick={() => setShowInviteModal(true)}>
+                <IconUserPlus className="h-4 w-4" />Invite user
+              </WorkspaceButton>
+            ) : hasActiveFilters ? (
+              <WorkspaceButton onClick={clearFilters}>
+                <X className="h-4 w-4" />Clear filters
+              </WorkspaceButton>
+            ) : undefined,
+          }}
+        />
+      </Workspace>
 
-        {/* Table */}
-        {!loading && !error && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">User</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Contact</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Status</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden xl:table-cell">Joined</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {paginatedUsers.map(user => {
-                    const roleCfg = user.role ? roleConfig[user.role] : noRoleConfig;
-                    const statusCfg = statusConfig[user.status] || statusConfig.pending;
-                    return (
-                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                              {getInitials(user.name)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
-                              <p className="text-xs text-slate-400 lg:hidden truncate">{user.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 hidden lg:table-cell">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-2 text-xs text-slate-600"><Mail className="w-3.5 h-3.5 text-slate-400" />{user.email}</div>
-                            {user.phone && <div className="flex items-center gap-2 text-xs text-slate-600"><Phone className="w-3.5 h-3.5 text-slate-400" />{user.phone}</div>}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <button onClick={() => { setUserToEdit(user); setNewRole(user.role || ""); setShowRoleModal(true); }}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize hover:opacity-80 transition-opacity ${roleCfg.bg}`}>
-                            {roleCfg.label}<ChevronDown className="w-3 h-3" />
-                          </button>
-                        </td>
-                        <td className="py-3.5 px-4 hidden md:table-cell">
-                          <button onClick={() => handleToggleStatus(user)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold hover:opacity-80 transition-opacity ${statusCfg.bg}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />{statusCfg.label}
-                          </button>
-                        </td>
-                        <td className="py-3.5 px-4 hidden xl:table-cell">
-                          <span className="text-xs text-slate-500">{formatDate(user.createdAt)}</span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center justify-end">
-                            <button onClick={() => { setUserToDelete(user.id); setShowDeleteModal(true); }} aria-label="Delete user" className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" aria-hidden="true" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Empty State */}
-            {filteredUsers.length === 0 && (
-              <div className="py-16 text-center">
-                <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                  <Search className="w-7 h-7 text-slate-400" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-1">No users found</h3>
-                <p className="text-slate-500 text-sm">Try adjusting your search or invite a teammate</p>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {filteredUsers.length > 0 && (
-              <div className="px-4 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <p className="text-xs text-slate-500">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
-                </p>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page" className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
-                    <button key={page} onClick={() => setCurrentPage(page)} className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${currentPage === page ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100"}`}>{page}</button>
-                  ))}
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} aria-label="Next page" className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Invite User Modal */}
+      {/* ── invite modal ── */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleInvite} className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Invite a teammate</h2>
-              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" aria-hidden="true" /></button>
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <form onSubmit={handleInvite} className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
+              <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Invite a teammate</h2>
+              <button
+                type="button"
+                onClick={() => { setShowInviteModal(false); setInviteEmail(""); }}
+                aria-label="Close"
+                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
-            <div className="p-6 space-y-5">
+
+            <div className="space-y-5 p-5">
               <div className="space-y-1.5">
-                <label htmlFor="inviteEmail" className="block text-sm font-medium text-slate-700">Email address</label>
+                <label htmlFor="inviteEmail" className="block text-sm font-medium text-[var(--adm-ink-mute)]">Email address</label>
                 <input
                   id="inviteEmail" type="email" required autoFocus autoComplete="off" value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
-                  className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)]"
+                  className="w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2.5 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 />
-                <p className="text-xs text-slate-400">We&apos;ll email them an invite with a temporary password. They set their name, phone, and password on first sign-in.</p>
+                <p className="text-xs text-[var(--adm-ink-subtle)]">
+                  We&apos;ll email them an invite with a temporary password. They set their name, phone, and password on first sign-in.
+                </p>
               </div>
+
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Role</label>
-                <div className="space-y-2">
-                  {ROLE_OPTIONS.map(({ role, desc }) => (
-                    <label key={role} className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${inviteRole === role ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]" : "border-slate-200 hover:border-slate-300"}`}>
-                      <input type="radio" name="inviteRole" value={role} checked={inviteRole === role} onChange={() => setInviteRole(role)} className="mt-0.5 w-4 h-4 text-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt)]" />
-                      <div>
-                        <p className="font-medium text-slate-900">{roleConfig[role].label}</p>
-                        <p className="text-xs text-slate-500">{desc}</p>
-                      </div>
-                    </label>
-                  ))}
+                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">Role</p>
+                <div className="space-y-1.5">
+                  {ROLE_ORDER.map(role => {
+                    const meta = ROLE_META[role];
+                    const selected = inviteRole === role;
+                    return (
+                      <label
+                        key={role}
+                        className={cn(
+                          "flex cursor-pointer items-start gap-3 rounded-[6px] border p-3 transition-colors",
+                          selected
+                            ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
+                            : "border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]",
+                        )}
+                      >
+                        <input
+                          type="radio" name="inviteRole" value={role} checked={selected}
+                          onChange={() => setInviteRole(role)}
+                          className="mt-0.5 h-4 w-4 accent-[var(--adm-accent)]"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                          <span className="mt-0.5 block text-xs leading-relaxed text-[var(--adm-ink-subtle)]">{meta.desc}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
-              <button type="button" onClick={() => { setShowInviteModal(false); setInviteEmail(""); }} className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
-              <button type="submit" disabled={inviting || !inviteEmail} className="px-5 py-2 text-sm font-medium bg-[var(--hz-cobalt)] text-white rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors disabled:opacity-50 flex items-center gap-2">
-                {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Invite
+
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
+              <button
+                type="button"
+                onClick={() => { setShowInviteModal(false); setInviteEmail(""); }}
+                className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={inviting || !inviteEmail}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-50"
+              >
+                {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSend className="h-4 w-4" />}Send Invite
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Change Role Modal */}
+      {/* ── change-role modal ── */}
       {showRoleModal && userToEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* Header — who you're editing */}
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-[var(--hz-cobalt-100)] text-sm font-bold text-[var(--hz-cobalt)]">
-                  {(userToEdit.name || userToEdit.email || "?").charAt(0).toUpperCase()}
-                </span>
+                <Avatar name={userToEdit.name} email={userToEdit.email} size="md" />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-900">{userToEdit.name || "Unnamed"}</p>
-                  <p className="truncate text-xs text-slate-500">{userToEdit.email}</p>
+                  <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{userToEdit.name || "Unnamed"}</p>
+                  <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{userToEdit.email}</p>
                 </div>
               </div>
-              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} aria-label="Close" className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" aria-hidden="true" /></button>
+              <button
+                onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
+                aria-label="Close"
+                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
 
             <div className="p-5">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Select a role</p>
-              <div className="space-y-2">
-                {ROLE_OPTIONS.map(({ role, desc }) => {
-                  const cfg = roleConfig[role];
-                  const Icon = roleIcon[role];
+              <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">Select a role</p>
+              <div className="space-y-1.5">
+                {ROLE_ORDER.map(role => {
+                  const meta = ROLE_META[role];
+                  const Icon = meta.icon;
                   const selected = newRole === role;
                   const current = userToEdit.role === role;
                   return (
@@ -496,25 +599,29 @@ export default function UsersPage() {
                       key={role}
                       onClick={() => setNewRole(role)}
                       className={cn(
-                        "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all",
+                        "flex w-full items-start gap-3 rounded-[6px] border p-3 text-left transition-colors",
                         selected
-                          ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)]/50 ring-1 ring-[var(--hz-cobalt)]"
-                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                          ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
+                          : "border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]",
                       )}
                     >
-                      <span className={cn("grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg", cfg.bg)}>
+                      <span className="mt-0.5 grid h-8 w-8 flex-shrink-0 place-items-center rounded-[6px] bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]">
                         <Icon className="h-4 w-4" />
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-slate-900">{cfg.label}</p>
-                          {current && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">Current</span>}
-                        </div>
-                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{desc}</p>
-                      </div>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                          {current && (
+                            <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">
+                              Current
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-[var(--adm-ink-subtle)]">{meta.desc}</span>
+                      </span>
                       <span className={cn(
                         "mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-colors",
-                        selected ? "border-[var(--hz-cobalt)] bg-[var(--hz-cobalt)]" : "border-slate-300",
+                        selected ? "border-[var(--adm-accent)] bg-[var(--adm-accent)]" : "border-[var(--adm-line)]",
                       )}>
                         {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                       </span>
@@ -524,36 +631,34 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
-              <button onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200">Cancel</button>
-              <button onClick={handleUpdateRole} disabled={updating || newRole === userToEdit.role || !newRole} className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.98] disabled:opacity-50">
-                {updating && <Loader2 className="h-4 w-4 animate-spin" />} Save role
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
+              <button
+                onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
+                className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateRole}
+                disabled={updating || newRole === userToEdit.role || !newRole}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-50"
+              >
+                {updating && <Loader2 className="h-4 w-4 animate-spin" />}Save role
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7 text-rose-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-900 mb-2">Delete User</h2>
-              <p className="text-sm text-slate-500">Are you sure? This action cannot be undone.</p>
-            </div>
-            <div className="flex items-center justify-center gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">
-              <button onClick={() => { setShowDeleteModal(false); setUserToDelete(null); }} className="px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-xl transition-colors">Cancel</button>
-              <button onClick={handleDeleteUser} disabled={updating} className="px-5 py-2.5 text-sm font-medium bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center gap-2">
-                {updating && <Loader2 className="w-4 h-4 animate-spin" />} Delete User
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <ConfirmDialog
+        open={showDeleteModal}
+        title="Delete this user?"
+        body="Their account and access are removed permanently. This cannot be undone."
+        confirmLabel="Delete User"
+        busy={updating}
+        onCancel={() => { setShowDeleteModal(false); setUserToDelete(null); }}
+        onConfirm={handleDeleteUser}
+      />
+    </>
   );
 }

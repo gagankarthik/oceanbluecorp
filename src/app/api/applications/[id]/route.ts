@@ -145,7 +145,8 @@ export async function PUT(
       body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
       body.resumeId !== undefined || body.resumeFileName !== undefined ||
       body.addToTalentBench !== undefined || body.benchAddedBy !== undefined ||
-      body.resumeAnalysis !== undefined;
+      body.resumeAnalysis !== undefined ||
+      body.visaSponsorshipRequired !== undefined || body.visaExpiry !== undefined;
 
     if (hasFullUpdateFields) {
       // Full application update
@@ -176,6 +177,10 @@ export async function PUT(
       if (body.jobTitle !== undefined) updates.jobTitle = body.jobTitle;
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;
+      // Visa details — the edit form omits visaExpiry entirely when it is blank,
+      // so an explicit "" is the only way it can be cleared.
+      if (body.visaSponsorshipRequired !== undefined) updates.visaSponsorshipRequired = body.visaSponsorshipRequired;
+      if (body.visaExpiry !== undefined) updates.visaExpiry = body.visaExpiry;
       if (body.ownership !== undefined) {
         updates.ownership = body.ownership;
         // Set ownershipClaimedAt when ownership is claimed, clear when released

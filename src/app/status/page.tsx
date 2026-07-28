@@ -4,7 +4,7 @@ import StatusContent from "./_content";
 export const metadata: Metadata = {
   title: "System Status",
   description:
-    "Real-time status of Ocean Blue Corporation's platform services — database, storage, authentication, email, and hosting.",
+    "Real-time status of Ocean Blue Corporation's platform services, database, storage, authentication, email, and hosting.",
   openGraph: {
     title: "System Status | Ocean Blue Corporation",
     description: "Live service health for Ocean Blue Corporation's platform.",

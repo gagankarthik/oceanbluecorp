@@ -1,39 +1,44 @@
 "use client";
-import { toast } from "sonner";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { toast } from "sonner";
 import {
-  Plus, Edit3, Trash2, Users, MapPin, Briefcase,
-  CheckCircle2, Copy, Loader2, DollarSign, Download, Eye,
-  MoreHorizontal, Building2, LayoutList, AlignJustify, Truck,
-  Calendar, PauseCircle, FileText, AlertTriangle, X,
+  Plus, Loader2, MoreHorizontal, X,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
 import { AdminCard } from "@/components/admin/admin-card";
-import { StatCard } from "@/components/admin/stat-card";
-import { SearchInput, ViewMenu } from "@/components/admin/toolbar";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DensityMenu, ColumnsMenu, GridSelect, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import {
+  IconRequisition, IconEdit, IconTrash, IconGroup, IconLocation, IconJob,
+  IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
+  IconCalendar, IconFile, IconWarning,
+} from "@/components/admin/icons";
 import JobsLoading from "./loading";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-type TableView = "compact" | "detailed";
+type JobWithVendor = Job & { vendorName?: string };
 
 const JOB_STATUSES: Array<{ value: Job["status"]; label: string }> = [
-  { value: "draft",    label: "Draft" },
-  { value: "open",     label: "Open" },
-  { value: "active",   label: "Active" },
-  { value: "on-hold",  label: "On Hold" },
-  { value: "closed",   label: "Closed" },
+  { value: "draft",   label: "Draft" },
+  { value: "open",    label: "Open" },
+  { value: "active",  label: "Active" },
+  { value: "on-hold", label: "On Hold" },
+  { value: "closed",  label: "Closed" },
 ];
 
 const STATUS_TABS = [
@@ -45,32 +50,34 @@ const STATUS_TABS = [
   { key: "closed",  label: "Closed" },
 ];
 
+
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+}
+
 export default function JobsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const reduceMotion = useReducedMotion();
 
-  const [jobs, setJobs]                   = useState<Job[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState<string | null>(null);
-  const [searchQuery, setSearchQuery]     = useState("");
-  const [statusFilter, setStatusFilter]   = useState("all");
+  const [jobs, setJobs]                 = useState<Job[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [deleting, setDeleting]           = useState(false);
-  const [duplicating, setDuplicating]     = useState<string | null>(null);
-  const [tableView, setTableView]         = useState<TableView>("compact");
+  const [deleting, setDeleting]         = useState(false);
+  const [duplicating, setDuplicating]   = useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 250);
-
   const canEdit = user?.role !== UserRole.RECRUITER;
 
-  // ── Data fetching ────────────────────────────────────────────────────────
+  // ── data ──────────────────────────────────────────────────────────────────
 
-  useEffect(() => { fetchJobs(); }, []);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch("/api/jobs");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
@@ -78,19 +85,19 @@ export default function JobsPage() {
       const fetchedJobs: Job[] = data.jobs || [];
       const now = new Date();
       const toClose = fetchedJobs.filter(
-        j => j.submissionDueDate && new Date(j.submissionDueDate) < now && j.status !== "closed"
+        (j) => j.submissionDueDate && new Date(j.submissionDueDate) < now && j.status !== "closed",
       );
 
       if (toClose.length > 0) {
-        await Promise.all(toClose.map(j =>
+        await Promise.all(toClose.map((j) =>
           fetch(`/api/jobs/${j.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "closed" }),
-          })
+          }),
         ));
-        const closedIds = new Set(toClose.map(j => j.id));
-        setJobs(fetchedJobs.map(j => closedIds.has(j.id) ? { ...j, status: "closed" } : j));
+        const closedIds = new Set(toClose.map((j) => j.id));
+        setJobs(fetchedJobs.map((j) => (closedIds.has(j.id) ? { ...j, status: "closed" } : j)));
       } else {
         setJobs(fetchedJobs);
       }
@@ -99,9 +106,11 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // ── CRUD helpers ─────────────────────────────────────────────────────────
+  useEffect(() => { void fetchJobs(); }, [fetchJobs]);
+
+  // ── mutations ─────────────────────────────────────────────────────────────
 
   const handleStatusChange = async (jobId: string, newStatus: Job["status"]) => {
     try {
@@ -111,7 +120,8 @@ export default function JobsPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error("Failed to update status");
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: newStatus } : j));
+      setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j)));
+      toast.success("Status updated");
     } catch { toast.error("Failed to update job status"); }
   };
 
@@ -120,8 +130,9 @@ export default function JobsPage() {
     try {
       const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete job");
-      setJobs(prev => prev.filter(j => j.id !== jobId));
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
       setShowDeleteConfirm(null);
+      toast.success("Job deleted");
     } catch { toast.error("Failed to delete job"); }
     finally { setDeleting(false); }
   };
@@ -132,14 +143,69 @@ export default function JobsPage() {
       const res = await fetch(`/api/jobs/${job.id}/duplicate`, { method: "POST" });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to duplicate"); }
       await fetchJobs();
+      toast.success("Job duplicated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to duplicate job");
     } finally { setDuplicating(null); }
   };
 
-  const exportCSV = () => {
-    const headers = ["Job ID","Title","Client","Location","Status","Pay Rate","Bill Rate","Manager","Created","Deadline"];
-    const rows = filteredJobs.map(job => [
+  // ── derived ───────────────────────────────────────────────────────────────
+
+  const filteredJobs = useMemo(() => jobs.filter((job) => {
+    const jv = job as JobWithVendor;
+    const q = debouncedSearch.toLowerCase();
+    const matchSearch = !q || [job.title, job.department, job.location, job.clientName, jv.vendorName, job.postingId]
+      .some((f) => f?.toLowerCase().includes(q));
+    const matchStatus = statusFilter === "all" || job.status === statusFilter;
+    return matchSearch && matchStatus;
+  // Newest first by default. The detailed view has no Created column to sort
+  // on, so without a base order it would fall back to raw fetch order.
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  [jobs, debouncedSearch, statusFilter]);
+
+  /** Open roles nobody has sourced for — the number worth acting on. */
+  const starvedRoles = useMemo(
+    () => jobs.filter(
+      (j) => (j.status === "active" || j.status === "open") && !(j.applicationsCount || 0),
+    ).length,
+    [jobs],
+  );
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.jobs.density", "default");
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>(
+    "adm.jobs.hiddenCols.v2",
+    ["department", "payRate", "billRate"],
+  );
+
+  const statusCounts = useMemo(() => STATUS_TABS.reduce((acc, tab) => {
+    acc[tab.key] = tab.key === "all" ? jobs.length : jobs.filter((j) => j.status === tab.key).length;
+    return acc;
+  }, {} as Record<string, number>), [jobs]);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    return {
+      total:  jobs.length,
+      active: jobs.filter((j) => j.status === "active" || j.status === "open").length,
+      draft:  jobs.filter((j) => j.status === "draft").length,
+      closingSoon: jobs.filter((j) => {
+        if (!j.submissionDueDate || j.status === "closed") return false;
+        const diff = new Date(j.submissionDueDate).getTime() - now;
+        return diff >= 0 && diff <= 7 * 86400000;
+      }).length,
+      applicants: jobs.reduce((s, j) => s + (j.applicationsCount || 0), 0),
+    };
+  }, [jobs]);
+
+
+
+  const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
+  const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
+
+  const exportCSV = () => downloadCsv(
+    "jobs",
+    ["Job ID","Title","Client","Location","Status","Pay Rate","Bill Rate","Manager","Created","Deadline"],
+    filteredJobs.map((job) => [
       job.postingId || "",
       job.title,
       job.clientName || "",
@@ -148,493 +214,388 @@ export default function JobsPage() {
       job.payRate        ? `$${job.payRate}/hr`        : "",
       job.clientBillRate ? `$${job.clientBillRate}/hr` : "",
       job.recruitmentManagerName || "",
-      new Date(job.createdAt).toLocaleDateString(),
-      job.submissionDueDate ? new Date(job.submissionDueDate).toLocaleDateString() : "",
-    ]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `jobs_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
+      fmtDate(job.createdAt),
+      job.submissionDueDate ? fmtDate(job.submissionDueDate) : "",
+    ]),
+  );
+
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const rowMenu = useCallback((job: Job) => (
+    <RowMenu
+      job={job}
+      canEdit={canEdit}
+      duplicating={duplicating === job.id}
+      onView={() => router.push(`/admin/jobs/${job.id}`)}
+      onEdit={() => router.push(`/admin/jobs/${job.id}/edit`)}
+      onDuplicate={() => handleDuplicate(job)}
+      onDelete={() => setShowDeleteConfirm(job.id)}
+    />
+  // handleDuplicate is stable enough for this call site; it only reads state setters.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [canEdit, duplicating, router]);
+
+  const idCol: DataTableColumn<Job> = {
+    key: "postingId",
+    header: "Job ID",
+    sortValue: (j) => j.postingId || "",
+    cell: (j) => j.postingId
+      ? <span className="rounded-[4px] bg-[var(--adm-accent-soft)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">{j.postingId}</span>
+      : <Blank />,
   };
 
-  // ── Derived data ─────────────────────────────────────────────────────────
-
-  const filteredJobs = useMemo(() => jobs.filter(job => {
-    const jv = job as Job & { vendorName?: string };
-    const q = debouncedSearch.toLowerCase();
-    const matchSearch = !q || [job.title, job.department, job.location, job.clientName, jv.vendorName, job.postingId]
-      .some(f => f?.toLowerCase().includes(q));
-    const matchStatus = statusFilter === "all" || job.status === statusFilter;
-    return matchSearch && matchStatus;
-  }), [jobs, debouncedSearch, statusFilter]);
-
-  const statusCounts = useMemo(() => STATUS_TABS.reduce((acc, tab) => {
-    acc[tab.key] = tab.key === "all" ? jobs.length : jobs.filter(j => j.status === tab.key).length;
-    return acc;
-  }, {} as Record<string, number>), [jobs]);
-
-  const now = Date.now();
-  const stats = {
-    total:  jobs.length,
-    active: jobs.filter(j => j.status === "active" || j.status === "open").length,
-    draft:  jobs.filter(j => j.status === "draft").length,
-    closingSoon: jobs.filter(j => {
-      if (!j.submissionDueDate || j.status === "closed") return false;
-      const diff = new Date(j.submissionDueDate).getTime() - now;
-      return diff >= 0 && diff <= 7 * 86400000;
-    }).length,
+  const titleCol: DataTableColumn<Job> = {
+    key: "title",
+    header: "Title",
+    sortValue: (j) => j.title,
+    cell: (j) => <span className="font-semibold text-[var(--adm-ink)]">{j.title}</span>,
   };
 
-  const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
-  const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
+  const departmentCol: DataTableColumn<Job> = {
+    key: "department",
+    header: "Department",
+    sortValue: (j) => j.department || "",
+    hideBelow: "xl",
+    cell: (j) => j.department
+      ? <span className="capitalize text-[var(--adm-ink-mute)]">{j.department}</span>
+      : <Blank />,
+  };
 
-  // ── Loading / Error states ───────────────────────────────────────────────
+  const clientCol: DataTableColumn<Job> = {
+    key: "client",
+    header: "Client",
+    sortValue: (j) => j.clientName || "",
+    hideBelow: "lg",
+    cell: (j) => j.clientName ? (
+      <span className="inline-flex max-w-full items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+        <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+        <span className="min-w-0 truncate">{j.clientName}</span>
+      </span>
+    ) : <Blank />,
+  };
+
+  const locationCol: DataTableColumn<Job> = {
+    key: "location",
+    header: "Location",
+    sortValue: (j) => j.location || "",
+    hideBelow: "lg",
+    cell: (j) => (
+      <span className="inline-flex max-w-full items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+        <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+        <span className="min-w-0 truncate">{j.location}{j.state ? `, ${j.state}` : ""}</span>
+      </span>
+    ),
+  };
+
+  const statusCol: DataTableColumn<Job> = {
+    key: "status",
+    header: "Status",
+    label: "Status",
+    width: "160px",
+    sortValue: (j) => j.status,
+    // Was a bare <select>, so Windows drew its own grey bevel inside an
+    // otherwise designed grid and the cell resized as the label changed.
+    cell: (j) => canEdit ? (
+      <GridSelect
+        value={j.status}
+        ariaLabel={`Status for ${j.title}`}
+        onChange={(e) => handleStatusChange(j.id, e.target.value as Job["status"])}
+      >
+        {JOB_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+      </GridSelect>
+    ) : <StatusBadge status={j.status} />,
+  };
+
+  const applicantsCol: DataTableColumn<Job> = {
+    key: "applicants",
+    header: "Applicants",
+    align: "right",
+    sortValue: (j) => j.applicationsCount || 0,
+    cell: (j) => (
+      <span className="inline-flex items-center gap-1.5 tabular-nums text-[var(--adm-ink-mute)]">
+        <IconGroup className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
+        {j.applicationsCount || 0}
+      </span>
+    ),
+  };
+
+  const createdCol: DataTableColumn<Job> = {
+    key: "created",
+    header: "Created",
+    sortValue: (j) => new Date(j.createdAt).getTime(),
+    hideBelow: "xl",
+    cell: (j) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(j.createdAt)}</span>,
+  };
+
+  const actionsCol: DataTableColumn<Job> = {
+    key: "actions",
+    header: "",
+    align: "right",
+    cell: (j) => <div onClick={(e) => e.stopPropagation()}>{rowMenu(j)}</div>,
+  };
+
+  // Two lenses over the same rows, both eight columns wide: "compact" answers
+  // where a role is and how it's doing, "detailed" answers what it pays.
+  // Neither stacks a second fact under a first — a value worth showing gets a
+  // column of its own, and everything else stays on the record page.
+  const payCol: DataTableColumn<Job> = {
+    key: "payRate", header: "Pay", label: "Pay rate", align: "right", width: "110px",
+    sortValue: (j) => j.payRate ?? 0,
+    cell: (j) => j.payRate
+      ? <span className="font-semibold tabular-nums text-[var(--adm-ink)]">${j.payRate}/hr</span>
+      : <Blank />,
+  };
+
+  const billCol: DataTableColumn<Job> = {
+    key: "billRate", header: "Bill", label: "Bill rate", align: "right", width: "110px",
+    sortValue: (j) => j.clientBillRate ?? 0,
+    cell: (j) => j.clientBillRate
+      ? <span className="font-semibold tabular-nums text-[var(--adm-ink)]">${j.clientBillRate}/hr</span>
+      : <Blank />,
+  };
+
+  /**
+   * ONE column list.
+   *
+   * There used to be two hard-coded sets, "Compact" and "Detailed", swapped by
+   * a ViewMenu that sat next to the density control — whose first option is
+   * also called "Compact". Two adjacent menus, both offering "Compact", doing
+   * completely different things: one changed which columns existed, the other
+   * changed row height.
+   *
+   * The columns menu already answers "which columns do I want", and more
+   * precisely than two fixed presets, so the ViewMenu is gone and the extra
+   * "detailed" columns simply start hidden.
+   */
+  const columns: DataTableColumn<Job>[] = [
+    idCol, titleCol, departmentCol, clientCol, locationCol,
+    payCol, billCol, statusCol, applicantsCol, createdCol, actionsCol,
+  ];
+
+  // ── states ────────────────────────────────────────────────────────────────
 
   if (loading) return <JobsLoading />;
 
   if (error) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center space-y-3">
-        <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
-        <p className="text-sm text-rose-600">{error}</p>
-        <button onClick={fetchJobs} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]">Retry</button>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="space-y-3 text-center">
+        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
+        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
+        <button onClick={fetchJobs} className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]">
+          Retry
+        </button>
       </div>
     </div>
   );
-
-  const fadeUp = (i: number) =>
-    reduceMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 12 },
-          animate: { opacity: 1, y: 0 },
-          transition: { delay: 0.05 * i, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
-        };
-
-  const empty = (
-    <div className="py-16 text-center">
-      <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-slate-100">
-        <Briefcase className="h-8 w-8 text-slate-300" />
-      </div>
-      <h3 className="mb-1 text-base font-bold text-slate-900">No jobs found</h3>
-      <p className="mb-5 text-sm text-slate-400">
-        {jobs.length === 0 ? "Post your first job to start tracking candidates" : "Try adjusting your search or filters"}
-      </p>
-      {jobs.length === 0 ? (
-        canEdit && (
-          <button onClick={() => router.push("/admin/jobs/new")} className="inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--hz-cobalt-600)]">
-            <Plus className="h-4 w-4" />Post a Job
-          </button>
-        )
-      ) : (
-        hasActiveFilters && (
-          <button onClick={clearFilters} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
-            <X className="h-4 w-4" />Clear filters
-          </button>
-        )
-      )}
-    </div>
-  );
-
-  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5 pb-10">
-
-      {/* ── Page header ── */}
-      <PageHeader
-        title="Job Postings"
-        subtitle="Manage open roles and track candidate pipelines"
-        icon={Briefcase}
+    <>
+      {/* One panel. The KPI strip is gone: "Open roles" and "Drafts" are values
+          of the Status filter, and their share bars measured against every job
+          record ever created, which is not a whole those counts are part of. */}
+      {/* No share bars. "Open roles 13, 6%" measured against every job record
+          ever created, which is not a whole those 13 are part of. */}
+      <WorkspaceTitle
+        title="Job postings"
+        meta={`${jobs.length} roles · ${stats.active} open`}
         actions={
           <>
-            <PageHeaderButton variant="secondary" onClick={exportCSV}>
-              <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
-            </PageHeaderButton>
+            <WorkspaceButton onClick={exportCSV}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
             {canEdit && (
-              <PageHeaderButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
-                <Plus className="w-4 h-4" />New Job
-              </PageHeaderButton>
+              <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
+                <Plus className="h-4 w-4" />Post a job
+              </WorkspaceButton>
             )}
           </>
         }
       />
+      <KpiRow
+        items={[
+          { label: "Open roles", value: stats.active, icon: IconRequisition,
+            onClick: () => setStatusFilter("active") },
+          { label: "Closing in 7 days", value: stats.closingSoon, icon: IconCalendar,
+            tone: stats.closingSoon > 0 ? "warning" : "default",
+            hint: stats.closingSoon > 0 ? "Submission deadline approaching" : undefined },
+          { label: "Roles with no applicants", value: starvedRoles, icon: IconGroup,
+            tone: starvedRoles > 0 ? "danger" : "success",
+            hint: starvedRoles > 0 ? "Nothing sourced yet" : "Every open role has candidates" },
+          { label: "Drafts", value: stats.draft, icon: IconFile,
+            onClick: () => setStatusFilter("draft") },
+        ]}
+      />
 
-      {/* ── KPI strip ── */}
-      <motion.div {...fadeUp(0)} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard size="sm" label="Total Jobs"    value={stats.total}       icon={Briefcase}    tone="blue" />
-        <StatCard size="sm" label="Active / Open" value={stats.active}      icon={CheckCircle2} tone="emerald" />
-        <StatCard size="sm" label="Drafts"        value={stats.draft}       icon={FileText}     tone="slate" />
-        <StatCard size="sm" label="Closing Soon"  value={stats.closingSoon} icon={PauseCircle}  tone="amber" hint="Due within 7 days" />
-      </motion.div>
-
-      {/* ── Filter bar ── */}
-      <motion.div {...fadeUp(1)}>
-        <AdminCard className="p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search title, client, location…" />
-            <ViewMenu
-              className="hidden xl:inline-flex"
-              options={[
-                { value: "compact",  label: "Compact",  icon: LayoutList },
-                { value: "detailed", label: "Detailed", icon: AlignJustify },
-              ]}
-              value={tableView}
-              onChange={setTableView}
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter jobs by title, client, location or ID"
             />
-          </div>
+          }
+          trailing={
+            <div className="hidden xl:contents">
+              <ColumnsMenu
+                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                hidden={hiddenColumns}
+                onChange={setHiddenColumns}
+              />
+              <DensityMenu value={density} onChange={setDensity} />
+            </div>
+          }
+        >
+          <FilterPill
+            label="Status"
+            icon={FilterIcon.status}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_TABS.map((t) => ({
+              value: t.key,
+              label: t.label,
+              count: statusCounts[t.key] || 0,
+            }))}
+          />
+        </WorkspaceToolbar>
 
-          {/* Status pill tabs */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {STATUS_TABS.map(tab => {
-              const isActive = statusFilter === tab.key;
-              return (
-                <button key={tab.key} onClick={() => setStatusFilter(tab.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    isActive ? "bg-[var(--hz-cobalt)] text-white shadow-sm shadow-[rgba(29,78,216,0.2)]" : "text-slate-600 hover:bg-slate-100"
-                  }`}>
-                  {tab.label}
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                  }`}>{statusCounts[tab.key] || 0}</span>
-                </button>
-              );
-            })}
-          </div>
-        </AdminCard>
-      </motion.div>
+        <ActiveFilters
+          chips={statusFilter !== "all"
+            ? [{
+                label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`,
+                onClear: () => setStatusFilter("all"),
+              }]
+            : []}
+          onClearAll={clearFilters}
+        />
 
-      {/* ── Active filter chips + count ── */}
-      <div className="-mt-1 flex flex-wrap items-center gap-2 px-0.5">
-        <p className="text-xs text-slate-400">
-          <span className="font-semibold text-slate-600 tabular-nums">{filteredJobs.length}</span> of {jobs.length} jobs
-        </p>
-        {hasActiveFilters && (
-          <>
-            {statusFilter !== "all" && (
-              <button onClick={() => setStatusFilter("all")}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--hz-cobalt-100)] px-2 py-0.5 text-[11px] font-semibold text-[var(--hz-cobalt)] transition hover:opacity-80">
-                {STATUS_TABS.find(t => t.key === statusFilter)?.label}
-                <X className="h-3 w-3" />
-              </button>
-            )}
-            {debouncedSearch.trim() && (
-              <button onClick={() => setSearchQuery("")}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-200">
-                &ldquo;{debouncedSearch}&rdquo;
-                <X className="h-3 w-3" />
-              </button>
-            )}
-            <button onClick={clearFilters} className="text-[11px] font-semibold text-slate-400 underline-offset-2 transition hover:text-slate-600 hover:underline">
-              Clear all
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* ── Mobile / tablet cards (phones 1-col, tablets/small laptops 2-col;
-             the wide table only takes over at xl where it has room) ── */}
-      <div className="grid gap-3 md:grid-cols-2 xl:hidden">
-        {filteredJobs.length > 0 ? filteredJobs.map((job, i) => {
-          const jv = job as Job & { vendorName?: string };
+      {/* ── mobile / tablet cards; the grid takes over at xl where it has room ── */}
+      <div className="grid gap-3 p-3 md:grid-cols-2 xl:hidden">
+        {filteredJobs.length > 0 ? filteredJobs.map((job) => {
+          const jv = job as JobWithVendor;
           return (
-            <motion.div key={job.id} {...fadeUp(Math.min(i, 6) + 2)}>
-              <AdminCard hover className="flex h-full flex-col p-4">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    {job.postingId && (
-                      <span className="rounded bg-[var(--hz-cobalt-100)] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-                        {job.postingId}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                      className="mt-1.5 block text-left text-sm font-bold leading-snug text-slate-900 transition-colors line-clamp-2 hover:text-[var(--hz-cobalt)]"
-                    >
-                      {job.title}
-                    </button>
-                    <p className="mt-0.5 text-xs capitalize text-slate-400">{job.department} · {job.type}</p>
-                  </div>
-                  <StatusBadge status={job.status} size="md" />
+            <AdminCard key={job.id} hover className="flex h-full flex-col p-4">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  {job.postingId && (
+                    <span className="rounded-[4px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">
+                      {job.postingId}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                    className="mt-1.5 block text-left text-sm font-bold leading-snug text-[var(--adm-ink)] transition-colors line-clamp-2 hover:text-[var(--adm-accent)]"
+                  >
+                    {job.title}
+                  </button>
+                  <p className="mt-0.5 text-xs capitalize text-[var(--adm-ink-subtle)]">
+                    {[job.department, job.type].filter(Boolean).join(" · ") || "—"}
+                  </p>
                 </div>
+                <StatusBadge status={job.status} size="md" />
+              </div>
 
-                <div className="mb-4 flex-1 space-y-1.5 text-xs text-slate-500">
-                  {job.clientName && (
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                      <span className="truncate">{job.clientName}</span>
-                    </div>
-                  )}
-                  {jv.vendorName && (
-                    <div className="flex items-center gap-1.5">
-                      <Truck className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                      <span className="truncate">{jv.vendorName}</span>
-                    </div>
-                  )}
+              <div className="mb-4 flex-1 space-y-1.5 text-xs text-[var(--adm-ink-subtle)]">
+                {job.clientName && (
                   <div className="flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                    <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
+                    <IconBuilding className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+                    <span className="truncate">{job.clientName}</span>
                   </div>
-                  {job.payRate && (
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                      <span className="tabular-nums">${job.payRate}/hr pay{job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}</span>
-                    </div>
-                  )}
-                  {job.submissionDueDate && (
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                      <span>Due {fmtDate(job.submissionDueDate)}</span>
-                    </div>
-                  )}
+                )}
+                {jv.vendorName && (
+                  <div className="flex items-center gap-1.5">
+                    <IconTruck className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+                    <span className="truncate">{jv.vendorName}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <IconLocation className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+                  <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
                 </div>
+                {job.payRate && (
+                  <div className="flex items-center gap-1.5">
+                    <IconMoney className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+                    <span className="tabular-nums">
+                      ${job.payRate}/hr pay{job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}
+                    </span>
+                  </div>
+                )}
+                {job.submissionDueDate && (
+                  <div className="flex items-center gap-1.5">
+                    <IconCalendar className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
+                    <span>Due {fmtDate(job.submissionDueDate)}</span>
+                  </div>
+                )}
+              </div>
 
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className="flex items-center gap-1 text-xs text-slate-400">
-                    <Users className="h-3 w-3" /><span className="tabular-nums">{job.applicationsCount || 0}</span> applicants
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => router.push(`/admin/jobs/${job.id}`)} aria-label="View job" className="rounded-lg p-2.5 text-slate-400 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]">
-                      <Eye className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    {canEdit && (
-                      <>
-                        <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} aria-label="Edit job" className="rounded-lg p-2.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                          <Edit3 className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                        <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} aria-label="Duplicate job" className="rounded-lg p-2.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50">
-                          {duplicating === job.id ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-                        </button>
-                        <button onClick={() => setShowDeleteConfirm(job.id)} aria-label="Delete job" className="rounded-lg p-2.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-3">
+                <span className="flex items-center gap-1 text-xs text-[var(--adm-ink-subtle)]">
+                  <IconGroup className="h-3 w-3" />
+                  <span className="tabular-nums">{job.applicationsCount || 0}</span> applicants
+                </span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => router.push(`/admin/jobs/${job.id}`)} aria-label="View job"
+                    className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]">
+                    <IconEye className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  {canEdit && (
+                    <>
+                      <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} aria-label="Edit job"
+                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
+                        <IconEdit className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                      <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} aria-label="Duplicate job"
+                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)] disabled:opacity-50">
+                        {duplicating === job.id
+                          ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                          : <IconCopy className="h-4 w-4" aria-hidden="true" />}
+                      </button>
+                      <button onClick={() => setShowDeleteConfirm(job.id)} aria-label="Delete job"
+                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
+                        <IconTrash className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
                 </div>
-              </AdminCard>
-            </motion.div>
+              </div>
+            </AdminCard>
           );
         }) : (
           <div className="md:col-span-2">
-            <AdminCard>{empty}</AdminCard>
+            <AdminCard className="py-6">
+              <EmptyJobs jobsEmpty={jobs.length === 0} canEdit={canEdit} hasFilters={hasActiveFilters}
+                onCreate={() => router.push("/admin/jobs/new")} onClear={clearFilters} />
+            </AdminCard>
           </div>
         )}
       </div>
 
-      {/* ── Desktop table (xl+ only — needs the horizontal room) ── */}
-      <motion.div {...fadeUp(2)} className="hidden xl:block">
-        <AdminCard className="overflow-hidden">
-          {tableView === "compact" ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500">
-                    <th className="whitespace-nowrap px-5 py-3 text-left font-semibold">Job ID</th>
-                    <th className="px-5 py-3 text-left font-semibold">Title</th>
-                    <th className="px-5 py-3 text-left font-semibold">Client</th>
-                    <th className="px-5 py-3 text-left font-semibold">Location</th>
-                    <th className="px-5 py-3 text-left font-semibold">Status</th>
-                    <th className="whitespace-nowrap px-5 py-3 text-left font-semibold">Applicants</th>
-                    <th className="px-5 py-3 text-left font-semibold">Created</th>
-                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredJobs.map(job => (
-                    <tr key={job.id} className="group transition-colors hover:bg-[var(--hz-cobalt-100)]/30">
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <span className="rounded bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-                          {job.postingId || "—"}
-                        </span>
-                      </td>
-                      <td className="max-w-[220px] px-5 py-4">
-                        <button
-                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                          className="block w-full truncate text-left font-semibold text-slate-900 transition-colors hover:text-[var(--hz-cobalt)]"
-                        >
-                          {job.title}
-                        </button>
-                        <p className="mt-0.5 truncate text-xs capitalize text-slate-400">{job.department} · {job.type}</p>
-                      </td>
-                      <td className="max-w-[160px] px-5 py-4">
-                        {job.clientName ? (
-                          <div className="flex items-center gap-1.5 text-slate-700">
-                            <Building2 className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                            <span className="truncate">{job.clientName}</span>
-                          </div>
-                        ) : <span className="text-slate-300">—</span>}
-                      </td>
-                      <td className="max-w-[160px] px-5 py-4">
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                          <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <StatusBadge status={job.status} />
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <Users className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="tabular-nums">{job.applicationsCount || 0}</span>
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <span className="text-xs text-slate-500 tabular-nums">{fmtDate(job.createdAt)}</span>
-                        {job.submissionDueDate && (
-                          <span className="mt-0.5 flex items-center gap-1 text-[11px] tabular-nums text-amber-600">
-                            <Calendar className="h-3 w-3" />Due {fmtDate(job.submissionDueDate)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-right">
-                        <RowMenu
-                          job={job}
-                          canEdit={canEdit}
-                          duplicating={duplicating === job.id}
-                          onView={() => router.push(`/admin/jobs/${job.id}`)}
-                          onEdit={() => router.push(`/admin/jobs/${job.id}/edit`)}
-                          onDuplicate={() => handleDuplicate(job)}
-                          onDelete={() => setShowDeleteConfirm(job.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1300px] text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500">
-                    {[
-                      "Job ID","Title","Client","Vendor","Location",
-                      "Pay Rate","Bill Rate","Status","Manager",
-                      "Applicants","Created","Deadline","Actions",
-                    ].map((h, i) => (
-                      <th key={i} className={`whitespace-nowrap px-5 py-3 font-semibold ${i === 12 ? "text-right" : "text-left"}`}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredJobs.map(job => {
-                    const jv = job as Job & { vendorName?: string };
-                    return (
-                      <tr key={job.id} className="group transition-colors hover:bg-[var(--hz-cobalt-100)]/30">
-                        <td className="whitespace-nowrap px-5 py-4">
-                          <span className="rounded bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-                            {job.postingId || "—"}
-                          </span>
-                        </td>
-                        <td className="max-w-[180px] px-5 py-4">
-                          <button
-                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                            className="block w-full truncate text-left font-semibold text-slate-900 transition-colors hover:text-[var(--hz-cobalt)]"
-                          >
-                            {job.title}
-                          </button>
-                          <p className="mt-0.5 truncate text-xs capitalize text-slate-400">{job.type}</p>
-                        </td>
-                        <td className="max-w-[140px] px-5 py-4">
-                          {job.clientName ? (
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <Building2 className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                              <span className="truncate">{job.clientName}</span>
-                            </div>
-                          ) : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="max-w-[130px] px-5 py-4">
-                          {jv.vendorName ? (
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <Truck className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                              <span className="truncate">{jv.vendorName}</span>
-                            </div>
-                          ) : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="max-w-[150px] px-5 py-4">
-                          <div className="flex items-center gap-1.5 text-slate-600">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                            <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          {job.payRate
-                            ? <span className="font-semibold text-slate-800 tabular-nums">${job.payRate}/hr</span>
-                            : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          {job.clientBillRate
-                            ? <span className="font-semibold text-slate-800 tabular-nums">${job.clientBillRate}/hr</span>
-                            : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          {canEdit ? (
-                            <select
-                              value={job.status}
-                              onChange={e => handleStatusChange(job.id, e.target.value as Job["status"])}
-                              className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors focus:border-[var(--hz-cobalt)] focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)]"
-                            >
-                              {JOB_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                            </select>
-                          ) : <StatusBadge status={job.status} />}
-                        </td>
-                        <td className="px-5 py-4">
-                          {job.recruitmentManagerName ? (
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-[10px] font-bold text-white">
-                                {job.recruitmentManagerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                              </div>
-                              <span className="max-w-[100px] truncate text-xs text-slate-600">{job.recruitmentManagerName}</span>
-                            </div>
-                          ) : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          <div className="flex items-center gap-1.5 text-slate-600">
-                            <Users className="h-3.5 w-3.5 text-slate-400" />
-                            <span className="tabular-nums">{job.applicationsCount || 0}</span>
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          <span className="text-xs text-slate-500 tabular-nums">{fmtDate(job.createdAt)}</span>
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
-                          {job.submissionDueDate ? (
-                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                              <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-                              <span className="tabular-nums">{fmtDate(job.submissionDueDate)}</span>
-                            </div>
-                          ) : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-right">
-                          <RowMenu
-                            job={job}
-                            canEdit={canEdit}
-                            duplicating={duplicating === job.id}
-                            onView={() => router.push(`/admin/jobs/${job.id}`)}
-                            onEdit={() => router.push(`/admin/jobs/${job.id}/edit`)}
-                            onDuplicate={() => handleDuplicate(job)}
-                            onDelete={() => setShowDeleteConfirm(job.id)}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/* ── desktop record grid ── */}
+      <div className="hidden xl:contents">
+        <DataTable
+          noun="jobs"
+          storageKey="jobs"
+          columns={columns}
+          rows={filteredJobs}
+          rowKey={(j) => j.id}
+          onRowClick={(j) => router.push(`/admin/jobs/${j.id}`)}
+          initialSort={{ key: "created", dir: "desc" }}
+          density={density}
+          hiddenColumns={hiddenColumns}
+          empty={{
+            icon: IconJob,
+            title: jobs.length === 0 ? "No jobs posted yet" : "No jobs match your filters",
+            description: jobs.length === 0
+              ? "Post your first job to start tracking candidates."
+              : "Try adjusting your search or status filter.",
+            action: jobs.length === 0
+              ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}><Plus className="h-4 w-4" />Post a job</WorkspaceButton> : undefined)
+              : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton> : undefined),
+          }}
+        />
+      </div>
+      </Workspace>
 
-          {filteredJobs.length === 0 && empty}
-        </AdminCard>
-      </motion.div>
-
-      {/* ── Delete Confirmation Modal ── */}
       <ConfirmDialog
         open={!!showDeleteConfirm}
         title="Delete this job?"
@@ -644,11 +605,39 @@ export default function JobsPage() {
         onCancel={() => setShowDeleteConfirm(null)}
         onConfirm={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
       />
+    </>
+  );
+}
+
+// ── empty state for the card view ────────────────────────────────────────────
+
+function EmptyJobs({ jobsEmpty, canEdit, hasFilters, onCreate, onClear }: {
+  jobsEmpty: boolean; canEdit: boolean; hasFilters: boolean;
+  onCreate: () => void; onClear: () => void;
+}) {
+  return (
+    <div className="py-10 text-center">
+      <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-surface-2)]">
+        <IconJob className="h-7 w-7 text-[var(--adm-ink-subtle)]" />
+      </div>
+      <h3 className="mb-1 text-base font-bold text-[var(--adm-ink)]">
+        {jobsEmpty ? "No jobs posted yet" : "No jobs match your filters"}
+      </h3>
+      <p className="mb-5 text-sm text-[var(--adm-ink-subtle)]">
+        {jobsEmpty ? "Post your first job to start tracking candidates" : "Try adjusting your search or filters"}
+      </p>
+      {jobsEmpty
+        ? canEdit && (
+            <WorkspaceButton variant="primary" onClick={onCreate} className="mx-auto"><Plus className="h-4 w-4" />Post a job</WorkspaceButton>
+          )
+        : hasFilters && (
+            <WorkspaceButton onClick={onClear} className="mx-auto"><X className="h-4 w-4" />Clear filters</WorkspaceButton>
+          )}
     </div>
   );
 }
 
-// ── Row action menu ──────────────────────────────────────────────────────────
+// ── row action menu ──────────────────────────────────────────────────────────
 
 function RowMenu({
   job, canEdit, duplicating, onView, onEdit, onDuplicate, onDelete,
@@ -664,24 +653,29 @@ function RowMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label={`Actions for ${job.title}`}>
+        <button
+          className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+          aria-label={`Actions for ${job.title}`}
+        >
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 rounded-xl border border-slate-200 bg-white shadow-lg">
-        <DropdownMenuItem onClick={onView} className="cursor-pointer rounded-lg text-sm">
-          <Eye className="mr-2 h-4 w-4 text-slate-400" />View Details
+      <DropdownMenuContent align="end" className="w-44 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg">
+        <DropdownMenuItem onClick={onView} className="cursor-pointer rounded-[4px] text-sm">
+          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View Details
         </DropdownMenuItem>
         {canEdit && <>
-          <DropdownMenuItem onClick={onEdit} className="cursor-pointer rounded-lg text-sm">
-            <Edit3 className="mr-2 h-4 w-4 text-slate-400" />Edit
+          <DropdownMenuItem onClick={onEdit} className="cursor-pointer rounded-[4px] text-sm">
+            <IconEdit className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate} disabled={duplicating} className="cursor-pointer rounded-lg text-sm">
-            {duplicating ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-slate-400" /> : <Copy className="mr-2 h-4 w-4 text-slate-400" />}Duplicate
+          <DropdownMenuItem onClick={onDuplicate} disabled={duplicating} className="cursor-pointer rounded-[4px] text-sm">
+            {duplicating
+              ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--adm-ink-subtle)]" />
+              : <IconCopy className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />}Duplicate
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="cursor-pointer rounded-lg text-sm text-rose-600 focus:bg-rose-50 focus:text-rose-600">
-            <Trash2 className="mr-2 h-4 w-4" />Delete
+          <DropdownMenuItem onClick={onDelete} className="cursor-pointer rounded-[4px] text-sm text-[var(--adm-danger)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger)]">
+            <IconTrash className="mr-2 h-4 w-4" />Delete
           </DropdownMenuItem>
         </>}
       </DropdownMenuContent>

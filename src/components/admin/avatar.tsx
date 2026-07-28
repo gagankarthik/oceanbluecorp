@@ -10,12 +10,12 @@ interface AvatarProps {
 }
 
 const PALETTE = [
-  ["from-[var(--hz-cobalt)]", "to-indigo-600"],
+  ["from-[var(--adm-accent)]", "to-indigo-600"],
   ["from-violet-500", "to-purple-600"],
   ["from-emerald-500", "to-teal-600"],
   ["from-amber-500", "to-orange-600"],
   ["from-rose-500", "to-pink-600"],
-  ["from-cyan-500", "to-[var(--hz-cobalt)]"],
+  ["from-cyan-500", "to-[var(--adm-accent)]"],
   ["from-sky-500", "to-indigo-600"],
 ];
 
@@ -45,13 +45,13 @@ export function Avatar({ name, email, size = "md", className, src }: AvatarProps
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={display} className={cn("rounded-full object-cover ring-2 ring-white shadow-sm", sz, className)} />
+      <img src={src} alt={display} className={cn("rounded-full object-cover ring-2 ring-[var(--adm-surface)] shadow-sm", sz, className)} />
     );
   }
   return (
     <div
       className={cn(
-        "rounded-full bg-gradient-to-br flex items-center justify-center font-bold text-white flex-shrink-0 ring-2 ring-white shadow-sm",
+        "rounded-full bg-gradient-to-br flex items-center justify-center font-bold text-white flex-shrink-0 ring-2 ring-[var(--adm-surface)] shadow-sm",
         palette[0],
         palette[1],
         sz,

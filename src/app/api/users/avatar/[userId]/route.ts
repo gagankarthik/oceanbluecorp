@@ -4,8 +4,15 @@ import { requireStaff } from "@/lib/auth/verify";
 
 export const runtime = "nodejs";
 
-// GET /api/users/avatar/[userId] — streams the user's profile photo from S3.
-// 404 when none exists, so the UI can fall back to initials.
+/**
+ * GET /api/users/avatar/[userId] — streams the user's profile photo from S3.
+ *
+ * "No photo uploaded" is the NORMAL case for most staff, not an error, so it
+ * answers 204 No Content rather than 404. The <img> still fails to decode and
+ * the UI still falls back to initials via onError, but the browser console no
+ * longer logs a red 404 on every admin page load for every user who simply
+ * never set a picture. Reserve 4xx for things that are actually wrong.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -16,7 +23,11 @@ export async function GET(
   const result = await getAvatarObject(generateAvatarKey(userId));
 
   if (result.notFound || !result.body) {
-    return NextResponse.json({ error: "No photo" }, { status: 404 });
+    return new NextResponse(null, {
+      status: 204,
+      // Cache the "nothing here" answer too, or every navigation re-asks.
+      headers: { "Cache-Control": "public, max-age=300" },
+    });
   }
   if (!result.success) {
     return NextResponse.json({ error: result.error || "Failed to load photo" }, { status: 500 });

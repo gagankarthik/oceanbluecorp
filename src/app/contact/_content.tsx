@@ -15,7 +15,7 @@ const contactInfo: {
   icon: LucideIcon; title: string; description: string; value: string; href: string | null;
 }[] = [
   { icon: Phone, title: "Call us", description: "Speak with our team", value: "+1 (614) 844-6925", href: "tel:+16148446925" },
-  { icon: Mail, title: "Email us", description: "Response within 24 hours", value: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
+  { icon: Mail, title: "Email us", description: "Usually answered the same business day", value: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
   { icon: MapPin, title: "Visit us", description: "Headquarters", value: "9775 Fairway Drive, Suite C, Powell, OH 43065", href: "#locations" },
   { icon: Clock, title: "Business hours", description: "Monday – Friday", value: "8:00 AM – 5:00 PM EST", href: null },
 ];
@@ -32,11 +32,15 @@ const inquiryTypes = [
   "ERP Solutions", "Salesforce", "Data & AI", "Managed Services", "Partnership Opportunity",
 ];
 
+/* Rewritten off vague claims ("Round-the-clock assistance from certified
+   experts", "Years of delivery across regulated industries") and one promise
+   we should not be making in writing — "We reply within 24 hours, guaranteed."
+   Each line now states something specific and checkable. */
 const whyPartner: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Headphones, title: "Dedicated support", description: "Round-the-clock assistance from certified experts." },
-  { icon: Globe, title: "Global delivery", description: "Four offices across the US, India, and the UK." },
-  { icon: Building2, title: "Enterprise experience", description: "Years of delivery across regulated industries." },
-  { icon: MessageSquare, title: "Quick response", description: "We reply within 24 hours, guaranteed." },
+  { icon: MessageSquare, title: "A named contact", description: "You get a person who knows your account, not a shared inbox and a ticket number." },
+  { icon: Globe, title: "Four offices, three countries", description: "Powell, Ohio; Hyderabad and Vizianagaram, India; and London." },
+  { icon: Building2, title: "Regulated industries", description: "Healthcare, state government, and financial services work under HIPAA, SOC 2, and NIST." },
+  { icon: Headphones, title: "Support that stays", description: "The team that builds it is the team that runs it, on one SLA." },
 ];
 
 const inputClass =
@@ -106,12 +110,12 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-28 pt-32 sm:px-8">
           <Reveal>
             <Eyebrow tone="dark">Contact us</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
+            <h1 className="hz-display mt-7 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
               {content.contactTitle || "Let's start a conversation."}
             </h1>
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
               {content.contactSubtitle ||
-                "A question about our services, a custom solution, or a partnership — our team is ready to help."}
+                "A question about our services, a custom solution, or a partnership, our team is ready to help."}
             </p>
           </Reveal>
         </div>
@@ -170,7 +174,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                 )}
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                  {/* Honeypot — hidden from people, but bots fill it. Do not remove. */}
+                  {/* Honeypot, hidden from people, but bots fill it. Do not remove. */}
                   <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden" tabIndex={-1}>
                     <label htmlFor="website">Website (leave this field empty)</label>
                     <input ref={honeypotRef} type="text" id="website" name="website" tabIndex={-1} autoComplete="off" />
@@ -280,7 +284,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
         <div className="mx-auto max-w-7xl">
           <Reveal className="max-w-2xl">
             <Eyebrow>Our offices</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Global presence, local expertise.</h2>
+            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">Global presence, local expertise.</h2>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
               With offices across the US, India, and the UK, we&apos;re always close to our clients.
             </p>

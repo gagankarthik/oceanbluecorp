@@ -1,56 +1,77 @@
+import { Skel } from "@/components/admin/skeletons";
+
+/**
+ * Bench loading state.
+ *
+ * Mirrors the real screen so nothing jumps when data lands: header band →
+ * six-cell KPI strip → toolbar → record grid.
+ */
 export default function BenchLoading() {
   return (
-    <div className="space-y-5 pb-10 animate-pulse">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-7 w-32 bg-slate-200 rounded-lg" />
-          <div className="h-4 w-56 bg-slate-100 rounded-lg" />
+    <div className="space-y-5 pb-10" aria-hidden="true" aria-label="Loading talent bench…">
+      {/* Header band — same negative margins and rule as PageHeader. */}
+      <div className="-mx-5 -mt-5 mb-6 flex flex-col gap-4 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-5 sm:flex-row sm:items-center sm:justify-between lg:-mx-6 lg:-mt-6 lg:px-6">
+        <div className="flex items-center gap-2.5">
+          <Skel className="hidden h-10 w-10 rounded-[10px] sm:block" />
+          <div className="space-y-2">
+            <Skel className="h-5 w-40" />
+            <Skel className="h-3.5 w-64 max-w-[60vw]" />
+          </div>
         </div>
         <div className="flex gap-2">
-          <div className="h-9 w-9 bg-slate-100 rounded-lg" />
-          <div className="h-9 w-32 bg-[var(--hz-cobalt-100)] rounded-lg" />
+          <Skel className="h-10 w-28" />
+          <Skel className="h-10 w-32" />
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex-1 min-w-[160px] h-9 bg-slate-100 rounded-lg" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-9 w-24 bg-slate-100 rounded-lg" />
+      {/* KPI strip — one panel, six hairline-divided cells. */}
+      <div className="grid grid-cols-2 overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] sm:grid-cols-3 lg:grid-cols-6 [&>*]:shadow-[inset_-1px_-1px_0_var(--adm-line-soft)]">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="space-y-2.5 p-4">
+            <div className="flex items-center gap-1.5">
+              <Skel className="h-[18px] w-[18px] rounded-[4px]" />
+              <Skel className="h-3 w-20" />
+            </div>
+            <Skel className="h-6 w-12" />
+          </div>
         ))}
       </div>
 
-      {/* Cards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0" />
+      {/* Toolbar — one row: search, then the filter menus and view control. */}
+      <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Skel className="h-9 min-w-[200px] flex-1" />
+          <Skel className="h-9 w-24" />
+          <Skel className="h-9 w-24" />
+          <Skel className="h-9 w-28" />
+        </div>
+      </div>
+
+      {/* Record grid. */}
+      <div className="overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
+        <div className="flex items-center gap-4 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]/70 px-5 py-3">
+          <Skel className="h-3 w-24" />
+          <Skel className="hidden h-3 w-20 lg:block" />
+          <Skel className="hidden h-3 w-16 md:block" />
+          <Skel className="hidden h-3 w-16 xl:block" />
+          <Skel className="ml-auto h-3 w-14" />
+        </div>
+        <div className="divide-y divide-[var(--adm-line-soft)]">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="flex h-[var(--adm-row-h)] items-center gap-4 px-5">
+              <div className="h-7 w-7 flex-none animate-pulse rounded-full bg-[var(--adm-line-soft)]/70" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-28 bg-slate-200 rounded" />
-                <div className="h-2.5 w-36 bg-slate-100 rounded" />
+                <Skel className="h-3.5 w-40 max-w-[45%]" />
+                <Skel className="h-2.5 w-20" />
               </div>
-              <div className="h-5 w-14 bg-[var(--hz-cobalt-100)] rounded-full" />
+              <Skel className="hidden h-3 w-32 lg:block" />
+              <Skel className="hidden h-5 w-24 rounded-[4px] md:block" />
+              <Skel className="hidden h-3 w-10 xl:block" />
+              <Skel className="h-5 w-20 rounded-[6px]" />
+              <Skel className="h-4 w-16" />
             </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} className="h-5 w-16 bg-slate-100 rounded-full" />
-              ))}
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between">
-                <div className="h-2.5 w-20 bg-slate-100 rounded" />
-                <div className="h-2.5 w-8 bg-slate-100 rounded" />
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full" />
-            </div>
-            <div className="flex gap-2 pt-1 border-t border-slate-50">
-              <div className="h-7 flex-1 bg-slate-100 rounded-lg" />
-              <div className="h-7 flex-1 bg-[var(--hz-cobalt-100)] rounded-lg" />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

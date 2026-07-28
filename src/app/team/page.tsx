@@ -4,7 +4,7 @@ import TeamPage from "./_content";
 export const metadata: Metadata = {
   title: "Our Team",
   description:
-    "Meet the leadership behind Ocean Blue Corporation — senior practitioners in IT staffing, enterprise solutions, and managed services.",
+    "Meet the leadership behind Ocean Blue Corporation, senior practitioners in IT staffing, enterprise solutions, and managed services.",
   openGraph: {
     title: "Our Team | Ocean Blue Corporation",
     description: "Meet the leadership behind Ocean Blue Corporation.",

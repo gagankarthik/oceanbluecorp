@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Ocean Blue Corporation",
     description:
-      "Learn about Ocean Blue Corporation — our mission, values, and commitment to enterprise IT excellence.",
+      "Learn about Ocean Blue Corporation, our mission, values, and commitment to enterprise IT excellence.",
     url: "https://oceanbluecorp.com/about",
   },
   alternates: { canonical: "https://oceanbluecorp.com/about" },

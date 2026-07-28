@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, updateJob, deleteJob, Job } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { sanitizeRichText } from "@/lib/sanitize-server";
 
 // GET /api/jobs/[id] - Get a specific job
 export async function GET(
@@ -63,7 +64,7 @@ export async function PUT(
     if (body.department !== undefined) updates.department = body.department;
     if (body.location !== undefined) updates.location = body.location;
     if (body.type !== undefined) updates.type = body.type;
-    if (body.description !== undefined) updates.description = body.description;
+    if (body.description !== undefined) updates.description = sanitizeRichText(body.description);
     if (body.requirements !== undefined) updates.requirements = body.requirements;
     if (body.responsibilities !== undefined) updates.responsibilities = body.responsibilities;
     if (body.salary !== undefined) updates.salary = body.salary;

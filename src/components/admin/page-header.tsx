@@ -1,57 +1,72 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { WorkspaceButton } from "./workspace";
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  /**
+   * @deprecated Accepted but no longer rendered. The tinted icon tile was
+   * removed with the header band; the prop stays so the ~20 existing call
+   * sites keep compiling. Drop it as each page is touched.
+   */
   icon?: React.ComponentType<{ className?: string }>;
   actions?: React.ReactNode;
   meta?: React.ReactNode;
   className?: string;
 }
 
-export function PageHeader({ title, subtitle, icon: Icon, actions, meta, className }: PageHeaderProps) {
+/**
+ * Header for an admin screen.
+ *
+ * Stripped back to plain content on the canvas. The previous version was a
+ * full-bleed white band with a bottom rule and a 40px tinted icon tile beside
+ * the title, and it was rejected across the board: "I don't like this part of
+ * design on all pages they look very bad."
+ *
+ * What went and why:
+ *  - the white fill, the border and the negative margins — a band that framed
+ *    a heading the sidebar and breadcrumb had already stated twice
+ *  - the tinted icon tile — decoration; the sidebar's active row carries the
+ *    same icon 200px to the left
+ *  - 20px bold title → 18px semibold; it is a label, not a banner
+ *
+ * List screens should not use this at all — they lead with `ViewTabs` from
+ * workspace.tsx. It stays for detail, form and settings screens, where the
+ * title is the record's own name and so is genuinely worth stating.
+ */
+export function PageHeader({ title, subtitle, actions, meta, className }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4", className)}>
-      <div className="flex items-start gap-3 min-w-0">
-        {Icon && (
-          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] items-center justify-center flex-shrink-0">
-            <Icon className="w-[18px] h-[18px] text-[var(--hz-cobalt)]" />
-          </div>
-        )}
-        <div className="min-w-0">
-          <h1 className="text-[19px] font-bold tracking-tight text-slate-900 leading-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{subtitle}</p>}
-          {meta && <div className="mt-2">{meta}</div>}
-        </div>
-      </div>
-      {actions && (
-        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-          {actions}
-        </div>
+    <div
+      className={cn(
+        "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        className,
       )}
+    >
+      <div className="min-w-0">
+        <h1 className="truncate text-[18px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h1>
+        {subtitle && <p className="mt-1 truncate text-[13.5px] leading-snug text-[var(--adm-ink-subtle)]">{subtitle}</p>}
+        {meta && <div className="mt-2">{meta}</div>}
+      </div>
+      {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
 
-// Reuses the shared ui/Button but bases every intent on the "ghost" variant —
-// ghost has no background or hover of its own, so our explicit colors apply
-// cleanly (the navy "default"/cyan "outline" variants otherwise fight these
-// through tailwind-merge and the accent background can drop out). Colors use the
-// proven --hz-cobalt tokens the rest of admin relies on.
-const headerButtonVariant = {
-  primary:   { variant: "ghost" as const, className: "bg-[var(--hz-cobalt)] text-white shadow-sm hover:bg-[var(--hz-cobalt-600)] hover:text-white" },
-  secondary: { variant: "ghost" as const, className: "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-900" },
-  ghost:     { variant: "ghost" as const, className: "text-slate-600 hover:bg-slate-100 hover:text-slate-900" },
-};
-
-/** Header action button — thin styling layer over the shared ui/Button. */
+/**
+ * Action button for a header or toolbar.
+ *
+ * Now a thin alias over `WorkspaceButton` rather than its own styling. It had
+ * drifted into a second, flatter button — same size but no elevation, no hover
+ * lift and no press — so screens still using it looked a generation behind the
+ * ones that had been migrated. One implementation means they cannot drift
+ * again; `secondary` maps to WorkspaceButton's default.
+ *
+ * Prefer importing `WorkspaceButton` directly in new code.
+ */
 export function PageHeaderButton({
   variant = "primary",
-  className,
   ...props
-}: Omit<React.ComponentProps<typeof Button>, "variant"> & { variant?: "primary" | "secondary" | "ghost" }) {
-  const v = headerButtonVariant[variant];
-  return <Button variant={v.variant} className={cn("font-semibold transition-all active:scale-[0.98]", v.className, className)} {...props} />;
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" }) {
+  return <WorkspaceButton variant={variant} {...props} />;
 }

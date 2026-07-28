@@ -173,15 +173,15 @@ export default function TermsPage() {
                 services, including but not limited to:
               </P>
               <UL items={[
-                "IT Staffing and Talent Acquisition — contract, contract-to-hire, and direct placement of technology professionals",
-                "Enterprise Resource Planning (ERP) — implementation, customization, and support for SAP, Oracle, and other ERP platforms",
-                "Cloud Infrastructure Services — architecture, migration, and managed services on AWS, Microsoft Azure, and Google Cloud Platform",
-                "Artificial Intelligence and Data Analytics — predictive modeling, machine learning, business intelligence, and data warehousing solutions",
-                "Salesforce CRM Consulting — implementation, integration, administration, and custom development",
-                "Managed IT Services — 24/7 monitoring, help desk support, and infrastructure management",
-                "DevOps and Application Development — CI/CD pipeline design, containerization, and custom software development",
-                "Cybersecurity — security assessments, identity and access management, vulnerability management, and HIPAA, SOC 2, and NIST compliance",
-                "Digital Transformation Consulting — strategic advisory services for organizational modernization",
+                "IT Staffing and Talent Acquisition, contract, contract-to-hire, and direct placement of technology professionals",
+                "Enterprise Resource Planning (ERP), implementation, customization, and support for SAP, Oracle, and other ERP platforms",
+                "Cloud Infrastructure Services, architecture, migration, and managed services on AWS, Microsoft Azure, and Google Cloud Platform",
+                "Artificial Intelligence and Data Analytics, predictive modeling, machine learning, business intelligence, and data warehousing solutions",
+                "Salesforce CRM Consulting, implementation, integration, administration, and custom development",
+                "Managed IT Services, 24/7 monitoring, help desk support, and infrastructure management",
+                "DevOps and Application Development, CI/CD pipeline design, containerization, and custom software development",
+                "Cybersecurity, security assessments, identity and access management, vulnerability management, and HIPAA, SOC 2, and NIST compliance",
+                "Digital Transformation Consulting, strategic advisory services for organizational modernization",
               ]} />
               <P>
                 Ocean Blue reserves the right to modify, suspend, or discontinue any service at any time
@@ -192,8 +192,8 @@ export default function TermsPage() {
 
             <Section id="accounts" number="03" title="User Accounts and Registration">
               <P>
-                To access certain features of our platform—including submitting job applications, uploading
-                resumes, and tracking application status—you must register for an account. You agree to:
+                To access certain features of our platform, including submitting job applications, uploading
+                resumes, and tracking application status, you must register for an account. You agree to:
               </P>
               <UL items={[
                 "Provide accurate, current, and complete registration information",
@@ -462,7 +462,7 @@ export default function TermsPage() {
               </P>
               <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50/60 p-6">
                 <p className="mb-4 text-sm font-semibold text-gray-800" style={{ fontFamily: "var(--font-display)" }}>
-                  Ocean Blue Corporation — Legal Department
+                  Ocean Blue Corporation, Legal Department
                 </p>
                 <div className="space-y-2.5 text-sm text-gray-600">
                   <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">

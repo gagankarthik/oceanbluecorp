@@ -93,23 +93,23 @@ export function ConfirmDialog({
       aria-labelledby="confirm-dialog-title"
       aria-describedby={body ? "confirm-dialog-body" : undefined}
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="w-full max-w-sm rounded-[6px] bg-[var(--adm-surface)] p-6 shadow-2xl">
         <div
-          className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${
-            danger ? "bg-rose-100" : "bg-[var(--hz-cobalt-100)]"
+          className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[6px] ${
+            danger ? "bg-[var(--adm-danger-soft)]" : "bg-[var(--adm-accent-soft)]"
           }`}
           aria-hidden="true"
         >
           {danger ? (
-            <Trash2 className="h-5 w-5 text-rose-600" />
+            <Trash2 className="h-5 w-5 text-[var(--adm-danger)]" />
           ) : (
-            <AlertTriangle className="h-5 w-5 text-[var(--hz-cobalt)]" />
+            <AlertTriangle className="h-5 w-5 text-[var(--adm-accent)]" />
           )}
         </div>
 
         <h3
           id="confirm-dialog-title"
-          className="text-center text-base font-bold text-slate-900"
+          className="text-center text-base font-bold text-[var(--adm-ink)]"
         >
           {title}
         </h3>
@@ -117,7 +117,7 @@ export function ConfirmDialog({
         {body && (
           <p
             id="confirm-dialog-body"
-            className="mt-1.5 mb-6 text-center text-sm leading-relaxed text-slate-500"
+            className="mt-1.5 mb-6 text-center text-sm leading-relaxed text-[var(--adm-ink-subtle)]"
           >
             {body}
           </p>
@@ -128,7 +128,7 @@ export function ConfirmDialog({
             ref={cancelRef}
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:opacity-60"
+            className="flex-1 rounded-[8px] border border-[var(--adm-line)] px-4 py-2.5 text-sm font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-60"
           >
             {cancelLabel}
           </button>
@@ -136,10 +136,10 @@ export function ConfirmDialog({
             ref={confirmRef}
             onClick={onConfirm}
             disabled={busy}
-            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-[8px] px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
               danger
                 ? "bg-rose-600 hover:bg-rose-700 focus:ring-rose-400"
-                : "bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] focus:ring-[var(--hz-cobalt-300)]"
+                : "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)] focus:ring-[var(--adm-focus-ring)]"
             }`}
           >
             {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}

@@ -1,58 +1,66 @@
+/**
+ * Loading state for the Applications workspace.
+ *
+ * Mirrors the real layout band for band — header, view tabs, toolbar, grid —
+ * so nothing jumps when the data lands. A skeleton whose shape differs from the
+ * screen it precedes is just a different kind of flash.
+ */
 export default function ApplicationsLoading() {
   return (
-    <div className="space-y-5 pb-10 animate-pulse">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-7 w-36 bg-slate-200 rounded-lg" />
-          <div className="h-4 w-52 bg-slate-100 rounded-lg" />
+    <div className="-mx-5 -mt-5 flex min-h-[calc(100vh-4rem)] animate-pulse flex-col border-t border-[var(--adm-line)] bg-[var(--adm-surface)] lg:-mx-6 lg:-mt-6">
+      {/* Header band */}
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--adm-line)] px-4 py-2.5 lg:px-5">
+        <div className="flex items-baseline gap-3">
+          <div className="h-5 w-32 rounded-[5px] bg-[var(--adm-line-soft)]" />
+          <div className="h-3.5 w-24 rounded-[4px] bg-[var(--adm-line-soft)]" />
         </div>
-        <div className="h-9 w-36 bg-[var(--hz-cobalt-100)] rounded-lg" />
-      </div>
-
-      {/* Pipeline strip */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl p-3 space-y-1.5 bg-slate-50">
-              <div className="h-2.5 w-14 bg-slate-200 rounded mx-auto" />
-              <div className="h-6 w-8 bg-slate-300 rounded mx-auto" />
-            </div>
-          ))}
+        <div className="flex gap-1.5">
+          <div className="h-8 w-24 rounded-[6px] bg-[var(--adm-line-soft)]" />
+          <div className="h-8 w-32 rounded-[6px] bg-[var(--adm-accent-soft)]" />
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex-1 min-w-[160px] h-9 bg-slate-100 rounded-lg" />
-        <div className="h-9 w-28 bg-slate-100 rounded-lg" />
-        <div className="h-9 w-28 bg-slate-100 rounded-lg" />
+      {/* View tabs */}
+      <div className="flex items-center gap-1 border-b border-[var(--adm-line)] px-2 lg:px-3">
+        {[64, 88, 104, 96, 84, 68, 72].map((w, i) => (
+          <div key={i} className="flex h-9 items-center px-2.5">
+            <div className="h-3.5 rounded-[4px] bg-[var(--adm-line-soft)]" style={{ width: w }} />
+          </div>
+        ))}
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/70">
-          <div className="w-8 h-8 rounded-full bg-slate-200" />
-          <div className="flex-1 h-3 max-w-[140px] bg-slate-200 rounded" />
-          <div className="h-3 w-28 bg-slate-100 rounded hidden sm:block" />
-          <div className="h-5 w-20 bg-slate-100 rounded-full" />
-          <div className="h-3 w-20 bg-slate-100 rounded hidden md:block" />
+      {/* Toolbar */}
+      <div className="flex items-center gap-1.5 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-2 py-1.5 lg:px-3">
+        <div className="h-8 w-[260px] rounded-[6px] bg-[var(--adm-surface)]" />
+        <div className="h-8 w-20 rounded-[6px] bg-[var(--adm-surface)]" />
+        <div className="h-8 w-24 rounded-[6px] bg-[var(--adm-surface)]" />
+        <div className="h-8 w-20 rounded-[6px] bg-[var(--adm-surface)]" />
+        <div className="ml-auto flex gap-1.5">
+          <div className="h-8 w-20 rounded-[6px] bg-[var(--adm-surface)]" />
+          <div className="h-8 w-12 rounded-[6px] bg-[var(--adm-surface)]" />
+          <div className="h-8 w-12 rounded-[6px] bg-[var(--adm-surface)]" />
         </div>
-        <div className="divide-y divide-slate-50">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 px-5 py-3.5">
-              <div className="w-9 h-9 bg-slate-200 rounded-full flex-shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-36 bg-slate-200 rounded" />
-                <div className="h-2.5 w-44 bg-slate-100 rounded" />
-              </div>
-              <div className="h-3 w-32 bg-slate-100 rounded hidden sm:block" />
-              <div className="h-5 w-20 bg-[var(--hz-cobalt-100)] rounded-full" />
-              <div className="h-3 w-20 bg-slate-100 rounded hidden md:block" />
-              <div className="w-7 h-7 bg-slate-100 rounded-lg" />
-            </div>
-          ))}
-        </div>
+      </div>
+
+      {/* Grid header */}
+      <div className="flex h-9 items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-head)] px-4">
+        {[80, 70, 70, 50, 60, 56, 54, 60].map((w, i) => (
+          <div key={i} className="h-3 rounded-[3px] bg-[var(--adm-line-soft)]" style={{ width: w }} />
+        ))}
+      </div>
+
+      {/* Rows, at the 40px default density */}
+      <div>
+        {Array.from({ length: 14 }).map((_, i) => (
+          <div key={i} className="flex h-10 items-center gap-3 border-b border-[var(--adm-line-soft)] px-4">
+            <div className="h-6 w-6 flex-none rounded-full bg-[var(--adm-line-soft)]" />
+            <div className="h-3.5 rounded-[4px] bg-[var(--adm-line-soft)]" style={{ width: 130 - (i % 3) * 18 }} />
+            <div className="hidden h-3 rounded-[4px] bg-[var(--adm-line-soft)] lg:block" style={{ width: 170 - (i % 4) * 20 }} />
+            <div className="hidden h-3 rounded-[4px] bg-[var(--adm-line-soft)] md:block" style={{ width: 150 - (i % 3) * 22 }} />
+            <div className="h-6 w-28 rounded-[6px] bg-[var(--adm-line-soft)]" />
+            <div className="ml-auto h-3 w-20 rounded-[4px] bg-[var(--adm-line-soft)]" />
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,49 +1,34 @@
 "use client";
+
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
+import { Loader2, Plus, X } from "lucide-react";
+import {
+  IconBuilding, IconContact, IconDownload, IconEdit, IconError,
+  IconGlobe, IconSuccess, IconTrash, IconWarning,
+} from "@/components/admin/icons";
+import type { Client } from "@/lib/aws/dynamodb";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { fmtDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Avatar } from "@/components/admin/avatar";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
-import { StatCard } from "@/components/admin/stat-card";
-import { AdminCard } from "@/components/admin/admin-card";
-import { EmptyState } from "@/components/admin/empty-state";
-import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
-import { FilterChips } from "@/components/admin/filter-chips";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
 
-import { useState, useEffect } from "react";
-import {
-  Download,
-  Plus,
-  Building2,
-  Globe,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Edit2,
-  Trash2,
-  Loader2,
-  X,
-  CheckCircle2,
-  XCircle,
-  ExternalLink,
-} from "lucide-react";
-import type { Client } from "@/lib/aws/dynamodb";
+// ── config ───────────────────────────────────────────────────────────────────
 
-const statusConfig = {
-  active: {
-    label: "Active",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dotColor: "bg-emerald-500",
-    icon: CheckCircle2,
-  },
-  inactive: {
-    label: "Inactive",
-    color: "bg-slate-50 text-slate-600 border-slate-200",
-    dotColor: "bg-slate-400",
-    icon: XCircle,
-  },
-};
+const STATUS_TABS = [
+  { key: "all",      label: "All" },
+  { key: "active",   label: "Active" },
+  { key: "inactive", label: "Inactive" },
+];
 
 interface FormData {
   name: string;
@@ -76,26 +61,35 @@ interface FormErrors {
   email?: string;
 }
 
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+}
+
+// ── page ─────────────────────────────────────────────────────────────────────
+
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchClients();
-  }, []);
+  const debouncedSearch = useDebouncedValue(searchQuery, 250);
 
-  const fetchClients = async () => {
+  // ── data ──────────────────────────────────────────────────────────────────
+
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch("/api/clients");
       const data = await response.json();
 
@@ -109,18 +103,66 @@ export default function ClientsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredClients = clients.filter((client) => {
+  useEffect(() => { void fetchClients(); }, [fetchClients]);
+
+  // ── derived ───────────────────────────────────────────────────────────────
+
+  const filteredClients = useMemo(() => clients.filter((client) => {
+    const q = debouncedSearch.toLowerCase();
     const matchesSearch =
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.websiteUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.state?.toLowerCase().includes(searchQuery.toLowerCase());
+      client.name.toLowerCase().includes(q) ||
+      client.websiteUrl.toLowerCase().includes(q) ||
+      client.email?.toLowerCase().includes(q) ||
+      client.city?.toLowerCase().includes(q) ||
+      client.state?.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }), [clients, debouncedSearch, statusFilter]);
+
+  // Counts feed the view tabs. The old `stats` object also computed a
+  // "reachable" figure that existed only to fill a fourth KPI tile.
+  const statusCounts: Record<string, number> = useMemo(() => ({
+    all:      clients.length,
+    active:   clients.filter((c) => c.status === "active").length,
+    inactive: clients.filter((c) => c.status === "inactive").length,
+  }), [clients]);
+
+  const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
+
+  /** Records nobody can reach — the one client fact worth flagging up top. */
+  const noContactCount = useMemo(
+    () => clients.filter((c) => !c.email && !c.phone).length,
+    [clients],
+  );
+
+  const addedThisMonth = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    return clients.filter((c) => new Date(c.createdAt).getTime() >= start.getTime()).length;
+  }, [clients]);
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.clients.density", "default");
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.clients.hiddenCols", []);
+  const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
+
+  // ── form + mutations ──────────────────────────────────────────────────────
+
+  const openCreate = () => {
+    setEditingClient(null);
+    setFormData(initialFormData);
+    setFormErrors({});
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingClient(null);
+    setFormData(initialFormData);
+    setFormErrors({});
+  };
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
@@ -174,10 +216,7 @@ export default function ClientsPage() {
       }
 
       await fetchClients();
-      setShowForm(false);
-      setEditingClient(null);
-      setFormData(initialFormData);
-      setFormErrors({});
+      closeForm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save client");
     } finally {
@@ -202,9 +241,6 @@ export default function ClientsPage() {
     setShowForm(true);
   };
 
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
   const performDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
@@ -221,57 +257,265 @@ export default function ClientsPage() {
     }
   };
 
-  const handleExportCSV = () => {
-    const headers = ["Name", "Website URL", "Status", "Email", "Phone", "Address", "City", "State", "ZIP Code", "Created At"];
-    const rows = filteredClients.map((client) => [
-      `"${client.name}"`,
-      `"${client.websiteUrl}"`,
-      `"${client.status}"`,
-      `"${client.email || ""}"`,
-      `"${client.phone || ""}"`,
-      `"${client.address || ""}"`,
-      `"${client.city || ""}"`,
-      `"${client.state || ""}"`,
-      `"${client.zipCode || ""}"`,
-      `"${new Date(client.createdAt).toLocaleDateString()}"`,
-    ]);
+  const handleExportCSV = () => downloadCsv(
+    "clients",
+    ["Name", "Website URL", "Status", "Email", "Phone", "Address", "City", "State", "ZIP Code", "Created At"],
+    filteredClients.map((client) => [
+      client.name,
+      client.websiteUrl,
+      client.status,
+      client.email || "",
+      client.phone || "",
+      client.address || "",
+      client.city || "",
+      client.state || "",
+      client.zipCode || "",
+      fmtDate(client.createdAt),
+    ]),
+  );
 
-    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `clients_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  // ── grid columns ──────────────────────────────────────────────────────────
 
-  const stats = {
-    total: clients.length,
-    active: clients.filter((c) => c.status === "active").length,
-    inactive: clients.filter((c) => c.status === "inactive").length,
-  };
-
-  if (loading) return <AdminListSkeleton rows={8} />;
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-rose-500 text-sm mb-3">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]"
-          >
-            Retry
-          </button>
+  const columns: DataTableColumn<Client>[] = [
+    {
+      key: "name",
+      header: "Client",
+      label: "Client",
+      locked: true,
+      width: "260px",
+      sortValue: (c) => c.name,
+      cell: (c) => (
+        <div className="flex items-center gap-2.5">
+          <Avatar name={c.name} size="sm" />
+          <span className="truncate font-semibold text-[var(--adm-ink)]">{c.name}</span>
+          {c.websiteUrl && (
+            <a
+              href={c.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title={c.websiteUrl.replace(/^https?:\/\//, "")}
+              aria-label={`Open ${c.name} website`}
+              className="flex-none text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+            >
+              <IconGlobe className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          )}
         </div>
+      ),
+    },
+    {
+      key: "contact",
+      header: "Contact",
+      label: "Contact",
+      width: "240px",
+      sortValue: (c) => c.email || "",
+      hideBelow: "md",
+      cell: (c) => c.email ? (
+        <a
+          href={`mailto:${c.email}`}
+          onClick={(e) => e.stopPropagation()}
+          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          {c.email}
+        </a>
+      ) : <Blank />,
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      label: "Phone",
+      width: "160px",
+      sortValue: (c) => c.phone || "",
+      hideBelow: "xl",
+      cell: (c) => c.phone ? (
+        <a
+          href={`tel:${c.phone}`}
+          onClick={(e) => e.stopPropagation()}
+          className="tabular-nums text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          {c.phone}
+        </a>
+      ) : <Blank />,
+    },
+    {
+      key: "location",
+      header: "Location",
+      label: "Location",
+      width: "180px",
+      sortValue: (c) => c.state || "",
+      hideBelow: "lg",
+      cell: (c) => {
+        const location = [c.city, c.state].filter(Boolean).join(", ");
+        return location ? <span className="text-[var(--adm-ink-mute)]">{location}</span> : <Blank />;
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      label: "Status",
+      width: "130px",
+      sortValue: (c) => c.status,
+      cell: (c) => <StatusBadge status={c.status} size="md" />,
+    },
+    {
+      key: "created",
+      header: "Created",
+      label: "Created",
+      width: "130px",
+      sortValue: (c) => new Date(c.createdAt).getTime(),
+      hideBelow: "xl",
+      cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(c.createdAt)}</span>,
+    },
+    // No trailing "actions" column. Edit and delete now ride in DataTable's
+    // rowActions slot, which reveals them on hover — a permanent column of
+    // pencil-and-bin icons drew a vertical stripe of chrome down the grid and
+    // competed with the records for attention.
+  ];
+
+  const rowActions = (c: Client) => (
+    <div className="flex items-center gap-0.5">
+      <button
+        onClick={() => handleEdit(c)}
+        aria-label={`Edit ${c.name}`}
+        title="Edit"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+      >
+        <IconEdit className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <button
+        onClick={() => setPendingDelete(c.id)}
+        aria-label={`Delete ${c.name}`}
+        title="Delete"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+      >
+        <IconTrash className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+
+  // ── states ────────────────────────────────────────────────────────────────
+
+  if (loading) return <AdminListSkeleton stats={4} rows={8} />;
+
+  if (error) return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="space-y-3 text-center">
+        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
+        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
+        <button
+          onClick={fetchClients}
+          className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]"
+        >
+          Retry
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
+    <>
+      {/* One panel. The KPI strip that used to sit above this is gone: it
+          restated the status counts that now ride on the view tabs, and three
+          of its four tiles drew a share bar ("7% reachable") against a total
+          that is not a whole those figures are part of. */}
+      {/* Overview. Deliberately NOT a count of rows the footer already shows:
+          each tile is either something the grid cannot tell you at a glance, or
+          a shortcut that filters to it. */}
+      <WorkspaceTitle
+        title="Clients"
+        meta={`${clients.length} accounts`}
+        actions={
+          <>
+            <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0}>
+              <IconDownload className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={openCreate}>
+              <Plus className="h-4 w-4" />Add client
+            </WorkspaceButton>
+          </>
+        }
+      />
+      <KpiRow
+        items={[
+          { label: "Active clients", value: statusCounts.active, icon: IconSuccess,
+            onClick: () => setStatusFilter("active") },
+          { label: "Inactive", value: statusCounts.inactive, icon: IconError,
+            tone: statusCounts.inactive > 0 ? "warning" : "default",
+            onClick: () => setStatusFilter("inactive") },
+          { label: "Missing contact details", value: noContactCount, icon: IconContact,
+            tone: noContactCount > 0 ? "warning" : "default",
+            hint: noContactCount > 0 ? "No email or phone on file" : "All reachable" },
+          { label: "Added this month", value: addedThisMonth, icon: IconBuilding },
+        ]}
+      />
+
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter clients by name, contact or location"
+            />
+          }
+          trailing={
+            <>
+              <ColumnsMenu
+                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                hidden={hiddenColumns}
+                onChange={setHiddenColumns}
+              />
+              <DensityMenu value={density} onChange={setDensity} />
+            </>
+          }
+        >
+          <FilterPill
+            label="Status"
+            icon={FilterIcon.status}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_TABS.map((t) => ({
+              value: t.key,
+              label: t.label,
+              count: statusCounts[t.key] || 0,
+            }))}
+          />
+        </WorkspaceToolbar>
+
+        <ActiveFilters
+          chips={statusFilter !== "all"
+            ? [{ label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
+            : []}
+          onClearAll={clearFilters}
+        />
+
+        <DataTable
+          noun="clients"
+          storageKey="clients"
+          columns={columns}
+          rows={filteredClients}
+          rowKey={(c) => c.id}
+          initialSort={{ key: "created", dir: "desc" }}
+          density={density}
+          hiddenColumns={hiddenColumns}
+          rowActions={rowActions}
+          empty={{
+            icon: IconBuilding,
+            title: clients.length === 0 ? "No clients yet" : "No clients match your filters",
+            description: clients.length === 0
+              ? "Add your first client to start tracking accounts."
+              : "Try adjusting your search or status filter.",
+            action: clients.length === 0 ? (
+              <WorkspaceButton variant="primary" onClick={openCreate}><Plus className="h-4 w-4" />Add client</WorkspaceButton>
+            ) : hasActiveFilters ? (
+              <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
+            ) : undefined,
+          }}
+        />
+      </Workspace>
+
       <ConfirmDialog
         open={!!pendingDelete}
         title="Delete client?"
@@ -280,277 +524,72 @@ export default function ClientsPage() {
         onConfirm={performDelete}
         onCancel={() => setPendingDelete(null)}
       />
-      <PageHeader
-        title="Client Management"
-        subtitle="Manage your client records"
-        icon={Building2}
-        actions={
-          <>
-            <PageHeaderButton variant="secondary" onClick={handleExportCSV} disabled={filteredClients.length === 0}>
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </PageHeaderButton>
-            <PageHeaderButton
-              variant="primary"
-              onClick={() => {
-                setEditingClient(null);
-                setFormData(initialFormData);
-                setFormErrors({});
-                setShowForm(true);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Client
-            </PageHeaderButton>
-          </>
-        }
-      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard size="sm" label="Total clients" value={stats.total} icon={Building2} tone="blue" />
-        <StatCard size="sm" label="Active" value={stats.active} icon={CheckCircle2} tone="emerald" />
-        <StatCard size="sm" label="Inactive" value={stats.inactive} icon={XCircle} tone="slate" />
-      </div>
-
-      {/* Toolbar */}
-      <AdminCard className="space-y-3 p-3">
-        <div className="flex gap-2">
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, website, email, location…" />
-          <FilterToggle
-            open={showFilters}
-            activeCount={statusFilter !== "all" ? 1 : 0}
-            onClick={() => setShowFilters(!showFilters)}
-          />
-        </div>
-        {showFilters && (
-          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-3">
-            <FormSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="all">All status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </FormSelect>
-          </div>
-        )}
-        <FilterChips
-          chips={statusFilter !== "all" ? [{ key: "status", label: "Status", value: statusFilter, onRemove: () => setStatusFilter("all") }] : []}
-        />
-      </AdminCard>
-
-      {/* Results count */}
-      <p className="text-xs text-slate-500">
-        {filteredClients.length} of {clients.length} clients
-      </p>
-
-      {/* Client Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Client</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Location</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Created</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredClients.length > 0 ? (
-                filteredClients.map((client) => {
-                  const status = statusConfig[client.status];
-                  const StatusIcon = status.icon;
-
-                  return (
-                    <tr key={client.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                            {client.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-slate-900 truncate">{client.name}</p>
-                            <a
-                              href={client.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] flex items-center gap-1 truncate"
-                            >
-                              <Globe className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate">{client.websiteUrl.replace(/^https?:\/\//, "")}</span>
-                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                            </a>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="space-y-1">
-                          {client.email && (
-                            <a href={`mailto:${client.email}`} className="text-sm text-slate-600 hover:text-[var(--hz-cobalt)] flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-slate-400" />
-                              {client.email}
-                            </a>
-                          )}
-                          {client.phone && (
-                            <a href={`tel:${client.phone}`} className="text-sm text-slate-600 hover:text-[var(--hz-cobalt)] flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-slate-400" />
-                              {client.phone}
-                            </a>
-                          )}
-                          {!client.email && !client.phone && (
-                            <span className="text-sm text-slate-400">No contact info</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        {client.city || client.state || client.zipCode ? (
-                          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                            <span>
-                              {[client.city, client.state, client.zipCode].filter(Boolean).join(", ")}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-slate-400">No location</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${status.color}`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {status.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {new Date(client.createdAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleEdit(client)}
-                            aria-label="Edit client"
-                            className="p-2.5 text-slate-500 hover:text-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-100)] rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" aria-hidden="true" />
-                          </button>
-                          <button
-                            onClick={() => setPendingDelete(client.id)}
-                            aria-label="Delete client"
-                            className="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState
-                      icon={Building2}
-                      tone="blue"
-                      title="No clients found"
-                      description={clients.length === 0 ? "Add your first client to start tracking accounts." : "No clients match your search — try clearing a filter."}
-                      action={clients.length === 0 ? (
-                        <PageHeaderButton variant="primary" onClick={() => { setEditingClient(null); setFormData(initialFormData); setFormErrors({}); setShowForm(true); }}>
-                          <Plus className="w-3.5 h-3.5" /> Add client
-                        </PageHeaderButton>
-                      ) : undefined}
-                    />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add/Edit Client Modal */}
+      {/* ── add / edit client ── */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl">
+            <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-6 py-4">
+              <h2 className="text-[16px] font-bold text-[var(--adm-ink)]">
                 {editingClient ? "Edit client" : "Add new client"}
               </h2>
               <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingClient(null);
-                  setFormData(initialFormData);
-                  setFormErrors({});
-                }}
+                onClick={closeForm}
                 aria-label="Close"
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white/50 transition-colors"
+                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
               >
-                <X className="w-5 h-5" aria-hidden="true" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
               <div className="space-y-6">
-                {/* Required Fields Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                    Required Information
+                  <h3 className="mb-4 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--adm-danger)]" />
+                    Required information
                   </h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Client name" required>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Client name" required error={formErrors.name}>
                       <FormInput
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Enter client name"
-                        className={formErrors.name ? "border-rose-300 bg-rose-50" : ""}
+                        invalid={!!formErrors.name}
                       />
-                      {formErrors.name && <p className="mt-1.5 text-sm text-rose-600">{formErrors.name}</p>}
                     </Field>
-                    <Field label="Website URL" required>
+                    <Field label="Website URL" required error={formErrors.websiteUrl}>
                       <FormInput
                         type="url"
                         value={formData.websiteUrl}
                         onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                         placeholder="https://example.com"
-                        className={formErrors.websiteUrl ? "border-rose-300 bg-rose-50" : ""}
+                        invalid={!!formErrors.websiteUrl}
                       />
-                      {formErrors.websiteUrl && <p className="mt-1.5 text-sm text-rose-600">{formErrors.websiteUrl}</p>}
                     </Field>
-                    <Field label="Status" required fullWidth>
+                    <Field label="Status" required fullWidth error={formErrors.status}>
                       <FormSelect
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as "active" | "inactive" })}
-                        className={formErrors.status ? "border-rose-300 bg-rose-50" : ""}
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </FormSelect>
-                      {formErrors.status && <p className="mt-1.5 text-sm text-rose-600">{formErrors.status}</p>}
                     </Field>
                   </div>
                 </div>
 
-                {/* Contact Information Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-4">Contact Information</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Email">
+                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Contact information</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Email" error={formErrors.email}>
                       <FormInput
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="client@example.com"
-                        className={formErrors.email ? "border-rose-300 bg-rose-50" : ""}
+                        invalid={!!formErrors.email}
                       />
-                      {formErrors.email && <p className="mt-1.5 text-sm text-rose-600">{formErrors.email}</p>}
                     </Field>
                     <Field label="Phone number">
                       <FormInput
@@ -563,9 +602,8 @@ export default function ClientsPage() {
                   </div>
                 </div>
 
-                {/* Address Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-4">Address</h3>
+                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Address</h3>
                   <div className="space-y-4">
                     <Field label="Street address">
                       <FormInput
@@ -574,7 +612,7 @@ export default function ClientsPage() {
                         placeholder="123 Main Street"
                       />
                     </Field>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid gap-4 md:grid-cols-3">
                       <Field label="City">
                         <FormInput value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
                       </Field>
@@ -589,33 +627,19 @@ export default function ClientsPage() {
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingClient(null);
-                    setFormData(initialFormData);
-                    setFormErrors({});
-                  }}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium"
-                >
+              <div className="mt-8 flex items-center justify-end gap-2 border-t border-[var(--adm-line)] pt-6">
+                <PageHeaderButton type="button" variant="secondary" onClick={closeForm}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2.5 bg-[var(--hz-cobalt)] hover:bg-[var(--hz-cobalt-600)] text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-                >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingClient ? "Update Client" : "Add Client"}
-                </button>
+                </PageHeaderButton>
+                <PageHeaderButton type="submit" variant="primary" disabled={submitting}>
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {editingClient ? "Update client" : "Add client"}
+                </PageHeaderButton>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

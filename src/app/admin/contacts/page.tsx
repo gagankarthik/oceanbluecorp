@@ -1,62 +1,51 @@
 "use client";
+
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { AdminListSkeleton } from "@/components/admin/skeletons";
-import { AdminCard } from "@/components/admin/admin-card";
-import { StatCard } from "@/components/admin/stat-card";
-import { EmptyState } from "@/components/admin/empty-state";
-import { SearchInput, FilterToggle } from "@/components/admin/toolbar";
-import { FilterChips } from "@/components/admin/filter-chips";
-import { FormSelect } from "@/components/admin/forms/primitives";
-
-import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import {
-  Download,
-  Mail,
-  Phone,
-  Building2,
-  Calendar,
-  MessageSquare,
-  CheckCircle2,
-  Archive,
-  Clock,
-  Trash2,
-  Loader2,
-  Briefcase,
-  Send,
-  X,
-  Inbox,
-  MailOpen,
-} from "lucide-react";
+  IconBuilding, IconCalendar, IconDownload, IconInbox, IconJob, IconMail,
+  IconMailOpen, IconMessage, IconPercent, IconPhone, IconSend, IconSuccess,
+  IconTrash,
+} from "@/components/admin/icons";
 import type { Contact } from "@/lib/aws/dynamodb";
+import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Avatar } from "@/components/admin/avatar";
+import { EmptyState } from "@/components/admin/empty-state";
+import {
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, GridSelect, KpiRow, type Density,
+} from "@/components/admin/workspace";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { FormSelect } from "@/components/admin/forms/primitives";
+import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import { type Tone } from "@/components/admin/theme";
 
-const statusConfig = {
-  new: { label: "New", bg: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]", dot: "bg-[var(--hz-cobalt)]", icon: Inbox },
-  read: { label: "Read", bg: "bg-amber-100 text-amber-800", dot: "bg-amber-500", icon: MailOpen },
-  responded: { label: "Responded", bg: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500", icon: CheckCircle2 },
-  archived: { label: "Archived", bg: "bg-slate-100 text-slate-600", dot: "bg-slate-400", icon: Archive },
-};
+// ── config ───────────────────────────────────────────────────────────────────
 
-const inquiryTypeConfig: Record<string, { textColor: string; bgColor: string }> = {
-  "General Inquiry": { textColor: "text-[var(--hz-cobalt)]", bgColor: "bg-[var(--hz-cobalt-100)]" },
-  "Business Partnership": { textColor: "text-purple-700", bgColor: "bg-purple-50" },
-  "Careers": { textColor: "text-emerald-700", bgColor: "bg-emerald-50" },
-  "Technical Support": { textColor: "text-orange-700", bgColor: "bg-orange-50" },
-  "Sales Inquiry": { textColor: "text-cyan-700", bgColor: "bg-cyan-50" },
-  "Media Inquiry": { textColor: "text-pink-700", bgColor: "bg-pink-50" },
-  "Other": { textColor: "text-slate-700", bgColor: "bg-slate-50" },
-};
+type ContactStatus = Contact["status"];
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status as keyof typeof statusConfig] || statusConfig.new;
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg}`}>
-      <Icon className="w-3 h-3" />{cfg.label}
-    </span>
-  );
+/** Enquiry states, in handling order. */
+const STATUSES: { key: ContactStatus; label: string; tone: Tone }[] = [
+  { key: "new",       label: "New",       tone: "blue" },
+  { key: "read",      label: "Read",      tone: "amber" },
+  { key: "responded", label: "Responded", tone: "emerald" },
+  { key: "archived",  label: "Archived",  tone: "slate" },
+];
+
+const STATUS_META = Object.fromEntries(STATUSES.map((s) => [s.key, s])) as Record<string, (typeof STATUSES)[number]>;
+
+const STATUS_TABS = [{ key: "all", label: "All" }, ...STATUSES.map((s) => ({ key: s.key as string, label: s.label }))];
+
+/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+function Blank() {
+  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
 }
+
+// ── page ─────────────────────────────────────────────────────────────────────
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -66,7 +55,9 @@ export default function ContactsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [inquiryFilter, setInquiryFilter] = useState("all");
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -85,20 +76,34 @@ export default function ContactsPage() {
     fetchContacts();
   }, []);
 
-  const inquiryTypes = [...new Set(contacts.map(c => c.inquiryType).filter(Boolean))];
+  // ── derived ───────────────────────────────────────────────────────────────
 
-  const filteredContacts = contacts.filter(contact => {
+  const inquiryTypes = useMemo(
+    () => [...new Set(contacts.map(c => c.inquiryType).filter(Boolean))],
+    [contacts],
+  );
+
+  const filteredContacts = useMemo(() => contacts.filter(contact => {
+    const q = searchQuery.toLowerCase();
     const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.message.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = fullName.includes(q) ||
+      contact.email.toLowerCase().includes(q) ||
+      contact.company.toLowerCase().includes(q) ||
+      contact.message.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
     const matchesInquiry = inquiryFilter === "all" || contact.inquiryType === inquiryFilter;
     return matchesSearch && matchesStatus && matchesInquiry;
-  });
+  }), [contacts, searchQuery, statusFilter, inquiryFilter]);
 
-  const handleStatusChange = async (contactId: string, newStatus: Contact["status"]) => {
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: contacts.length };
+    for (const s of STATUSES) counts[s.key] = contacts.filter(c => c.status === s.key).length;
+    return counts;
+  }, [contacts]);
+
+  // ── mutations ─────────────────────────────────────────────────────────────
+
+  const handleStatusChange = async (contactId: string, newStatus: ContactStatus) => {
     try {
       const response = await fetch(`/api/contacts/${contactId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -111,9 +116,6 @@ export default function ContactsPage() {
       toast.error("Failed to update contact status");
     }
   };
-
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const performDelete = async () => {
     if (!pendingDelete) return;
@@ -132,62 +134,136 @@ export default function ContactsPage() {
     }
   };
 
-  const handleExportCSV = () => {
-    const headers = ["Name","Email","Phone","Company","Job Title","Inquiry Type","Status","Date","Message"];
-    const rows = filteredContacts.map(contact => [
-      `"${contact.firstName} ${contact.lastName}"`,
-      `"${contact.email}"`,
-      `"${contact.phone || ""}"`,
-      `"${contact.company}"`,
-      `"${contact.jobTitle || ""}"`,
-      `"${contact.inquiryType}"`,
-      `"${contact.status}"`,
-      `"${new Date(contact.createdAt).toLocaleDateString()}"`,
-      `"${contact.message.replace(/"/g, '""')}"`,
-    ]);
-    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `contacts_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const openContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    if (contact.status === "new") handleStatusChange(contact.id, "read");
   };
 
-  const formatTimeAgo = (dateStr: string) => {
-    const diffMs = Date.now() - new Date(dateStr).getTime();
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  const exportCSV = () => downloadCsv(
+    "contacts",
+    ["Name", "Email", "Phone", "Company", "Job Title", "Inquiry Type", "Status", "Date", "Message"],
+    filteredContacts.map((c) => [
+      `${c.firstName} ${c.lastName}`,
+      c.email,
+      c.phone || "",
+      c.company,
+      c.jobTitle || "",
+      c.inquiryType,
+      c.status,
+      fmtDate(c.createdAt),
+      c.message,
+    ]),
+  );
 
-  const stats = {
-    total: contacts.length,
-    new: contacts.filter(c => c.status === "new").length,
-    read: contacts.filter(c => c.status === "read").length,
-    responded: contacts.filter(c => c.status === "responded").length,
-  };
+  const hasActiveFilters = statusFilter !== "all" || inquiryFilter !== "all" || searchQuery.trim() !== "";
 
-  if (loading) return <AdminListSkeleton rows={8} />;
+  const responseRate = contacts.length > 0
+    ? `${Math.round(((statusCounts.responded || 0) / contacts.length) * 100)}%`
+    : "—";
+
+  const [density, setDensity] = useLocalStorage<Density>("adm.contacts.density", "default");
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.contacts.hiddenCols", []);
+  const clearFilters = () => { setStatusFilter("all"); setInquiryFilter("all"); setSearchQuery(""); };
+
+  // ── grid columns ──────────────────────────────────────────────────────────
+
+  const columns: DataTableColumn<Contact>[] = [
+    {
+      key: "name", header: "Contact", label: "Contact", width: "240px", locked: true, sortValue: (c) => `${c.firstName} ${c.lastName}`,
+      cell: (c) => (
+        <div className="flex items-center gap-2.5">
+          <Avatar name={`${c.firstName} ${c.lastName}`} email={c.email} size="sm" />
+          <span className="truncate font-semibold text-[var(--adm-ink)]">{c.firstName} {c.lastName}</span>
+          {c.status === "new" && (
+            <span aria-label="Unread" className="h-1.5 w-1.5 flex-none rounded-full bg-[var(--adm-accent)]" />
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "email", header: "Email", label: "Email", width: "240px", sortValue: (c) => c.email, hideBelow: "lg",
+      cell: (c) => (
+        <a
+          href={`mailto:${c.email}`}
+          onClick={(e) => e.stopPropagation()}
+          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          {c.email}
+        </a>
+      ),
+    },
+    {
+      key: "company", header: "Company", label: "Company", width: "190px", sortValue: (c) => c.company || "", hideBelow: "md",
+      cell: (c) => c.company ? <span className="text-[var(--adm-ink-mute)]">{c.company}</span> : <Blank />,
+    },
+    {
+      key: "inquiryType", header: "Type", label: "Type", width: "150px", sortValue: (c) => c.inquiryType || "", hideBelow: "xl",
+      cell: (c) => c.inquiryType
+        ? <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-xs font-medium text-[var(--adm-ink-mute)]">{c.inquiryType}</span>
+        : <Blank />,
+    },
+    {
+      key: "status", header: "Status", label: "Status", width: "150px", sortValue: (c) => c.status,
+      cell: (c) => (
+        <GridSelect
+          value={c.status}
+          ariaLabel={`Status for ${c.firstName} ${c.lastName}`}
+          onChange={(e) => handleStatusChange(c.id, e.target.value as ContactStatus)}
+        >
+          {STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+        </GridSelect>
+      ),
+    },
+    {
+      key: "createdAt", header: "Received", label: "Received", width: "150px", sortValue: (c) => new Date(c.createdAt).getTime(), hideBelow: "sm",
+      cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(c.createdAt)}</span>,
+    },
+    {
+      key: "actions", header: "", align: "right",
+      cell: (c) => (
+        <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
+          <a
+            href={`mailto:${c.email}?subject=Re: ${c.inquiryType} Inquiry`}
+            title="Reply"
+            aria-label={`Reply to ${c.firstName} ${c.lastName}`}
+            className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+          >
+            <IconSend className="h-4 w-4" aria-hidden="true" />
+          </a>
+          <button
+            onClick={() => setPendingDelete(c.id)}
+            title="Delete"
+            aria-label={`Delete ${c.firstName} ${c.lastName}`}
+            className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+          >
+            <IconTrash className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  // ── states ────────────────────────────────────────────────────────────────
+
+  if (loading) return <AdminListSkeleton stats={4} rows={8} />;
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-3">
-          <p className="text-rose-500 text-sm">{error}</p>
-          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white text-sm rounded-lg hover:bg-[var(--hz-cobalt-600)]">Retry</button>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="max-w-md rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+          <EmptyState
+            variant="error"
+            title="Could not load contact submissions"
+            description={error}
+            action={<WorkspaceButton variant="primary" onClick={() => window.location.reload()}>Retry</WorkspaceButton>}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <ConfirmDialog
         open={!!pendingDelete}
         title="Delete contact?"
@@ -196,194 +272,227 @@ export default function ContactsPage() {
         onConfirm={performDelete}
         onCancel={() => setPendingDelete(null)}
       />
-      <PageHeader
-        title="Contact Submissions"
-        subtitle="Manage inquiries from website visitors"
-        icon={MessageSquare}
-        meta={<span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{contacts.length} total</span>}
+
+      {/* The KPI strip counted the same read-states the Status filter now
+          carries, plus a "Response rate" tile nothing followed from. */}
+      <WorkspaceTitle
+        title="Contacts"
+        meta={`${contacts.length} enquiries`}
         actions={
-          <PageHeaderButton variant="secondary" onClick={handleExportCSV} disabled={filteredContacts.length === 0}>
-            <Download className="w-4 h-4" /><span className="hidden sm:inline">Export CSV</span>
-          </PageHeaderButton>
+          <>
+            <WorkspaceButton onClick={exportCSV} disabled={filteredContacts.length === 0}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+            </WorkspaceButton>
+          </>
         }
       />
+      <KpiRow
+        items={[
+          { label: "Awaiting a reply", value: statusCounts.new || 0, icon: IconInbox,
+            tone: (statusCounts.new || 0) > 0 ? "warning" : "default",
+            onClick: () => setStatusFilter("new") },
+          { label: "Read, not answered", value: statusCounts.read || 0, icon: IconMailOpen,
+            onClick: () => setStatusFilter("read") },
+          { label: "Responded", value: statusCounts.responded || 0, icon: IconSuccess,
+            tone: "success", onClick: () => setStatusFilter("responded") },
+          { label: "Response rate", value: responseRate, icon: IconPercent,
+            hint: "Of all enquiries received" },
+        ]}
+      />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard size="sm" label="Total" value={stats.total} icon={MessageSquare} tone="blue" />
-        <StatCard size="sm" label="New" value={stats.new} icon={Inbox} tone="indigo" />
-        <StatCard size="sm" label="Read" value={stats.read} icon={MailOpen} tone="amber" />
-        <StatCard size="sm" label="Responded" value={stats.responded} icon={CheckCircle2} tone="emerald" />
-      </div>
-
-      {/* Toolbar */}
-      <AdminCard className="space-y-3 p-3">
-        <div className="flex gap-2">
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, email, company, message…" />
-          <FilterToggle
-            open={showFilters}
-            activeCount={[statusFilter !== "all", inquiryFilter !== "all"].filter(Boolean).length}
-            onClick={() => setShowFilters(!showFilters)}
-          />
-        </div>
-        {showFilters && (
-          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
-            <FormSelect value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="all">All Status</option>
-              <option value="new">New</option>
-              <option value="read">Read</option>
-              <option value="responded">Responded</option>
-              <option value="archived">Archived</option>
-            </FormSelect>
-            <FormSelect value={inquiryFilter} onChange={e => setInquiryFilter(e.target.value)}>
-              <option value="all">All Inquiry Types</option>
-              {inquiryTypes.map(t => <option key={t} value={t}>{t}</option>)}
-            </FormSelect>
-          </div>
-        )}
-        <FilterChips
-          chips={[
-            ...(statusFilter !== "all" ? [{ key: "status", label: "Status", value: statusConfig[statusFilter as keyof typeof statusConfig]?.label ?? statusFilter, onRemove: () => setStatusFilter("all") }] : []),
-            ...(inquiryFilter !== "all" ? [{ key: "inquiry", label: "Type", value: inquiryFilter, onRemove: () => setInquiryFilter("all") }] : []),
-          ]}
-          onClearAll={() => { setStatusFilter("all"); setInquiryFilter("all"); }}
-        />
-      </AdminCard>
-
-      <p className="text-xs text-slate-400">{filteredContacts.length} of {contacts.length} contacts</p>
-
-      {/* Contact List */}
-      <div className="space-y-3">
-        {filteredContacts.length > 0 ? filteredContacts.map(contact => {
-          const inquiryStyle = inquiryTypeConfig[contact.inquiryType] || inquiryTypeConfig["Other"];
-          return (
-            <div key={contact.id} onClick={() => { setSelectedContact(contact); if (contact.status === "new") handleStatusChange(contact.id, "read"); }}
-              className="border border-slate-200 rounded-xl bg-white shadow-sm p-4 cursor-pointer hover:border-[var(--hz-cobalt-100)] hover:shadow-md transition-all group">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                  {contact.firstName[0]}{contact.lastName[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900 truncate">{contact.firstName} {contact.lastName}</h3>
-                        {contact.status === "new" && <span className="w-2 h-2 bg-[var(--hz-cobalt)] rounded-full flex-shrink-0" />}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
-                        <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5 flex-shrink-0" />{contact.company}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inquiryStyle.bgColor} ${inquiryStyle.textColor}`}>{contact.inquiryType}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <StatusBadge status={contact.status} />
-                      <span className="text-xs text-slate-400 hidden sm:block">{formatTimeAgo(contact.createdAt)}</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-600 mt-2 line-clamp-2">{contact.message}</p>
-                  {/* Quick Actions */}
-                  <div className="flex items-center gap-2 mt-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <a href={`mailto:${contact.email}?subject=Re: ${contact.inquiryType} Inquiry`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-lg text-xs font-medium hover:bg-[var(--hz-cobalt-100)] transition-colors">
-                      <Send className="w-3 h-3" /> Reply
-                    </a>
-                    <button onClick={e => { e.stopPropagation(); setPendingDelete(contact.id); }} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-rose-600 rounded-lg text-xs font-medium hover:bg-rose-50 transition-colors">
-                      <Trash2 className="w-3 h-3" /> Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }) : (
-          <AdminCard>
-            <EmptyState
-              icon={MessageSquare}
-              tone="blue"
-              title="No contacts found"
-              description={contacts.length === 0 ? "Submissions from the website contact form will appear here." : "No contacts match your search — try clearing a filter."}
+      <Workspace>
+        <WorkspaceToolbar
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter enquiries by name, email or message"
             />
-          </AdminCard>
-        )}
-      </div>
+          }
+          trailing={
+            <>
+              <ColumnsMenu
+                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                hidden={hiddenColumns}
+                onChange={setHiddenColumns}
+              />
+              <DensityMenu value={density} onChange={setDensity} />
+            </>
+          }
+        >
+          <FilterPill
+            label="Status"
+            icon={FilterIcon.status}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_TABS.map((t) => ({
+              value: t.key,
+              label: t.label,
+              count: statusCounts[t.key] || 0,
+            }))}
+          />
+          <FilterPill
+            label="Type"
+            icon={FilterIcon.type}
+            value={inquiryFilter}
+            onChange={setInquiryFilter}
+            options={[
+              { value: "all", label: "All types" },
+              ...inquiryTypes.map((t) => ({
+                value: t,
+                label: t,
+                count: contacts.filter((c) => c.inquiryType === t).length,
+              })),
+            ]}
+          />
+        </WorkspaceToolbar>
 
-      {/* Contact Detail Modal */}
+        <ActiveFilters
+          chips={[
+            ...(statusFilter !== "all"
+              ? [{ label: `Status: ${STATUS_META[statusFilter]?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
+              : []),
+            ...(inquiryFilter !== "all"
+              ? [{ label: `Type: ${inquiryFilter}`, onClear: () => setInquiryFilter("all") }]
+              : []),
+          ]}
+          onClearAll={clearFilters}
+        />
+
+        <DataTable
+          noun="enquiries"
+          storageKey="contacts"
+          columns={columns}
+          rows={filteredContacts}
+          rowKey={(c) => c.id}
+          onRowClick={openContact}
+          initialSort={{ key: "createdAt", dir: "desc" }}
+          density={density}
+          hiddenColumns={hiddenColumns}
+          empty={{
+            icon: IconMessage,
+            title: contacts.length === 0 ? "No contacts yet" : "No contacts match your filters",
+            description: contacts.length === 0
+              ? "Submissions from the website contact form will appear here."
+              : "Try adjusting your search or clearing a filter.",
+            action: contacts.length > 0 && hasActiveFilters
+              ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
+              : undefined,
+          }}
+        />
+      </Workspace>
+
+      {/* ── detail drawer ── */}
       {selectedContact && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedContact(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--hz-cobalt)] to-cyan-600 flex items-center justify-center text-white font-bold">
-                  {selectedContact.firstName[0]}{selectedContact.lastName[0]}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedContact(null)}
+        >
+          <div
+            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar name={`${selectedContact.firstName} ${selectedContact.lastName}`} email={selectedContact.email} size="lg" />
+                <div className="min-w-0">
+                  <h2 className="truncate text-[17px] font-bold leading-tight text-[var(--adm-ink)]">
+                    {selectedContact.firstName} {selectedContact.lastName}
+                  </h2>
+                  <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-subtle)]">{selectedContact.company}</p>
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">{selectedContact.firstName} {selectedContact.lastName}</h2>
-                  <p className="text-slate-500 text-sm">{selectedContact.company}</p>
-                </div>
+                <StatusBadge
+                  status={selectedContact.status}
+                  tone={STATUS_META[selectedContact.status]?.tone}
+                  label={STATUS_META[selectedContact.status]?.label}
+                  size="md"
+                />
               </div>
-              <button onClick={() => setSelectedContact(null)} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" aria-hidden="true" /></button>
+              <button
+                onClick={() => setSelectedContact(null)}
+                aria-label="Close"
+                className="flex-none rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Contact Info */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Contact Information</h3>
-                  <div className="space-y-3 bg-slate-50 rounded-xl p-4">
-                    <a href={`mailto:${selectedContact.email}`} className="flex items-center gap-3 text-sm text-slate-700 hover:text-[var(--hz-cobalt)] transition-colors">
-                      <Mail className="w-4 h-4 text-slate-400" />{selectedContact.email}
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                {/* Contact details */}
+                <div className="space-y-3">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Contact information</h3>
+                  <div className="divide-y divide-[var(--adm-line-soft)] rounded-[6px] border border-[var(--adm-line)]">
+                    <a href={`mailto:${selectedContact.email}`} className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
+                      <IconMail className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.email}</span>
                     </a>
                     {selectedContact.phone && (
-                      <a href={`tel:${selectedContact.phone}`} className="flex items-center gap-3 text-sm text-slate-700 hover:text-[var(--hz-cobalt)] transition-colors">
-                        <Phone className="w-4 h-4 text-slate-400" />{selectedContact.phone}
+                      <a href={`tel:${selectedContact.phone}`} className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
+                        <IconPhone className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />{selectedContact.phone}
                       </a>
                     )}
-                    <div className="flex items-center gap-3 text-sm text-slate-600"><Building2 className="w-4 h-4 text-slate-400" />{selectedContact.company}</div>
-                    {selectedContact.jobTitle && <div className="flex items-center gap-3 text-sm text-slate-600"><Briefcase className="w-4 h-4 text-slate-400" />{selectedContact.jobTitle}</div>}
-                    <div className="flex items-center gap-3 text-sm text-slate-600"><Calendar className="w-4 h-4 text-slate-400" />{new Date(selectedContact.createdAt).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)]">
+                      <IconBuilding className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.company}</span>
+                    </div>
+                    {selectedContact.jobTitle && (
+                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)]">
+                        <IconJob className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.jobTitle}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+                      <IconCalendar className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />{fmtDateTime(selectedContact.createdAt)}
+                    </div>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-slate-500 mb-2">Inquiry Type</p>
-                    <span className={`inline-flex px-3 py-1.5 rounded-lg text-sm font-medium ${(inquiryTypeConfig[selectedContact.inquiryType] || inquiryTypeConfig["Other"]).bgColor} ${(inquiryTypeConfig[selectedContact.inquiryType] || inquiryTypeConfig["Other"]).textColor}`}>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Inquiry type</p>
+                    <span className="inline-flex rounded-[4px] bg-[var(--adm-surface-2)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
                       {selectedContact.inquiryType}
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status & Actions</h3>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600">Update Status</label>
-                    <select value={selectedContact.status} autoComplete="off" onChange={e => handleStatusChange(selectedContact.id, e.target.value as Contact["status"])} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(29,78,216,0.2)] focus:border-[var(--hz-cobalt)] bg-white">
-                      <option value="new">New</option>
-                      <option value="read">Read</option>
-                      <option value="responded">Responded</option>
-                      <option value="archived">Archived</option>
-                    </select>
+                <div className="space-y-3">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Status &amp; actions</h3>
+                  <div className="space-y-1.5">
+                    <label htmlFor="contact-status" className="block text-[13px] font-medium text-[var(--adm-ink-mute)]">Update status</label>
+                    <FormSelect
+                      id="contact-status"
+                      value={selectedContact.status}
+                      onChange={e => handleStatusChange(selectedContact.id, e.target.value as ContactStatus)}
+                    >
+                      {STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    </FormSelect>
                   </div>
-                  <a href={`mailto:${selectedContact.email}?subject=Re: ${selectedContact.inquiryType} Inquiry`} onClick={() => { if (selectedContact.status !== "responded") handleStatusChange(selectedContact.id, "responded"); }} className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[var(--hz-cobalt)] text-white rounded-xl hover:bg-[var(--hz-cobalt-600)] transition-colors font-medium text-sm">
-                    <Send className="w-4 h-4" /> Reply via Email
+                  <a
+                    href={`mailto:${selectedContact.email}?subject=Re: ${selectedContact.inquiryType} Inquiry`}
+                    onClick={() => { if (selectedContact.status !== "responded") handleStatusChange(selectedContact.id, "responded"); }}
+                    className="flex w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
+                  >
+                    <IconSend className="h-4 w-4" /> Reply via email
                   </a>
-                  <button onClick={() => setPendingDelete(selectedContact.id)} className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 transition-colors font-medium text-sm">
-                    <Trash2 className="w-4 h-4" /> Delete Contact
+                  <button
+                    onClick={() => setPendingDelete(selectedContact.id)}
+                    className="flex w-full items-center justify-center gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] px-4 py-2.5 text-[14px] font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+                  >
+                    <IconTrash className="h-4 w-4" /> Delete contact
                   </button>
                 </div>
               </div>
 
               {/* Message */}
-              <div className="mt-6">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5" /> Message
+              <div className="mt-5">
+                <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">
+                  <IconMessage className="h-3.5 w-3.5" /> Message
                 </h3>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-                  <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">{selectedContact.message}</p>
+                <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-zebra)] p-4">
+                  <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{selectedContact.message}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

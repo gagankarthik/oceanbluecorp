@@ -3,6 +3,7 @@ import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPub
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff, getClaims } from "@/lib/auth/verify";
+import { sanitizeRichText } from "@/lib/sanitize-server";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       department: body.department,
       location: body.location,
       type: body.type,
-      description: body.description,
+      description: sanitizeRichText(body.description),
       requirements: body.requirements || [],
       responsibilities: body.responsibilities || [],
       salary: body.salary,

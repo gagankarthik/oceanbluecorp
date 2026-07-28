@@ -43,7 +43,7 @@ function Related({ current }: { current: string }) {
             </Link>
           ))}
 
-          {/* Engineering — the fourth practice, on its own page */}
+          {/* Engineering, the fourth practice, on its own page */}
           <Link
             href="/solutions/engineering"
             className="group flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-sm"
@@ -72,7 +72,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
         <Photo src={data.image} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
         <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
           <Reveal>
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/15">
@@ -80,7 +80,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               </span>
               <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-cyan-400)]">{data.eyebrow}</span>
             </div>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[3.75rem]">
+            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,4.8vw,3.75rem)] break-words text-white">
               {data.title}
             </h1>
             <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">{data.lede}</p>
@@ -102,7 +102,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       </section>
 
       {/* ---------- Overview + capabilities ---------- */}
-      <section className="relative w-full bg-[var(--hz-canvas)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-6">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
@@ -156,13 +156,13 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       </section>
 
       {/* ---------- Approach ---------- */}
-      <section className="relative w-full bg-[var(--hz-canvas)] py-24 sm:py-32">
+      <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
             <h2 className="hz-display mt-7 text-[2rem] text-[var(--hz-text)] sm:text-[2.75rem]">How we deliver.</h2>
             <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              A method you can hold us to — outcomes agreed up front, progress you can see.
+              A method you can hold us to, outcomes agreed up front, progress you can see.
             </p>
           </Reveal>
           <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4" gap={0.1}>
@@ -188,7 +188,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-28">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[18ch] text-[2.25rem] text-white sm:text-[3rem]">
+            <h2 className="hz-display mt-7 max-w-[18ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">
               Ready to move on {data.eyebrow.toLowerCase()}?
             </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">

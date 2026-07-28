@@ -95,18 +95,18 @@ export function EmptyState({
       <span
         aria-hidden="true"
         className={cn(
-          "grid place-items-center rounded-2xl",
+          "grid place-items-center rounded-[6px]",
           t.bg,
           sm ? "h-10 w-10" : "h-12 w-12",
         )}
       >
         <Icon className={cn(t.text, sm ? "h-5 w-5" : "h-6 w-6")} strokeWidth={1.5} />
       </span>
-      <p className={cn("mt-3 font-medium text-slate-600", sm ? "text-xs" : "text-sm")}>
+      <p className={cn("mt-3 font-medium text-[var(--adm-ink-mute)]", sm ? "text-xs" : "text-sm")}>
         {resolvedTitle}
       </p>
       {resolvedDescription && (
-        <p className="mt-1 max-w-xs text-xs text-slate-400">{resolvedDescription}</p>
+        <p className="mt-1 max-w-xs text-xs text-[var(--adm-ink-subtle)]">{resolvedDescription}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>

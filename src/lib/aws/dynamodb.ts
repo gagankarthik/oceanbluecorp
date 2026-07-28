@@ -101,6 +101,35 @@ const getTables = () => getEnvConfig().tables;
 // Types
 // ===========================================
 
+/**
+ * Where a candidate came from. Shared by Application and Candidate — the two
+ * had drifted apart (Candidate was missing "Career Portal"), so the candidate
+ * form could write a value its own type rejected. Mirrors SOURCE_OPTIONS in
+ * components/admin/theme.ts, which is what every picker renders.
+ */
+export type ApplicationSource =
+  | "LinkedIn" | "Indeed" | "Company Website" | "Referral"
+  | "Agency" | "Career Portal" | "Other";
+
+/**
+ * Work authorization. Mirrors WORK_AUTH_OPTIONS in components/admin/theme.ts.
+ *
+ * Widened from the original six because the pickers had already outgrown it:
+ * the Applications filter offered H4 EAD / E3 / L1 and split OPT and CPT apart,
+ * none of which this union permitted — the write paths cast around it, so
+ * invalid values were reaching the table. DynamoDB is schemaless, so widening
+ * the type needs no migration.
+ *
+ * "OPT/CPT" is retained for records written before OPT and CPT were separated.
+ * It is deliberately absent from the picker (offering it alongside the split
+ * values would be ambiguous); the edit form renders any stored value that isn't
+ * in the list as an extra option so legacy records survive a round-trip.
+ */
+export type WorkAuthorization =
+  | "US Citizen" | "Green Card" | "H1-B" | "H4 EAD" | "OPT" | "CPT"
+  | "TN Visa" | "E3 Visa" | "L1 Visa" | "O1 Visa" | "Other"
+  | "OPT/CPT";
+
 export interface NoteEntry {
   id: string;           // UUID for each note
   text: string;         // Note content
@@ -309,8 +338,16 @@ export interface Application {
   coverLetter?: string;
 
   // HR-specific fields
-  source?: "LinkedIn" | "Indeed" | "Company Website" | "Referral" | "Agency" | "Career Portal" | "Other";
-  workAuthorization?: "US Citizen" | "Green Card" | "H1-B" | "OPT/CPT" | "TN Visa" | "Other";
+  source?: ApplicationSource;
+  workAuthorization?: WorkAuthorization;
+  /**
+   * Whether the candidate will need sponsorship, and when their current
+   * authorization lapses (ISO date). Both were collected by the new/edit
+   * application forms but existed on neither this type nor the write paths, so
+   * every value entered was silently discarded on save.
+   */
+  visaSponsorshipRequired?: boolean;
+  visaExpiry?: string;
   ownership?: string; // HR user ID assigned
   ownershipName?: string; // HR user name for display
   ownershipClaimedAt?: string; // When ownership was claimed
@@ -503,14 +540,14 @@ export interface CandidateApplication {
   city?: string;
   state?: string;
   zipCode?: string;
-  source: "LinkedIn" | "Indeed" | "Company Website" | "Referral" | "Agency" | "Other";
+  source: ApplicationSource;
   status: "active" | "inactive" | "hired" | "rejected";
   jobId?: string; // FK to jobs table
   jobTitle?: string; // Auto-populated from Job ID
   ownership?: string; // HR user assigned
   ownershipName?: string; // HR user name for display
   ownershipClaimedAt?: string; // When ownership was claimed
-  workAuthorization: "US Citizen" | "Green Card" | "H1-B" | "OPT/CPT" | "TN Visa" | "Other";
+  workAuthorization: WorkAuthorization;
   createdBy: string; // Auto-populate with current user
   createdByName?: string;
   createdAt: string; // Auto-populate with current date

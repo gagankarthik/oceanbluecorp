@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Sitemap",
-  description: "A directory of every page on the Ocean Blue Corporation website — services, careers, products, and more.",
+  description: "A directory of every page on the Ocean Blue Corporation website, services, careers, products, and more.",
   alternates: { canonical: "https://oceanbluecorp.com/sitemap" },
 };
 

@@ -2,19 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, FileText, Briefcase, Users, Settings, LogOut,
-  Menu, X, ChevronRight, ChevronDown, Bell, Search, Home,
-  UserCog, PanelLeftClose, PanelLeft, MessageSquare, Loader2,
-  UsersRound, Building, Boxes, Shield, FolderOpen, Code2, HelpCircle,
-  ExternalLink,
+  Menu, X, ChevronRight, Search,
+  PanelLeftClose, PanelLeft, Loader2, ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole, routeAccess } from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 import { HeaderSearch } from "@/components/admin/header-search";
+import { Avatar } from "@/components/admin/avatar";
+import {
+  IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
+  IconContact, IconClient, IconVendor, IconContent, IconStaff,
+  IconBell, IconHelp, IconSettings, IconDocs,
+  IconGroup, IconHome, IconLogout, IconShield,
+} from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useNotifications, formatTimeAgo } from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
@@ -24,48 +28,62 @@ type NavItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   roles: UserRole[];
+  section: string;
 };
 
 const ALL_ROLES = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 
+// Grouped under uppercase section headers, the way a data console organises its
+// nav (Conduktor: CONSOLE / INSIGHTS / SELF-SERVICE). Order here is the render
+// order; SECTION_ORDER drives the grouping.
+const SECTION_ORDER = ["Recruiting", "Relationships", "Workspace"] as const;
+
 const NAV_ITEMS: NavItem[] = [
-  { name: "Dashboard",    href: "/admin",              icon: LayoutDashboard,  roles: ALL_ROLES },
-  { name: "Job Postings", href: "/admin/jobs",         icon: Briefcase,        roles: ALL_ROLES },
-  { name: "Applications", href: "/admin/applications", icon: Users,            roles: ALL_ROLES },
-  { name: "Talent Bench", href: "/admin/bench",        icon: Boxes,            roles: ALL_ROLES },
-  { name: "Resumes",      href: "/admin/resumes",      icon: FolderOpen,       roles: ALL_ROLES },
-  { name: "Contacts",     href: "/admin/contacts",     icon: MessageSquare,    roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Clients",      href: "/admin/clients",      icon: Building,         roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Vendors",      href: "/admin/vendors",      icon: UsersRound,       roles: [UserRole.ADMIN, UserRole.HR] },
-  { name: "Content",      href: "/admin/content",      icon: FileText,         roles: [UserRole.ADMIN] },
-  { name: "Users",        href: "/admin/users",        icon: UserCog,          roles: [UserRole.ADMIN] },
+  { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Resumes",      href: "/admin/resumes",      icon: IconResume,       roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Contacts",     href: "/admin/contacts",     icon: IconContact,      roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
+  { name: "Clients",      href: "/admin/clients",      icon: IconClient,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
+  { name: "Vendors",      href: "/admin/vendors",      icon: IconVendor,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
+  { name: "Content",      href: "/admin/content",      icon: IconContent,      roles: [UserRole.ADMIN], section: "Workspace" },
+  { name: "Users",        href: "/admin/users",        icon: IconStaff,        roles: [UserRole.ADMIN], section: "Workspace" },
 ];
 
 const notificationIcons = {
-  job_posted: Briefcase,
-  application_received: Users,
-  contact_received: MessageSquare,
+  job_posted: IconRequisition,
+  application_received: IconApplication,
+  contact_received: IconContact,
 };
 
 const notificationColors = {
-  job_posted: "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
-  application_received: "bg-emerald-50 text-emerald-600",
-  contact_received: "bg-violet-50 text-violet-600",
+  job_posted: "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]",
+  application_received: "bg-emerald-500/15 text-emerald-600",
+  contact_received: "bg-violet-500/15 text-violet-500",
 };
 
+// Translucent category tints (not -50 fills) so each role hue survives on the
+// dark chrome as well as the light one.
 const roleBadgeColor: Record<string, string> = {
-  [UserRole.ADMIN]:     "bg-rose-50 text-rose-600",
-  [UserRole.HR]:        "bg-violet-50 text-violet-600",
-  [UserRole.RECRUITER]: "bg-teal-50 text-teal-600",
-  [UserRole.SALES]:     "bg-amber-50 text-amber-600",
+  [UserRole.ADMIN]:     "bg-rose-500/15 text-rose-600",
+  [UserRole.HR]:        "bg-violet-500/15 text-violet-500",
+  [UserRole.RECRUITER]: "bg-teal-500/15 text-teal-600",
+  [UserRole.SALES]:     "bg-amber-500/15 text-amber-600",
 };
 
 // ── Section aliases — maps path prefixes with no nav entry to their parent ────
 const SECTION_ALIASES: Record<string, { name: string; href: string }> = {
-  "/admin/candidates": { name: "Applications", href: "/admin/applications" },
-  "/admin/roles":      { name: "Roles",        href: "/admin/roles" },
-  "/admin/settings":   { name: "Settings",     href: "/admin/settings" },
-  "/admin/api-keys":   { name: "API Keys",     href: "/admin/api-keys" },
+  "/admin/candidates":    { name: "Applications",  href: "/admin/applications" },
+  "/admin/roles":         { name: "Roles",         href: "/admin/roles" },
+  "/admin/settings":      { name: "Settings",      href: "/admin/settings" },
+  "/admin/api-keys":      { name: "API Keys",      href: "/admin/api-keys" },
+  // These three have no sidebar entry either, so without an alias they fell
+  // through to the "Dashboard" fallback and the breadcrumb lied about where
+  // you were — /admin/help read "Dashboard" while showing the directory.
+  "/admin/help":          { name: "Help",          href: "/admin/help" },
+  "/admin/notifications": { name: "Notifications", href: "/admin/notifications" },
+  "/admin/docs":          { name: "Developer",     href: "/admin/docs" },
 };
 
 function useCurrentSection(pathname: string) {
@@ -100,7 +118,7 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed top-0 left-0 z-50 h-full bg-white border-r border-slate-200/80 transform transition-all duration-300 ease-in-out lg:translate-x-0",
+        "fixed top-0 left-0 z-50 h-full bg-[var(--adm-chrome)] transform transition-all duration-300 ease-in-out lg:translate-x-0",
         open ? "translate-x-0" : "-translate-x-full",
         collapsed ? "lg:w-[64px]" : "lg:w-56",
         "w-56",
@@ -110,14 +128,14 @@ function Sidebar({
         {/* Logo */}
         <div
           className={cn(
-            "flex items-center h-14 border-b border-slate-100",
+            "flex items-center h-16",
             collapsed ? "justify-center px-2" : "justify-between px-4",
           )}
         >
           <Link href="/admin" className="flex items-center gap-2">
             {collapsed ? (
               <div className="w-8 h-8 flex items-center justify-center">
-                <Image src="/logo.png" alt="Logo" width={32} height={32} className="w-8 h-8" />
+                <Image src="/favicon.png" alt="Logo" width={32} height={32} className="w-8 h-8" />
               </div>
             ) : (
               <Image
@@ -133,56 +151,67 @@ function Sidebar({
           <button
             onClick={onClose}
             aria-label="Close navigation"
-            className="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+            className="lg:hidden p-1.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-md transition-colors"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-px" aria-label="Main navigation">
-          {NAV_ITEMS.filter((item) => hasAnyRole(item.roles)).map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/admin" && pathname.startsWith(item.href));
+        {/* Navigation — grouped under uppercase section headers. */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
+          {SECTION_ORDER.map((section, groupIdx) => {
+            const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
+            if (items.length === 0) return null;
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                title={collapsed ? item.name : undefined}
-                onClick={onClose}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "group relative flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
-                  collapsed ? "justify-center p-2.5" : "px-3 py-[7px]",
-                  isActive
-                    ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]",
+              <div key={section} className={cn("space-y-0.5", groupIdx > 0 && "mt-6")}>
+                {collapsed ? (
+                  // In the rail, the label collapses to a hairline between groups
+                  // (the first group needs none).
+                  groupIdx > 0 && <div className="mx-1 mb-2 border-t border-[var(--adm-line)]" />
+                ) : (
+                  <p className="px-3 pb-1.5 pt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+                    {section}
+                  </p>
                 )}
-              >
-                {isActive && !collapsed && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--hz-cobalt)]"
-                  />
-                )}
-                <item.icon
-                  aria-hidden="true"
-                  className={cn(
-                    "flex-shrink-0 transition-transform duration-200",
-                    collapsed ? "h-[18px] w-[18px]" : "h-[15px] w-[15px]",
-                    !isActive && "group-hover:scale-110",
-                  )}
-                />
-                {!collapsed && <span>{item.name}</span>}
-              </Link>
+                {items.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/admin" && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      title={collapsed ? item.name : undefined}
+                      onClick={onClose}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-[8px] text-[14px] transition-colors duration-150",
+                        collapsed ? "justify-center p-2.5" : "px-3 py-[9px]",
+                        isActive
+                          ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
+                          : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                      )}
+                    >
+                      <item.icon
+                        aria-hidden="true"
+                        className={cn(
+                          "flex-shrink-0 transition-colors",
+                          collapsed ? "h-[21px] w-[21px]" : "h-[18px] w-[18px]",
+                          isActive ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)] group-hover:text-[var(--adm-ink)]",
+                        )}
+                      />
+                      {!collapsed && <span>{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
 
-        {/* HR Portal link — visible to Admin and HR only */}
+        {/* HR Portal link, visible to Admin and HR only */}
         {hasAnyRole([UserRole.ADMIN, UserRole.HR]) && (
-          <div className="px-2 py-2 border-t border-slate-100">
+          <div className="px-2 py-2">
             <a
               href="https://hr.oceanbluecorp.com"
               target="_blank"
@@ -190,15 +219,15 @@ function Sidebar({
               title={collapsed ? "HR Portal" : undefined}
               className={cn(
                 "group flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
-                "text-violet-600 hover:bg-violet-50 hover:text-violet-700 active:scale-[0.98]",
+                "text-violet-500 hover:bg-[var(--adm-row-hover)] hover:text-violet-400 active:scale-[0.98]",
                 collapsed ? "justify-center p-2.5" : "px-3 py-[7px]",
               )}
             >
-              <UsersRound
+              <IconGroup
                 aria-hidden="true"
                 className={cn(
-                  "flex-shrink-0 transition-transform duration-200 group-hover:scale-110",
-                  collapsed ? "h-[18px] w-[18px]" : "h-[15px] w-[15px]",
+                  "flex-shrink-0",
+                  collapsed ? "h-[21px] w-[21px]" : "h-[18px] w-[18px]",
                 )}
               />
               {!collapsed && (
@@ -212,12 +241,12 @@ function Sidebar({
         )}
 
         {/* Collapse toggle (desktop only) */}
-        <div className="hidden lg:block px-2 py-2 border-t border-slate-100">
+        <div className="hidden lg:block px-2 py-2">
           <button
             onClick={onToggleCollapse}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all",
+              "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] transition-all",
               collapsed ? "justify-center p-2.5" : "px-3 py-2",
             )}
           >
@@ -249,9 +278,9 @@ function NotificationsPanel() {
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="relative p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+        className="relative p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
       >
-        <Bell className="w-5 h-5" aria-hidden="true" />
+        <IconBell className="w-5 h-5" aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
@@ -266,20 +295,20 @@ function NotificationsPanel() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute top-full right-0 mt-1.5 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200/80 shadow-xl ring-1 ring-black/5 overflow-hidden z-50"
+          className="absolute top-full right-0 mt-1.5 w-80 sm:w-96 bg-[var(--adm-surface)] rounded-[6px] border border-[var(--adm-line)] shadow-xl ring-1 ring-black/5 overflow-hidden z-50"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+          <div className="flex items-center justify-between px-4 py-3 bg-[var(--adm-surface-sunken)] border-b border-[var(--adm-line)]">
             <div>
-              <h3 className="font-semibold text-slate-900 text-sm">Notifications</h3>
+              <h3 className="font-semibold text-[var(--adm-ink)] text-sm">Notifications</h3>
               {unreadCount > 0 && (
-                <p className="text-xs text-slate-500 mt-0.5">{unreadCount} unread</p>
+                <p className="text-xs text-[var(--adm-ink-mute)] mt-0.5">{unreadCount} unread</p>
               )}
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-[var(--hz-cobalt)] font-medium px-2 py-1 rounded-md hover:bg-[var(--hz-cobalt-100)] transition-colors"
+                className="text-xs text-[var(--adm-accent)] font-medium px-2 py-1 rounded-md hover:bg-[var(--adm-accent-soft)] transition-colors"
               >
                 Mark all read
               </button>
@@ -287,18 +316,18 @@ function NotificationsPanel() {
           </div>
 
           {/* List */}
-          <div className="max-h-96 overflow-y-auto bg-white">
+          <div className="max-h-96 overflow-y-auto bg-[var(--adm-surface)]">
             {loading && notifications.length === 0 ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 text-[var(--hz-cobalt)] animate-spin" aria-label="Loading notifications" />
+                <Loader2 className="w-6 h-6 text-[var(--adm-accent)] animate-spin" aria-label="Loading notifications" />
               </div>
             ) : notifications.length === 0 ? (
               <div className="py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                  <Bell className="w-6 h-6 text-slate-400" aria-hidden="true" />
+                <div className="w-12 h-12 rounded-full bg-[var(--adm-surface-2)] flex items-center justify-center mx-auto mb-3">
+                  <IconBell className="w-6 h-6 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 </div>
-                <p className="text-sm font-medium text-slate-600">No notifications</p>
-                <p className="text-xs text-slate-400 mt-1">You&apos;re all caught up!</p>
+                <p className="text-sm font-medium text-[var(--adm-ink-mute)]">No notifications</p>
+                <p className="text-xs text-[var(--adm-ink-subtle)] mt-1">You&apos;re all caught up!</p>
               </div>
             ) : (
               notifications.map((notification) => {
@@ -309,8 +338,8 @@ function NotificationsPanel() {
                     key={notification.id}
                     onClick={() => handleClick(notification)}
                     className={cn(
-                      "w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0",
-                      !notification.isRead ? "bg-[#eef3fe]" : "bg-white",
+                      "w-full flex items-start gap-3 px-4 py-3 hover:bg-[var(--adm-row-hover)] transition-colors text-left border-b border-[var(--adm-line)] last:border-0",
+                      !notification.isRead ? "bg-[var(--adm-accent-soft)]" : "bg-[var(--adm-surface)]",
                     )}
                   >
                     <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm", colorClass)}>
@@ -318,15 +347,15 @@ function NotificationsPanel() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={cn("text-sm leading-tight", !notification.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700")}>
+                        <p className={cn("text-sm leading-tight", !notification.isRead ? "font-semibold text-[var(--adm-ink)]" : "font-medium text-[var(--adm-ink-mute)]")}>
                           {notification.title}
                         </p>
                         {!notification.isRead && (
-                          <span aria-label="Unread" className="w-2 h-2 rounded-full bg-[var(--hz-cobalt)] flex-shrink-0 mt-1 ring-2 ring-[rgba(29,78,216,0.2)]" />
+                          <span aria-label="Unread" className="w-2 h-2 rounded-full bg-[var(--adm-accent)] flex-shrink-0 mt-1 ring-2 ring-[rgba(29,78,216,0.2)]" />
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{notification.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{formatTimeAgo(notification.createdAt)}</p>
+                      <p className="text-xs text-[var(--adm-ink-mute)] mt-1 line-clamp-2">{notification.message}</p>
+                      <p className="text-[10px] text-[var(--adm-ink-subtle)] mt-1.5 font-medium">{formatTimeAgo(notification.createdAt)}</p>
                     </div>
                   </button>
                 );
@@ -336,11 +365,11 @@ function NotificationsPanel() {
 
           {/* Footer */}
           {allNotifications.length > 0 && (
-            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100">
+            <div className="px-4 py-2.5 bg-[var(--adm-surface-sunken)] border-t border-[var(--adm-line)]">
               <Link
                 href="/admin/notifications"
                 onClick={() => setOpen(false)}
-                className="text-xs text-[var(--hz-cobalt)] font-medium flex items-center justify-center gap-1"
+                className="text-xs text-[var(--adm-accent)] font-medium flex items-center justify-center gap-1"
               >
                 View all notifications
                 <ChevronRight className="w-3 h-3" aria-hidden="true" />
@@ -376,11 +405,14 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  const badgeColor = roleBadgeColor[user?.role ?? ""] ?? "bg-sky-50 text-sky-600";
-  const avatarSrc =
-    user?.id && !avatarFailed
-      ? `/api/users/avatar/${user.id}`
-      : `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.email ?? "user")}&backgroundColor=b6e3f4`;
+  const badgeColor = roleBadgeColor[user?.role ?? ""] ?? "bg-sky-500/15 text-sky-600";
+
+  // Uploaded photo if there is one, otherwise the initials Avatar used
+  // everywhere else in admin. This used to fall back to a generated cartoon
+  // face from api.dicebear.com — a third-party request on every admin page
+  // load that leaked the user's email as a seed in the URL, and produced an
+  // avatar that matched nothing else in the console.
+  const photoSrc = user?.id && !avatarFailed ? `/api/users/avatar/${user.id}` : null;
 
   return (
     <div ref={menuRef} className="relative">
@@ -389,52 +421,50 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
         aria-label="User menu"
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-lg border border-transparent py-1 pl-1 pr-1.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
+        className="flex items-center rounded-full border border-transparent p-0.5 transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]"
       >
-        <img
-          src={avatarSrc}
-          alt={user?.name ?? "User"}
-          width={28}
-          height={28}
-          loading="lazy"
-          decoding="async"
-          onError={() => setAvatarFailed(true)}
-          className="w-7 h-7 rounded-full object-cover bg-[var(--hz-cobalt-100)] ring-2 ring-white shadow-sm"
-        />
-        <div className="hidden md:block text-left">
-          <p className="text-xs font-semibold text-slate-800 leading-tight truncate max-w-[110px]">
-            {user?.name ?? "User"}
-          </p>
-          <span className={cn("text-[10px] px-1.5 py-px rounded font-medium capitalize", badgeColor)}>
-            {user?.role}
-          </span>
-        </div>
-        <ChevronDown
-          aria-hidden="true"
-          className={cn("hidden md:block w-3.5 h-3.5 text-slate-400 transition-transform duration-200", open && "rotate-180")}
-        />
+        {photoSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={photoSrc}
+            alt={user?.name ?? "User"}
+            width={28}
+            height={28}
+            loading="lazy"
+            decoding="async"
+            onError={() => setAvatarFailed(true)}
+            className="w-7 h-7 rounded-full object-cover bg-[var(--adm-accent-soft)] ring-2 ring-[var(--adm-surface)] shadow-sm"
+          />
+        ) : (
+          <Avatar name={user?.name} email={user?.email} size="sm" />
+        )}
       </button>
 
       {open && (
         <div
           role="menu"
           aria-label="User options"
-          className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 z-50"
+          className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl ring-1 ring-black/5 z-50"
         >
-          <div className="flex items-center gap-3 border-b border-slate-100 px-3.5 py-3">
-            <img
-              src={avatarSrc}
-              alt={user?.name ?? "User"}
-              width={36}
-              height={36}
-              loading="lazy"
-              decoding="async"
-              onError={() => setAvatarFailed(true)}
-              className="h-9 w-9 flex-shrink-0 rounded-full object-cover bg-slate-100 ring-1 ring-slate-200"
-            />
+          <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
+            {photoSrc ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={photoSrc}
+                alt={user?.name ?? "User"}
+                width={36}
+                height={36}
+                loading="lazy"
+                decoding="async"
+                onError={() => setAvatarFailed(true)}
+                className="h-9 w-9 flex-shrink-0 rounded-full object-cover bg-[var(--adm-surface-2)] ring-1 ring-[var(--adm-line)]"
+              />
+            ) : (
+              <Avatar name={user?.name} email={user?.email} size="md" />
+            )}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
-              <p className="truncate text-[11px] text-slate-500">{user?.email}</p>
+              <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{user?.name}</p>
+              <p className="truncate text-[11px] text-[var(--adm-ink-mute)]">{user?.email}</p>
             </div>
           </div>
           <div className="px-3 pt-2.5 pb-1.5">
@@ -447,9 +477,9 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
               href="/admin/settings"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
             >
-              <Settings className="w-4 h-4 text-slate-400" aria-hidden="true" /> Settings
+              <IconSettings className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Settings
             </Link>
             {(user?.role === UserRole.ADMIN || user?.role === UserRole.HR) && (
               <a
@@ -458,11 +488,11 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
                 rel="noopener noreferrer"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-violet-50 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
               >
-                <UsersRound className="w-4 h-4 text-violet-400" aria-hidden="true" />
+                <IconGroup className="w-4 h-4 text-violet-400" aria-hidden="true" />
                 <span>HR Portal</span>
-                <ExternalLink className="ml-auto h-3 w-3 text-slate-300" aria-hidden="true" />
+                <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
               </a>
             )}
             {user?.role === UserRole.ADMIN && (
@@ -470,9 +500,9 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
                 href="/admin/docs"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
               >
-                <Code2 className="w-4 h-4 text-slate-400" aria-hidden="true" /> Developer
+                <IconDocs className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Developer
               </Link>
             )}
             <Link
@@ -481,18 +511,18 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
               role="menuitem"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-[#eef3fe] transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
             >
-              <Home className="w-4 h-4 text-slate-400" aria-hidden="true" /> View website
+              <IconHome className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> View website
             </Link>
           </div>
-          <div className="border-t border-slate-100 py-1" role="none">
+          <div className="border-t border-[var(--adm-line)] py-1" role="none">
             <button
               role="menuitem"
               onClick={() => signOut()}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] transition-colors"
             >
-              <LogOut className="w-4 h-4" aria-hidden="true" /> Sign Out
+              <IconLogout className="w-4 h-4" aria-hidden="true" /> Sign Out
             </button>
           </div>
         </div>
@@ -505,17 +535,17 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
       <div className="max-w-sm text-center">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-rose-50">
-          <Shield className="h-7 w-7 text-rose-500" aria-hidden="true" />
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-danger-soft)]">
+          <IconShield className="h-7 w-7 text-[var(--adm-danger)]" aria-hidden="true" />
         </div>
-        <p className="text-base font-bold text-slate-900">Access restricted</p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="text-base font-bold text-[var(--adm-ink)]">Access restricted</p>
+        <p className="mt-1 text-sm text-[var(--adm-ink-mute)]">
           Your role ({userRole}) doesn&apos;t have access to this page. Contact an
           administrator if you think this is a mistake.
         </p>
         <Link
           href="/admin"
-          className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
           Back to dashboard
         </Link>
@@ -547,11 +577,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   })();
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div
+      className="adm-scope min-h-screen bg-[var(--adm-canvas)]"
+      data-theme="light"
+    >
       {/* Skip link */}
       <a
         href="#adm-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-[var(--hz-cobalt)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-[var(--adm-accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
       >
         Skip to content
       </a>
@@ -575,63 +608,40 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       />
 
       {/* Main content */}
-      <div className={cn("transition-all duration-300", sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56")}>
+      <div className={cn("transition-all duration-300 bg-[var(--adm-chrome)]", sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56")}>
         {/* Top header */}
-        <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-5 relative">
+        {/* Command bar. Solid rather than translucent-blurred: a business
+            system's top bar is a fixed piece of chrome, and blur over a dense
+            scrolling grid smears the rows underneath it. */}
+        <header className="sticky top-0 z-30 h-16 bg-[var(--adm-chrome)] flex items-center justify-between gap-3 px-5 lg:px-6 relative">
           <div className="flex min-w-0 items-center gap-3">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation"
-              className="lg:hidden p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+              className="lg:hidden p-1.5 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-md transition-colors"
             >
               <Menu className="w-5 h-5" aria-hidden="true" />
             </button>
 
-            {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 whitespace-nowrap text-sm sm:flex">
-              <Link
-                href="/admin"
-                title="Dashboard"
-                className="inline-flex flex-shrink-0 items-center text-slate-400 transition-colors hover:text-[var(--hz-cobalt)]"
-              >
-                <Home className="h-4 w-4" aria-hidden="true" />
-                <span className="sr-only">Dashboard</span>
-              </Link>
-              <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-slate-300" aria-hidden="true" />
-              {pathname === "/admin" ? (
-                <span className="font-semibold text-slate-900" aria-current="page">Dashboard</span>
-              ) : pageCrumb ? (
-                <>
-                  <Link href={section.href} className="flex-shrink-0 font-medium text-slate-500 transition-colors hover:text-[var(--hz-cobalt)]">
-                    {section.name}
-                  </Link>
-                  <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-slate-300" aria-hidden="true" />
-                  <span className="truncate font-semibold text-slate-900" aria-current="page">{pageCrumb}</span>
-                </>
-              ) : (
-                <span className="font-semibold text-slate-900" aria-current="page">{section.name}</span>
-              )}
-            </nav>
-
             {/* Mobile title */}
-            <h1 className="sm:hidden truncate font-semibold text-slate-800">
+            <h1 className="sm:hidden truncate font-semibold text-[var(--adm-ink)]">
               {pathname === "/admin" ? "Dashboard" : (pageCrumb ?? section.name)}
             </h1>
           </div>
 
-          {/* Centered search */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          {/* Centered search, Conduktor-style. */}
+          <div className="absolute left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
             <HeaderSearch />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5">
             {/* Mobile search */}
             <button
               type="button"
               onClick={openCommandPalette}
               aria-label="Open search"
-              className="md:hidden p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+              className="md:hidden p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
             >
               <Search className="w-5 h-5" aria-hidden="true" />
             </button>
@@ -642,19 +652,29 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               href="/admin/help"
               title="Help & team"
               aria-label="Help and team directory"
-              className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+              className="p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
             >
-              <HelpCircle className="w-5 h-5" aria-hidden="true" />
+              <IconHelp className="w-5 h-5" aria-hidden="true" />
             </Link>
 
-            <div className="hidden md:block w-px h-5 bg-slate-200 mx-0.5" aria-hidden="true" />
+            <div className="hidden md:block w-px h-6 bg-[var(--adm-line)] mx-1" aria-hidden="true" />
 
             <UserMenu user={user} signOut={signOut} />
           </div>
         </header>
 
         {/* Page content */}
-        <main id="adm-main" className="p-3 lg:p-4 min-h-[calc(100vh-3.5rem)]">
+        {/* Fixed height, not min-height, and the scroll container itself.
+            `min-h` let the content grow past the viewport, so a Workspace
+            panel's `flex-1` had nothing to bound it: the whole document
+            scrolled and the grid's own footer — pager and rows-per-page — sat
+            below the fold. With a real height the panel claims exactly what is
+            left after any overview strip and scrolls its rows internally,
+            while taller pages (dashboard, settings, docs) still scroll here. */}
+        <main
+          id="adm-main"
+          className="flex h-[calc(100vh-4rem)] min-w-0 flex-col overflow-y-auto overflow-x-hidden rounded-tl-2xl bg-[var(--adm-canvas)] p-5 lg:p-6"
+        >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>
       </div>
