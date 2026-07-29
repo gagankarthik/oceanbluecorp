@@ -6,7 +6,7 @@ import {
   Star, User2, Shield, Plus,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import type { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import { statusMeta, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS, type AppStatus , WORK_AUTH_GROUPS } from "./theme";
@@ -46,6 +46,7 @@ const defaultForm = {
   notes: "",
   rating: 0,
   addToTalentBench: false,
+  benchType: "external" as BenchType,
 };
 
 type FormState = typeof defaultForm;
@@ -98,6 +99,8 @@ export function CandidateEditDrawer({
         notes: candidate.notes || "",
         rating: candidate.rating || 0,
         addToTalentBench: !!candidate.addToTalentBench,
+        benchType: candidate.benchType
+          || (candidate.status === "hired" ? "internal" : "external"),
       });
     } else {
       setForm({ ...defaultForm, jobId: defaultJobId || "" });
@@ -147,6 +150,7 @@ export function CandidateEditDrawer({
         notes: form.notes,
         rating: form.rating || undefined,
         addToTalentBench: form.addToTalentBench,
+        ...(form.addToTalentBench && { benchType: form.benchType }),
         createdBy: user?.email || "admin",
         createdByName: user?.name || "Admin",
       };
@@ -299,6 +303,14 @@ export function CandidateEditDrawer({
                         <span className="text-sm text-[var(--adm-ink-mute)]">Add to bench</span>
                       </label>
                     </Field>
+                    {form.addToTalentBench && (
+                      <Field label="Talent pool">
+                        <FormSelect value={form.benchType} onChange={(e) => set("benchType", e.target.value as BenchType)}>
+                          <option value="external">Talent Bench — external candidate</option>
+                          <option value="internal">My Pool — internal hire</option>
+                        </FormSelect>
+                      </Field>
+                    )}
                   </div>
                 </FormSection>
               </>

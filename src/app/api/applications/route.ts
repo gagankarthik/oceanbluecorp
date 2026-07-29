@@ -177,6 +177,12 @@ export async function POST(request: NextRequest) {
       notes: body.notes,
       addToTalentBench: body.addToTalentBench || false,
       benchAddedBy: body.benchAddedBy,
+      // Bench pool: hired-at-creation records land on the internal bench,
+      // everything else added to the bench defaults to the external pool.
+      benchType: body.benchType
+        || (body.addToTalentBench
+          ? (body.status === "hired" ? "internal" : "external")
+          : undefined),
       statusHistory: [{
         status: body.status || "pending",
         changedAt: now,

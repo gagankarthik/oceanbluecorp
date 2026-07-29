@@ -10,7 +10,7 @@ import {
   IconUser, IconLocation, IconJob, IconShield, IconFile, IconPipeline,
   IconWarning, IconUpload, IconDownload, IconTrash, IconStar, IconEdit, IconSave,
 } from "@/components/admin/icons";
-import type { Job } from "@/lib/aws/dynamodb";
+import type { BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   PIPELINE_STAGES, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS,
@@ -57,6 +57,7 @@ function EditApplicationInner() {
   const [status, setStatus]     = useState<AppStatus>("pending");
   const [source, setSource]     = useState("");
   const [addToTalentBench, setAddToTalentBench] = useState(false);
+  const [benchType, setBenchType] = useState<BenchType>("external");
 
   // Skills
   const [skills, setSkills]         = useState<string[]>([]);
@@ -102,6 +103,7 @@ function EditApplicationInner() {
         setStatus((app.status as AppStatus) || "pending");
         setSource(app.source || "");
         setAddToTalentBench(!!app.addToTalentBench);
+        setBenchType(app.benchType || (app.status === "hired" ? "internal" : "external"));
         setSkills(app.skills || []);
         setExperience(app.experience || "");
         setWorkAuth(app.workAuthorization || "");
@@ -203,7 +205,7 @@ function EditApplicationInner() {
         city, state, skills, experience, notes,
         rating: rating || undefined,
         addToTalentBench,
-        ...(addToTalentBench && { benchAddedBy: user?.email || user?.id }),
+        ...(addToTalentBench && { benchAddedBy: user?.email || user?.id, benchType }),
         changedBy:     user?.id,
         changedByName: user?.name || "Admin",
         ...resumePayload,
@@ -497,6 +499,15 @@ function EditApplicationInner() {
                   <span className="mt-0.5 block text-[11px] text-[var(--adm-ink-subtle)]">Keep this candidate available for future requisitions.</span>
                 </span>
               </label>
+
+              {addToTalentBench && (
+                <Field label="Talent pool" htmlFor="benchType">
+                  <FormSelect id="benchType" value={benchType} onChange={(e) => setBenchType(e.target.value as BenchType)}>
+                    <option value="external">Talent Bench — external candidate</option>
+                    <option value="internal">My Pool — internal hire</option>
+                  </FormSelect>
+                </Field>
+              )}
             </div>
           </AdminCard>
 

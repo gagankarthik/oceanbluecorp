@@ -189,7 +189,18 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     setBenchSaving(true);
     const next = !candidate.addToTalentBench;
     setCandidate((p) => (p ? { ...p, addToTalentBench: next } : p));
-    try { await patch({ addToTalentBench: next, ...(next && { benchAddedBy: user?.email || user?.id }) }); }
+    try {
+      await patch({
+        addToTalentBench: next,
+        ...(next && {
+          benchAddedBy: user?.email || user?.id,
+          // Hired candidates land in the internal pool, everyone else on the
+          // external bench; an existing benchType is kept as-is.
+          benchType: candidate.benchType
+            || (candidate.status === "hired" ? "internal" : "external"),
+        }),
+      });
+    }
     catch {
       setCandidate((p) => (p ? { ...p, addToTalentBench: !next } : p));
       toast.error("Failed to update talent bench");

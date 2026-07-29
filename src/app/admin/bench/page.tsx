@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
-import type { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import BenchLoading from "./loading";
 
@@ -88,6 +88,30 @@ const STATUS_TABS = [
   ...BENCH_STATUSES.map((s) => ({ key: s as string, label: statusMeta[s].label })),
 ];
 
+/**
+ * The bench splits into two pools: "My Pool" holds our own hired consultants
+ * sitting between placements (internal), "Talent Bench" holds market
+ * candidates kept warm for future roles (external). The tabs sit above the
+ * KPI strip because every number below them is scoped to the selected pool.
+ */
+const POOL_TABS = [
+  { key: "all", label: "All candidates" },
+  { key: "internal", label: "My Pool", hint: "Internal" },
+  { key: "external", label: "Talent Bench", hint: "External" },
+] as const;
+
+type PoolKey = (typeof POOL_TABS)[number]["key"];
+
+/**
+ * A record's pool, with the legacy fallback: rows written before benchType
+ * existed count as internal when hired (they became one of our consultants)
+ * and external otherwise — the same rule scripts/backfill-bench-type.mjs
+ * applies, so the page reads correctly before and after the backfill runs.
+ */
+function poolOf(app: Application): BenchType {
+  return app.benchType || (app.status === "hired" ? "internal" : "external");
+}
+
 // These used to be narrower private lists, because the Application unions were
 // narrower than the theme lists and the write path cast around the mismatch.
 // Both unions have since been widened to match the pickers, so the shared lists
@@ -122,6 +146,23 @@ function daysOnBench(app: Application): number | null {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
 
+/** Internal / External pool tag shown in the grid, on cards and in detail. */
+function PoolBadge({ pool }: { pool: BenchType }) {
+  const internal = pool === "internal";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center whitespace-nowrap rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium",
+        internal
+          ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+          : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
+      )}
+    >
+      {internal ? "Internal" : "External"}
+    </span>
+  );
+}
+
 /** Section heading inside the create/edit form. */
 function SectionTitle({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
@@ -150,6 +191,7 @@ export default function TalentBenchPage() {
   const [skillFilter, setSkillFilter] = useState("all");
   const [authFilter, setAuthFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [poolFilter, setPoolFilter] = useState<PoolKey>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   const debouncedSearch = useDebouncedValue(searchQuery, 250);
@@ -180,6 +222,7 @@ export default function TalentBenchPage() {
     zipCode: "",
     source: "" as Application["source"] | "",
     status: "active" as Application["status"],
+    benchType: "external" as BenchType,
     jobId: "",
     jobTitle: "",
     ownership: "",
@@ -309,7 +352,25 @@ export default function TalentBenchPage() {
     return matchesOwnership && matchesOwner;
   }), [applications, isAdmin, user?.email, user?.id, ownerFilter, resolveAdder]);
 
-  const filteredApplications = useMemo(() => scopedApplications.filter((app) => {
+  /** Tab counts come from the scoped set, so they don't move as filters change. */
+  const poolCounts = useMemo(() => ({
+    all: scopedApplications.length,
+    internal: scopedApplications.filter((a) => poolOf(a) === "internal").length,
+    external: scopedApplications.filter((a) => poolOf(a) === "external").length,
+  }), [scopedApplications]);
+
+  /**
+   * The selected pool. The KPI strip, status counts and the grid are all built
+   * from this list — switching tabs re-scopes the whole page, not just the rows.
+   */
+  const pooledApplications = useMemo(
+    () => (poolFilter === "all"
+      ? scopedApplications
+      : scopedApplications.filter((a) => poolOf(a) === poolFilter)),
+    [scopedApplications, poolFilter],
+  );
+
+  const filteredApplications = useMemo(() => pooledApplications.filter((app) => {
     const q = debouncedSearch.toLowerCase();
     const matchesSearch = !q
       || [app.name, app.email, app.applicationId, app.jobTitle].some((f) => f?.toLowerCase().includes(q))
@@ -318,36 +379,36 @@ export default function TalentBenchPage() {
     const matchesSkill = skillFilter === "all" || (app.skills?.includes(skillFilter) || false);
     const matchesAuth = authFilter === "all" || app.workAuthorization === authFilter;
     return matchesSearch && matchesStatus && matchesSkill && matchesAuth;
-  }), [scopedApplications, debouncedSearch, statusFilter, skillFilter, authFilter]);
+  }), [pooledApplications, debouncedSearch, statusFilter, skillFilter, authFilter]);
 
   const statusCounts = useMemo(
     () => Object.fromEntries(
       STATUS_TABS.map((t) => [
         t.key,
-        t.key === "all" ? scopedApplications.length : scopedApplications.filter((a) => a.status === t.key).length,
+        t.key === "all" ? pooledApplications.length : pooledApplications.filter((a) => a.status === t.key).length,
       ]),
     ) as Record<string, number>,
-    [scopedApplications],
+    [pooledApplications],
   );
 
   const kpis = useMemo(() => {
     return {
-      total: scopedApplications.length,
-      available: scopedApplications.filter((a) => a.status === "active" || a.status === "pending").length,
-      inProcess: scopedApplications.filter((a) => ["reviewing", "submitted", "interview"].includes(a.status)).length,
-      placed: scopedApplications.filter((a) => a.status === "hired").length,
+      total: pooledApplications.length,
+      available: pooledApplications.filter((a) => a.status === "active" || a.status === "pending").length,
+      inProcess: pooledApplications.filter((a) => ["reviewing", "submitted", "interview"].includes(a.status)).length,
+      placed: pooledApplications.filter((a) => a.status === "hired").length,
     };
-  }, [scopedApplications]);
+  }, [pooledApplications]);
 
   const [density, setDensity] = useLocalStorage<Density>("adm.bench.density", "default");
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.bench.hiddenCols", []);
 
   /** On the bench a month or more without moving — the re-engagement list. */
   const staleBench = useMemo(
-    () => scopedApplications.filter(
+    () => pooledApplications.filter(
       (a) => (Date.now() - new Date(a.appliedAt).getTime()) / 86_400_000 >= 30,
     ).length,
-    [scopedApplications],
+    [pooledApplications],
   );
 
   const hasActiveFilters = [statusFilter, skillFilter, authFilter, ownerFilter].some((f) => f !== "all")
@@ -423,7 +484,7 @@ export default function TalentBenchPage() {
   const handleExportCSV = () => downloadCsv(
     "bench",
     [
-      "App ID", "Name", "Email", "Phone", "Last Position", "Status",
+      "App ID", "Name", "Email", "Phone", "Last Position", "Status", "Pool",
       "Work Authorization", "Skills", "Rating", "City", "State", "Has Resume", "Notes",
     ],
     filteredApplications.map((app) => [
@@ -433,6 +494,7 @@ export default function TalentBenchPage() {
       app.phone || "",
       app.jobTitle || "",
       app.status,
+      poolOf(app),
       app.workAuthorization || "",
       app.skills?.join(", ") || "",
       app.rating?.toString() || "",
@@ -457,6 +519,7 @@ export default function TalentBenchPage() {
       zipCode: "",
       source: "",
       status: "active",
+      benchType: "external",
       jobId: "",
       jobTitle: "",
       ownership: "",
@@ -500,6 +563,7 @@ export default function TalentBenchPage() {
       zipCode: app.zipCode || "",
       source: app.source || "",
       status: app.status,
+      benchType: poolOf(app),
       jobId: app.jobId || "",
       jobTitle: app.jobTitle || "",
       ownership: app.ownership || "",
@@ -674,6 +738,7 @@ export default function TalentBenchPage() {
         zipCode: formData.zipCode || undefined,
         source: formData.source || "Other",
         status: formData.status,
+        benchType: formData.benchType,
         jobId: formData.jobId || undefined,
         jobTitle: formData.jobTitle || undefined,
         ownership: formData.ownership || undefined,
@@ -810,6 +875,14 @@ export default function TalentBenchPage() {
     ),
   };
 
+  const poolCol: DataTableColumn<ApplicationWithJob> = {
+    key: "pool",
+    header: "Pool",
+    hideBelow: "lg",
+    sortValue: (a) => poolOf(a),
+    cell: (a) => <PoolBadge pool={poolOf(a)} />,
+  };
+
   const statusCol: DataTableColumn<ApplicationWithJob> = {
     key: "status",
     header: "Stage",
@@ -857,7 +930,7 @@ export default function TalentBenchPage() {
   };
 
   /**
-   * Eight columns for an admin, seven for everyone else. It was eleven, several
+   * Nine columns for an admin, eight for everyone else. It was eleven, several
    * of them stacking two facts on top of each other; phone, work authorisation,
    * the application ID and the resume link all still live on the record itself,
    * which is one click away, and work auth is already a filter on the toolbar.
@@ -869,9 +942,24 @@ export default function TalentBenchPage() {
     skillsCol,
     ageCol,
     ratingCol,
+    poolCol,
     statusCol,
     actionsCol,
   ];
+
+  // Empty-state copy depends on which pool tab is empty: the internal pool
+  // fills itself when candidates are hired, the external bench is hand-built.
+  const emptyFresh = pooledApplications.length === 0;
+  const emptyTitle = emptyFresh
+    ? (poolFilter === "internal" ? "No internal candidates in My Pool yet"
+      : poolFilter === "external" ? "No external candidates on the bench yet"
+      : "No candidates on the bench yet")
+    : "No candidates match your filters";
+  const emptyDescription = emptyFresh
+    ? (poolFilter === "internal"
+      ? "Candidates move here automatically when they are marked as hired. You can also add a profile directly."
+      : "Add a profile to keep strong candidates warm for future roles.")
+    : "Try adjusting your search or filters.";
 
   // ── states ────────────────────────────────────────────────────────────────
 
@@ -1133,6 +1221,19 @@ export default function TalentBenchPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Talent pool</Label>
+                <Select
+                  value={formData.benchType}
+                  onValueChange={(v) => setFormData({ ...formData, benchType: v as BenchType })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="external">Talent Bench — external candidate</SelectItem>
+                    <SelectItem value="internal">My Pool — internal hire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </AdminCard>
 
@@ -1293,6 +1394,7 @@ export default function TalentBenchPage() {
           meta={
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={app.status} size="md" />
+              <PoolBadge pool={poolOf(app)} />
               {age !== null && (
                 <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">{age}d on bench</span>
               )}
@@ -1454,6 +1556,12 @@ export default function TalentBenchPage() {
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Details</h3>
               <dl className="space-y-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[var(--adm-ink-subtle)]">Pool</dt>
+                  <dd className="font-medium text-[var(--adm-ink-mute)]">
+                    {poolOf(app) === "internal" ? "My Pool (Internal)" : "Talent Bench (External)"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
                   <dt className="text-[var(--adm-ink-subtle)]">Source</dt>
                   <dd className="font-medium text-[var(--adm-ink-mute)]">{app.source || <BlankCell />}</dd>
                 </div>
@@ -1510,7 +1618,7 @@ export default function TalentBenchPage() {
           of "On bench", which the footer already counts. */}
       <WorkspaceTitle
         title="Talent bench"
-        meta={`${scopedApplications.length} candidates`}
+        meta={`${pooledApplications.length} candidates`}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0}>
@@ -1522,6 +1630,43 @@ export default function TalentBenchPage() {
           </>
         }
       />
+
+      {/* Pool tabs — everything below (KPIs, counts, grid) is scoped to the
+          selected pool, so they sit above the KPI strip, not among the filter
+          pills. */}
+      <div
+        role="tablist"
+        aria-label="Talent pool"
+        className="inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5"
+      >
+        {POOL_TABS.map((t) => {
+          const active = poolFilter === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setPoolFilter(t.key)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-semibold transition-colors",
+                active
+                  ? "bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-sm"
+                  : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",
+              )}
+            >
+              {t.label}
+              {"hint" in t && (
+                <span className="text-[11px] font-medium text-[var(--adm-ink-subtle)]">{t.hint}</span>
+              )}
+              <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-px text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                {poolCounts[t.key]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <KpiRow
         items={[
           { label: "Available now", value: kpis.available, icon: IconSuccess,
@@ -1637,11 +1782,9 @@ export default function TalentBenchPage() {
             hiddenColumns={hiddenColumns}
             empty={{
               icon: IconBoxes,
-              title: scopedApplications.length === 0 ? "No candidates on the bench yet" : "No candidates match your filters",
-              description: scopedApplications.length === 0
-                ? "Add a profile to keep strong candidates warm for future roles."
-                : "Try adjusting your search or filters.",
-              action: scopedApplications.length === 0
+              title: emptyTitle,
+              description: emptyDescription,
+              action: emptyFresh
                 ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
                 : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
             }}
@@ -1671,7 +1814,10 @@ export default function TalentBenchPage() {
                         </p>
                       </div>
                     </div>
-                    <StatusBadge status={app.status} size="md" />
+                    <div className="flex flex-none flex-col items-end gap-1">
+                      <StatusBadge status={app.status} size="md" />
+                      <PoolBadge pool={poolOf(app)} />
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
@@ -1758,12 +1904,10 @@ export default function TalentBenchPage() {
           <div>
             <EmptyState
               icon={IconBoxes}
-              variant={scopedApplications.length === 0 ? "fresh" : "filtered"}
-              title={scopedApplications.length === 0 ? "No candidates on the bench yet" : "No candidates match your filters"}
-              description={scopedApplications.length === 0
-                ? "Add a profile to keep strong candidates warm for future roles."
-                : "Try adjusting your search or filters."}
-              action={scopedApplications.length === 0
+              variant={emptyFresh ? "fresh" : "filtered"}
+              title={emptyTitle}
+              description={emptyDescription}
+              action={emptyFresh
                 ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
                 : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>}
             />

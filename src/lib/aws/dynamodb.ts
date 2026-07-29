@@ -112,6 +112,13 @@ export type ApplicationSource =
   | "Agency" | "Career Portal" | "Other";
 
 /**
+ * Which talent pool a bench record belongs to. "internal" = our own hired
+ * consultants on the bench between placements; "external" = market candidates
+ * kept warm for future roles.
+ */
+export type BenchType = "internal" | "external";
+
+/**
  * Work authorization. Mirrors WORK_AUTH_OPTIONS in components/admin/theme.ts.
  *
  * Widened from the original six because the pickers had already outgrown it:
@@ -384,6 +391,14 @@ export interface Application {
 
   // Talent bench flag
   addToTalentBench?: boolean;
+  /**
+   * Which pool a bench record belongs to: "internal" = our own hires sitting
+   * on the bench between placements, "external" = market candidates kept warm
+   * for future roles. Only meaningful when addToTalentBench is true. Legacy
+   * rows predate the field — readers fall back to status === "hired" ?
+   * "internal" : "external" (same rule the backfill script applies).
+   */
+  benchType?: BenchType;
 
   // Resume analysis (parsed by the resume-extraction Lambda)
   resumeAnalysis?: ResumeAnalysis;

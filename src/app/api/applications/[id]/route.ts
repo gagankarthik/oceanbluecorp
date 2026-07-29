@@ -140,15 +140,20 @@ export async function PUT(
 
     // Check if this is a status change or a full update
     const isStatusChange = body.status && body.status !== existingApp.data.status;
+    // Hiring a candidate moves them onto the internal bench automatically, so
+    // a hire must go through the full-update path even when the request is a
+    // bare status change.
+    const isHire = isStatusChange && body.status === "hired";
     const hasFullUpdateFields = body.firstName || body.lastName || body.address ||
       body.city || body.state || body.workAuthorization || body.source ||
       body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
       body.resumeId !== undefined || body.resumeFileName !== undefined ||
       body.addToTalentBench !== undefined || body.benchAddedBy !== undefined ||
+      body.benchType !== undefined ||
       body.resumeAnalysis !== undefined ||
       body.visaSponsorshipRequired !== undefined || body.visaExpiry !== undefined;
 
-    if (hasFullUpdateFields) {
+    if (hasFullUpdateFields || isHire) {
       // Full application update
       const updates: Partial<Application> = {};
 
@@ -205,6 +210,15 @@ export async function PUT(
       // Talent bench flag
       if (body.addToTalentBench !== undefined) updates.addToTalentBench = body.addToTalentBench;
       if (body.benchAddedBy !== undefined) updates.benchAddedBy = body.benchAddedBy;
+      if (body.benchType !== undefined) updates.benchType = body.benchType;
+
+      // Hiring moves the candidate onto the internal bench: they are now one
+      // of our own consultants. An explicit benchType in the same request
+      // still wins.
+      if (isHire) {
+        updates.addToTalentBench = body.addToTalentBench ?? true;
+        if (body.benchType === undefined) updates.benchType = "internal";
+      }
 
       // Resume fields
       if (body.resumeId !== undefined) updates.resumeId = body.resumeId;
