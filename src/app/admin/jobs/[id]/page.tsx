@@ -9,6 +9,7 @@ import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
+import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
 import JobDetailLoading from "./loading";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
@@ -306,12 +307,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     },
   ];
 
-  const requirements = job.requirements
-    ? (Array.isArray(job.requirements) ? job.requirements : [job.requirements])
-    : [];
-  const responsibilities = job.responsibilities
-    ? (Array.isArray(job.responsibilities) ? job.responsibilities : [job.responsibilities])
-    : [];
+  const hasRequirements = !!richTextToPlain(job.requirements);
+  const hasResponsibilities = !!richTextToPlain(job.responsibilities);
   const assignees = job.assignedToNames || [];
 
   return (
@@ -464,39 +461,34 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               {job.description ? (
                 <section>
                   <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Description</h3>
-                  <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{job.description}</p>
+                  <div
+                    className="text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
+                    dangerouslySetInnerHTML={renderRichText(job.description)}
+                  />
                 </section>
               ) : null}
 
-              {requirements.length > 0 && (
+              {hasRequirements && (
                 <section>
                   <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Requirements</h3>
-                  <ul className="space-y-2">
-                    {requirements.map((req, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-[13.5px] text-[var(--adm-ink-mute)]">
-                        <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--adm-accent)]" />
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
+                  <div
+                    className="text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:space-y-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:marker:text-[var(--adm-accent)]"
+                    dangerouslySetInnerHTML={renderListField(job.requirements)}
+                  />
                 </section>
               )}
 
-              {responsibilities.length > 0 && (
+              {hasResponsibilities && (
                 <section>
                   <h3 className="mb-2 text-[13px] font-medium text-[var(--adm-ink-subtle)]">Responsibilities</h3>
-                  <ul className="space-y-2">
-                    {responsibilities.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-[13.5px] text-[var(--adm-ink-mute)]">
-                        <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--adm-ink-subtle)]" />
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
+                  <div
+                    className="text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:space-y-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:marker:text-[var(--adm-ink-subtle)]"
+                    dangerouslySetInnerHTML={renderListField(job.responsibilities)}
+                  />
                 </section>
               )}
 
-              {!job.description && requirements.length === 0 && responsibilities.length === 0 && (
+              {!job.description && !hasRequirements && !hasResponsibilities && (
                 <p className="py-6 text-center text-[13px] text-[var(--adm-ink-subtle)]">No posting copy recorded for this role.</p>
               )}
             </div>

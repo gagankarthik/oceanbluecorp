@@ -384,8 +384,10 @@ export interface Job {
   location: string;
   type: "full-time" | "part-time" | "contract" | "contract-to-hire" | "direct-hire" | "managed-teams" | "remote";
   description: string;
-  requirements: string[];
-  responsibilities: string[];
+  // Rich HTML (new records) or a legacy string[] of bullet items. Read via
+  // renderListField / richTextToPlain (src/lib/rich-text) which handle both.
+  requirements: string | string[];
+  responsibilities: string | string[];
   salary?: {
     min: number;
     max: number;

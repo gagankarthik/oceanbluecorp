@@ -1,4 +1,5 @@
 import * as nodemailer from "nodemailer";
+import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 
 // SMTP Configuration for AWS SES
 const getSmtpConfig = () => ({
@@ -57,8 +58,8 @@ export interface JobPostedNotificationEmail {
   jobId: string;
   postingId?: string;
   description?: string;
-  requirements?: string[];
-  responsibilities?: string[];
+  requirements?: string | string[];
+  responsibilities?: string | string[];
   salary?: {
     min: number;
     max: number;
@@ -448,31 +449,27 @@ export async function sendJobPostedNotification(
       <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
         Job Description
       </h3>
-      <p style="color: #475569; line-height: 1.8; margin: 0; font-size: 14px; white-space: pre-wrap;">${data.description}</p>
+      <div style="color: #475569; line-height: 1.8; margin: 0; font-size: 14px;">${renderRichText(data.description).__html}</div>
     </div>
     ` : ""}
 
     <!-- Key Responsibilities -->
-    ${data.responsibilities && data.responsibilities.length > 0 ? `
+    ${richTextToPlain(data.responsibilities) ? `
     <div style="margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
         Key Responsibilities
       </h3>
-      <ul style="color: #475569; line-height: 1.8; margin: 8px 0; padding-left: 24px; font-size: 14px;">
-        ${data.responsibilities.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join("")}
-      </ul>
+      <div style="color: #475569; line-height: 1.8; margin: 8px 0; font-size: 14px;">${renderListField(data.responsibilities).__html}</div>
     </div>
     ` : ""}
 
     <!-- Requirements & Qualifications -->
-    ${data.requirements && data.requirements.length > 0 ? `
+    ${richTextToPlain(data.requirements) ? `
     <div style="margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
         Requirements & Qualifications
       </h3>
-      <ul style="color: #475569; line-height: 1.8; margin: 8px 0; padding-left: 24px; font-size: 14px;">
-        ${data.requirements.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join("")}
-      </ul>
+      <div style="color: #475569; line-height: 1.8; margin: 8px 0; font-size: 14px;">${renderListField(data.requirements).__html}</div>
     </div>
     ` : ""}
 
@@ -520,17 +517,17 @@ ${data.clientBillRate ? `Client Bill Rate: $${data.clientBillRate}/hour` : ""}
 
 ${data.description ? `
 === JOB DESCRIPTION ===
-${data.description}
+${richTextToPlain(data.description)}
 ` : ""}
 
-${data.responsibilities && data.responsibilities.length > 0 ? `
+${richTextToPlain(data.responsibilities) ? `
 === KEY RESPONSIBILITIES ===
-${data.responsibilities.map((r, i) => `${i + 1}. ${r}`).join("\n")}
+${richTextToPlain(data.responsibilities)}
 ` : ""}
 
-${data.requirements && data.requirements.length > 0 ? `
+${richTextToPlain(data.requirements) ? `
 === REQUIREMENTS & QUALIFICATIONS ===
-${data.requirements.map((r, i) => `${i + 1}. ${r}`).join("\n")}
+${richTextToPlain(data.requirements)}
 ` : ""}
 
 View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}

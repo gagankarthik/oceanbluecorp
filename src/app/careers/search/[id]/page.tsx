@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getJob, toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
+import { richTextToPlain } from "@/lib/rich-text";
 import JobDetailsClient from "./JobDetailsClient";
 
 interface Props {
@@ -98,8 +99,8 @@ function jobPostingLd(job: PublicJob, id: string) {
           },
         }
       : {}),
-    ...(job.responsibilities?.length ? { responsibilities: job.responsibilities.join(" ") } : {}),
-    ...(job.requirements?.length ? { qualifications: job.requirements.join(" ") } : {}),
+    ...(richTextToPlain(job.responsibilities) ? { responsibilities: richTextToPlain(job.responsibilities) } : {}),
+    ...(richTextToPlain(job.requirements) ? { qualifications: richTextToPlain(job.requirements) } : {}),
     directApply: true,
     url: `https://oceanbluecorp.com/careers/search/${id}`,
   };

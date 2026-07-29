@@ -12,9 +12,9 @@ import { US_STATES, normalizeState } from "@/components/admin/theme";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
 import { WorkspaceButton } from "@/components/admin/workspace";
-import { Field, FormInput, MoneyInput, FormSelect, FormTextarea, AssigneePicker, AssigneeUser } from "./primitives";
+import { Field, FormInput, MoneyInput, FormSelect, AssigneePicker, AssigneeUser } from "./primitives";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
-import { renderRichText } from "@/lib/rich-text";
+import { renderRichText, renderListField } from "@/lib/rich-text";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -118,8 +118,10 @@ export function jobToFormData(job: Job): JobFormData {
     assignedToNames: job.assignedToNames || (job.assignedToName ? [job.assignedToName] : []),
     assignedToEmails: job.assignedToEmails || [],
     description: job.description || "",
-    requirements: Array.isArray(job.requirements) ? job.requirements.join("\n") : (job.requirements || ""),
-    responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.join("\n") : (job.responsibilities || ""),
+    // Seed the rich editor with HTML — a legacy string[] becomes a <ul>, HTML
+    // passes through unchanged.
+    requirements: renderListField(job.requirements).__html,
+    responsibilities: renderListField(job.responsibilities).__html,
   };
 }
 
@@ -132,8 +134,10 @@ export function formDataToPayload(data: JobFormData) {
     state: data.state || undefined,
     type: data.type,
     description: data.description,
-    requirements: parseLines(data.requirements),
-    responsibilities: parseLines(data.responsibilities),
+    // Rich HTML now (server sanitizes on save). Empty editors send undefined so
+    // an empty <ul></ul> or stray <br> isn't stored.
+    requirements: data.requirements?.trim() ? data.requirements : undefined,
+    responsibilities: data.responsibilities?.trim() ? data.responsibilities : undefined,
     salary: data.salaryMin && data.salaryMax
       ? { min: parseInt(data.salaryMin), max: parseInt(data.salaryMax), currency: "$" }
       : undefined,
@@ -463,22 +467,20 @@ export function JobForm({
                   placeholder="Describe the role, team, and what makes this opportunity exciting…"
                 />
               </Field>
-              <Field label="Requirements" hint="One item per line" htmlFor="job-requirements">
-                <FormTextarea
+              <Field label="Requirements" hint="Use the list button for bullet points" htmlFor="job-requirements">
+                <RichTextEditor
                   id="job-requirements"
-                  rows={6}
                   value={data.requirements}
-                  onChange={(e) => set("requirements", e.target.value)}
-                  placeholder={"Bachelor's degree in Computer Science\n5+ years of experience\nProficiency in React and Node.js"}
+                  onChange={(html) => set("requirements", html)}
+                  placeholder="Bachelor's degree in Computer Science; 5+ years of experience; proficiency in React and Node.js…"
                 />
               </Field>
-              <Field label="Responsibilities" hint="One item per line" htmlFor="job-responsibilities">
-                <FormTextarea
+              <Field label="Responsibilities" hint="Use the list button for bullet points" htmlFor="job-responsibilities">
+                <RichTextEditor
                   id="job-responsibilities"
-                  rows={6}
                   value={data.responsibilities}
-                  onChange={(e) => set("responsibilities", e.target.value)}
-                  placeholder={"Design and implement new features\nCollaborate with cross-functional teams\nConduct code reviews"}
+                  onChange={(html) => set("responsibilities", html)}
+                  placeholder="Design and implement new features; collaborate with cross-functional teams; conduct code reviews…"
                 />
               </Field>
             </div>
@@ -661,13 +663,19 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
           {data.responsibilities && (
             <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
               <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Responsibilities</h2>
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--adm-ink-mute)]">{data.responsibilities}</pre>
+              <div
+                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={renderRichText(data.responsibilities)}
+              />
             </div>
           )}
           {data.requirements && (
             <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
               <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Requirements</h2>
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--adm-ink-mute)]">{data.requirements}</pre>
+              <div
+                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={renderRichText(data.requirements)}
+              />
             </div>
           )}
 

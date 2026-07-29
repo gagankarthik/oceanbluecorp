@@ -2,14 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, Search, Command, X } from "lucide-react";
+import { Check, Search, Command, X, Plus, Loader2 } from "lucide-react";
 import {
-  IconBook, IconCopy, IconHelp, IconMail, IconPhone,
+  IconBook, IconCopy, IconHelp, IconMail, IconPhone, IconEdit, IconTrash,
 } from "@/components/admin/icons";
-import { PageHeader } from "@/components/admin/page-header";
+import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { Avatar } from "@/components/admin/avatar";
 import { Kbd } from "@/components/admin/kbd";
 import { useAdmin } from "@/components/admin/admin-provider";
+import { useAuth, UserRole } from "@/lib/auth";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 /* ============================================================================
@@ -36,7 +38,10 @@ interface TeamMember {
   team: Team;
 }
 
-const teamMembers: TeamMember[] = [
+const TEAMS: Team[] = ["Leadership", "People & HR", "Recruiting", "Sales"];
+
+/** Built-in seed — shown until Admin/HR save a directory to the content store. */
+const DEFAULT_TEAM: TeamMember[] = [
   { name: "Sarojini Gude",       designation: "President",                  email: "sgude@oceanbluecorp.com",    phone: "",                   team: "Leadership"  },
   { name: "Ravi OceanBlue",      designation: "Chief Operating Officer",    email: "ravi@oceanbluecorp.com",     phone: "+1 (614) 352-0189",  team: "Leadership"  },
   { name: "Sushma Moturu",       designation: "Global HR",                  email: "hr@oceanbluecorp.com",       phone: "+1 (614) 352-2777",  team: "People & HR" },
@@ -171,21 +176,160 @@ function DirectoryCard({ member }: { member: TeamMember }) {
   );
 }
 
+// ── directory editor (Admin / HR) ────────────────────────────────────────────
+
+/** Modal for Admin/HR to add, edit and remove directory people. Saves the whole
+ *  list to the content store via /api/help/directory. */
+function DirectoryEditor({
+  initial, onClose, onSaved,
+}: {
+  initial: TeamMember[];
+  onClose: () => void;
+  onSaved: (members: TeamMember[]) => void;
+}) {
+  const { user } = useAuth();
+  const [rows, setRows] = React.useState<TeamMember[]>(initial.length ? initial : DEFAULT_TEAM);
+  const [saving, setSaving] = React.useState(false);
+
+  const update = (i: number, patch: Partial<TeamMember>) =>
+    setRows((r) => r.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
+  const remove = (i: number) => setRows((r) => r.filter((_, idx) => idx !== i));
+  const add = () =>
+    setRows((r) => [...r, { name: "", designation: "", email: "", phone: "", team: "Recruiting" }]);
+
+  const save = async () => {
+    const cleaned = rows
+      .map((m) => ({ ...m, name: m.name.trim(), email: m.email.trim() }))
+      .filter((m) => m.name || m.email);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/help/directory", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members: cleaned, updatedByName: user?.name }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Failed to save");
+      }
+      onSaved(cleaned);
+      toast.success("Directory updated");
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save directory");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls =
+    "h-9 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 text-[13px] text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
+
+  return (
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit directory"
+    >
+      <div
+        className="flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
+          <div>
+            <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Edit directory</h2>
+            <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">Add, edit or remove the people shown on the Help page.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-8 w-8 place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-5">
+          {rows.map((m, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-3">
+              <input className={cn(inputCls, "w-full sm:w-40")} placeholder="Name" value={m.name} onChange={(e) => update(i, { name: e.target.value })} />
+              <input className={cn(inputCls, "w-full sm:w-40")} placeholder="Title" value={m.designation} onChange={(e) => update(i, { designation: e.target.value })} />
+              <input className={cn(inputCls, "min-w-[160px] flex-1")} placeholder="Email" value={m.email} onChange={(e) => update(i, { email: e.target.value })} />
+              <input className={cn(inputCls, "w-full sm:w-36")} placeholder="Phone" value={m.phone} onChange={(e) => update(i, { phone: e.target.value })} />
+              <select
+                className={cn(inputCls, "w-full appearance-none sm:w-36")}
+                value={m.team}
+                onChange={(e) => update(i, { team: e.target.value as Team })}
+                aria-label="Team"
+              >
+                {TEAMS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                aria-label={`Remove ${m.name || "person"}`}
+                className="grid h-9 w-9 flex-none place-items-center rounded-[6px] text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+              >
+                <IconTrash className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border border-dashed border-[var(--adm-line-strong)] px-3 py-2 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]"
+          >
+            <Plus className="h-4 w-4" /> Add person
+          </button>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3">
+          <PageHeaderButton variant="secondary" onClick={onClose}>Cancel</PageHeaderButton>
+          <PageHeaderButton variant="primary" onClick={save} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
+          </PageHeaderButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── page ─────────────────────────────────────────────────────────────────────
 
 export default function HelpPage() {
   const { openCommandPalette } = useAdmin();
+  const { user } = useAuth();
+  const canEdit = user?.role === UserRole.ADMIN || user?.role === UserRole.HR;
+
+  const [members, setMembers] = React.useState<TeamMember[]>(DEFAULT_TEAM);
+  const [editing, setEditing] = React.useState(false);
   const [query, setQuery] = React.useState("");
+
+  // Load the stored directory; fall back to the built-in defaults when none has
+  // been saved yet.
+  React.useEffect(() => {
+    let alive = true;
+    fetch("/api/help/directory")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d && Array.isArray(d.members) && d.members.length) setMembers(d.members);
+      })
+      .catch(() => { /* keep defaults */ });
+    return () => { alive = false; };
+  }, []);
 
   const q = query.trim().toLowerCase();
   const matches = React.useMemo(
     () =>
       !q
-        ? teamMembers
-        : teamMembers.filter((m) =>
+        ? members
+        : members.filter((m) =>
             [m.name, m.designation, m.email, m.team].some((f) => f.toLowerCase().includes(q)),
           ),
-    [q],
+    [q, members],
   );
 
   const groups = TEAM_ORDER.map((t) => ({
@@ -198,6 +342,11 @@ export default function HelpPage() {
       <PageHeader
         title="Help & contacts"
         subtitle="Who to reach at Ocean Blue, and how to get unstuck."
+        actions={canEdit ? (
+          <PageHeaderButton variant="secondary" onClick={() => setEditing(true)}>
+            <IconEdit className="h-4 w-4" /> Edit directory
+          </PageHeaderButton>
+        ) : undefined}
       />
 
       {/* ── Ways to get help ──
@@ -315,6 +464,14 @@ export default function HelpPage() {
             </section>
           ))}
         </div>
+      )}
+
+      {editing && canEdit && (
+        <DirectoryEditor
+          initial={members}
+          onClose={() => setEditing(false)}
+          onSaved={setMembers}
+        />
       )}
     </div>
   );

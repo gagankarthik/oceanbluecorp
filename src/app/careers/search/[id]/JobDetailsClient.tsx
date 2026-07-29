@@ -386,7 +386,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               >
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">What you'll do</h2>
                 {typeof job.responsibilities === 'string' ? (
-                  <pre className="text-slate-600 text-base leading-relaxed whitespace-pre-wrap break-words font-sans">{job.responsibilities}</pre>
+                  <div
+                    className="text-slate-600 text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
+                    dangerouslySetInnerHTML={renderRichText(job.responsibilities)}
+                  />
                 ) : (
                   <ul className="space-y-4">
                     {job.responsibilities.map((item, i) => (
@@ -411,7 +414,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               >
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">What we're looking for</h2>
                 {typeof job.requirements === 'string' ? (
-                  <pre className="text-slate-600 text-base leading-relaxed whitespace-pre-wrap break-words font-sans">{job.requirements}</pre>
+                  <div
+                    className="text-slate-600 text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
+                    dangerouslySetInnerHTML={renderRichText(job.requirements)}
+                  />
                 ) : (
                   <ul className="space-y-4">
                     {job.requirements.map((item, i) => (
