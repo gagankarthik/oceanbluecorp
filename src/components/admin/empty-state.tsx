@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import { FilterX, FolderOpen, AlertTriangle, Lock } from "lucide-react";
+import type { IconComponent } from "./icons";
 import { tones, type Tone } from "./theme";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,7 @@ export type EmptyVariant = "fresh" | "filtered" | "error" | "permission";
 
 const VARIANT_DEFAULTS: Record<
   EmptyVariant,
-  { icon: LucideIcon; tone: Tone; fallbackTitle: string; fallbackDescription: string }
+  { icon: IconComponent; tone: Tone; fallbackTitle: string; fallbackDescription: string }
 > = {
   fresh: {
     icon: FolderOpen,
@@ -38,7 +38,7 @@ const VARIANT_DEFAULTS: Record<
 
 interface EmptyStateProps {
   /** Icon override — uses variant default when omitted. */
-  icon?: LucideIcon;
+  icon?: IconComponent;
   title?: string;
   description?: string;
   tone?: Tone;

@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
+import { PageHeaderButton } from "@/components/admin/page-header";
 
 // ── config ───────────────────────────────────────────────────────────────────
 

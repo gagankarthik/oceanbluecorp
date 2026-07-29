@@ -67,6 +67,6 @@ export function PageHeader({ title, subtitle, actions, meta, className }: PageHe
 export function PageHeaderButton({
   variant = "primary",
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost"; asChild?: boolean }) {
   return <WorkspaceButton variant={variant} {...props} />;
 }

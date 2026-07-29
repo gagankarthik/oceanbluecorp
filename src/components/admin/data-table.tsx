@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "./icons";
 import { ArrowUp, ArrowDown, ChevronsUpDown, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "./empty-state";
@@ -73,7 +73,7 @@ interface DataTableProps<T> {
   loading?: boolean;
   /** Shown when rows is empty (and not loading). */
   empty?: {
-    icon?: LucideIcon;
+    icon?: IconComponent;
     title: string;
     description?: string;
     action?: React.ReactNode;

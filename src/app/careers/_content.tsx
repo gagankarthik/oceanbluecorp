@@ -168,22 +168,21 @@ export default function CareersPage() {
             </div>
           </Reveal>
 
-          <Stagger className="lg:col-span-7" gap={0.08}>
+          <Stagger className="grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:col-span-7 lg:grid-cols-3" gap={0.08}>
             {culture.map((c) => (
               <StaggerItem key={c.title}>
-                <div className="flex gap-5 border-t border-[var(--hz-band-line)] py-7 first:border-t-0 first:pt-0 sm:gap-6">
-                  <div className="mt-0.5 h-16 w-16 flex-none overflow-hidden rounded-xl ring-1 ring-[var(--hz-band-line)] sm:h-20 sm:w-20">
+                {/* Image leads the card; title + copy sit below it. */}
+                <div className="flex h-full flex-col">
+                  <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl ring-1 ring-[var(--hz-band-line)]">
                     <Photo
                       src={c.img}
                       alt={c.title}
                       className="h-full w-full object-cover"
-                      sizes="80px"
+                      sizes="(min-width: 1024px) 260px, (min-width: 640px) 45vw, 100vw"
                     />
                   </div>
-                  <div>
-                    <h3 className="hz-display text-[1.2rem] text-[var(--hz-text)] sm:text-[1.35rem]">{c.title}</h3>
-                    <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{c.desc}</p>
-                  </div>
+                  <h3 className="hz-display mt-5 text-[1.2rem] text-[var(--hz-text)] sm:text-[1.35rem]">{c.title}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{c.desc}</p>
                 </div>
               </StaggerItem>
             ))}

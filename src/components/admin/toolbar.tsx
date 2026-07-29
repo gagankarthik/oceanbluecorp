@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "./icons";
 import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -258,7 +258,7 @@ export function FilterToggle({
 export interface ViewOption<V extends string> {
   value: V;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
 }
 
 /** Segmented control for table/kanban/list (or grid/list) view modes. */

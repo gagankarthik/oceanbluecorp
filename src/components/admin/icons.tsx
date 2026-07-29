@@ -1,4 +1,12 @@
-import type { SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
+
+/**
+ * Any admin icon component — one of the custom glyphs in this file OR a lucide
+ * glyph. Props typed with this accept BOTH, which the plain `LucideIcon` type
+ * (a forwardRef exotic) does not: the custom icons are plain function
+ * components. Use this for any `icon` prop that a page might feed a custom icon.
+ */
+export type IconComponent = ComponentType<{ className?: string; strokeWidth?: number | string }>;
 
 /* ============================================================
    Custom admin iconography.

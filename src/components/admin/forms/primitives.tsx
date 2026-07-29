@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "../icons";
 import { AlertCircle, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/admin/avatar";
@@ -11,13 +11,16 @@ import { Avatar } from "@/components/admin/avatar";
 // in a soft header band, content padded below.
 
 interface SectionProps {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description?: string;
   /** Optional slot rendered on the right of the header (e.g. a small action). */
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  /** Accepted for back-compat with older call sites; the redesigned header uses
+   *  a plain muted glyph, so the tinted-chip tone is no longer applied. */
+  tone?: string;
 }
 
 export function FormSection({

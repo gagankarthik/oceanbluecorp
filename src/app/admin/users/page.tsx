@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   ChevronDown, X, Loader2, Check,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/admin/icons";
 import {
   IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup,
   IconUserPlus, IconSend, IconClock, IconUserMinus,
@@ -46,7 +46,7 @@ interface User {
  */
 const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter"];
 
-const ROLE_META: Record<Role, { label: string; tone: Tone; icon: LucideIcon; desc: string }> = {
+const ROLE_META: Record<Role, { label: string; tone: Tone; icon: IconComponent; desc: string }> = {
   admin:     { label: "Admin",     tone: "rose",   icon: IconShield,    desc: "Full access to all features, settings, and user management" },
   hr:        { label: "HR",        tone: "violet", icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
   sales:     { label: "Sales",     tone: "amber",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
