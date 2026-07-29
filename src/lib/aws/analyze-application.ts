@@ -4,9 +4,10 @@
 //
 // Personal information is never written back — only the structured resume
 // sections (experience, education, skills, analytics, …) are stored.
-import { getApplication, getResume, updateApplication } from "./dynamodb";
+import { getApplication, getJob, getResume, updateApplication } from "./dynamodb";
 import { getResumeObject } from "./s3";
 import { parseResumeBuffer } from "./resume-parser";
+import { embedResume, scoreResume, jobToPayload } from "./match-candidates";
 
 export interface AnalyzeResult {
   success: boolean;
@@ -81,6 +82,53 @@ export async function analyzeApplicationResume(applicationId: string): Promise<A
 
   if (!saveResult.success) {
     return { success: false, error: saveResult.error || "Failed to save analysis", status: 500 };
+  }
+
+  // Index this candidate in the matching engine so it's searchable immediately.
+  // Best-effort: a matching-service hiccup must not fail resume analysis.
+  const embedded = await embedResume({
+    resumeId: applicationId,
+    analysis: parsed.analysis,
+    candidateName: app.name,
+    source: "application",
+  });
+  if (!embedded.success) {
+    console.error(`[analyze] matching-engine embed failed (non-fatal) for ${applicationId}: ${embedded.error}`);
+  }
+
+  // Auto-score this candidate against the job they applied for, so the
+  // application shows "matched / not matched" + missing skills without anyone
+  // clicking. Best-effort — never fails the analysis.
+  if (app.jobId) {
+    try {
+      const jobRes = await getJob(app.jobId);
+      if (jobRes.success && jobRes.data) {
+        const scored = await scoreResume({
+          job: jobToPayload(jobRes.data),
+          analysis: parsed.analysis,
+          candidateName: app.name,
+          resumeId: applicationId,
+        });
+        if (scored.success && scored.fit) {
+          const f = scored.fit;
+          await updateApplication(applicationId, {
+            jobFit: {
+              fitScore: f.fit_score,
+              qualified: f.qualified,
+              verdict: f.verdict,
+              matchedSkills: f.matched_skills || [],
+              missingSkills: f.missing_skills || [],
+              rationale: f.rationale ?? null,
+            },
+            jobFitAt: new Date().toISOString(),
+          });
+        } else if (!scored.success) {
+          console.error(`[analyze] job-fit scoring failed (non-fatal) for ${applicationId}: ${scored.error}`);
+        }
+      }
+    } catch (e) {
+      console.error(`[analyze] job-fit auto-score errored (non-fatal) for ${applicationId}:`, e);
+    }
   }
 
   return { success: true };

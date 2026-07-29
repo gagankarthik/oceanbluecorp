@@ -7,6 +7,8 @@ import {
   parseResumeBankKey,
 } from "@/lib/aws";
 import { requireStaff } from "@/lib/auth/verify";
+import { parseResumeBuffer } from "@/lib/aws/resume-parser";
+import { embedResume, resumesIndexed } from "@/lib/aws/match-candidates";
 
 function deriveFileType(fileName: string): string {
   const ext = fileName.split(".").pop()?.toLowerCase();
@@ -42,7 +44,11 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
-    return NextResponse.json({ success: true, resumes });
+    // Best-effort index status per resume (empty map if the engine is unreachable).
+    const indexMap = await resumesIndexed(resumes.map((r) => r.fileKey));
+    const withStatus = resumes.map((r) => ({ ...r, indexed: !!indexMap[r.fileKey] }));
+
+    return NextResponse.json({ success: true, resumes: withStatus });
   } catch (error) {
     console.error("Resume bank list error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -90,6 +96,20 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
+
+    // Best-effort: parse + index this resume so it's searchable by skills in the
+    // bank. Fire-and-forget keeps the upload fast; failures are non-fatal (the
+    // backfill script re-indexes anything missed). resumeId = the S3 key.
+    void (async () => {
+      try {
+        const parsed = await parseResumeBuffer(buffer, fileName, fileType);
+        if (parsed.success && parsed.analysis) {
+          await embedResume({ resumeId: fileKey, analysis: parsed.analysis, candidateName, source: "bank" });
+        }
+      } catch (e) {
+        console.error(`[resume-bank] auto-index failed (non-fatal) for ${fileKey}:`, e);
+      }
+    })();
 
     return NextResponse.json({ success: true, fileKey });
   } catch (error) {

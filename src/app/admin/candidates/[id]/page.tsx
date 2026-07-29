@@ -13,6 +13,7 @@ import { AdminDetailSkeleton } from "@/components/admin/skeletons";
 import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
 import { ResumeAnalysisEditDrawer } from "@/components/admin/resume-analysis-edit-drawer";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { JobFitCard } from "@/components/admin/job-fit-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
@@ -571,6 +572,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                       </p>
                     )}
                   </AdminCard>
+                  <JobFitCard applicationId={id} />
                   <ResumeAnalysisPanel analysis={candidate.resumeAnalysis} />
                 </>
               ) : candidate.resumeId ? (

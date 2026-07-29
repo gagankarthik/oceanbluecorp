@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, type ComponentType } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Check, Copy } from "lucide-react";
+import * as AdminIcons from "@/components/admin/icons";
+import { cn } from "@/lib/utils";
 
 type Swatch = { name: string; hex: string; varName: string; note?: string; dark?: boolean };
 
@@ -68,6 +70,60 @@ function CopyChip({ value }: { value: string }) {
     >
       {value}
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 opacity-50" />}
+    </button>
+  );
+}
+
+// Every custom glyph exported from the admin icon set. Type exports are erased
+// at runtime, so filtering to Icon-named function values yields exactly the
+// components — no manual list to keep in sync.
+const ICON_ENTRIES = (Object.entries(AdminIcons) as [string, unknown][])
+  .filter(([name, v]) => name.startsWith("Icon") && typeof v === "function")
+  .sort(([a], [b]) => a.localeCompare(b)) as [string, ComponentType<{ className?: string }>][];
+
+/** One icon tile — click copies the rendered <svg> markup to the clipboard. */
+function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ className?: string }> }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    const svg = ref.current?.querySelector("svg");
+    if (!svg) return;
+    // Copy a clean, self-contained SVG: drop the React className, pin a size.
+    const clone = svg.cloneNode(true) as SVGElement;
+    clone.removeAttribute("class");
+    clone.setAttribute("width", "24");
+    clone.setAttribute("height", "24");
+    try {
+      await navigator.clipboard.writeText(clone.outerHTML);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // clipboard is permission-gated / unavailable on plain http — no-op
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={`Copy ${name} SVG`}
+      aria-label={copied ? `${name} SVG copied` : `Copy ${name} SVG`}
+      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md"
+    >
+      <span ref={ref} className="text-[var(--hz-cobalt)]">
+        <Icon className="h-6 w-6" />
+      </span>
+      <span className="w-full truncate text-center font-mono text-[10.5px] text-[var(--hz-text-mute)]">{name}</span>
+      <span
+        aria-hidden
+        className={cn(
+          "absolute right-1.5 top-1.5 transition-colors",
+          copied ? "text-emerald-500" : "text-slate-300 group-hover:text-slate-400",
+        )}
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      </span>
     </button>
   );
 }
@@ -168,6 +224,20 @@ export default function BrandKitContent() {
                 <span className="rounded-2xl bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">rounded-2xl (cards)</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Icons */}
+        <section>
+          <SectionHeading
+            n="05"
+            title="Icons"
+            sub="The custom Ocean Blue icon set — drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
+          />
+          <div className="mt-8 grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+            {ICON_ENTRIES.map(([name, Icon]) => (
+              <IconCell key={name} name={name} Icon={Icon} />
+            ))}
           </div>
         </section>
       </div>

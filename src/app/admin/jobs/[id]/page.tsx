@@ -15,18 +15,16 @@ import JobDetailLoading from "./loading";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { WorkspaceButton } from "@/components/admin/workspace";
+import { BestCandidates } from "@/components/admin/best-candidates";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { StatCard, KpiStrip } from "@/components/admin/stat-card";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
-import { ChartPanel, FunnelChart, BreakdownBars, type BreakdownItem } from "@/components/admin/charts";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { SearchInput } from "@/components/admin/toolbar";
 import { Avatar } from "@/components/admin/avatar";
 import {
-  IconRequisition, IconPipeline, IconConversion, IconSource,
-  IconWarning, IconChart, IconBuilding, IconCalendar, IconCopy, IconMoney,
+  IconRequisition, IconWarning, IconBuilding, IconCopy, IconMoney,
   IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
-  IconUserCheck, IconGroup, IconClock,
+  IconUserCheck, IconGroup, IconSource,
 } from "@/components/admin/icons";
 import { statusMeta, PIPELINE_STAGES, SERIES, type AppStatus } from "@/components/admin/theme";
 import {
@@ -35,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type Tab = "info" | "applicants";
+type Tab = "info" | "applicants" | "candidates";
 
 const DAY = 86400000;
 
@@ -171,32 +169,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   // ── summary figures ─────────────────────────────────────────────────────────
   const hired      = pipelineCounts["hired"] || 0;
   const rejected   = pipelineCounts["rejected"] || 0;
-  const inPipeline = applications.length - hired - rejected;
-  const daysOpen   = Math.max(0, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / DAY));
-  const daysToDue  = job.submissionDueDate
-    ? Math.ceil((new Date(job.submissionDueDate).getTime() - Date.now()) / DAY)
-    : null;
-
-  /** Stage drop-off for this requisition — the ordered hiring flow. */
-  const funnelStages = PIPELINE_STAGES.map((s) => ({
-    label: s.label,
-    value: pipelineCounts[s.key] || 0,
-    onClick: () => { setActiveTab("applicants"); setStatusFilter(s.key); },
-  }));
-
-  /** Channel attribution, capped at the five categorical slots. */
-  const sourceItems: BreakdownItem[] = (() => {
-    const map = new Map<string, number>();
-    for (const a of applications) {
-      const s = a.source || "Unknown";
-      map.set(s, (map.get(s) || 0) + 1);
-    }
-    const ranked = [...map.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
-    if (ranked.length <= 5) return ranked;
-    const head = ranked.slice(0, 4);
-    const tail = ranked.slice(4).reduce((s, r) => s + r.value, 0);
-    return [...head, { label: `Other (${ranked.length - 4})`, value: tail, color: SERIES.neutral }];
-  })();
 
   // ── applicant grid ──────────────────────────────────────────────────────────
   const columns: DataTableColumn<Application>[] = [
@@ -385,37 +357,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      {/* ── Summary strip ── */}
-      <KpiStrip cols={5}>
-        <StatCard size="sm" label="Applicants"   value={applications.length} icon={IconGroup}           tone="slate" />
-        <StatCard size="sm" label="In pipeline"  value={inPipeline}          icon={IconPipeline}    tone="slate" hint={`${rejected} rejected`} />
-        <StatCard size="sm" label="Hired"        value={hired}               icon={IconConversion}  tone="slate"
-          hint={applications.length > 0 ? `${Math.round((hired / applications.length) * 100)}% of applicants` : "No applicants yet"} />
-        <StatCard size="sm" label="Days open"    value={daysOpen}            icon={IconClock}           tone="slate" hint={`Posted ${fmtDate(job.createdAt)}`} />
-        <StatCard
-          size="sm"
-          label="Days to deadline"
-          value={daysToDue === null ? "—" : daysToDue}
-          icon={IconCalendar}
-          tone="slate"
-          hint={job.submissionDueDate
-            ? (daysToDue !== null && daysToDue < 0 ? `Overdue since ${fmtDate(job.submissionDueDate)}` : `Due ${fmtDate(job.submissionDueDate)}`)
-            : "No deadline set"}
-        />
-      </KpiStrip>
-
-      {/* ── Analytics — only where there is something to plot ── */}
-      {applications.length > 0 && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartPanel icon={IconChart} title="Applicant pipeline" subtitle="Click a stage to filter the list">
-            <FunnelChart stages={funnelStages} />
-          </ChartPanel>
-          <ChartPanel icon={IconSource} title="Source mix" subtitle="Where these applicants came from">
-            <BreakdownBars items={sourceItems} emptyMessage="No source data yet" />
-          </ChartPanel>
-        </div>
-      )}
-
       {/* ── Body: main + sidebar ── */}
       <div className="grid items-start gap-4 lg:grid-cols-3">
 
@@ -424,8 +365,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           {/* Tab bar */}
           <div className="flex border-b border-[var(--adm-line)] px-2">
             {([
-              { id: "applicants" as Tab, label: "Applicants", count: applications.length, icon: IconGroup    },
-              { id: "info" as Tab,       label: "About job",  count: undefined,           icon: IconFile },
+              { id: "applicants" as Tab, label: "Applicants",     count: applications.length, icon: IconGroup },
+              { id: "candidates" as Tab, label: "Best candidates", count: undefined,          icon: IconSource },
+              { id: "info" as Tab,       label: "About job",      count: undefined,          icon: IconFile },
             ] as const).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -454,6 +396,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               );
             })}
           </div>
+
+          {/* ── Best candidates ── */}
+          {activeTab === "candidates" && <BestCandidates jobId={jobId} bare />}
 
           {/* ── About job ── */}
           {activeTab === "info" && (

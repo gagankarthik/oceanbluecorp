@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { LayoutGrid, LayoutList, X, Loader2 } from "lucide-react";
+import { LayoutGrid, LayoutList, X, Loader2, Check } from "lucide-react";
 import {
   IconDownload, IconEye, IconFile, IconSuccess, IconTrash, IconUpload,
   IconWarning,
@@ -36,6 +36,9 @@ interface BankResume {
   candidateName?: string;
   uploaderEmail: string;
   uploadedAt: string;
+  indexed?: boolean;        // in the matching bank (searchable) yet?
+  indexing?: boolean;       // client-side: an index request is in flight
+  indexFailed?: boolean;    // client-side: last index attempt failed (retryable)
 }
 
 type UploadStatus = "pending" | "uploading" | "done" | "error";
@@ -325,6 +328,54 @@ export default function ResumeBankPage() {
     </div>
   );
 
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
+
+  // Parse + index a set of resumes so they become searchable (Lead Sourcing /
+  // Best candidates). Limited concurrency, one short request per resume, live
+  // per-row status; failures are isolated and retryable.
+  const indexKeys = useCallback(
+    async (targets: BankResume[]) => {
+      if (targets.length === 0 || bulkRunning) return;
+      const ids = new Set(targets.map((t) => t.id));
+      setResumes((prev) => prev.map((x) => (ids.has(x.id) ? { ...x, indexing: true, indexFailed: false } : x)));
+      setBulkRunning(true);
+      setBulkProgress({ done: 0, total: targets.length });
+
+      let cursor = 0;
+      let done = 0;
+      const worker = async () => {
+        while (cursor < targets.length) {
+          const r = targets[cursor++];
+          try {
+            const res = await fetch("/api/resume-bank/index", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ fileKeys: [r.fileKey] }),
+            });
+            const data = await res.json().catch(() => ({}));
+            const ok = res.ok && data?.results?.[r.fileKey]?.indexed;
+            setResumes((prev) =>
+              prev.map((x) => (x.id === r.id ? { ...x, indexing: false, indexed: !!ok, indexFailed: !ok } : x)),
+            );
+          } catch {
+            setResumes((prev) => prev.map((x) => (x.id === r.id ? { ...x, indexing: false, indexFailed: true } : x)));
+          } finally {
+            done += 1;
+            setBulkProgress({ done, total: targets.length });
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(3, targets.length) }, worker));
+      setBulkRunning(false);
+    },
+    [bulkRunning],
+  );
+
+  const indexAll = useCallback(() => {
+    indexKeys(resumes.filter((r) => !r.indexed && !r.indexing));
+  }, [resumes, indexKeys]);
+
   const columns: DataTableColumn<BankResume>[] = [
     {
       key: "fileName", header: "File", sortValue: (r) => r.fileName,
@@ -360,6 +411,30 @@ export default function ResumeBankPage() {
     {
       key: "uploadedAt", header: "Uploaded", sortValue: (r) => new Date(r.uploadedAt).getTime(), hideBelow: "sm",
       cell: (r) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(r.uploadedAt)}</span>,
+    },
+    {
+      key: "indexed", header: "Indexed", sortValue: (r) => (r.indexed ? 2 : r.indexFailed ? 0 : 1), hideBelow: "sm",
+      cell: (r) =>
+        r.indexing ? (
+          <span className="inline-flex items-center gap-1.5 text-[12px] text-[var(--adm-ink-mute)]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Indexing…
+          </span>
+        ) : r.indexed ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[12px] font-semibold text-emerald-700">
+            <Check className="h-3 w-3" strokeWidth={2.5} /> Indexed
+          </span>
+        ) : r.indexFailed ? (
+          <button
+            type="button"
+            onClick={() => indexKeys([r])}
+            disabled={bulkRunning}
+            className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-red-700 transition-colors hover:bg-red-500/15 disabled:opacity-50"
+          >
+            Failed · Retry
+          </button>
+        ) : (
+          <span className="text-[12px] text-[var(--adm-ink-subtle)]">Not indexed</span>
+        ),
     },
     {
       key: "actions", header: "", align: "right",
@@ -563,6 +638,27 @@ export default function ResumeBankPage() {
           ]}
           onClearAll={clearFilters}
         />
+
+      {/* ── indexing banner ── */}
+      {!loading && !error && bulkRunning && (
+        <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
+          <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
+          <span className="text-[14px] text-[var(--adm-ink)]">
+            Indexing resumes… {bulkProgress.done}/{bulkProgress.total}. This can take a while — you can keep working.
+          </span>
+        </div>
+      )}
+      {!loading && !error && !bulkRunning && resumes.some((r) => !r.indexed) && (
+        <div className="flex flex-col gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[14px] text-[var(--adm-ink)]">
+            <span className="font-semibold">{resumes.filter((r) => !r.indexed).length}</span>{" "}
+            {resumes.filter((r) => !r.indexed).length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet — index them so they appear in Lead Sourcing and Best candidates.
+          </p>
+          <WorkspaceButton variant="primary" onClick={indexAll} className="sm:flex-none">
+            Index all
+          </WorkspaceButton>
+        </div>
+      )}
 
       {/* ── records ── */}
       {loading ? (

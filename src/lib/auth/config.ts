@@ -56,6 +56,7 @@ export const routeAccess: Record<string, UserRole[]> = {
   "/admin/applications": ALL_STAFF,
   "/admin/candidates": ALL_STAFF,
   "/admin/bench": ALL_STAFF,
+  "/admin/lead-sourcing": ALL_STAFF,
   "/admin/resumes": ALL_STAFF,
   "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access

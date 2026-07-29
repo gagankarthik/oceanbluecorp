@@ -295,6 +295,30 @@ export interface ResumeAnalysis {
   _metadata?: Record<string, unknown>;
 }
 
+// Cached fit verdict from the Resume Matching Engine (one resume vs one job).
+export interface JobFitResult {
+  fitScore: number;                 // 0–100
+  qualified: boolean;
+  verdict: "strong" | "possible" | "weak";
+  matchedSkills: string[];
+  missingSkills: string[];
+  rationale?: string | null;
+}
+
+// One ranked candidate cached on a Job (engine's snake_case shape, stored as-is
+// so the "Best candidates" panel renders cached and fresh results identically).
+export interface JobCandidateMatch {
+  resume_id: string;
+  candidate_name?: string | null;
+  fit_score: number;
+  similarity: number;
+  qualified: boolean;
+  verdict: "strong" | "possible" | "weak";
+  matched_skills: string[];
+  missing_skills: string[];
+  rationale?: string | null;
+}
+
 // Unified Application interface - supports both portal applications and HR-created applications
 export interface Application {
   id: string; // PK (UUID)
@@ -367,6 +391,11 @@ export interface Application {
   resumeAnalysisStatus?: "pending" | "processing" | "completed" | "failed";
   resumeAnalysisError?: string;       // last failure message, if any
 
+  // Job-fit verdict (this application's resume vs its job), cached from the
+  // Resume Matching Engine so the card doesn't re-score on every view.
+  jobFit?: JobFitResult;
+  jobFitAt?: string;                  // ISO timestamp of last scoring
+
   // Status history for timeline
   statusHistory?: Array<{
     status: string;
@@ -402,6 +431,12 @@ export interface Job {
   postedByEmail?: string; // Email of admin/HR who posted
   postedByRole?: string; // Role of poster (admin/hr)
   applicationsCount?: number;
+
+  // Cached "best candidates" — the matching engine's ranking of the resume bank
+  // for this job. Recomputed on demand; stored so the panel loads instantly and
+  // resumes aren't re-vectorized per view.
+  candidateMatches?: JobCandidateMatch[];
+  candidateMatchesAt?: string;
 
   // Job Posting ID (auto-generated OB-YYYY-XXXX format)
   postingId?: string;

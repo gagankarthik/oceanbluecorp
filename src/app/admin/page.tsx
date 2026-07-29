@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { WorkspaceButton } from "@/components/admin/workspace";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import {
@@ -726,7 +727,11 @@ export default function AdminDashboard() {
     <div className="space-y-8 pb-12">
 
       {/* ── scope filter (right-aligned) ── */}
-      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
+          <IconRequisition className="h-4 w-4" strokeWidth={1.75} />
+          Add job
+        </WorkspaceButton>
         <div className="relative">
           <label htmlFor="dash-range" className="sr-only">Date range</label>
           <select

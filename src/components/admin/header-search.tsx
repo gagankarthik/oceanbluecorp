@@ -98,7 +98,7 @@ export function HeaderSearch() {
       )}
 
       {showDropdown && (
-        <div className="absolute right-0 top-full z-[100] mt-1.5 w-[min(420px,calc(100vw-1.5rem))] overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg ring-1 ring-black/5">
+        <div className="absolute inset-x-0 top-full z-[100] mt-1.5 overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg ring-1 ring-black/5">
           {loading && hits.length === 0 ? (
             <div className="px-4 py-6 text-center text-xs text-[var(--adm-ink-subtle)]">Searching…</div>
           ) : hits.length > 0 ? (

@@ -25,6 +25,9 @@ frontend:
         - echo "NEXT_AWS_STMP_PASSWORD=$NEXT_AWS_STMP_PASSWORD" >> .env.production
         - echo "NEXT_AWS_STMP_IAM_USERNAME=$NEXT_AWS_STMP_IAM_USERNAME" >> .env.production
         - echo "NEXT_AWS_DYNAMODB_TABLE_API_KEYS=$NEXT_AWS_DYNAMODB_TABLE_API_KEYS" >> .env.production
+        # Resume Matching Engine (server-side only; set both in Amplify env vars)
+        - echo "RESUME_MATCH_API_URL=$RESUME_MATCH_API_URL" >> .env.production
+        - echo "RESUME_MATCH_API_KEY=$RESUME_MATCH_API_KEY" >> .env.production
 
         - npm run build
   artifacts:

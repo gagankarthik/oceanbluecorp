@@ -17,7 +17,7 @@ import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs,
-  IconGroup, IconHome, IconLogout, IconShield,
+  IconGroup, IconHome, IconLogout, IconShield, IconSource,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useNotifications, formatTimeAgo } from "@/hooks/use-notifications";
@@ -43,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
+  { name: "Lead Sourcing",href: "/admin/lead-sourcing",icon: IconSource,       roles: ALL_ROLES, section: "Recruiting" },
   { name: "Resumes",      href: "/admin/resumes",      icon: IconResume,       roles: ALL_ROLES, section: "Recruiting" },
   { name: "Contacts",     href: "/admin/contacts",     icon: IconContact,      roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Clients",      href: "/admin/clients",      icon: IconClient,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
@@ -631,7 +632,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Centered search, Conduktor-style. */}
-          <div className="absolute left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
+          <div className="absolute left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
             <HeaderSearch />
           </div>
 
