@@ -74,8 +74,10 @@ export async function GET(request: NextRequest) {
           type: "application",
           id: app.id,
           title: app.name,
-          subtitle: app.email,
-          link: `/admin/applications?search=${encodeURIComponent(app.name)}`,
+          subtitle: [app.applicationId, app.email].filter(Boolean).join(" · "),
+          // Straight to the candidate record — the applications list ignores
+          // a ?search param, so linking there landed on an unfiltered page.
+          link: `/admin/candidates/${app.id}`,
           status: app.status,
         });
       });

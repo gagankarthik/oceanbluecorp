@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Check, ExternalLink, Loader2, Plus,
+  ArrowLeft, Check, ChevronDown, ExternalLink, Loader2, Plus,
 } from "lucide-react";
-import type { Application, NoteEntry } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, NoteEntry } from "@/lib/aws/dynamodb";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { AdminDetailSkeleton } from "@/components/admin/skeletons";
 import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
@@ -39,11 +42,18 @@ interface CandidateDetail extends Application {
 type TabKey = "overview" | "activity" | "notes";
 
 /**
- * The six in-flight stages are one ordered measure, so they take the sequential
- * cobalt ramp rather than six categorical hues — the same ramp the funnel chart
- * and the applications pipeline band use.
+ * Which pool a bench record belongs to, with the legacy fallback used across
+ * the app: rows written before benchType existed read as internal when hired,
+ * external otherwise.
  */
-const STAGE_RAMP = ["#93b4fb", "#6d97f7", "#4a7bef", "#2f62e0", "#1d4ed8", "#1a3fae"];
+function poolOf(c: Application): BenchType {
+  return c.benchType || (c.status === "hired" ? "internal" : "external");
+}
+
+const POOL_LABEL: Record<BenchType, string> = {
+  internal: "My Pool",
+  external: "Talent Bench",
+};
 
 /** Label/value pair for the applicant details definition grid. */
 function DetailItem({ label, value }: { label: string; value?: React.ReactNode }) {
@@ -184,25 +194,21 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try { await patch({ rating: next }); } catch { toast.error("Failed to update rating"); }
   };
 
-  const handleBenchToggle = async () => {
+  /** Put the candidate in a pool, or take them off the bench entirely (null). */
+  const handleBenchChange = async (pool: BenchType | null) => {
     if (!candidate || benchSaving) return;
+    const current: BenchType | null = candidate.addToTalentBench ? poolOf(candidate) : null;
+    if (pool === current) return;
     setBenchSaving(true);
-    const next = !candidate.addToTalentBench;
-    setCandidate((p) => (p ? { ...p, addToTalentBench: next } : p));
+    const prev = candidate;
+    setCandidate((p) => (p ? { ...p, addToTalentBench: !!pool, benchType: pool || p.benchType } : p));
     try {
-      await patch({
-        addToTalentBench: next,
-        ...(next && {
-          benchAddedBy: user?.email || user?.id,
-          // Hired candidates land in the internal pool, everyone else on the
-          // external bench; an existing benchType is kept as-is.
-          benchType: candidate.benchType
-            || (candidate.status === "hired" ? "internal" : "external"),
-        }),
-      });
-    }
-    catch {
-      setCandidate((p) => (p ? { ...p, addToTalentBench: !next } : p));
+      await patch(pool
+        ? { addToTalentBench: true, benchType: pool, benchAddedBy: user?.email || user?.id }
+        : { addToTalentBench: false });
+      toast.success(pool ? `Added to ${POOL_LABEL[pool]}` : "Removed from bench");
+    } catch {
+      setCandidate(prev);
       toast.error("Failed to update talent bench");
     } finally { setBenchSaving(false); }
   };
@@ -297,6 +303,18 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const currentIdx = PIPELINE_STAGES.findIndex((s) => s.key === candidate.status);
   const notes: NoteEntry[] = candidate.notesHistory || [];
   const history = candidate.statusHistory || [];
+
+  // How long the candidate has been sitting in the current stage; falls back
+  // to the application date for records with no history entries.
+  const stageSince = [...history].reverse().find((h) => h.status === candidate.status)?.changedAt
+    || candidate.appliedAt;
+  const stageSinceDate = new Date(stageSince);
+  const daysInStage = isNaN(stageSinceDate.getTime())
+    ? null
+    : Math.max(0, Math.floor((Date.now() - stageSinceDate.getTime()) / 86400000));
+  const rejectedEntry = isRejected
+    ? [...history].reverse().find((h) => h.status === "rejected")
+    : undefined;
   const isOwner = candidate.ownership === user?.id;
   const hasAnalysis = !!candidate.resumeAnalysis;
   const location = [candidate.city, candidate.state].filter(Boolean).join(", ");
@@ -339,8 +357,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 )}
                 <StatusBadge status={candidate.status} withIcon size="md" />
                 {candidate.addToTalentBench && (
-                  <span className="inline-flex items-center gap-1 rounded-[4px] border border-emerald-200 bg-[var(--adm-success-soft)] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-[var(--adm-success)]">
-                    <IconBookmarkCheck className="h-3 w-3" /> Bench
+                  <span className={cn(
+                    "inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em]",
+                    poolOf(candidate) === "internal"
+                      ? "border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+                      : "border-emerald-200 bg-[var(--adm-success-soft)] text-[var(--adm-success)]",
+                  )}>
+                    <IconBookmarkCheck className="h-3 w-3" /> {POOL_LABEL[poolOf(candidate)]}
                   </span>
                 )}
               </div>
@@ -380,12 +403,72 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                   <IconJob className="h-4 w-4" /><span className="hidden sm:inline">View job</span>
                 </WorkspaceButton>
               )}
-              <WorkspaceButton onClick={handleBenchToggle} disabled={benchSaving}>
-                {benchSaving
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : candidate.addToTalentBench ? <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success)]" /> : <IconBookmarkPlus className="h-4 w-4" />}
-                {candidate.addToTalentBench ? "In bench" : "Add to bench"}
-              </WorkspaceButton>
+
+              {/* Claiming lives up here — it was buried in the last sidebar
+                  card, below the fold on every screen size. */}
+              {!candidate.ownership && (
+                <WorkspaceButton onClick={handleClaimOwnership} disabled={ownerSaving}>
+                  {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
+                  Claim
+                </WorkspaceButton>
+              )}
+
+              {/* Adding to the bench is a choice of pool, not a blind toggle. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <WorkspaceButton disabled={benchSaving}>
+                    {benchSaving
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : candidate.addToTalentBench
+                        ? <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success)]" />
+                        : <IconBookmarkPlus className="h-4 w-4" />}
+                    {candidate.addToTalentBench ? `In ${POOL_LABEL[poolOf(candidate)]}` : "Add to bench"}
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  </WorkspaceButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={4}
+                  className="min-w-[240px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-lg"
+                >
+                  {(["internal", "external"] as const).map((pool) => {
+                    const selected = candidate.addToTalentBench && poolOf(candidate) === pool;
+                    return (
+                      <DropdownMenuItem
+                        key={pool}
+                        onClick={() => handleBenchChange(pool)}
+                        className={cn(
+                          "flex cursor-pointer items-start gap-2 rounded-[4px] px-2 py-2",
+                          selected && "text-[var(--adm-accent)]",
+                        )}
+                      >
+                        <Check className={cn("mt-0.5 h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
+                        <span className="min-w-0 flex-1">
+                          <span className={cn("block text-[13px] font-semibold", !selected && "text-[var(--adm-ink)]")}>
+                            {POOL_LABEL[pool]}
+                          </span>
+                          <span className="mt-0.5 block text-[11.5px] font-normal text-[var(--adm-ink-subtle)]">
+                            {pool === "internal" ? "Internal hire between placements" : "External candidate kept warm"}
+                          </span>
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  {candidate.addToTalentBench && (
+                    <>
+                      <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
+                      <DropdownMenuItem
+                        onClick={() => handleBenchChange(null)}
+                        className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger)]"
+                      >
+                        <span className="w-3.5 flex-none" />
+                        Remove from bench
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ candidate })}>
                 <IconEdit className="h-4 w-4" />Edit profile
               </WorkspaceButton>
@@ -405,78 +488,126 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* ── Stage control ──
-          One connected strip rather than six floating pills: the stages are a
-          single ordered flow, so they share a frame and a sequential ramp. */}
+          A stepper, not a strip: numbered nodes on a progress track, completed
+          stages checked off in the single cobalt accent, the current node
+          haloed with time-in-stage under it. Rejecting is terminal and off the
+          ordered flow, so it lives as an action in the card header instead of
+          masquerading as a seventh stage. */}
       <AdminCard className="overflow-hidden">
         <AdminCardHeader
           icon={IconPipeline}
           title="Hiring pipeline"
-          action={statusSaving ? (
-            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--adm-accent)]">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
-            </span>
-          ) : (
-            <span className="hidden text-[12.5px] text-[var(--adm-ink-subtle)] sm:inline">Click a stage to move this candidate</span>
-          )}
-        />
-        <div className="flex items-stretch overflow-x-auto">
-          {PIPELINE_STAGES.map((stage, i) => {
-            const isActive = stage.key === candidate.status;
-            const isPast   = !isRejected && currentIdx > i;
-            const color    = STAGE_RAMP[Math.min(i, STAGE_RAMP.length - 1)];
-            return (
+          action={
+            <div className="flex flex-none items-center gap-3">
+              {statusSaving ? (
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--adm-accent)]">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+                </span>
+              ) : (
+                <span className="hidden text-[12.5px] text-[var(--adm-ink-subtle)] md:inline">
+                  Click a stage to move this candidate
+                </span>
+              )}
               <button
-                key={stage.key}
-                onClick={() => handleStageClick(stage.key)}
-                disabled={statusSaving}
-                aria-pressed={isActive}
-                title={`Move to ${stage.label}`}
+                onClick={() => handleStageClick("rejected")}
+                disabled={statusSaving || isRejected}
                 className={cn(
-                  "relative flex min-w-[104px] flex-1 items-center gap-2 border-r border-[var(--adm-line-soft)] px-3.5 py-3.5 text-left transition-colors disabled:opacity-60",
-                  isActive ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-zebra)]",
-                  isRejected && !isActive && "opacity-55 hover:opacity-100",
+                  "inline-flex items-center gap-1.5 rounded-[6px] border px-2.5 py-1.5 text-[12px] font-semibold transition-colors",
+                  isRejected
+                    ? "border-rose-200 bg-[var(--adm-danger-soft)] text-[var(--adm-danger)]"
+                    : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)] disabled:opacity-60",
                 )}
               >
-                {isActive && <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />}
-                <span
-                  className="grid h-4 w-4 flex-none place-items-center rounded-full"
-                  style={{ background: isActive || isPast ? color : "#e2e8f0" }}
-                >
-                  {isPast && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-                </span>
-                <span className={cn(
-                  "truncate text-[12.5px] font-semibold",
-                  isActive ? "text-[var(--adm-ink)]" : isPast ? "text-[var(--adm-ink-mute)]" : "text-[var(--adm-ink-subtle)]",
-                )}>
-                  {stage.label}
-                </span>
+                <IconError className="h-3.5 w-3.5" />
+                {isRejected ? "Rejected" : "Reject"}
               </button>
-            );
-          })}
+            </div>
+          }
+        />
 
-          {/* Rejected is terminal and off the main flow, so it sits behind a
-              heavier rule rather than in the ordered ramp. */}
-          <button
-            onClick={() => handleStageClick("rejected")}
-            disabled={statusSaving}
-            aria-pressed={isRejected}
-            aria-label="Reject candidate"
-            className={cn(
-              "relative flex min-w-[104px] items-center gap-2 border-l-2 border-[var(--adm-line)] px-3.5 py-3.5 text-left transition-colors disabled:opacity-60",
-              isRejected ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-zebra)]",
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] px-6 pb-5 pt-6">
+            <div className="relative">
+              {/* Track runs between the first and last node centers; the fill
+                  advances to the current stage. */}
+              <div
+                className="absolute top-[15px] h-[2px] rounded-full bg-[var(--adm-line)]"
+                style={{
+                  left: `${50 / PIPELINE_STAGES.length}%`,
+                  right: `${50 / PIPELINE_STAGES.length}%`,
+                }}
+              >
+                <div
+                  className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-300"
+                  style={{
+                    width: isRejected || currentIdx <= 0
+                      ? "0%"
+                      : `${(currentIdx / (PIPELINE_STAGES.length - 1)) * 100}%`,
+                  }}
+                />
+              </div>
+
+              <div className="relative flex">
+                {PIPELINE_STAGES.map((stage, i) => {
+                  const isActive = !isRejected && stage.key === candidate.status;
+                  const isPast   = !isRejected && currentIdx > i;
+                  return (
+                    <button
+                      key={stage.key}
+                      onClick={() => handleStageClick(stage.key)}
+                      disabled={statusSaving || isActive}
+                      aria-pressed={isActive}
+                      title={isActive ? stage.label : `Move to ${stage.label}`}
+                      className="group flex flex-1 flex-col items-center gap-2 disabled:cursor-default"
+                    >
+                      <span
+                        className={cn(
+                          "grid h-8 w-8 place-items-center rounded-full border-2 text-[12.5px] font-bold tabular-nums transition-all duration-150",
+                          isActive
+                            ? "border-[var(--adm-accent)] bg-[var(--adm-accent)] text-white shadow-[0_0_0_4px_var(--adm-accent-soft)]"
+                            : isPast
+                              ? "border-[var(--adm-accent)] bg-[var(--adm-accent)] text-white group-hover:shadow-[0_0_0_4px_var(--adm-accent-soft)]"
+                              : cn(
+                                "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)]",
+                                !statusSaving && "group-hover:border-[var(--adm-accent)] group-hover:text-[var(--adm-accent)]",
+                              ),
+                          isRejected && "opacity-55 group-hover:opacity-100",
+                        )}
+                      >
+                        {isPast ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
+                      </span>
+                      <span className="flex flex-col items-center gap-0.5">
+                        <span
+                          className={cn(
+                            "text-[12px] font-semibold leading-none transition-colors",
+                            isActive
+                              ? "text-[var(--adm-ink)]"
+                              : isPast
+                                ? "text-[var(--adm-ink-mute)]"
+                                : "text-[var(--adm-ink-subtle)] group-hover:text-[var(--adm-accent)]",
+                          )}
+                        >
+                          {stage.label}
+                        </span>
+                        {isActive && daysInStage !== null && (
+                          <span className="text-[10.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                            {daysInStage === 0 ? "moved today" : `${daysInStage}d in stage`}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {isRejected && (
+              <p className="mt-5 rounded-[6px] border border-rose-200 bg-[var(--adm-danger-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--adm-danger)]">
+                This candidate was rejected{rejectedEntry ? ` on ${fmtDate(rejectedEntry.changedAt)}` : ""}
+                {rejectedEntry?.changedByName ? ` by ${rejectedEntry.changedByName}` : ""}. Click any stage to reopen them.
+              </p>
             )}
-          >
-            {isRejected && <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: "#e11d48" }} />}
-            <span
-              className="grid h-4 w-4 flex-none place-items-center rounded-full"
-              style={{ background: isRejected ? "#e11d48" : "#e2e8f0" }}
-            >
-              {isRejected && <IconError className="h-2.5 w-2.5 text-white" />}
-            </span>
-            <span className={cn("truncate text-[12.5px] font-semibold", isRejected ? "text-[var(--adm-ink)]" : "text-[var(--adm-ink-subtle)]")}>
-              Rejected
-            </span>
-          </button>
+          </div>
         </div>
       </AdminCard>
 
@@ -736,6 +867,40 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         {/* Sidebar */}
         <div className="space-y-4 lg:sticky lg:top-20">
 
+          {/* Owner — first card: whose desk this candidate is on is the first
+              thing a teammate opening the record wants to know. */}
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader icon={IconUserCheck} title="Assigned recruiter" />
+            <div className="p-5">
+              {candidate.ownership && candidate.ownershipName ? (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar name={candidate.ownershipName} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{candidate.ownershipName}</p>
+                      {candidate.ownershipClaimedAt && (
+                        <p className="mt-0.5 text-[11.5px] text-[var(--adm-ink-subtle)]">Since {fmtDate(candidate.ownershipClaimedAt)}</p>
+                      )}
+                    </div>
+                  </div>
+                  {isOwner && (
+                    <button onClick={handleReleaseOwnership} disabled={ownerSaving}
+                      className="inline-flex flex-none items-center gap-1 rounded-[4px] border border-transparent px-2 py-1 text-[11px] font-semibold text-[var(--adm-danger)] transition-colors hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] disabled:opacity-60">
+                      {ownerSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <IconUserX className="h-3 w-3" />}
+                      Release
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button onClick={handleClaimOwnership} disabled={ownerSaving}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)] disabled:opacity-60">
+                  {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
+                  Claim this candidate
+                </button>
+              )}
+            </div>
+          </AdminCard>
+
           {/* Resume file */}
           <AdminCard className="overflow-hidden">
             <AdminCardHeader icon={IconFile} title="Resume" />
@@ -775,6 +940,12 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 }
               />
               <MetaRow label="Status" value={<StatusBadge status={candidate.status} size="sm" />} />
+              {candidate.addToTalentBench && (
+                <MetaRow
+                  label="Pool"
+                  value={poolOf(candidate) === "internal" ? "My Pool (Internal)" : "Talent Bench (External)"}
+                />
+              )}
               <MetaRow label="Applied" value={fmtDate(candidate.appliedAt)} />
               {candidate.updatedAt && <MetaRow label="Updated" value={fmtDate(candidate.updatedAt)} />}
               {hasAnalysis && candidate.resumeAnalyzedAt && (
@@ -816,39 +987,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               </div>
             </AdminCard>
           )}
-
-          {/* Owner */}
-          <AdminCard className="overflow-hidden">
-            <AdminCardHeader icon={IconUserCheck} title="Assigned recruiter" />
-            <div className="p-5">
-              {candidate.ownership && candidate.ownershipName ? (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <Avatar name={candidate.ownershipName} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{candidate.ownershipName}</p>
-                      {candidate.ownershipClaimedAt && (
-                        <p className="mt-0.5 text-[11.5px] text-[var(--adm-ink-subtle)]">Since {fmtDate(candidate.ownershipClaimedAt)}</p>
-                      )}
-                    </div>
-                  </div>
-                  {isOwner && (
-                    <button onClick={handleReleaseOwnership} disabled={ownerSaving}
-                      className="inline-flex flex-none items-center gap-1 rounded-[4px] border border-transparent px-2 py-1 text-[11px] font-semibold text-[var(--adm-danger)] transition-colors hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] disabled:opacity-60">
-                      {ownerSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <IconUserX className="h-3 w-3" />}
-                      Release
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button onClick={handleClaimOwnership} disabled={ownerSaving}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)] disabled:opacity-60">
-                  {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
-                  Claim this candidate
-                </button>
-              )}
-            </div>
-          </AdminCard>
 
           {/* Created by */}
           {candidate.createdByName && (
