@@ -4,15 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
-  IconBuilding, IconContact, IconDownload, IconEdit, IconError,
-  IconGlobe, IconSuccess, IconTrash, IconWarning,
+  IconBuilding, IconDownload, IconEdit,
+  IconGlobe, IconTrash, IconWarning,
 } from "@/components/admin/icons";
 import type { Client } from "@/lib/aws/dynamodb";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -145,7 +145,7 @@ export default function ClientsPage() {
     return clients.filter((c) => new Date(c.createdAt).getTime() >= start.getTime()).length;
   }, [clients]);
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.clients.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.clients.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.clients.hiddenCols", []);
   const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
 
@@ -425,7 +425,6 @@ export default function ClientsPage() {
           a shortcut that filters to it. */}
       <WorkspaceTitle
         title="Clients"
-        meta={`${clients.length} accounts`}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0}>
@@ -438,22 +437,24 @@ export default function ClientsPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Active clients", value: statusCounts.active, icon: IconSuccess,
+          { label: "Active clients", value: statusCounts.active,
             onClick: () => setStatusFilter("active") },
-          { label: "Inactive", value: statusCounts.inactive, icon: IconError,
+          { label: "Inactive", value: statusCounts.inactive,
             tone: statusCounts.inactive > 0 ? "warning" : "default",
             onClick: () => setStatusFilter("inactive") },
-          { label: "Missing contact details", value: noContactCount, icon: IconContact,
+          { label: "Missing contact details", value: noContactCount,
             tone: noContactCount > 0 ? "warning" : "default",
             hint: noContactCount > 0 ? "No email or phone on file" : "All reachable" },
-          { label: "Added this month", value: addedThisMonth, icon: IconBuilding },
+          { label: "Added this month", value: addedThisMonth },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -463,12 +464,14 @@ export default function ClientsPage() {
           }
           trailing={
             <>
-              <ColumnsMenu
+              <DisplayMenu
                 columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
                 hidden={hiddenColumns}
-                onChange={setHiddenColumns}
+                onHiddenChange={setHiddenColumns}
+                rows={rows}
+                onRowsChange={setRows}
+                onReset={() => { setHiddenColumns([]); setRows(25); }}
               />
-              <DensityMenu value={density} onChange={setDensity} />
             </>
           }
         >
@@ -483,15 +486,17 @@ export default function ClientsPage() {
               count: statusCounts[t.key] || 0,
             }))}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
+      <ActiveFilters
+          variant="canvas"
           chips={statusFilter !== "all"
             ? [{ label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
             : []}
           onClearAll={clearFilters}
-        />
+      />
 
+      <Workspace>
         <DataTable
           noun="clients"
           storageKey="clients"
@@ -499,7 +504,8 @@ export default function ClientsPage() {
           rows={filteredClients}
           rowKey={(c) => c.id}
           initialSort={{ key: "created", dir: "desc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           rowActions={rowActions}
           empty={{

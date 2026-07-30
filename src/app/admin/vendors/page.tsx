@@ -4,15 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
-  IconDownload, IconEdit, IconGroup, IconShield, IconTrash,
-  IconUserRole, IconUserX, IconWarning,
+  IconDownload, IconEdit, IconTrash,
+  IconUserRole, IconWarning,
 } from "@/components/admin/icons";
 import type { Vendor } from "@/lib/aws/dynamodb";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -156,7 +156,7 @@ export default function VendorsPage() {
 
   const hasActiveFilters = vendorLeadFilter !== "all" || debouncedSearch.trim() !== "";
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.vendors.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.vendors.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.vendors.hiddenCols", []);
   const clearFilters = () => { setVendorLeadFilter("all"); setSearchQuery(""); };
 
@@ -441,7 +441,6 @@ export default function VendorsPage() {
           than being promoted to a tab row. */}
       <WorkspaceTitle
         title="Vendors"
-        meta={`${vendors.length} partners`}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredVendors.length === 0}>
@@ -454,18 +453,20 @@ export default function VendorsPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "HR-led", value: stats.hr, icon: IconGroup, onClick: () => setVendorLeadFilter("hr") },
-          { label: "Admin-led", value: stats.admin, icon: IconShield, onClick: () => setVendorLeadFilter("admin") },
-          { label: "No contact on file", value: stats.noContact, icon: IconUserX,
+          { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr") },
+          { label: "Admin-led", value: stats.admin, onClick: () => setVendorLeadFilter("admin") },
+          { label: "No contact on file", value: stats.noContact,
             tone: stats.noContact > 0 ? "warning" : "default",
             hint: stats.noContact > 0 ? "Cannot be called or emailed" : "All reachable" },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -475,12 +476,14 @@ export default function VendorsPage() {
           }
           trailing={
             <>
-              <ColumnsMenu
+              <DisplayMenu
                 columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
                 hidden={hiddenColumns}
-                onChange={setHiddenColumns}
+                onHiddenChange={setHiddenColumns}
+                rows={rows}
+                onRowsChange={setRows}
+                onReset={() => { setHiddenColumns([]); setRows(25); }}
               />
-              <DensityMenu value={density} onChange={setDensity} />
             </>
           }
         >
@@ -495,9 +498,10 @@ export default function VendorsPage() {
               { value: "admin", label: LEAD_META.admin.label, count: stats.admin },
             ]}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
+      <ActiveFilters
+          variant="canvas"
           chips={vendorLeadFilter !== "all"
             ? [{
                 label: `Lead: ${LEAD_META[vendorLeadFilter as LeadRole]?.label ?? vendorLeadFilter}`,
@@ -505,8 +509,9 @@ export default function VendorsPage() {
               }]
             : []}
           onClearAll={clearFilters}
-        />
+      />
 
+      <Workspace>
         <DataTable
           noun="vendors"
           storageKey="vendors"
@@ -514,7 +519,8 @@ export default function VendorsPage() {
           rows={filteredVendors}
           rowKey={(v) => v.id}
           initialSort={{ key: "created", dir: "desc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           rowActions={rowActions}
           empty={{

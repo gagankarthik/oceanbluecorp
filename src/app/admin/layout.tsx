@@ -17,7 +17,7 @@ import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs,
-  IconGroup, IconHome, IconLogout, IconShield, IconSource,
+  IconHome, IconHrPortal, IconLogout, IconShield, IconSource,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useNotifications, formatTimeAgo } from "@/hooks/use-notifications";
@@ -188,9 +188,11 @@ function Sidebar({
                       className={cn(
                         "group relative flex items-center gap-3 rounded-[8px] text-[14px] transition-colors duration-150",
                         collapsed ? "justify-center p-2.5" : "px-3 py-[9px]",
+                        // Items sit flat on the chrome; label ink is full black
+                        // so the nav reads at a glance, not washed-out slate.
                         isActive
                           ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
-                          : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                          : "font-medium text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
                       )}
                     >
                       <item.icon
@@ -224,7 +226,7 @@ function Sidebar({
                 collapsed ? "justify-center p-2.5" : "px-3 py-[7px]",
               )}
             >
-              <IconGroup
+              <IconHrPortal
                 aria-hidden="true"
                 className={cn(
                   "flex-shrink-0",
@@ -491,7 +493,7 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
               >
-                <IconGroup className="w-4 h-4 text-violet-400" aria-hidden="true" />
+                <IconHrPortal className="w-4 h-4 text-violet-400" aria-hidden="true" />
                 <span>HR Portal</span>
                 <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
               </a>

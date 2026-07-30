@@ -9,12 +9,12 @@ import {
 import type { IconComponent } from "@/components/admin/icons";
 import {
   IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup,
-  IconUserPlus, IconSend, IconClock, IconUserMinus,
+  IconUserPlus, IconSend,
 } from "@/components/admin/icons";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Avatar } from "@/components/admin/avatar";
@@ -222,7 +222,7 @@ export default function UsersPage() {
   /** Authenticated but in no staff group, so they can reach nothing. */
   const noRoleCount = useMemo(() => users.filter((u) => !u.role).length, [users]);
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.users.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.users.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.users.hiddenCols", []);
   const clearFilters = () => { setSelectedRole("all"); setSelectedStatus("all"); setSearchQuery(""); };
 
@@ -366,7 +366,6 @@ export default function UsersPage() {
           followed from. */}
       <WorkspaceTitle
         title="Users & access"
-        meta={`${users.length} staff`}
         actions={
           <>
             <Link
@@ -381,25 +380,27 @@ export default function UsersPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Active staff", value: stats.active, icon: IconUserCheck,
+          { label: "Active staff", value: stats.active,
             onClick: () => setSelectedStatus("active") },
-          { label: "Invites pending", value: stats.pending, icon: IconClock,
+          { label: "Invites pending", value: stats.pending,
             tone: stats.pending > 0 ? "warning" : "default",
             hint: stats.pending > 0 ? "Not yet signed in" : undefined,
             onClick: () => setSelectedStatus("pending") },
-          { label: "Admins", value: stats.admins, icon: IconShield,
+          { label: "Admins", value: stats.admins,
             hint: "Full access to every screen",
             onClick: () => setSelectedRole("admin") },
-          { label: "Without a role", value: noRoleCount, icon: IconUserMinus,
+          { label: "Without a role", value: noRoleCount,
             tone: noRoleCount > 0 ? "danger" : "default",
             hint: noRoleCount > 0 ? "Signed in but no access" : undefined },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -409,12 +410,14 @@ export default function UsersPage() {
           }
           trailing={
             <>
-              <ColumnsMenu
+              <DisplayMenu
                 columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
                 hidden={hiddenColumns}
-                onChange={setHiddenColumns}
+                onHiddenChange={setHiddenColumns}
+                rows={rows}
+                onRowsChange={setRows}
+                onReset={() => { setHiddenColumns([]); setRows(25); }}
               />
-              <DensityMenu value={density} onChange={setDensity} />
             </>
           }
         >
@@ -441,9 +444,10 @@ export default function UsersPage() {
               { value: "pending",  label: STATUS_META.pending.label,  count: stats.pending },
             ]}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
+      <ActiveFilters
+          variant="canvas"
           chips={[
             ...(selectedRole !== "all"
               ? [{ label: `Role: ${ROLE_TABS.find(t => t.key === selectedRole)?.label ?? selectedRole}`, onClear: () => setSelectedRole("all") }]
@@ -453,8 +457,9 @@ export default function UsersPage() {
               : []),
           ]}
           onClearAll={clearFilters}
-        />
+      />
 
+      <Workspace>
         <DataTable
           noun="staff"
           storageKey="users"
@@ -462,7 +467,8 @@ export default function UsersPage() {
           rows={filteredUsers}
           rowKey={u => u.id}
           initialSort={{ key: "name", dir: "asc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           empty={{
             icon: IconGroup,

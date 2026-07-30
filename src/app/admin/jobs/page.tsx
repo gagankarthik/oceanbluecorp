@@ -13,16 +13,16 @@ import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { AdminCard } from "@/components/admin/admin-card";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DensityMenu, ColumnsMenu, GridSelect, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, GridSelect, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
-  IconRequisition, IconEdit, IconTrash, IconGroup, IconLocation, IconJob,
+  IconEdit, IconTrash, IconGroup, IconLocation, IconJob,
   IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
-  IconCalendar, IconFile, IconWarning,
+  IconCalendar, IconWarning,
 } from "@/components/admin/icons";
 import JobsLoading from "./loading";
 import {
@@ -171,7 +171,7 @@ export default function JobsPage() {
     [jobs],
   );
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.jobs.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.jobs.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>(
     "adm.jobs.hiddenCols.v2",
     ["department", "payRate", "billRate"],
@@ -397,7 +397,6 @@ export default function JobsPage() {
           ever created, which is not a whole those 13 are part of. */}
       <WorkspaceTitle
         title="Job postings"
-        meta={`${jobs.length} roles · ${stats.active} open`}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV}>
@@ -411,23 +410,24 @@ export default function JobsPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Open roles", value: stats.active, icon: IconRequisition,
-            onClick: () => setStatusFilter("active") },
-          { label: "Closing in 7 days", value: stats.closingSoon, icon: IconCalendar,
+          { label: "Open roles", value: stats.active, onClick: () => setStatusFilter("active") },
+          { label: "Closing in 7 days", value: stats.closingSoon,
             tone: stats.closingSoon > 0 ? "warning" : "default",
-            hint: stats.closingSoon > 0 ? "Submission deadline approaching" : undefined },
-          { label: "Roles with no applicants", value: starvedRoles, icon: IconGroup,
+            hint: "Submission deadline approaching" },
+          { label: "No applicants", value: starvedRoles,
             tone: starvedRoles > 0 ? "danger" : "success",
             hint: starvedRoles > 0 ? "Nothing sourced yet" : "Every open role has candidates" },
-          { label: "Drafts", value: stats.draft, icon: IconFile,
-            onClick: () => setStatusFilter("draft") },
+          { label: "Drafts", value: stats.draft, onClick: () => setStatusFilter("draft") },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar sits on the canvas between the stat strip and the table —
+          one slim line of search + filters + table controls. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -437,12 +437,14 @@ export default function JobsPage() {
           }
           trailing={
             <div className="hidden xl:contents">
-              <ColumnsMenu
+              <DisplayMenu
                 columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
                 hidden={hiddenColumns}
-                onChange={setHiddenColumns}
+                onHiddenChange={setHiddenColumns}
+                rows={rows}
+                onRowsChange={setRows}
+                onReset={() => { setHiddenColumns(["department", "payRate", "billRate"]); setRows(25); }}
               />
-              <DensityMenu value={density} onChange={setDensity} />
             </div>
           }
         >
@@ -457,18 +459,20 @@ export default function JobsPage() {
               count: statusCounts[t.key] || 0,
             }))}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
-          chips={statusFilter !== "all"
-            ? [{
-                label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`,
-                onClear: () => setStatusFilter("all"),
-              }]
-            : []}
-          onClearAll={clearFilters}
-        />
+      <ActiveFilters
+        variant="canvas"
+        chips={statusFilter !== "all"
+          ? [{
+              label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`,
+              onClear: () => setStatusFilter("all"),
+            }]
+          : []}
+        onClearAll={clearFilters}
+      />
 
+      <Workspace>
       {/* ── mobile / tablet cards; the grid takes over at xl where it has room ── */}
       <div className="grid gap-3 p-3 md:grid-cols-2 xl:hidden">
         {filteredJobs.length > 0 ? filteredJobs.map((job) => {
@@ -580,7 +584,8 @@ export default function JobsPage() {
           rowKey={(j) => j.id}
           onRowClick={(j) => router.push(`/admin/jobs/${j.id}`)}
           initialSort={{ key: "created", dir: "desc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           empty={{
             icon: IconJob,

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  X, Plus, MoreHorizontal, LayoutList, Columns, AlignJustify,
+  X, Plus, MoreHorizontal,
 } from "lucide-react";
 import {
   IconDownload, IconEye, IconStar, IconTrash, IconEdit, IconGroup,
@@ -22,9 +22,8 @@ import { cn } from "@/lib/utils";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
   FilterPill, FilterIcon, AdvancedFilterToggle, ActiveFilters,
-  DensityMenu, ColumnsMenu, SelectionBar, KpiRow, type Density,
+  DisplayMenu, SelectionBar, StatStrip,
 } from "@/components/admin/workspace";
-import { ViewMenu } from "@/components/admin/toolbar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
@@ -196,7 +195,7 @@ export default function ApplicationsPage() {
 
   // Workspace preferences persist — a density or column choice that resets on
   // every navigation is not a preference, it is a toy.
-  const [density, setDensity] = useLocalStorage<Density>("adm.applications.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.applications.rows", 25);
   // Source starts hidden — it only matters in aggregate, which the dashboard's
   // channel panel already answers. The key is versioned (v2) because the
   // previous default was persisted to localStorage, and a stored value always
@@ -295,7 +294,7 @@ export default function ApplicationsPage() {
   ];
 
   const activeFilterCount = [
-    authFilter !== "all", minRating > 0,
+    sourceFilter !== "all", authFilter !== "all", minRating > 0,
   ].filter(Boolean).length;
 
   const hasActiveFilters = activeFilterCount > 0
@@ -501,7 +500,6 @@ export default function ApplicationsPage() {
     <>
     <WorkspaceTitle
       title="Applications"
-      meta={`${applications.length} total · ${viewCounts.review} need review`}
       actions={
         <>
           <WorkspaceButton onClick={exportCSV}>
@@ -513,27 +511,27 @@ export default function ApplicationsPage() {
         </>
       }
     />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Needs review", value: viewCounts.review, icon: IconEye,
+          { label: "Needs review", value: viewCounts.review,
             tone: viewCounts.review > 0 ? "warning" : "default",
             onClick: () => setSavedView("review") },
-          { label: "Interviewing", value: viewCounts.interviewing, icon: IconGroup,
+          { label: "Interviewing", value: viewCounts.interviewing,
             onClick: () => setSavedView("interviewing") },
-          { label: "Offers out", value: viewCounts.offers, icon: IconClock,
+          { label: "Offers out", value: viewCounts.offers,
             onClick: () => setSavedView("offers") },
-          { label: "Stale over 7 days", value: viewCounts.stale, icon: IconClock,
+          { label: "Stale 7d+", value: viewCounts.stale,
             tone: viewCounts.stale > 0 ? "danger" : "success",
             hint: viewCounts.stale > 0 ? "No movement in 7+ days" : "Pipeline moving",
             onClick: () => setSavedView("stale") },
         ]}
       />
 
-    <Workspace>
-      {/* No page-title band, and no tab row. Every filter — including the
-          saved views — is a pill in one toolbar, so none outranks the others
-          just by being rendered first. */}
+      {/* Search on the left; filters live on the right, directly beside the
+          Display gear (which also carries the Table/Kanban/List switch). */}
       <WorkspaceToolbar
+        variant="canvas"
         search={
           <WorkspaceSearch
             value={search}
@@ -543,84 +541,74 @@ export default function ApplicationsPage() {
         }
         trailing={
           <>
-            <ViewMenu
-              options={[
-                { value: "table",  label: "Table",  icon: LayoutList },
-                { value: "kanban", label: "Kanban", icon: Columns },
-                { value: "list",   label: "List",   icon: AlignJustify },
-              ]}
-              value={view}
-              onChange={setView}
-              className="h-10 rounded-[8px] px-3 py-0 text-[14px]"
+            <FilterPill
+              label="View"
+              icon={FilterIcon.view}
+              value={savedView}
+              onChange={(k) => { setSavedView(k); setSelected([]); }}
+              options={views.map((v) => ({ value: v.key, label: v.label, count: v.count }))}
             />
-            {isGrid && (
-              <>
-                <ColumnsMenu
-                  columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                  hidden={hiddenColumns}
-                  onChange={setHiddenColumns}
-                />
-                <DensityMenu value={density} onChange={setDensity} />
-              </>
-            )}
+            <FilterPill
+              label="Stage"
+              icon={FilterIcon.stage}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: "all", label: "All stages", count: inView.length },
+                ...ALL_STATUSES.map((s) => ({
+                  value: s,
+                  label: sLabel(s),
+                  count: statusCounts[s] || 0,
+                  color: STAGE_COLOR[s],
+                })),
+              ]}
+            />
+            <FilterPill
+              label="Position"
+              icon={FilterIcon.position}
+              value={posFilter}
+              onChange={setPosFilter}
+              options={[
+                { value: "all", label: "All positions" },
+                ...positions.map((p) => ({ value: p, label: p })),
+              ]}
+            />
+            {/* Source lives in the advanced drawer: it's the least-reached-for
+                filter (its column is hidden by default). */}
+            <AdvancedFilterToggle
+              open={filtersOpen}
+              activeCount={activeFilterCount}
+              onClick={() => setFiltersOpen((v) => !v)}
+            />
+            <DisplayMenu
+              view={view}
+              viewOptions={[
+                { value: "table",  label: "Table" },
+                { value: "kanban", label: "Kanban" },
+                { value: "list",   label: "List" },
+              ]}
+              onViewChange={(v) => setView(v as ViewMode)}
+              columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+              hidden={hiddenColumns}
+              onHiddenChange={setHiddenColumns}
+              rows={rows}
+              onRowsChange={setRows}
+              onReset={() => { setHiddenColumns(["source"]); setRows(25); setView("table"); }}
+            />
           </>
         }
       >
-        {/* The saved views are a filter like any other, so they get a pill
-            rather than a privileged tab row. "My queue" and "Stale" are still
-            worth keeping as named predicates: neither is expressible as a value
-            in a single column, which is the whole reason they exist. */}
-        <FilterPill
-          label="View"
-          icon={FilterIcon.view}
-          value={savedView}
-          onChange={(k) => { setSavedView(k); setSelected([]); }}
-          options={views.map((v) => ({ value: v.key, label: v.label, count: v.count }))}
-        />
-        <FilterPill
-          label="Stage"
-          icon={FilterIcon.stage}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={[
-            { value: "all", label: "All stages", count: inView.length },
-            ...ALL_STATUSES.map((s) => ({
-              value: s,
-              label: sLabel(s),
-              count: statusCounts[s] || 0,
-              color: STAGE_COLOR[s],
-            })),
-          ]}
-        />
-        <FilterPill
-          label="Position"
-          icon={FilterIcon.position}
-          value={posFilter}
-          onChange={setPosFilter}
-          options={[
-            { value: "all", label: "All positions" },
-            ...positions.map((p) => ({ value: p, label: p })),
-          ]}
-        />
-        <FilterPill
-          label="Source"
-          icon={FilterIcon.source}
-          value={sourceFilter}
-          onChange={setSourceFilter}
-          options={[
-            { value: "all", label: "All sources" },
-            ...SOURCE_OPTIONS.map((s) => ({ value: s, label: s })),
-          ]}
-        />
-        <AdvancedFilterToggle
-          open={filtersOpen}
-          activeCount={activeFilterCount}
-          onClick={() => setFiltersOpen((v) => !v)}
-        />
       </WorkspaceToolbar>
 
       {filtersOpen && (
-        <div className="grid grid-cols-1 gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-3 sm:grid-cols-2 lg:px-4">
+        <div className="mb-3 grid grid-cols-1 gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-3 sm:grid-cols-3 lg:px-4">
+          <div>
+            <label className="mb-1 block text-[12px] font-medium text-[var(--adm-ink-subtle)]">Source</label>
+            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} autoComplete="off" className={selectCls}>
+              <option value="all">All sources</option>
+              {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-[12px] font-medium text-[var(--adm-ink-subtle)]">Work authorization</label>
             <select value={authFilter} onChange={(e) => setAuthFilter(e.target.value)} autoComplete="off" className={selectCls}>
@@ -645,8 +633,9 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      <ActiveFilters chips={filterChips} onClearAll={clearFilters} />
+      <ActiveFilters variant="canvas" chips={filterChips} onClearAll={clearFilters} />
 
+    <Workspace>
       {/* ── views ── */}
       {isGrid && (
         <DataTable
@@ -659,7 +648,8 @@ export default function ApplicationsPage() {
           onSelectedChange={setSelected}
           onRowClick={(a) => router.push(`/admin/candidates/${a.id}`)}
           initialSort={{ key: "appliedAt", dir: "desc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           rowActions={(a) => <RowActionsMenu app={a} {...rowActions} />}
           empty={{

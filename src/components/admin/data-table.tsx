@@ -61,6 +61,12 @@ interface DataTableProps<T> {
   /** Offer to the rows-per-page menu. */
   pageSizeOptions?: number[];
   /**
+   * Makes rows-per-page CONTROLLED: `pageSize` is used as-is and changes flow
+   * through this callback (the page's Display menu owns the setting). The
+   * footer's own rows select is hidden to avoid two controls for one value.
+   */
+  onPageSizeChange?: (n: number) => void;
+  /**
    * Plural record name for the footer tally ("… of 161 applications").
    * Naming the records beats a bare figure — "161" alone makes you look back
    * at the page heading to remember what was counted.
@@ -125,6 +131,7 @@ export function DataTable<T>({
   onSelectedChange,
   pageSize: initialPageSize = 25,
   pageSizeOptions = [25, 50, 100],
+  onPageSizeChange,
   noun = "records",
   storageKey,
   footerExtra,
@@ -145,13 +152,19 @@ export function DataTable<T>({
 
   // Rows-per-page is a preference, so it survives navigation when the caller
   // gives it a key. Read lazily and guarded: a stored value from an older
-  // build may no longer be one of the offered options.
-  const [pageSize, setPageSizeState] = React.useState(() => {
+  // build may no longer be one of the offered options. When the caller passes
+  // onPageSizeChange the value is controlled from outside instead.
+  const controlled = onPageSizeChange !== undefined;
+  const [pageSizeState, setPageSizeState] = React.useState(() => {
     if (typeof window === "undefined" || !storageKey) return initialPageSize;
     const raw = window.localStorage.getItem(`adm.pageSize.${storageKey}`);
     const n = raw ? Number(raw) : NaN;
     return Number.isFinite(n) && pageSizeOptions.includes(n) ? n : initialPageSize;
   });
+  const pageSize = controlled ? initialPageSize : pageSizeState;
+
+  // A controlled page-size change arrives via props — snap back to page one.
+  React.useEffect(() => { setPage(0); }, [pageSize]);
 
   const setPageSize = (n: number) => {
     setPageSizeState(n);
@@ -353,15 +366,12 @@ export function DataTable<T>({
                   >
                     {selectable && (
                       <td className="w-12 pl-5 pr-1" onClick={(e) => e.stopPropagation()}>
+                        {/* Always visible: the hover-reveal fade made rows look
+                            unselectable (and untouchable on touch screens). */}
                         <Checkbox
                           className={cn(
                             checkboxCobalt,
                             "relative before:absolute before:left-1/2 before:top-1/2 before:h-10 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']",
-                            // Unticked boxes fade back until the row is hovered
-                            // or something is selected, so a resting grid is not
-                            // a column of empty squares.
-                            !isSelected && "opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100",
-                            someVisibleSelected && "opacity-100",
                           )}
                           checked={!!isSelected}
                           onCheckedChange={() => toggleRow(id)}
@@ -419,6 +429,7 @@ export function DataTable<T>({
         <div className="flex items-center gap-3">
           {footerExtra}
 
+          {!controlled && (
           <label className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-subtle)]">
             <span className="hidden sm:inline">Rows</span>
             <span className="relative inline-flex items-center">
@@ -441,6 +452,7 @@ export function DataTable<T>({
               </svg>
             </span>
           </label>
+          )}
 
           {pageCount > 1 && (
             <div className="flex items-center gap-1">

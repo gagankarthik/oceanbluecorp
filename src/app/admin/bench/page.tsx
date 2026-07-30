@@ -19,7 +19,7 @@ import {
 
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -38,9 +38,9 @@ import {
   WORK_AUTH_OPTIONS, SOURCE_OPTIONS, type AppStatus,
 } from "@/components/admin/theme";
 import {
-  IconAlert, IconBoxes, IconConversion, IconDownload, IconEdit, IconEye,
+  IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
   IconFile, IconHistory, IconJob, IconLocation, IconMail, IconPhone,
-  IconPipeline, IconShield, IconSuccess, IconTrash, IconUpload, IconUser,
+  IconShield, IconTrash, IconUpload, IconUser,
   IconWarning,
 } from "@/components/admin/icons";
 
@@ -400,7 +400,7 @@ export default function TalentBenchPage() {
     };
   }, [pooledApplications]);
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.bench.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.bench.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.bench.hiddenCols", []);
 
   /** On the bench a month or more without moving — the re-engagement list. */
@@ -1618,7 +1618,6 @@ export default function TalentBenchPage() {
           of "On bench", which the footer already counts. */}
       <WorkspaceTitle
         title="Talent bench"
-        meta={`${pooledApplications.length} candidates`}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0}>
@@ -1637,7 +1636,7 @@ export default function TalentBenchPage() {
       <div
         role="tablist"
         aria-label="Talent pool"
-        className="inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5"
+        className="flex max-w-full items-center gap-0.5 self-start overflow-x-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5 sm:inline-flex sm:w-auto"
       >
         {POOL_TABS.map((t) => {
           const active = poolFilter === t.key;
@@ -1667,20 +1666,21 @@ export default function TalentBenchPage() {
         })}
       </div>
 
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Available now", value: kpis.available, icon: IconSuccess,
-            hint: "Not currently in a process" },
-          { label: "In process", value: kpis.inProcess, icon: IconPipeline },
-          { label: "Placed", value: kpis.placed, icon: IconConversion, tone: "success" },
-          { label: "On bench 30+ days", value: staleBench, icon: IconBoxes,
+          { label: "Available now", value: kpis.available, hint: "Not currently in a process" },
+          { label: "In process", value: kpis.inProcess },
+          { label: "Placed", value: kpis.placed, tone: "success" },
+          { label: "On bench 30d+", value: staleBench,
             tone: staleBench > 0 ? "warning" : "default",
             hint: staleBench > 0 ? "Worth re-engaging" : "All recently added" },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -1697,17 +1697,17 @@ export default function TalentBenchPage() {
                 ]}
                 value={viewMode}
                 onChange={setViewMode}
-                className="h-10 rounded-[8px] px-3 py-0 text-[14px]"
+                className="h-8 rounded-[6px] px-2.5 py-0 text-[13px]"
               />
               {viewMode === "table" && (
-                <>
-                  <ColumnsMenu
-                    columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                    hidden={hiddenColumns}
-                    onChange={setHiddenColumns}
-                  />
-                  <DensityMenu value={density} onChange={setDensity} />
-                </>
+                <DisplayMenu
+                  columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+                  hidden={hiddenColumns}
+                  onHiddenChange={setHiddenColumns}
+                  rows={rows}
+                  onRowsChange={setRows}
+                  onReset={() => { setHiddenColumns([]); setRows(25); }}
+                />
               )}
             </>
           }
@@ -1757,18 +1757,20 @@ export default function TalentBenchPage() {
               ]}
             />
           )}
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
-          chips={[
-            ...(statusFilter !== "all" ? [{ label: `Stage: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
-            ...(skillFilter !== "all" ? [{ label: `Skill: ${skillFilter}`, onClear: () => setSkillFilter("all") }] : []),
-            ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
-            ...(ownerFilter !== "all" ? [{ label: `Added by: ${ownerFilter}`, onClear: () => setOwnerFilter("all") }] : []),
-          ]}
-          onClearAll={clearFilters}
-        />
+      <ActiveFilters
+        variant="canvas"
+        chips={[
+          ...(statusFilter !== "all" ? [{ label: `Stage: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
+          ...(skillFilter !== "all" ? [{ label: `Skill: ${skillFilter}`, onClear: () => setSkillFilter("all") }] : []),
+          ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
+          ...(ownerFilter !== "all" ? [{ label: `Added by: ${ownerFilter}`, onClear: () => setOwnerFilter("all") }] : []),
+        ]}
+        onClearAll={clearFilters}
+      />
 
+      <Workspace>
       {/* ── record grid ── */}
       {viewMode === "table" && (
           <DataTable
@@ -1778,7 +1780,8 @@ export default function TalentBenchPage() {
             rows={filteredApplications}
             rowKey={(a) => a.id}
             onRowClick={handleViewApplication}
-            density={density}
+            pageSize={rows}
+            onPageSizeChange={setRows}
             hiddenColumns={hiddenColumns}
             empty={{
               icon: IconBoxes,

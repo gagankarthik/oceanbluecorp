@@ -48,6 +48,18 @@ export function IconApplication(props: IconProps) {
   );
 }
 
+/** HR Portal: a person framed in an open doorway — people, through a portal. */
+export function IconHrPortal(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15" />
+      <path d="M3 21h18" />
+      <circle cx="12" cy="10.5" r="2" />
+      <path d="M8.5 17.5a3.5 3.5 0 0 1 7 0" />
+    </svg>
+  );
+}
+
 /** Requisition: an open role, drawn as a posting board rather than a briefcase. */
 export function IconRequisition(props: IconProps) {
   return (

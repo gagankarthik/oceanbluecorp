@@ -242,7 +242,7 @@ function DarkBars({ items, emptyMessage = "Nothing to break down yet" }: {
  * stroke` keeps line + dashes even while the SVG stretches to the panel width.
  */
 function LineChart({
-  data, dataKey, xKey, xFmt, color = "var(--adm-data)", height = 132,
+  data, dataKey, xKey, xFmt, color = "var(--adm-data)", height = 132, dataKey2, color2 = "var(--adm-danger)",
 }: {
   data: Record<string, unknown>[];
   dataKey: string;
@@ -250,9 +250,13 @@ function LineChart({
   xFmt: (v: string) => string;
   color?: string;
   height?: number;
+  /** Optional comparison series, drawn as a second line with no area fill. */
+  dataKey2?: string;
+  color2?: string;
 }): React.ReactElement {
   const vals = data.map((d) => Number(d[dataKey]) || 0);
-  const hasData = data.length > 1 && vals.some((v) => v > 0);
+  const vals2 = dataKey2 ? data.map((d) => Number(d[dataKey2]) || 0) : [];
+  const hasData = data.length > 1 && (vals.some((v) => v > 0) || vals2.some((v) => v > 0));
 
   if (!hasData) {
     return (
@@ -265,11 +269,12 @@ function LineChart({
 
   const W = 600, H = 100, padT = 8, padB = 8;
   const innerH = H - padT - padB;
-  const max = Math.max(...vals, 1);
+  const max = Math.max(...vals, ...vals2, 1);
   const n = vals.length;
   const X = (i: number) => (n === 1 ? W / 2 : (i * W) / (n - 1));
   const Y = (v: number) => padT + innerH * (1 - v / max);
   const line = vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
+  const line2 = vals2.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
   const area = `${line} L ${W} ${H - padB} L 0 ${H - padB} Z`;
   const gy = [0, 0.5, 1].map((t) => padT + innerH * t);
   const ticks = [0, Math.floor((n - 1) / 2), n - 1];
@@ -289,6 +294,10 @@ function LineChart({
             strokeWidth={1} strokeDasharray="2 5" vectorEffect="non-scaling-stroke" />
         ))}
         <path d={area} fill={`url(#${gid})`} />
+        {dataKey2 && line2 && (
+          <path d={line2} fill="none" stroke={color2} strokeWidth={2} strokeDasharray="5 4"
+            vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        )}
         <path d={line} fill="none" stroke={color} strokeWidth={2}
           vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
       </svg>
@@ -343,8 +352,11 @@ export default function AdminDashboard() {
   const [range, setRange] = useState<RangeKey>("90d");
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
-  const [period, setPeriod]     = useState<Period>("90d");
   const [recentTab, setRecentTab] = useState<"all" | "interview" | "offered">("all");
+
+  // The volume charts follow the page's date-range control — they used to have
+  // their own 30D/90D/1Y segmented picker, which just duplicated it.
+  const period: Period = range === "7d" || range === "30d" ? "30d" : range === "90d" ? "90d" : "1y";
 
   const fetchAll = useCallback(async () => {
     try {
@@ -662,25 +674,27 @@ export default function AdminDashboard() {
       return d.toISOString().split("T")[0];
     };
 
-    const b: Record<string, { applied: number; hired: number }> = {};
+    const b: Record<string, { applied: number; hired: number; rejected: number }> = {};
     const cur = new Date(start);
     while (cur <= now) {
-      b[keyOf(cur)] ??= { applied: 0, hired: 0 };
+      b[keyOf(cur)] ??= { applied: 0, hired: 0, rejected: 0 };
       cur.setDate(cur.getDate() + (group === "day" ? 1 : group === "week" ? 7 : 28));
     }
     for (const a of applications) {
       const d = new Date(a.appliedAt);
       if (d < start) continue;
       const k = keyOf(d);
-      b[k] ??= { applied: 0, hired: 0 };
+      b[k] ??= { applied: 0, hired: 0, rejected: 0 };
       b[k].applied++;
       if (a.status === "hired") b[k].hired++;
+      if (a.status === "rejected") b[k].rejected++;
     }
     return Object.entries(b).sort(([x], [y]) => x.localeCompare(y)).map(([date, v]) => ({ date, ...v }));
   }, [applications, period]);
 
-  const appliedTotal = trend.reduce((s, t) => s + t.applied, 0);
-  const hiredTotal   = trend.reduce((s, t) => s + t.hired, 0);
+  const appliedTotal  = trend.reduce((s, t) => s + t.applied, 0);
+  const hiredTotal    = trend.reduce((s, t) => s + t.hired, 0);
+  const rejectedTotal = trend.reduce((s, t) => s + t.rejected, 0);
   const xFmt = (v: string) => new Date(v).toLocaleDateString("en-US",
     period === "1y" ? { month: "short", year: "2-digit" } : { month: "short", day: "numeric" });
 
@@ -791,15 +805,24 @@ export default function AdminDashboard() {
 
       {/* ── state card + volume charts ── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Pipeline state — green glow + solid check badge. */}
-        <div className="relative overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5">
-          {healthy && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-12 -top-12 h-64 w-64 rounded-full"
-              style={{ background: "radial-gradient(circle, var(--adm-glow), transparent 70%)" }}
-            />
+        {/* Pipeline state — the card wears its state: a light green wash when
+            everything is healthy, an amber wash + amber border when something
+            needs attention, so the difference is visible from across the room. */}
+        <div
+          className={cn(
+            "relative overflow-hidden rounded-[12px] border bg-[var(--adm-surface)] p-5",
+            healthy ? "border-[var(--adm-line)]" : "border-[var(--adm-warning)]",
           )}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-12 -top-12 h-64 w-64 rounded-full"
+            style={{
+              background: healthy
+                ? "radial-gradient(circle, var(--adm-glow), transparent 70%)"
+                : "radial-gradient(circle, var(--adm-warning-soft), transparent 70%)",
+            }}
+          />
           <div className="relative flex items-center justify-between">
             <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Pipeline state</h3>
             <Link href="/admin/applications"
@@ -865,24 +888,6 @@ export default function AdminDashboard() {
                   {appliedTotal.toLocaleString()}
                 </div>
                 <div className="mt-1.5 text-[12px] text-[var(--adm-ink-subtle)]">received, {period}</div>
-                <div className="mt-4 inline-flex rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-seg-track)] p-0.5">
-                  {PERIODS.map((p) => (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => setPeriod(p.value)}
-                      aria-pressed={period === p.value}
-                      className={cn(
-                        "rounded-[6px] px-2.5 py-1 text-[12px] font-semibold transition-colors",
-                        period === p.value
-                          ? "bg-[var(--adm-seg-active)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]"
-                          : "text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
               </div>
               <div className="min-w-0 flex-1">
                 <LineChart data={trend} dataKey="applied" xKey="date" xFmt={xFmt} color="var(--adm-data)" />
@@ -901,9 +906,30 @@ export default function AdminDashboard() {
                   hired, {period}
                   {offerAcceptance !== null && <> · {offerAcceptance}% offer accept</>}
                 </div>
+                {/* Hired vs rejected: same axis, so the two outcomes read against each other. */}
+                <div className="mt-4 space-y-1.5 text-[12px]">
+                  <div className="flex items-center gap-1.5">
+                    <span aria-hidden className="h-[3px] w-4 flex-none rounded-full" style={{ background: "var(--adm-success)" }} />
+                    <span className="text-[var(--adm-ink-mute)]">Hired</span>
+                    <span className="ml-auto font-bold tabular-nums text-[var(--adm-ink)]">{hiredTotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span aria-hidden className="h-[3px] w-4 flex-none rounded-full border-b border-dashed" style={{ background: "var(--adm-danger)" }} />
+                    <span className="text-[var(--adm-ink-mute)]">Rejected</span>
+                    <span className="ml-auto font-bold tabular-nums text-[var(--adm-ink)]">{rejectedTotal.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
               <div className="min-w-0 flex-1">
-                <LineChart data={trend} dataKey="hired" xKey="date" xFmt={xFmt} color="var(--adm-success)" />
+                <LineChart
+                  data={trend}
+                  dataKey="hired"
+                  dataKey2="rejected"
+                  xKey="date"
+                  xFmt={xFmt}
+                  color="var(--adm-success)"
+                  color2="var(--adm-danger)"
+                />
               </div>
             </div>
           </Card>

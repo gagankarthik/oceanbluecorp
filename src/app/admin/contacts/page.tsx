@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import {
-  IconBuilding, IconCalendar, IconDownload, IconInbox, IconJob, IconMail,
-  IconMailOpen, IconMessage, IconPercent, IconPhone, IconSend, IconSuccess,
+  IconBuilding, IconCalendar, IconDownload, IconJob, IconMail,
+  IconMessage, IconPhone, IconSend,
   IconTrash,
 } from "@/components/admin/icons";
 import type { Contact } from "@/lib/aws/dynamodb";
@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, ColumnsMenu, GridSelect, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, GridSelect, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { FormSelect } from "@/components/admin/forms/primitives";
@@ -58,6 +58,12 @@ export default function ContactsPage() {
 
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Deep-link search (global command palette links here as ?search=<name>).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("search");
+    if (q) setSearchQuery(q);
+  }, []);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -161,7 +167,7 @@ export default function ContactsPage() {
     ? `${Math.round(((statusCounts.responded || 0) / contacts.length) * 100)}%`
     : "—";
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.contacts.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.contacts.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.contacts.hiddenCols", []);
   const clearFilters = () => { setStatusFilter("all"); setInquiryFilter("all"); setSearchQuery(""); };
 
@@ -277,7 +283,6 @@ export default function ContactsPage() {
           carries, plus a "Response rate" tile nothing followed from. */}
       <WorkspaceTitle
         title="Contacts"
-        meta={`${contacts.length} enquiries`}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV} disabled={filteredContacts.length === 0}>
@@ -286,22 +291,24 @@ export default function ContactsPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Awaiting a reply", value: statusCounts.new || 0, icon: IconInbox,
+          { label: "Awaiting a reply", value: statusCounts.new || 0,
             tone: (statusCounts.new || 0) > 0 ? "warning" : "default",
             onClick: () => setStatusFilter("new") },
-          { label: "Read, not answered", value: statusCounts.read || 0, icon: IconMailOpen,
+          { label: "Read, not answered", value: statusCounts.read || 0,
             onClick: () => setStatusFilter("read") },
-          { label: "Responded", value: statusCounts.responded || 0, icon: IconSuccess,
+          { label: "Responded", value: statusCounts.responded || 0,
             tone: "success", onClick: () => setStatusFilter("responded") },
-          { label: "Response rate", value: responseRate, icon: IconPercent,
+          { label: "Response rate", value: responseRate,
             hint: "Of all enquiries received" },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={searchQuery}
@@ -311,12 +318,14 @@ export default function ContactsPage() {
           }
           trailing={
             <>
-              <ColumnsMenu
+              <DisplayMenu
                 columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
                 hidden={hiddenColumns}
-                onChange={setHiddenColumns}
+                onHiddenChange={setHiddenColumns}
+                rows={rows}
+                onRowsChange={setRows}
+                onReset={() => { setHiddenColumns([]); setRows(25); }}
               />
-              <DensityMenu value={density} onChange={setDensity} />
             </>
           }
         >
@@ -345,9 +354,10 @@ export default function ContactsPage() {
               })),
             ]}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
+      <ActiveFilters
+          variant="canvas"
           chips={[
             ...(statusFilter !== "all"
               ? [{ label: `Status: ${STATUS_META[statusFilter]?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
@@ -357,8 +367,9 @@ export default function ContactsPage() {
               : []),
           ]}
           onClearAll={clearFilters}
-        />
+      />
 
+      <Workspace>
         <DataTable
           noun="enquiries"
           storageKey="contacts"
@@ -367,7 +378,8 @@ export default function ContactsPage() {
           rowKey={(c) => c.id}
           onRowClick={openContact}
           initialSort={{ key: "createdAt", dir: "desc" }}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           empty={{
             icon: IconMessage,

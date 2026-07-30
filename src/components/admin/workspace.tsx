@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Slot } from "radix-ui";
 import {
   AlignJustify, ArrowLeft, BadgeCheck, Bookmark, Briefcase, Check, ChevronDown, CircleDot,
-  Plus, Route, Search, Settings2, Shield, SlidersHorizontal, Tag, UserRound,
+  Plus, RotateCcw, Route, Search, Settings2, Shield, SlidersHorizontal, Tag, UserRound,
   Workflow, Wrench, X,
 } from "lucide-react";
 import {
@@ -144,7 +144,8 @@ export function WorkspaceButton({
       {...(asChild ? {} : { type: "button" as const })}
       {...props}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-[8px] px-3.5 text-[14px] font-semibold",
+        // h-9: page actions stay slim so the chrome never outweighs the data.
+        "inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-[13.5px] font-semibold",
         // Transform as well as colour, and a press that actually depresses.
         // The 1px lift on hover is the difference between a control that
         // acknowledges the pointer and one that just recolours under it.
@@ -393,6 +394,63 @@ export function KpiRow({ items, className }: { items: KpiItem[]; className?: str
   );
 }
 
+/**
+ * Conduktor-style inline stat strip: LABEL value · LABEL value, one short line
+ * under the page title. Replaces the KpiRow card grid on list screens where
+ * vertical space belongs to the table, not to four boxes repeating what the
+ * grid already shows. Clickable stats filter, exactly like KPI tiles did.
+ */
+export interface StatItem {
+  label: string;
+  value: React.ReactNode;
+  tone?: "default" | "success" | "warning" | "danger";
+  onClick?: () => void;
+  /** Tooltip explaining the figure. */
+  hint?: string;
+}
+
+const STAT_TONE: Record<NonNullable<StatItem["tone"]>, string> = {
+  default: "text-[var(--adm-ink)]",
+  success: "text-[var(--adm-success)]",
+  warning: "text-[var(--adm-warning)]",
+  danger:  "text-[var(--adm-danger)]",
+};
+
+export function StatStrip({ items, className }: { items: StatItem[]; className?: string }) {
+  if (items.length === 0) return null;
+  return (
+    <div className={cn("mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1.5", className)}>
+      {items.map((s) => {
+        const body = (
+          <>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
+              {s.label}
+            </span>
+            <span className={cn("text-[15px] font-bold tabular-nums leading-none", STAT_TONE[s.tone ?? "default"])}>
+              {s.value}
+            </span>
+          </>
+        );
+        return s.onClick ? (
+          <button
+            key={s.label}
+            type="button"
+            onClick={s.onClick}
+            title={s.hint}
+            className="inline-flex items-baseline gap-1.5 rounded-[4px] transition-colors hover:bg-[var(--adm-row-hover)] px-1 -mx-1 py-0.5"
+          >
+            {body}
+          </button>
+        ) : (
+          <span key={s.label} title={s.hint} className="inline-flex items-baseline gap-1.5">
+            {body}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Sections ─────────────────────────────────────────────────────────────────
 
 /**
@@ -494,6 +552,7 @@ export function WorkspaceToolbar({
   children,
   trailing,
   className,
+  variant = "panel",
 }: {
   search?: React.ReactNode;
   /** Filter controls, in reading order. */
@@ -501,11 +560,20 @@ export function WorkspaceToolbar({
   /** Right-anchored controls: density, columns, record count. */
   trailing?: React.ReactNode;
   className?: string;
+  /**
+   * "panel" fuses the toolbar to the table panel (band + border). "canvas"
+   * floats it on the page between the stat strip and the table — the
+   * Conduktor arrangement, one slim line, no chrome of its own.
+   */
+  variant?: "panel" | "canvas";
 }) {
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5 lg:px-4",
+        "flex flex-wrap items-center gap-2",
+        variant === "panel"
+          ? "border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 lg:px-4"
+          : "mb-3",
         className,
       )}
     >
@@ -551,8 +619,8 @@ export function WorkspaceSearch({
   }, []);
 
   return (
-    <div className={cn("relative w-full sm:w-[300px]", className)}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
+    <div className={cn("relative w-full sm:w-[260px]", className)}>
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         ref={ref}
         type="search"
@@ -561,7 +629,7 @@ export function WorkspaceSearch({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") { onChange(""); ref.current?.blur(); } }}
-        className="h-10 w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-14 text-[14px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
+        className="h-8 w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-8 pr-12 text-[13px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
@@ -662,7 +730,9 @@ export function FilterPill<V extends string>({
           className={cn(
             // Dashed "+ Label" add-filter pill when idle; once a value is picked
             // it fills solid with the accent tint and shows the chosen value.
-            "inline-flex h-10 max-w-[240px] items-center gap-1.5 rounded-[8px] border px-3 text-[14px] font-medium transition-colors",
+            // h-8: the toolbar is one slim line — search, filters and table
+            // controls together — so the grid starts as high as possible.
+            "inline-flex h-8 max-w-[240px] items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
@@ -675,15 +745,15 @@ export function FilterPill<V extends string>({
               {current?.color ? (
                 <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: current.color }} />
               ) : Icon ? (
-                <Icon className="h-4 w-4 flex-none opacity-80" />
+                <Icon className="h-3.5 w-3.5 flex-none opacity-80" />
               ) : null}
               <span className="opacity-70">{label}</span>
               <span className="truncate font-semibold">{current?.label}</span>
-              <ChevronDown className="h-4 w-4 flex-none opacity-60" />
+              <ChevronDown className="h-3.5 w-3.5 flex-none opacity-60" />
             </>
           ) : (
             <>
-              <Plus className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
+              <Plus className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
               <span>{label}</span>
             </>
           )}
@@ -740,13 +810,13 @@ export function AdvancedFilterToggle({
       onClick={onClick}
       aria-expanded={open}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-[8px] border px-3 text-[14px] font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
         engaged
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
       )}
     >
-      <SlidersHorizontal className="h-4 w-4" />
+      <SlidersHorizontal className="h-3.5 w-3.5" />
       <span className="hidden sm:inline">Filters</span>
       {activeCount > 0 && (
         <span className="rounded-[5px] bg-[var(--adm-accent)] px-1.5 text-[11.5px] font-bold leading-[1.5] text-white">
@@ -843,9 +913,9 @@ export function DensityMenu({ value, onChange }: { value: Density; onChange: (d:
           type="button"
           title="Row density"
           aria-label={`Row density: ${DENSITY_LABEL[value]}`}
-          className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 text-[14px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-row-hover)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-row-hover)]"
         >
-          <AlignJustify className="h-4 w-4" />
+          <AlignJustify className="h-3.5 w-3.5" />
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         </button>
       </DropdownMenuTrigger>
@@ -903,14 +973,14 @@ export function ColumnsMenu({
           title="Edit columns"
           aria-label="Edit columns"
           className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-[8px] border px-3 text-[14px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
             hiddenCount > 0
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
           )}
         >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Edit columns</span>
+          <Settings2 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Columns</span>
           {hiddenCount > 0 && <span className="text-[12px] font-semibold tabular-nums">{hiddenCount}</span>}
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         </button>
@@ -956,6 +1026,175 @@ export function ColumnsMenu({
   );
 }
 
+// ── Display menu ─────────────────────────────────────────────────────────────
+
+/**
+ * The table's single settings control (Conduktor's "Display" popover): column
+ * visibility toggles, rows-per-page and a reset, behind one gear. Replaces the
+ * separate Columns and Density menus — row density is gone entirely; every
+ * grid uses the one comfortable height.
+ */
+export function DisplayMenu({
+  columns,
+  hidden = [],
+  onHiddenChange,
+  rows,
+  rowsOptions = [25, 50, 100],
+  onRowsChange,
+  view,
+  viewOptions,
+  onViewChange,
+  onReset,
+}: {
+  /** Toggleable columns. Omit to hide the section (grids with fixed columns). */
+  columns?: { key: string; label: string; locked?: boolean }[];
+  hidden?: string[];
+  onHiddenChange?: (hidden: string[]) => void;
+  /** Current rows-per-page. Omit to hide the section. */
+  rows?: number;
+  rowsOptions?: number[];
+  onRowsChange?: (n: number) => void;
+  /** Layout switch (Table / Kanban / List). Omit to hide the section. */
+  view?: string;
+  viewOptions?: { value: string; label: string }[];
+  onViewChange?: (v: string) => void;
+  onReset?: () => void;
+}) {
+  const toggle = (key: string) =>
+    onHiddenChange?.(hidden.includes(key) ? hidden.filter((k) => k !== key) : [...hidden, key]);
+  const hasColumns = !!columns && !!onHiddenChange;
+  const hasRows = rows !== undefined && !!onRowsChange;
+  const hasView = view !== undefined && !!viewOptions && !!onViewChange;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title="Display settings"
+          aria-label="Display settings"
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
+            hidden.length > 0
+              ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+          )}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Display</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={4}
+        className="max-h-[440px] w-[230px] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+      >
+        {hasView && (
+          <>
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+              View
+            </DropdownMenuLabel>
+            <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
+              {viewOptions!.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => onViewChange!(o.value)}
+                  aria-pressed={o.value === view}
+                  className={cn(
+                    "flex-1 rounded-[6px] border px-2 py-1 text-[12.5px] font-semibold transition-colors",
+                    o.value === view
+                      ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+                      : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {hasColumns && (
+          <>
+            {hasView && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+              Table columns
+            </DropdownMenuLabel>
+            {columns!.filter((c) => !c.locked).map((c) => {
+              const shown = !hidden.includes(c.key);
+              return (
+                <DropdownMenuItem
+                  key={c.key}
+                  onSelect={(e) => { e.preventDefault(); toggle(c.key); }}
+                  className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]"
+                >
+                  <span className="flex-1 truncate">{c.label}</span>
+                  {/* Mini switch, like the reference — reads as on/off at a glance. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "relative inline-flex h-4 w-7 flex-none items-center rounded-full transition-colors",
+                      shown ? "bg-[var(--adm-accent)]" : "bg-[var(--adm-line-strong)]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute h-3 w-3 rounded-full bg-white shadow transition-transform",
+                        shown ? "translate-x-[14px]" : "translate-x-[2px]",
+                      )}
+                    />
+                  </span>
+                </DropdownMenuItem>
+              );
+            })}
+          </>
+        )}
+
+        {hasRows && (
+          <>
+            {(hasColumns || hasView) && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+              Table rows
+            </DropdownMenuLabel>
+            <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
+              {rowsOptions.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onRowsChange!(n)}
+                  aria-pressed={n === rows}
+                  className={cn(
+                    "flex-1 rounded-[6px] border px-2 py-1 text-[12.5px] font-semibold tabular-nums transition-colors",
+                    n === rows
+                      ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+                      : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {onReset && (
+          <>
+            <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
+            <DropdownMenuItem
+              onClick={onReset}
+              className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-ink-mute)]"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset to default
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // ── Active filter chips ──────────────────────────────────────────────────────
 
 /**
@@ -970,13 +1209,23 @@ export function ColumnsMenu({
 export function ActiveFilters({
   chips,
   onClearAll,
+  variant = "panel",
 }: {
   chips: { label: string; onClear: () => void }[];
   onClearAll: () => void;
+  /** Match the toolbar it sits under — see WorkspaceToolbar. */
+  variant?: "panel" | "canvas";
 }) {
   if (chips.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5 lg:px-5">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2",
+        variant === "panel"
+          ? "border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5 lg:px-5"
+          : "mb-3",
+      )}
+    >
       {chips.map((c) => (
         <span
           key={c.label}

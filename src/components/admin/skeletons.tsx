@@ -25,54 +25,67 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
   );
 }
 
-/** Full-page list view: header + optional stat cards + filter bar + table. */
-export function AdminListSkeleton({ stats = 0, rows = 8 }: { stats?: number; rows?: number }) {
+/**
+ * Full-page list view, mirroring the current workspace layout so nothing jumps
+ * when data lands: title row → inline stat strip → slim canvas toolbar
+ * (search left, filter pills + Display right) → table panel with footer.
+ */
+export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: number; rows?: number; tabs?: number }) {
   return (
-    <div className="space-y-5 pb-10" aria-hidden="true" aria-label="Loading…">
-      {/* header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div className="space-y-2">
-          <Skel className="h-6 w-44" />
-          <Skel className="h-3.5 w-60 max-w-[60vw]" />
-        </div>
+    <div className="pb-10" aria-hidden="true" aria-label="Loading…">
+      {/* title + actions */}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <Skel className="h-6 w-44" />
         <div className="flex gap-2">
           <Skel className="hidden h-9 w-24 sm:block" />
           <Skel className="h-9 w-32" />
         </div>
       </div>
 
-      {/* stat cards */}
+      {/* segmented tabs (e.g. bench pools) */}
+      {tabs > 0 && (
+        <div className="mb-4 inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5">
+          {Array.from({ length: tabs }).map((_, i) => (
+            <Skel key={i} className="h-7 w-28 rounded-[6px]" />
+          ))}
+        </div>
+      )}
+
+      {/* stat strip */}
       {stats > 0 && (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
           {Array.from({ length: stats }).map((_, i) => (
-            <div key={i} className="space-y-2 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-              <div className="flex items-center justify-between">
-                <Skel className="h-3.5 w-20" />
-                <Skel className="h-8 w-8 rounded-[6px]" />
-              </div>
-              <Skel className="h-6 w-12" />
-              <Skel className="h-2.5 w-24" />
+            <div key={i} className="flex items-baseline gap-1.5">
+              <Skel className="h-2.5 w-16" />
+              <Skel className="h-4 w-7" />
             </div>
           ))}
         </div>
       )}
 
-      {/* filter bar */}
-      <div className="flex flex-wrap gap-3">
-        <Skel className="h-10 min-w-[160px] flex-1" />
-        <Skel className="h-10 w-28" />
-        <Skel className="h-10 w-28" />
+      {/* canvas toolbar: search left, filter pills + Display right */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Skel className="h-8 w-full sm:w-[260px]" />
+        <div className="ml-auto flex items-center gap-2">
+          <Skel className="hidden h-8 w-24 sm:block" />
+          <Skel className="hidden h-8 w-24 md:block" />
+          <Skel className="h-8 w-20" />
+        </div>
       </div>
 
-      {/* table */}
-      <div className="overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-        <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)]/70 px-5 py-3">
-          <div className="h-3.5 w-9" />
+      {/* table panel */}
+      <div className="overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+        <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] px-6 py-4">
           <Skel className="h-3 w-32 max-w-[40%] flex-1" />
           <Skel className="hidden h-3 w-24 sm:block" />
+          <Skel className="hidden h-3 w-20 md:block" />
           <Skel className="h-3 w-16" />
         </div>
         <AdminRowsSkeleton rows={rows} />
+        <div className="flex items-center justify-between border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3">
+          <Skel className="h-3 w-28" />
+          <Skel className="h-3 w-24" />
+        </div>
       </div>
     </div>
   );

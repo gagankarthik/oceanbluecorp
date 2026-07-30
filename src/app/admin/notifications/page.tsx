@@ -10,7 +10,7 @@ import {
 import { IconBell, IconSuccess, IconTrash, IconAlert } from "@/components/admin/icons";
 import { fmtRelative } from "@/lib/format";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
     };
   }, [notifications]);
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.notifications.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.notifications.rows", 25);
   const clearFilters = () => { setFilter("all"); setTypeFilter("all"); };
 
   // ── grid columns ──────────────────────────────────────────────────────────
@@ -258,7 +258,6 @@ export default function NotificationsPage() {
           Unread doubles as the filter shortcut. */}
       <WorkspaceTitle
         title="Notifications"
-        meta={`${unreadCount} unread`}
         actions={
           unreadCount > 0 ? (
             <WorkspaceButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
@@ -268,34 +267,22 @@ export default function NotificationsPage() {
           ) : undefined
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Unread", value: unreadCount, icon: IconBell,
+          { label: "Unread", value: unreadCount,
             tone: unreadCount > 0 ? "warning" : "success",
             hint: unreadCount === 0 ? "All caught up" : undefined,
             onClick: () => setFilter("unread") },
-          { label: "Arrived today", value: todayCount, icon: IconBell },
-          { label: "This week", value: weekCount, icon: IconBell },
+          { label: "Arrived today", value: todayCount },
+          { label: "This week", value: weekCount },
         ]}
       />
 
-      <Workspace>
-      {/* ── Error ── */}
-      {error && (
-        <div className="flex items-center gap-3 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] p-3 text-sm text-[var(--adm-danger)]">
-          <IconAlert className="h-4 w-4 flex-shrink-0" />
-          <p>{error}</p>
-          <button
-            onClick={fetchNotifications}
-            className="ml-auto rounded-[6px] bg-[var(--adm-danger-soft)] px-3 py-1 text-xs font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-        <WorkspaceToolbar
-          trailing={<DensityMenu value={density} onChange={setDensity} />}
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
+          trailing={<DisplayMenu rows={rows} onRowsChange={setRows} onReset={() => setRows(25)} />}
         >
           <FilterPill
             label="Type"
@@ -321,9 +308,10 @@ export default function NotificationsPage() {
               { value: "unread", label: "Unread", count: unreadCount },
             ]}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
+      <ActiveFilters
+          variant="canvas"
           chips={[
             ...(typeFilter !== "all"
               ? [{ label: `Type: ${NOTIFICATION_TYPES.find((t) => t.key === typeFilter)?.short ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
@@ -331,7 +319,22 @@ export default function NotificationsPage() {
             ...(filter !== "all" ? [{ label: "Unread only", onClear: () => setFilter("all") }] : []),
           ]}
           onClearAll={clearFilters}
-        />
+      />
+
+      <Workspace>
+      {/* ── Error ── */}
+      {error && (
+        <div className="flex items-center gap-3 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] p-3 text-sm text-[var(--adm-danger)]">
+          <IconAlert className="h-4 w-4 flex-shrink-0" />
+          <p>{error}</p>
+          <button
+            onClick={fetchNotifications}
+            className="ml-auto rounded-[6px] bg-[var(--adm-danger-soft)] px-3 py-1 text-xs font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* ── Feed ── */}
         <DataTable
@@ -340,7 +343,8 @@ export default function NotificationsPage() {
           columns={columns}
           rows={filteredNotifications}
           rowKey={(n) => n.id}
-          density={density}
+          pageSize={rows}
+          onPageSizeChange={setRows}
           initialSort={{ key: "received", dir: "desc" }}
           empty={{
             icon: IconBell,
