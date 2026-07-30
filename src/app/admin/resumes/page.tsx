@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { LayoutGrid, LayoutList, X, Loader2, Check } from "lucide-react";
+import { X, Loader2, Check } from "lucide-react";
 import {
   IconDownload, IconEye, IconFile, IconSuccess, IconTrash, IconUpload,
   IconWarning,
@@ -12,13 +12,10 @@ import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DensityMenu, KpiRow, type Density,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { AdminCard } from "@/components/admin/admin-card";
-import {
-  ViewSwitcher,
-} from "@/components/admin/toolbar";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -151,9 +148,47 @@ export default function ResumeBankPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  /** Re-fetch without flashing the skeleton — used by the cloud-indexing poll. */
+  const refreshSilently = useCallback(async () => {
+    try {
+      const res = await fetch("/api/resume-bank");
+      const data = await res.json();
+      if (res.ok) setResumes(data.resumes || []);
+    } catch { /* transient — keep showing the last data */ }
+  }, []);
+
   // ── derived ───────────────────────────────────────────────────────────────
 
   const uploaders = useMemo(() => [...new Set(resumes.map(r => r.uploaderEmail))], [resumes]);
+
+  // ── duplicates ────────────────────────────────────────────────────────────
+  // Same file name AND same byte size = the same resume uploaded twice. Only
+  // one copy per group is indexed (server-side), so the extras just clutter
+  // the bank and would show the candidate twice — flag them for deletion.
+
+  const groupKeyOf = (r: BankResume) => `${r.fileName.toLowerCase()}|${r.fileSize}`;
+
+  const dupGroups = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of resumes) counts.set(groupKeyOf(r), (counts.get(groupKeyOf(r)) || 0) + 1);
+    return new Set([...counts].filter(([, n]) => n > 1).map(([k]) => k));
+  }, [resumes]);
+
+  const isDuplicate = useCallback((r: BankResume) => dupGroups.has(groupKeyOf(r)), [dupGroups]);
+  const duplicateCount = useMemo(() => resumes.filter(isDuplicate).length, [resumes, isDuplicate]);
+  const [showDupsOnly, setShowDupsOnly] = useState(false);
+
+  /** Groups that already have a searchable copy — their unindexed extras don't count as work. */
+  const indexedGroups = useMemo(
+    () => new Set(resumes.filter((r) => r.indexed).map(groupKeyOf)),
+    [resumes],
+  );
+
+  /** What actually still needs indexing: unindexed files that aren't a spare copy of an indexed one. */
+  const pendingIndex = useMemo(
+    () => resumes.filter((r) => !r.indexed && !(isDuplicate(r) && indexedGroups.has(groupKeyOf(r)))),
+    [resumes, isDuplicate, indexedGroups],
+  );
 
   const filtered = useMemo(() => resumes.filter(r => {
     const q = search.toLowerCase();
@@ -161,8 +196,9 @@ export default function ResumeBankPage() {
     if (typeFilter === "pdf"  && !isPdf(r.fileType))  return false;
     if (typeFilter === "word" && !isWord(r.fileType)) return false;
     if (uploaderFilter !== "all" && r.uploaderEmail !== uploaderFilter) return false;
+    if (showDupsOnly && !isDuplicate(r)) return false;
     return true;
-  }), [resumes, search, typeFilter, uploaderFilter]);
+  }), [resumes, search, typeFilter, uploaderFilter, showDupsOnly, isDuplicate]);
 
   const typeCounts = useMemo(() => ({
     all:  resumes.length,
@@ -301,10 +337,10 @@ export default function ResumeBankPage() {
     };
   }, [resumes]);
 
-  const [density, setDensity] = useLocalStorage<Density>("adm.resumes.density", "default");
+  const [rows, setRows] = useLocalStorage<number>("adm.resumes.rows", 25);
 
-  const hasActiveFilters = typeFilter !== "all" || uploaderFilter !== "all" || search.trim() !== "";
-  const clearFilters = () => { setTypeFilter("all"); setUploaderFilter("all"); setSearch(""); };
+  const hasActiveFilters = typeFilter !== "all" || uploaderFilter !== "all" || search.trim() !== "" || showDupsOnly;
+  const clearFilters = () => { setTypeFilter("all"); setUploaderFilter("all"); setSearch(""); setShowDupsOnly(false); };
 
   const pendingCount = queue.filter(q => q.status === "pending").length;
   const anyUploading = queue.some(q => q.status === "uploading");
@@ -372,15 +408,70 @@ export default function ResumeBankPage() {
     [bulkRunning],
   );
 
-  const indexAll = useCallback(() => {
-    indexKeys(resumes.filter((r) => !r.indexed && !r.indexing));
-  }, [resumes, indexKeys]);
+  // ── cloud indexing ────────────────────────────────────────────────────────
+  // "Index all" runs server-side as a self-chaining background job (see
+  // /api/resume-bank/index-all) — the old browser-driven loop died the moment
+  // the tab closed, which for hundreds of resumes it always eventually did.
+  // The flag persists so the progress banner survives a reload.
+
+  const [cloudIndexing, setCloudIndexing] = useLocalStorage<boolean>("adm.resumes.cloudIndexing", false);
+  const [cloudTotals, setCloudTotals] = useState<{ bank: number; applications: number } | null>(null);
+
+  const startCloudIndexing = useCallback(async () => {
+    try {
+      const res = await fetch("/api/resume-bank/index-all", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data?.error === "string" ? data.error : "Failed to start indexing");
+      if (data.alreadyRunning) {
+        setCloudIndexing(true);
+        toast.info(data.message || "Indexing is already running in the cloud");
+        return;
+      }
+      if (!data.started) {
+        toast.success(data.message || "Everything is already indexed");
+        void refreshSilently();
+        return;
+      }
+      setCloudTotals({ bank: data.bank || 0, applications: data.applications || 0 });
+      setCloudIndexing(true);
+      toast.success(`Indexing started in the cloud — ${(data.bank || 0) + (data.applications || 0)} resumes queued`);
+      if (data.duplicateCopies > 0) {
+        toast.warning(`${data.duplicateCopies} duplicate ${data.duplicateCopies === 1 ? "copy was" : "copies were"} skipped — review and delete them below`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start indexing");
+    }
+  }, [refreshSilently, setCloudIndexing]);
+
+  // Poll while the cloud job runs; each poll re-reads indexed flags.
+  useEffect(() => {
+    if (!cloudIndexing) return;
+    const timer = setInterval(() => { void refreshSilently(); }, 12_000);
+    return () => clearInterval(timer);
+  }, [cloudIndexing, refreshSilently]);
+
+  // The job is done (for this page's purposes) when nothing actionable is left
+  // to index — skipped duplicate copies don't count as pending work.
+  useEffect(() => {
+    if (!cloudIndexing || loading) return;
+    if (resumes.length > 0 && pendingIndex.length === 0) {
+      setCloudIndexing(false);
+      toast.success("All resumes are indexed and searchable");
+    }
+  }, [cloudIndexing, loading, resumes, pendingIndex, setCloudIndexing]);
 
   const columns: DataTableColumn<BankResume>[] = [
     {
       key: "fileName", header: "File", sortValue: (r) => r.fileName,
       cell: (r) => (
-        <span className="font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
+        <span className="inline-flex max-w-full items-center gap-2 align-middle">
+          <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
+          {isDuplicate(r) && (
+            <span className="flex-none rounded-[4px] bg-[var(--adm-warning-soft)] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-[var(--adm-warning)]">
+              Duplicate
+            </span>
+          )}
+        </span>
       ),
     },
     {
@@ -556,7 +647,6 @@ export default function ResumeBankPage() {
 
       <WorkspaceTitle
         title="Resume bank"
-        meta={`${resumes.length} files`}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
@@ -568,18 +658,24 @@ export default function ResumeBankPage() {
           </>
         }
       />
-      <KpiRow
+      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      <StatStrip
         items={[
-          { label: "Uploaded this month", value: monthCount, icon: IconUpload },
-          { label: "Not linked to a candidate", value: unnamedCount, icon: IconFile,
+          { label: "Files", value: resumes.length },
+          { label: "Indexed", value: `${resumes.filter((r) => r.indexed).length}/${resumes.length}`,
+            tone: resumes.some((r) => !r.indexed) ? "warning" : "success",
+            hint: "Searchable in Lead Sourcing / Best candidates" },
+          { label: "This month", value: monthCount },
+          { label: "Unlinked", value: unnamedCount,
             tone: unnamedCount > 0 ? "warning" : "default",
-            hint: unnamedCount > 0 ? "No candidate name recorded" : "All linked" },
-          { label: "Storage used", value: storageUsed, icon: IconFile },
+            hint: "No candidate name recorded" },
+          { label: "Storage", value: storageUsed },
         ]}
       />
 
-      <Workspace>
-        <WorkspaceToolbar
+      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      <WorkspaceToolbar
+          variant="canvas"
           search={
             <WorkspaceSearch
               value={search}
@@ -588,20 +684,17 @@ export default function ResumeBankPage() {
             />
           }
           trailing={
-            <>
-              <ViewSwitcher
-                options={[
-                  { value: "list", label: "List", icon: LayoutList },
-                  { value: "grid", label: "Grid", icon: LayoutGrid },
-                ]}
-                value={view}
-                onChange={setView}
-                className="h-10 rounded-[8px]"
-              />
-              {view === "list" && (
-                <DensityMenu value={density} onChange={setDensity} />
-              )}
-            </>
+            <DisplayMenu
+              view={view}
+              viewOptions={[
+                { value: "list", label: "List" },
+                { value: "grid", label: "Grid" },
+              ]}
+              onViewChange={(v) => setView(v as ViewMode)}
+              rows={rows}
+              onRowsChange={setRows}
+              onReset={() => { setRows(25); setView("list"); }}
+            />
           }
         >
           <FilterPill
@@ -625,41 +718,83 @@ export default function ResumeBankPage() {
               })),
             ]}
           />
-        </WorkspaceToolbar>
+      </WorkspaceToolbar>
 
-        <ActiveFilters
-          chips={[
-            ...(typeFilter !== "all"
-              ? [{ label: `Type: ${TYPE_TABS.find((t) => t.key === typeFilter)?.label ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
-              : []),
-            ...(uploaderFilter !== "all"
-              ? [{ label: `Uploaded by: ${uploaderFilter}`, onClear: () => setUploaderFilter("all") }]
-              : []),
-          ]}
-          onClearAll={clearFilters}
-        />
+      <ActiveFilters
+        variant="canvas"
+        chips={[
+          ...(typeFilter !== "all"
+            ? [{ label: `Type: ${TYPE_TABS.find((t) => t.key === typeFilter)?.label ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
+            : []),
+          ...(uploaderFilter !== "all"
+            ? [{ label: `Uploaded by: ${uploaderFilter}`, onClear: () => setUploaderFilter("all") }]
+            : []),
+          ...(showDupsOnly
+            ? [{ label: "Duplicates only", onClear: () => setShowDupsOnly(false) }]
+            : []),
+        ]}
+        onClearAll={clearFilters}
+      />
 
-      {/* ── indexing banner ── */}
-      {!loading && !error && bulkRunning && (
-        <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
+      {/* ── indexing banners (on the canvas, above the table) ── */}
+      {/* Cloud job in flight: progress from the polled indexed flags. */}
+      {!loading && !error && cloudIndexing && (
+        <div className="mb-3 flex flex-col gap-2 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Loader2 className="mt-0.5 h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
+            <div>
+              <p className="text-[14px] font-medium text-[var(--adm-ink)]">
+                Indexing in the cloud — {pendingIndex.length} of {resumes.length} bank resumes remaining
+                {cloudTotals && cloudTotals.applications > 0 ? `, plus ${cloudTotals.applications} bench and applicant resumes` : ""}.
+              </p>
+              <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                Runs on the server — you can close this page. If the count stops moving, a few files may have failed; retry them from the Indexed column.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCloudIndexing(false)}
+            className="flex-none self-start rounded-[6px] px-2 py-1 text-[12px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] sm:self-center"
+          >
+            Hide
+          </button>
+        </div>
+      )}
+      {/* Single-row retry in flight. */}
+      {!loading && !error && !cloudIndexing && bulkRunning && (
+        <div className="mb-3 flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
           <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
           <span className="text-[14px] text-[var(--adm-ink)]">
             Indexing resumes… {bulkProgress.done}/{bulkProgress.total}. This can take a while — you can keep working.
           </span>
         </div>
       )}
-      {!loading && !error && !bulkRunning && resumes.some((r) => !r.indexed) && (
-        <div className="flex flex-col gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      {!loading && !error && !cloudIndexing && !bulkRunning && pendingIndex.length > 0 && (
+        <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[14px] text-[var(--adm-ink)]">
-            <span className="font-semibold">{resumes.filter((r) => !r.indexed).length}</span>{" "}
-            {resumes.filter((r) => !r.indexed).length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet — index them so they appear in Lead Sourcing and Best candidates.
+            <span className="font-semibold">{pendingIndex.length}</span>{" "}
+            {pendingIndex.length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet — index them so they appear in Lead Sourcing and Best candidates. Already-indexed resumes are skipped; runs in the cloud, you don&apos;t need to keep this page open.
           </p>
-          <WorkspaceButton variant="primary" onClick={indexAll} className="sm:flex-none">
+          <WorkspaceButton variant="primary" onClick={startCloudIndexing} className="sm:flex-none">
             Index all
           </WorkspaceButton>
         </div>
       )}
+      {/* Duplicate files: same name + size uploaded twice. Only one copy gets
+          indexed; the extras should be deleted so a candidate never shows twice. */}
+      {!loading && !error && duplicateCount > 0 && (
+        <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[14px] text-[var(--adm-ink)]">
+            <span className="font-semibold">{duplicateCount}</span> files look like duplicates (same name and size).
+            Only one copy per file is indexed — delete the extras so a candidate never appears twice in matches.
+          </p>
+          <WorkspaceButton onClick={() => setShowDupsOnly((v) => !v)} className="sm:flex-none">
+            {showDupsOnly ? "Show all files" : "Review duplicates"}
+          </WorkspaceButton>
+        </div>
+      )}
 
+      <Workspace>
       {/* ── records ── */}
       {loading ? (
         <AdminRowsSkeleton rows={6} />
@@ -680,7 +815,8 @@ export default function ResumeBankPage() {
             rows={filtered}
             rowKey={(r) => r.id}
             onRowClick={handlePreview}
-            density={density}
+            pageSize={rows}
+            onPageSizeChange={setRows}
             initialSort={{ key: "uploadedAt", dir: "desc" }}
             empty={{
               icon: IconFile,

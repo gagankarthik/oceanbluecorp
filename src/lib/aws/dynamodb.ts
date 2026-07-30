@@ -3,6 +3,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
   GetCommand,
+  BatchGetCommand,
   QueryCommand,
   UpdateCommand,
   DeleteCommand,
@@ -1827,6 +1828,111 @@ export async function deleteVendor(id: string): Promise<{ success: boolean; erro
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete vendor",
     };
+  }
+}
+
+// ===========================================
+// Bank-resume contact cards
+// ===========================================
+// The resume bank stores raw files in S3 with no per-file record. When a bank
+// file is parsed for indexing, the extracted contact details (name, email,
+// phone) are kept here — keyed by the S3 file key, in the otherwise-idle
+// candidates table — so Lead Sourcing / Best candidates can show who a match
+// actually is instead of "Unnamed candidate".
+
+export interface BankResumeContact {
+  id: string; // resume-bank S3 file key
+  name?: string;
+  email?: string;
+  phone?: string;
+  source: "resume-bank";
+  updatedAt: string;
+}
+
+export async function putBankResumeContact(
+  contact: Omit<BankResumeContact, "source" | "updatedAt">,
+): Promise<{ success: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    await dbCheck.client!.send(
+      new PutCommand({
+        TableName: getTables().candidates,
+        Item: { ...contact, source: "resume-bank", updatedAt: new Date().toISOString() },
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving bank resume contact:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to save contact" };
+  }
+}
+
+/** Fetch contact cards for a set of bank file keys. Missing ids are simply absent. */
+export async function getBankResumeContacts(ids: string[]): Promise<Record<string, BankResumeContact>> {
+  const out: Record<string, BankResumeContact> = {};
+  if (ids.length === 0) return out;
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return out;
+  try {
+    const table = getTables().candidates;
+    for (let i = 0; i < ids.length; i += 100) {
+      const chunk = [...new Set(ids.slice(i, i + 100))];
+      const result = await dbCheck.client!.send(
+        new BatchGetCommand({ RequestItems: { [table]: { Keys: chunk.map((id) => ({ id })) } } }),
+      );
+      for (const item of result.Responses?.[table] || []) {
+        const c = item as BankResumeContact;
+        out[c.id] = c;
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching bank resume contacts:", error);
+  }
+  return out;
+}
+
+// ===========================================
+// Resume-index job state
+// ===========================================
+// One small item in the counters table tracks the cloud indexing chain, so a
+// second "Index all" can't start a parallel chain (duplicate parses cost real
+// money) and the UI can tell whether a run is already in flight.
+
+const INDEX_JOB_ID = "resume-index-job";
+
+export interface IndexJobState {
+  id: string;
+  updatedAt: string; // last hop heartbeat
+  remaining: number; // items left; 0 = finished
+}
+
+export async function putIndexJobState(remaining: number): Promise<void> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return;
+  try {
+    await dbCheck.client!.send(
+      new PutCommand({
+        TableName: getTables().counters,
+        Item: { id: INDEX_JOB_ID, updatedAt: new Date().toISOString(), remaining },
+      }),
+    );
+  } catch (error) {
+    console.error("Error writing index job state:", error);
+  }
+}
+
+export async function getIndexJobState(): Promise<IndexJobState | null> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return null;
+  try {
+    const result = await dbCheck.client!.send(
+      new GetCommand({ TableName: getTables().counters, Key: { id: INDEX_JOB_ID } }),
+    );
+    return (result.Item as IndexJobState) || null;
+  } catch (error) {
+    console.error("Error reading index job state:", error);
+    return null;
   }
 }
 

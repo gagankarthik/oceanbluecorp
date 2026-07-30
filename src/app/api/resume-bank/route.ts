@@ -9,6 +9,7 @@ import {
 import { requireStaff } from "@/lib/auth/verify";
 import { parseResumeBuffer } from "@/lib/aws/resume-parser";
 import { embedResume, resumesIndexed } from "@/lib/aws/match-candidates";
+import { putBankResumeContact } from "@/lib/aws/dynamodb";
 
 function deriveFileType(fileName: string): string {
   const ext = fileName.split(".").pop()?.toLowerCase();
@@ -104,7 +105,16 @@ export async function POST(request: NextRequest) {
       try {
         const parsed = await parseResumeBuffer(buffer, fileName, fileType);
         if (parsed.success && parsed.analysis) {
-          await embedResume({ resumeId: fileKey, analysis: parsed.analysis, candidateName, source: "bank" });
+          const name = candidateName || parsed.contact?.name;
+          if (parsed.contact) {
+            await putBankResumeContact({
+              id: fileKey,
+              name,
+              email: parsed.contact.email,
+              phone: parsed.contact.phone,
+            }).catch(() => {});
+          }
+          await embedResume({ resumeId: fileKey, analysis: parsed.analysis, candidateName: name, source: "bank" });
         }
       } catch (e) {
         console.error(`[resume-bank] auto-index failed (non-fatal) for ${fileKey}:`, e);

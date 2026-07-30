@@ -23,16 +23,41 @@ function getParserBaseUrl(): string {
 // Max time to wait for the Lambda before giving up (ms).
 const PARSE_TIMEOUT_MS = Number(process.env.RESUME_PARSER_TIMEOUT_MS || 110_000);
 
+export interface ParsedContact {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
 export interface ParseResult {
   success: boolean;
   analysis?: ResumeAnalysis;
+  /**
+   * Contact details the extractor found. Deliberately NOT part of `analysis`
+   * (which gets persisted onto applications, where the candidate's own details
+   * are the source of truth) — callers that have no other identity for the
+   * person, like resume-bank indexing, read it from here explicitly.
+   */
+  contact?: ParsedContact;
   error?: string;
+}
+
+/** Pull name/email/phone out of the extractor's personal_information, whatever keys it used. */
+function extractContact(pi: unknown): ParsedContact | undefined {
+  if (!pi || typeof pi !== "object") return undefined;
+  const p = pi as Record<string, unknown>;
+  const s = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+  const joined = [s(p.first_name), s(p.last_name)].filter(Boolean).join(" ");
+  const name = s(p.full_name) || s(p.name) || s(p.fullName) || (joined || undefined);
+  const email = s(p.email) || s(p.email_address) || s(p.emailAddress);
+  const phone = s(p.phone) || s(p.phone_number) || s(p.phoneNumber) || s(p.mobile) || s(p.contact_number);
+  return name || email || phone ? { name, email, phone } : undefined;
 }
 
 /**
  * Send a resume file to the extraction Lambda and return the structured result.
- * `personal_information` is intentionally stripped from the result — the
- * candidate's own contact details on the Application stay the source of truth.
+ * `personal_information` is stripped out of `analysis` (never persisted there)
+ * but surfaced separately as `contact` for callers that need it.
  */
 export async function parseResumeBuffer(
   bytes: Uint8Array | Buffer,
@@ -71,11 +96,11 @@ export async function parseResumeBuffer(
 
     const data = (await res.json()) as Record<string, unknown>;
 
-    // Drop personal_information so we never persist parsed contact details.
+    // Keep personal_information out of the persisted analysis, but hand the
+    // contact details back separately for callers that need an identity.
     const { personal_information, ...rest } = data;
-    void personal_information;
 
-    return { success: true, analysis: rest as ResumeAnalysis };
+    return { success: true, analysis: rest as ResumeAnalysis, contact: extractContact(personal_information) };
   } catch (err) {
     const aborted = err instanceof Error && err.name === "AbortError";
     return {

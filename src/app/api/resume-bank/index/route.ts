@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getResumeObject, parseResumeBankKey } from "@/lib/aws";
-import { parseResumeBuffer } from "@/lib/aws/resume-parser";
-import { embedResume } from "@/lib/aws/match-candidates";
+import { indexBankFile } from "@/lib/aws/index-resumes";
 import { requireStaff } from "@/lib/auth/verify";
 
-function deriveFileType(fileName: string): string {
-  const ext = fileName.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return "application/pdf";
-  if (ext === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  if (ext === "doc") return "application/msword";
-  return "application/octet-stream";
-}
+// A parse can take 30–90s; allow a couple per request.
+export const maxDuration = 120;
 
 // POST /api/resume-bank/index
 // Parse + index one or more resume-bank files so they become searchable.
-// Body: { fileKeys: string[] }. Each file is parsed via the extraction Lambda
-// (30–90s each) then embedded — send small batches (ideally 1) per request so a
-// serverless request doesn't time out. Every item is isolated: one failure
-// never aborts the others.
+// Body: { fileKeys: string[] }. Used for single-row retries in the UI; the
+// bulk "Index all" path goes through /api/resume-bank/index-all, which runs
+// as a cloud-side background job instead of many browser-driven requests.
+// Every item is isolated: one failure never aborts the others.
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
@@ -44,28 +37,7 @@ export async function POST(request: NextRequest) {
 
   for (const fileKey of fileKeys) {
     try {
-      const meta = parseResumeBankKey(fileKey);
-      const fileName = meta.fileName || fileKey.split("/").pop() || "resume";
-
-      const object = await getResumeObject(fileKey);
-      if (!object.success || !object.body) {
-        results[fileKey] = { indexed: false, error: object.notFound ? "File missing from storage" : object.error || "Could not read file" };
-        continue;
-      }
-
-      const parsed = await parseResumeBuffer(object.body, fileName, object.contentType || deriveFileType(fileName));
-      if (!parsed.success || !parsed.analysis) {
-        results[fileKey] = { indexed: false, error: parsed.error || "Could not parse resume" };
-        continue;
-      }
-
-      const embedded = await embedResume({
-        resumeId: fileKey,
-        analysis: parsed.analysis,
-        candidateName: meta.candidateName || undefined,
-        source: "bank",
-      });
-      results[fileKey] = embedded.success ? { indexed: true } : { indexed: false, error: embedded.error || "Indexing failed" };
+      results[fileKey] = await indexBankFile(fileKey);
     } catch (e) {
       console.error(`[resume-bank/index] ${fileKey}:`, e);
       results[fileKey] = { indexed: false, error: "Unexpected error indexing this resume" };
