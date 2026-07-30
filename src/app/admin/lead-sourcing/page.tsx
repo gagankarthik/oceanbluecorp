@@ -10,7 +10,7 @@ import { ChevronDown } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconSource, IconWarning, IconRequisition, IconGroup } from "@/components/admin/icons";
-import { VerdictBadge, SkillChips, fitScoreColor, type Verdict } from "@/components/admin/fit-ui";
+import { VerdictBadge, SkillChips, OriginBadge, fitScoreColor, type Verdict, type MatchOrigin } from "@/components/admin/fit-ui";
 import { cn } from "@/lib/utils";
 
 interface Candidate {
@@ -22,6 +22,13 @@ interface Candidate {
   matched_skills: string[];
   missing_skills: string[];
   rationale: string | null;
+  // Enrichment from the server: where this hit lives and how to open it.
+  origin?: MatchOrigin;
+  profileId?: string;
+  email?: string;
+  phone?: string;
+  fileName?: string;
+  bankId?: string;
 }
 
 interface JobOption {
@@ -91,12 +98,24 @@ export default function LeadSourcingPage() {
 
   const canRun = mode === "job" ? !!jobId : !!jobText.trim();
 
+  /** Open a resume-bank file via its presigned download URL. */
+  const openBankResume = async (bankId: string) => {
+    try {
+      const res = await fetch(`/api/resume-bank/${bankId}`);
+      const data = await res.json();
+      if (!res.ok || !data.downloadUrl) throw new Error();
+      window.open(data.downloadUrl, "_blank");
+    } catch {
+      setError("Could not open this resume file.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <header>
         <h1 className="text-[22px] font-semibold text-[var(--adm-ink)]">Lead Sourcing</h1>
         <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">
-          Find the best-matching candidates in your resume bank for a job — by fit score, with the skills they match and miss.
+          Find the best-matching candidates across your resume bank and talent bench for a job — by fit score, with the skills they match and miss.
         </p>
       </header>
 
@@ -172,7 +191,7 @@ export default function LeadSourcingPage() {
         <AdminCard>
           <div className="flex items-center gap-3 p-6 text-[14px] text-[var(--adm-ink-mute)]">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--adm-line)] border-t-[var(--adm-accent)]" />
-            Ranking the resume bank…
+            Ranking your resume bank and talent bench…
           </div>
         </AdminCard>
       )}
@@ -191,7 +210,9 @@ export default function LeadSourcingPage() {
           <div className="flex flex-col items-center gap-2 p-10 text-center">
             <IconGroup className="h-8 w-8 text-[var(--adm-ink-subtle)]" strokeWidth={1.5} />
             <p className="text-[14px] text-[var(--adm-ink-mute)]">
-              No candidates found. Resumes are indexed as they&apos;re parsed/uploaded — run the backfill once to index existing ones.
+              No candidates found. Resumes become searchable once indexed — open{" "}
+              <Link href="/admin/resumes" className="font-semibold text-[var(--adm-accent)] hover:underline">Resumes</Link>{" "}
+              and click &ldquo;Index all&rdquo; to make existing ones searchable.
             </p>
           </div>
         </AdminCard>
@@ -216,10 +237,13 @@ export default function LeadSourcingPage() {
                         {i + 1}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">
-                          {c.candidate_name || "Unnamed candidate"}
+                        <p className="flex items-center gap-2 truncate text-[15px] font-semibold text-[var(--adm-ink)]">
+                          <span className="truncate">{c.candidate_name || "Unnamed candidate"}</span>
+                          <OriginBadge origin={c.origin} className="flex-none" />
                         </p>
-                        <p className="truncate font-mono text-[11px] text-[var(--adm-ink-subtle)]">{c.resume_id}</p>
+                        <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">
+                          {[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}
+                        </p>
                       </div>
                     </div>
                     <div className="flex flex-none items-center gap-2 sm:gap-3">
@@ -248,12 +272,24 @@ export default function LeadSourcingPage() {
                         </div>
                       )}
                       <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
-                      <Link
-                        href={`/admin/candidates/${c.resume_id}`}
-                        className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
-                      >
-                        View full profile →
-                      </Link>
+                      {/* Bank hits are files, not candidate records — link each
+                          hit to the thing it actually is. */}
+                      {c.profileId ? (
+                        <Link
+                          href={`/admin/candidates/${c.profileId}`}
+                          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                        >
+                          View full profile →
+                        </Link>
+                      ) : c.bankId ? (
+                        <button
+                          type="button"
+                          onClick={() => void openBankResume(c.bankId!)}
+                          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                        >
+                          Open resume →
+                        </button>
+                      ) : null}
                     </div>
                   )}
                 </li>

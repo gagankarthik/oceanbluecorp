@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { matchCandidates } from "@/lib/aws/match-candidates";
+import { enrichMatches } from "@/lib/aws/enrich-matches";
 import { requireStaff } from "@/lib/auth/verify";
 
 // POST /api/match — find candidates for a pasted job description.
@@ -37,5 +38,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unable to find candidates right now. Please try again." }, { status: 502 });
   }
 
-  return NextResponse.json({ success: true, count: result.candidates.length, candidates: result.candidates });
+  // Resolve each hit to its origin (resume bank / talent bench / applicant)
+  // so the UI can badge and link it correctly.
+  const candidates = await enrichMatches(result.candidates);
+
+  return NextResponse.json({ success: true, count: candidates.length, candidates });
 }

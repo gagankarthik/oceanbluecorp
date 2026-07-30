@@ -5,10 +5,11 @@
 // `bare` renders it inside a tab panel (no card shell); default is a standalone
 // AdminCard.
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconSource, IconWarning, IconGroup } from "@/components/admin/icons";
-import { VerdictBadge, SkillChips, fitScoreColor, type Verdict } from "@/components/admin/fit-ui";
+import { VerdictBadge, SkillChips, OriginBadge, fitScoreColor, type Verdict, type MatchOrigin } from "@/components/admin/fit-ui";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,13 @@ interface Candidate {
   matched_skills: string[];
   missing_skills: string[];
   rationale: string | null;
+  // Enrichment from the server: where this hit lives and how to open it.
+  origin?: MatchOrigin;
+  profileId?: string;
+  email?: string;
+  phone?: string;
+  fileName?: string;
+  bankId?: string;
 }
 
 export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: boolean }) {
@@ -126,10 +134,13 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
                     {i + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">
-                      {c.candidate_name || "Unnamed candidate"}
+                    <p className="flex items-center gap-2 truncate text-[15px] font-semibold text-[var(--adm-ink)]">
+                      <span className="truncate">{c.candidate_name || "Unnamed candidate"}</span>
+                      <OriginBadge origin={c.origin} className="flex-none" />
                     </p>
-                    <p className="truncate font-mono text-[11px] text-[var(--adm-ink-subtle)]">{c.resume_id}</p>
+                    <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">
+                      {[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-none items-center gap-2 sm:gap-3">
@@ -148,6 +159,15 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
               <div className="mt-3">
                 <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
               </div>
+
+              {c.profileId && (
+                <Link
+                  href={`/admin/candidates/${c.profileId}`}
+                  className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                >
+                  View full profile →
+                </Link>
+              )}
             </li>
           ))}
         </ol>
@@ -161,7 +181,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Best candidates</h3>
-            <p className="text-[13px] text-[var(--adm-ink-mute)]">Ranked from your resume bank for this job.</p>
+            <p className="text-[13px] text-[var(--adm-ink-mute)]">Ranked from your resume bank and talent bench for this job.</p>
           </div>
           {actionButton}
         </div>

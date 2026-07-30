@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, updateJob } from "@/lib/aws/dynamodb";
 import { matchCandidates, jobToPayload } from "@/lib/aws/match-candidates";
+import { enrichMatches } from "@/lib/aws/enrich-matches";
 import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/jobs/[id]/match-candidates
@@ -17,9 +18,12 @@ export async function GET(
   if (!jobResult.success || !jobResult.data) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
+  // The cache stores the raw engine result; origin/link data is derived on
+  // read so it never goes stale (e.g. a candidate later added to the bench).
+  const candidates = await enrichMatches(jobResult.data.candidateMatches ?? []);
   return NextResponse.json({
     success: true,
-    candidates: jobResult.data.candidateMatches ?? [],
+    candidates,
     matchedAt: jobResult.data.candidateMatchesAt ?? null,
     cached: true,
   });
@@ -59,10 +63,12 @@ export async function POST(
   }
 
   const matchedAt = new Date().toISOString();
-  // Cache the ranking so re-opening the job page is instant. Best-effort.
+  // Cache the RAW ranking so re-opening the job page is instant; enrichment is
+  // derived on every read. Best-effort.
   await updateJob(id, { candidateMatches: result.candidates, candidateMatchesAt: matchedAt }).catch((e) =>
     console.error(`[match-candidates] cache write failed for ${id}:`, e),
   );
 
-  return NextResponse.json({ success: true, count: result.candidates.length, candidates: result.candidates, matchedAt });
+  const candidates = await enrichMatches(result.candidates);
+  return NextResponse.json({ success: true, count: candidates.length, candidates, matchedAt });
 }

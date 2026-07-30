@@ -22,6 +22,25 @@ export function VerdictBadge({ verdict, className }: { verdict: Verdict; classNa
   return <span className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold", m.cls, className)}>{m.label}</span>;
 }
 
+export type MatchOrigin = "bank" | "bench" | "applicant";
+
+const ORIGIN_META: Record<MatchOrigin, { label: string; cls: string }> = {
+  bench:     { label: "Talent bench", cls: "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]" },
+  applicant: { label: "Applicant",    cls: "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]" },
+  bank:      { label: "Resume bank",  cls: "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]" },
+};
+
+/** Where a matched candidate came from: bench profile, applicant, or bank file. */
+export function OriginBadge({ origin, className }: { origin?: MatchOrigin; className?: string }) {
+  if (!origin) return null;
+  const m = ORIGIN_META[origin];
+  return (
+    <span className={cn("rounded-[4px] px-1.5 py-0.5 text-[11px] font-semibold", m.cls, className)}>
+      {m.label}
+    </span>
+  );
+}
+
 export function SkillChips({ matched, missing }: { matched: string[]; missing: string[] }) {
   if (matched.length === 0 && missing.length === 0) return null;
   return (
