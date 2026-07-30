@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth";
+import { IconHrPortal } from "@/components/admin/icons";
 
 // Four core practices — used by both the desktop dropdown and the mobile menu.
 const solutions = [
@@ -435,7 +436,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                 onClick={() => setUserMenuOpen(false)}
                                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
                               >
-                                <Building className="h-4 w-4 text-slate-400" strokeWidth={2} />
+                                <IconHrPortal className="h-4 w-4 text-slate-400" strokeWidth={2} />
                                 HR Portal
                                 <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-slate-400" />
                               </a>
@@ -620,7 +621,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                           className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          <Building className="w-5 h-5 text-gray-400" />
+                          <IconHrPortal className="w-5 h-5 text-gray-400" />
                           <span className="font-medium text-sm">HR Portal</span>
                           <ArrowUpRight className="ml-auto w-4 h-4 text-gray-400" />
                         </a>

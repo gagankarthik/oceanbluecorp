@@ -36,6 +36,7 @@ const footerLinks = {
   Resources: [
     { name: "Products", href: "/products" },
     { name: "Job Feed API", href: "/developers" },
+    { name: "HR Portal", href: "https://hr.oceanbluecorp.com", external: true },
     { name: "Brand Kit", href: "/brand-kit" },
     { name: "System Status", href: "/status" },
     { name: "Sitemap", href: "/sitemap" },
@@ -130,12 +131,23 @@ export default function Footer() {
                 <ul className="mt-5 space-y-3">
                   {links.map((l) => (
                     <li key={l.name}>
-                      <Link
-                        href={l.href}
-                        className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                      >
-                        {l.name}
-                      </Link>
+                      {"external" in l && l.external ? (
+                        <a
+                          href={l.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
+                        >
+                          {l.name}
+                        </a>
+                      ) : (
+                        <Link
+                          href={l.href}
+                          className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
+                        >
+                          {l.name}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -145,20 +157,19 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar, copyright + status together on the left, social on the
-          right. Previously all three were `justify-between` children, which
-          left the status pill floating at an arbitrary point mid-row rather
-          than aligned to anything. */}
+      {/* Bottom bar: copyright left, system status dead centre, social right —
+          three fixed zones, so the status pill anchors the middle of the row. */}
       <div className="border-t border-black/[0.07]">
-        <div className="mx-auto flex max-w-7xl flex-col-reverse items-center gap-5 px-6 py-6 sm:flex-row sm:justify-between sm:px-8">
-          <div className="flex flex-col items-center gap-x-6 gap-y-2 sm:flex-row">
-            <p className="text-[13px] text-[var(--hz-text-subtle)]">
-              © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
-            </p>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-5 px-6 py-6 sm:grid-cols-3 sm:px-8">
+          <p className="text-center text-[13px] text-[var(--hz-text-subtle)] sm:text-left">
+            © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
+          </p>
+
+          <div className="flex justify-center">
             <FooterStatus />
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-1 sm:justify-end">
             {socialLinks.map((s) => (
               <a
                 key={s.name}
