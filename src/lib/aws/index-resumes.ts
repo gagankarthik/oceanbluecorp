@@ -11,6 +11,7 @@
 // the next time "Index all" is clicked.
 //
 // Server-side only (it touches S3, DynamoDB and the matching engine secret).
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { getResumeObject, parseResumeBankKey } from "./s3";
 import { parseResumeBuffer } from "./resume-parser";
 import { embedResume, resumesIndexed } from "./match-candidates";
@@ -35,6 +36,35 @@ const MAX_DEPTH = 500;
 /** The shared secret hops use to authenticate to each other. Server-only env. */
 export function indexChainKey(): string {
   return (process.env.RESUME_MATCH_API_KEY || "").trim();
+}
+
+/**
+ * Hop authentication: an HMAC of the exact request body, NOT the raw secret.
+ * The self-callback URL is partly request-derived, so if a spoofed Host header
+ * ever pointed a hop at an attacker's server, they'd receive only a signature
+ * for that one payload — worthless for reaching the matching engine or
+ * forging different work — never the key itself.
+ */
+export function signIndexPayload(rawBody: string): string {
+  return createHmac("sha256", indexChainKey()).update(rawBody).digest("hex");
+}
+
+/** Constant-time check of a hop signature against the raw request body. */
+export function verifyIndexSignature(rawBody: string, signature: string): boolean {
+  if (!indexChainKey() || !signature) return false;
+  const expected = Buffer.from(signIndexPayload(rawBody), "hex");
+  const provided = Buffer.from(signature, "hex");
+  return expected.length === provided.length && timingSafeEqual(expected, provided);
+}
+
+/**
+ * Base URL for hop self-calls. A trusted env var wins; the request origin is
+ * only a fallback for environments where no base URL is configured.
+ */
+export function indexChainBaseUrl(requestOrigin: string): string {
+  return (process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || requestOrigin)
+    .trim()
+    .replace(/\/+$/, "");
 }
 
 export function deriveFileType(fileName: string): string {
@@ -173,10 +203,11 @@ export async function processIndexHop(payload: IndexJobPayload, selfUrl: string)
   try {
     // The next hop 202s before doing any work, so this await is quick — it only
     // confirms the baton was handed off, it does not wait for the whole chain.
+    const body = JSON.stringify(rest);
     const res = await fetch(selfUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-index-key": indexChainKey() },
-      body: JSON.stringify(rest),
+      headers: { "Content-Type": "application/json", "x-index-sig": signIndexPayload(body) },
+      body,
     });
     if (!res.ok) console.error(`[index-chain] next hop refused: ${res.status}`);
   } catch (e) {

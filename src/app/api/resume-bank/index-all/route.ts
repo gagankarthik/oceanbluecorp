@@ -7,6 +7,7 @@ import {
   putIndexJobState,
 } from "@/lib/aws/dynamodb";
 import {
+  indexChainBaseUrl,
   indexChainKey,
   processIndexHop,
   resumesIndexedChunked,
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     await putIndexJobState(bank.length + apps.length);
-    const selfUrl = new URL("/api/resume-bank/index-run", request.nextUrl.origin).toString();
+    const selfUrl = `${indexChainBaseUrl(request.nextUrl.origin)}/api/resume-bank/index-run`;
     after(() => processIndexHop({ bank, apps, depth: 0 }, selfUrl));
 
     return NextResponse.json(

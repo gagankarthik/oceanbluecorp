@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import {
-  indexChainKey,
+  indexChainBaseUrl,
   processIndexHop,
+  verifyIndexSignature,
   type IndexJobPayload,
 } from "@/lib/aws/index-resumes";
 import { requireStaff } from "@/lib/auth/verify";
@@ -15,9 +16,11 @@ export const maxDuration = 120;
 // previous hop with the internal key; staff auth also accepted so a hop can be
 // resumed manually. Responds 202 before doing any work.
 export async function POST(request: NextRequest) {
-  const secret = indexChainKey();
-  const provided = (request.headers.get("x-index-key") || "").trim();
-  const internal = !!secret && provided === secret;
+  // Internal hops authenticate with an HMAC of the exact body (see
+  // signIndexPayload) — the raw secret never travels in a request.
+  const rawBody = await request.text();
+  const signature = (request.headers.get("x-index-sig") || "").trim();
+  const internal = verifyIndexSignature(rawBody, signature);
   if (!internal) {
     const auth = await requireStaff(request);
     if (!auth.ok) return auth.response;
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   let body: Partial<IndexJobPayload>;
   try {
-    body = await request.json();
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ accepted: true, remaining: 0 });
   }
 
-  const selfUrl = new URL("/api/resume-bank/index-run", request.nextUrl.origin).toString();
+  const selfUrl = `${indexChainBaseUrl(request.nextUrl.origin)}/api/resume-bank/index-run`;
   after(() => processIndexHop({ bank, apps, depth }, selfUrl));
 
   return NextResponse.json({ accepted: true, remaining: bank.length + apps.length }, { status: 202 });
