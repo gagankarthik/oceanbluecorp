@@ -8,7 +8,7 @@ import { WorkspaceButton } from "@/components/admin/workspace";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import {
-  IconOverview, IconRequisition, IconPipeline,
+  IconOverview, IconRequisition, IconPipeline, IconUser,
   IconCoverage, IconInterview, IconTrend, IconWarning,
 } from "@/components/admin/icons";
 import { Avatar } from "@/components/admin/avatar";
@@ -342,7 +342,7 @@ function DashboardSkeleton() {
 // ── dashboard ────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { setJobs: setProviderJobs, candidateRevision } = useAdmin();
 
@@ -700,6 +700,9 @@ export default function AdminDashboard() {
 
   // ── header state ──────────────────────────────────────────────────────────
 
+  /** Cognito gives us a full `name`, falling back to the email when unset. */
+  const firstName = (user?.name ?? "").split("@")[0].trim().split(/\s+/)[0];
+
   const openItems =
     (staleCandidates.length > 0 ? 1 : 0) +
     (offersAtRisk.length > 0 ? 1 : 0) +
@@ -740,28 +743,41 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8 pb-12">
 
-      {/* ── scope filter (right-aligned) ── */}
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
-          <IconRequisition className="h-4 w-4" strokeWidth={1.75} />
-          Add job
-        </WorkspaceButton>
-        <div className="relative">
-          <label htmlFor="dash-range" className="sr-only">Date range</label>
-          <select
-            id="dash-range"
-            value={range}
-            onChange={(e) => setRange(e.target.value as RangeKey)}
-            className="h-10 cursor-pointer appearance-none rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3.5 pr-9 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-accent)]"
-          >
-            {RANGES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
-          <ChevronDown
-            aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]"
-          />
+      {/* ── greeting + scope filter, one row ── */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="grid h-12 w-12 flex-none place-items-center rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] text-[var(--adm-accent)]">
+            <IconUser className="h-6 w-6" strokeWidth={1.6} />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
+              Welcome back{firstName ? `, ${firstName}` : ""}!
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
+            <IconRequisition className="h-4 w-4" strokeWidth={1.75} />
+            Add job
+          </WorkspaceButton>
+          <div className="relative">
+            <label htmlFor="dash-range" className="sr-only">Date range</label>
+            <select
+              id="dash-range"
+              value={range}
+              onChange={(e) => setRange(e.target.value as RangeKey)}
+              className="h-10 cursor-pointer appearance-none rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3.5 pr-9 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-accent)]"
+            >
+              {RANGES.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+            <ChevronDown
+              aria-hidden
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]"
+            />
+          </div>
         </div>
       </div>
 
