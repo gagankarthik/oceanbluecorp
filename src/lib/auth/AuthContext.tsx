@@ -4,15 +4,19 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { UserManager, User, WebStorageStateStore } from "oidc-client-ts";
 import type { UserProfile } from "oidc-client-ts";
 import { UserRole, roleHierarchy, highestStaffRole } from "./config";
-import { writeHrPortalSession, clearHrPortalSession } from "./hrPortalSession";
+import { clearLegacyHrPortalCookies } from "./hrPortalSession";
 
 /**
- * Shown when someone signs in with an employee-portal account. Exported so the
- * sign-in screen can recognise it and point them at the right place instead of
- * rendering it as a generic failure.
+ * Shown when a valid account in this pool carries no staff role on this site.
+ * Exported so the sign-in screen can recognise it and point them at the right
+ * place instead of rendering it as a generic failure.
+ *
+ * The HR portal is a completely separate user pool with its own accounts, so
+ * there is no session to hand over here: they sign in there with their own
+ * portal credentials.
  */
 export const NOT_STAFF_ERROR =
-  "This account is for the employee portal, not the staff site. Use hr.oceanbluecorp.com for your leave, attendance and documents.";
+  "This account has no access to the staff site. The Ocean Blue HR portal is a separate sign-in at hr.oceanbluecorp.com, using the credentials HR issued you.";
 
 interface AuthUser {
   id: string;
@@ -161,19 +165,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const userManager = getUserManager();
 
+    // Retire any cookies left over from the shared-pool SSO bridge. The HR
+    // portal has its own user pool now and reads nothing this site writes.
+    clearLegacyHrPortalCookies();
+
     // Check for existing session
     userManager.getUser().then(async (oidcUser) => {
       if (oidcUser && !oidcUser.expired) {
         // Set the server cookie before flagging the user as authenticated, so
         // gated admin pages never fire their first fetch without credentials.
         await syncServerSession(oidcUser.id_token, oidcUser.expires_in);
-        // Mirror into the shared HR-portal session cookies so a click-through to
-        // hr.oceanbluecorp.com lands already signed in.
-        writeHrPortalSession({
-          idToken: oidcUser.id_token || "",
-          accessToken: oidcUser.access_token,
-          refreshToken: oidcUser.refresh_token,
-        });
         setUser(parseUser(oidcUser));
       }
       setIsLoading(false);
@@ -185,17 +186,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Handle token refresh events
     const handleUserLoaded = (oidcUser: User) => {
       void syncServerSession(oidcUser.id_token, oidcUser.expires_in);
-      writeHrPortalSession({
-        idToken: oidcUser.id_token || "",
-        accessToken: oidcUser.access_token,
-        refreshToken: oidcUser.refresh_token,
-      });
       setUser(parseUser(oidcUser));
     };
 
     const handleUserUnloaded = () => {
       void clearServerSession();
-      clearHrPortalSession();
       setUser(null);
     };
 
@@ -251,26 +246,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const authUser = parseUser(oidcUser);
 
-    // The user pool is shared with the employee portal, so valid credentials do
-    // not by themselves make someone staff here. An account with no role on
-    // this site never gets a session: no stored user, no server cookie. Their
-    // portal session is still written, so the link we show them lands signed in.
+    // Valid credentials for this pool do not by themselves make someone staff.
+    // An account with no role on this site never gets a session: no stored
+    // user, no server cookie. This still matters after the pool split, because
+    // accounts predating it remain in this pool with no `web:*` group.
     if (!authUser.role) {
-      writeHrPortalSession({
-        idToken: data.idToken,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      });
       throw new Error(NOT_STAFF_ERROR);
     }
 
     await userManager.storeUser(oidcUser);
     await syncServerSession(data.idToken, data.expiresIn);
-    writeHrPortalSession({
-      idToken: data.idToken,
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-    });
     setUser(authUser);
     return authUser;
   }, []);
@@ -346,8 +331,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Clear the server session cookie too (guarded; never blocks sign-out).
     await clearServerSession();
-    // Tear down the shared HR-portal cookies so the user is signed out there too.
-    clearHrPortalSession();
+    // Sweep any shared-domain cookies from the retired SSO bridge. Signing out
+    // here no longer affects the HR portal: separate pool, separate session.
+    clearLegacyHrPortalCookies();
 
     try {
       // Clear all oidc.* entries from both storages

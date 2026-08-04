@@ -35,15 +35,18 @@ export const roleHierarchy: Record<UserRole, number> = {
 /**
  * Cognito groups are namespaced per application.
  *
- * One user pool serves this site and the HR portal (hr.oceanbluecorp.com), so a
- * bare group called `admin` does not say whose admin it means. This site writes
- * `web:admin`, `web:hr`, `web:recruiter`, `web:sales`. The HR portal writes
- * `hr:*` for its own roles, including `hr:employee` for the placed workforce.
+ * This site and the HR portal (hr.oceanbluecorp.com) now run on SEPARATE user
+ * pools: different accounts, different tokens, no shared session. This pool is
+ * the staff pool, and it writes `web:admin`, `web:hr`, `web:recruiter`,
+ * `web:sales`.
+ *
+ * The namespace stays for two reasons. Accounts created before the split are
+ * still in this pool and some carry `hr:*` groups, which must go on granting
+ * nothing here. And the prefix keeps saying which application a role is about
+ * if a third one ever shares this pool.
  *
  * Reads accept both `web:<role>` and the legacy bare `<role>`, so no existing
- * staff member is locked out by the rename. A group from ANOTHER namespace
- * grants nothing here: an `hr:employee` account is an employee-portal login and
- * has no business on this site, which is exactly the separation intended.
+ * staff member is locked out. A group from another namespace grants nothing.
  */
 export const WEBSITE_ROLE_NAMESPACE = "web";
 const NAMESPACE_SEPARATOR = ":";
@@ -130,7 +133,9 @@ export const routeAccess: Record<string, UserRole[]> = {
   "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
   "/admin/content": [UserRole.ADMIN],
-  "/admin/users": [UserRole.ADMIN],
+  // Account administration is shared with HR: they invite staff and manage
+  // ordinary accounts. The API still reserves Admin/HR role changes for admins.
+  "/admin/users": [UserRole.ADMIN, UserRole.HR],
   "/admin/roles": [UserRole.ADMIN],
   "/admin/api-keys": [UserRole.ADMIN],
   // Settings is PERSONAL for every staff member (Profile / Notifications /

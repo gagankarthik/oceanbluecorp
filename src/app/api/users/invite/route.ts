@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { inviteUser, STAFF_ROLES, type StaffRole } from "@/lib/aws/cognito";
-import { requireAdmin } from "@/lib/auth/verify";
+import { requireUserAdmin, denyElevatedAction } from "@/lib/auth/verify";
 
 const cognitoErrorMessages: Record<string, string> = {
   UsernameExistsException: "An account with this email already exists.",
@@ -10,8 +10,10 @@ const cognitoErrorMessages: Record<string, string> = {
 
 // POST /api/users/invite - Invite a new staff member (email + role).
 // Cognito emails the invitation with a temporary password.
+//
+// Admin and HR both invite; only an admin may hand out Admin or HR itself.
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { email, role } = await request.json();
@@ -29,6 +31,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const escalation = denyElevatedAction(auth.claims, { grantingRole: role });
+    if (escalation) return escalation;
 
     const result = await inviteUser(email.trim().toLowerCase(), role as StaffRole);
 

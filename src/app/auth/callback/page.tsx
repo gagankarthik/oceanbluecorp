@@ -18,7 +18,7 @@ const ROLE_TITLES: Record<UserRole, string> = {
   [UserRole.SALES]: "Sales",
 };
 
-/** Where a placed-workforce account should go instead. */
+/** The HR portal, which is a separate sign-in with its own accounts. */
 const HR_PORTAL_URL = "https://hr.oceanbluecorp.com";
 
 export default function CallbackPage() {
@@ -314,7 +314,7 @@ export default function CallbackPage() {
               </motion.div>
             )}
 
-            {/* Signed in, but not staff of this site — an employee-portal account. */}
+            {/* Signed in, but this account holds no staff role on this site. */}
             {status === "no_access" && (
               <motion.div
                 key="no_access"
@@ -332,11 +332,11 @@ export default function CallbackPage() {
                   <Shield className="h-10 w-10 text-white" />
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">Employee portal account</h1>
+                <h1 className="heading-subsection text-gray-900 mb-3">No access to the staff site</h1>
                 <p className="text-gray-500 mb-6">
-                  This sign-in is for the employee portal, where you&apos;ll find your leave,
-                  attendance, documents and the handbook. It doesn&apos;t have access to the staff
-                  site.
+                  This account has no staff role here. If you were looking for your leave,
+                  attendance, documents or the handbook, those live in the HR portal, which is a
+                  separate sign-in with the credentials HR issued you.
                 </p>
 
                 <div className="flex flex-col items-center gap-3">
@@ -344,7 +344,7 @@ export default function CallbackPage() {
                     href={HR_PORTAL_URL}
                     className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
                   >
-                    Go to the employee portal
+                    Go to the HR portal
                     <ArrowRight className="h-4 w-4" />
                   </a>
                   <Link href="/" className="text-sm text-gray-500 transition-colors hover:text-gray-700">

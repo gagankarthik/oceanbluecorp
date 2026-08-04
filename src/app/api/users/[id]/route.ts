@@ -8,7 +8,7 @@ import {
   STAFF_ROLES,
   type StaffRole,
 } from "@/lib/aws/cognito";
-import { requireStaff, requireAdmin } from "@/lib/auth/verify";
+import { requireStaff, requireUserAdmin, denyElevatedAction } from "@/lib/auth/verify";
 
 // GET /api/users/[id] - Get a single user
 export async function GET(
@@ -40,16 +40,27 @@ export async function GET(
 }
 
 // PATCH /api/users/[id] - Update user (role, status)
+//
+// Admin and HR both manage accounts; HR is held to ordinary staff. The target's
+// current role is read from Cognito rather than taken from the request, so a
+// caller cannot talk their way past the check.
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
     const { role, status } = body;
+
+    const current = await getCognitoUser(id);
+    const guard = denyElevatedAction(auth.claims, {
+      grantingRole: role,
+      targetRole: current.user?.role ?? null,
+    });
+    if (guard) return guard;
 
     // Update role if provided
     if (role) {
@@ -106,15 +117,20 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/users/[id] - Delete a user
+// DELETE /api/users/[id] - Delete a user. HR may remove ordinary staff; only an
+// admin can delete an Admin or HR account.
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
+
+    const current = await getCognitoUser(id);
+    const guard = denyElevatedAction(auth.claims, { targetRole: current.user?.role ?? null });
+    if (guard) return guard;
 
     const result = await deleteUser(id);
 

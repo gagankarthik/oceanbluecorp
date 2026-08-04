@@ -113,10 +113,66 @@ export async function requireStaff(req: NextRequest): Promise<Guard> {
   return { ok: true, claims };
 }
 
-// Require the ADMIN role (user management, API keys, etc.).
+// Require the ADMIN role (roles, API keys, site content, etc.).
 export async function requireAdmin(req: NextRequest): Promise<Guard> {
   const claims = await getClaims(req);
   if (!claims) return { ok: false, response: unauthorized() };
-  if (!staffRolesOf(claims.groups).includes(UserRole.ADMIN)) return { ok: false, response: forbidden() };
+  if (!isAdminClaims(claims)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
+}
+
+/** True when the verified caller holds this site's admin role. */
+export function isAdminClaims(claims: Claims): boolean {
+  return staffRolesOf(claims.groups).includes(UserRole.ADMIN);
+}
+
+/**
+ * Require ADMIN or HR: the two roles that run account administration here.
+ *
+ * HR invites people and manages ordinary staff accounts day to day. What HR
+ * must not do is manufacture peers or superiors, so granting an admin or hr
+ * role, and touching an account that already holds one, stays with admins.
+ * Callers enforce that second half with {@link denyElevatedAction}.
+ */
+export async function requireUserAdmin(req: NextRequest): Promise<Guard> {
+  const claims = await getClaims(req);
+  if (!claims) return { ok: false, response: unauthorized() };
+  const roles = staffRolesOf(claims.groups);
+  if (!roles.includes(UserRole.ADMIN) && !roles.includes(UserRole.HR)) {
+    return { ok: false, response: forbidden() };
+  }
+  return { ok: true, claims };
+}
+
+/** Roles that confer account-management power, and so may only be handed out by an admin. */
+const ELEVATED_ROLES: string[] = [UserRole.ADMIN, UserRole.HR];
+
+export function isElevatedRole(role: string | null | undefined): boolean {
+  return Boolean(role && ELEVATED_ROLES.includes(role.toLowerCase().trim()));
+}
+
+/**
+ * Block a non-admin caller from assigning an elevated role or acting on an
+ * account that already holds one. Pass the role being granted, the target's
+ * current role, or both. Returns a 403 response, or null when the action is
+ * allowed.
+ */
+export function denyElevatedAction(
+  claims: Claims,
+  { grantingRole, targetRole }: { grantingRole?: string | null; targetRole?: string | null },
+): NextResponse | null {
+  if (isAdminClaims(claims)) return null;
+  if (isElevatedRole(grantingRole)) {
+    return NextResponse.json(
+      { error: "Only an administrator can grant the Admin or HR role." },
+      { status: 403 },
+    );
+  }
+  if (isElevatedRole(targetRole)) {
+    return NextResponse.json(
+      { error: "Only an administrator can change an Admin or HR account." },
+      { status: 403 },
+    );
+  }
+  return null;
 }
