@@ -3,11 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUserManager } from "@/lib/auth/AuthContext";
+import { UserRole, highestStaffRole } from "@/lib/auth/config";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, Shield, ArrowRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-type AuthStatus = "verifying" | "success" | "error" | "email_verified";
+type AuthStatus = "verifying" | "success" | "error" | "email_verified" | "no_access";
+
+/** Human titles for this site's staff roles. */
+const ROLE_TITLES: Record<UserRole, string> = {
+  [UserRole.ADMIN]: "Administrator",
+  [UserRole.HR]: "HR Manager",
+  [UserRole.RECRUITER]: "Recruiter",
+  [UserRole.SALES]: "Sales",
+};
+
+/** Where a placed-workforce account should go instead. */
+const HR_PORTAL_URL = "https://hr.oceanbluecorp.com";
 
 export default function CallbackPage() {
   const [status, setStatus] = useState<AuthStatus>("verifying");
@@ -43,32 +55,26 @@ export default function CallbackPage() {
         const user = await userManager.signinRedirectCallback();
 
         if (user) {
-          // Get user role from groups
+          // Groups are namespaced per application, so only this site's roles
+          // count here (see lib/auth/config.ts).
           const groups = (user.profile as Record<string, unknown>)["cognito:groups"] as string[] || [];
+          const role = highestStaffRole(groups);
 
-          // Determine role for display
-          if (groups.includes("admin")) {
-            setUserRole("Administrator");
-          } else if (groups.includes("hr")) {
-            setUserRole("HR Manager");
-          } else if (groups.includes("recruiter")) {
-            setUserRole("Recruiter");
-          } else if (groups.includes("sales")) {
-            setUserRole("Sales");
-          } else {
-            setUserRole("Staff");
+          // The user pool is shared with the HR portal, so a placed-workforce
+          // account can authenticate against it and still have no business on
+          // this site. End the session instead of leaving them signed in with
+          // nowhere to go.
+          if (!role) {
+            await userManager.removeUser().catch(() => {});
+            setStatus("no_access");
+            return;
           }
 
+          setUserRole(ROLE_TITLES[role]);
           setStatus("success");
 
           // Redirect after a brief delay to show success state
-          setTimeout(() => {
-            if (groups.includes("admin") || groups.includes("hr") || groups.includes("recruiter") || groups.includes("sales")) {
-              router.push("/admin");
-            } else {
-              router.push("/");
-            }
-          }, 2000);
+          setTimeout(() => router.push("/admin"), 2000);
         } else {
           router.push("/");
         }
@@ -305,6 +311,46 @@ export default function CallbackPage() {
                     <ArrowRight className="w-4 h-4" />
                   </motion.div>
                 </motion.div>
+              </motion.div>
+            )}
+
+            {/* Signed in, but not staff of this site — an employee-portal account. */}
+            {status === "no_access" && (
+              <motion.div
+                key="no_access"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center"
+              >
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
+                >
+                  <Shield className="h-10 w-10 text-white" />
+                </motion.div>
+
+                <h1 className="heading-subsection text-gray-900 mb-3">Employee portal account</h1>
+                <p className="text-gray-500 mb-6">
+                  This sign-in is for the employee portal, where you&apos;ll find your leave,
+                  attendance, documents and the handbook. It doesn&apos;t have access to the staff
+                  site.
+                </p>
+
+                <div className="flex flex-col items-center gap-3">
+                  <a
+                    href={HR_PORTAL_URL}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    Go to the employee portal
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <Link href="/" className="text-sm text-gray-500 transition-colors hover:text-gray-700">
+                    Back to the website
+                  </Link>
+                </div>
               </motion.div>
             )}
 

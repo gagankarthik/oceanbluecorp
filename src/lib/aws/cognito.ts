@@ -11,7 +11,10 @@ import {
   AdminDeleteUserCommand,
   AdminUpdateUserAttributesCommand,
   ListGroupsCommand,
+  CreateGroupCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
+
+import { groupNameForRole, highestStaffRole, normalizeStaffRole } from "@/lib/auth/config";
 
 // Assignable staff roles. There is no public "user" role — every account is
 // created by an admin and belongs to exactly one of these groups.
@@ -64,14 +67,11 @@ const mapUserStatus = (cognitoStatus: string | undefined, enabled: boolean): "ac
   }
 };
 
-// Get user role from groups. null when the account belongs to no staff group.
-const getRoleFromGroups = (groups: string[]): StaffRole | null => {
-  if (groups.includes("admin")) return "admin";
-  if (groups.includes("hr")) return "hr";
-  if (groups.includes("recruiter")) return "recruiter";
-  if (groups.includes("sales")) return "sales";
-  return null;
-};
+// Get user role from groups. null when the account belongs to no staff group of
+// THIS site: groups are namespaced per application, so `web:hr` and the legacy
+// bare `hr` both count while an HR-portal group such as `hr:employee` does not.
+const getRoleFromGroups = (groups: string[]): StaffRole | null =>
+  (highestStaffRole(groups) as StaffRole | null) ?? null;
 
 // List all users from Cognito
 export async function listCognitoUsers(options?: {
@@ -200,11 +200,31 @@ export async function getCognitoUser(username: string): Promise<{ success: boole
   }
 }
 
+/**
+ * Make sure a group exists before assigning it. The namespaced groups
+ * (`web:admin` and friends) are new, so the first assignment would otherwise
+ * fail with ResourceNotFound. Best-effort: an existing group throws and that is
+ * exactly the case we want to ignore.
+ */
+async function ensureGroup(groupName: string): Promise<void> {
+  try {
+    const config = getConfig();
+    const client = createCognitoClient();
+    await client.send(
+      new CreateGroupCommand({ UserPoolId: config.userPoolId, GroupName: groupName }),
+    );
+  } catch {
+    // Group already exists, or we lack CreateGroup — the add below reports it.
+  }
+}
+
 // Add user to a group
 export async function addUserToGroup(username: string, groupName: string): Promise<{ success: boolean; error?: string }> {
   try {
     const config = getConfig();
     const client = createCognitoClient();
+
+    await ensureGroup(groupName);
 
     const command = new AdminAddUserToGroupCommand({
       UserPoolId: config.userPoolId,
@@ -246,24 +266,33 @@ export async function removeUserFromGroup(username: string, groupName: string): 
   }
 }
 
-// Update user role (manages groups)
+/**
+ * Update a user's role on THIS site.
+ *
+ * Writes the namespaced group (`web:hr`) and clears every other group that
+ * would grant a role here, legacy bare names included. Clearing the legacy ones
+ * matters: reads accept both shapes, so leaving an old bare `admin` behind would
+ * make a demotion no demotion at all.
+ *
+ * Groups belonging to another application (`hr:*`) are left strictly alone —
+ * this site does not manage the HR portal's access.
+ */
 export async function updateUserRole(username: string, newRole: StaffRole): Promise<{ success: boolean; error?: string }> {
   try {
-    // Get current groups
+    const target = groupNameForRole(newRole);
     const currentGroups = await getUserGroups(username);
 
-    // Remove from every role group the user is currently in
-    for (const group of STAFF_ROLES) {
-      if (currentGroups.includes(group)) {
-        const result = await removeUserFromGroup(username, group);
-        if (!result.success) {
-          return result;
-        }
+    // Every other group that grants a role on this site has to go.
+    const stale = currentGroups.filter((g) => g !== target && normalizeStaffRole(g) !== null);
+    for (const group of stale) {
+      const result = await removeUserFromGroup(username, group);
+      if (!result.success) {
+        return result;
       }
     }
 
     // Add to the new role group
-    const result = await addUserToGroup(username, newRole);
+    const result = await addUserToGroup(username, target);
     if (!result.success) {
       return result;
     }
@@ -307,7 +336,8 @@ export async function inviteUser(
     // Use the username Cognito assigned (the pool may use a UUID username with
     // email as an alias) so the group assignment targets the right account.
     const username = created.User?.Username || email;
-    const roleResult = await addUserToGroup(username, role);
+    // Namespaced group, so this account is staff HERE and nowhere else.
+    const roleResult = await addUserToGroup(username, groupNameForRole(role));
     if (!roleResult.success) {
       return roleResult;
     }

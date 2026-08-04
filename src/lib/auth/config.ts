@@ -32,6 +32,74 @@ export const roleHierarchy: Record<UserRole, number> = {
   [UserRole.SALES]: 2,
 };
 
+/**
+ * Cognito groups are namespaced per application.
+ *
+ * One user pool serves this site and the HR portal (hr.oceanbluecorp.com), so a
+ * bare group called `admin` does not say whose admin it means. This site writes
+ * `web:admin`, `web:hr`, `web:recruiter`, `web:sales`. The HR portal writes
+ * `hr:*` for its own roles, including `hr:employee` for the placed workforce.
+ *
+ * Reads accept both `web:<role>` and the legacy bare `<role>`, so no existing
+ * staff member is locked out by the rename. A group from ANOTHER namespace
+ * grants nothing here: an `hr:employee` account is an employee-portal login and
+ * has no business on this site, which is exactly the separation intended.
+ */
+export const WEBSITE_ROLE_NAMESPACE = "web";
+const NAMESPACE_SEPARATOR = ":";
+
+const STAFF_ROLE_VALUES: string[] = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
+
+/** The Cognito group name this site writes for a role, e.g. "web:admin". */
+export function groupNameForRole(role: UserRole | string): string {
+  return `${WEBSITE_ROLE_NAMESPACE}${NAMESPACE_SEPARATOR}${role}`;
+}
+
+/**
+ * Resolve a raw Cognito group to one of THIS site's staff roles.
+ * `web:admin` and legacy `admin` both give admin; `hr:admin` and `hr:employee`
+ * give null, because they belong to the HR portal.
+ */
+export function normalizeStaffRole(raw: string | null | undefined): UserRole | null {
+  if (!raw) return null;
+  const value = raw.toLowerCase().trim();
+  if (!value) return null;
+
+  const sep = value.indexOf(NAMESPACE_SEPARATOR);
+  if (sep !== -1) {
+    const namespace = value.slice(0, sep);
+    const role = value.slice(sep + 1);
+    if (namespace !== WEBSITE_ROLE_NAMESPACE) return null; // another app's role
+    return STAFF_ROLE_VALUES.includes(role) ? (role as UserRole) : null;
+  }
+
+  // Legacy unprefixed group.
+  return STAFF_ROLE_VALUES.includes(value) ? (value as UserRole) : null;
+}
+
+/** Every staff role in a group list that belongs to this site. */
+export function staffRolesOf(groups: ReadonlyArray<string> | null | undefined): UserRole[] {
+  if (!groups?.length) return [];
+  const out = new Set<UserRole>();
+  for (const g of groups) {
+    const role = normalizeStaffRole(g);
+    if (role) out.add(role);
+  }
+  return [...out];
+}
+
+/** The single highest-privilege role a group list grants, or null for none. */
+export function highestStaffRole(groups: ReadonlyArray<string> | null | undefined): UserRole | null {
+  const owned = staffRolesOf(groups);
+  if (owned.length === 0) return null;
+  return owned.reduce((best, r) => (roleHierarchy[r] > roleHierarchy[best] ? r : best));
+}
+
+/** True when the group list grants any staff access to this site. */
+export function hasStaffAccess(groups: ReadonlyArray<string> | null | undefined): boolean {
+  return highestStaffRole(groups) !== null;
+}
+
 // Cognito Hosted UI URLs
 export const getCognitoUrls = () => {
   const domain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN || "";

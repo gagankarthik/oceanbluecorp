@@ -11,6 +11,7 @@
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { UserRole, hasStaffAccess, staffRolesOf } from "./config";
 
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2";
 const POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "";
@@ -19,7 +20,6 @@ const ISSUER = `https://cognito-idp.${REGION}.amazonaws.com/${POOL_ID}`;
 const JWKS_URL = `${ISSUER}/.well-known/jwks.json`;
 
 export const SESSION_COOKIE = "ob_session";
-const STAFF_GROUPS = ["admin", "hr", "recruiter", "sales"];
 
 type Jwk = { kid: string; kty: string; n: string; e: string; alg?: string; use?: string };
 
@@ -101,19 +101,22 @@ type Guard = { ok: true; claims: Claims } | { ok: false; response: NextResponse 
 const unauthorized = (): NextResponse => NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 const forbidden = (): NextResponse => NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-// Require a signed-in user belonging to any staff group. This closes the
-// "anyone with the URL" hole; finer per-role checks remain enforced in the UI.
+// Require a signed-in user belonging to any staff group of THIS site. Groups
+// are matched through the namespace rules in config.ts, so `web:hr` and legacy
+// `hr` both pass while an HR-portal group such as `hr:employee` does not: a
+// placed-workforce account is authenticated against the shared pool but is not
+// staff here.
 export async function requireStaff(req: NextRequest): Promise<Guard> {
   const claims = await getClaims(req);
   if (!claims) return { ok: false, response: unauthorized() };
-  if (!claims.groups.some((g) => STAFF_GROUPS.includes(g))) return { ok: false, response: forbidden() };
+  if (!hasStaffAccess(claims.groups)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
 }
 
-// Require the ADMIN group (user management, API keys, etc.).
+// Require the ADMIN role (user management, API keys, etc.).
 export async function requireAdmin(req: NextRequest): Promise<Guard> {
   const claims = await getClaims(req);
   if (!claims) return { ok: false, response: unauthorized() };
-  if (!claims.groups.includes("admin")) return { ok: false, response: forbidden() };
+  if (!staffRolesOf(claims.groups).includes(UserRole.ADMIN)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
 }

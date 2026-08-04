@@ -3,8 +3,16 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { UserManager, User, WebStorageStateStore } from "oidc-client-ts";
 import type { UserProfile } from "oidc-client-ts";
-import { UserRole, roleHierarchy } from "./config";
+import { UserRole, roleHierarchy, highestStaffRole } from "./config";
 import { writeHrPortalSession, clearHrPortalSession } from "./hrPortalSession";
+
+/**
+ * Shown when someone signs in with an employee-portal account. Exported so the
+ * sign-in screen can recognise it and point them at the right place instead of
+ * rendering it as a generic failure.
+ */
+export const NOT_STAFF_ERROR =
+  "This account is for the employee portal, not the staff site. Use hr.oceanbluecorp.com for your leave, attendance and documents.";
 
 interface AuthUser {
   id: string;
@@ -77,21 +85,12 @@ const createUserManagerConfig = () => {
 const parseUser = (oidcUser: User): AuthUser => {
   const profile = oidcUser.profile;
 
-  // Cognito groups are in the cognito:groups claim
+  // Cognito groups are in the cognito:groups claim. They are namespaced per
+  // application (`web:admin`); bare legacy names still count, and another app's
+  // groups (`hr:employee`) grant nothing here. Highest role wins; null means the
+  // account has no staff access to this site at all.
   const groups: string[] = (profile as Record<string, unknown>)["cognito:groups"] as string[] || [];
-
-  // Determine role from groups (prioritize highest role). null = no staff
-  // group, which grants access to nothing.
-  let role: UserRole | null = null;
-  if (groups.includes("admin")) {
-    role = UserRole.ADMIN;
-  } else if (groups.includes("hr")) {
-    role = UserRole.HR;
-  } else if (groups.includes("recruiter")) {
-    role = UserRole.RECRUITER;
-  } else if (groups.includes("sales")) {
-    role = UserRole.SALES;
-  }
+  const role: UserRole | null = highestStaffRole(groups);
 
   return {
     id: profile.sub || "",
@@ -241,6 +240,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       expires_at: Math.floor(Date.now() / 1000) + (data.expiresIn ?? 3600),
     });
 
+    const authUser = parseUser(oidcUser);
+
+    // The user pool is shared with the employee portal, so valid credentials do
+    // not by themselves make someone staff here. An account with no role on
+    // this site never gets a session: no stored user, no server cookie. Their
+    // portal session is still written, so the link we show them lands signed in.
+    if (!authUser.role) {
+      writeHrPortalSession({
+        idToken: data.idToken,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      });
+      throw new Error(NOT_STAFF_ERROR);
+    }
+
     await userManager.storeUser(oidcUser);
     await syncServerSession(data.idToken, data.expiresIn);
     writeHrPortalSession({
@@ -248,7 +262,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
     });
-    const authUser = parseUser(oidcUser);
     setUser(authUser);
     return authUser;
   }, []);
