@@ -101,8 +101,11 @@ export default function SignInPage() {
   const [isSubmitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Complete-invite step
+  // Complete-invite step. `challengeUsername` / `requiredAttributes` come from
+  // Cognito with the challenge and have to travel back with the answer.
   const [session, setSession] = useState("");
+  const [challengeUsername, setChallengeUsername] = useState("");
+  const [requiredAttributes, setRequiredAttributes] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [phonePrefix, setPhonePrefix] = useState("+1");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -130,6 +133,8 @@ export default function SignInPage() {
       const result = await signInWithCredentials(email, password);
       if (result.status === "NEW_PASSWORD_REQUIRED") {
         setSession(result.session);
+        setChallengeUsername(result.username);
+        setRequiredAttributes(result.requiredAttributes);
         setStep("complete");
       } else {
         router.push(getRoleRedirect(result.user.role));
@@ -154,6 +159,8 @@ export default function SignInPage() {
         email, session, name,
         phone: `${phonePrefix}${phoneNumber}`,
         password: newPassword,
+        username: challengeUsername,
+        requiredAttributes,
       });
       router.push(getRoleRedirect(authUser.role));
     } catch (err: unknown) {
@@ -198,11 +205,23 @@ export default function SignInPage() {
     </div>
   );
 
+  // The server may append the identity provider's own reason after a newline;
+  // show it quieter, under the headline, so a rejected setup is diagnosable.
+  const [errorHeadline, ...errorDetail] = (error ?? "").split("\n");
+
   const errorBanner = (
     <AnimatePresence>
       {error && (
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-2.5 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" /> {error}
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>
+            {errorHeadline}
+            {errorDetail.length > 0 && (
+              <span className="mt-1 block text-[11px] leading-relaxed text-red-600/80">
+                {errorDetail.join(" ")}
+              </span>
+            )}
+          </span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -328,6 +347,19 @@ export default function SignInPage() {
                   {isSubmitting ? "Setting up…" : "Complete setup"}
                 </button>
               </form>
+
+              {/* An invite session is single-use and short-lived; without this
+                  an expired one strands the user on a form that can't submit. */}
+              <p className="mt-6 text-center text-xs text-gray-400">
+                Session expired?{" "}
+                <button
+                  type="button"
+                  onClick={() => { setStep("signin"); setError(null); setSession(""); setPassword(""); }}
+                  className="text-[#1d4ed8] hover:underline"
+                >
+                  Start over
+                </button>
+              </p>
             </>
           )}
         </motion.div>

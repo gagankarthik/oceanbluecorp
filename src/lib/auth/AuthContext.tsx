@@ -31,7 +31,14 @@ interface AuthUser {
 // challenge so the UI can collect a permanent password (plus name/phone).
 type SignInResult =
   | { status: "AUTHENTICATED"; user: AuthUser }
-  | { status: "NEW_PASSWORD_REQUIRED"; session: string };
+  | {
+      status: "NEW_PASSWORD_REQUIRED";
+      session: string;
+      // The identifier Cognito issued the session for, and the attributes it
+      // still needs — both have to come back with the challenge answer.
+      username: string;
+      requiredAttributes: string[];
+    };
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -46,6 +53,8 @@ interface AuthContextType {
     name: string;
     phone: string;
     password: string;
+    username?: string;
+    requiredAttributes?: string[];
   }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
@@ -281,7 +290,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // First sign-in for an invited user: Cognito asks for a permanent password.
     if (data.challenge === "NEW_PASSWORD_REQUIRED") {
-      return { status: "NEW_PASSWORD_REQUIRED", session: data.session };
+      return {
+        status: "NEW_PASSWORD_REQUIRED",
+        session: data.session,
+        username: data.username || email,
+        requiredAttributes: data.requiredAttributes ?? [],
+      };
     }
 
     const user = await establishSession(data);
@@ -291,18 +305,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Answer the NEW_PASSWORD_REQUIRED challenge: set the permanent password and
   // store the user's full name + phone, then establish the session.
   const completeNewPassword = useCallback(async ({
-    email, session, name, phone, password,
-  }: { email: string; session: string; name: string; phone: string; password: string }): Promise<AuthUser> => {
+    email, session, name, phone, password, username, requiredAttributes,
+  }: {
+    email: string; session: string; name: string; phone: string; password: string;
+    username?: string; requiredAttributes?: string[];
+  }): Promise<AuthUser> => {
     const response = await fetch("/api/auth/complete-invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, session, name, phone, password }),
+      body: JSON.stringify({ email, session, name, phone, password, username, requiredAttributes }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Could not complete your account setup.");
+      // Cognito's own reason, when there is one, says far more than the
+      // friendly headline — keep it attached so the banner can show it.
+      throw new Error(
+        [data.error || "Could not complete your account setup.", data.detail]
+          .filter(Boolean)
+          .join("\n")
+      );
     }
 
     return establishSession(data);

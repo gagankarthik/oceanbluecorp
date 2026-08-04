@@ -36,9 +36,29 @@ export async function POST(request: Request) {
     // before issuing tokens. Hand the session back so the client can collect a
     // new password (plus name + phone) and complete the challenge.
     if (response.ChallengeName === "NEW_PASSWORD_REQUIRED") {
+      const params = response.ChallengeParameters ?? {};
+
+      // Any attribute the pool marks required but the invite didn't set has to
+      // travel with the challenge answer. Cognito lists them here as
+      // ["userAttribute.name","userAttribute.phone_number"] — strip the prefix.
+      let requiredAttributes: string[] = [];
+      try {
+        const raw = JSON.parse(params.requiredAttributes || "[]");
+        if (Array.isArray(raw)) {
+          requiredAttributes = raw.map((a: string) => String(a).replace(/^userAttribute\./, ""));
+        }
+      } catch {
+        // Malformed list — the complete-invite route falls back to its defaults.
+      }
+
       return NextResponse.json({
         challenge: "NEW_PASSWORD_REQUIRED",
         session: response.Session,
+        // Answer the challenge with the identifier Cognito issued the session
+        // for. Pools that use a UUID username with email as an alias reject the
+        // typed email here.
+        username: params.USER_ID_FOR_SRP || email,
+        requiredAttributes,
       });
     }
 
