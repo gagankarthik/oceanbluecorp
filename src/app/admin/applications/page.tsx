@@ -39,6 +39,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { fmtDate } from "@/lib/format";
 import { daysInStage, isStale, TERMINAL, STALE_DAYS } from "@/lib/pipeline";
+import { candidateHaystack, matchesTerms, searchTerms } from "@/lib/candidate-search";
 import { downloadCsv } from "@/lib/csv";
 
 /* ============================================================================
@@ -370,11 +371,25 @@ export default function ApplicationsPage() {
     [applications, savedView, viewCtx],
   );
 
-  const filtered = useMemo(() => inView.filter((a) => {
-    const q = debouncedSearch.toLowerCase();
-    // City joins the searchable fields so "austin" still finds a candidate
-    // even though the location filter itself works at state level.
-    if (q && ![a.name, a.email, a.applicationId, a.jobTitle, a.phone, a.city].some((f) => f?.toLowerCase().includes(q))) return false;
+  /**
+   * Searchable text per record, built once per loaded list rather than on every
+   * keystroke — walking a few hundred parsed resumes on each character typed is
+   * what would make a skill search feel slow.
+   */
+  const haystacks = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of applications) map.set(a.id, candidateHaystack(a));
+    return map;
+  }, [applications]);
+
+  const filtered = useMemo(() => {
+    // All terms must match, so "java aws" means both.
+    const terms = searchTerms(debouncedSearch.trim());
+    return inView.filter((a) => {
+    // Matches identity fields AND the parsed resume — skills, employers, role
+    // titles, technologies, certifications. Searching a skill finds people who
+    // have it, not just people who applied to a job named after it.
+    if (terms.length && !matchesTerms(haystacks.get(a.id) ?? candidateHaystack(a), terms)) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (posFilter    !== "all" && a.jobTitle !== posFilter) return false;
     if (locationFilter !== "all") {
@@ -386,7 +401,8 @@ export default function ApplicationsPage() {
     if (hireFilter   !== "all" && a.hireType !== hireFilter) return false;
     if (minRating > 0 && (a.rating || 0) < minRating) return false;
     return true;
-  }), [inView, debouncedSearch, statusFilter, posFilter, locationFilter, sourceFilter, authFilter, hireFilter, minRating]);
+    });
+  }, [inView, haystacks, debouncedSearch, statusFilter, posFilter, locationFilter, sourceFilter, authFilter, hireFilter, minRating]);
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
@@ -631,7 +647,7 @@ export default function ApplicationsPage() {
           <WorkspaceSearch
             value={search}
             onChange={setSearch}
-            placeholder="Filter applicants by name, email, position or ID"
+            placeholder="Search name, email, position, or a skill from their resume"
           />
         }
         trailing={

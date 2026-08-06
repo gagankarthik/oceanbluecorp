@@ -16,6 +16,7 @@ import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { BestCandidates } from "@/components/admin/best-candidates";
+import { JobSubmissions } from "@/components/admin/job-submissions";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -24,7 +25,7 @@ import { Avatar } from "@/components/admin/avatar";
 import {
   IconRequisition, IconWarning, IconBuilding, IconCopy, IconMoney,
   IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
-  IconUserCheck, IconGroup, IconSource,
+  IconUserCheck, IconGroup, IconSource, IconSend,
 } from "@/components/admin/icons";
 import { statusMeta, PIPELINE_STAGES, SERIES, type AppStatus } from "@/components/admin/theme";
 import {
@@ -33,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type Tab = "info" | "applicants" | "candidates";
+type Tab = "info" | "applicants" | "submissions" | "candidates";
 
 const DAY = 86400000;
 
@@ -365,9 +366,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           {/* Tab bar */}
           <div className="flex border-b border-[var(--adm-line)] px-2">
             {([
-              { id: "applicants" as Tab, label: "Applicants",     count: applications.length, icon: IconGroup },
-              { id: "candidates" as Tab, label: "Best candidates", count: undefined,          icon: IconSource },
-              { id: "info" as Tab,       label: "About job",      count: undefined,          icon: IconFile },
+              { id: "applicants" as Tab,  label: "Applicants",      count: applications.length, icon: IconGroup },
+              { id: "submissions" as Tab, label: "Submissions",     count: undefined,          icon: IconSend },
+              { id: "candidates" as Tab,  label: "Best candidates", count: undefined,          icon: IconSource },
+              { id: "info" as Tab,        label: "About job",       count: undefined,          icon: IconFile },
             ] as const).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -396,6 +398,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               );
             })}
           </div>
+
+          {/* ── Submissions raised for this requisition ── */}
+          {activeTab === "submissions" && <JobSubmissions jobId={jobId} />}
 
           {/* ── Best candidates ── */}
           {activeTab === "candidates" && <BestCandidates jobId={jobId} bare />}

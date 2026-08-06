@@ -264,9 +264,16 @@ export async function PUT(
       if (resumeChanged) {
         updates.resumeAnalysisStatus = "pending";
         updates.resumeAnalysisError = "";
+        // A new document starts with a clean slate. Without this a record that
+        // had exhausted its retry budget — or was marked a dead end because the
+        // OLD file was a scan — would refuse to analyse the new one.
+        updates.resumeAnalysisAttempts = 0;
+        updates.resumeAnalysisRetryable = false;
       }
       if (resumeDetached) {
         updates.resumeAnalysisError = "";
+        updates.resumeAnalysisAttempts = 0;
+        updates.resumeAnalysisRetryable = false;
       }
 
       // Handle status history for status changes
@@ -305,7 +312,7 @@ export async function PUT(
       if (resumeChanged) {
         after(async () => {
           try {
-            await analyzeApplicationResume(id);
+            await analyzeApplicationResume(id, auth.claims.sub);
           } catch (err) {
             console.error("Resume analysis after update failed:", err);
           }

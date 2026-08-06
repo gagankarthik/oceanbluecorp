@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Companion documents
+
+- **`STANDARDS.md`** — structure, naming, reuse (which shared helper to use instead
+  of writing another), the client/server boundary rule, security rules, and the
+  pre-ship checks. Read before adding a route, a component, or a table.
+- **`DESIGN_SYSTEM.md`** — visual language and the admin component inventory.
+
 ## Project Overview
 
 Ocean Blue Corporation enterprise website built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4. Uses AWS services (Cognito, DynamoDB, S3) for authentication and data storage. Deployed on AWS Amplify.

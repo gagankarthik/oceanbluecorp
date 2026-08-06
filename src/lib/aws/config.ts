@@ -49,6 +49,10 @@ export const dynamoDBConfig = {
       contacts: process.env.NEXT_AWS_DYNAMODB_TABLE_CONTACTS || "oceanblue-contacts",
       clients: process.env.NEXT_AWS_DYNAMODB_TABLE_CLIENTS || "oceanblue-clients",
       vendors: process.env.NEXT_AWS_DYNAMODB_TABLE_VENDORS || "oceanblue-vendors",
+      // Submissions, interviews and placements — the recruiting lifecycle after
+      // "candidate". One table with a `kind` discriminator, because these are
+      // almost always read together for one application.
+      pipeline: process.env.NEXT_AWS_DYNAMODB_TABLE_PIPELINE || "oceanblue-pipeline",
     };
   },
   get endpoint() {

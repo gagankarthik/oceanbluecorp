@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Menu, X, ChevronRight, Search,
-  PanelLeftClose, PanelLeft, Loader2, ExternalLink,
+  PanelLeftClose, Loader2, ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole, routeAccess } from "@/lib/auth";
@@ -133,12 +133,20 @@ function Sidebar({
             collapsed ? "justify-center px-2" : "justify-between px-4",
           )}
         >
-          <Link href="/admin" className="flex items-center gap-2">
-            {collapsed ? (
-              <div className="w-8 h-8 flex items-center justify-center">
-                <Image src="/favicon.png" alt="Logo" width={32} height={32} className="w-8 h-8" />
-              </div>
-            ) : (
+          {/* In the rail the brand mark IS the expand control — a 64px column
+              has no room for both a logo and a separate toggle, and the mark is
+              the one thing already sitting at the top of every console. */}
+          {collapsed ? (
+            <button
+              onClick={onToggleCollapse}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+              className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--adm-row-hover)]"
+            >
+              <Image src="/favicon.png" alt="Ocean Blue Corporation" width={32} height={32} className="h-8 w-8" />
+            </button>
+          ) : (
+            <Link href="/admin" className="flex items-center gap-2">
               <Image
                 src="/logo.png"
                 alt="Ocean Blue Corporation"
@@ -147,8 +155,8 @@ function Sidebar({
                 className="h-8 w-auto px-6"
                 priority
               />
-            )}
-          </Link>
+            </Link>
+          )}
           <button
             onClick={onClose}
             aria-label="Close navigation"
@@ -243,26 +251,20 @@ function Sidebar({
           </div>
         )}
 
-        {/* Collapse toggle (desktop only) */}
-        <div className="hidden lg:block px-2 py-2">
-          <button
-            onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn(
-              "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] transition-all",
-              collapsed ? "justify-center p-2.5" : "px-3 py-2",
-            )}
-          >
-            {collapsed ? (
-              <PanelLeft className="w-[18px] h-[18px]" aria-hidden="true" />
-            ) : (
-              <>
-                <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* Collapse toggle (desktop only). Expanding is handled by the brand
+            mark up in the rail, so this only ever reads "Collapse". */}
+        {!collapsed && (
+          <div className="hidden lg:block px-2 py-2">
+            <button
+              onClick={onToggleCollapse}
+              aria-label="Collapse sidebar"
+              className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] transition-all"
+            >
+              <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
+              <span>Collapse</span>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

@@ -21,6 +21,10 @@ import { cn } from "@/lib/utils";
 // the 40px hit area below comes from the ::before pseudo-element, so nothing is
 // harder to click for being a pixel smaller.
 const checkboxCobalt =
+  // A 40px hit area over the 16px box: a 40px-tall row has the room, and
+  // selecting records is the most repeated action in the grid (Fitts's Law —
+  // see the .adm-hit note in globals.css). The component's own default is 24px.
+  "before:size-10 " +
   "size-4 rounded-[4px] border border-[var(--adm-line)] shadow-none transition-colors " +
   "hover:border-[var(--adm-ink-subtle)] " +
   "focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] focus-visible:border-[var(--adm-accent)] " +
@@ -280,7 +284,7 @@ export function DataTable<T>({
               {selectable && (
                 <th className="w-12 pl-5 pr-1">
                   <Checkbox
-                    className={cn(checkboxCobalt, "relative before:absolute before:left-1/2 before:top-1/2 before:h-10 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']")}
+                    className={checkboxCobalt}
                     checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
                     onCheckedChange={toggleAll}
                     aria-label="Select all rows"
@@ -378,10 +382,7 @@ export function DataTable<T>({
                         {/* Always visible: the hover-reveal fade made rows look
                             unselectable (and untouchable on touch screens). */}
                         <Checkbox
-                          className={cn(
-                            checkboxCobalt,
-                            "relative before:absolute before:left-1/2 before:top-1/2 before:h-10 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']",
-                          )}
+                          className={checkboxCobalt}
                           checked={!!isSelected}
                           onCheckedChange={() => toggleRow(id)}
                           aria-label="Select row"

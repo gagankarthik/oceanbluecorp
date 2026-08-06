@@ -15,8 +15,10 @@ import {
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, getClaims } from "@/lib/auth/verify";
+import { hasStaffAccess } from "@/lib/auth/config";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
+import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
 
 // Resume analysis runs after the response via after(); give the invocation room
 // for the LLM pipeline (30–90s) without delaying the applicant's response.
@@ -94,6 +96,34 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // This route is open — the public careers portal posts through it — so a
+    // client-supplied analysis is only trusted from a verified staff session.
+    // The new-applicant screen already ran the extraction to fill its form, and
+    // sends it here so the same document isn't put through the pipeline twice.
+    // An anonymous caller's resumeAnalysis is ignored, not rejected: their
+    // application must still go through, and it gets analysed server-side below.
+    const claims = await getClaims(request);
+    const isStaff = !!claims && hasStaffAccess(claims.groups);
+
+    const suppliedAnalysis: ResumeAnalysis | undefined =
+      isStaff
+        && body.resumeAnalysis && typeof body.resumeAnalysis === "object" && !Array.isArray(body.resumeAnalysis)
+        ? (body.resumeAnalysis as ResumeAnalysis)
+        : undefined;
+
+    /**
+     * Fields only staff may set.
+     *
+     * This route is open so the public careers portal can post applications, and
+     * it used to take every field straight off the body — which let an anonymous
+     * applicant file themselves as `status: "hired"`, claim `ownership`, seed the
+     * internal `notes` a recruiter would later read as a colleague's, hand
+     * themselves a `rating`, or add themselves to the talent bench. A public
+     * caller now gets the safe defaults; nothing is rejected, so a genuine
+     * application still goes through.
+     */
+    const staffOnly = <T,>(value: T, fallback: T): T => (isStaff ? value : fallback);
+
     // For HR-created applications, email is required. For portal, jobId and email are required.
     if (!body.email) {
       return NextResponse.json(
@@ -151,7 +181,10 @@ export async function POST(request: NextRequest) {
       // Queue resume analysis when a resume is attached; the background task
       // below flips this to processing/completed/failed.
       resumeAnalysisStatus: body.resumeId ? "pending" : undefined,
-      status: body.status || "pending",
+      // An analysis handed in by staff is stored by that same background task,
+      // which also indexes the candidate and scores them against the job.
+      // A public applicant is always "pending"; only staff may file a stage.
+      status: staffOnly(body.status || "pending", "pending"),
       appliedAt: now,
       createdAt: now,
       name,
@@ -173,14 +206,14 @@ export async function POST(request: NextRequest) {
       // when blank, so it stays undefined rather than writing an empty string.
       visaSponsorshipRequired: body.visaSponsorshipRequired || false,
       visaExpiry: body.visaExpiry || undefined,
-      ownership: body.ownership,
-      ownershipName: body.ownershipName,
-      createdBy: body.createdBy,
-      createdByName: body.createdByName,
-      rating: body.rating,
-      notes: body.notes,
-      addToTalentBench: body.addToTalentBench || false,
-      benchAddedBy: body.benchAddedBy,
+      ownership: staffOnly(body.ownership, undefined),
+      ownershipName: staffOnly(body.ownershipName, undefined),
+      createdBy: staffOnly(body.createdBy, undefined),
+      createdByName: staffOnly(body.createdByName, undefined),
+      rating: staffOnly(body.rating, undefined),
+      notes: staffOnly(body.notes, undefined),
+      addToTalentBench: staffOnly(body.addToTalentBench || false, false),
+      benchAddedBy: staffOnly(body.benchAddedBy, undefined),
       // Bench pool: hired-at-creation records land on the internal bench,
       // everything else added to the bench defaults to the external pool.
       benchType: body.benchType
@@ -188,7 +221,7 @@ export async function POST(request: NextRequest) {
           ? (body.status === "hired" ? "internal" : "external")
           : undefined),
       statusHistory: [{
-        status: body.status || "pending",
+        status: staffOnly(body.status || "pending", "pending"),
         changedAt: now,
         changedBy: body.createdBy || "system",
         changedByName: body.createdByName || (isPortalApplication ? "Career Portal" : "System"),
@@ -212,7 +245,7 @@ export async function POST(request: NextRequest) {
     if (application.resumeId) {
       after(async () => {
         try {
-          await analyzeApplicationResume(application.id);
+          await analyzeApplicationResume(application.id, claims?.sub, { analysis: suppliedAnalysis });
         } catch (err) {
           console.error("Automatic resume analysis failed:", err);
         }

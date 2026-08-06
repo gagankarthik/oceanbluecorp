@@ -401,7 +401,7 @@ export function CandidateEditDrawer({
                     </Field>
                     <Field label="Add to talent bench">
                       <label className="flex items-center gap-2 px-3 py-2 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)] cursor-pointer hover:bg-[var(--adm-row-hover)] transition-colors">
-                        <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-[var(--adm-line)] text-[var(--adm-accent)]" />
+                        <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="size-4 shrink-0 rounded border-[var(--adm-line)] accent-[var(--adm-accent)]" />
                         <span className="text-sm text-[var(--adm-ink-mute)]">Add to bench</span>
                       </label>
                     </Field>
@@ -596,7 +596,7 @@ export function CandidateEditDrawer({
                         autoComplete="off"
                         checked={form.visaSponsorshipRequired}
                         onChange={(e) => set("visaSponsorshipRequired", e.target.checked)}
-                        className="rounded border-[var(--adm-line)] text-[var(--adm-accent)]"
+                        className="size-4 shrink-0 rounded border-[var(--adm-line)] accent-[var(--adm-accent)]"
                       />
                       <div>
                         <p className="text-sm font-medium text-[var(--adm-ink-mute)]">Requires sponsorship</p>

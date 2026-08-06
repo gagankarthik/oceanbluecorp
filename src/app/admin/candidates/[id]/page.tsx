@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Check, ChevronDown, ExternalLink, Loader2, Plus,
 } from "lucide-react";
-import type { Application, BenchType, NoteEntry } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, Job, NoteEntry } from "@/lib/aws/dynamodb";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -17,6 +17,7 @@ import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
 import { ResumeAnalysisEditDrawer } from "@/components/admin/resume-analysis-edit-drawer";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { JobFitCard } from "@/components/admin/job-fit-card";
+import { PipelinePanel } from "@/components/admin/pipeline-panel";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
@@ -40,7 +41,7 @@ interface CandidateDetail extends Application {
   jobType?: string;
 }
 
-type TabKey = "overview" | "activity" | "notes";
+type TabKey = "overview" | "pipeline" | "activity" | "notes";
 
 /** Label/value pair for the applicant details definition grid. */
 function DetailItem({ label, value }: { label: string; value?: React.ReactNode }) {
@@ -85,6 +86,10 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const [addingNote, setAddingNote] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisEditOpen, setAnalysisEditOpen] = useState(false);
+  /** The linked requisition, for the pipeline panel's client/vendor/rate defaults. */
+  const [jobDetail, setJobDetail] = useState<Job | null>(null);
+  /** One unattended retry per visit — not per render, and not a loop. */
+  const autoRetried = useRef(false);
 
   const fetchCandidate = useCallback(async () => {
     try {
@@ -116,6 +121,10 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         const jr = await fetch(`/api/jobs/${jobId}`);
         if (!jr.ok || cancelled) return;
         const jd = await jr.json();
+        // Kept whole as well as flattened: the pipeline panel defaults a
+        // submission's client, vendor and rates from the requisition, so a
+        // recruiter is not retyping what the job already says.
+        setJobDetail((jd.job as Job) ?? null);
         setCandidate((p) => (p ? {
           ...p,
           jobTitle:      p.jobTitle || jd.job?.title,
@@ -247,23 +256,62 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     } catch { toast.error("Failed to load resume. The file may have been deleted."); }
   };
 
-  const handleAnalyze = async () => {
+  /**
+   * Run the analysis. `auto` is the unattended retry: it says nothing on the way
+   * in and nothing on failure, because nobody asked for it — only a success is
+   * worth interrupting the page for.
+   */
+  const handleAnalyze = async ({ auto = false }: { auto?: boolean } = {}) => {
     if (!candidate?.resumeId || analyzing) return;
     setAnalyzing(true);
-    const toastId = toast.loading("Analyzing resume… this can take up to a minute.");
+    const toastId = auto ? undefined : toast.loading("Analyzing resume… this can take up to a minute.");
     try {
       const res = await fetch(`/api/applications/${id}/analyze`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed");
       setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
-      setActiveTab("overview");
+      if (!auto) setActiveTab("overview");
       toast.success("Resume analyzed", { id: toastId });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Analysis failed", { id: toastId });
+      if (auto) {
+        // The record now carries the fresh failure and its retryable flag; the
+        // panel shows it. A toast on a retry nobody asked for is just noise.
+        console.error("[candidate] automatic resume re-analysis failed:", err);
+        await refreshAnalysisState();
+      } else {
+        toast.error(err instanceof Error ? err.message : "Analysis failed", { id: toastId });
+      }
     } finally {
       setAnalyzing(false);
     }
   };
+
+  /** Pull just the analysis fields back after an unattended attempt. */
+  const refreshAnalysisState = async () => {
+    try {
+      const res = await fetch(`/api/applications/${id}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
+    } catch { /* non-fatal — the stale message stays on screen */ }
+  };
+
+  // A failed analysis retries itself once per visit. Most failures are not about
+  // this candidate at all (a rejected extraction token, the service down, a
+  // timeout), so the record should heal on the next view rather than sit on
+  // "didn't finish" until somebody notices the button. Dead ends — no resume, the
+  // file gone from storage, a document nothing can be read from — are flagged
+  // non-retryable server-side and left alone. Records that failed before the flag
+  // existed have it undefined, and get one chance.
+  useEffect(() => {
+    if (autoRetried.current || analyzing) return;
+    if (!candidate?.resumeId) return;
+    if (candidate.resumeAnalysisStatus !== "failed") return;
+    if (candidate.resumeAnalysisRetryable === false) return;
+    autoRetried.current = true;
+    void handleAnalyze({ auto: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate?.resumeId, candidate?.resumeAnalysisStatus, candidate?.resumeAnalysisRetryable]);
 
   if (loading) return <AdminDetailSkeleton />;
 
@@ -307,9 +355,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const location = [candidate.city, candidate.state].filter(Boolean).join(", ");
 
   const TABS = [
-    { key: "overview" as TabKey, label: "Overview", icon: IconFile,          count: undefined as number | undefined },
+    { key: "overview" as TabKey, label: "Overview", icon: IconFile,        count: undefined as number | undefined },
+    // Submissions / interviews / placements live behind their own tab: they are a
+    // record of their own, and stacking them under Overview pushed the resume
+    // detail far down a screen that was already long.
+    { key: "pipeline" as TabKey, label: "Pipeline", icon: IconPipeline,    count: undefined as number | undefined },
     { key: "notes"    as TabKey, label: "Notes",    icon: IconMessageText, count: notes.length },
-    { key: "activity" as TabKey, label: "Activity", icon: IconHistory,           count: history.length },
+    { key: "activity" as TabKey, label: "Activity", icon: IconHistory,     count: history.length },
   ];
 
   return (
@@ -696,7 +748,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                             className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]">
                             <IconEdit className="h-3.5 w-3.5" /> Edit
                           </button>
-                          <button onClick={handleAnalyze} disabled={analyzing}
+                          <button onClick={() => void handleAnalyze()} disabled={analyzing}
                             className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60">
                             {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconRefresh className="h-3.5 w-3.5" />}
                             Re-analyze
@@ -715,7 +767,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </>
               ) : candidate.resumeId ? (
                 <AdminCard>
-                  {(candidate.resumeAnalysisStatus === "pending" || candidate.resumeAnalysisStatus === "processing") ? (
+                  {/* `analyzing` is included so an automatic retry shows as work in
+                      progress instead of leaving the previous failure on screen. */}
+                  {(analyzing || candidate.resumeAnalysisStatus === "pending" || candidate.resumeAnalysisStatus === "processing") ? (
                     <div className="flex flex-col items-center px-5 py-12 text-center">
                       <span className="grid h-12 w-12 place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
                         <Loader2 className="h-6 w-6 animate-spin text-[var(--adm-accent)]" />
@@ -736,7 +790,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                           : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."
                       }
                       action={
-                        <WorkspaceButton variant="primary" onClick={handleAnalyze} disabled={analyzing}>
+                        <WorkspaceButton variant="primary" onClick={() => void handleAnalyze()} disabled={analyzing}>
                           {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSparkles className="h-4 w-4" />}
                           {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
                         </WorkspaceButton>
@@ -759,6 +813,27 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 </AdminCard>
               )}
             </div>
+          )}
+
+          {/* Pipeline tab — where this candidate was sent, and what came of it */}
+          {activeTab === "pipeline" && (
+            <PipelinePanel
+              applicationId={id}
+              candidateName={candidate.name}
+              jobId={candidate.jobId}
+              jobTitle={candidate.jobTitle}
+              defaultClientId={jobDetail?.clientId}
+              defaultClientName={jobDetail?.clientName}
+              defaultVendorId={jobDetail?.vendorId}
+              defaultVendorName={jobDetail?.vendorName}
+              defaultBillRate={jobDetail?.clientBillRate}
+              defaultPayRate={jobDetail?.payRate}
+              onStatusAdvanced={(status) => {
+                // The stage moved server-side as a consequence of the event;
+                // mirror it here so the header and stage rail agree without a reload.
+                setCandidate((p) => (p ? { ...p, status: status as CandidateDetail["status"] } : p));
+              }}
+            />
           )}
 
           {/* Notes tab */}

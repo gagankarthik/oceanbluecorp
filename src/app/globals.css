@@ -167,9 +167,21 @@
     outline: none;
   }
 
-  /* Ensure interactive elements have minimum touch target size (WCAG 2.5.5) */
-  button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+  /* Ensure interactive elements have minimum touch target size (WCAG 2.5.5).
+     Roles that draw a fixed-size box (checkbox, radio, switch) are exempt —
+     a min-height would stretch the 16px square into a 16x24 rectangle. Those
+     controls carry their own transparent oversized hit area instead. */
+  button:not([role="checkbox"], [role="radio"], [role="switch"]),
+  a, [role="button"] {
     min-height: 24px;
+  }
+
+  /* Native boxes are square by definition — a min-height turns them into
+     rectangles. Size them instead, so height and width move together. */
+  input[type="checkbox"], input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    flex: none;
   }
 
   /* Smooth scrollbar hide utility */
@@ -1756,8 +1768,9 @@
   transform: translate(-50%, -50%);
 }
 
-/* Column headers: the whole cell sorts, not just the label's text box. */
-.adm-grid thead th button {
+/* Column headers: the whole cell sorts, not just the label's text box.
+   The select-all checkbox lives in a th too, and must keep its square box. */
+.adm-grid thead th button:not([role="checkbox"]) {
   height: 100%;
   min-height: 40px;
 }

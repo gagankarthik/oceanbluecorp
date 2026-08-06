@@ -25,9 +25,17 @@ frontend:
         - echo "NEXT_AWS_STMP_PASSWORD=$NEXT_AWS_STMP_PASSWORD" >> .env.production
         - echo "NEXT_AWS_STMP_IAM_USERNAME=$NEXT_AWS_STMP_IAM_USERNAME" >> .env.production
         - echo "NEXT_AWS_DYNAMODB_TABLE_API_KEYS=$NEXT_AWS_DYNAMODB_TABLE_API_KEYS" >> .env.production
+        # Submissions / interviews / placements (scripts/create-pipeline-table.mjs)
+        - echo "NEXT_AWS_DYNAMODB_TABLE_PIPELINE=$NEXT_AWS_DYNAMODB_TABLE_PIPELINE" >> .env.production
         # Resume Matching Engine (server-side only; set both in Amplify env vars)
         - echo "RESUME_MATCH_API_URL=$RESUME_MATCH_API_URL" >> .env.production
         - echo "RESUME_MATCH_API_KEY=$RESUME_MATCH_API_KEY" >> .env.production
+        # Resume extraction engine. POST /extract needs an X-Extraction-Token
+        # ticket, signed per request with the secret below — it must match
+        # EXTRACTION_SHARED_SECRET on the engine, or every analysis fails 401
+        # "Upload authorisation failed or expired."
+        - echo "NEXT_PUBLIC_RESUME_PARSER_API_URL=$NEXT_PUBLIC_RESUME_PARSER_API_URL" >> .env.production
+        - echo "NEXT_EXTRACTION_SHARED_SECRET=$NEXT_EXTRACTION_SHARED_SECRET" >> .env.production
 
         - npm run build
   artifacts:

@@ -936,11 +936,12 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
-                  [<HttpBadge key="1" method="POST" />, "/api/resume/upload", "Get presigned S3 URL for direct upload"],
-                  [<HttpBadge key="2" method="GET" />, "/api/resume/[id]", "Get presigned download URL (1h expiry)"],
-                  [<HttpBadge key="3" method="DELETE" />, "/api/resume/[id]", "Delete resume from S3 + DynamoDB"],
-                  [<HttpBadge key="4" method="GET" />, "/api/resume-bank", "List all resume bank entries"],
-                  [<HttpBadge key="5" method="POST" />, "/api/resume-bank", "Upload to resume bank"],
+                  [<HttpBadge key="1" method="POST" />, "/api/resume/upload", "Upload a resume: server-side to S3 + DynamoDB record"],
+                  [<HttpBadge key="2" method="POST" />, "/api/resume/parse", "Read a resume and return its structured content — stores nothing (backs the new-applicant autofill)"],
+                  [<HttpBadge key="3" method="GET" />, "/api/resume/[id]", "Get presigned download URL (1h expiry)"],
+                  [<HttpBadge key="4" method="DELETE" />, "/api/resume/[id]", "Delete resume from S3 + DynamoDB"],
+                  [<HttpBadge key="5" method="GET" />, "/api/resume-bank", "List all resume bank entries"],
+                  [<HttpBadge key="6" method="POST" />, "/api/resume-bank", "Upload to resume bank"],
                 ]}
               />
             </SubSection>

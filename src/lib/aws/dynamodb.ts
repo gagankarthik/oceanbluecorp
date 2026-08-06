@@ -34,6 +34,7 @@ const getEnvConfig = () => {
       counters: process.env.NEXT_AWS_DYNAMODB_TABLE_COUNTERS || "oceanblue-counters",
       content: process.env.NEXT_AWS_DYNAMODB_TABLE_CONTENT || "oceanblue-content",
       apiKeys: process.env.NEXT_AWS_DYNAMODB_TABLE_API_KEYS || "oceanblue-api-keys",
+      pipeline: process.env.NEXT_AWS_DYNAMODB_TABLE_PIPELINE || "oceanblue-pipeline",
     },
   };
 };
@@ -489,6 +490,15 @@ export interface Application {
   resumeAnalyzedAt?: string;          // ISO timestamp of last successful analysis
   resumeAnalysisStatus?: "pending" | "processing" | "completed" | "failed";
   resumeAnalysisError?: string;       // last failure message, if any
+  /**
+   * Whether the last failure is worth trying again on its own (a service
+   * outage, a timeout, a rejected token — things that get fixed elsewhere) as
+   * opposed to a dead end (no resume attached, file gone from storage, a
+   * document nothing can be read from). Drives the automatic retry; absent on
+   * records that failed before the flag existed, which are retried once.
+   */
+  resumeAnalysisRetryable?: boolean;
+  resumeAnalysisAttempts?: number;    // failed attempts since the last success
 
   // Job-fit verdict (this application's resume vs its job), cached from the
   // Resume Matching Engine so the card doesn't re-score on every view.
@@ -2312,5 +2322,317 @@ export async function deleteApiKey(id: string): Promise<{ success: boolean; erro
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to delete API key" };
+  }
+}
+
+/* ============================================================
+   RECRUITING PIPELINE — submissions, interviews, placements
+
+   Everything after "candidate" used to be a status label on the
+   application: `status: "submitted"` could not say WHO the person was
+   submitted to, at what rate, or when, so none of the questions a desk
+   actually runs on could be answered — submittals this week,
+   submission-to-interview ratio, which client is sitting on a candidate,
+   time-to-fill, margin on a placement.
+
+   All three live in ONE table behind a `kind` discriminator. They are
+   almost always read together for a single application, they share the
+   same audit shape, and a submission's interviews and placement are
+   meaningless apart from it. Two GSIs cover both access patterns:
+   everything for one application, and everything of one kind in a date
+   window (which is what the reporting reads).
+   ============================================================ */
+
+export type PipelineKind = "submission" | "interview" | "placement";
+
+/** How a money figure should be read. Contract desks quote hourly; perm quotes annual. */
+export type RateUnit = "hourly" | "daily" | "weekly" | "monthly" | "annual";
+
+/** Shared by all three kinds. `occurredAt` is the date the record is ABOUT
+ *  (sent / scheduled / start date) rather than when it was typed in — it is the
+ *  sort key on both indexes, so it is what every list and report orders by. */
+export interface PipelineBase {
+  id: string;                  // PK (UUID)
+  kind: PipelineKind;
+  applicationId: string;       // GSI: applicationId-index
+  occurredAt: string;          // GSI sort key (ISO)
+  /** Denormalised so cross-candidate lists need no second read. */
+  candidateName?: string;
+  jobId?: string;
+  jobTitle?: string;
+  /** Interviews and placements point back at the submission that produced them.
+   *  Optional: a direct-hire interview can happen with no submission at all. */
+  submissionId?: string;
+  notes?: string;
+  createdAt: string;
+  createdBy?: string;
+  createdByName?: string;
+  updatedAt?: string;
+}
+
+export type SubmissionStatus =
+  | "sent"
+  | "under-review"
+  | "shortlisted"
+  | "interviewing"
+  | "offered"
+  | "placed"
+  | "rejected"
+  | "withdrawn";
+
+export interface Submission extends PipelineBase {
+  kind: "submission";
+  /** Submitted to a client directly, or through a vendor/prime. */
+  clientId?: string;
+  clientName?: string;
+  vendorId?: string;
+  vendorName?: string;
+  /** Person on the other side — the one to chase for a response. */
+  submittedTo?: string;
+  rate?: number;
+  rateUnit?: RateUnit;
+  currency?: string;
+  status: SubmissionStatus;
+  /** When the client came back, whatever the answer — drives response-time reporting. */
+  respondedAt?: string;
+  rejectionReason?: string;
+}
+
+export type InterviewMode = "phone" | "video" | "onsite";
+export type InterviewStatus = "scheduled" | "completed" | "cancelled" | "no-show" | "rescheduled";
+export type InterviewOutcome = "pending" | "pass" | "fail" | "hold";
+
+export interface Interview extends PipelineBase {
+  kind: "interview";
+  round: number;
+  mode: InterviewMode;
+  /** Mirrors occurredAt; kept named for readability at call sites. */
+  scheduledAt: string;
+  durationMinutes?: number;
+  /** Room, address, or meeting link depending on mode. */
+  location?: string;
+  panel?: string[];
+  status: InterviewStatus;
+  outcome?: InterviewOutcome;
+  feedback?: string;
+}
+
+export type PlacementStatus = "active" | "completed" | "terminated" | "extended";
+
+export interface Placement extends PipelineBase {
+  kind: "placement";
+  /** Mirrors occurredAt. */
+  startAt: string;
+  endAt?: string;
+  billRate?: number;
+  payRate?: number;
+  rateUnit?: RateUnit;
+  currency?: string;
+  status: PlacementStatus;
+  poNumber?: string;
+}
+
+export type PipelineRecord = Submission | Interview | Placement;
+
+export async function createPipelineRecord(
+  record: PipelineRecord
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    await db.client.send(new PutCommand({ TableName: getTables().pipeline, Item: record }));
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating pipeline record:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create record" };
+  }
+}
+
+export async function getPipelineRecord(
+  id: string
+): Promise<{ success: boolean; data?: PipelineRecord; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+  try {
+    const result = await db.client.send(
+      new GetCommand({ TableName: getTables().pipeline, Key: { id } })
+    );
+    return { success: true, data: result.Item as PipelineRecord | undefined };
+  } catch (error) {
+    console.error("Error getting pipeline record:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get record" };
+  }
+}
+
+/**
+ * Everything recorded against one application, oldest first.
+ *
+ * Returns an empty list rather than an error when the table is missing, so a
+ * candidate screen still renders on a deployment where the pipeline table has
+ * not been created yet.
+ */
+export async function listPipelineByApplication(
+  applicationId: string
+): Promise<{ success: boolean; data?: PipelineRecord[]; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: true, data: [] };
+  try {
+    const result = await db.client.send(
+      new QueryCommand({
+        TableName: getTables().pipeline,
+        IndexName: "applicationId-index",
+        KeyConditionExpression: "applicationId = :a",
+        ExpressionAttributeValues: { ":a": applicationId },
+      })
+    );
+    const data = ((result.Items || []) as PipelineRecord[]).sort(
+      (x, y) => (x.occurredAt || "").localeCompare(y.occurredAt || "")
+    );
+    return { success: true, data };
+  } catch (error) {
+    const name = (error as { name?: string }).name;
+    if (name === "ResourceNotFoundException") {
+      console.warn("Pipeline table does not exist yet - returning an empty pipeline.");
+      return { success: true, data: [] };
+    }
+    console.error("Error listing pipeline records:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to list records" };
+  }
+}
+
+/**
+ * All records of one kind, newest first, optionally inside a date window.
+ *
+ * This is the reporting read: submittals this week, interviews next week,
+ * placements ending this month. Because `kind` is the partition key on the
+ * index, it touches only the rows asked for instead of scanning the table.
+ */
+export async function listPipelineByKind(
+  kind: PipelineKind,
+  range?: { from?: string; to?: string }
+): Promise<{ success: boolean; data?: PipelineRecord[]; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: true, data: [] };
+
+  const values: Record<string, string> = { ":k": kind };
+  let condition = "#kind = :k";
+  if (range?.from && range?.to) {
+    condition += " AND occurredAt BETWEEN :from AND :to";
+    values[":from"] = range.from;
+    values[":to"] = range.to;
+  } else if (range?.from) {
+    condition += " AND occurredAt >= :from";
+    values[":from"] = range.from;
+  } else if (range?.to) {
+    condition += " AND occurredAt <= :to";
+    values[":to"] = range.to;
+  }
+
+  try {
+    const result = await db.client.send(
+      new QueryCommand({
+        TableName: getTables().pipeline,
+        IndexName: "kind-date-index",
+        KeyConditionExpression: condition,
+        ExpressionAttributeNames: { "#kind": "kind" },
+        ExpressionAttributeValues: values,
+        ScanIndexForward: false, // newest first
+      })
+    );
+    return { success: true, data: (result.Items || []) as PipelineRecord[] };
+  } catch (error) {
+    const name = (error as { name?: string }).name;
+    if (name === "ResourceNotFoundException") return { success: true, data: [] };
+    console.error("Error listing pipeline by kind:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to list records" };
+  }
+}
+
+/**
+ * Submissions raised against one requisition.
+ *
+ * Filtered from the kind query rather than given its own index: submissions are
+ * a small slice of the table, and one more GSI to maintain buys nothing at this
+ * size.
+ */
+export async function listSubmissionsByJob(
+  jobId: string
+): Promise<{ success: boolean; data?: Submission[]; error?: string }> {
+  const result = await listPipelineByKind("submission");
+  if (!result.success) return { success: false, error: result.error };
+  const data = (result.data || [])
+    .filter((r): r is Submission => r.kind === "submission" && r.jobId === jobId);
+  return { success: true, data };
+}
+
+export async function updatePipelineRecord(
+  id: string,
+  updates: Partial<Omit<PipelineRecord, "id" | "kind" | "applicationId" | "createdAt">>
+): Promise<{ success: boolean; data?: PipelineRecord; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  const entries = Object.entries({ ...updates, updatedAt: new Date().toISOString() })
+    .filter(([, v]) => v !== undefined);
+  if (entries.length === 0) return { success: false, error: "No fields to update" };
+
+  const names: Record<string, string> = {};
+  const values: Record<string, unknown> = {};
+  const sets = entries.map(([key, value], i) => {
+    names[`#f${i}`] = key;
+    values[`:v${i}`] = value;
+    return `#f${i} = :v${i}`;
+  });
+
+  try {
+    const result = await db.client.send(
+      new UpdateCommand({
+        TableName: getTables().pipeline,
+        Key: { id },
+        UpdateExpression: `SET ${sets.join(", ")}`,
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: values,
+        ReturnValues: "ALL_NEW",
+      })
+    );
+    return { success: true, data: result.Attributes as PipelineRecord };
+  } catch (error) {
+    console.error("Error updating pipeline record:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update record" };
+  }
+}
+
+/**
+ * Delete a record, and anything hanging off it.
+ *
+ * Deleting a submission takes its interviews and placement with it: they
+ * describe a submission that no longer exists, and leaving them orphaned would
+ * keep them in every report.
+ */
+export async function deletePipelineRecord(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    const existing = await getPipelineRecord(id);
+    const record = existing.data;
+
+    if (record?.kind === "submission") {
+      const siblings = await listPipelineByApplication(record.applicationId);
+      const children = (siblings.data || []).filter((r) => r.submissionId === id);
+      for (const child of children) {
+        await db.client.send(
+          new DeleteCommand({ TableName: getTables().pipeline, Key: { id: child.id } })
+        );
+      }
+    }
+
+    await db.client.send(new DeleteCommand({ TableName: getTables().pipeline, Key: { id } }));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting pipeline record:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete record" };
   }
 }

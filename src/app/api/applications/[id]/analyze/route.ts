@@ -18,9 +18,14 @@ export async function POST(
 
   const { id } = await params;
 
-  const result = await analyzeApplicationResume(id);
+  const result = await analyzeApplicationResume(id, auth.claims.sub);
   if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: result.status || 500 });
+    // `retryable` tells the caller whether this is worth another attempt later —
+    // the candidate screen uses it to decide whether to retry on its own.
+    return NextResponse.json(
+      { error: result.error, retryable: result.retryable ?? false },
+      { status: result.status || 500 },
+    );
   }
 
   // Return the updated application so the client can render immediately.

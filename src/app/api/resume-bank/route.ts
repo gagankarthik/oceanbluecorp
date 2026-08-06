@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     // backfill script re-indexes anything missed). resumeId = the S3 key.
     void (async () => {
       try {
-        const parsed = await parseResumeBuffer(buffer, fileName, fileType);
+        const parsed = await parseResumeBuffer(buffer, fileName, fileType, auth.claims.sub);
         if (parsed.success && parsed.analysis) {
           const name = candidateName || parsed.contact?.name;
           if (parsed.contact) {

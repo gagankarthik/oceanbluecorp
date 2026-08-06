@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,6 +9,7 @@ import {
 import {
   IconUser, IconLocation, IconJob, IconShield, IconFile, IconPipeline,
   IconWarning, IconUpload, IconStar, IconUserPlus, IconSave,
+  IconSparkles, IconEdit,
 } from "@/components/admin/icons";
 import type { BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -24,6 +25,9 @@ import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
 import { StarRating } from "@/components/admin/star-rating";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  buildResumePrefill, filledKeys, PREFILL_LABELS, type ResumePrefill,
+} from "@/lib/resume-prefill";
 import { cn } from "@/lib/utils";
 
 /** Ties the header / action-bar submit buttons to the form they sit outside of. */
@@ -77,6 +81,33 @@ function NewApplicationInner() {
   const [resumeError, setResumeError]         = useState<string | null>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
 
+  // How this record is being created. The form stays hidden until the recruiter
+  // chooses, because reading the resume first fills most of it in — offering the
+  // empty form straight away buries that and invites re-typing what the document
+  // already says.
+  const [mode, setMode] = useState<"choose" | "form">("choose");
+  const [parsing, setParsing] = useState(false);
+  // Kept apart from resumeError: that one belongs to the file itself (wrong type,
+  // too big, upload failed) and shows in the Documents card. A failed READ is
+  // about the form the recruiter is looking at, and has to be visible from the
+  // top of the page — buried at the bottom it reads as nothing having happened.
+  const [parseError, setParseError] = useState<string | null>(null);
+  // Which file the current values came from, and what it filled — shown so the
+  // recruiter knows exactly what to double-check before saving.
+  const [prefillFrom, setPrefillFrom]     = useState<string | null>(null);
+  const [prefillFields, setPrefillFields] = useState<string[]>([]);
+  // The extraction behind that prefill, sent with the new record so the server
+  // stores it instead of putting the same document through the 30–90s pipeline a
+  // second time. Kept opaque here — this screen only reads it via the prefill.
+  const [parsedAnalysis, setParsedAnalysis] = useState<unknown>(null);
+  /**
+   * WHICH file that analysis describes, by object identity rather than by name.
+   * Recruiters hand around a great many files called "resume.pdf", and comparing
+   * names would let one candidate's parsed analysis be filed against another's
+   * record the moment two uploads happened to share a filename.
+   */
+  const parsedFile = useRef<File | null>(null);
+
   useEffect(() => {
     fetch("/api/jobs")
       .then((r) => r.json())
@@ -100,17 +131,107 @@ function NewApplicationInner() {
 
   // Judged on the extension, not the MIME type: browsers report .doc/.docx
   // inconsistently and a valid resume was being turned away as the wrong type.
+  const validateResume = (file: File): string | null => {
+    const name = file.name.toLowerCase();
+    if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
+      return "Upload a PDF or Word document (.pdf, .doc, .docx)";
+    }
+    if (file.size > 5 * 1024 * 1024) return "File must be under 5MB";
+    return null;
+  };
+
   const handleResumeSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setResumeError(null);
+    setParseError(null);
     if (!file) return;
-    const name = file.name.toLowerCase();
-    if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
-      setResumeError("Upload a PDF or Word document (.pdf, .doc, .docx)");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) { setResumeError("File must be under 5MB"); return; }
+    const invalid = validateResume(file);
+    if (invalid) { setResumeError(invalid); return; }
     setResumeFile(file);
+  };
+
+  /**
+   * Fill blanks only, and merge skills. A field the recruiter already typed wins
+   * over the extractor — they are looking at the person's application, the
+   * parser is guessing from a document.
+   */
+  const applyPrefill = (p: ResumePrefill) => {
+    setFirstName((v) => v || p.firstName);
+    setLastName((v)  => v || p.lastName);
+    setEmail((v)     => v || p.email);
+    setPhone((v)     => v || p.phone);
+    setCity((v)      => v || p.city);
+    setState((v)     => v || p.state);
+    setExperience((v) => v || p.experience);
+    setSkills((prev) => {
+      const seen = new Set(prev.map((s) => s.toLowerCase()));
+      return [...prev, ...p.skills.filter((s) => !seen.has(s.toLowerCase()))];
+    });
+  };
+
+  /**
+   * Read a resume and fill the form from it. Nothing is stored yet — the file is
+   * attached on save like any other, so a failed read never blocks the record:
+   * the recruiter just types it in.
+   */
+  const parseResumeFile = async (file: File) => {
+    setParsing(true);
+    setParseError(null);
+    try {
+      // Raw binary + headers, not multipart: Amplify's SSR layer drops the
+      // multipart boundary and request.formData() throws on the route side.
+      const res = await fetch("/api/resume/parse", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "x-file-name": encodeURIComponent(file.name),
+          "x-file-type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not read this resume");
+
+      const prefill = buildResumePrefill(data.analysis, data.contact ?? undefined);
+      const filled = filledKeys(prefill);
+      if (filled.length === 0) {
+        // Nothing to show for it, so nothing is claimed: no prefill banner, and
+        // no analysis carried over from whatever was read before this file.
+        setPrefillFrom(null);
+        setPrefillFields([]);
+        setParsedAnalysis(null);
+        parsedFile.current = null;
+        setParseError("Nothing usable could be read from this resume — fill the form in manually. The file will still be attached.");
+        return;
+      }
+      applyPrefill(prefill);
+      setPrefillFrom(file.name);
+      setPrefillFields(filled.map((k) => PREFILL_LABELS[k]));
+      setParsedAnalysis(data.analysis ?? null);
+      parsedFile.current = file;
+    } catch (err) {
+      setPrefillFrom(null);
+      setPrefillFields([]);
+      setParsedAnalysis(null);
+      parsedFile.current = null;
+      setParseError(err instanceof Error ? err.message : "Could not read this resume");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  /** Chooser path: take the file, show the form, and read it in the background. */
+  const handleStartFromResume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be re-picked after an error
+    setResumeError(null);
+    setParseError(null);
+    if (!file) return;
+    const invalid = validateResume(file);
+    if (invalid) { setResumeError(invalid); return; }
+    setResumeFile(file);
+    setMode("form");
+    void parseResumeFile(file);
   };
 
   const uploadResume = async (userId: string): Promise<{ resumeId: string; fileName: string; fileKey: string } | null> => {
@@ -144,12 +265,18 @@ function NewApplicationInner() {
     setError(null);
     try {
       // Upload resume first if selected; use a temp ID (will be replaced with actual app ID if needed)
-      let resumePayload: Record<string, string> = {};
+      let resumePayload: Record<string, unknown> = {};
       if (resumeFile) {
         const tempId = `new-${Date.now()}`;
         const uploaded = await uploadResume(tempId);
         if (!uploaded) { setSubmitting(false); return; }
         resumePayload = { resumeId: uploaded.resumeId, resumeFileName: uploaded.fileName, resumeFileKey: uploaded.fileKey };
+        // Only when it belongs to the file actually being attached — swapping the
+        // resume after a prefill must not file the previous document's analysis
+        // against the new one.
+        if (parsedAnalysis && parsedFile.current === resumeFile) {
+          resumePayload.resumeAnalysis = parsedAnalysis;
+        }
       }
 
       const job = jobs.find((j) => j.id === jobId);
@@ -196,7 +323,7 @@ function NewApplicationInner() {
   // come from the shared table rather than a hardcoded pair of values.
   const isPermanent = !workAuthNeedsSponsorship(workAuth);
   const showExpiry  = workAuthExpires(workAuth);
-  const busy = submitting || resumeUploading;
+  const busy = submitting || resumeUploading || parsing;
 
   return (
     <div className="space-y-5">
@@ -242,7 +369,88 @@ function NewApplicationInner() {
         </div>
       )}
 
-      <form id={FORM_ID} onSubmit={handleSubmit} className="grid items-start gap-4 lg:grid-cols-3">
+      {/* ── How to start: read a resume, or type it in ────────────────────────
+          Both routes end at the same form. Uploading first only pre-fills it. */}
+      {mode === "choose" ? (
+        <AdminCard>
+          <AdminCardHeader icon={IconUserPlus} title="How do you want to add this candidate?" />
+          <div className="grid gap-3 p-5 sm:grid-cols-2">
+            <label className="group flex cursor-pointer flex-col rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-4 transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
+              <input type="file" accept=".pdf,.doc,.docx" onChange={handleStartFromResume} className="sr-only" />
+              <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+              <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Upload a resume</span>
+              <span className="mt-1 text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
+                Name, contact, location, skills and experience are read from the document and filled in for you to check. PDF or Word · max 5MB.
+              </span>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => { setResumeError(null); setMode("form"); }}
+              className="group flex cursor-pointer flex-col rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-4 text-left transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]"
+            >
+              <IconEdit className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+              <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Enter details manually</span>
+              <span className="mt-1 text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
+                Fill the form in yourself. A resume can still be attached at the end, and read at any point.
+              </span>
+            </button>
+          </div>
+          {resumeError && (
+            <p role="alert" className="mx-5 mb-5 flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-2.5 py-2 text-xs text-[var(--adm-danger)]">
+              <IconWarning className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+              {resumeError}
+            </p>
+          )}
+        </AdminCard>
+      ) : (
+        <>
+          {parsing && (
+            <div className="flex items-center gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-4 py-3">
+              <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
+              <p className="text-sm text-[var(--adm-accent)]">
+                Reading {resumeFile?.name ?? "the resume"}… this can take up to a minute. You can start filling the form meanwhile.
+              </p>
+            </div>
+          )}
+
+          {!parsing && prefillFrom && (
+            <div className="flex items-start gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-4 py-3">
+              <IconSparkles className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
+              <p className="text-sm text-[var(--adm-accent)]">
+                Filled from <span className="font-semibold">{prefillFrom}</span> — {prefillFields.join(", ")}.
+                Check the values before saving; the file will be attached to the record.
+              </p>
+            </div>
+          )}
+
+          {/* A failed read is not a failed record: the form still works and the
+              file is still attached, so this reports and offers another go. */}
+          {!parsing && parseError && (
+            <div role="alert" className="flex flex-wrap items-start gap-2.5 rounded-[6px] border border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] px-4 py-3">
+              <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-warning)]" aria-hidden="true" />
+              <p className="min-w-0 flex-1 text-sm text-[var(--adm-warning)]">
+                Couldn&apos;t read the resume — enter the details below instead. {parseError}
+              </p>
+              {resumeFile && (
+                <button
+                  type="button"
+                  onClick={() => void parseResumeFile(resumeFile)}
+                  className="flex-none rounded-[6px] border border-[var(--adm-warning)] px-2.5 py-1 text-[12px] font-semibold text-[var(--adm-warning)] transition-colors hover:bg-[var(--adm-surface)]"
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <form
+        id={FORM_ID}
+        onSubmit={handleSubmit}
+        className={cn("grid items-start gap-4 lg:grid-cols-3", mode === "choose" && "hidden")}
+      >
 
         {/* ── Primary record ── */}
         <div className="space-y-4 lg:col-span-2">
@@ -364,10 +572,29 @@ function NewApplicationInner() {
                     <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{resumeFile.name}</p>
                     <p className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{(resumeFile.size / 1024).toFixed(0)} KB</p>
                   </div>
+                  {/* Reading the file is available from here too, so a resume
+                      attached late in a manual entry can still fill the blanks. */}
+                  {parsedFile.current !== resumeFile && (
+                    <button
+                      type="button"
+                      onClick={() => void parseResumeFile(resumeFile)}
+                      disabled={parsing}
+                      className="inline-flex flex-none items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60"
+                    >
+                      {parsing
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        : <IconSparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+                      {parsing ? "Reading…" : "Fill form from resume"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-label="Remove resume"
-                    onClick={() => setResumeFile(null)}
+                    onClick={() => {
+                      setResumeFile(null); setPrefillFrom(null); setPrefillFields([]);
+                      setParsedAnalysis(null); setParseError(null);
+                      parsedFile.current = null;
+                    }}
                     className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
@@ -546,14 +773,17 @@ function NewApplicationInner() {
       </form>
 
       {/* ── Anchored action bar — Save stays reachable on a long form ── */}
-      <div className="sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/90 px-5 py-3 backdrop-blur lg:-mx-6 lg:-mb-6 lg:px-6">
+      <div className={cn(
+        "sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/90 px-5 py-3 backdrop-blur lg:-mx-6 lg:-mb-6 lg:px-6",
+        mode === "choose" && "hidden",
+      )}>
         {error && <p className="mr-auto text-[13px] font-medium text-[var(--adm-danger)]">{error}</p>}
         <WorkspaceButton type="button" onClick={() => router.push("/admin/applications")}>
           Cancel
         </WorkspaceButton>
         <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={busy}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSave className="h-4 w-4" />}
-          {resumeUploading ? "Uploading…" : "Add Applicant"}
+          {parsing ? "Reading resume…" : resumeUploading ? "Uploading…" : "Add Applicant"}
         </WorkspaceButton>
       </div>
     </div>
