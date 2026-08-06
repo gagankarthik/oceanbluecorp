@@ -159,6 +159,38 @@ export const SOURCE_OPTIONS = [
 ];
 
 /**
+ * Type of hire — the engagement a candidate is placed on.
+ *
+ * This is the candidate's payroll/contracting arrangement, not the
+ * requisition's employment type: one contract req can be filled W2 by one
+ * consultant and corp-to-corp by another. Values are the stored strings and
+ * mirror the HireType union in lib/aws/dynamodb.ts.
+ */
+export interface HireTypeOption {
+  value: string;
+  label: string;
+  hint: string;
+}
+
+export const HIRE_TYPE_OPTIONS: HireTypeOption[] = [
+  { value: "W2",               label: "W2",               hint: "On our payroll, taxes withheld" },
+  { value: "C2C",              label: "C2C (Corp-to-Corp)", hint: "Through the candidate's own company or a vendor" },
+  { value: "1099",             label: "1099",             hint: "Independent contractor, no withholding" },
+  { value: "Full-time",        label: "Full-time / Permanent", hint: "Direct placement with the client" },
+  { value: "Contract-to-Hire", label: "Contract-to-Hire", hint: "Contract first, conversion later" },
+  { value: "Internal",         label: "Internal / Employee", hint: "Our own employee" },
+];
+
+/** Stored values only — the shape filters and <option> loops expect. */
+export const HIRE_TYPE_VALUES: string[] = HIRE_TYPE_OPTIONS.map((o) => o.value);
+
+/** Display label for a stored hire-type value; unknown values pass through. */
+export function hireTypeLabel(value?: string | null): string {
+  if (!value) return "";
+  return HIRE_TYPE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+/**
  * Categorical chart palette — consume IN ORDER, never cycled.
  *
  * Validated with the dataviz six-checks validator against the #ffffff panel

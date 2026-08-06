@@ -24,6 +24,7 @@ import {
   FilterPill, FilterIcon, AdvancedFilterToggle, ActiveFilters,
   DisplayMenu, SelectionBar, StatStrip,
 } from "@/components/admin/workspace";
+import { Field, FormSelect } from "@/components/admin/forms/primitives";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
@@ -31,6 +32,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
   statusMeta, tones, SERIES, SOURCE_OPTIONS, WORK_AUTH_GROUPS,
+  HIRE_TYPE_OPTIONS, hireTypeLabel, normalizeState, US_STATES,
   type AppStatus, type Tone,
 } from "@/components/admin/theme";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -88,12 +90,42 @@ const STAGE_COLOR: Record<string, string> = {
 const sLabel = (s: string) => statusMeta[s as AppStatus]?.label ?? s;
 const sTone = (s: string): Tone => statusMeta[s as AppStatus]?.tone ?? "slate";
 
-const selectCls =
-  "h-8 w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 text-[13px] text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
-
 /** Empty-cell placeholder. A quiet dash, never a grey sentence. */
 function Blank() {
   return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
+}
+
+// ── location ─────────────────────────────────────────────────────────────────
+
+/**
+ * A record's state as a canonical 2-letter code. Older rows stored the full
+ * name ("Texas"), so every read goes through here to land in the same bucket as
+ * a row saved as "TX" — otherwise one filter option per spelling appears and
+ * neither finds the whole set. Unrecognised values pass through rather than
+ * disappearing.
+ */
+function stateOf(value?: string | null): string {
+  return normalizeState(value) || value?.trim() || "";
+}
+
+const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
+
+/** "Austin, TX" — what a recruiter actually calls the location. */
+function locationOf(a: Pick<App, "city" | "state">): string {
+  return [a.city?.trim(), stateOf(a.state)].filter(Boolean).join(", ");
+}
+
+/**
+ * The location filter keys on STATE, not on the full city string.
+ *
+ * Recruiters filter to a market, not to a spelling: "Austin", "austin" and
+ * "Austin Metro" are the same answer to "who can work in Texas?", and a
+ * city-keyed list would have offered all three as separate options while a
+ * candidate in Round Rock matched none of them. Cities remain searchable
+ * through the search box and are shown in the column.
+ */
+function stateFilterValue(a: Pick<App, "city" | "state">): string {
+  return stateOf(a.state);
 }
 
 // ── saved views ──────────────────────────────────────────────────────────────
@@ -211,8 +243,10 @@ export default function ApplicationsPage() {
   const debouncedSearch                 = useDebouncedValue(search, 250);
   const [statusFilter, setStatusFilter] = useState("all");
   const [posFilter, setPosFilter]       = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [authFilter, setAuthFilter]     = useState("all");
+  const [hireFilter, setHireFilter]     = useState("all");
   const [minRating, setMinRating]       = useState(0);
   const [filtersOpen, setFiltersOpen]   = useState(false);
 
@@ -263,6 +297,35 @@ export default function ApplicationsPage() {
     [applications],
   );
 
+  /**
+   * Locations present in the data, with how many records sit in each. Built
+   * from the records themselves rather than from the 50-state list, so the
+   * menu never offers a state nobody has applied from.
+   */
+  const locations = useMemo(() => {
+    const counts = new Map<string, number>();
+    let unknown = 0;
+    for (const a of applications) {
+      const code = stateFilterValue(a);
+      if (!code) { unknown += 1; continue; }
+      counts.set(code, (counts.get(code) || 0) + 1);
+    }
+    const named = [...counts.entries()]
+      .map(([code, count]) => ({ value: code, label: STATE_NAME.get(code) || code, count }))
+      .sort((x, y) => x.label.localeCompare(y.label));
+    return unknown > 0
+      ? [...named, { value: "__none", label: "No location recorded", count: unknown }]
+      : named;
+  }, [applications]);
+
+  /** Hire types present in the data, in the canonical picker order. */
+  const hireTypes = useMemo(() => {
+    const present = new Set(applications.map((a) => a.hireType).filter(Boolean) as string[]);
+    const known = HIRE_TYPE_OPTIONS.filter((o) => present.has(o.value)).map((o) => o.value);
+    const extra = [...present].filter((v) => !HIRE_TYPE_OPTIONS.some((o) => o.value === v));
+    return [...known, ...extra];
+  }, [applications]);
+
   const statusCounts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const a of applications) c[a.status] = (c[a.status] || 0) + 1;
@@ -294,11 +357,11 @@ export default function ApplicationsPage() {
   ];
 
   const activeFilterCount = [
-    sourceFilter !== "all", authFilter !== "all", minRating > 0,
+    sourceFilter !== "all", authFilter !== "all", hireFilter !== "all", minRating > 0,
   ].filter(Boolean).length;
 
   const hasActiveFilters = activeFilterCount > 0
-    || statusFilter !== "all" || posFilter !== "all" || sourceFilter !== "all"
+    || statusFilter !== "all" || posFilter !== "all" || locationFilter !== "all"
     || debouncedSearch.trim() !== "";
 
   /** Records inside the current saved view, before the toolbar filters apply. */
@@ -309,14 +372,21 @@ export default function ApplicationsPage() {
 
   const filtered = useMemo(() => inView.filter((a) => {
     const q = debouncedSearch.toLowerCase();
-    if (q && ![a.name, a.email, a.applicationId, a.jobTitle, a.phone].some((f) => f?.toLowerCase().includes(q))) return false;
+    // City joins the searchable fields so "austin" still finds a candidate
+    // even though the location filter itself works at state level.
+    if (q && ![a.name, a.email, a.applicationId, a.jobTitle, a.phone, a.city].some((f) => f?.toLowerCase().includes(q))) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (posFilter    !== "all" && a.jobTitle !== posFilter) return false;
+    if (locationFilter !== "all") {
+      const code = stateFilterValue(a);
+      if (locationFilter === "__none" ? !!code : code !== locationFilter) return false;
+    }
     if (sourceFilter !== "all" && a.source !== sourceFilter) return false;
     if (authFilter   !== "all" && a.workAuthorization !== authFilter) return false;
+    if (hireFilter   !== "all" && a.hireType !== hireFilter) return false;
     if (minRating > 0 && (a.rating || 0) < minRating) return false;
     return true;
-  }), [inView, debouncedSearch, statusFilter, posFilter, sourceFilter, authFilter, minRating]);
+  }), [inView, debouncedSearch, statusFilter, posFilter, locationFilter, sourceFilter, authFilter, hireFilter, minRating]);
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
@@ -373,25 +443,31 @@ export default function ApplicationsPage() {
 
   const exportCSV = () => downloadCsv(
     "applications",
-    ["ID", "Name", "Email", "Phone", "Job", "Status", "Source", "Work Auth", "Applied", "Rating"],
+    ["ID", "Name", "Email", "Phone", "Job", "Status", "Source", "Hire Type", "Work Auth", "City", "State", "Applied", "Rating"],
     filtered.map((a) => [
       a.applicationId || "", a.name || "", a.email, a.phone || "",
-      a.jobTitle || "", a.status, a.source || "", a.workAuthorization || "",
+      a.jobTitle || "", a.status, a.source || "", hireTypeLabel(a.hireType),
+      a.workAuthorization || "", a.city || "", stateOf(a.state),
       fmtDate(a.appliedAt), a.rating || "",
     ]),
   );
 
   const clearFilters = () => {
-    setSearch(""); setStatusFilter("all"); setPosFilter("all");
-    setSourceFilter("all"); setAuthFilter("all"); setMinRating(0);
+    setSearch(""); setStatusFilter("all"); setPosFilter("all"); setLocationFilter("all");
+    setSourceFilter("all"); setAuthFilter("all"); setHireFilter("all"); setMinRating(0);
   };
+
+  const locationLabel = (v: string) =>
+    v === "__none" ? "No location" : STATE_NAME.get(v) || v;
 
   const filterChips: { label: string; onClear: () => void }[] = [
     ...(savedView !== "all" ? [{ label: `View: ${views.find((v) => v.key === savedView)?.label ?? savedView}`, onClear: () => setSavedView("all") }] : []),
     ...(statusFilter !== "all" ? [{ label: `Stage: ${sLabel(statusFilter)}`, onClear: () => setStatusFilter("all") }] : []),
     ...(posFilter !== "all"    ? [{ label: `Position: ${posFilter}`, onClear: () => setPosFilter("all") }] : []),
+    ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabel(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
     ...(sourceFilter !== "all" ? [{ label: `Source: ${sourceFilter}`, onClear: () => setSourceFilter("all") }] : []),
     ...(authFilter !== "all"   ? [{ label: `Auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
+    ...(hireFilter !== "all"   ? [{ label: `Hire: ${hireTypeLabel(hireFilter)}`, onClear: () => setHireFilter("all") }] : []),
     ...(minRating > 0          ? [{ label: `${minRating}+ stars`, onClear: () => setMinRating(0) }] : []),
   ];
 
@@ -440,6 +516,25 @@ export default function ApplicationsPage() {
       key: "age", header: "In stage", label: "In stage", hideBelow: "lg", width: "95px",
       sortValue: (a) => (TERMINAL.has(a.status) ? -1 : daysInStage(a)),
       cell: (a) => <AgeCell app={a} />,
+    },
+    {
+      key: "location", header: "Location", label: "Location", hideBelow: "lg", width: "150px",
+      sortValue: (a) => locationOf(a),
+      cell: (a) => {
+        const loc = locationOf(a);
+        return loc ? <span className="text-[14px] text-[var(--adm-ink-mute)]">{loc}</span> : <Blank />;
+      },
+    },
+    {
+      key: "hireType", header: "Hire type", label: "Hire type", hideBelow: "xl", width: "130px",
+      sortValue: (a) => a.hireType || "",
+      cell: (a) => a.hireType
+        ? (
+          <span className="inline-flex items-center rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">
+            {a.hireType}
+          </span>
+        )
+        : <Blank />,
     },
     {
       key: "owner", header: "Owner", label: "Owner", hideBelow: "xl", width: "140px",
@@ -573,8 +668,21 @@ export default function ApplicationsPage() {
                 ...positions.map((p) => ({ value: p, label: p })),
               ]}
             />
-            {/* Source lives in the advanced drawer: it's the least-reached-for
-                filter (its column is hidden by default). */}
+            {/* Location is a primary pill: "who can work in this market?" is a
+                question recruiters open this screen to answer, so it sits
+                beside Stage and Position rather than behind the drawer. */}
+            <FilterPill
+              label="Location"
+              icon={FilterIcon.location}
+              value={locationFilter}
+              onChange={setLocationFilter}
+              options={[
+                { value: "all", label: "All locations", count: inView.length },
+                ...locations.map((l) => ({ value: l.value, label: l.label, count: l.count })),
+              ]}
+            />
+            {/* Source, work auth, hire type and rating live in the advanced
+                drawer: the least-reached-for filters. */}
             <AdvancedFilterToggle
               open={filtersOpen}
               activeCount={activeFilterCount}
@@ -601,35 +709,46 @@ export default function ApplicationsPage() {
       </WorkspaceToolbar>
 
       {filtersOpen && (
-        <div className="mb-3 grid grid-cols-1 gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-3 sm:grid-cols-3 lg:px-4">
-          <div>
-            <label className="mb-1 block text-[12px] font-medium text-[var(--adm-ink-subtle)]">Source</label>
-            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} autoComplete="off" className={selectCls}>
+        /* These were bare <select>s carrying a local class that omitted
+           appearance-none, so the browser drew its own control chrome over the
+           top: the OS decides the corner radius, the chevron and the inner
+           metrics, which is why the boxes read as unsquared and did not match
+           any other control on the screen. FormSelect is the house control —
+           appearance-none, an 8px radius and our own chevron. */
+        <div className="mb-3 grid grid-cols-1 gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4">
+          <Field label="Source" htmlFor="filter-source">
+            <FormSelect id="filter-source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
               <option value="all">All sources</option>
               {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-[12px] font-medium text-[var(--adm-ink-subtle)]">Work authorization</label>
-            <select value={authFilter} onChange={(e) => setAuthFilter(e.target.value)} autoComplete="off" className={selectCls}>
+            </FormSelect>
+          </Field>
+          <Field label="Type of hire" htmlFor="filter-hire">
+            <FormSelect id="filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+              <option value="all">All hire types</option>
+              {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
+            </FormSelect>
+          </Field>
+          <Field label="Work authorization" htmlFor="filter-auth">
+            <FormSelect id="filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
               <option value="all">All</option>
               {WORK_AUTH_GROUPS.map((g) => (
                 <optgroup key={g.label} label={g.label}>
                   {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </optgroup>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-[12px] font-medium text-[var(--adm-ink-subtle)]">Minimum rating</label>
-            <div className="flex h-8 items-center gap-1">
+            </FormSelect>
+          </Field>
+          <Field label="Minimum rating">
+            {/* h-10 matches the control height beside it, so the four cells in
+                the row share one baseline. */}
+            <div className="flex h-10 items-center gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button key={n} type="button" aria-label={`Minimum ${n} stars`} onClick={() => setMinRating(n === minRating ? 0 : n)}>
                   <IconStar aria-hidden className={cn("h-[18px] w-[18px] transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)] hover:text-amber-300")} />
                 </button>
               ))}
             </div>
-          </div>
+          </Field>
         </div>
       )}
 
@@ -1031,8 +1150,11 @@ function ListView({ apps, empty, onAdd, ...shared }: SharedProps & { empty: bool
                 <p className="truncate text-[13.5px] text-[var(--adm-ink-mute)]">
                   {app.jobTitle || <span className="text-[var(--adm-ink-subtle)]">No position</span>}
                 </p>
+                {locationOf(app) && <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">{locationOf(app)}</p>}
                 {app.source && <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">{app.source}</p>}
-                {app.workAuthorization && <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">{app.workAuthorization}</p>}
+                <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                  {[app.workAuthorization, app.hireType].filter(Boolean).join(" · ")}
+                </p>
               </div>
 
               <div className="flex gap-2 sm:flex-col sm:items-end">

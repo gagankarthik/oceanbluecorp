@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type and size
-    const validation = validateResumeFile({ type: file.type, size: file.size });
+    const validation = validateResumeFile({ type: file.type, size: file.size, name: file.name });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }

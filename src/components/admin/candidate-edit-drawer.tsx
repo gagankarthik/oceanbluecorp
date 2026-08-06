@@ -3,13 +3,17 @@
 import * as React from "react";
 import {
   Loader2, AlertTriangle, X, Briefcase, MapPin, FileText,
-  Star, User2, Shield, Plus,
+  Star, User2, Shield, Plus, Upload, Sparkles,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
-import { statusMeta, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS, type AppStatus , WORK_AUTH_GROUPS } from "./theme";
+import { POOL_META, POOL_ORDER } from "@/lib/bench";
+import {
+  statusMeta, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS, type AppStatus,
+  WORK_AUTH_GROUPS, workAuthExpires, HIRE_TYPE_OPTIONS,
+} from "./theme";
 import { FormSection, Field, FormInput, FormSelect, FormTextarea } from "./forms/primitives";
 import { StarRating } from "./star-rating";
 
@@ -17,14 +21,18 @@ import { StarRating } from "./star-rating";
 
 const TABS = [
   { id: "profile",  label: "Profile",  icon: User2    },
+  { id: "resume",   label: "Resume",   icon: FileText },
   { id: "skills",   label: "Skills",   icon: Briefcase },
   { id: "visa",     label: "Visa",     icon: Shield   },
-  { id: "notes",    label: "Notes",    icon: FileText  },
+  { id: "notes",    label: "Notes",    icon: Star     },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
 
-// ── Visa status options ────────────────────────────────────────────────────────
+// ── Resume upload constraints ──────────────────────────────────────────────────
+
+const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+const RESUME_EXTENSIONS = [".pdf", ".doc", ".docx"];
 
 // ── Default form ───────────────────────────────────────────────────────────────
 
@@ -33,6 +41,7 @@ const defaultForm = {
   status: "pending" as AppStatus,
   jobId: "", jobTitle: "",
   source: "",
+  hireType: "",
   city: "", state: "",
   // Skills tab
   skills: [] as string[],
@@ -73,10 +82,25 @@ export function CandidateEditDrawer({
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
+  // Resume — a new applicant added from this drawer had no way to attach one,
+  // so their record could never be parsed. The file is uploaded on submit and
+  // the API queues extraction from there.
+  const [resumeFile, setResumeFile] = React.useState<File | null>(null);
+  const [resumeError, setResumeError] = React.useState<string | null>(null);
+  const [resumeUploading, setResumeUploading] = React.useState(false);
+  const [existingResume, setExistingResume] = React.useState<{ id: string; fileName: string } | null>(null);
+
   React.useEffect(() => {
     if (!open) return;
     setError(null);
     setActiveTab("profile");
+    setResumeFile(null);
+    setResumeError(null);
+    setExistingResume(
+      candidate?.resumeId
+        ? { id: candidate.resumeId, fileName: candidate.resumeFileName || "Resume on file" }
+        : null,
+    );
     if (candidate) {
       const rawSkills = candidate.skills || [];
       setForm({
@@ -88,14 +112,17 @@ export function CandidateEditDrawer({
         jobId: candidate.jobId || "",
         jobTitle: candidate.jobTitle || "",
         source: candidate.source || "",
+        hireType: candidate.hireType || "",
         city: candidate.city || "",
         state: candidate.state || "",
         skills: rawSkills,
         skillInput: "",
         experience: candidate.experience || "",
         workAuthorization: candidate.workAuthorization || "",
-        visaExpiry: "",
-        visaSponsorshipRequired: false,
+        // Both visa fields were reset to blank on load and left out of the
+        // payload, so opening and saving a record silently wiped them.
+        visaExpiry: candidate.visaExpiry || "",
+        visaSponsorshipRequired: !!candidate.visaSponsorshipRequired,
         notes: candidate.notes || "",
         rating: candidate.rating || 0,
         addToTalentBench: !!candidate.addToTalentBench,
@@ -121,6 +148,50 @@ export function CandidateEditDrawer({
   const removeSkill = (skill: string) =>
     set("skills", form.skills.filter((s) => s !== skill));
 
+  /**
+   * Validate by file extension rather than by MIME type. Browsers report
+   * inconsistent types for .doc/.docx depending on what is installed, and
+   * Windows has been known to hand over an empty string — a MIME allow-list
+   * rejected perfectly good resumes. The extraction service reads the bytes
+   * regardless, so the extension is the honest gate here.
+   */
+  const handleResumeSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setResumeError(null);
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!RESUME_EXTENSIONS.some((ext) => name.endsWith(ext))) {
+      setResumeError("Upload a PDF or Word document (.pdf, .doc, .docx)");
+      return;
+    }
+    if (file.size > RESUME_MAX_BYTES) {
+      setResumeError("File must be under 5MB");
+      return;
+    }
+    setResumeFile(file);
+  };
+
+  const uploadResume = async (
+    ownerId: string,
+  ): Promise<{ resumeId: string; resumeFileName: string; resumeFileKey: string } | null> => {
+    if (!resumeFile) return null;
+    setResumeUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", resumeFile);
+      fd.append("userId", ownerId);
+      const res = await fetch("/api/resume/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Resume upload failed");
+      return { resumeId: data.resumeId, resumeFileName: resumeFile.name, resumeFileKey: data.fileKey };
+    } catch (err) {
+      setResumeError(err instanceof Error ? err.message : "Resume upload failed");
+      return null;
+    } finally {
+      setResumeUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.email.trim()) {
@@ -131,6 +202,22 @@ export function CandidateEditDrawer({
     setSubmitting(true);
     setError(null);
     try {
+      // Resume goes up first: the create/update call carries the reference, and
+      // the API queues extraction off the back of it.
+      let resumePayload: Record<string, string> = {};
+      if (resumeFile) {
+        const uploaded = await uploadResume(candidate?.id || `applicant-${Date.now()}`);
+        if (!uploaded) {
+          setActiveTab("resume");
+          setSubmitting(false);
+          return;
+        }
+        resumePayload = uploaded;
+      } else if (mode === "edit" && !existingResume && candidate?.resumeId) {
+        // The recruiter detached the resume that was on file.
+        resumePayload = { resumeId: "", resumeFileName: "", resumeFileKey: "" };
+      }
+
       const job = jobs.find((j) => j.id === form.jobId);
       const payload = {
         firstName: form.firstName.trim(),
@@ -142,7 +229,10 @@ export function CandidateEditDrawer({
         jobId: form.jobId || undefined,
         jobTitle: form.jobTitle || job?.title || undefined,
         source: form.source || undefined,
+        hireType: form.hireType || undefined,
         workAuthorization: form.workAuthorization || undefined,
+        visaSponsorshipRequired: form.visaSponsorshipRequired,
+        visaExpiry: form.visaExpiry,
         city: form.city,
         state: form.state,
         skills: form.skills,
@@ -150,9 +240,13 @@ export function CandidateEditDrawer({
         notes: form.notes,
         rating: form.rating || undefined,
         addToTalentBench: form.addToTalentBench,
-        ...(form.addToTalentBench && { benchType: form.benchType }),
+        ...(form.addToTalentBench && {
+          benchType: form.benchType,
+          benchAddedBy: user?.email || user?.id,
+        }),
         createdBy: user?.email || "admin",
         createdByName: user?.name || "Admin",
+        ...resumePayload,
       };
       let res: Response;
       if (mode === "create") {
@@ -297,6 +391,14 @@ export function CandidateEditDrawer({
                         {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </FormSelect>
                     </Field>
+                    <Field label="Type of hire">
+                      <FormSelect value={form.hireType} onChange={(e) => set("hireType", e.target.value)}>
+                        <option value="">Select…</option>
+                        {HIRE_TYPE_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </FormSelect>
+                    </Field>
                     <Field label="Add to talent bench">
                       <label className="flex items-center gap-2 px-3 py-2 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)] cursor-pointer hover:bg-[var(--adm-row-hover)] transition-colors">
                         <input type="checkbox" autoComplete="off" checked={form.addToTalentBench} onChange={(e) => set("addToTalentBench", e.target.checked)} className="rounded border-[var(--adm-line)] text-[var(--adm-accent)]" />
@@ -304,16 +406,98 @@ export function CandidateEditDrawer({
                       </label>
                     </Field>
                     {form.addToTalentBench && (
-                      <Field label="Talent pool">
+                      <Field label="Talent pool" helper={POOL_META[form.benchType].hint}>
                         <FormSelect value={form.benchType} onChange={(e) => set("benchType", e.target.value as BenchType)}>
-                          <option value="external">Talent Bench — external candidate</option>
-                          <option value="internal">My Pool — internal hire</option>
+                          {POOL_ORDER.map((p) => (
+                            <option key={p} value={p}>
+                              {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                            </option>
+                          ))}
                         </FormSelect>
                       </Field>
                     )}
                   </div>
                 </FormSection>
               </>
+            )}
+
+            {/* ── Resume tab ── */}
+            {activeTab === "resume" && (
+              <FormSection icon={FileText} title="Resume">
+                <div className="space-y-3">
+                  {resumeFile ? (
+                    <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3">
+                      <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
+                        <FileText className="h-4 w-4 text-[var(--adm-accent)]" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{resumeFile.name}</p>
+                        <p className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">
+                          {(resumeFile.size / 1024).toFixed(0)} KB · ready to upload
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setResumeFile(null)}
+                        aria-label="Remove selected resume"
+                        className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ) : existingResume ? (
+                    <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3">
+                      <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-success-soft)]">
+                        <FileText className="h-4 w-4 text-[var(--adm-success)]" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{existingResume.fileName}</p>
+                        <p className="text-xs text-[var(--adm-ink-subtle)]">Currently on file</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExistingResume(null)}
+                        aria-label="Detach resume"
+                        className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {!resumeFile && (
+                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[8px] border border-dashed border-[var(--adm-line)] bg-[var(--adm-surface)] p-6 transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
+                      <input
+                        type="file"
+                        accept={RESUME_EXTENSIONS.join(",")}
+                        onChange={handleResumeSelect}
+                        className="sr-only"
+                      />
+                      <Upload className="h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                      <span className="text-center">
+                        <span className="block text-sm font-semibold text-[var(--adm-ink-mute)]">
+                          {existingResume ? "Upload a replacement" : "Upload resume"}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-[var(--adm-ink-subtle)]">PDF or Word · max 5MB</span>
+                      </span>
+                    </label>
+                  )}
+
+                  {resumeError && (
+                    <p role="alert" className="flex items-start gap-2 rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-2.5 py-2 text-xs text-[var(--adm-danger)]">
+                      <AlertTriangle className="mt-px h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                      {resumeError}
+                    </p>
+                  )}
+
+                  <p className="flex items-start gap-2 rounded-[6px] bg-[var(--adm-accent-tint)] px-3 py-2.5 text-xs leading-relaxed text-[var(--adm-ink-mute)]">
+                    <Sparkles className="mt-px h-3.5 w-3.5 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
+                    Saving with a resume attached extracts the full profile — work history, education,
+                    skills, certifications and projects — onto the candidate record. It usually takes
+                    under a minute and appears on their page automatically.
+                  </p>
+                </div>
+              </FormSection>
             )}
 
             {/* ── Skills tab ── */}
@@ -398,8 +582,8 @@ export function CandidateEditDrawer({
                     </FormSelect>
                   </Field>
 
-                  {/* Visa expiry — only for non-permanent statuses */}
-                  {form.workAuthorization && !["US Citizen", "Green Card"].includes(form.workAuthorization) && (
+                  {/* Visa expiry — only where an expiry is a real fact */}
+                  {workAuthExpires(form.workAuthorization) && (
                     <Field label="Visa / OPT Expiry Date">
                       <FormInput type="date" value={form.visaExpiry} onChange={(e) => set("visaExpiry", e.target.value)} />
                     </Field>
@@ -470,9 +654,9 @@ export function CandidateEditDrawer({
             <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-[var(--adm-line)] text-[var(--adm-ink-mute)] rounded-[8px] hover:bg-[var(--adm-row-hover)] transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] disabled:opacity-60 transition">
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {mode === "create" ? "Add Applicant" : "Save Changes"}
+            <button type="submit" disabled={submitting || resumeUploading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] disabled:opacity-60 transition">
+              {(submitting || resumeUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
+              {resumeUploading ? "Uploading resume…" : mode === "create" ? "Add Applicant" : "Save Changes"}
             </button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   getApplication,
   updateApplicationStatus,
@@ -9,6 +9,11 @@ import {
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
+
+// Attaching a resume on update kicks off the extraction Lambda via after();
+// its multi-agent pipeline runs 30–90s, so the invocation needs the headroom.
+export const maxDuration = 120;
 
 // GET /api/applications/[id] - Get a specific application
 export async function GET(
@@ -148,6 +153,7 @@ export async function PUT(
       body.city || body.state || body.workAuthorization || body.source ||
       body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
       body.resumeId !== undefined || body.resumeFileName !== undefined ||
+      body.resumeFileKey !== undefined || body.hireType !== undefined ||
       body.addToTalentBench !== undefined || body.benchAddedBy !== undefined ||
       body.benchType !== undefined ||
       body.resumeAnalysis !== undefined ||
@@ -182,6 +188,7 @@ export async function PUT(
       if (body.jobTitle !== undefined) updates.jobTitle = body.jobTitle;
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;
+      if (body.hireType !== undefined) updates.hireType = body.hireType;
       // Visa details — the edit form omits visaExpiry entirely when it is blank,
       // so an explicit "" is the only way it can be cleared.
       if (body.visaSponsorshipRequired !== undefined) updates.visaSponsorshipRequired = body.visaSponsorshipRequired;
@@ -223,12 +230,43 @@ export async function PUT(
       // Resume fields
       if (body.resumeId !== undefined) updates.resumeId = body.resumeId;
       if (body.resumeFileName !== undefined) updates.resumeFileName = body.resumeFileName;
+      if (body.resumeFileKey !== undefined) updates.resumeFileKey = body.resumeFileKey;
 
       // Resume analysis (manual edits from the candidate page)
       if (body.resumeAnalysis !== undefined) {
         updates.resumeAnalysis = body.resumeAnalysis;
         updates.resumeAnalysisStatus = "completed";
         updates.resumeAnalyzedAt = body.resumeAnalyzedAt || new Date().toISOString();
+      }
+
+      /**
+       * A resume arriving on an update gets parsed, exactly as one arriving on
+       * create does. Until now only POST queued analysis, so a resume attached
+       * from the bench form or the applicant drawer sat on S3 unread and the
+       * candidate page offered a manual "Analyze resume" button nobody knew to
+       * press.
+       *
+       * Queued only when the attached file actually changed, so re-saving a
+       * profile does not re-run a 90-second LLM pipeline for nothing. A manual
+       * resumeAnalysis edit in the same request wins — that is someone
+       * correcting the extraction by hand, and re-parsing would overwrite it.
+       */
+      const newResumeId = typeof updates.resumeId === "string" ? updates.resumeId : undefined;
+      const resumeChanged = !!newResumeId
+        && newResumeId !== existingApp.data.resumeId
+        && body.resumeAnalysis === undefined;
+
+      // Detaching the resume: an empty id where one used to be. The parsed
+      // detail goes with it — leaving it behind would describe a document the
+      // record no longer has.
+      const resumeDetached = newResumeId === "" && !!existingApp.data.resumeId;
+
+      if (resumeChanged) {
+        updates.resumeAnalysisStatus = "pending";
+        updates.resumeAnalysisError = "";
+      }
+      if (resumeDetached) {
+        updates.resumeAnalysisError = "";
       }
 
       // Handle status history for status changes
@@ -244,13 +282,34 @@ export async function PUT(
         updates.statusHistory = [...statusHistory, newHistoryEntry];
       }
 
-      const result = await updateApplication(id, updates);
+      const result = await updateApplication(
+        id,
+        updates,
+        // The previous document's parsed detail must not survive its
+        // replacement or removal, so it is deleted rather than left to look
+        // current.
+        resumeChanged
+          ? ["resumeAnalysis", "resumeAnalyzedAt", "jobFit", "jobFitAt"]
+          : resumeDetached
+            ? ["resumeAnalysis", "resumeAnalyzedAt", "jobFit", "jobFitAt", "resumeAnalysisStatus"]
+            : [],
+      );
 
       if (!result.success) {
         return NextResponse.json(
           { error: result.error || "Failed to update application" },
           { status: 500 }
         );
+      }
+
+      if (resumeChanged) {
+        after(async () => {
+          try {
+            await analyzeApplicationResume(id);
+          } catch (err) {
+            console.error("Resume analysis after update failed:", err);
+          }
+        });
       }
     } else {
       // Simple status/notes/rating update

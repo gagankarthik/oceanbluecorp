@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
+import { FormSelect } from "@/components/admin/forms/primitives";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
@@ -35,12 +37,14 @@ import { InlineSelect, Empty as BlankCell } from "@/components/admin/list-panel"
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
   statusMeta, tones, US_STATES, normalizeState,
-  WORK_AUTH_OPTIONS, SOURCE_OPTIONS, type AppStatus,
+  WORK_AUTH_OPTIONS, SOURCE_OPTIONS, HIRE_TYPE_OPTIONS, hireTypeLabel,
+  type AppStatus,
 } from "@/components/admin/theme";
+import { POOL_META, POOL_ORDER, poolOf, canView } from "@/lib/bench";
 import {
   IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
   IconFile, IconHistory, IconJob, IconLocation, IconMail, IconPhone,
-  IconShield, IconTrash, IconUpload, IconUser,
+  IconRefresh, IconShield, IconSparkles, IconTrash, IconUpload, IconUser,
   IconWarning,
 } from "@/components/admin/icons";
 
@@ -89,28 +93,20 @@ const STATUS_TABS = [
 ];
 
 /**
- * The bench splits into two pools: "My Pool" holds our own hired consultants
- * sitting between placements (internal), "Talent Bench" holds market
- * candidates kept warm for future roles (external). The tabs sit above the
- * KPI strip because every number below them is scoped to the selected pool.
+ * The bench splits into two pools, defined once in lib/bench:
+ *
+ *   Talent Bench (internal)  our own consultants — the whole team sees them
+ *   My Pool      (external)  candidates you sourced — private to you
+ *
+ * The tabs sit above the KPI strip because every number below them is scoped
+ * to the selected pool.
  */
 const POOL_TABS = [
-  { key: "all", label: "All candidates" },
-  { key: "internal", label: "My Pool", hint: "Internal" },
-  { key: "external", label: "Talent Bench", hint: "External" },
-] as const;
+  { key: "all" as const, label: "All candidates", hint: "" },
+  ...POOL_ORDER.map((p) => ({ key: p, label: POOL_META[p].label, hint: POOL_META[p].badge })),
+];
 
-type PoolKey = (typeof POOL_TABS)[number]["key"];
-
-/**
- * A record's pool, with the legacy fallback: rows written before benchType
- * existed count as internal when hired (they became one of our consultants)
- * and external otherwise — the same rule scripts/backfill-bench-type.mjs
- * applies, so the page reads correctly before and after the backfill runs.
- */
-function poolOf(app: Application): BenchType {
-  return app.benchType || (app.status === "hired" ? "internal" : "external");
-}
+type PoolKey = "all" | BenchType;
 
 // These used to be narrower private lists, because the Application unions were
 // narrower than the theme lists and the write path cast around the mismatch.
@@ -127,11 +123,22 @@ const SOURCE_CHOICES = SOURCE_OPTIONS as NonNullable<Application["source"]>[];
  * than disappearing.
  */
 function stateOf(value?: string | null): string {
-  return normalizeState(value) || value || "";
+  return normalizeState(value) || value?.trim() || "";
 }
 
-const selectCls =
-  "w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-sm text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
+const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
+
+/**
+ * The location filter keys on STATE, not on the city string.
+ *
+ * A bench is searched by market, not by spelling: "Austin", "austin" and
+ * "Austin Metro" are one answer to "who can work in Texas?", and a city-keyed
+ * menu would list all three as separate options while a consultant in Round
+ * Rock matched none of them. Cities stay searchable through the search box.
+ */
+function locationLabelOf(value: string): string {
+  return value === "__none" ? "No location" : STATE_NAME.get(value) || value;
+}
 
 const textareaCls =
   "w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink-mute)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] resize-none";
@@ -146,19 +153,27 @@ function daysOnBench(app: Application): number | null {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
 
-/** Internal / External pool tag shown in the grid, on cards and in detail. */
+/**
+ * Pool tag shown in the grid, on cards and in detail.
+ *
+ * It names the POOL, not the raw internal/external value: "Talent Bench" and
+ * "My Pool" are what the tabs above the grid call the same two sets, and a
+ * badge that used different words for them made a row look like it belonged
+ * somewhere other than the tab it was sitting under.
+ */
 function PoolBadge({ pool }: { pool: BenchType }) {
-  const internal = pool === "internal";
+  const shared = pool === "internal";
   return (
     <span
+      title={POOL_META[pool].hint}
       className={cn(
         "inline-flex items-center whitespace-nowrap rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium",
-        internal
+        shared
           ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
       )}
     >
-      {internal ? "Internal" : "External"}
+      {POOL_META[pool].label}
     </span>
   );
 }
@@ -190,6 +205,8 @@ export default function TalentBenchPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [skillFilter, setSkillFilter] = useState("all");
   const [authFilter, setAuthFilter] = useState("all");
+  const [hireFilter, setHireFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [poolFilter, setPoolFilter] = useState<PoolKey>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
@@ -211,6 +228,9 @@ export default function TalentBenchPage() {
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
 
+  // Which record is being re-parsed right now, if any.
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -228,6 +248,7 @@ export default function TalentBenchPage() {
     ownership: "",
     ownershipName: "",
     workAuthorization: "" as Application["workAuthorization"] | "",
+    hireType: "",
     rating: 0,
     notes: "",
     skills: [] as string[],
@@ -304,6 +325,31 @@ export default function TalentBenchPage() {
     void fetchUsers();
   }, [fetchData, fetchUsers]);
 
+  /**
+   * Poll the open record while its resume is being parsed in the background.
+   * Attaching a resume queues extraction server-side, so without this the
+   * profile would sit on "Analyzing…" until someone reloaded the page.
+   */
+  useEffect(() => {
+    const status = selectedApplication?.resumeAnalysisStatus;
+    const appId = selectedApplication?.id;
+    if (!appId || (status !== "pending" && status !== "processing")) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/applications/${appId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const updated = data.application as ApplicationWithJob;
+        setSelectedApplication((prev) => (prev && prev.id === appId ? { ...prev, ...updated } : prev));
+        setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, ...updated } : a)));
+        if (updated.resumeAnalysisStatus === "completed") toast.success("Resume analyzed");
+      } catch { /* non-fatal — the next tick retries */ }
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [selectedApplication?.id, selectedApplication?.resumeAnalysisStatus]);
+
   // ── derived ───────────────────────────────────────────────────────────────
 
   const allSkills = useMemo(
@@ -314,6 +360,14 @@ export default function TalentBenchPage() {
     () => [...new Set(applications.map((a) => a.workAuthorization).filter(Boolean))] as string[],
     [applications],
   );
+  /** Hire types actually present, listed in the canonical picker order. */
+  const hireTypes = useMemo(() => {
+    const present = new Set(applications.map((a) => a.hireType).filter(Boolean) as string[]);
+    return [
+      ...HIRE_TYPE_OPTIONS.filter((o) => present.has(o.value)).map((o) => o.value),
+      ...[...present].filter((v) => !HIRE_TYPE_OPTIONS.some((o) => o.value === v)),
+    ];
+  }, [applications]);
 
   // Resolve who added a bench entry (benchAddedBy/createdBy holds an email or id).
   const addedByIndex = useMemo(() => {
@@ -341,15 +395,21 @@ export default function TalentBenchPage() {
   );
 
   /**
-   * The bench this viewer is allowed to see: admins get every team member's
-   * records, everyone else only what they themselves added. The KPI strip and
-   * the grid are built from this list, never from the raw fetch.
+   * The bench this viewer is allowed to see.
+   *
+   * Visibility follows the pool, not the person: Talent Bench (internal) holds
+   * our own consultants and is company property, so every staff member sees
+   * the whole list. My Pool (external) is the pipeline a recruiter built
+   * themselves and stays private to them — admins excepted, since auditing the
+   * team's pipeline is their job.
+   *
+   * This replaces a blanket "non-admins only ever see their own records" rule,
+   * which hid the shared bench from the people expected to staff from it.
    */
   const scopedApplications = useMemo(() => applications.filter((app) => {
-    const addedBy = app.benchAddedBy || app.createdBy;
-    const matchesOwnership = isAdmin || (!!addedBy && (addedBy === user?.email || addedBy === user?.id));
+    const viewer = { id: user?.id, email: user?.email, isAdmin };
     const matchesOwner = !isAdmin || ownerFilter === "all" || resolveAdder(app).name === ownerFilter;
-    return matchesOwnership && matchesOwner;
+    return canView(app, viewer) && matchesOwner;
   }), [applications, isAdmin, user?.email, user?.id, ownerFilter, resolveAdder]);
 
   /** Tab counts come from the scoped set, so they don't move as filters change. */
@@ -370,16 +430,43 @@ export default function TalentBenchPage() {
     [scopedApplications, poolFilter],
   );
 
+  /**
+   * Locations present in the visible bench, with a count each. Built from the
+   * selected pool so the menu never offers a state the current tab has nobody
+   * in, and never lists all 50 when the bench holds three.
+   */
+  const locations = useMemo(() => {
+    const counts = new Map<string, number>();
+    let unknown = 0;
+    for (const a of pooledApplications) {
+      const code = stateOf(a.state);
+      if (!code) { unknown += 1; continue; }
+      counts.set(code, (counts.get(code) || 0) + 1);
+    }
+    const named = [...counts.entries()]
+      .map(([code, count]) => ({ value: code, label: STATE_NAME.get(code) || code, count }))
+      .sort((x, y) => x.label.localeCompare(y.label));
+    return unknown > 0
+      ? [...named, { value: "__none", label: "No location recorded", count: unknown }]
+      : named;
+  }, [pooledApplications]);
+
   const filteredApplications = useMemo(() => pooledApplications.filter((app) => {
     const q = debouncedSearch.toLowerCase();
+    // City is searchable even though the location filter works at state level,
+    // so "austin" still finds someone.
     const matchesSearch = !q
-      || [app.name, app.email, app.applicationId, app.jobTitle].some((f) => f?.toLowerCase().includes(q))
+      || [app.name, app.email, app.applicationId, app.jobTitle, app.city].some((f) => f?.toLowerCase().includes(q))
       || (app.skills?.some((s) => s.toLowerCase().includes(q)) ?? false);
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesSkill = skillFilter === "all" || (app.skills?.includes(skillFilter) || false);
     const matchesAuth = authFilter === "all" || app.workAuthorization === authFilter;
-    return matchesSearch && matchesStatus && matchesSkill && matchesAuth;
-  }), [pooledApplications, debouncedSearch, statusFilter, skillFilter, authFilter]);
+    const matchesHire = hireFilter === "all" || app.hireType === hireFilter;
+    const code = stateOf(app.state);
+    const matchesLocation = locationFilter === "all"
+      || (locationFilter === "__none" ? !code : code === locationFilter);
+    return matchesSearch && matchesStatus && matchesSkill && matchesAuth && matchesHire && matchesLocation;
+  }), [pooledApplications, debouncedSearch, statusFilter, skillFilter, authFilter, hireFilter, locationFilter]);
 
   const statusCounts = useMemo(
     () => Object.fromEntries(
@@ -411,7 +498,7 @@ export default function TalentBenchPage() {
     [pooledApplications],
   );
 
-  const hasActiveFilters = [statusFilter, skillFilter, authFilter, ownerFilter].some((f) => f !== "all")
+  const hasActiveFilters = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, ownerFilter].some((f) => f !== "all")
     || debouncedSearch.trim() !== "";
 
   const clearFilters = () => {
@@ -419,6 +506,8 @@ export default function TalentBenchPage() {
     setStatusFilter("all");
     setSkillFilter("all");
     setAuthFilter("all");
+    setHireFilter("all");
+    setLocationFilter("all");
     setOwnerFilter("all");
   };
 
@@ -485,7 +574,8 @@ export default function TalentBenchPage() {
     "bench",
     [
       "App ID", "Name", "Email", "Phone", "Last Position", "Status", "Pool",
-      "Work Authorization", "Skills", "Rating", "City", "State", "Has Resume", "Notes",
+      "Hire Type", "Work Authorization", "Skills", "Rating", "City", "State",
+      "Has Resume", "Notes",
     ],
     filteredApplications.map((app) => [
       app.applicationId || app.id.slice(0, 8),
@@ -494,7 +584,8 @@ export default function TalentBenchPage() {
       app.phone || "",
       app.jobTitle || "",
       app.status,
-      poolOf(app),
+      POOL_META[poolOf(app)].label,
+      hireTypeLabel(app.hireType),
       app.workAuthorization || "",
       app.skills?.join(", ") || "",
       app.rating?.toString() || "",
@@ -525,6 +616,7 @@ export default function TalentBenchPage() {
       ownership: "",
       ownershipName: "",
       workAuthorization: "",
+      hireType: "",
       rating: 0,
       notes: "",
       skills: [],
@@ -569,6 +661,7 @@ export default function TalentBenchPage() {
       ownership: app.ownership || "",
       ownershipName: app.ownershipName || "",
       workAuthorization: app.workAuthorization || "",
+      hireType: app.hireType || "",
       rating: app.rating || 0,
       notes: app.notes || "",
       skills: app.skills || [],
@@ -620,13 +713,10 @@ export default function TalentBenchPage() {
 
     if (!file) return;
 
-    // Validate file type
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    if (!allowedTypes.includes(file.type)) {
+    // Validated on the extension rather than the MIME type — browsers report
+    // .doc/.docx inconsistently, and a type allow-list rejected valid resumes.
+    const name = file.name.toLowerCase();
+    if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
       setResumeError("Please upload a PDF or Word document (.pdf, .doc, .docx)");
       return;
     }
@@ -677,6 +767,31 @@ export default function TalentBenchPage() {
       return null;
     } finally {
       setResumeUploading(false);
+    }
+  };
+
+  /**
+   * Run (or re-run) resume extraction for a bench record.
+   *
+   * Uploading a resume from this page now queues extraction automatically, so
+   * this is the manual path: profiles added before that existed, and re-parsing
+   * after replacing a document.
+   */
+  const handleAnalyzeResume = async (appId: string) => {
+    setAnalyzingId(appId);
+    try {
+      const response = await fetch(`/api/applications/${appId}/analyze`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Analysis failed");
+
+      const updated = data.application as ApplicationWithJob;
+      setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, ...updated } : a)));
+      setSelectedApplication((prev) => (prev && prev.id === appId ? { ...prev, ...updated } : prev));
+      toast.success("Resume analyzed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to analyze resume");
+    } finally {
+      setAnalyzingId(null);
     }
   };
 
@@ -744,6 +859,7 @@ export default function TalentBenchPage() {
         ownership: formData.ownership || undefined,
         ownershipName: formData.ownershipName || undefined,
         workAuthorization: formData.workAuthorization || undefined,
+        hireType: formData.hireType || undefined,
         rating: formData.rating || undefined,
         notes: formData.notes || undefined,
         addToTalentBench: true,
@@ -883,6 +999,31 @@ export default function TalentBenchPage() {
     cell: (a) => <PoolBadge pool={poolOf(a)} />,
   };
 
+  const locationCol: DataTableColumn<ApplicationWithJob> = {
+    key: "location",
+    header: "Location",
+    hideBelow: "lg",
+    sortValue: (a) => [a.city, stateOf(a.state)].filter(Boolean).join(", "),
+    cell: (a) => {
+      const loc = [a.city?.trim(), stateOf(a.state)].filter(Boolean).join(", ");
+      return loc ? <span className="text-[13px] text-[var(--adm-ink-mute)]">{loc}</span> : <BlankCell />;
+    },
+  };
+
+  const hireTypeCol: DataTableColumn<ApplicationWithJob> = {
+    key: "hireType",
+    header: "Hire type",
+    hideBelow: "xl",
+    sortValue: (a) => a.hireType || "",
+    cell: (a) => a.hireType
+      ? (
+        <span className="inline-flex items-center rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--adm-ink-mute)]">
+          {a.hireType}
+        </span>
+      )
+      : <BlankCell />,
+  };
+
   const statusCol: DataTableColumn<ApplicationWithJob> = {
     key: "status",
     header: "Stage",
@@ -930,35 +1071,39 @@ export default function TalentBenchPage() {
   };
 
   /**
-   * Nine columns for an admin, eight for everyone else. It was eleven, several
-   * of them stacking two facts on top of each other; phone, work authorisation,
-   * the application ID and the resume link all still live on the record itself,
-   * which is one click away, and work auth is already a filter on the toolbar.
+   * Eleven columns for an admin, ten for everyone else. Phone, work
+   * authorisation, the application ID and the resume link all live on the
+   * record itself, which is one click away, and work auth is already a filter
+   * on the toolbar. Location and hire type are columns rather than record-only
+   * facts because both are now filters — a filter you cannot see the result of
+   * in the grid leaves you guessing why rows disappeared.
    */
   const columns: DataTableColumn<ApplicationWithJob>[] = [
     candidateCol,
     ...(isAdmin ? [addedByCol] : []),
     emailCol,
     skillsCol,
+    locationCol,
     ageCol,
     ratingCol,
+    hireTypeCol,
     poolCol,
     statusCol,
     actionsCol,
   ];
 
-  // Empty-state copy depends on which pool tab is empty: the internal pool
-  // fills itself when candidates are hired, the external bench is hand-built.
+  // Empty-state copy depends on which pool tab is empty: the shared Talent
+  // Bench fills itself when candidates are hired, My Pool is hand-built.
   const emptyFresh = pooledApplications.length === 0;
   const emptyTitle = emptyFresh
-    ? (poolFilter === "internal" ? "No internal candidates in My Pool yet"
-      : poolFilter === "external" ? "No external candidates on the bench yet"
+    ? (poolFilter === "internal" ? "No consultants on the Talent Bench yet"
+      : poolFilter === "external" ? "Nothing in your pool yet"
       : "No candidates on the bench yet")
     : "No candidates match your filters";
   const emptyDescription = emptyFresh
     ? (poolFilter === "internal"
-      ? "Candidates move here automatically when they are marked as hired. You can also add a profile directly."
-      : "Add a profile to keep strong candidates warm for future roles.")
+      ? "Candidates move here automatically when they are marked as hired. You can also add a consultant directly."
+      : "Add the external candidates you are sourcing. Only you see them.")
     : "Try adjusting your search or filters.";
 
   // ── states ────────────────────────────────────────────────────────────────
@@ -988,15 +1133,19 @@ export default function TalentBenchPage() {
     const closeForm = () => { setPageMode("list"); resetForm(); };
     return (
       <div className="space-y-5 pb-10">
+        {/* Back leads the page, ahead of the title. */}
+        <button
+          type="button"
+          onClick={closeForm}
+          className="-mb-1 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+
         <PageHeader
-          title={pageMode === "create" ? "Add to Talent Bench" : "Edit Bench Profile"}
+          title={pageMode === "create" ? "Add bench profile" : "Edit bench profile"}
           subtitle={pageMode === "edit" ? selectedApplication?.name || undefined : undefined}
           icon={IconBoxes}
-          actions={
-            <PageHeaderButton variant="secondary" onClick={closeForm}>
-              <ArrowLeft className="h-4 w-4" />Back
-            </PageHeaderButton>
-          }
         />
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1194,6 +1343,20 @@ export default function TalentBenchPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Type of hire</Label>
+                <Select
+                  value={formData.hireType}
+                  onValueChange={(v) => setFormData({ ...formData, hireType: v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select hire type" /></SelectTrigger>
+                  <SelectContent>
+                    {HIRE_TYPE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -1229,10 +1392,14 @@ export default function TalentBenchPage() {
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="external">Talent Bench — external candidate</SelectItem>
-                    <SelectItem value="internal">My Pool — internal hire</SelectItem>
+                    {POOL_ORDER.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-[var(--adm-ink-subtle)]">{POOL_META[formData.benchType].hint}</p>
               </div>
             </div>
           </AdminCard>
@@ -1385,8 +1552,19 @@ export default function TalentBenchPage() {
     const adder = isAdmin ? resolveAdder(app) : null;
     const age = daysOnBench(app);
 
+    const backToList = () => { setPageMode("list"); setSelectedApplication(null); };
+
     return (
       <div className="space-y-5 pb-10">
+        {/* Back leads the page, ahead of the title. */}
+        <button
+          type="button"
+          onClick={backToList}
+          className="-mb-1 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+
         <PageHeader
           title={app.name || "Unknown"}
           subtitle={app.applicationId || `ID: ${app.id.slice(0, 8)}`}
@@ -1402,12 +1580,6 @@ export default function TalentBenchPage() {
           }
           actions={
             <>
-              <PageHeaderButton
-                variant="secondary"
-                onClick={() => { setPageMode("list"); setSelectedApplication(null); }}
-              >
-                <ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">Back</span>
-              </PageHeaderButton>
               <a
                 href={`mailto:${app.email}`}
                 className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
@@ -1467,6 +1639,71 @@ export default function TalentBenchPage() {
               )}
             </AdminCard>
 
+            {/* Parsed resume.
+                A bench profile could always carry a resume, but nothing on this
+                screen ever showed what was in it — the extraction ran (or, for
+                older records, never ran) and the result was only visible on the
+                candidate page. Same panel as the candidate record, so a
+                consultant reads identically wherever you open them. */}
+            {app.resumeAnalysis ? (
+              <div className="space-y-4">
+                <AdminCard className="flex flex-wrap items-center justify-between gap-3 p-5">
+                  <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+                    <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-accent)]" />Resume analysis
+                    {app.resumeAnalyzedAt && (
+                      <span className="text-[12px] font-normal text-[var(--adm-ink-subtle)]">
+                        · {fmtDate(app.resumeAnalyzedAt)}
+                      </span>
+                    )}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => void handleAnalyzeResume(app.id)}
+                    disabled={analyzingId === app.id}
+                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60"
+                  >
+                    {analyzingId === app.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <IconRefresh className="h-3.5 w-3.5" />}
+                    Re-analyze
+                  </button>
+                </AdminCard>
+                <ResumeAnalysisPanel analysis={app.resumeAnalysis} />
+              </div>
+            ) : app.resumeId ? (
+              <AdminCard className="p-5">
+                <h3 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
+                  <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Resume analysis
+                </h3>
+                {app.resumeAnalysisStatus === "pending" || app.resumeAnalysisStatus === "processing" ? (
+                  <p className="flex items-center gap-2 text-sm text-[var(--adm-ink-mute)]">
+                    <Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" />
+                    Analyzing the attached resume — experience, education, skills and more. Usually under a minute.
+                  </p>
+                ) : (
+                  <>
+                    <p className="mb-3 text-sm text-[var(--adm-ink-subtle)]">
+                      {app.resumeAnalysisStatus === "failed" && app.resumeAnalysisError
+                        ? app.resumeAnalysisError
+                        : "Extract the full profile from the resume on file."}
+                    </p>
+                    <WorkspaceButton
+                      variant="primary"
+                      onClick={() => void handleAnalyzeResume(app.id)}
+                      disabled={analyzingId === app.id}
+                    >
+                      {analyzingId === app.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <IconSparkles className="h-4 w-4" />}
+                      {analyzingId === app.id
+                        ? "Analyzing…"
+                        : app.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
+                    </WorkspaceButton>
+                  </>
+                )}
+              </AdminCard>
+            ) : null}
+
             <AdminCard className="p-5">
               <h3 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
                 <IconFile className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Notes
@@ -1507,17 +1744,18 @@ export default function TalentBenchPage() {
           <div className="space-y-4">
             <AdminCard className="p-5">
               <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Stage</h3>
-              <select
+              {/* The house select. This was a bare <select> whose local class
+                  omitted appearance-none, so the OS drew the control and its
+                  own corner radius won over ours. */}
+              <FormSelect
                 value={app.status}
-                autoComplete="off"
                 aria-label="Stage"
                 onChange={(e) => void handleStatusChange(app.id, e.target.value as Application["status"])}
-                className={selectCls}
               >
                 {BENCH_STATUSES.map((s) => (
                   <option key={s} value={s}>{statusMeta[s].label}</option>
                 ))}
-              </select>
+              </FormSelect>
             </AdminCard>
 
             <AdminCard className="p-5">
@@ -1558,7 +1796,13 @@ export default function TalentBenchPage() {
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-[var(--adm-ink-subtle)]">Pool</dt>
                   <dd className="font-medium text-[var(--adm-ink-mute)]">
-                    {poolOf(app) === "internal" ? "My Pool (Internal)" : "Talent Bench (External)"}
+                    {POOL_META[poolOf(app)].label} ({POOL_META[poolOf(app)].badge})
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[var(--adm-ink-subtle)]">Type of hire</dt>
+                  <dd className="font-medium text-[var(--adm-ink-mute)]">
+                    {app.hireType ? hireTypeLabel(app.hireType) : <BlankCell />}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -1743,6 +1987,26 @@ export default function TalentBenchPage() {
               ...workAuthorizations.map((auth) => ({ value: auth, label: auth })),
             ]}
           />
+          <FilterPill
+            label="Hire type"
+            icon={FilterIcon.type}
+            value={hireFilter}
+            onChange={setHireFilter}
+            options={[
+              { value: "all", label: "All hire types" },
+              ...hireTypes.map((h) => ({ value: h, label: hireTypeLabel(h) })),
+            ]}
+          />
+          <FilterPill
+            label="Location"
+            icon={FilterIcon.location}
+            value={locationFilter}
+            onChange={setLocationFilter}
+            options={[
+              { value: "all", label: "All locations", count: pooledApplications.length },
+              ...locations.map((l) => ({ value: l.value, label: l.label, count: l.count })),
+            ]}
+          />
           {/* Only admins see the whole team's bench, so only they get to slice
               it by who added a record. */}
           {isAdmin && (
@@ -1765,6 +2029,8 @@ export default function TalentBenchPage() {
           ...(statusFilter !== "all" ? [{ label: `Stage: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
           ...(skillFilter !== "all" ? [{ label: `Skill: ${skillFilter}`, onClear: () => setSkillFilter("all") }] : []),
           ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
+          ...(hireFilter !== "all" ? [{ label: `Hire type: ${hireTypeLabel(hireFilter)}`, onClear: () => setHireFilter("all") }] : []),
+          ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabelOf(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
           ...(ownerFilter !== "all" ? [{ label: `Added by: ${ownerFilter}`, onClear: () => setOwnerFilter("all") }] : []),
         ]}
         onClearAll={clearFilters}

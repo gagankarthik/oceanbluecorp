@@ -11,8 +11,17 @@ import { cn } from "@/lib/utils";
 // ui/Checkbox defaults to the navy --primary with a drop shadow + a fat 3px
 // focus ring. Flatten it and move it onto the admin accent: no shadow, a clean
 // hover border, and a tidy 2px accent focus ring.
+//
+// Whole pixels only. This was size-[17px] with a border-[1.5px]: an odd box
+// with a fractional border means neither the outer edges nor the stroke land on
+// device pixels, so the browser rounds each of the four sides independently —
+// at the 125%/150% display scaling Windows ships by default that lands as 1px
+// on some sides and 2px on others, and the "square" visibly isn't one. 16px at
+// a 1px border is the same geometry every other checkbox in the app uses, and
+// the 40px hit area below comes from the ::before pseudo-element, so nothing is
+// harder to click for being a pixel smaller.
 const checkboxCobalt =
-  "size-[17px] rounded-[5px] border-[1.5px] border-[var(--adm-line)] shadow-none transition-colors " +
+  "size-4 rounded-[4px] border border-[var(--adm-line)] shadow-none transition-colors " +
   "hover:border-[var(--adm-ink-subtle)] " +
   "focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] focus-visible:border-[var(--adm-accent)] " +
   "data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)] data-[state=checked]:text-white " +

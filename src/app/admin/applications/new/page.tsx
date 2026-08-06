@@ -14,9 +14,10 @@ import type { BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   PIPELINE_STAGES, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS,
-  WORK_AUTH_OPTIONS, WORK_AUTH_GROUPS, workAuthExpires, workAuthNeedsSponsorship,
-  type AppStatus,
+  WORK_AUTH_GROUPS, workAuthExpires, workAuthNeedsSponsorship,
+  HIRE_TYPE_OPTIONS, type AppStatus,
 } from "@/components/admin/theme";
+import { POOL_META, POOL_ORDER } from "@/lib/bench";
 import { PageHeader } from "@/components/admin/page-header";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -53,6 +54,7 @@ function NewApplicationInner() {
   const [jobTitle, setJobTitle] = useState("");
   const [status, setStatus] = useState<AppStatus>("pending");
   const [source, setSource] = useState("");
+  const [hireType, setHireType] = useState("");
   const [addToTalentBench, setAddToTalentBench] = useState(false);
   const [benchType, setBenchType] = useState<BenchType>("external");
 
@@ -96,12 +98,17 @@ function NewApplicationInner() {
     setSkillInput("");
   };
 
+  // Judged on the extension, not the MIME type: browsers report .doc/.docx
+  // inconsistently and a valid resume was being turned away as the wrong type.
   const handleResumeSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setResumeError(null);
     if (!file) return;
-    const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    if (!allowed.includes(file.type)) { setResumeError("Upload a PDF or Word document"); return; }
+    const name = file.name.toLowerCase();
+    if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
+      setResumeError("Upload a PDF or Word document (.pdf, .doc, .docx)");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) { setResumeError("File must be under 5MB"); return; }
     setResumeFile(file);
   };
@@ -156,6 +163,7 @@ function NewApplicationInner() {
         jobId:             jobId     || undefined,
         jobTitle:          jobTitle  || job?.title || undefined,
         source:            source    || undefined,
+        hireType:          hireType  || undefined,
         workAuthorization: workAuth  || undefined,
         visaSponsorshipRequired: needsSponsorship,
         ...(visaExpiry && { visaExpiry }),
@@ -193,6 +201,18 @@ function NewApplicationInner() {
   return (
     <div className="space-y-5">
 
+      {/* Back sits at the very start of the page, ahead of the title — the
+          same place it appears on every other record screen, so it is always
+          the first thing under the cursor rather than buried in the action
+          cluster on the far right. */}
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="-mb-1 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+
       <PageHeader
         title="New Applicant"
         subtitle="Create a candidate record and place it on the pipeline"
@@ -209,14 +229,10 @@ function NewApplicationInner() {
             </Link>
           </span>
         ) : undefined}
-        // Save and Cancel are in the anchored bar at the foot of the form
-        // and were ALSO repeated up here, so a long form offered two
-        // identical commits at once. Only the back link stays.
-        actions={
-          <WorkspaceButton type="button" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />Back
-          </WorkspaceButton>
-        }
+        // Save and Cancel are in the anchored bar at the foot of the form and
+        // were ALSO repeated up here, so a long form offered two identical
+        // commits at once. Back has moved to the top of the page, so the
+        // header carries no actions at all.
       />
 
       {error && (
@@ -415,6 +431,17 @@ function NewApplicationInner() {
                 </FormSelect>
               </Field>
 
+              <Field
+                label="Type of hire"
+                htmlFor="hireType"
+                helper={HIRE_TYPE_OPTIONS.find((o) => o.value === hireType)?.hint}
+              >
+                <FormSelect id="hireType" value={hireType} onChange={(e) => setHireType(e.target.value)}>
+                  <option value="">Select…</option>
+                  {HIRE_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </FormSelect>
+              </Field>
+
               <label
                 htmlFor="addToTalentBench"
                 className="flex cursor-pointer items-start gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5"
@@ -432,10 +459,13 @@ function NewApplicationInner() {
               </label>
 
               {addToTalentBench && (
-                <Field label="Talent pool" htmlFor="benchType">
+                <Field label="Talent pool" htmlFor="benchType" helper={POOL_META[benchType].hint}>
                   <FormSelect id="benchType" value={benchType} onChange={(e) => setBenchType(e.target.value as BenchType)}>
-                    <option value="external">Talent Bench — external candidate</option>
-                    <option value="internal">My Pool — internal hire</option>
+                    {POOL_ORDER.map((p) => (
+                      <option key={p} value={p}>
+                        {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                      </option>
+                    ))}
                   </FormSelect>
                 </Field>
               )}

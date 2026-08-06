@@ -98,6 +98,75 @@ const checkDbAvailable = (): { available: boolean; client?: DynamoDBDocumentClie
 // Get table names (read fresh each time)
 const getTables = () => getEnvConfig().tables;
 
+/**
+ * Scan a whole table, following the pagination cursor.
+ *
+ * A DynamoDB Scan returns at most 1MB per call and hands back a
+ * LastEvaluatedKey when there is more; every list in this file issued a single
+ * ScanCommand and read `result.Items`, so once a table crossed 1MB the extra
+ * records simply stopped existing as far as the UI was concerned. Nothing
+ * errored — the list just came back short, which is why it looked like
+ * individual records had gone missing while their detail pages still loaded
+ * (those fetch by key, not by scan).
+ *
+ * Applications hit this first: a parsed resume stores work history, education,
+ * skills, projects and certifications on the record, so a few hundred analysed
+ * candidates is enough to blow through the page limit.
+ *
+ * The page cap is a runaway guard, not a product limit — 40MB of records is far
+ * past the point where these screens should be paginating server-side.
+ */
+async function scanAll<T>(
+  client: DynamoDBDocumentClient,
+  params: ConstructorParameters<typeof ScanCommand>[0],
+  maxPages = 40,
+): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: Record<string, unknown> | undefined;
+  let pages = 0;
+
+  do {
+    const result = await client.send(new ScanCommand({ ...params, ExclusiveStartKey: cursor }));
+    if (result.Items?.length) items.push(...(result.Items as T[]));
+    cursor = result.LastEvaluatedKey;
+    pages += 1;
+    if (cursor && pages >= maxPages) {
+      console.warn(
+        `[dynamodb] scan of ${params?.TableName} stopped at ${maxPages} pages (${items.length} items); results are incomplete`,
+      );
+      break;
+    }
+  } while (cursor);
+
+  return items;
+}
+
+/** Same pagination contract as scanAll, for GSI queries. */
+async function queryAll<T>(
+  client: DynamoDBDocumentClient,
+  params: ConstructorParameters<typeof QueryCommand>[0],
+  maxPages = 40,
+): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: Record<string, unknown> | undefined;
+  let pages = 0;
+
+  do {
+    const result = await client.send(new QueryCommand({ ...params, ExclusiveStartKey: cursor }));
+    if (result.Items?.length) items.push(...(result.Items as T[]));
+    cursor = result.LastEvaluatedKey;
+    pages += 1;
+    if (cursor && pages >= maxPages) {
+      console.warn(
+        `[dynamodb] query of ${params?.IndexName || params?.TableName} stopped at ${maxPages} pages (${items.length} items); results are incomplete`,
+      );
+      break;
+    }
+  } while (cursor);
+
+  return items;
+}
+
 // ===========================================
 // Types
 // ===========================================
@@ -137,6 +206,18 @@ export type WorkAuthorization =
   | "US Citizen" | "Green Card" | "H1-B" | "H4 EAD" | "OPT" | "CPT"
   | "TN Visa" | "E3 Visa" | "L1 Visa" | "O1 Visa" | "Other"
   | "OPT/CPT";
+
+/**
+ * The engagement a candidate is being placed on. Distinct from Job["type"],
+ * which describes the requisition: a single contract requisition can be filled
+ * W2 by one candidate and corp-to-corp by another, and the payroll treatment is
+ * the candidate's fact, not the job's.
+ *
+ * Mirrors HIRE_TYPE_OPTIONS in components/admin/theme.ts, which is what every
+ * picker renders.
+ */
+export type HireType =
+  | "W2" | "C2C" | "1099" | "Full-time" | "Contract-to-Hire" | "Internal";
 
 export interface NoteEntry {
   id: string;           // UUID for each note
@@ -372,6 +453,8 @@ export interface Application {
   // HR-specific fields
   source?: ApplicationSource;
   workAuthorization?: WorkAuthorization;
+  /** Engagement type this candidate is being placed on (W2, C2C, 1099, …). */
+  hireType?: HireType;
   /**
    * Whether the candidate will need sponsorship, and when their current
    * authorization lapses (ISO date). Both were collected by the new/edit
@@ -669,17 +752,15 @@ export async function getResumesByUser(userId: string): Promise<{ success: boole
   }
 
   try {
-    const result = await dbCheck.client!.send(
-      new QueryCommand({
-        TableName: getTables().resumes,
-        IndexName: "userId-index",
-        KeyConditionExpression: "userId = :userId",
-        ExpressionAttributeValues: {
-          ":userId": userId,
-        },
-      })
-    );
-    return { success: true, data: result.Items as Resume[] };
+    const data = await queryAll<Resume>(dbCheck.client!, {
+      TableName: getTables().resumes,
+      IndexName: "userId-index",
+      KeyConditionExpression: "userId = :userId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+      },
+    });
+    return { success: true, data };
   } catch (error) {
     console.error("Error getting resumes by user:", error);
     return {
@@ -769,17 +850,15 @@ export async function getApplicationsByUser(userId: string): Promise<{ success: 
   }
 
   try {
-    const result = await dbCheck.client!.send(
-      new QueryCommand({
-        TableName: getTables().applications,
-        IndexName: "userId-index",
-        KeyConditionExpression: "userId = :userId",
-        ExpressionAttributeValues: {
-          ":userId": userId,
-        },
-      })
-    );
-    return { success: true, data: result.Items as Application[] };
+    const data = await queryAll<Application>(dbCheck.client!, {
+      TableName: getTables().applications,
+      IndexName: "userId-index",
+      KeyConditionExpression: "userId = :userId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+      },
+    });
+    return { success: true, data };
   } catch (error) {
     console.error("Error getting applications by user:", error);
     return {
@@ -796,17 +875,15 @@ export async function getApplicationsByJob(jobId: string): Promise<{ success: bo
   }
 
   try {
-    const result = await dbCheck.client!.send(
-      new QueryCommand({
-        TableName: getTables().applications,
-        IndexName: "jobId-index",
-        KeyConditionExpression: "jobId = :jobId",
-        ExpressionAttributeValues: {
-          ":jobId": jobId,
-        },
-      })
-    );
-    return { success: true, data: result.Items as Application[] };
+    const data = await queryAll<Application>(dbCheck.client!, {
+      TableName: getTables().applications,
+      IndexName: "jobId-index",
+      KeyConditionExpression: "jobId = :jobId",
+      ExpressionAttributeValues: {
+        ":jobId": jobId,
+      },
+    });
+    return { success: true, data };
   } catch (error) {
     console.error("Error getting applications by job:", error);
     return {
@@ -824,14 +901,11 @@ export async function getAllApplications(): Promise<{ success: boolean; data?: A
   }
 
   try {
-    console.log("Fetching applications from table:", getTables().applications);
-    const result = await dbCheck.client!.send(
-      new ScanCommand({
-        TableName: getTables().applications,
-      })
-    );
-    console.log("Applications fetched successfully, count:", result.Items?.length || 0);
-    return { success: true, data: result.Items as Application[] };
+    const data = await scanAll<Application>(dbCheck.client!, {
+      TableName: getTables().applications,
+    });
+    console.log("Applications fetched successfully, count:", data.length);
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -915,9 +989,21 @@ export async function updateApplicationStatus(
   }
 }
 
+/**
+ * Patch an application.
+ *
+ * `remove` deletes attributes outright, which setting them cannot do: an
+ * undefined value is skipped by the loop below, and an empty string leaves a
+ * present-but-blank attribute behind. Replacing a resume needs the real thing —
+ * the previous resume's parsed analysis has to disappear, not linger as stale
+ * detail attributed to a document that is no longer on file.
+ */
+type ApplicationPatch = Partial<Omit<Application, "id" | "applicationId" | "createdAt" | "createdBy">>;
+
 export async function updateApplication(
   id: string,
-  updates: Partial<Omit<Application, "id" | "applicationId" | "createdAt" | "createdBy">>
+  updates: ApplicationPatch,
+  remove: (keyof ApplicationPatch)[] = []
 ): Promise<{ success: boolean; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
@@ -941,11 +1027,23 @@ export async function updateApplication(
       }
     });
 
+    // A field being both set and removed would make the expression invalid, so
+    // an explicit set always wins.
+    const removals = [...new Set(remove)].filter((k) => updates[k] === undefined);
+    for (const key of removals) {
+      expressionAttributeNames[`#${key}`] = key as string;
+    }
+
+    const expression = [
+      `SET ${updateExpressions.join(", ")}`,
+      removals.length ? `REMOVE ${removals.map((k) => `#${k}`).join(", ")}` : "",
+    ].filter(Boolean).join(" ");
+
     await dbCheck.client!.send(
       new UpdateCommand({
         TableName: getTables().applications,
         Key: { id },
-        UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+        UpdateExpression: expression,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: expressionAttributeValues,
       })
@@ -1085,32 +1183,16 @@ export async function getAllJobs(status?: Job["status"]): Promise<{ success: boo
   }
 
   try {
-    console.log("Fetching jobs from table:", getTables().jobs);
-    let result;
-
-    if (status) {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().jobs,
-          FilterExpression: "#status = :status",
-          ExpressionAttributeNames: {
-            "#status": "status",
-          },
-          ExpressionAttributeValues: {
-            ":status": status,
-          },
-        })
-      );
-    } else {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().jobs,
-        })
-      );
-    }
-
-    console.log("Jobs fetched successfully, count:", result.Items?.length || 0);
-    return { success: true, data: result.Items as Job[] };
+    const data = await scanAll<Job>(dbCheck.client!, {
+      TableName: getTables().jobs,
+      ...(status && {
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":status": status },
+      }),
+    });
+    console.log("Jobs fetched successfully, count:", data.length);
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -1248,32 +1330,16 @@ export async function getAllContacts(status?: Contact["status"]): Promise<{ succ
   }
 
   try {
-    console.log("Fetching contacts from table:", getTables().contacts);
-    let result;
-
-    if (status) {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().contacts,
-          FilterExpression: "#status = :status",
-          ExpressionAttributeNames: {
-            "#status": "status",
-          },
-          ExpressionAttributeValues: {
-            ":status": status,
-          },
-        })
-      );
-    } else {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().contacts,
-        })
-      );
-    }
-
-    console.log("Contacts fetched successfully, count:", result.Items?.length || 0);
-    return { success: true, data: result.Items as Contact[] };
+    const data = await scanAll<Contact>(dbCheck.client!, {
+      TableName: getTables().contacts,
+      ...(status && {
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":status": status },
+      }),
+    });
+    console.log("Contacts fetched successfully, count:", data.length);
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -1393,18 +1459,17 @@ export async function getAllNotifications(limit?: number): Promise<{ success: bo
   }
 
   try {
-    const result = await dbCheck.client!.send(
-      new ScanCommand({
-        TableName: getTables().notifications,
-        ...(limit && { Limit: limit }),
-      })
-    );
+    // Note: `limit` caps rows read per page, NOT the number returned — a Scan
+    // Limit is applied before sorting, so it cannot mean "the newest N".
+    // Sorting happens below, over everything, then the caller slices.
+    const notifications = await scanAll<Notification>(dbCheck.client!, {
+      TableName: getTables().notifications,
+    });
 
     // Sort by createdAt descending
-    const notifications = (result.Items as Notification[]) || [];
     notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return { success: true, data: notifications };
+    return { success: true, data: limit ? notifications.slice(0, limit) : notifications };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error getting notifications:", errorMessage, error);
@@ -1420,18 +1485,13 @@ export async function getUnreadNotifications(): Promise<{ success: boolean; data
   }
 
   try {
-    const result = await dbCheck.client!.send(
-      new ScanCommand({
-        TableName: getTables().notifications,
-        FilterExpression: "isRead = :isRead",
-        ExpressionAttributeValues: {
-          ":isRead": false,
-        },
-      })
-    );
+    const notifications = await scanAll<Notification>(dbCheck.client!, {
+      TableName: getTables().notifications,
+      FilterExpression: "isRead = :isRead",
+      ExpressionAttributeValues: { ":isRead": false },
+    });
 
     // Sort by createdAt descending
-    const notifications = (result.Items as Notification[]) || [];
     notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return { success: true, data: notifications };
@@ -1578,30 +1638,15 @@ export async function getAllClients(status?: Client["status"]): Promise<{ succes
   }
 
   try {
-    let result;
-
-    if (status) {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().clients,
-          FilterExpression: "#status = :status",
-          ExpressionAttributeNames: {
-            "#status": "status",
-          },
-          ExpressionAttributeValues: {
-            ":status": status,
-          },
-        })
-      );
-    } else {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().clients,
-        })
-      );
-    }
-
-    return { success: true, data: result.Items as Client[] };
+    const data = await scanAll<Client>(dbCheck.client!, {
+      TableName: getTables().clients,
+      ...(status && {
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":status": status },
+      }),
+    });
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error getting clients:", errorMessage, error);
@@ -1735,27 +1780,14 @@ export async function getAllVendors(vendorLeadRole?: Vendor["vendorLeadRole"]): 
   }
 
   try {
-    let result;
-
-    if (vendorLeadRole) {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().vendors,
-          FilterExpression: "vendorLeadRole = :vendorLeadRole",
-          ExpressionAttributeValues: {
-            ":vendorLeadRole": vendorLeadRole,
-          },
-        })
-      );
-    } else {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().vendors,
-        })
-      );
-    }
-
-    return { success: true, data: result.Items as Vendor[] };
+    const data = await scanAll<Vendor>(dbCheck.client!, {
+      TableName: getTables().vendors,
+      ...(vendorLeadRole && {
+        FilterExpression: "vendorLeadRole = :vendorLeadRole",
+        ExpressionAttributeValues: { ":vendorLeadRole": vendorLeadRole },
+      }),
+    });
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error getting vendors:", errorMessage, error);
@@ -2035,30 +2067,15 @@ export async function getAllCandidateApplications(status?: CandidateApplication[
   }
 
   try {
-    let result;
-
-    if (status) {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().applications,
-          FilterExpression: "#status = :status",
-          ExpressionAttributeNames: {
-            "#status": "status",
-          },
-          ExpressionAttributeValues: {
-            ":status": status,
-          },
-        })
-      );
-    } else {
-      result = await dbCheck.client!.send(
-        new ScanCommand({
-          TableName: getTables().applications,
-        })
-      );
-    }
-
-    return { success: true, data: result.Items as CandidateApplication[] };
+    const data = await scanAll<CandidateApplication>(dbCheck.client!, {
+      TableName: getTables().applications,
+      ...(status && {
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":status": status },
+      }),
+    });
+    return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error getting candidate applications:", errorMessage, error);
@@ -2163,8 +2180,8 @@ export async function getAllContentBlocks(): Promise<{ success: boolean; data?: 
   const db = checkDbAvailable();
   if (!db.available || !db.client) return { success: false, error: db.error };
   try {
-    const result = await db.client.send(new ScanCommand({ TableName: getTables().content }));
-    return { success: true, data: (result.Items || []) as ContentBlock[] };
+    const data = await scanAll<ContentBlock>(db.client, { TableName: getTables().content });
+    return { success: true, data };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to get content" };
   }
@@ -2231,16 +2248,17 @@ export async function getApiKeyByValue(key: string): Promise<{ success: boolean;
   const db = checkDbAvailable();
   if (!db.available || !db.client) return { success: false, error: db.error };
   try {
-    const result = await db.client.send(
-      new ScanCommand({
-        TableName: getTables().apiKeys,
-        FilterExpression: "#k = :key",
-        ExpressionAttributeNames: { "#k": "key" },
-        ExpressionAttributeValues: { ":key": key },
-      })
-    );
-    const item = (result.Items || [])[0] as ApiKey | undefined;
-    return { success: true, data: item };
+    // Paginated deliberately: a FilterExpression is applied AFTER each 1MB page
+    // is read, so an unpaginated scan can return an empty page while the
+    // matching key sits on the next one — which would reject a valid API key
+    // intermittently, and more often as the table grows.
+    const items = await scanAll<ApiKey>(db.client, {
+      TableName: getTables().apiKeys,
+      FilterExpression: "#k = :key",
+      ExpressionAttributeNames: { "#k": "key" },
+      ExpressionAttributeValues: { ":key": key },
+    });
+    return { success: true, data: items[0] };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to validate API key" };
   }
@@ -2250,8 +2268,8 @@ export async function getAllApiKeys(): Promise<{ success: boolean; data?: ApiKey
   const db = checkDbAvailable();
   if (!db.available || !db.client) return { success: false, error: db.error };
   try {
-    const result = await db.client.send(new ScanCommand({ TableName: getTables().apiKeys }));
-    return { success: true, data: (result.Items || []) as ApiKey[] };
+    const data = await scanAll<ApiKey>(db.client, { TableName: getTables().apiKeys });
+    return { success: true, data };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to list API keys" };
   }

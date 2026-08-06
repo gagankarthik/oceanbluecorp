@@ -252,6 +252,17 @@ export function JobForm({
 
   return (
     <>
+      {/* Back leads the page, ahead of the title — the same position it holds
+          on every record screen, rather than sitting in the action cluster on
+          the far right where it competed with Save for the eye. */}
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+
       {/* ── Header band ──
           Owned here rather than by /admin/jobs/new and /admin/jobs/[id]/edit:
           the form is the thing that knows the mode, the posting id and the
@@ -274,10 +285,8 @@ export function JobForm({
         actions={
           <>
             {/* "Back" and "Cancel" both called router.back(), so the header
-                offered the same escape twice under two names. One stays. */}
-            <WorkspaceButton type="button" variant="ghost" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />Cancel
-            </WorkspaceButton>
+                offered the same escape twice under two names. The single
+                remaining one is the Back link above the title. */}
             <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
               <Eye className="h-4 w-4" />Preview
             </WorkspaceButton>

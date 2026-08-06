@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Slot } from "radix-ui";
 import {
   AlignJustify, ArrowLeft, BadgeCheck, Bookmark, Briefcase, Check, ChevronDown, CircleDot,
-  Plus, RotateCcw, Route, Search, Settings2, Shield, SlidersHorizontal, Tag, UserRound,
+  MapPin, Plus, RotateCcw, Route, Search, Settings2, Shield, SlidersHorizontal, Tag, UserRound,
   Workflow, Wrench, X,
 } from "lucide-react";
 import {
@@ -676,6 +676,7 @@ export const FilterIcon = {
   person:   UserRound,    // owner, lead, added-by, uploaded-by
   role:     Shield,       // permission level
   view:     Bookmark,     // a saved view
+  location: MapPin,       // where the record is, geographically
 } as const;
 
 export interface PillOption<V extends string> {

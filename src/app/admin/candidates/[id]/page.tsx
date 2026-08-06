@@ -29,7 +29,8 @@ import {
   IconSparkles, IconUserCheck, IconUserX, IconError,
 } from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
-import { tones, statusMeta, PIPELINE_STAGES, type AppStatus } from "@/components/admin/theme";
+import { tones, statusMeta, PIPELINE_STAGES, hireTypeLabel, type AppStatus } from "@/components/admin/theme";
+import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 
@@ -40,20 +41,6 @@ interface CandidateDetail extends Application {
 }
 
 type TabKey = "overview" | "activity" | "notes";
-
-/**
- * Which pool a bench record belongs to, with the legacy fallback used across
- * the app: rows written before benchType existed read as internal when hired,
- * external otherwise.
- */
-function poolOf(c: Application): BenchType {
-  return c.benchType || (c.status === "hired" ? "internal" : "external");
-}
-
-const POOL_LABEL: Record<BenchType, string> = {
-  internal: "My Pool",
-  external: "Talent Bench",
-};
 
 /** Label/value pair for the applicant details definition grid. */
 function DetailItem({ label, value }: { label: string; value?: React.ReactNode }) {
@@ -431,7 +418,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                   sideOffset={4}
                   className="min-w-[240px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-lg"
                 >
-                  {(["internal", "external"] as const).map((pool) => {
+                  {POOL_ORDER.map((pool) => {
                     const selected = candidate.addToTalentBench && poolOf(candidate) === pool;
                     return (
                       <DropdownMenuItem
@@ -448,7 +435,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                             {POOL_LABEL[pool]}
                           </span>
                           <span className="mt-0.5 block text-[11.5px] font-normal text-[var(--adm-ink-subtle)]">
-                            {pool === "internal" ? "Internal hire between placements" : "External candidate kept warm"}
+                            {POOL_META[pool].hint}
                           </span>
                         </span>
                       </DropdownMenuItem>
@@ -658,7 +645,16 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 <AdminCardHeader icon={IconFile} title="Applicant details" />
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 sm:grid-cols-3">
                   <DetailItem label="Work authorization" value={candidate.workAuthorization} />
+                  <DetailItem label="Type of hire" value={hireTypeLabel(candidate.hireType)} />
                   <DetailItem label="Source" value={candidate.source} />
+                  <DetailItem
+                    label="Visa expiry"
+                    value={candidate.visaExpiry ? fmtDate(candidate.visaExpiry) : undefined}
+                  />
+                  <DetailItem
+                    label="Sponsorship"
+                    value={candidate.visaSponsorshipRequired ? "Required" : undefined}
+                  />
                   <DetailItem label="Street address" value={candidate.address} />
                   <DetailItem label="ZIP code" value={candidate.zipCode} />
                   <DetailItem label="Applied" value={fmtDate(candidate.appliedAt)} />
@@ -943,7 +939,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               {candidate.addToTalentBench && (
                 <MetaRow
                   label="Pool"
-                  value={poolOf(candidate) === "internal" ? "My Pool (Internal)" : "Talent Bench (External)"}
+                  value={`${POOL_LABEL[poolOf(candidate)]} (${POOL_META[poolOf(candidate)].badge})`}
                 />
               )}
               <MetaRow label="Applied" value={fmtDate(candidate.appliedAt)} />

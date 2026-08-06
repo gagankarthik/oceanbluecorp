@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Empty file body" }, { status: 400 });
     }
 
-    const validation = validateResumeFile({ type: fileType, size: buffer.length });
+    const validation = validateResumeFile({ type: fileType, size: buffer.length, name: fileName });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }

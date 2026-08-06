@@ -145,6 +145,9 @@ export async function POST(request: NextRequest) {
       jobTitle: body.jobTitle || job?.title || undefined,
       resumeId: body.resumeId || undefined,
       resumeFileName: body.resumeFileName || undefined,
+      // The S3 key was collected by every upload path but dropped here, so no
+      // record ever carried one and anything reading resumeFileKey saw blank.
+      resumeFileKey: body.resumeFileKey || undefined,
       // Queue resume analysis when a resume is attached; the background task
       // below flips this to processing/completed/failed.
       resumeAnalysisStatus: body.resumeId ? "pending" : undefined,
@@ -165,6 +168,7 @@ export async function POST(request: NextRequest) {
       coverLetter: body.coverLetter,
       source: body.source || (isPortalApplication ? "Career Portal" : "Other"),
       workAuthorization: body.workAuthorization,
+      hireType: body.hireType || undefined,
       // Visa details — both forms collect these; the client omits visaExpiry
       // when blank, so it stays undefined rather than writing an empty string.
       visaSponsorshipRequired: body.visaSponsorshipRequired || false,

@@ -248,14 +248,30 @@ export async function resumeExists(
   }
 }
 
-// Validate resume file
+/** File extensions a resume may carry, paired with ALLOWED_RESUME_TYPES. */
+export const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".doc", ".docx"];
+
+/**
+ * Validate a resume upload.
+ *
+ * A file passes on EITHER its MIME type or its extension. Browsers disagree
+ * about .doc/.docx — Windows reports several different types depending on what
+ * Office writes into the registry, and a file dragged from some clients arrives
+ * as an empty string or application/octet-stream. Judging on MIME alone
+ * rejected legitimate resumes with a message blaming the candidate's file.
+ * The extraction service sniffs the bytes itself, so the extension is a
+ * sufficient gate.
+ */
 export function validateResumeFile(
-  file: { type: string; size: number }
+  file: { type: string; size: number; name?: string }
 ): { valid: boolean; error?: string } {
-  if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
+  const name = (file.name || "").toLowerCase();
+  const extensionOk = !!name && ALLOWED_RESUME_EXTENSIONS.some((ext) => name.endsWith(ext));
+
+  if (!ALLOWED_RESUME_TYPES.includes(file.type) && !extensionOk) {
     return {
       valid: false,
-      error: "Invalid file type. Please upload a PDF or Word document.",
+      error: "Invalid file type. Please upload a PDF or Word document (.pdf, .doc, .docx).",
     };
   }
 
