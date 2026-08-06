@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--max-http-header-size=65536 next dev",
     "build": "next build",
-    "start": "cross-env NODE_OPTIONS=--max-http-header-size=65536 next start"
+    "start": "cross-env NODE_OPTIONS=--max-http-header-size=65536 next start",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.996.0",

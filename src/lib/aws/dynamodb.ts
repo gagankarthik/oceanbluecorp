@@ -499,6 +499,15 @@ export interface Application {
    */
   resumeAnalysisRetryable?: boolean;
   resumeAnalysisAttempts?: number;    // failed attempts since the last success
+  /**
+   * Lowercased searchable text — skills, employers, role titles, technologies —
+   * built by the API for LIST responses only, and never stored.
+   *
+   * List reads drop `resumeAnalysis` (2.43MB of a 2.76MB payload across 174
+   * candidates) and send this instead, so a skill search still runs instantly in
+   * the browser without shipping every parsed resume to it.
+   */
+  searchText?: string;
 
   // Job-fit verdict (this application's resume vs its job), cached from the
   // Resume Matching Engine so the card doesn't re-score on every view.
@@ -2634,5 +2643,40 @@ export async function deletePipelineRecord(
   } catch (error) {
     console.error("Error deleting pipeline record:", error);
     return { success: false, error: error instanceof Error ? error.message : "Failed to delete record" };
+  }
+}
+
+/**
+ * Atomically count one request against a rate-limit bucket, returning the new
+ * count — or null when the counter is unavailable, which callers treat as
+ * "allow" (see lib/rate-limit.ts on failing open).
+ *
+ * `expiresAt` is written as a TTL attribute so buckets tidy themselves up if TTL
+ * is enabled on the counters table; harmless if it is not.
+ */
+export async function incrementRateCounter(
+  counterId: string,
+  expiresAt: number,
+): Promise<number | null> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return null;
+
+  try {
+    const result = await db.client.send(
+      new UpdateCommand({
+        TableName: getTables().counters,
+        Key: { id: counterId },
+        UpdateExpression:
+          "SET #c = if_not_exists(#c, :zero) + :one, #ttl = if_not_exists(#ttl, :exp)",
+        ExpressionAttributeNames: { "#c": "counter", "#ttl": "expiresAt" },
+        ExpressionAttributeValues: { ":zero": 0, ":one": 1, ":exp": expiresAt },
+        ReturnValues: "UPDATED_NEW",
+      })
+    );
+    const count = result.Attributes?.counter;
+    return typeof count === "number" ? count : null;
+  } catch (error) {
+    console.error("Rate counter unavailable (allowing the request):", error);
+    return null;
   }
 }

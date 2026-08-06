@@ -21,9 +21,15 @@ function strings(values?: Array<string | null | undefined>): string[] {
  *
  * Deliberately includes the parsed resume: skills by every category the
  * extractor reports, job titles and employers from the work history, the
- * technologies used on each role, certifications, and the professional summary.
- * Education and personal detail are left out — searching "Austin" should find a
- * candidate in Austin, not everyone who went to university there.
+ * technologies used on each role, certifications, and the industry. Education
+ * and personal detail are left out — searching "Austin" should find a candidate
+ * in Austin, not everyone who went to university there.
+ *
+ * Long prose is left out too — the professional summary and per-role
+ * descriptions. Recruiters search skills, employers and titles, not sentences,
+ * and this string is sent to the browser for every candidate in a list: paragraphs
+ * would put back most of the payload it exists to avoid. Full text is still on
+ * the record itself, which the detail screen loads.
  */
 export function candidateHaystack(app: Application): string {
   const parts: string[] = [
@@ -31,13 +37,10 @@ export function candidateHaystack(app: Application): string {
     ...strings([app.applicationId, app.jobTitle, app.city, app.state]),
     ...strings([app.workAuthorization, app.source, app.hireType]),
     ...strings(app.skills),
-    ...strings([app.experience]),
   ];
 
   const analysis = app.resumeAnalysis;
   if (analysis) {
-    parts.push(...strings([analysis.professional_summary]));
-
     const s = analysis.skills;
     if (s) {
       parts.push(
@@ -51,7 +54,7 @@ export function candidateHaystack(app: Application): string {
     }
 
     for (const role of analysis.work_experience || []) {
-      parts.push(...strings([role.job_title, role.company_name, role.description]));
+      parts.push(...strings([role.job_title, role.company_name]));
       parts.push(...strings(role.technologies_used));
     }
 
@@ -68,7 +71,29 @@ export function candidateHaystack(app: Application): string {
     if (a) parts.push(...strings([a.primary_industry, a.career_level, ...(a.job_functions || [])]));
   }
 
-  return parts.join("  ").toLowerCase();
+  // Deduplicated: a skill repeated across five roles adds nothing to a substring
+  // match, and every copy is bytes on the wire.
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const part of parts) {
+    const key = part.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(key);
+  }
+  return unique.join("  ");
+}
+
+/**
+ * The haystack for a record, preferring one the server already built.
+ *
+ * List responses carry `searchText` and NOT `resumeAnalysis`: shipping every
+ * parsed resume to the browser so it could be searched there cost 2.76MB across
+ * 174 candidates, 88% of it analysis. Detail screens hold the full record, where
+ * this falls back to computing the haystack directly.
+ */
+export function haystackOf(app: Application): string {
+  return app.searchText || candidateHaystack(app);
 }
 
 /**

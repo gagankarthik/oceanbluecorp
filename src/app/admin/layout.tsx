@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Menu, X, ChevronRight, Search,
-  PanelLeftClose, Loader2, ExternalLink,
+  PanelLeftClose, PanelLeft, Loader2, ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth, UserRole, routeAccess } from "@/lib/auth";
@@ -133,17 +133,29 @@ function Sidebar({
             collapsed ? "justify-center px-2" : "justify-between px-4",
           )}
         >
-          {/* In the rail the brand mark IS the expand control — a 64px column
-              has no room for both a logo and a separate toggle, and the mark is
-              the one thing already sitting at the top of every console. */}
+          {/* In the rail the brand mark doubles as a second way to expand. On
+              hover it swaps to the panel icon: a logo that silently acts as a
+              button is a trap, so the affordance has to appear the moment the
+              cursor reaches it. The toggle at the foot of the rail is the
+              always-visible control. */}
           {collapsed ? (
             <button
               onClick={onToggleCollapse}
               aria-label="Expand sidebar"
               title="Expand sidebar"
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--adm-row-hover)]"
+              className="group relative flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--adm-row-hover)]"
             >
-              <Image src="/favicon.png" alt="Ocean Blue Corporation" width={32} height={32} className="h-8 w-8" />
+              <Image
+                src="/favicon.png"
+                alt="Ocean Blue Corporation"
+                width={32}
+                height={32}
+                className="h-8 w-8 transition-opacity group-hover:opacity-0"
+              />
+              <PanelLeft
+                className="absolute h-[18px] w-[18px] text-[var(--adm-accent)] opacity-0 transition-opacity group-hover:opacity-100"
+                aria-hidden="true"
+              />
             </button>
           ) : (
             <Link href="/admin" className="flex items-center gap-2">
@@ -251,20 +263,31 @@ function Sidebar({
           </div>
         )}
 
-        {/* Collapse toggle (desktop only). Expanding is handled by the brand
-            mark up in the rail, so this only ever reads "Collapse". */}
-        {!collapsed && (
-          <div className="hidden lg:block px-2 py-2">
-            <button
-              onClick={onToggleCollapse}
-              aria-label="Collapse sidebar"
-              className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] transition-all"
-            >
-              <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
-              <span>Collapse</span>
-            </button>
-          </div>
-        )}
+        {/* Collapse / expand toggle (desktop only).
+            Rendered in BOTH states, and always in this same spot. An earlier
+            version dropped it when collapsed and left only the brand mark as the
+            way back — a logo gives no hint that it is a control, so the rail read
+            as having no way out of itself. */}
+        <div className="hidden lg:block px-2 py-2">
+          <button
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : undefined}
+            className={cn(
+              "flex items-center rounded-lg text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+              collapsed ? "mx-auto h-9 w-9 justify-center" : "w-full gap-2.5 px-3 py-2",
+            )}
+          >
+            {collapsed ? (
+              <PanelLeft className="h-[18px] w-[18px]" aria-hidden="true" />
+            ) : (
+              <>
+                <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </aside>
   );

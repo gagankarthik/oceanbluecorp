@@ -19,6 +19,8 @@ import { requireStaff, getClaims } from "@/lib/auth/verify";
 import { hasStaffAccess } from "@/lib/auth/config";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
+import { candidateHaystack } from "@/lib/candidate-search";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Resume analysis runs after the response via after(); give the invocation room
 // for the LLM pipeline (30–90s) without delaying the applicant's response.
@@ -81,7 +83,28 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
     );
 
-    return NextResponse.json({ applications });
+    /**
+     * Lists go out lean.
+     *
+     * A parsed resume is ~14KB of work history, skills, projects and
+     * certifications, and this endpoint was sending all of it for every
+     * candidate: 2.76MB across 174 records, 88% of it analysis, growing linearly
+     * with the database. `searchText` replaces it with the few hundred bytes the
+     * browser actually needs to filter on, and the detail screens read the full
+     * record by key as they already did.
+     */
+    const lean = applications.map((app) => {
+      const { resumeAnalysis, ...rest } = app;
+      return {
+        ...rest,
+        // Computed from the full record before it is dropped.
+        searchText: candidateHaystack(app),
+        // Kept so a list row can still say "analysed" without carrying the analysis.
+        hasResumeAnalysis: !!resumeAnalysis,
+      };
+    });
+
+    return NextResponse.json({ applications: lean });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(
@@ -104,6 +127,14 @@ export async function POST(request: NextRequest) {
     // application must still go through, and it gets analysed server-side below.
     const claims = await getClaims(request);
     const isStaff = !!claims && hasStaffAccess(claims.groups);
+
+    // Throttle anonymous callers only. A recruiter entering a batch of candidates
+    // is a legitimate burst; an unauthenticated script hitting this in a loop
+    // writes rows, runs an LLM extraction and sends an email per iteration.
+    if (!isStaff) {
+      const limited = await checkRateLimit(request, RATE_LIMITS.application);
+      if (!limited.allowed) return limited.response!;
+    }
 
     const suppliedAnalysis: ResumeAnalysis | undefined =
       isStaff

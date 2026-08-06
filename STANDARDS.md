@@ -74,10 +74,11 @@ values safe in a browser bundle. A table name is
 it will silently fall back in production: `.env.local`, `src/lib/aws/config.ts`
 (and the `getEnvConfig` copy in `dynamodb.ts`), and `amplify.yml`.
 
-> **Found in audit:** `.env.local` defines `NEXT_AWS_DYNAMODB_TABLE_SITE_CONTENT`,
-> but the code reads `NEXT_AWS_DYNAMODB_TABLE_CONTENT`. It works only because the
-> hardcoded fallback happens to match. Rename the variable to the name the code
-> reads.
+> **Found and fixed in audit:** `.env.local` defined
+> `NEXT_AWS_DYNAMODB_TABLE_SITE_CONTENT` while the code read
+> `NEXT_AWS_DYNAMODB_TABLE_CONTENT` — it worked only because the hardcoded
+> fallback happened to name the same table. Renamed, and now echoed in
+> `amplify.yml` too. This is the failure mode the three-places rule exists for.
 
 ---
 
@@ -100,6 +101,8 @@ was duplicated first**.
 | Class merging | `cn()` | template-string class concatenation |
 | Rich text out of the DB | `renderRichText` / `renderListField` | raw `dangerouslySetInnerHTML` |
 | CSV export | `lib/csv.ts` `downloadCsv` | building a blob inline |
+| Validate a request body | `lib/validate.ts` | reading fields straight off `body` |
+| Throttle an open route | `lib/rate-limit.ts` | an in-memory counter (see §5.4) |
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and
 `jobTitle` so cross-candidate lists need no second read. That is a considered
@@ -173,7 +176,40 @@ const staffOnly = <T,>(value: T, fallback: T): T => (isStaff ? value : fallback)
 > themselves to the talent bench. All are now gated behind `staffOnly`; a public
 > application still succeeds with safe defaults.
 
-### 5.3 Secrets
+### 5.3 Declare the body, do not filter it
+
+`lib/validate.ts`: a handler states the fields it accepts, and everything else is
+dropped before it can reach a record.
+
+```ts
+const checked = validate(raw, SCHEMAS[kind]);
+if (!checked.ok) {
+  return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
+}
+const body = checked.value;   // declared fields only
+```
+
+Gating dangerous fields one at a time (§5.2) fixes the instance. Declaring the
+shape fixes the class: a field nobody declared cannot reach the database however
+it arrives, including one somebody adds to the client later. Errors name the
+field — a 400 reading "Invalid request" costs an afternoon.
+
+Applied to: `api/pipeline`. Everything else predates it; convert on next touch.
+
+### 5.4 Rate limiting
+
+Unauthenticated routes are throttled per client through `lib/rate-limit.ts`
+(`RATE_LIMITS.application`, `RATE_LIMITS.resumeUpload`). Three properties matter
+and should be preserved by anything added to it:
+
+- The counter lives in DynamoDB, not in a `Map`. Each Lambda instance has its own
+  memory and a cold start resets it, so an in-memory counter would report
+  protection it does not provide.
+- It **fails open**: if the counter cannot be read, the request is allowed. A
+  limiter that is down must never be why a real applicant cannot apply.
+- Staff are exempt. A recruiter entering a batch is a legitimate burst.
+
+### 5.5 Secrets
 
 - Never `NEXT_PUBLIC_` for a credential. `NEXT_EXTRACTION_SHARED_SECRET` signs
   extraction tickets and is server-side only.
@@ -183,7 +219,7 @@ const staffOnly = <T,>(value: T, fallback: T): T => (isStaff ? value : fallback)
 - Outbound service credentials belong in `src/lib/aws/*` or a server-only module,
   never in a component.
 
-### 5.4 HTML and injection
+### 5.6 HTML and injection
 
 - Rich text is sanitized **at save time** with `sanitizeRichText`
   (`lib/sanitize-server.ts`) — see `api/jobs/route.ts` and `api/jobs/[id]/route.ts`.
@@ -194,18 +230,20 @@ const staffOnly = <T,>(value: T, fallback: T): T => (isStaff ? value : fallback)
 - DynamoDB expressions are always parameterised
   (`ExpressionAttributeNames` / `Values`), never string-built from input.
 
-### 5.5 Known gaps, not yet closed
+### 5.7 Known gaps, not yet closed
 
 Recorded honestly rather than left implied:
 
-1. **No rate limiting on the public routes.** `POST /api/resume/upload` accepts a
-   5MB file and writes an S3 object plus a DynamoDB row with no throttle and no
-   authentication. `POST /api/applications` is likewise open. Both are abusable.
-2. **No schema validation.** There is no zod/valibot; every handler hand-checks a
-   few fields and passes the rest through. A validation layer at the route
-   boundary would have prevented 5.2 structurally.
-3. **Audit trail is partial.** `statusHistory` covers stage changes on an
+1. **Validation is not yet on every route.** `lib/validate.ts` exists and guards
+   the pipeline routes; the older handlers still hand-check a few fields and pass
+   the rest through. Convert each as it is next touched.
+2. **Audit trail is partial.** `statusHistory` covers stage changes on an
    application; there is no general record of who edited what.
+3. **No optimistic concurrency.** Last write wins, so two people editing one
+   candidate silently overwrite each other.
+
+Closed since the audit: the public routes are now rate limited (§5.4), and the
+privileged-field hole in §5.2 is gated.
 
 ---
 
@@ -245,13 +283,20 @@ One-off work lives in `scripts/*.mjs`, loads `.env.local` itself, and:
 
 ## 8. Before it ships
 
-There is no test runner and no ESLint config in this project. That makes the
-following the actual gate:
-
 ```bash
-npx tsc --noEmit     # must exit 0 — the only automated check that exists
+npm test             # node --test over tests/*.test.mjs — must be green
+npm run typecheck    # tsc --noEmit — must exit 0
 npm run build        # before deploying
 ```
+
+There is no ESLint config, so those two are the automated gate.
+
+**What belongs in `tests/`.** Pure functions only — no AWS, no network, no React.
+Modules are loaded through `tests/load.mjs` (jiti, already a transitive
+dependency), which resolves TypeScript and the `@/*` alias without adding a test
+framework. Business rules with money or state transitions in them get a test:
+margin, stage progression, what a search matches, how an extraction maps onto a
+form.
 
 And by hand:
 

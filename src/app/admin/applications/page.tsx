@@ -39,7 +39,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { fmtDate } from "@/lib/format";
 import { daysInStage, isStale, TERMINAL, STALE_DAYS } from "@/lib/pipeline";
-import { candidateHaystack, matchesTerms, searchTerms } from "@/lib/candidate-search";
+import { haystackOf, matchesTerms, searchTerms } from "@/lib/candidate-search";
 import { downloadCsv } from "@/lib/csv";
 
 /* ============================================================================
@@ -378,7 +378,7 @@ export default function ApplicationsPage() {
    */
   const haystacks = useMemo(() => {
     const map = new Map<string, string>();
-    for (const a of applications) map.set(a.id, candidateHaystack(a));
+    for (const a of applications) map.set(a.id, haystackOf(a));
     return map;
   }, [applications]);
 
@@ -389,7 +389,7 @@ export default function ApplicationsPage() {
     // Matches identity fields AND the parsed resume — skills, employers, role
     // titles, technologies, certifications. Searching a skill finds people who
     // have it, not just people who applied to a job named after it.
-    if (terms.length && !matchesTerms(haystacks.get(a.id) ?? candidateHaystack(a), terms)) return false;
+    if (terms.length && !matchesTerms(haystacks.get(a.id) ?? haystackOf(a), terms)) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (posFilter    !== "all" && a.jobTitle !== posFilter) return false;
     if (locationFilter !== "all") {

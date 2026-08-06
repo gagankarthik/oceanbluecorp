@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import { getClaims } from "@/lib/auth/verify";
+import { hasStaffAccess } from "@/lib/auth/config";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import {
   generateResumeKey,
   uploadResume,
@@ -11,6 +14,15 @@ import {
 // This avoids S3 CORS restrictions that break browser-to-S3 presigned PUT requests.
 export async function POST(request: NextRequest) {
   try {
+    // Unauthenticated by design — the public careers form uploads through here —
+    // so anonymous callers are throttled. Each accepted request writes a 5MB-max
+    // S3 object plus a DynamoDB row, which is worth abusing.
+    const claims = await getClaims(request);
+    if (!claims || !hasStaffAccess(claims.groups)) {
+      const limited = await checkRateLimit(request, RATE_LIMITS.resumeUpload);
+      if (!limited.allowed) return limited.response!;
+    }
+
     const formData = await request.formData();
 
     const file = formData.get("file") as File | null;

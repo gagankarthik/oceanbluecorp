@@ -682,8 +682,27 @@ export default function TalentBenchPage() {
   };
 
   const handleViewApplication = (app: ApplicationWithJob) => {
+    // Render the row immediately, then pull the full record.
+    //
+    // List responses no longer carry `resumeAnalysis` — sending every parsed
+    // resume to the browser cost megabytes per page load — so the analysis panel
+    // below needs the record fetched by key. One item, and the row is already on
+    // screen while it lands.
     setSelectedApplication(app);
     setPageMode("view");
+
+    if (!app.resumeAnalysis) {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/applications/${app.id}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const full = data.application as ApplicationWithJob | undefined;
+          if (!full) return;
+          setSelectedApplication((prev) => (prev && prev.id === app.id ? { ...prev, ...full } : prev));
+        } catch { /* non-fatal: the row still renders, minus the parsed detail */ }
+      })();
+    }
   };
 
   const handleOwnershipSelect = (userId: string) => {
