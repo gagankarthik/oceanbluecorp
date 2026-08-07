@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
+import SmoothScroll from "@/components/providers/SmoothScroll";
 
 export default function LayoutWrapper({
   children,
@@ -35,6 +36,11 @@ export default function LayoutWrapper({
 
   return (
     <>
+      {/* Momentum scrolling, marketing routes only — this branch is already
+          past the /admin early return above, and eased scrolling in a dense
+          data table fights the person trying to find a row in it. */}
+      <SmoothScroll />
+
       {/* Skip link (WCAG 2.4.1 Bypass Blocks) */}
       <a
         href="#main-content"

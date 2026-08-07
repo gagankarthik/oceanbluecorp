@@ -10,6 +10,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primit
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
+import { MILESTONES } from "@/lib/company";
 
 const approach: { icon: LucideIcon; title: string; description: string }[] = [
   { icon: Target, title: "Outcome-first", description: "We focus on business impact, not buzzwords." },
@@ -27,14 +28,9 @@ const differentiators: { icon: LucideIcon; title: string; description: string }[
   { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects — we support your evolution." },
 ];
 
-const milestones = [
-  { year: "2013", title: "Foundation", description: "Ocean Blue founded with a vision to transform enterprise IT." },
-  { year: "2015", title: "First prime-vendor MSA", description: "Established our first Master Service Agreement with a prime vendor." },
-  { year: "2021", title: "Fortune 500 MSA", description: "Secured an MSA with a Fortune 500 enterprise client." },
-  { year: "2022", title: "Expansion to India", description: "Opened a new delivery center with local operations." },
-  { year: "2024", title: "Offices in the UK", description: "Strengthened European presence and client services." },
-  { year: "2025", title: "AI practice launch", description: "Launched a dedicated AI practice for production deployments." },
-];
+/* Moved to `lib/company.ts` when the anniversary page needed the same list —
+   one copy, so a corrected year can't be right here and wrong there. */
+const milestones = MILESTONES;
 
 function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
   return (

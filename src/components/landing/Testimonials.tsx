@@ -1,6 +1,7 @@
 "use client";
 
 import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
+import WaveField from "./motion/WaveField";
 
 type T = { quote: string; author: string; role: string; company: string };
 
@@ -81,8 +82,18 @@ function QuoteCard({ t }: { t: T }) {
 
 export default function Testimonials() {
   return (
-    <section className="relative w-full border-t border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
+    <section className="relative w-full overflow-hidden border-t border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
+      {/* Replaced a vendored WebGL "retro grid" — a receding synthwave horizon,
+          which is a strong and entirely unrelated aesthetic to bring to a
+          consulting testimonial wall, and cost a live GL context to say
+          nothing. Same wave as every other band, quieter here because three
+          quote cards already fill the section. */}
+      <WaveField
+        intensity={0.6}
+        className="top-auto bottom-0 z-0 h-[55%] [mask-image:linear-gradient(to_top,#000_0%,#000_40%,transparent_100%)]"
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
         <Reveal className="max-w-2xl">
           <span className="hz-eyebrow text-[var(--hz-amber)]">Client feedback</span>
           <h2 className="hz-display mt-4 text-[1.75rem] text-[var(--hz-text)] sm:text-[2.1rem] 2xl:text-[2.5rem]">

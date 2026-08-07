@@ -6,8 +6,10 @@ import ImpactStats from "@/components/landing/ImpactStats";
 import Certifications from "@/components/landing/Certifications";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
+import Anniversary from "@/components/landing/anniversary/Anniversary";
 import { IMG, atWidth } from "@/components/landing/media";
 import { getSiteContent } from "@/lib/content";
+import { isAnniversaryLive } from "@/lib/anniversary";
 
 // Re-read CMS content (edited at /admin/content) at most once a minute, so
 // admin edits go live without a rebuild while the page stays effectively static.
@@ -73,25 +75,40 @@ const homeJsonLd = {
 
 export default async function Home() {
   const content = await getSiteContent("homepage");
+  // TEMPORARY (13-year celebration). Evaluated here, on the server, and passed
+  // down — a client component reading the clock itself would let the server and
+  // the browser disagree across midnight and blow up hydration.
+  const anniversary = isAnniversaryLive(content);
   return (
     <div className="horizon relative w-full bg-[var(--hz-canvas)]">
       {/* Warm up the LCP hero photo before React hydrates. imageSrcSet mirrors
-          the Hero's own ladder so the preload matches the request it makes. */}
-      <link
-        rel="preload"
-        as="image"
-        href={IMG.heroSlides[0]}
-        imageSrcSet={[640, 960, 1280, 1600, 2000]
-          .map((w) => `${atWidth(IMG.heroSlides[0], w)} ${w}w`)
-          .join(", ")}
-        imageSizes="100vw"
-        fetchPriority="high"
-      />
+          the Hero's own ladder so the preload matches the request it makes.
+
+          Skipped while the anniversary band is up: the band is then the first
+          section and the hero photo is below the fold, so a high-priority
+          preload would spend the opening bandwidth on an image nobody is
+          looking at yet — and delay the thing they are. */}
+      {!anniversary && (
+        <link
+          rel="preload"
+          as="image"
+          href={IMG.heroSlides[0]}
+          imageSrcSet={[640, 960, 1280, 1600, 2000]
+            .map((w) => `${atWidth(IMG.heroSlides[0], w)} ${w}w`)
+            .join(", ")}
+          imageSizes="100vw"
+          fetchPriority="high"
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
       />
 
+      {/* TEMPORARY — for the celebration the anniversary band leads the page
+          and the hero sits beneath it. Removing the band restores the original
+          order with no other edit. */}
+      {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
       <ClientLogos />
       <Services />

@@ -151,7 +151,13 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
-  html {
+  /* Scoped to `:not(.lenis)` — Lenis stamps `.lenis` on <html> when it takes
+     over the scroll. Native smooth scrolling and Lenis fight for the same
+     scroll position: Lenis writes it every frame, and the browser then tries to
+     *animate* toward each of those writes, which reads as lag rather than
+     smoothness. This keeps native smoothing everywhere Lenis is not active —
+     the admin console, and anyone with prefers-reduced-motion set. */
+  html:not(.lenis) {
     scroll-behavior: smooth;
   }
 
@@ -1830,4 +1836,49 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ============================================================
+   LENIS — momentum scrolling (see components/providers/SmoothScroll.tsx).
+
+   Transcribed from `lenis/dist/lenis.css` rather than @import-ed:
+   the ruleset is fifteen stable lines, and inlining keeps the
+   scroll behaviour visible next to the rest of the base layer
+   instead of hidden behind a node_modules path.
+
+   `height: auto` is the load-bearing rule. Lenis measures the
+   document to compute scroll limits, and a `height: 100%` on
+   html/body reports the viewport height instead of the content
+   height — the page then refuses to scroll past one screen.
+
+   `[data-lenis-prevent]` opts a scrollable child out, so an
+   inner overflow container (a modal, a code block) keeps native
+   scrolling instead of forwarding the wheel to the page.
+   ============================================================ */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch],
+.lenis [data-lenis-prevent-vertical],
+.lenis [data-lenis-prevent-horizontal] {
+  overscroll-behavior: contain;
+}
+
+/* An iframe swallows wheel events, which strands the page mid-scroll. */
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+.lenis.lenis-autoToggle {
+  transition-property: overflow;
+  transition-duration: 1ms;
+  transition-behavior: allow-discrete;
 }
