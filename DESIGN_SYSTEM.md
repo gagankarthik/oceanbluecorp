@@ -177,3 +177,73 @@ then delete — no parallel duplicates.
 **Health metrics.** Adoption = count of hand-rolled search inputs remaining
 (`grep 'placeholder="Search' src/app/admin` → should trend to 0); consistency = no new
 hex values in `src/app/admin` diffs; bundle = `@aws-sdk` count in `.next/static` stays 0.
+
+---
+
+## 8. Laws of UX — how they bind here
+
+Reference: [Laws of UX](https://lawsofux.com), Jon Yablonski. Listing a law is
+worthless; what follows is the **rule this codebase enforces** because of it, and
+the measurement that says whether we still comply. Anything unmeasurable is a
+slogan, so each rule below is either a number or a structural check.
+
+Audited 2026-08-07 against the admin app.
+
+### Load-bearing — violations are bugs
+
+| Law | The rule here | Check |
+|---|---|---|
+| **Doherty Threshold** | No interaction waits on us past 400ms without saying so. Search debounce is 250ms (lists) / 200ms (global). Anything slower gets a skeleton that mirrors the final layout, never a spinner in a void. | `useDebouncedValue` default ≤ 250; long fetches render `skeletons.tsx` |
+| **Fitts's Law** | A control used while reading a long record is pinned, not parked at the top. The candidate record scrolls ~4,100px, so identity, stage and the primary action ride in a sticky header. | No primary action may require a scroll round-trip to reach |
+| **Miller's Law** | Max ~7 peer items in one view. The candidate record was 10 stacked cards under one tab; it is now 5 labelled tabs. Sidebar is 22 links in 3 named sections, never a flat list. | Count peers per view; if > 7, chunk or tab |
+| **Hick's Law** | One control per decision, not one per dimension. The applications toolbar was 4 filter pills + an "Advanced" drawer of 4 more; it is now a single `FilterMenu`. | Count filter controls in a toolbar: 1 |
+| **Von Restorff** | **Filled = action. Outlined or tinted = state.** Exactly one filled control per surface. This is what stops semantic colour (red "Unclaimed", green owner, stage tints) from cancelling the primary action out — they are different *kinds* of thing, not competing buttons. | One `variant="primary"` per view |
+| **Postel's Law** | Be liberal inbound: ownership matches on email *or* id, case-insensitively (`isOwnRecord`). Conservative outbound: `validate.ts` declares accepted fields; undeclared ones cannot reach a record. | New routes declare a schema |
+| **Tesler's Law** | Irreducible complexity belongs to the system, not the user. Resume parsing extracts name, contact, location, skills and experience so nobody retypes a document we can read. | Prefer a parse/derive over a field |
+
+### Structural — followed by construction
+
+- **Law of Common Region / Proximity / Uniform Connectedness.** `AdminCard` is the
+  only grouping device. Related fields share one card; unrelated fields never do.
+  Hairlines separate bands *within* a card, whitespace separates cards.
+- **Law of Similarity.** One status colour per state everywhere it appears —
+  `statusColor()` is the single source, so a stage is the same colour in the rail,
+  the badge, the list cell and the dropdown.
+- **Jakob's Law.** ATS conventions are kept deliberately: record header with
+  tabbed detail, right rail for metadata, list → detail navigation. Novelty is
+  spent on the marketing site, not here.
+- **Chunking.** Long forms are titled sections (`AdminCardHeader`), never one
+  continuous field list.
+- **Selective Attention.** Empty fields are not rendered as data. A grid of nine
+  cells with four em-dashes made the reader parse four cells to learn nothing;
+  they collapse behind one line that says how many are missing.
+- **Zeigarnik Effect.** That same line is the open loop — "4 fields are not
+  recorded" states an incomplete task rather than hiding it.
+- **Goal-Gradient.** The pipeline stepper shows position and distance to hire;
+  progress bars fill toward a stated end.
+
+### Judgement — no automatic check
+
+- **Aesthetic-Usability Effect.** Justifies polish, never at the cost of the rules
+  above. Decoration that competes with data loses: four marketplace background
+  effects were removed from the marketing site for exactly this reason.
+- **Peak-End Rule.** The end of a flow is a confirmation the user can act on, not
+  a silent redirect.
+- **Paradox of the Active User.** Nobody reads instructions. Empty states carry
+  the next action as a button; hints sit inside the control they describe.
+- **Cognitive Load / Working Memory.** Never make the user hold a value across a
+  scroll. If a decision needs two facts, both are on screen together.
+
+### Known open items
+
+1. **Choice Overload, `FilterMenu`.** Consolidating eight filters into one control
+   fixed Hick's at the toolbar and moved the cost inside the menu. Acceptable while
+   the fields stay labelled and scannable; if a screen needs more than ~8, group
+   them or make the menu two-column. Watch it.
+2. **Tables scroll the page, not themselves.** `DataTable` already has everything
+   needed to scroll internally — an `overflow-auto` container, a `maxHeight` prop,
+   and a sticky `thead` (`.adm-grid thead th`, in `globals.css` rather than the
+   component, which is easy to miss). What is missing is at the page level: list
+   pages do not bound its height, so the whole page scrolls and the header sticks
+   to nothing. Converting a page means making it `h-full min-h-0 flex flex-col`
+   so the table becomes the scrolling element. Not yet done on any page.

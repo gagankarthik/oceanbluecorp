@@ -22,7 +22,7 @@ import {
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { FormSelect } from "@/components/admin/forms/primitives";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
-import { type Tone } from "@/components/admin/theme";
+import { statusColor, type Tone } from "@/components/admin/theme";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -213,6 +213,7 @@ export default function ContactsPage() {
       cell: (c) => (
         <GridSelect
           value={c.status}
+          dot={statusColor(c.status)}
           ariaLabel={`Status for ${c.firstName} ${c.lastName}`}
           onChange={(e) => handleStatusChange(c.id, e.target.value as ContactStatus)}
         >

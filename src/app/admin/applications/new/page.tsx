@@ -85,7 +85,7 @@ function NewApplicationInner() {
   // chooses, because reading the resume first fills most of it in — offering the
   // empty form straight away buries that and invites re-typing what the document
   // already says.
-  const [mode, setMode] = useState<"choose" | "form">("choose");
+  const [mode, setMode] = useState<"choose" | "reading" | "form">("choose");
   const [parsing, setParsing] = useState(false);
   // Kept apart from resumeError: that one belongs to the file itself (wrong type,
   // too big, upload failed) and shows in the Documents card. A failed READ is
@@ -220,7 +220,20 @@ function NewApplicationInner() {
     }
   };
 
-  /** Chooser path: take the file, show the form, and read it in the background. */
+  /**
+   * Chooser path: take the file and READ IT BEFORE showing the form.
+   *
+   * This used to drop straight to the form with a banner reading "you can start
+   * filling the form meanwhile", which was worse than it sounds. `applyPrefill`
+   * keeps whatever is already in a field (`(v) => v || p.firstName`) so the
+   * recruiter's own typing wins — meaning anything typed during the parse
+   * silently DISCARDS the parsed value for that field. The banner invited
+   * exactly the work that defeats the feature, and there was no way to tell
+   * afterwards which fields had lost.
+   *
+   * So the read gets its own step. Nothing to race, nothing thrown away, and
+   * the form appears already filled — which is the thing being offered.
+   */
   const handleStartFromResume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // let the same file be re-picked after an error
@@ -230,8 +243,10 @@ function NewApplicationInner() {
     const invalid = validateResume(file);
     if (invalid) { setResumeError(invalid); return; }
     setResumeFile(file);
-    setMode("form");
-    void parseResumeFile(file);
+    setMode("reading");
+    // Land on the form once the read settles, however it settles: a failed or
+    // empty parse still has to hand over to a form the recruiter can type in.
+    void parseResumeFile(file).finally(() => setMode("form"));
   };
 
   const uploadResume = async (userId: string): Promise<{ resumeId: string; fileName: string; fileKey: string } | null> => {
@@ -403,13 +418,48 @@ function NewApplicationInner() {
             </p>
           )}
         </AdminCard>
+      ) : mode === "reading" ? (
+        /* ── Reading the resume ───────────────────────────────────────────
+           A step of its own rather than a banner over an editable form. The
+           parse fills the same fields the recruiter would type, and a typed
+           value beats the parsed one, so "fill it in meanwhile" meant racing
+           the extractor for the same boxes and quietly losing whichever ones
+           you reached first. There is nothing useful to do here, so the screen
+           says so and gets out of the way when it is done. */
+        <AdminCard>
+          <div className="flex flex-col items-center px-5 py-16 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-[8px] bg-[var(--adm-accent-soft)]">
+              <Loader2 className="h-7 w-7 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
+            </span>
+            <p className="mt-4 text-[15px] font-semibold text-[var(--adm-ink)]" role="status" aria-live="polite">
+              Reading {resumeFile?.name ?? "the resume"}…
+            </p>
+            <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-[var(--adm-ink-subtle)]">
+              Pulling out name, contact details, location, skills and experience. This usually
+              takes a few seconds and can take up to a minute — the form opens filled in, ready
+              for you to check.
+            </p>
+            <button
+              type="button"
+              onClick={() => setMode("form")}
+              className="mt-6 text-[12.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+            >
+              Skip and fill it in myself
+            </button>
+          </div>
+        </AdminCard>
       ) : (
         <>
+          {/* Only reachable by skipping the reading step, or re-reading a file
+              from the form. Says what will happen rather than inviting a race:
+              a field you have already typed keeps your value, so the warning is
+              about the EMPTY ones changing under you. */}
           {parsing && (
             <div className="flex items-center gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-4 py-3">
               <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
-              <p className="text-sm text-[var(--adm-accent)]">
-                Reading {resumeFile?.name ?? "the resume"}… this can take up to a minute. You can start filling the form meanwhile.
+              <p className="text-sm text-[var(--adm-accent)]" role="status" aria-live="polite">
+                Still reading {resumeFile?.name ?? "the resume"} — empty fields may fill in shortly.
+                Anything you type stays as you typed it.
               </p>
             </div>
           )}

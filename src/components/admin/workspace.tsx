@@ -695,6 +695,101 @@ export interface PillOption<V extends string> {
  * "All" is not an active filter and must not look like one, or a toolbar of six
  * filters looks permanently engaged and you stop reading it.
  */
+/* ============================================================
+   FilterMenu — every filter on a screen, behind one control.
+
+   Replaces a toolbar that had grown to four pills plus an
+   "Advanced" toggle that swung open a fifth row of four more.
+   Two problems with that shape, both of which get worse as
+   filters are added:
+
+   - The filters were split across two places by an implicit
+     judgement about which ones people reach for. Anyone whose
+     work depends on one of the "advanced" four had to open a
+     drawer every time, and the drawer pushed the table down the
+     page while it was open.
+   - Five controls that all look like filters, in a row, are
+     scanned one by one. One control is found instantly.
+
+   State stays visible: this owns the CHOOSING, and the active
+   chips below the toolbar keep the current selection on screen
+   and individually dismissible, per the design system's rule
+   that a filtered list always shows what it is filtered by.
+   ============================================================ */
+export function FilterMenu({
+  activeCount,
+  onClearAll,
+  children,
+}: {
+  /** Drives the badge and the "filters applied" summary. */
+  activeCount: number;
+  onClearAll: () => void;
+  /** The filter fields themselves, so each screen keeps its own set. */
+  children: React.ReactNode;
+}) {
+  const active = activeCount > 0;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
+            active
+              ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+              : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
+            "data-[state=open]:border-solid data-[state=open]:border-[var(--adm-accent)]",
+          )}
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 5h18M7 12h10M11 19h2" />
+          </svg>
+          Filters
+          {active && (
+            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-[10px] font-bold tabular-nums text-white">
+              {activeCount}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={6}
+        // Capped and scrollable: the field list grows per screen, and a menu
+        // taller than the viewport puts its own footer out of reach.
+        className="max-h-[min(32rem,70vh)] w-[22rem] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
+      >
+        <div className="flex items-center justify-between border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+          <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
+            Filters
+          </span>
+          <button
+            type="button"
+            onClick={onClearAll}
+            disabled={!active}
+            className="text-[12px] font-semibold text-[var(--adm-accent)] transition-opacity hover:underline disabled:pointer-events-none disabled:opacity-40"
+          >
+            Clear all
+          </button>
+        </div>
+
+        {/* Fields are plain content, not menu items — a DropdownMenuItem
+            swallows the click and closes the menu, which makes setting two
+            filters in a row impossible. */}
+        <div
+          className="space-y-3 px-4 py-3.5"
+          // Radix menus treat typing as typeahead and steal the keystrokes;
+          // without this a text input inside the panel cannot be typed into.
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function FilterPill<V extends string>({
   label,
   icon: Icon,
@@ -850,7 +945,15 @@ export function GridSelect({
 }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  /** Status colour for the current value. */
+  /** Status colour for the current value — renders the leading dot AND tints
+   *  the label. Pass `statusColor(status)` from theme.ts.
+   *
+   *  Both, not just the dot: a 8px dot is a poor carrier for the one fact this
+   *  cell exists to convey, and a status column read at a glance down a list of
+   *  200 rows needs the word itself to be the signal. Without a colour the
+   *  control inherits `--adm-ink-mute`, which is why every editable status in
+   *  the app rendered grey while the read-only badge beside it was in full
+   *  colour — the tone was there the whole time, nothing passed it. */
   dot?: string;
   width?: number;
   ariaLabel?: string;
@@ -874,11 +977,14 @@ export function GridSelect({
         onChange={onChange}
         autoComplete="off"
         aria-label={ariaLabel}
+        // Colour on the element, not a class: the value comes from `statusColor`
+        // at runtime and Tailwind cannot compile an arbitrary class for it.
+        style={dot ? { color: dot } : undefined}
         className={cn(
-          "h-9 w-full cursor-pointer appearance-none rounded-[8px] border border-transparent bg-transparent pr-7 text-[14px] font-medium text-[var(--adm-ink-mute)]",
+          "h-9 w-full cursor-pointer appearance-none rounded-[8px] border border-transparent bg-transparent pr-7 text-[14px]",
           "transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)]",
           "focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]",
-          dot ? "pl-7" : "pl-2.5",
+          dot ? "pl-7 font-semibold" : "pl-2.5 font-medium text-[var(--adm-ink-mute)]",
         )}
       >
         {children}

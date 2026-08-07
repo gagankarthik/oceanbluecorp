@@ -15,8 +15,9 @@ import {
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff, getClaims } from "@/lib/auth/verify";
+import { requireStaff, getClaims, isAdminClaims } from "@/lib/auth/verify";
 import { hasStaffAccess } from "@/lib/auth/config";
+import { canView } from "@/lib/bench";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
 import { candidateHaystack } from "@/lib/candidate-search";
@@ -77,6 +78,37 @@ export async function GET(request: NextRequest) {
         applications = result.data || [];
       }
     }
+
+    /**
+     * My Pool stays private, and it has to be enforced HERE.
+     *
+     * The rule: Talent Bench (internal) is company property and every staff
+     * member sees all of it; My Pool (external) is the recruiter's own sourced
+     * pipeline and is visible only to whoever added it, plus admins, who audit
+     * the team's pipeline.
+     *
+     * That rule was implemented in exactly one place — a `canView` call in the
+     * browser, in `admin/bench/page.tsx` — while this endpoint returned every
+     * application to every staff caller. The list on screen looked right, but
+     * one recruiter's private pool was sitting in the JSON delivered to every
+     * other recruiter's browser, readable from the network tab without any
+     * particular effort. UI gating is courtesy; this is the authorization it
+     * was standing in for.
+     *
+     * Scoped to `addToTalentBench` deliberately. `canView` resolves a record's
+     * pool via `poolOf`, which falls back to "external" for anything not hired
+     * — so filtering every application through it would hide most of the
+     * pipeline from everyone on every other screen that reads this endpoint.
+     * Only records actually on the bench carry the visibility rule.
+     */
+    const viewer = {
+      id: auth.claims.sub,
+      email: auth.claims.email,
+      isAdmin: isAdminClaims(auth.claims),
+    };
+    applications = applications.filter(
+      (app) => !app.addToTalentBench || canView(app, viewer),
+    );
 
     // Sort by appliedAt descending (newest first)
     applications.sort(

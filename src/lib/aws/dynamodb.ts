@@ -513,6 +513,10 @@ export interface Application {
   // Resume Matching Engine so the card doesn't re-score on every view.
   jobFit?: JobFitResult;
   jobFitAt?: string;                  // ISO timestamp of last scoring
+  /** The job the cached fit was scored against. A verdict is only meaningful
+   *  for one requisition, so without this a moved candidate's old score is
+   *  indistinguishable from a current one. */
+  jobFitJobId?: string;
 
   // Status history for timeline
   statusHistory?: Array<{

@@ -24,6 +24,8 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
   const [at, setAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The cached verdict was scored against a different job and was withheld. */
+  const [staleForJobChange, setStale] = useState(false);
 
   // Load the cached verdict on mount.
   useEffect(() => {
@@ -34,6 +36,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         if (active && d) {
           setFit(d.jobFit ?? null);
           setAt(d.jobFitAt ?? null);
+          setStale(!!d.staleForJobChange);
         }
       })
       .catch(() => {});
@@ -53,6 +56,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       } else {
         setFit(data.jobFit ?? null);
         setAt(data.jobFitAt ?? null);
+        setStale(false);
       }
     } catch {
       setError("Network error. Please try again.");
@@ -74,6 +78,19 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       />
 
       <div className="p-6">
+        {/* Says why there is no score, rather than looking never-scored. The
+            previous verdict still exists in the record; it is withheld because
+            it belongs to a different requisition. */}
+        {staleForJobChange && !fit && !error && (
+          <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--adm-warning-soft)] px-4 py-3 text-[14px] text-[var(--adm-warning)]">
+            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none" strokeWidth={1.75} />
+            <span>
+              This candidate moved to a different job, so the previous fit score no longer
+              applies. Score again to rate them against the job they are on now.
+            </span>
+          </div>
+        )}
+
         {error && (
           <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-red-500/8 px-4 py-3 text-[14px] text-red-700">
             <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none" strokeWidth={1.75} />

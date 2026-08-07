@@ -26,7 +26,29 @@ export async function GET(
   if (!result.success || !result.data) {
     return NextResponse.json({ error: "Application not found" }, { status: 404 });
   }
-  return NextResponse.json({ jobFit: result.data.jobFit ?? null, jobFitAt: result.data.jobFitAt ?? null });
+  /**
+   * Never serve a verdict scored against a different job.
+   *
+   * The PUT handler clears the cache when a candidate is moved, which is the
+   * primary fix. This is the backstop: any other path that changes `jobId` —
+   * an import, a script, a future route — would otherwise resurrect the same
+   * bug, and the failure is silent by nature. Comparing the stamp costs one
+   * field on a read that already has the record in hand.
+   *
+   * A missing `jobFitJobId` is grandfathered rather than treated as stale:
+   * every score written before the stamp existed lacks it, and invalidating
+   * all of them would bill a re-score for records that were never moved. Those
+   * are covered by the PUT clear the moment they actually are.
+   */
+  const app = result.data;
+  const stale = !!app.jobFit && !!app.jobFitJobId && app.jobFitJobId !== app.jobId;
+
+  return NextResponse.json({
+    jobFit: stale ? null : app.jobFit ?? null,
+    jobFitAt: stale ? null : app.jobFitAt ?? null,
+    // Lets the card explain the empty state rather than looking unscored.
+    staleForJobChange: stale,
+  });
 }
 
 // POST — (re)score this application's resume against its job, then cache it.
@@ -70,7 +92,7 @@ export async function POST(
   const jobFit = toResult(scored.fit);
   const jobFitAt = new Date().toISOString();
   // Best-effort cache — a failed write shouldn't fail the request.
-  await updateApplication(id, { jobFit, jobFitAt }).catch((e) => console.error(`[job-fit] cache write failed for ${id}:`, e));
+  await updateApplication(id, { jobFit, jobFitAt, jobFitJobId: app.jobId }).catch((e) => console.error(`[job-fit] cache write failed for ${id}:`, e));
 
-  return NextResponse.json({ jobFit, jobFitAt });
+  return NextResponse.json({ jobFit, jobFitAt, jobFitJobId: app.jobId });
 }

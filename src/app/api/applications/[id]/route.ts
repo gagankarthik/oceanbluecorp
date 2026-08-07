@@ -8,7 +8,8 @@ import {
   NoteEntry,
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, isAdminClaims } from "@/lib/auth/verify";
+import { canView } from "@/lib/bench";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 
 // Attaching a resume on update kicks off the extraction Lambda via after();
@@ -41,7 +42,32 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ application: result.data });
+    /**
+     * My Pool is private to the recruiter who built it (admins excepted).
+     *
+     * The list endpoint filters these out, but filtering a list is not access
+     * control on its own: the ids are guessable from anywhere else they appear,
+     * and this route would happily return the full record — resume analysis
+     * included — to any staff caller who asked for one directly.
+     *
+     * 404 rather than 403 on purpose. A 403 confirms the record exists, which
+     * is itself the thing being protected: whether a given person is in a
+     * colleague's sourcing pipeline. To a caller with no right to it, the
+     * record should be indistinguishable from one that was never there.
+     */
+    const app = result.data;
+    if (app.addToTalentBench) {
+      const visible = canView(app, {
+        id: auth.claims.sub,
+        email: auth.claims.email,
+        isAdmin: isAdminClaims(auth.claims),
+      });
+      if (!visible) {
+        return NextResponse.json({ error: "Application not found" }, { status: 404 });
+      }
+    }
+
+    return NextResponse.json({ application: app });
   } catch (error) {
     console.error("Error fetching application:", error);
     return NextResponse.json(
@@ -185,6 +211,26 @@ export async function PUT(
       // Application details
       if (body.status !== undefined) updates.status = body.status;
       if (body.jobId !== undefined) updates.jobId = body.jobId;
+
+      /**
+       * Moving a candidate to a different job invalidates their fit score.
+       *
+       * The verdict is cached on the application as `{ jobFit, jobFitAt }` and
+       * was scored against whichever requisition they were on at the time. Move
+       * them and nothing cleared it, so the card went on presenting a number
+       * computed for a job the candidate is no longer applying to — as the fit
+       * for the one they are. A stale score is worse than none: it is confident
+       * and specific, so nobody thinks to question it.
+       *
+       * Cleared here rather than only marked stale, because this is the one
+       * place every move goes through, and it fixes records written before
+       * `jobFitJobId` existed too — they carry no job to compare against.
+       */
+      if (body.jobId !== undefined && body.jobId !== existingApp.data.jobId) {
+        updates.jobFit = undefined;
+        updates.jobFitAt = "";
+        updates.jobFitJobId = "";
+      }
       if (body.jobTitle !== undefined) updates.jobTitle = body.jobTitle;
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;

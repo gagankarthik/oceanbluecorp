@@ -21,6 +21,32 @@ export const tones: Record<Tone, {
   purple:  { bg: "bg-purple-50",  soft: "bg-purple-100",  ring: "ring-purple-200",  text: "text-purple-700",  dot: "bg-purple-500",  solid: "bg-purple-600",  gradFrom: "from-purple-500",  gradTo: "to-purple-600"  },
 };
 
+/**
+ * Raw CSS colour per tone.
+ *
+ * `tones` above is Tailwind classes, which covers most cases but cannot reach
+ * an inline `style` — a dot's `background`, a `<select>`'s own text colour, a
+ * computed ramp. Without this, any control that needs a colour as a *value*
+ * silently falls back to grey, which is exactly what happened to every editable
+ * status cell in the app: the tone was defined, and nothing could read it.
+ *
+ * Semantic tones alias the admin tokens so a brand retune moves them too;
+ * categorical ones are literals because they have no token.
+ */
+export const toneColor: Record<Tone, string> = {
+  blue:    "var(--adm-accent)",
+  indigo:  "#6366f1",
+  violet:  "#8b5cf6",
+  emerald: "var(--adm-success)",
+  amber:   "var(--adm-warning)",
+  rose:    "var(--adm-danger)",
+  sky:     "#0284c7",
+  slate:   "#64748b",
+  teal:    "#0d9488",
+  cyan:    "#0891b2",
+  purple:  "#9333ea",
+};
+
 export type AppStatus =
   | "pending" | "reviewing" | "submitted" | "interview" | "offered" | "hired" | "rejected"
   | "active" | "inactive" | "paused" | "draft" | "closed" | "open" | "on-hold";
@@ -54,6 +80,15 @@ export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: Th
   open:      { label: "Open",      tone: "emerald", icon: CheckCircle2 },
   "on-hold": { label: "On Hold",   tone: "amber",   icon: Clock        },
 };
+
+/**
+ * A status's colour as a CSS value — for dots, inline styles and editable
+ * controls. Unknown statuses fall back to the neutral tone rather than throwing:
+ * these strings come from the database, and a status nobody has themed yet
+ * should render plainly, not break the row it is in.
+ */
+export const statusColor = (status: string): string =>
+  toneColor[statusMeta[status as AppStatus]?.tone ?? "slate"];
 
 export const PIPELINE_STAGES: { key: AppStatus; label: string; tone: Tone }[] = [
   { key: "pending",   label: "New",       tone: "slate"   },

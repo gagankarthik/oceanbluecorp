@@ -73,7 +73,12 @@ export function HeaderSearch() {
   const showDropdown = open && q.trim().length > 0;
 
   return (
-    <div ref={ref} className="relative hidden w-56 md:block lg:w-72">
+    /* Was `w-56 / lg:w-72` — 224px, which is narrower than most of the things
+       it searches for. A candidate name plus a job title truncates before the
+       result list even opens, and the top bar has the room: the centre of the
+       chrome was mostly empty either side of it. Scales with the viewport now
+       rather than sitting at one small fixed size. */
+    <div ref={ref} className="relative hidden w-72 md:block lg:w-[26rem] xl:w-[34rem] 2xl:w-[40rem]">
       <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         type="search"
@@ -84,7 +89,7 @@ export function HeaderSearch() {
         onKeyDown={onKey}
         placeholder="Search jobs, candidates…"
         aria-label="Search"
-        className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-1.5 pl-8 pr-8 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
+        className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-2 pl-9 pr-8 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {q && (
         <button

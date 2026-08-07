@@ -17,6 +17,7 @@ import {
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { statusColor } from "@/components/admin/theme";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
@@ -298,6 +299,7 @@ export default function JobsPage() {
     cell: (j) => canEdit ? (
       <GridSelect
         value={j.status}
+        dot={statusColor(j.status)}
         ariaLabel={`Status for ${j.title}`}
         onChange={(e) => handleStatusChange(j.id, e.target.value as Job["status"])}
       >

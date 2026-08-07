@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
-  FilterPill, FilterIcon, AdvancedFilterToggle, ActiveFilters,
+  FilterMenu, ActiveFilters,
   DisplayMenu, SelectionBar, StatStrip,
 } from "@/components/admin/workspace";
 import { Field, FormSelect } from "@/components/admin/forms/primitives";
@@ -357,12 +357,19 @@ export default function ApplicationsPage() {
     { key: "hired",        label: "Hired",          count: viewCounts.hired },
   ];
 
-  const activeFilterCount = [
-    sourceFilter !== "all", authFilter !== "all", hireFilter !== "all", minRating > 0,
+  /* The badge on the single Filters control. Counts every dimension it owns —
+     the old split counted only the four that lived behind the drawer, because
+     the other four had their own pills to show state. With one control there is
+     nowhere else for that state to show. `savedView` is excluded: it selects
+     WHICH records are in scope rather than narrowing them, and its own label is
+     already in the menu. */
+  const totalActiveFilters = [
+    statusFilter !== "all", posFilter !== "all", locationFilter !== "all",
+    sourceFilter !== "all", authFilter !== "all", hireFilter !== "all",
+    minRating > 0,
   ].filter(Boolean).length;
 
-  const hasActiveFilters = activeFilterCount > 0
-    || statusFilter !== "all" || posFilter !== "all" || locationFilter !== "all"
+  const hasActiveFilters = totalActiveFilters > 0
     || debouncedSearch.trim() !== "";
 
   /** Records inside the current saved view, before the toolbar filters apply. */
@@ -608,7 +615,24 @@ export default function ApplicationsPage() {
   const isGrid = view === "table";
 
   return (
-    <>
+    /* ── Bounded height: the TABLE scrolls, not the page ──────────────────
+       The admin shell already gives `main` a fixed height and its own
+       overflow, so the only thing standing between this screen and an
+       internal scroll was the page itself being taller than that box. As a
+       full-height flex column, the chrome above (title, stats, toolbar) takes
+       its natural height and `Workspace` — already `flex-1` — absorbs the
+       rest, which makes DataTable's `overflow-auto` container the scrolling
+       element.
+
+       `min-h-0` is the load-bearing part: a flex child defaults to
+       `min-height: auto`, so without it this column refuses to shrink below
+       the table's intrinsic height, grows past the viewport, and the page
+       scrolls exactly as before.
+
+       This is also what finally makes the sticky `thead` (`.adm-grid thead th`
+       in globals.css) do anything — a sticky header only sticks to a scroll
+       container, and until now the container it sat in never scrolled. */
+    <div className="flex h-full min-h-0 flex-col">
     <WorkspaceTitle
       title="Applications"
       actions={
@@ -652,58 +676,95 @@ export default function ApplicationsPage() {
         }
         trailing={
           <>
-            <FilterPill
-              label="View"
-              icon={FilterIcon.view}
-              value={savedView}
-              onChange={(k) => { setSavedView(k); setSelected([]); }}
-              options={views.map((v) => ({ value: v.key, label: v.label, count: v.count }))}
-            />
-            <FilterPill
-              label="Stage"
-              icon={FilterIcon.stage}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { value: "all", label: "All stages", count: inView.length },
-                ...ALL_STATUSES.map((s) => ({
-                  value: s,
-                  label: sLabel(s),
-                  count: statusCounts[s] || 0,
-                  color: STAGE_COLOR[s],
-                })),
-              ]}
-            />
-            <FilterPill
-              label="Position"
-              icon={FilterIcon.position}
-              value={posFilter}
-              onChange={setPosFilter}
-              options={[
-                { value: "all", label: "All positions" },
-                ...positions.map((p) => ({ value: p, label: p })),
-              ]}
-            />
-            {/* Location is a primary pill: "who can work in this market?" is a
-                question recruiters open this screen to answer, so it sits
-                beside Stage and Position rather than behind the drawer. */}
-            <FilterPill
-              label="Location"
-              icon={FilterIcon.location}
-              value={locationFilter}
-              onChange={setLocationFilter}
-              options={[
-                { value: "all", label: "All locations", count: inView.length },
-                ...locations.map((l) => ({ value: l.value, label: l.label, count: l.count })),
-              ]}
-            />
-            {/* Source, work auth, hire type and rating live in the advanced
-                drawer: the least-reached-for filters. */}
-            <AdvancedFilterToggle
-              open={filtersOpen}
-              activeCount={activeFilterCount}
-              onClick={() => setFiltersOpen((v) => !v)}
-            />
+            {/* Every filter on this screen, in one control. It was four pills
+                plus an "Advanced" toggle opening a fifth row of four more —
+                a split that decided for the user which filters mattered, and
+                pushed the table down the page whenever the drawer was open. */}
+            <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
+              <Field label="Saved view" htmlFor="filter-view">
+                <FormSelect
+                  id="filter-view"
+                  value={savedView}
+                  onChange={(e) => { setSavedView(e.target.value as ViewKey); setSelected([]); }}
+                >
+                  {views.map((v) => (
+                    <option key={v.key} value={v.key}>
+                      {v.label}{typeof v.count === "number" ? ` (${v.count})` : ""}
+                    </option>
+                  ))}
+                </FormSelect>
+              </Field>
+
+              <Field label="Stage" htmlFor="filter-stage">
+                <FormSelect id="filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                  <option value="all">All stages ({inView.length})</option>
+                  {ALL_STATUSES.map((st) => (
+                    <option key={st} value={st}>{sLabel(st)} ({statusCounts[st] || 0})</option>
+                  ))}
+                </FormSelect>
+              </Field>
+
+              <Field label="Position" htmlFor="filter-position">
+                <FormSelect id="filter-position" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
+                  <option value="all">All positions</option>
+                  {positions.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
+                </FormSelect>
+              </Field>
+
+              <Field label="Location" htmlFor="filter-location">
+                <FormSelect id="filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                  <option value="all">All locations ({inView.length})</option>
+                  {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
+                </FormSelect>
+              </Field>
+
+              <Field label="Source" htmlFor="filter-source">
+                <FormSelect id="filter-source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+                  <option value="all">All sources</option>
+                  {SOURCE_OPTIONS.map((src) => <option key={src} value={src}>{src}</option>)}
+                </FormSelect>
+              </Field>
+
+              <Field label="Type of hire" htmlFor="filter-hire">
+                <FormSelect id="filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+                  <option value="all">All hire types</option>
+                  {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
+                </FormSelect>
+              </Field>
+
+              <Field label="Work authorization" htmlFor="filter-auth">
+                <FormSelect id="filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+                  <option value="all">All</option>
+                  {WORK_AUTH_GROUPS.map((g) => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </optgroup>
+                  ))}
+                </FormSelect>
+              </Field>
+
+              <Field label="Minimum rating">
+                <div className="flex h-10 items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-label={`Minimum ${n} stars`}
+                      onClick={() => setMinRating(n === minRating ? 0 : n)}
+                    >
+                      <IconStar
+                        aria-hidden
+                        className={cn(
+                          "h-[18px] w-[18px] transition-colors",
+                          n <= minRating ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)] hover:text-amber-300",
+                        )}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </FilterMenu>
+
             <DisplayMenu
               view={view}
               viewOptions={[
@@ -723,50 +784,6 @@ export default function ApplicationsPage() {
         }
       >
       </WorkspaceToolbar>
-
-      {filtersOpen && (
-        /* These were bare <select>s carrying a local class that omitted
-           appearance-none, so the browser drew its own control chrome over the
-           top: the OS decides the corner radius, the chevron and the inner
-           metrics, which is why the boxes read as unsquared and did not match
-           any other control on the screen. FormSelect is the house control —
-           appearance-none, an 8px radius and our own chevron. */
-        <div className="mb-3 grid grid-cols-1 gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4">
-          <Field label="Source" htmlFor="filter-source">
-            <FormSelect id="filter-source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-              <option value="all">All sources</option>
-              {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </FormSelect>
-          </Field>
-          <Field label="Type of hire" htmlFor="filter-hire">
-            <FormSelect id="filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
-              <option value="all">All hire types</option>
-              {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
-            </FormSelect>
-          </Field>
-          <Field label="Work authorization" htmlFor="filter-auth">
-            <FormSelect id="filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
-              <option value="all">All</option>
-              {WORK_AUTH_GROUPS.map((g) => (
-                <optgroup key={g.label} label={g.label}>
-                  {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </optgroup>
-              ))}
-            </FormSelect>
-          </Field>
-          <Field label="Minimum rating">
-            {/* h-10 matches the control height beside it, so the four cells in
-                the row share one baseline. */}
-            <div className="flex h-10 items-center gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} type="button" aria-label={`Minimum ${n} stars`} onClick={() => setMinRating(n === minRating ? 0 : n)}>
-                  <IconStar aria-hidden className={cn("h-[18px] w-[18px] transition-colors", n <= minRating ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)] hover:text-amber-300")} />
-                </button>
-              ))}
-            </div>
-          </Field>
-        </div>
-      )}
 
       <ActiveFilters variant="canvas" chips={filterChips} onClearAll={clearFilters} />
 
@@ -877,7 +894,7 @@ export default function ApplicationsPage() {
         onCancel={() => setBulkDeleteOpen(false)}
       />
     </Workspace>
-    </>
+    </div>
   );
 }
 
