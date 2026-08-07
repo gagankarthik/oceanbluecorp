@@ -1173,6 +1173,22 @@
   --hz-amber-600:  #b45309;
   --hz-amber-100:  #fde7c9;
 
+  /* Gold — the anniversary line-work only (anniversary/CornerArches.tsx).
+     That component passes `var(--hz-gold, #c9a227)` rather than the bare
+     token, deliberately: an unresolved var in an SVG `stroke` computes to
+     `none`, so a missing token does not degrade the ornament — it deletes
+     it, silently and completely. The literal keeps the failure cosmetic.
+     Scoped that narrowly on purpose: cobalt is the brand, and a second
+     saturated accent used freely would dilute it. Gold appears here as
+     drawn geometry at very low alpha, never as a fill or a text colour,
+     so it reads as engraving rather than as a competing brand colour.
+     --hz-gold-ink is the only value dark enough for text on white, and
+     is there for a caption if one is ever needed. */
+  --hz-gold:      #c9a227;
+  --hz-gold-300:  #e3c268;
+  --hz-gold-100:  #f4e6bf;
+  --hz-gold-ink:  #7a5c12;
+
   /* Cool-tinted shadows */
   --hz-shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.05);
   --hz-shadow-md: 0 10px 30px -12px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);

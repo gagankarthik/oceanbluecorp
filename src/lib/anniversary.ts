@@ -29,7 +29,13 @@ export const ANNIVERSARY_ARTWORK = "/anniversary/13-years.jpg";
  *  social post say the same thing. Overridable per-field from /admin/content. */
 export const ANNIVERSARY_COPY = {
   eyebrow: `${FOUNDED_LONG} — ${ANNIVERSARY_LONG}`,
-  heading: `${BRAND_NAME} turns ${ANNIVERSARY_YEARS}`,
+  /* Split in two so the second half can carry the cobalt, exactly as the
+     artwork sets it: the company name in ink, "Turns 13" in brand blue.
+     Kept as a joined string too, for anywhere that needs the plain sentence
+     (metadata, the OG card, the accessible name). */
+  headingLead: BRAND_NAME,
+  headingAccent: `Turns ${ANNIVERSARY_YEARS}`,
+  heading: `${BRAND_NAME} Turns ${ANNIVERSARY_YEARS}`,
   tagline: `Celebrating ${ANNIVERSARY_YEARS} years of innovation, trust, and excellence.`,
   thanks:
     "Thank you to our employees, clients, and partners for being part of our journey.",

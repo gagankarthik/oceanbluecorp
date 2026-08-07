@@ -7,6 +7,7 @@ import { Cta } from "../ui";
 import Confetti from "./Confetti";
 import YearArc from "./YearArc";
 import Numeral from "./Numeral";
+import CornerArches from "./CornerArches";
 import { FOUNDED_SHORT } from "@/lib/company";
 import {
   ANNIVERSARY_COPY,
@@ -211,6 +212,13 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
         ))}
       </svg>
 
+      {/* Gold pillar-and-arch at each corner, framing the band as a pavilion.
+          Replaced a pair of mandala medallions flanking the mark: a medallion
+          is an object sitting in the margin, where an arch is architecture the
+          content stands inside — which is what fills the space rather than
+          merely occupying it. */}
+      <CornerArches />
+
       <Confetti run={burst} />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
@@ -266,11 +274,25 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
             }}
             className="mx-auto mt-6 max-w-3xl text-center sm:mt-8"
           >
+            {/* Two-tone, as the artwork sets it: the company in ink, the
+                occasion in cobalt. A CMS override is rendered plain — an
+                editor typing a custom line has no way to say where the colour
+                should break, and guessing at a delimiter would put it in the
+                wrong place the first time someone rephrased it. */}
             <h2
               id="thirteen-heading"
               className="hz-display text-[clamp(1.9rem,5vw,3.25rem)] text-[var(--hz-text)]"
             >
-              {heading}
+              {content.anniversaryHeading ? (
+                content.anniversaryHeading
+              ) : (
+                <>
+                  {ANNIVERSARY_COPY.headingLead}{" "}
+                  <span className="text-[var(--hz-cobalt)]">
+                    {ANNIVERSARY_COPY.headingAccent}
+                  </span>
+                </>
+              )}
             </h2>
             <p className="mt-5 text-[clamp(1rem,2.2vw,1.25rem)] font-medium leading-snug text-[var(--hz-cobalt)]">
               {tagline}
