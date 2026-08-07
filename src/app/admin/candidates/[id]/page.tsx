@@ -25,13 +25,14 @@ import {
   IconMessageText, IconRefresh, IconSparkles,
 } from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
-import { type AppStatus } from "@/components/admin/theme";
+import { statusMeta, type AppStatus } from "@/components/admin/theme";
 // Still needed by handleBenchChange, which resolves the candidate's current
 // pool before deciding whether a change is a no-op.
 import { POOL_LABEL, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/format";
 import { TERMINAL } from "@/lib/pipeline";
+import { undoable } from "@/lib/undo";
 
 interface CandidateDetail extends Application {
   jobDepartment?: string;
@@ -145,12 +146,30 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     return data.application as Application;
   };
 
+  /**
+   * Move the candidate to a stage, and say so.
+   *
+   * This was silent on success: the rail moved and nothing else happened, so a
+   * misclick on a six-node stepper was invisible until somebody noticed the
+   * candidate was in the wrong place. It is also exactly reversible, so it
+   * gets an undo rather than a confirm — a confirm on the most-used control on
+   * the screen would be intolerable, which is precisely why the action was
+   * left unguarded in the first place.
+   */
   const handleStageClick = async (stage: AppStatus) => {
     if (!candidate || stage === candidate.status || statusSaving) return;
+    const previous = candidate.status;
     setStatusSaving(true);
     try {
       const updated = await patch({ status: stage, changedBy: user?.id, changedByName: user?.name || user?.email || "Admin" });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
+      undoable({
+        message: `Moved to ${statusMeta[stage]?.label ?? stage}`,
+        undo: async () => {
+          const back = await patch({ status: previous, changedBy: user?.id, changedByName: user?.name || user?.email || "Admin" });
+          setCandidate((p) => (p ? { ...p, ...back } : p));
+        },
+      });
     } catch { toast.error("Failed to update status"); }
     finally { setStatusSaving(false); }
   };
@@ -174,29 +193,55 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       await patch(pool
         ? { addToTalentBench: true, benchType: pool, benchAddedBy: user?.email || user?.id }
         : { addToTalentBench: false });
-      toast.success(pool ? `Added to ${POOL_LABEL[pool]}` : "Removed from bench");
+      undoable({
+        message: pool ? `Added to ${POOL_LABEL[pool]}` : "Removed from bench",
+        undo: async () => {
+          await patch(current
+            ? { addToTalentBench: true, benchType: current, benchAddedBy: user?.email || user?.id }
+            : { addToTalentBench: false });
+          setCandidate((p) => (p ? { ...p, addToTalentBench: !!current, benchType: current || p.benchType } : p));
+        },
+      });
     } catch {
       setCandidate(prev);
       toast.error("Failed to update talent bench");
     } finally { setBenchSaving(false); }
   };
 
+  /* Claim and release both succeeded silently. Ownership is a claim ON A
+     SHARED RECORD — it tells the rest of the team whose desk this is — so
+     "did that register?" is a real question, and the only answer was a chip
+     quietly changing in the corner of the toolbar. Both are exactly
+     reversible, so each reports and offers the inverse. */
+  const applyOwner = async (ownership: string, ownershipName: string) => {
+    const updated = await patch({ ownership, ownershipName });
+    setCandidate((p) => (p ? { ...p, ...updated } : p));
+  };
+
   const handleClaimOwnership = async () => {
     if (!candidate || !user || ownerSaving) return;
     setOwnerSaving(true);
     try {
-      const updated = await patch({ ownership: user.id, ownershipName: user.name || user.email });
-      setCandidate((p) => (p ? { ...p, ...updated } : p));
+      await applyOwner(user.id, user.name || user.email || "");
+      undoable({
+        message: "You now own this candidate",
+        undo: () => applyOwner("", ""),
+      });
     } catch { toast.error("Failed to claim ownership"); }
     finally { setOwnerSaving(false); }
   };
 
   const handleReleaseOwnership = async () => {
     if (!candidate || ownerSaving) return;
+    const prevId = candidate.ownership || "";
+    const prevName = candidate.ownershipName || "";
     setOwnerSaving(true);
     try {
-      const updated = await patch({ ownership: "", ownershipName: "" });
-      setCandidate((p) => (p ? { ...p, ...updated } : p));
+      await applyOwner("", "");
+      undoable({
+        message: "Released — this candidate is unassigned",
+        undo: () => applyOwner(prevId, prevName),
+      });
     } catch { toast.error("Failed to release ownership"); }
     finally { setOwnerSaving(false); }
   };

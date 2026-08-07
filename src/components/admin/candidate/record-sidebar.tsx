@@ -75,7 +75,7 @@ export function RecordSidebar({
               <div className="flex min-w-0 items-center gap-2.5">
                 <Avatar name={candidate.ownershipName} size="sm" />
                 <div className="min-w-0">
-                  <p className="truncate text-[13.5px] font-semibold text-[var(--adm-success)]">
+                  <p className="truncate text-[13.5px] font-semibold text-[var(--adm-success-ink)]">
                     {candidate.ownershipName}
                   </p>
                   {candidate.ownershipClaimedAt && (
@@ -89,7 +89,7 @@ export function RecordSidebar({
                 <button
                   onClick={onRelease}
                   disabled={ownerSaving}
-                  className="inline-flex flex-none items-center gap-1 rounded-[4px] border border-transparent px-2 py-1 text-[11px] font-semibold text-[var(--adm-danger)] transition-colors hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] disabled:opacity-60"
+                  className="inline-flex flex-none items-center gap-1 rounded-[4px] border border-transparent px-2 py-1 text-[11px] font-semibold text-[var(--adm-danger-ink)] transition-colors hover:border-rose-200 hover:bg-[var(--adm-danger-soft)] disabled:opacity-60"
                 >
                   {ownerSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <IconUserX className="h-3 w-3" />}
                   Release
@@ -104,7 +104,7 @@ export function RecordSidebar({
             <button
               onClick={onClaim}
               disabled={ownerSaving}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-[var(--adm-danger)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)] disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-[var(--adm-danger)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-danger-ink)] transition-colors hover:bg-[var(--adm-danger-soft)] disabled:opacity-60"
             >
               {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
               Unclaimed — claim this candidate

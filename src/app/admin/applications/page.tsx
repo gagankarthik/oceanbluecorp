@@ -249,7 +249,6 @@ export default function ApplicationsPage() {
   const [authFilter, setAuthFilter]     = useState("all");
   const [hireFilter, setHireFilter]     = useState("all");
   const [minRating, setMinRating]       = useState(0);
-  const [filtersOpen, setFiltersOpen]   = useState(false);
 
   // ── selection + modals
   const [selected, setSelected]             = useState<string[]>([]);

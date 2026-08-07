@@ -10,7 +10,6 @@ import WaveField from "@/components/landing/motion/WaveField";
 import Confetti from "@/components/landing/anniversary/Confetti";
 import {
   BRAND_NAME,
-  FOUNDED_LONG,
   FOUNDED_SHORT,
   LEGAL_NAME,
   MILESTONES,

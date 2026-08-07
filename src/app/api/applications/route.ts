@@ -320,17 +320,29 @@ export async function POST(request: NextRequest) {
       const currentCount = job.applicationsCount || 0;
       await updateJob(body.jobId, { applicationsCount: currentCount + 1 });
 
-      // Create in-app notification for admin panel
-      createNotification({
-        id: uuidv4(),
-        type: "application_received",
-        title: "New Application Received",
-        message: `${name} applied for ${job.title}`,
-        link: `/admin/applications`,
-        relatedId: application.id,
-        isRead: false,
-        createdAt: now,
-      }).catch((err) => console.error("Failed to create notification:", err));
+      /* after(), and AWAITED inside it.
+         Both halves matter. Unawaited, this was a promise nobody tracked, and
+         on Lambda the execution environment can freeze the moment the response
+         returns — so the notification landed sometimes and vanished sometimes.
+         after() alone does not fix that: it keeps the invocation alive for the
+         promise its callback RETURNS, so a fire-and-forget call inside it is
+         just as untracked as it was outside. */
+      after(async () => {
+        try {
+          await createNotification({
+            id: uuidv4(),
+            type: "application_received",
+            title: "New Application Received",
+            message: `${name} applied for ${job.title}`,
+            link: `/admin/applications`,
+            relatedId: application.id,
+            isRead: false,
+            createdAt: now,
+          });
+        } catch (err) {
+          console.error("Failed to create application notification:", err);
+        }
+      });
 
       const emailPromises: Promise<void>[] = [];
 

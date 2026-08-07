@@ -136,7 +136,7 @@ function StageSelect({
             here rather than a seventh stage pretending to be one. */}
         <DropdownMenuItem
           onClick={() => onStage("rejected")}
-          className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-semibold text-[var(--adm-danger)]"
+          className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-semibold text-[var(--adm-danger-ink)]"
         >
           <IconError className="h-3.5 w-3.5 flex-none" />
           {isRejected ? "Rejected" : "Reject candidate"}
@@ -167,7 +167,7 @@ function BenchMenu({
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : candidate.addToTalentBench ? (
-            <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success)]" />
+            <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success-ink)]" />
           ) : (
             <IconBookmarkPlus className="h-4 w-4" />
           )}
@@ -212,7 +212,7 @@ function BenchMenu({
             <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
             <DropdownMenuItem
               onClick={() => onBench(null)}
-              className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger)]"
+              className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)]"
             >
               <span className="w-3.5 flex-none" />
               Remove from bench
@@ -256,7 +256,7 @@ export function RecordBar({
                   "inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em]",
                   poolOf(candidate) === "internal"
                     ? "border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-                    : "border-emerald-200 bg-[var(--adm-success-soft)] text-[var(--adm-success)]",
+                    : "border-emerald-200 bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
                 )}
               >
                 <IconBookmarkCheck className="h-3 w-3" /> {POOL_LABEL[poolOf(candidate)]}
@@ -336,7 +336,7 @@ export function RecordBar({
             make. Release stays in the sidebar, where it is labelled. */}
         {candidate.ownership ? (
           <span
-            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-emerald-200 bg-[var(--adm-success-soft)] px-2.5 text-[13.5px] font-semibold text-[var(--adm-success)]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-emerald-200 bg-[var(--adm-success-soft)] px-2.5 text-[13.5px] font-semibold text-[var(--adm-success-ink)]"
             title={`Claimed by ${candidate.ownershipName || "a teammate"}`}
           >
             <IconUserCheck className="h-4 w-4 flex-none" />
@@ -348,7 +348,7 @@ export function RecordBar({
           <WorkspaceButton
             onClick={onClaim}
             disabled={ownerSaving}
-            className="border-[var(--adm-danger)] bg-transparent text-[var(--adm-danger)] shadow-none hover:border-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+            className="border-[var(--adm-danger)] bg-transparent text-[var(--adm-danger-ink)] shadow-none hover:border-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           >
             {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
             <span className="hidden 2xl:inline">Unclaimed</span>

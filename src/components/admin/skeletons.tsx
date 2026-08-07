@@ -212,64 +212,86 @@ export function KanbanSkeleton({
 }
 
 /** Dashboard skeleton — stat cards + chart placeholder + recent list. */
+/**
+ * Mirrors /admin exactly — six bands in the order the page renders them.
+ *
+ * The version this replaced described a layout the dashboard had not had for
+ * some time: a 4-up stat-card row that no longer exists, and nothing at all for
+ * three of the six sections. A skeleton that does not match is worse than none,
+ * because it promises a shape and then the content arrives somewhere else — the
+ * page appears to jump, which is the exact thing a skeleton exists to prevent.
+ *
+ * If you move a band on the dashboard, move it here. The two are a pair.
+ */
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-5 pb-10" aria-hidden="true" aria-label="Loading dashboard…">
-      {/* Stat cards row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
-            <div className="flex items-start justify-between">
-              <Skel className="h-10 w-10 rounded-[4px]" />
-              <Skel className="h-5 w-14 rounded-[4px]" />
-            </div>
-            <div className="space-y-1.5">
-              <Skel className="h-7 w-16" />
-              <Skel className="h-3 w-24" />
-            </div>
-          </div>
-        ))}
+    <div className="space-y-8 pb-12" aria-hidden="true">
+      {/* 1. Greeting + scope filter. Plain content on the canvas, NOT a card —
+             the old skeleton drew a bordered card here and the real page has
+             none, so the whole page shifted up when it loaded. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <Skel className="h-12 w-12 flex-none rounded-[12px]" />
+          <Skel className="h-6 w-56" />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Skel className="h-9 w-32 rounded-[8px]" />
+          <Skel className="h-9 w-40 rounded-[8px]" />
+        </div>
       </div>
 
-      {/* Main chart area */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <Skel className="h-4 w-40" />
-            <Skel className="h-8 w-32 rounded-[6px]" />
-          </div>
-          <Skel className="h-48 w-full rounded-[4px]" />
-        </div>
-        <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5 space-y-4">
-          <Skel className="h-4 w-32" />
-          <div className="flex justify-center">
-            <Skel className="h-40 w-40 rounded-full" />
-          </div>
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Skel className="h-3 w-3 rounded-full" />
-                <Skel className="h-3 flex-1" />
-                <Skel className="h-3 w-8" />
+      {/* 2. Header block + the six-across stat row */}
+      <div className="overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
+        <div className="p-6">
+          <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-0">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={i > 0 ? "lg:border-l lg:border-[var(--adm-line)] lg:px-5" : "lg:px-5"}>
+                <Skel className="h-3 w-20" />
+                <Skel className="mt-2 h-7 w-14" />
+                <Skel className="mt-2 h-3 w-16" />
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Recent activity list */}
-      <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-        <div className="border-b border-[var(--adm-line-soft)] px-5 py-3 flex items-center gap-2">
-          <Skel className="h-7 w-7 rounded-[6px]" />
-          <Skel className="h-4 w-36" />
+      {/* 3. State card + volume charts (charts take two thirds) */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Skel className="h-[410px] rounded-[12px]" />
+        <div className="grid gap-4 lg:col-span-2">
+          <Skel className="h-[197px] rounded-[12px]" />
+          <Skel className="h-[197px] rounded-[12px]" />
         </div>
-        <AdminRowsSkeleton rows={5} />
+      </div>
+
+      {/* 4 and 5 are `space-y-3` wrappers, each a small section LABEL above its
+          grid — not bare grids. Leaving the label out shifted everything below
+          by ~24px twice over, which is precisely the jump a skeleton is for. */}
+      <div className="space-y-3">
+        <Skel className="h-3 w-44" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skel className="h-[524px] rounded-[12px]" />
+          <Skel className="h-[524px] rounded-[12px]" />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <Skel className="h-3 w-40" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skel className="h-[372px] rounded-[12px]" />
+          <Skel className="h-[372px] rounded-[12px]" />
+        </div>
+      </div>
+
+      {/* 6. Recent activity + throughput, split three/two */}
+      <div className="grid gap-4 lg:grid-cols-5">
+        <Skel className="h-[477px] rounded-[12px] lg:col-span-3" />
+        <Skel className="h-[477px] rounded-[12px] lg:col-span-2" />
       </div>
     </div>
   );
 }
 
-/** Chart section skeleton — use inside a card while chart data loads. */
 export function ChartSkeleton({ height = 180 }: { height?: number }) {
   return (
     <div

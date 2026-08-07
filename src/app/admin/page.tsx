@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { DashboardSkeleton } from "@/components/admin/skeletons";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import {
   IconOverview, IconRequisition, IconPipeline, IconUser,
@@ -241,8 +242,28 @@ function DarkBars({ items, emptyMessage = "Nothing to break down yet" }: {
  * a soft area fill and a crisp 2px line, with tiny axis ticks. `non-scaling-
  * stroke` keeps line + dashes even while the SVG stretches to the panel width.
  */
+/* ============================================================
+   LineChart — with a hover readout.
+
+   The chart was a static picture: it showed a shape and no
+   numbers, so "how many applications on June 15?" could only be
+   answered by squinting at a gridline. A trend without values is
+   decoration.
+
+   ── Why the readout is HTML, not SVG ────────────────────────
+   This chart is drawn with `preserveAspectRatio="none"`, which
+   stretches a 600x100 viewBox to whatever width it is given.
+   That is fine for the line, and fine for a VERTICAL guide (a
+   vertical line stays vertical however you stretch x). It is
+   fatal for a marker dot: a circle in that coordinate space
+   renders as an ellipse, wider the narrower the container gets.
+   So the guide is drawn in the SVG and the dots and the tooltip
+   are absolutely-positioned HTML on top, where a circle is a
+   circle.
+   ============================================================ */
 function LineChart({
   data, dataKey, xKey, xFmt, color = "var(--adm-data)", height = 132, dataKey2, color2 = "var(--adm-danger)",
+  label, label2,
 }: {
   data: Record<string, unknown>[];
   dataKey: string;
@@ -253,7 +274,12 @@ function LineChart({
   /** Optional comparison series, drawn as a second line with no area fill. */
   dataKey2?: string;
   color2?: string;
+  /** Series names for the readout. Default to the data keys. */
+  label?: string;
+  label2?: string;
 }): React.ReactElement {
+  const [active, setActive] = useState<number | null>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
   const vals = data.map((d) => Number(d[dataKey]) || 0);
   const vals2 = dataKey2 ? data.map((d) => Number(d[dataKey2]) || 0) : [];
   const hasData = data.length > 1 && (vals.some((v) => v > 0) || vals2.some((v) => v > 0));
@@ -280,8 +306,30 @@ function LineChart({
   const ticks = [0, Math.floor((n - 1) / 2), n - 1];
   const gid = `ln-${dataKey}`;
 
+  /* Nearest point to the pointer, from its position as a FRACTION of the
+     container. The viewBox is stretched on x, so container-relative maths is
+     the only thing that survives the stretch. */
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = plotRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0) return;
+    const frac = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1);
+    setActive(Math.round(frac * (n - 1)));
+  };
+
+  const pctX = (i: number) => (n === 1 ? 50 : (i / (n - 1)) * 100);
+  const topPx = (v: number) => (Y(v) / H) * height;
+  const point = active !== null ? data[active] : null;
+
   return (
     <div>
+      <div
+        ref={plotRef}
+        className="relative"
+        onPointerMove={onMove}
+        onPointerLeave={() => setActive(null)}
+      >
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height }}>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
@@ -300,7 +348,62 @@ function LineChart({
         )}
         <path d={line} fill="none" stroke={color} strokeWidth={2}
           vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Guide. Safe inside the stretched viewBox because it is vertical. */}
+        {active !== null && (
+          <line
+            x1={X(active)} y1={padT} x2={X(active)} y2={H - padB}
+            stroke="var(--adm-ink-subtle)" strokeWidth={1}
+            strokeDasharray="3 3" vectorEffect="non-scaling-stroke"
+          />
+        )}
       </svg>
+
+      {/* Markers and readout: HTML, so circles stay circular. */}
+      {active !== null && point && (
+        <>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--adm-surface)]"
+            style={{ left: `${pctX(active)}%`, top: topPx(vals[active]), background: color }}
+          />
+          {dataKey2 && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--adm-surface)]"
+              style={{ left: `${pctX(active)}%`, top: topPx(vals2[active]), background: color2 }}
+            />
+          )}
+          <div
+            role="status"
+            aria-live="polite"
+            /* Flips to the left of the guide past the midpoint so it never
+               runs off the panel on the last few points. */
+            className={cn(
+              "pointer-events-none absolute top-0 z-10 min-w-[7rem] rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 shadow-[var(--adm-shadow-md)]",
+              pctX(active) > 55 ? "-translate-x-[calc(100%+10px)]" : "translate-x-[10px]",
+            )}
+            style={{ left: `${pctX(active)}%` }}
+          >
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
+              {xFmt(String(point[xKey] ?? ""))}
+            </p>
+            <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink)]">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+              <span className="text-[var(--adm-ink-subtle)]">{label ?? dataKey}</span>
+              <span className="ml-auto font-bold tabular-nums">{vals[active]}</span>
+            </p>
+            {dataKey2 && (
+              <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink)]">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color2 }} />
+                <span className="text-[var(--adm-ink-subtle)]">{label2 ?? dataKey2}</span>
+                <span className="ml-auto font-bold tabular-nums">{vals2[active]}</span>
+              </p>
+            )}
+          </div>
+        </>
+      )}
+      </div>
       <div className="mt-2 flex justify-between px-0.5 text-[10px] tabular-nums text-[var(--adm-ink-subtle)]">
         {ticks.map((ti, i) => <span key={i}>{xFmt(String(data[ti]?.[xKey] ?? ""))}</span>)}
       </div>
@@ -308,36 +411,6 @@ function LineChart({
   );
 }
 
-// ── skeleton ─────────────────────────────────────────────────────────────────
-
-function Skel({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-[4px] bg-[var(--adm-line-soft)]", className)} />;
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-8 pb-10">
-      <Card className="p-6">
-        <div className="flex items-center gap-4">
-          <Skel className="h-12 w-12 rounded-[12px]" />
-          <div className="space-y-2"><Skel className="h-6 w-48" /><Skel className="h-3 w-32" /></div>
-        </div>
-        <div className="mt-6 flex gap-8">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex-1 space-y-2"><Skel className="h-3 w-20" /><Skel className="h-7 w-12" /></div>
-          ))}
-        </div>
-      </Card>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Skel className="h-64 rounded-[12px]" />
-        <Skel className="h-64 rounded-[12px] lg:col-span-2" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-28 rounded-[12px]" />)}
-      </div>
-    </div>
-  );
-}
 
 // ── dashboard ────────────────────────────────────────────────────────────────
 
@@ -731,11 +804,23 @@ export default function AdminDashboard() {
   );
 
   // ── header stat row ─────────────────────────────────────────────────────────
-  const headStats = [
-    { label: "Open roles",   value: openReqCount,   sub: "current" },
-    { label: "In play",      value: activeCount,    sub: `${applications.length} apps` },
-    { label: "Interviews",   value: interviewCount, sub: "active" },
-    { label: "Placements",   value: placementCount, sub: rangeStart !== null ? rangeLabel.toLowerCase() : "all time" },
+  /* Each figure that COUNTS something links to the records behind it. A number
+     you cannot act on is a poster; this row is the top of the funnel into the
+     rest of the app, and previously every one of these was a dead <div>.
+
+     Coverage and time-to-hire carry no href on purpose — they are ratios over
+     the whole set, not a filterable subset, so there is no list to land on.
+     Giving them a hover state would promise a destination that does not
+     exist. */
+  const headStats: { label: string; value: React.ReactNode; sub: string; href?: string }[] = [
+    { label: "Open roles",   value: openReqCount,   sub: "current",
+      href: "/admin/jobs" },
+    { label: "In play",      value: activeCount,    sub: `${applications.length} apps`,
+      href: "/admin/applications" },
+    { label: "Interviews",   value: interviewCount, sub: "active",
+      href: "/admin/applications?status=interview" },
+    { label: "Placements",   value: placementCount, sub: rangeStart !== null ? rangeLabel.toLowerCase() : "all time",
+      href: "/admin/applications?status=hired" },
     { label: "Coverage",     value: coverage !== null ? coverage : "—", sub: "per role" },
     { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "—", sub: "median" },
   ];
@@ -798,23 +883,40 @@ export default function AdminDashboard() {
 
           {/* Hairline-divided stat columns, the Conduktor signature. */}
           <div className="grid flex-1 grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-0">
-            {headStats.map((s, i) => (
-              <div
-                key={s.label}
-                className={cn(
-                  "px-0 lg:px-5",
-                  i > 0 && "lg:border-l lg:border-[var(--adm-line)]",
-                )}
-              >
-                <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
-                  {s.label}
-                </div>
-                <div className="mt-1.5 text-[26px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
-                  {s.value}
-                </div>
-                <div className="mt-1 text-[11.5px] text-[var(--adm-ink-subtle)]">{s.sub}</div>
-              </div>
-            ))}
+            {headStats.map((s, i) => {
+              const body = (
+                <>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
+                    {s.label}
+                  </div>
+                  <div className={cn(
+                    "mt-1.5 text-[26px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]",
+                    s.href && "transition-colors group-hover:text-[var(--adm-accent)]",
+                  )}>
+                    {s.value}
+                  </div>
+                  <div className="mt-1 text-[11.5px] text-[var(--adm-ink-subtle)]">{s.sub}</div>
+                </>
+              );
+              const divider = i > 0 && "lg:border-l lg:border-[var(--adm-line)]";
+              return s.href ? (
+                <Link
+                  key={s.label}
+                  href={s.href}
+                  // A real anchor, not an onClick div: middle-click, open-in-
+                  // new-tab and the browser's own link affordances all matter
+                  // on a figure someone reaches for a dozen times a day.
+                  className={cn(
+                    "group -mx-2 rounded-[8px] px-2 py-1 transition-colors hover:bg-[var(--adm-accent-tint)] lg:mx-0 lg:px-5",
+                    divider,
+                  )}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={s.label} className={cn("px-0 lg:px-5", divider)}>{body}</div>
+              );
+            })}
           </div>
         </div>
       </Card>
@@ -906,7 +1008,7 @@ export default function AdminDashboard() {
                 <div className="mt-1.5 text-[12px] text-[var(--adm-ink-subtle)]">received, {period}</div>
               </div>
               <div className="min-w-0 flex-1">
-                <LineChart data={trend} dataKey="applied" xKey="date" xFmt={xFmt} color="var(--adm-data)" />
+                <LineChart data={trend} dataKey="applied" label="Applications" xKey="date" xFmt={xFmt} color="var(--adm-data)" />
               </div>
             </div>
           </Card>
@@ -940,7 +1042,9 @@ export default function AdminDashboard() {
                 <LineChart
                   data={trend}
                   dataKey="hired"
+                  label="Hired"
                   dataKey2="rejected"
+                  label2="Rejected"
                   xKey="date"
                   xFmt={xFmt}
                   color="var(--adm-success)"

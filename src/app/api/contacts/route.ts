@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { sendContactNotificationEmail } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // ── Spam heuristics (no external dependencies) ──────────────────────────────
 // A "token" is treated as random/bot-generated if it's long and either has no
@@ -105,6 +106,20 @@ export async function GET(request: NextRequest) {
 // POST /api/contacts - Create a new contact submission
 export async function POST(request: NextRequest) {
   try {
+    /* Throttle before doing any work.
+     *
+     * This is the only public write on the site that was unthrottled, and it is
+     * the most expensive one per request: a contacts row, an in-app
+     * notification, and an SES email to the team. The honeypot below stops
+     * naive bots, but anything that reads the form first defeats it by leaving
+     * the decoy empty and waiting three seconds — so the honeypot is a filter,
+     * not a limit.
+     *
+     * Fails open by design (see lib/rate-limit): a limiter that is down must
+     * never be the reason a real enquiry cannot be sent. */
+    const limited = await checkRateLimit(request, RATE_LIMITS.contact);
+    if (!limited.allowed) return limited.response!;
+
     const body = await request.json();
 
     // ── Anti-spam gate ──────────────────────────────────────────────────────
@@ -151,31 +166,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create in-app notification for admin panel
-    createNotification({
-      id: uuidv4(),
-      type: "contact_received",
-      title: "New Contact Submission",
-      message: `${body.firstName} ${body.lastName} from ${body.company} - ${body.inquiryType}`,
-      link: `/admin/contacts`,
-      relatedId: contact.id,
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    }).catch((err) => console.error("Failed to create notification:", err));
-
-    // Send email notification to admin
+    /* Both of these run AFTER the response, inside after().
+     *
+     * They were fired unawaited with a .catch() and nothing holding the
+     * invocation open. That works on a long-lived server and is unreliable on
+     * Lambda, which is what Amplify runs: once the response is returned the
+     * execution environment can freeze, and an in-flight promise nobody is
+     * tracking dies with it. The symptom is the worst kind — intermittent.
+     * Some enquiries notify the team and email them, some silently do neither,
+     * with nothing in between to explain the difference.
+     *
+     * after() keeps the function alive until they finish without making the
+     * person filling in the form wait for an email round-trip. The same
+     * mechanism already runs resume analysis on the applications route. */
     const adminEmail = process.env.NEXT_AWS_SES_FROM_EMAIL || "hiring@oceanbluecorp.com";
-    sendContactNotificationEmail({
-      adminEmail,
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      email: contact.email,
-      phone: contact.phone,
-      company: contact.company,
-      jobTitle: contact.jobTitle,
-      inquiryType: contact.inquiryType,
-      message: contact.message,
-    }).catch((err) => console.error("Failed to send contact notification email:", err));
+    after(async () => {
+      await Promise.allSettled([
+        createNotification({
+          id: uuidv4(),
+          type: "contact_received",
+          title: "New Contact Submission",
+          message: `${body.firstName} ${body.lastName} from ${body.company} - ${body.inquiryType}`,
+          link: `/admin/contacts`,
+          relatedId: contact.id,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        }).catch((err) => { console.error("Failed to create notification:", err); throw err; }),
+        sendContactNotificationEmail({
+          adminEmail,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company: contact.company,
+          jobTitle: contact.jobTitle,
+          inquiryType: contact.inquiryType,
+          message: contact.message,
+        }).catch((err) => { console.error("Failed to send contact notification email:", err); throw err; }),
+      ]);
+    });
 
     return NextResponse.json(
       { message: "Contact form submitted successfully", contact },

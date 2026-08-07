@@ -19,6 +19,8 @@ import {
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Avatar } from "@/components/admin/avatar";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { AccountState } from "@/components/admin/users/account-state";
+import { undoable } from "@/lib/undo";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
@@ -59,7 +61,11 @@ const NO_ROLE = { label: "No role", tone: "slate" as Tone };
 const STATUS_META: Record<User["status"], { label: string; tone: Tone }> = {
   active:   { label: "Active",   tone: "emerald" },
   pending:  { label: "Invited",  tone: "amber"   },
-  inactive: { label: "Inactive", tone: "slate"   },
+  // `rose`, not `slate`. Neutral made a revoked account read as "no status
+  // recorded" rather than "cannot sign in" — an absence rather than a state.
+  // Inactive is a deliberate act with a real consequence and should look like
+  // one wherever it appears, including the filter pill and the counts.
+  inactive: { label: "Inactive", tone: "rose"    },
 };
 
 const ROLE_TABS: { key: string; label: string }[] = [
@@ -111,6 +117,9 @@ export default function UsersPage() {
       setLoading(false);
     }
   };
+
+  /** Which row's switch is mid-flight, so only that one shows the spinner. */
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -177,18 +186,48 @@ export default function UsersPage() {
     }
   };
 
+  /**
+   * Deactivating is undoable, not confirmed.
+   *
+   * This screen shipped a confirm dialog for deactivation earlier today, on the
+   * reasoning that revoking a colleague's access should not be one stray click.
+   * That reasoning was half right and the remedy was wrong: a confirm taxes
+   * every correct invocation to half-protect the rare mistake, and because it
+   * fires every time, it trains people to dismiss it — so the one that mattered
+   * gets clicked through too.
+   *
+   * Deactivation has an exact inverse, so it does not need to be prevented, it
+   * needs to be reversible. The action lands immediately and the toast carries
+   * Undo. Delete keeps its dialog, because a deleted account has no inverse.
+   */
+  const setStatus = async (user: User, next: "active" | "inactive") => {
+    const response = await fetch(`/api/users/${user.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: next }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update status");
+    setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, status: next } : u)));
+  };
+
   const handleToggleStatus = async (user: User) => {
-    const newStatus = user.status === "active" ? "inactive" : "active";
+    const next = user.status === "active" ? "inactive" : "active";
+    const previous = user.status as "active" | "inactive";
+    setTogglingId(user.id);
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+      await setStatus(user, next);
+      const who = user.name || user.email;
+      undoable({
+        message: next === "inactive"
+          ? `${who} can no longer sign in`
+          : `${who} can sign in again`,
+        undo: () => setStatus(user, previous),
+        undoErrorMessage: "Couldn't undo that - the account status is unchanged from the new value.",
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to update status");
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newStatus as "active" | "inactive" } : u));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -302,14 +341,13 @@ export default function UsersPage() {
       cell: u => {
         const meta = STATUS_META[u.status] || STATUS_META.pending;
         return (
-          <button
-            type="button"
-            onClick={() => handleToggleStatus(u)}
-            aria-label={`Toggle status for ${u.name || u.email}`}
-            className="rounded-[4px] transition-opacity hover:opacity-75"
-          >
-            <StatusBadge tone={meta.tone} label={meta.label} size="md" />
-          </button>
+          <AccountState
+            status={u.status}
+            label={meta.label}
+            tone={meta.tone}
+            busy={togglingId === u.id}
+            onToggle={() => void handleToggleStatus(u)}
+          />
         );
       },
     },

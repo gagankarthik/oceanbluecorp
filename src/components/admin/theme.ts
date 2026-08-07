@@ -32,19 +32,24 @@ export const tones: Record<Tone, {
  *
  * Semantic tones alias the admin tokens so a brand retune moves them too;
  * categorical ones are literals because they have no token.
+ *
+ * EVERY value here clears 4.5:1 as text on white, and tests/contrast.test.ts
+ * fails if one stops doing so. That constraint is why the semantic entries
+ * point at the `-ink` tokens rather than the base ones: these are used as text
+ * far more than as fills, and the base tokens are tuned for fills.
  */
 export const toneColor: Record<Tone, string> = {
-  blue:    "var(--adm-accent)",
-  indigo:  "#6366f1",
-  violet:  "#8b5cf6",
-  emerald: "var(--adm-success)",
-  amber:   "var(--adm-warning)",
-  rose:    "var(--adm-danger)",
-  sky:     "#0284c7",
-  slate:   "#64748b",
-  teal:    "#0d9488",
-  cyan:    "#0891b2",
-  purple:  "#9333ea",
+  blue:    "var(--adm-accent)",       // 6.70:1
+  indigo:  "#4f46e5",                 // was #6366f1 at 4.47:1 — just under AA
+  violet:  "#7c3aed",                 // was #8b5cf6 at 4.23:1
+  emerald: "var(--adm-success-ink)",  // the fill token is 3.77:1 as text
+  amber:   "var(--adm-warning-ink)",  // the fill token is 3.19:1 as text
+  rose:    "var(--adm-danger-ink)",   // the base is 4.01:1 on its own tint
+  sky:     "#0369a1",                 // 5.93:1 (was #0284c7 at 4.10:1)
+  slate:   "#64748b",                 // 4.76:1
+  teal:    "#0f766e",                 // 5.47:1 (was #0d9488 at 3.74:1)
+  cyan:    "#0e7490",                 // 5.36:1 (was #0891b2 at 3.68:1)
+  purple:  "#9333ea",                 // 5.38:1
 };
 
 export type AppStatus =

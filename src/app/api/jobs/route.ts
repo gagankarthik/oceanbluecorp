@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
@@ -119,18 +119,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create in-app notification for admin panel (only for active/open jobs)
+    /* In-app notification, after the response and awaited inside it.
+       Fired unawaited this was a promise nobody held: on Lambda the invocation
+       can freeze as soon as the response returns, so the notification appeared
+       for some postings and not others with nothing to distinguish them. */
     if (job.status === "active" || job.status === "open") {
-      createNotification({
-        id: uuidv4(),
-        type: "job_posted",
-        title: "New Job Posted",
-        message: `${job.title} in ${job.department} - ${job.location}`,
-        link: `/admin/jobs`,
-        relatedId: job.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      }).catch((err) => console.error("Failed to create notification:", err));
+      after(async () => {
+        try {
+          await createNotification({
+            id: uuidv4(),
+            type: "job_posted",
+            title: "New Job Posted",
+            message: `${job.title} in ${job.department} - ${job.location}`,
+            link: `/admin/jobs`,
+            relatedId: job.id,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (err) {
+          console.error("Failed to create job notification:", err);
+        }
+      });
     }
 
     // Send email notifications for new job posting (only for active/open jobs)

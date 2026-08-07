@@ -104,4 +104,15 @@ export const RATE_LIMITS = {
   application: { action: "apply", limit: 5, windowSeconds: 60 } as RateLimitRule,
   /** Public resume upload — heavier, since each one writes to S3. */
   resumeUpload: { action: "resume-upload", limit: 10, windowSeconds: 300 } as RateLimitRule,
+  /**
+   * Public contact form.
+   *
+   * Tighter than an application because each submission costs more on the way
+   * out: a contacts row, an in-app notification, AND an SES email to the team.
+   * The route already carries a honeypot field and a submit-timing check, but
+   * both are trivially defeated by anything that reads the form before posting
+   * to it — leave the decoy input empty, wait three seconds, and you are through.
+   * A real person sends one of these; three in five minutes is already generous.
+   */
+  contact: { action: "contact", limit: 3, windowSeconds: 300 } as RateLimitRule,
 } as const;

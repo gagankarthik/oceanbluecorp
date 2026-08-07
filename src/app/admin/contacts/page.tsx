@@ -2,27 +2,23 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
-import {
-  IconBuilding, IconCalendar, IconDownload, IconJob, IconMail,
-  IconMessage, IconPhone, IconSend,
-  IconTrash,
-} from "@/components/admin/icons";
+import { ArrowLeft, X } from "lucide-react";
+// The contact-detail icons moved with the detail pane into
+// components/admin/contacts/contact-detail.tsx.
+import { IconDownload, IconMessage } from "@/components/admin/icons";
 import type { Contact } from "@/lib/aws/dynamodb";
-import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
+import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
-import { StatusBadge } from "@/components/admin/status-badge";
-import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, GridSelect, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, StatStrip,
 } from "@/components/admin/workspace";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { FormSelect } from "@/components/admin/forms/primitives";
-import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
-import { statusColor, type Tone } from "@/components/admin/theme";
+import { ContactList } from "@/components/admin/contacts/contact-list";
+import { ContactDetail } from "@/components/admin/contacts/contact-detail";
+import { cn } from "@/lib/utils";
+import { type Tone } from "@/components/admin/theme";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -39,11 +35,6 @@ const STATUSES: { key: ContactStatus; label: string; tone: Tone }[] = [
 const STATUS_META = Object.fromEntries(STATUSES.map((s) => [s.key, s])) as Record<string, (typeof STATUSES)[number]>;
 
 const STATUS_TABS = [{ key: "all", label: "All" }, ...STATUSES.map((s) => ({ key: s.key as string, label: s.label }))];
-
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
-function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
-}
 
 // ── page ─────────────────────────────────────────────────────────────────────
 
@@ -167,88 +158,8 @@ export default function ContactsPage() {
     ? `${Math.round(((statusCounts.responded || 0) / contacts.length) * 100)}%`
     : "—";
 
-  const [rows, setRows] = useLocalStorage<number>("adm.contacts.rows", 25);
-  const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.contacts.hiddenCols", []);
   const clearFilters = () => { setStatusFilter("all"); setInquiryFilter("all"); setSearchQuery(""); };
 
-  // ── grid columns ──────────────────────────────────────────────────────────
-
-  const columns: DataTableColumn<Contact>[] = [
-    {
-      key: "name", header: "Contact", label: "Contact", width: "240px", locked: true, sortValue: (c) => `${c.firstName} ${c.lastName}`,
-      cell: (c) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={`${c.firstName} ${c.lastName}`} email={c.email} size="sm" />
-          <span className="truncate font-semibold text-[var(--adm-ink)]">{c.firstName} {c.lastName}</span>
-          {c.status === "new" && (
-            <span aria-label="Unread" className="h-1.5 w-1.5 flex-none rounded-full bg-[var(--adm-accent)]" />
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "email", header: "Email", label: "Email", width: "240px", sortValue: (c) => c.email, hideBelow: "lg",
-      cell: (c) => (
-        <a
-          href={`mailto:${c.email}`}
-          onClick={(e) => e.stopPropagation()}
-          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          {c.email}
-        </a>
-      ),
-    },
-    {
-      key: "company", header: "Company", label: "Company", width: "190px", sortValue: (c) => c.company || "", hideBelow: "md",
-      cell: (c) => c.company ? <span className="text-[var(--adm-ink-mute)]">{c.company}</span> : <Blank />,
-    },
-    {
-      key: "inquiryType", header: "Type", label: "Type", width: "150px", sortValue: (c) => c.inquiryType || "", hideBelow: "xl",
-      cell: (c) => c.inquiryType
-        ? <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-xs font-medium text-[var(--adm-ink-mute)]">{c.inquiryType}</span>
-        : <Blank />,
-    },
-    {
-      key: "status", header: "Status", label: "Status", width: "150px", sortValue: (c) => c.status,
-      cell: (c) => (
-        <GridSelect
-          value={c.status}
-          dot={statusColor(c.status)}
-          ariaLabel={`Status for ${c.firstName} ${c.lastName}`}
-          onChange={(e) => handleStatusChange(c.id, e.target.value as ContactStatus)}
-        >
-          {STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-        </GridSelect>
-      ),
-    },
-    {
-      key: "createdAt", header: "Received", label: "Received", width: "150px", sortValue: (c) => new Date(c.createdAt).getTime(), hideBelow: "sm",
-      cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(c.createdAt)}</span>,
-    },
-    {
-      key: "actions", header: "", align: "right",
-      cell: (c) => (
-        <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
-          <a
-            href={`mailto:${c.email}?subject=Re: ${c.inquiryType} Inquiry`}
-            title="Reply"
-            aria-label={`Reply to ${c.firstName} ${c.lastName}`}
-            className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
-          >
-            <IconSend className="h-4 w-4" aria-hidden="true" />
-          </a>
-          <button
-            onClick={() => setPendingDelete(c.id)}
-            title="Delete"
-            aria-label={`Delete ${c.firstName} ${c.lastName}`}
-            className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
-          >
-            <IconTrash className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      ),
-    },
-  ];
 
   // ── states ────────────────────────────────────────────────────────────────
 
@@ -270,7 +181,7 @@ export default function ContactsPage() {
   }
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <ConfirmDialog
         open={!!pendingDelete}
         title="Delete contact?"
@@ -317,18 +228,9 @@ export default function ContactsPage() {
               placeholder="Filter enquiries by name, email or message"
             />
           }
-          trailing={
-            <>
-              <DisplayMenu
-                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                hidden={hiddenColumns}
-                onHiddenChange={setHiddenColumns}
-                rows={rows}
-                onRowsChange={setRows}
-                onReset={() => { setHiddenColumns([]); setRows(25); }}
-              />
-            </>
-          }
+          /* No DisplayMenu: it managed hidden columns and page size for a
+             grid that no longer exists. A split view has one row shape and an
+             index that simply scrolls, so there is nothing left to configure. */
         >
           <FilterPill
             label="Status"
@@ -370,142 +272,88 @@ export default function ContactsPage() {
           onClearAll={clearFilters}
       />
 
-      <Workspace>
-        <DataTable
-          noun="enquiries"
-          storageKey="contacts"
-          columns={columns}
-          rows={filteredContacts}
-          rowKey={(c) => c.id}
-          onRowClick={openContact}
-          initialSort={{ key: "createdAt", dir: "desc" }}
-          pageSize={rows}
-          onPageSizeChange={setRows}
-          hiddenColumns={hiddenColumns}
-          empty={{
-            icon: IconMessage,
-            title: contacts.length === 0 ? "No contacts yet" : "No contacts match your filters",
-            description: contacts.length === 0
-              ? "Submissions from the website contact form will appear here."
-              : "Try adjusting your search or clearing a filter.",
-            action: contacts.length > 0 && hasActiveFilters
-              ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
-              : undefined,
-          }}
-        />
-      </Workspace>
+      {/* ── Split view: index left, reading pane right ─────────────────────
+          Was a full-width grid plus a centred modal, which made triage
+          open → read → close → find your place → open again. A mail layout
+          removes three of those five steps, and it is the shape everyone
+          already knows from their inbox (Jakob's Law).
 
-      {/* ── detail drawer ── */}
-      {selectedContact && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
-          onClick={() => setSelectedContact(null)}
+          `h-full min-h-0` on the wrapper and `min-h-0` on both panes: the
+          shell gives `main` a fixed height, so bounding this makes each pane
+          scroll independently instead of the page scrolling as one. Without
+          `min-h-0` a flex child refuses to shrink below its content and both
+          panes grow the page instead. */}
+      <div className="flex min-h-0 flex-1 gap-4">
+        {/* Index. Fixed width on desktop so the reading measure stays stable
+            as the window resizes; full width on mobile, where it swaps with
+            the detail rather than sitting beside it. */}
+        <Workspace
+          className={cn(
+            "min-h-0 lg:w-[22rem] lg:flex-none xl:w-[26rem]",
+            selectedContact && "hidden lg:flex",
+          )}
         >
-          <div
-            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar name={`${selectedContact.firstName} ${selectedContact.lastName}`} email={selectedContact.email} size="lg" />
-                <div className="min-w-0">
-                  <h2 className="truncate text-[17px] font-bold leading-tight text-[var(--adm-ink)]">
-                    {selectedContact.firstName} {selectedContact.lastName}
-                  </h2>
-                  <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-subtle)]">{selectedContact.company}</p>
-                </div>
-                <StatusBadge
-                  status={selectedContact.status}
-                  tone={STATUS_META[selectedContact.status]?.tone}
-                  label={STATUS_META[selectedContact.status]?.label}
-                  size="md"
-                />
-              </div>
-              <button
-                onClick={() => setSelectedContact(null)}
-                aria-label="Close"
-                className="flex-none rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex-none border-b border-[var(--adm-line)] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
+              {filteredContacts.length} {filteredContacts.length === 1 ? "enquiry" : "enquiries"}
             </div>
-
-            <div className="flex-1 overflow-y-auto p-5">
-              <div className="grid gap-5 md:grid-cols-2">
-                {/* Contact details */}
-                <div className="space-y-3">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Contact information</h3>
-                  <div className="divide-y divide-[var(--adm-line-soft)] rounded-[6px] border border-[var(--adm-line)]">
-                    <a href={`mailto:${selectedContact.email}`} className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
-                      <IconMail className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.email}</span>
-                    </a>
-                    {selectedContact.phone && (
-                      <a href={`tel:${selectedContact.phone}`} className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]">
-                        <IconPhone className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />{selectedContact.phone}
-                      </a>
-                    )}
-                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)]">
-                      <IconBuilding className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.company}</span>
-                    </div>
-                    {selectedContact.jobTitle && (
-                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-[var(--adm-ink-mute)]">
-                        <IconJob className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" /><span className="truncate">{selectedContact.jobTitle}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
-                      <IconCalendar className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />{fmtDateTime(selectedContact.createdAt)}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Inquiry type</p>
-                    <span className="inline-flex rounded-[4px] bg-[var(--adm-surface-2)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
-                      {selectedContact.inquiryType}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="space-y-3">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Status &amp; actions</h3>
-                  <div className="space-y-1.5">
-                    <label htmlFor="contact-status" className="block text-[13px] font-medium text-[var(--adm-ink-mute)]">Update status</label>
-                    <FormSelect
-                      id="contact-status"
-                      value={selectedContact.status}
-                      onChange={e => handleStatusChange(selectedContact.id, e.target.value as ContactStatus)}
-                    >
-                      {STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                    </FormSelect>
-                  </div>
-                  <a
-                    href={`mailto:${selectedContact.email}?subject=Re: ${selectedContact.inquiryType} Inquiry`}
-                    onClick={() => { if (selectedContact.status !== "responded") handleStatusChange(selectedContact.id, "responded"); }}
-                    className="flex w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
-                  >
-                    <IconSend className="h-4 w-4" /> Reply via email
-                  </a>
-                  <button
-                    onClick={() => setPendingDelete(selectedContact.id)}
-                    className="flex w-full items-center justify-center gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] px-4 py-2.5 text-[14px] font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
-                  >
-                    <IconTrash className="h-4 w-4" /> Delete contact
-                  </button>
-                </div>
-              </div>
-
-              {/* Message */}
-              <div className="mt-5">
-                <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">
-                  <IconMessage className="h-3.5 w-3.5" /> Message
-                </h3>
-                <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-zebra)] p-4">
-                  <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{selectedContact.message}</p>
-                </div>
-              </div>
+            <div className="min-h-0 flex-1">
+              <ContactList
+                contacts={filteredContacts}
+                selectedId={selectedContact?.id}
+                onSelect={openContact}
+                statusMeta={STATUS_META}
+                emptyTitle={contacts.length === 0 ? "No contacts yet" : "No contacts match your filters"}
+                emptyDescription={
+                  contacts.length === 0
+                    ? "Submissions from the website contact form will appear here."
+                    : "Try adjusting your search or clearing a filter."
+                }
+                emptyAction={
+                  contacts.length > 0 && hasActiveFilters
+                    ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
+                    : undefined
+                }
+              />
             </div>
           </div>
-        </div>
-      )}
-    </>
+        </Workspace>
+
+        {/* Reading pane */}
+        <Workspace className={cn("min-h-0 flex-1", !selectedContact && "hidden lg:flex")}>
+          {selectedContact ? (
+            <>
+              {/* Back to the list — mobile only, where the panes swap. */}
+              <button
+                onClick={() => setSelectedContact(null)}
+                className="flex flex-none items-center gap-1.5 border-b border-[var(--adm-line)] px-4 py-2.5 text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)] lg:hidden"
+              >
+                <ArrowLeft className="h-4 w-4" /> All enquiries
+              </button>
+              <ContactDetail
+                contact={selectedContact}
+                statuses={STATUSES}
+                statusMeta={STATUS_META}
+                onStatusChange={handleStatusChange}
+                onDelete={setPendingDelete}
+              />
+            </>
+          ) : (
+            <div className="grid h-full place-items-center p-8">
+              <div className="text-center">
+                <IconMessage className="mx-auto h-8 w-8 text-[var(--adm-line-strong)]" />
+                <p className="mt-3 text-[14px] font-semibold text-[var(--adm-ink-mute)]">
+                  Select an enquiry to read it
+                </p>
+                <p className="mt-1 text-[13px] text-[var(--adm-ink-subtle)]">
+                  Use ↑ and ↓ to move through the list.
+                </p>
+              </div>
+            </div>
+          )}
+        </Workspace>
+      </div>
+
+    </div>
   );
 }

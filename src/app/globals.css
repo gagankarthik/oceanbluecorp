@@ -1357,11 +1357,28 @@
   /* Ink */
   --adm-ink:        #0f172a;                  /* headings, primary values (slate-900) */
   --adm-ink-mute:   #64748b;                  /* labels, secondary text (slate-500) */
-  --adm-ink-subtle: #94a3b8;                  /* hints, timestamps (slate-400) */
+  /* Was #94a3b8 (slate-400), which is 2.56:1 on white — a clear WCAG 1.4.3
+     failure for the labels, hints and timestamps this token colours. It reads
+     as "quiet" on a designer's monitor and as "unreadable" on a laptop at an
+     angle. #6b7280 is the lightest step that clears 4.5:1 (4.83). Measured by
+     tests/contrast.test.mjs, which fails if this is lightened again. */
+  --adm-ink-subtle: #6b7280;                  /* hints, timestamps */
 
   /* Status (match tones in components/admin/theme.ts) */
   --adm-success: #059669;
   --adm-warning: #d97706;
+  /* Text-weight variants. The base tokens above are tuned as FILLS — dots,
+     switch tracks, tinted chips — where they read correctly, but as TEXT they
+     are 3.77:1 (success) and 3.19:1 (warning) on white and fail 1.4.3. Two
+     tokens rather than darkening the base, because darkening the base would
+     also darken every dot and fill that is currently right. */
+  --adm-success-ink: #047857;                 /* 5.48:1 on white */
+  --adm-warning-ink: #b45309;                 /* 5.02:1 on white */
+  /* --adm-danger is 4.70:1 on white and passes there, but only 4.01:1 on its
+     own 10% tint — which is exactly where it is used, in the unclaimed claim
+     button. Tinted backgrounds eat contrast, so the tint case needs its own
+     value even when the plain case is fine. */
+  --adm-danger-ink:  #be123c;                 /* 6.29:1 white, 5.37:1 on tint */
   --adm-danger:  #e11d48;
   --adm-info:    #4f46e5;
 
