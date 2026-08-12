@@ -12,17 +12,18 @@ import {
   Cloud,
   Users,
   Cpu,
-  Building,
   Settings,
   Headphones,
-  Briefcase,
   Wrench,
   LogOut,
   LayoutDashboard,
   ArrowRight,
   ArrowUpRight,
 } from "lucide-react";
-import { IllDocs, IllBlog, IllNews, IllStories, IllCases } from "@/components/landing/motifs/Motifs";
+import {
+  IllDocs, IllBlog, IllNews, IllStories, IllCases,
+  IllBuilding, IllTeam, IllCareers, IllContact, IllPositions, IllProducts, IllBrandKit,
+} from "@/components/landing/motifs/Motifs";
 import { useAuth, UserRole } from "@/lib/auth";
 import { IconHrPortal } from "@/components/admin/icons";
 
@@ -34,16 +35,9 @@ const solutions = [
   { name: "Managed Services",              href: "/solutions/managed",     icon: Headphones, description: "24/7 operations, one SLA" },
 ];
 
-const aboutItems = [
-  { name: "About Us",  href: "/about",      icon: Building,   description: "Our story, principles, and how we work." },
-  { name: "Our Team",  href: "/team",       icon: Users,      description: "Meet the leadership behind the practice." },
-  { name: "Careers",   href: "/careers",    icon: Briefcase,  description: "Open roles and life at Ocean Blue." },
-];
-
 const navigation = [
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
   { name: "Solutions", href: "/solutions", hasDropdown: true, dropdownType: "solutions" },
-  { name: "Products", href: "/products" },
   { name: "Resources", href: "/developers", hasDropdown: true, dropdownType: "resources" },
   { name: "Careers", href: "/careers" },
   // Contact is deliberately absent — it renders as an action at the right end
@@ -73,11 +67,11 @@ const navigation = [
 type MenuItem = {
   name: string;
   href: string;
-  /** Drawn from the shared motif set. Optional — Solutions and About carry no
-   *  icons, and adding them there would be decoration, since a wrench beside
-   *  "Engineering Talent" tells you nothing the words do not. Resources is
-   *  different: the five are different KINDS of thing, and the glyph is what
-   *  separates a case study from a news item at a glance. */
+  /** Drawn from the shared motif set. Optional, and carried only by the CELL
+   *  menus (About, Resources), whose entries are different kinds of thing. The
+   *  Solutions columns stay bare: those entries are all one kind of thing, and
+   *  a wrench beside "Engineering Talent" would tell you nothing the words do
+   *  not — decoration standing in for a distinction. */
   Icon?: (p: { className?: string }) => React.ReactElement;
   /** The icon's hue. Two tones of one colour — see the note in Motifs. */
   tint?: string;
@@ -114,23 +108,17 @@ const SOLUTIONS_COLUMNS: MenuColumn[] = [
   },
 ];
 
-const ABOUT_COLUMNS: MenuColumn[] = [
-  {
-    heading: "The firm",
-    items: [
-      { name: "About Us", href: "/about" },
-      { name: "Our Team", href: "/team" },
-      { name: "Careers", href: "/careers" },
-    ],
-  },
-  {
-    heading: "Working with us",
-    items: [
-      { name: "Contact", href: "/contact" },
-      { name: "Open positions", href: "/careers/search" },
-      { name: "Products", href: "/products" },
-    ],
-  },
+/* About moves to cells for the same reason Resources did: these six are six
+   different kinds of thing — a company page, a roster, a job board, a form —
+   and a bare list of names makes a reader work out which is which. The two
+   headings that used to group them ("The firm" / "Working with us") were
+   doing that job with words; the drawings do it faster. */
+const ABOUT_CELLS: MenuItem[] = [
+  { name: "About Us", href: "/about", description: "Our story, principles, and how we work", Icon: IllBuilding, tint: "#1d4ed8" },
+  { name: "Our Team", href: "/team", description: "The leadership behind the practice", Icon: IllTeam, tint: "#0EA5E9" },
+  { name: "Careers", href: "/careers", description: "Life at Ocean Blue, and how we hire", Icon: IllCareers, tint: "#0D9488" },
+  { name: "Open positions", href: "/careers/search", description: "Every role we are hiring for right now", Icon: IllPositions, tint: "#6366F1" },
+  { name: "Contact", href: "/contact", description: "Start a conversation with the team", Icon: IllContact, tint: "#0CACCF" },
 ];
 
 /* Resources is laid out as CELLS, not a link column, because the reference
@@ -151,6 +139,8 @@ const RESOURCES_CELLS: MenuItem[] = [
   { name: "News", href: "/news", description: "Announcements, awards, and company updates", Icon: IllNews, tint: "#6366F1" },
   { name: "Customer stories", href: "/customer-stories", description: "How clients describe working with us", Icon: IllStories, tint: "#0EA5E9" },
   { name: "Case studies", href: "/case-studies", description: "Engagements in detail, with the outcomes", Icon: IllCases, tint: "#0D9488" },
+  { name: "Products", href: "/products", description: "The platforms we build and run ourselves", Icon: IllProducts, tint: "#0975C1" },
+  { name: "Brand kit", href: "/brand-kit", description: "Logos, colours, and usage guidance", Icon: IllBrandKit, tint: "#7C3AED" },
 ];
 
 /* One table, so adding a menu is adding a row rather than extending a chain
@@ -161,7 +151,7 @@ type Menu =
 
 const MENUS: Record<string, Menu> = {
   solutions: { layout: "columns", columns: SOLUTIONS_COLUMNS },
-  about: { layout: "columns", columns: ABOUT_COLUMNS },
+  about: { layout: "cells", cells: ABOUT_CELLS },
   resources: { layout: "cells", cells: RESOURCES_CELLS },
 };
 
@@ -378,7 +368,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   };
   const getDropdownItems = (type: string): MobileItem[] => {
     if (type === "solutions") return solutions.map(({ name, href, description }) => ({ name, href, description }));
-    if (type === "about") return aboutItems.map(({ name, href, description }) => ({ name, href, description }));
+    if (type === "about") return ABOUT_CELLS;
     if (type === "resources") return RESOURCES_CELLS;
     return [];
   };

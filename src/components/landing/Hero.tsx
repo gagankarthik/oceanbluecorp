@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion
 import { ArrowRight } from "lucide-react";
 import WordsRise from "./motion/WordsRise";
 import { Cta } from "./ui";
-import ShaderBackdrop from "./ShaderBackdrop";
+import VideoBackdrop from "./VideoBackdrop";
 
 /* Three statements, no photographs. The hero is the shader gradient now, so
    the rotation is purely editorial: same ground, three arguments.
@@ -44,21 +44,25 @@ export default function Hero({ content = {} }: { content?: Record<string, string
       className="relative isolate flex min-h-[88svh] w-full flex-col overflow-hidden sm:min-h-[92vh]"
       style={{ background: "#07142b" }}
     >
-      {/* The ground. Was a three-photograph crossfade; it is the shader
-          gradient now, at full strength because here it IS the hero rather
-          than a tint over something else. */}
-      <ShaderBackdrop className="z-0" intensity={80} />
+      {/* The ground. Was a photo crossfade, then a WebGL gradient, now the
+          brand film. The path is URL-encoded because the asset ships with a
+          space in its filename. */}
+      <VideoBackdrop src="/video/Hero%20Video.mp4" className="z-0" intensity={100} />
 
       {/* Brand scrim */}
       <div
         aria-hidden
         className="absolute inset-0 z-[1]"
         style={{
-          // Centre-weighted now: with no photograph underneath, the scrim's
-          // only job is to keep the centred headline legible wherever the
-          // shader happens to be bright at that moment.
+          // Retuned for film. The previous values were set against a shader
+          // whose darkest state was already near-black; footage is brighter,
+          // moves, and cannot be relied on to be dark anywhere in particular,
+          // so the headline needs a floor of contrast that does not depend on
+          // which frame is showing. A flat wash carries that floor, the centre
+          // radial deepens it behind the words, and the top and bottom ramps
+          // hold the nav and the scroll edge.
           background:
-            "radial-gradient(70% 60% at 50% 45%, rgba(4,10,24,0.55) 0%, rgba(4,10,24,0.2) 55%, transparent 80%), linear-gradient(0deg, rgba(4,10,24,0.55) 0%, transparent 40%)",
+            "linear-gradient(180deg, rgba(4,10,24,0.72) 0%, rgba(4,10,24,0.42) 30%, rgba(4,10,24,0.42) 70%, rgba(4,10,24,0.8) 100%), radial-gradient(65% 55% at 50% 45%, rgba(4,10,24,0.5) 0%, transparent 75%)",
         }}
       />
 

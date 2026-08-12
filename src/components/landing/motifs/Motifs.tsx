@@ -307,3 +307,86 @@ export function IllCases({ className = "" }: MotifProps) {
     </Frame>
   );
 }
+
+/* ---------- about menu ----------
+
+   Six more in the same frame and stroke, for the About menu once it moved to
+   the cell layout Resources uses. Same rule as always: each depicts its own
+   destination. `IllTeam` above already draws a team, so "Our Team" reuses it
+   rather than getting a second, slightly different set of people.            */
+
+/** About us: the office, and the mark on the door. */
+export function IllBuilding({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M10 42V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v32" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M10 42V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v32" />
+      <path d="M30 20h7a2 2 0 0 1 2 2v20" />
+      <path d="M16 16h8M16 23h8M16 30h8M34 27h2M34 34h2" strokeWidth={1.5} />
+      <path d="M17 42v-6h6v6" />
+      <path d="M5 42h38" />
+    </Frame>
+  );
+}
+
+/** Careers: a role, and the step up it represents. */
+export function IllCareers({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M6 17h36v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M6 17h36v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" />
+      <path d="M18 17v-4a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v4" />
+      <path d="M15 34v-5M24 34v-9M33 34v-13" strokeWidth={2.5} />
+    </Frame>
+  );
+}
+
+/** Contact: a message, sent. */
+export function IllContact({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M7 12h34a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M7 12h34a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2Z" />
+      <path d="m5.5 13.5 18.5 13 18.5-13" />
+    </Frame>
+  );
+}
+
+/** Open positions: the roles currently on the board. */
+export function IllPositions({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M11 7h26a2 2 0 0 1 2 2v32a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M11 7h26a2 2 0 0 1 2 2v32a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+      <path d="M16 17h16M16 25h16M16 33h9" strokeWidth={1.75} />
+      <circle cx="33" cy="33" r="6" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M33 29.5v7M29.5 33h7" strokeWidth={1.75} />
+    </Frame>
+  );
+}
+
+/** Products: the platforms we own, stacked. */
+export function IllProducts({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="m24 6 17 9-17 9-17-9z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="m24 6 17 9-17 9-17-9z" />
+      <path d="m7 24 17 9 17-9" />
+      <path d="m7 33 17 9 17-9" />
+    </Frame>
+  );
+}
+
+/** Brand kit: the palette, and the mark it belongs to. */
+export function IllBrandKit({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M8 10h32a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M8 10h32a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2Z" />
+      {/* Four swatches along the base — the palette itself. */}
+      <path d="M12 31h5M21 31h5M30 31h5" strokeWidth={3} />
+      <path d="M13 17.5c3 3 5 5 5 7a5 5 0 0 1-10 0c0-2 2-4 5-7Z" />
+      <path d="M24 17h12M24 23h8" strokeWidth={1.75} />
+    </Frame>
+  );
+}
