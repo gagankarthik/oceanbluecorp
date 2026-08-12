@@ -35,6 +35,21 @@ const COUNTRY_CODES = [
   { code: "+91", flag: "🇮🇳", label: "IN" },
 ];
 
+// Mirrors the user pool's password policy exactly (min 8 + upper + lower +
+// number + symbol). Checking it here is what keeps a rejected password from
+// costing the user their challenge session: Cognito burns the session on a
+// refusal, so a policy miss used to turn the next attempt into "session
+// expired" rather than the advice they needed.
+const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
+  { label: "8 characters", test: (v) => v.length >= 8 },
+  { label: "an uppercase letter", test: (v) => /[A-Z]/.test(v) },
+  { label: "a lowercase letter", test: (v) => /[a-z]/.test(v) },
+  { label: "a number", test: (v) => /\d/.test(v) },
+  // Cognito counts only this set as a symbol — a wider test would pass here
+  // and still be refused server-side.
+  { label: "a symbol", test: (v) => /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]/.test(v) },
+];
+
 type E4 = [number, number, number, number];
 const ease: E4 = [0.16, 1, 0.3, 1];
 const inputClass =
@@ -147,10 +162,15 @@ export default function SignInPage() {
   };
 
   const passwordsMatch = confirmPassword === "" || newPassword === confirmPassword;
+  const unmetRules = PASSWORD_RULES.filter((r) => !r.test(newPassword));
 
   const handleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (unmetRules.length > 0) {
+      setError(`Your password still needs ${unmetRules.map((r) => r.label).join(", ")}.`);
+      return;
+    }
     if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
     if (phoneNumber.length !== 10) { setError("Enter a valid 10-digit phone number."); return; }
     setSubmitting(true);
@@ -323,7 +343,19 @@ export default function SignInPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-[11px] text-gray-400">Uppercase, lowercase, number, and symbol required.</p>
+                  {newPassword && unmetRules.length > 0 ? (
+                    <p className="text-[11px] text-amber-600">
+                      Still needs {unmetRules.map((r) => r.label).join(", ")}.
+                    </p>
+                  ) : newPassword ? (
+                    <p className="flex items-center gap-1 text-[11px] text-emerald-600">
+                      <CheckCircle className="h-3 w-3" /> Meets all requirements
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-gray-400">
+                      At least 8 characters, with uppercase, lowercase, number, and symbol.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
