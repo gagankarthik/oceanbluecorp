@@ -17,14 +17,16 @@ import Image from "next/image";
 
    Heights are per badge. Intrinsic ratios run 1:1 to 4.18:1, so a
    single uniform box lets the square hexagon fill its height while
-   the long horizontal lockups shrink to a third of it.
+   the long horizontal lockups shrink to a third of it. The four
+   values keep their proportions to each other, so scaling the row
+   up scales all of them and none of them changes relative weight.
    ============================================================ */
 
 const CERTS = [
-  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-11" },
-  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-8" },
-  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-8" },
-  { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9" },
+  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-[68px]" },
+  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-[46px]" },
+  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-[46px]" },
+  { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-[56px]" },
 ];
 
 export default function CertificationStrip() {
@@ -35,7 +37,7 @@ export default function CertificationStrip() {
             edges open, so the row reads as a strip rather than a boxed table. */}
         <ul className="grid grid-cols-2 divide-y divide-[var(--hz-strip-line)] border-y border-[var(--hz-strip-line)] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
           {CERTS.map((c) => (
-            <li key={c.name} className="flex items-center justify-center px-5 py-7 sm:px-6">
+            <li key={c.name} className="flex items-center justify-center px-5 py-9 sm:px-6">
               {/* Badge only. Each of these already carries its issuer's name in
                   its own artwork, so the label beside it was setting the same
                   words twice — and the pair made every cell wide enough that

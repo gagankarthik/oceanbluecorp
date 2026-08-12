@@ -136,24 +136,33 @@ function MenuLink({ name, href, onClick }: { name: string; href: string; onClick
 
 function MegaPanel({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?: () => void }) {
   return (
-    <div className="border-b border-[var(--hz-paper-line)] bg-white">
-      <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
-        {/* Flex, not a fixed grid. On a grid sized for the widest menu, a
-            three-column menu leaves an empty fourth track and the whole group
-            sits off to the left. Flexing them and centring the row means each
-            menu is centred on its own content, whatever it contains. */}
-        <div className="flex flex-wrap justify-center py-8">
-          {columns.map((col, i) => (
+    <div className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
+      <div className="mx-auto w-full max-w-7xl px-6 py-6 sm:px-8 2xl:max-w-[96rem]">
+        {/* Each column is its OWN bordered card, not a track separated from its
+            neighbour by a shared rule. The difference matters: a divided grid
+            reads as one table you scan across, whereas four boxes read as four
+            independent lists you pick between, which is what these are.
+
+            `items-stretch` squares the bottoms off — with six links in one card
+            and two in another, ragged heights would make the shortest look
+            unfinished rather than simply shorter. */}
+        <div className="flex flex-wrap items-stretch justify-center gap-3">
+          {columns.map((col) => (
             <div
               key={col.heading}
-              className={`w-full sm:w-[280px] sm:px-9 ${
-                i < columns.length - 1 ? "sm:border-r sm:border-[var(--hz-paper-line)]" : ""
-              }`}
+              className="w-full overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white sm:w-[290px]"
             >
-              <p className="mb-3 text-[14.5px] font-semibold text-[var(--hz-text)]">{col.heading}</p>
-              {col.items.map((it) => (
-                <MenuLink key={it.name} name={it.name} href={it.href} onClick={onNavigate} />
-              ))}
+              {/* Header band: the taxonomy, and a small dot at the right edge
+                  that closes the row the arrows below open. */}
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--hz-paper-line)] px-4 py-3">
+                <span className="text-[14.5px] font-semibold text-[var(--hz-text)]">{col.heading}</span>
+                <span aria-hidden className="h-2.5 w-2.5 flex-none rounded-full bg-[var(--hz-paper-line)]" />
+              </div>
+              <div className="px-4 py-2">
+                {col.items.map((it) => (
+                  <MenuLink key={it.name} name={it.name} href={it.href} onClick={onNavigate} />
+                ))}
+              </div>
             </div>
           ))}
         </div>
