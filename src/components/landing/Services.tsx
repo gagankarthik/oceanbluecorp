@@ -115,25 +115,36 @@ export default function Services() {
       className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
-        <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
+        {/* Statement left, the case for it right. The row used to be a heading
+            capped at max-w-2xl with a lone "All solutions" link justified to
+            the far edge, which left roughly a third of the row empty across
+            the middle. Giving the right column something to say is the
+            editorial fix — and it is where the pitch belongs anyway. */}
+        <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-10">
+          <div className="lg:col-span-7">
             <span className="hz-eyebrow text-[var(--hz-amber)]">What we do</span>
-            <h2 className="hz-display mt-4 text-[1.75rem] text-[var(--hz-text)] sm:text-[2.1rem] 2xl:text-[2.5rem]">
+            <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
               One partner for talent, engineering, technology, and operations.
             </h2>
           </div>
 
-          {/* Balances the header row, which previously justified against nothing. */}
-          <Link
-            href="/solutions"
-            className="group inline-flex flex-none items-center gap-2 text-[14px] font-semibold text-[var(--hz-cobalt)]"
-          >
-            All solutions
-            <ArrowRight
-              className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
-              strokeWidth={1.75}
-            />
-          </Link>
+          <div className="lg:col-span-4 lg:col-start-9">
+            <p className="text-[15px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[15.5px]">
+              Four practices, one contract, one team accountable for the
+              outcome — so the handoffs between hiring, building, and running
+              stop being your problem to manage.
+            </p>
+            <Link
+              href="/solutions"
+              className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--hz-cobalt)]"
+            >
+              All solutions
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
+                strokeWidth={1.75}
+              />
+            </Link>
+          </div>
         </Reveal>
 
         <Stagger className="mt-12 grid gap-x-8 gap-y-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>

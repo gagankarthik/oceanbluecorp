@@ -70,7 +70,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
         {/* Heading, left */}
         <Reveal className="lg:col-span-5">
           <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-          <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.4vw,2.75rem)] leading-[1.08] text-[var(--hz-text)] sm:mt-7">
+          <h2 className="hz-display hz-h2 mt-6 text-[var(--hz-text)] sm:mt-7">
             {content.statsHeading || "Over a decade of delivery, one accountable team."}
           </h2>
           <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-[var(--hz-text-mute)] sm:mt-6 sm:text-[16px]">

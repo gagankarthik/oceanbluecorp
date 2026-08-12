@@ -46,13 +46,21 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
   },
 ];
 
+/* The specimen renders the REAL utility classes, not restated pixel values.
+   Restating them is how this drifted: it claimed H2 was a flat 1.75rem and the
+   hero 3.5rem, while the site had moved to fluid clamps and grown a second
+   heading role the kit never showed. A brand kit that has to be hand-synced
+   with the stylesheet stops being the source of truth the first time someone
+   edits one and not the other — the icon grid below is auto-enumerated for the
+   same reason. `note` is the only thing written by hand, and it describes
+   where the role is used rather than what size it is. */
 const TYPE_SCALE = [
-  { label: "Display / Hero", cls: "text-[3.5rem] leading-none", sample: "Enterprises & agencies." },
-  { label: "H1", cls: "text-[2.5rem] leading-tight", sample: "Section headline" },
-  { label: "H2", cls: "text-[1.75rem]", sample: "Subsection heading" },
-  { label: "H3", cls: "text-[1.25rem]", sample: "Card title" },
-  { label: "Body", cls: "text-[16px] leading-relaxed", sample: "Body copy sets the reading rhythm at a relaxed line height for clarity." },
-  { label: "Small / caption", cls: "text-[13px] text-[var(--hz-text-mute)]", sample: "Captions, metadata, and labels." },
+  { label: "Display / Hero", cls: "text-[clamp(2rem,5.4vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
+  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2 — opens a section", sample: "Section headline" },
+  { label: "Statement", cls: "hz-statement", note: ".hz-statement — supports one", sample: "Relied on by enterprises." },
+  { label: "Card title / H3", cls: "text-[1.35rem] sm:text-[1.5rem]", note: "Service and content cards", sample: "Card title" },
+  { label: "Body", cls: "text-[16px] font-normal leading-relaxed", note: "Paragraphs", sample: "Body copy sets the reading rhythm at a relaxed line height for clarity." },
+  { label: "Small / caption", cls: "text-[13px] font-normal text-[var(--hz-text-mute)]", note: "Captions, metadata", sample: "Captions, metadata, and labels." },
 ];
 
 function CopyChip({ value }: { value: string }) {
@@ -197,7 +205,10 @@ export default function BrandKitContent() {
           <div className="mt-8 divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm">
             {TYPE_SCALE.map((t) => (
               <div key={t.label} className="flex flex-col gap-2 px-5 py-5 sm:flex-row sm:items-baseline sm:gap-8">
-                <span className="w-32 flex-none text-[12px] font-medium uppercase tracking-wide text-[var(--hz-text-mute)]">{t.label}</span>
+                <span className="w-32 flex-none">
+                  <span className="block text-[12px] font-medium uppercase tracking-wide text-[var(--hz-text-mute)]">{t.label}</span>
+                  <span className="mt-0.5 block font-mono text-[10.5px] leading-snug text-[var(--hz-text-subtle)]">{t.note}</span>
+                </span>
                 <p className={`hz-display min-w-0 truncate text-[var(--hz-text)] ${t.cls}`}>{t.sample}</p>
               </div>
             ))}

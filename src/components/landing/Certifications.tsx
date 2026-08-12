@@ -3,11 +3,18 @@
 import Image from "next/image";
 import { Reveal } from "./motion/Primitives";
 
+/* Intrinsic ratios here run from 1:1 to 4.18:1, which is why a single box
+   size made these look mismatched: object-contain inside one frame lets the
+   square badge fill the full height while the long horizontal lockups shrink
+   to a third of it. Heights are set per badge so they carry comparable visual
+   weight — the square one shorter than its box would allow, the wide ones
+   taller. Width/height are the real pixel dimensions, so next/image keeps the
+   aspect and only CSS scales them. */
 const certs = [
-  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png" },
-  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png" },
-  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png" },
-  { name: "MBE", logo: "/logos/certifications/mbe.png" },
+  { name: "NMSDC",    logo: "/logos/certifications/NMSDC.png",    w: 340, h: 340, cls: "h-16 sm:h-20" },
+  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png",      w: 845, h: 202, cls: "h-11 sm:h-14" },
+  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png",  w: 734, h: 202, cls: "h-11 sm:h-14" },
+  { name: "MBE",      logo: "/logos/certifications/mbe.png",      w: 707, h: 353, cls: "h-14 sm:h-16" },
 ];
 
 export default function Certifications() {
@@ -20,27 +27,21 @@ export default function Certifications() {
           <p className="hz-eyebrow text-[var(--hz-text-subtle)]">
             A certified minority- and women-owned business
           </p>
-          {/* These are four raw vendor files — a blue hexagon, two red-and-blue
-              Ohio script badges, a solid MBE rectangle — at four different
-              shapes and saturations. Loose on white they were the loudest thing
-              on an otherwise restrained page. Equal neutral tiles give them one
-              shared frame, and resting desaturated (full colour on hover) lets
-              the credential read as prestige rather than clip art. */}
-          <ul className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {/* No frames and full colour: these are accreditations, and an MBE or
+              WBE mark is recognised by its own colours. Boxing them in tiles
+              made four credentials read as four UI cards, and desaturating
+              them threw away the exact thing that identifies them. What they
+              needed was consistent sizing, not containment. */}
+          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-16">
             {certs.map((c) => (
-              <li
-                key={c.name}
-                className="group flex items-center justify-center rounded-xl border border-black/[0.06] bg-[var(--hz-band)] px-6 py-7 transition-colors duration-300 hover:border-black/[0.1] hover:bg-white"
-              >
-                <div className="relative h-12 w-24 sm:h-14 sm:w-28">
-                  <Image
-                    src={c.logo}
-                    alt={`${c.name} certification`}
-                    fill
-                    className="object-contain opacity-75 saturate-0 transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-100 group-hover:saturate-100"
-                    sizes="(max-width: 640px) 96px, 112px"
-                  />
-                </div>
+              <li key={c.name}>
+                <Image
+                  src={c.logo}
+                  alt={`${c.name} certification`}
+                  width={c.w}
+                  height={c.h}
+                  className={`${c.cls} w-auto object-contain transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.04]`}
+                />
               </li>
             ))}
           </ul>

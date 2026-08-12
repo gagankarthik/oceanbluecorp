@@ -1211,6 +1211,30 @@
   font-weight: 600;
 }
 
+/* Section heading scale.
+
+   These had drifted into four different sizes across five sections —
+   1.5/1.85/2.1, 1.75/2.1/2.5, and two separate clamps — so the page
+   spoke in four voices depending on where you were in it. Two roles,
+   both fluid, both used everywhere:
+
+   .hz-h2         opens a section and carries its argument.
+   .hz-statement  supports one — the centered line introducing a row of
+                  client logos or certification badges. Deliberately
+                  smaller: it sets up the marks beneath it rather than
+                  competing with the section headings above and below.
+
+   The hero and the closing CTA keep their own larger sizes; they are
+   the two moments that should out-scale everything else. */
+.hz-h2 {
+  font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+  line-height: 1.06;
+}
+.hz-statement {
+  font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+  line-height: 1.15;
+}
+
 /* Eyebrow — mono, uppercase, tracked */
 .hz-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;

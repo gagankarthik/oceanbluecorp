@@ -48,11 +48,16 @@ function LogoMark({ l }: { l: Logo }) {
 
 export default function ClientLogos() {
   return (
-    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] py-16 sm:py-20 lg:py-24">
+    // Asymmetric padding on purpose. Symmetric py- on neighbouring sections
+    // compounds: this section's 96px foot met Services' 128px head and put
+    // ~220px of empty canvas between a logo row and the next heading, which
+    // reads as a missing section rather than as breathing room. The logos
+    // belong closer to what follows them than to the hero above.
+    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] pt-16 pb-10 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <Reveal className="flex flex-col items-center gap-4 text-center">
           <span className="hz-eyebrow text-[var(--hz-amber)]">Selected clients</span>
-          <h2 className="hz-display max-w-2xl text-[1.5rem] text-[var(--hz-text)] sm:text-[1.85rem] lg:text-[2.1rem]">
+          <h2 className="hz-display hz-statement max-w-2xl text-[var(--hz-text)]">
             Relied on by enterprises and state government agencies across North America.
           </h2>
         </Reveal>
