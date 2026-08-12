@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { TagMark } from "./motifs/Motifs";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
@@ -68,7 +68,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         <ul className="mt-6 flex flex-wrap items-center gap-x-7 gap-y-2.5">
           {PROOF.map((p) => (
             <li key={p} className="flex items-center gap-2 text-[13.5px] text-[var(--hz-text-mute)]">
-              <Check className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={2.5} />
+              <TagMark className="h-3 w-3 flex-none text-[var(--hz-cobalt)]" />
               {p}
             </li>
           ))}

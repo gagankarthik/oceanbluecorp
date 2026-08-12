@@ -1,6 +1,7 @@
 "use client";
 
 import { Reveal } from "./motion/Primitives";
+import { ArcSweep, DropStack, ArcRing, ArcSpan } from "./motifs/Motifs";
 
 /* ============================================================
    Statement — the thesis, with the load-bearing words in colour.
@@ -24,14 +25,17 @@ import { Reveal } from "./motion/Primitives";
 
 const PILLARS = [
   {
+    Motif: DropStack,
     title: "One contract, not four",
     body: "Staffing, engineering, platforms and support under a single agreement and a single SLA.",
   },
   {
+    Motif: ArcRing,
     title: "Our people, our problem",
     body: "Engineers are embedded and accountable to the outcome, not billed by the ticket.",
   },
   {
+    Motif: ArcSpan,
     title: "Public sector ready",
     body: "Certified MBE and WBE, with the procurement history state agencies ask for.",
   },
@@ -39,7 +43,10 @@ const PILLARS = [
 
 export default function Statement() {
   return (
-    <section className="relative w-full bg-[var(--hz-paper)] py-20 sm:py-24 lg:py-28">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-paper)] py-20 sm:py-24 lg:py-28">
+      {/* The mark's wave at scale, flipped into the top-right so it frames the
+          statement without sitting under the words. */}
+      <ArcSweep className="pointer-events-none absolute -right-32 -top-24 h-[520px] w-[520px] -scale-x-100 text-[var(--hz-cobalt)] opacity-[0.07]" />
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal>
           <p className="mx-auto max-w-[24ch] text-center text-[clamp(1.6rem,3.6vw,3rem)] font-semibold leading-[1.15] tracking-[-0.025em] text-[var(--hz-text)] sm:max-w-[30ch]">
@@ -58,7 +65,8 @@ export default function Statement() {
         <div className="mt-14 grid gap-10 border-t border-[var(--hz-paper-line)] pt-10 sm:mt-16 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--hz-paper-line)]">
           {PILLARS.map((p) => (
             <div key={p.title} className="sm:px-8 sm:first:pl-0 sm:last:pr-0">
-              <h3 className="text-[16px] font-semibold text-[var(--hz-text)]">{p.title}</h3>
+              <p.Motif className="h-9 w-9 text-[var(--hz-cobalt)]" />
+              <h3 className="mt-5 text-[16px] font-semibold text-[var(--hz-text)]">{p.title}</h3>
               <p className="mt-2.5 max-w-[34ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">
                 {p.body}
               </p>

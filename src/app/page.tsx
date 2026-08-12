@@ -6,6 +6,7 @@ import Services from "@/components/landing/Services";
 import ImpactStats from "@/components/landing/ImpactStats";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
+import CertificationStrip from "@/components/landing/CertificationStrip";
 import Anniversary from "@/components/landing/anniversary/Anniversary";
 import { IMG, atWidth } from "@/components/landing/media";
 import { getSiteContent } from "@/lib/content";
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
    sections removed until the Resources content exists.)
    Order: Hero(statement + wide image) · Clients · Statement ·
    Services (panel strip) · Proof (stats + accreditations) ·
-   Client work (case-study rows) · Careers.
+   Client work (case-study rows) · Careers · Accreditation strip.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -117,6 +118,7 @@ export default async function Home() {
       <ImpactStats content={content} />
       <Testimonials />
       <CallToAction content={content} />
+      <CertificationStrip />
     </div>
   );
 }

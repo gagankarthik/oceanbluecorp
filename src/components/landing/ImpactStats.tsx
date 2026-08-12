@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion } from "framer-motion";
-import Image from "next/image";
 import { Reveal } from "./motion/Primitives";
+import { TagMark, ArcSweep, DropGrid, ArcRing, DropStack, ArcSpan } from "./motifs/Motifs";
 
 /* ============================================================
    Proof — customer.io's "Enterprise ready" band.
@@ -15,15 +15,16 @@ import { Reveal } from "./motion/Primitives";
    the part of a page that answers "can you actually be trusted
    with this?".
 
-   Ocean Blue's version merges what used to be two sections — the
-   stat tiles and the certification row. Both answer that same
-   question, and running them as separate bands said it twice.
+   The accreditations used to live in this band too. They now sit in
+   a strip directly above the footer, which is where the reference
+   site parks its trust marks — they are the last thing you pass on
+   the way out, not a competitor to the figures.
 
    The count-up runs once the panel is in view, never for
    prefers-reduced-motion.
    ============================================================ */
 
-type Stat = { value: number; suffix: string; label: string; sub: string };
+type Stat = { value: number; suffix: string; label: string; sub: string; Motif: (p: { className?: string }) => React.ReactElement };
 
 function parseStatValue(raw: string | undefined, fallbackValue: number, fallbackSuffix: string) {
   if (!raw) return { value: fallbackValue, suffix: fallbackSuffix };
@@ -54,29 +55,31 @@ function Counter({ target, run }: { target: number; run: boolean }) {
   return <>{n}</>;
 }
 
-const CERTS = [
-  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-11" },
-  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-8" },
-  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-8" },
-  { name: "MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9" },
-];
 
 export default function ImpactStats({ content = {} }: { content?: Record<string, string> }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   const stats: Stat[] = [
-    { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA" },
-    { ...parseStatValue(content.statClients, 50, "+"), label: "Enterprise clients", sub: "Across North America" },
-    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention", sub: "Year over year" },
-    { ...parseStatValue(content.statOffices, 4, ""), label: "Delivery centres", sub: "US, India and UK" },
+    // A different motif per pane, chosen for what the figure means rather
+    // than to fill the corner: layers for time, a ruled grid for scale,
+    // closed arcs for continuity, opened arcs for reach.
+    { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA", Motif: DropStack },
+    { ...parseStatValue(content.statClients, 50, "+"), label: "Enterprise clients", sub: "Across North America", Motif: DropGrid },
+    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention", sub: "Year over year", Motif: ArcRing },
+    { ...parseStatValue(content.statOffices, 4, ""), label: "Delivery centres", sub: "US, India and UK", Motif: ArcSpan },
   ];
 
   return (
-    <section className="relative w-full bg-[var(--hz-ink)] py-20 sm:py-24 lg:py-28">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-ink)] py-20 sm:py-24 lg:py-28">
+      {/* The mark's wave, enlarged into the corner of the band. */}
+      <ArcSweep className="pointer-events-none absolute -left-24 bottom-0 h-[420px] w-[420px] text-[var(--hz-aqua)] opacity-[0.10]" />
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <span className="hz-eyebrow text-[var(--hz-aqua)]">Enterprise ready</span>
+          <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-aqua)]">
+            <TagMark className="h-3 w-3" />
+            Enterprise ready
+          </span>
           <h2 className="hz-display hz-h2 mt-4 text-white">
             Thirteen years of delivery, and the paperwork to prove it.
           </h2>
@@ -91,11 +94,15 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
           {stats.map((s, i) => (
             <div
               key={s.label}
-              className={`p-7 sm:p-8 ${i % 2 === 0 ? "sm:border-r sm:border-white/[0.12]" : ""} ${
+              className={`relative overflow-hidden p-7 sm:p-8 ${i % 2 === 0 ? "sm:border-r sm:border-white/[0.12]" : ""} ${
                 i < 2 ? "sm:border-b sm:border-white/[0.12]" : ""
               } lg:border-b-0 lg:border-r lg:border-white/[0.12] lg:last:border-r-0`}
             >
-              <p className="hz-display hz-tnum text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
+              {/* The motif sits in the corner at low opacity — present enough
+                  to give the pane a face, quiet enough that the figure is
+                  still the first thing read. */}
+              <s.Motif className="pointer-events-none absolute -right-5 -top-5 h-28 w-28 text-[var(--hz-aqua)] opacity-[0.16]" />
+              <p className="relative hz-display hz-tnum text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
                 <Counter target={s.value} run={inView} />
                 <span className="text-[var(--hz-aqua)]">{s.suffix}</span>
               </p>
@@ -107,28 +114,6 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
           ))}
         </div>
 
-        {/* The accreditations, in the same frame language. Knocked out to white
-            so four differently-coloured vendor badges read as one row on a dark
-            ground. This is the one place that treatment is right: here they are
-            a credential LIST, not the credential itself. */}
-        <div className="mt-4 rounded-2xl border border-white/[0.12] px-7 py-8 sm:px-10">
-          <p className="text-center text-[12px] font-semibold uppercase tracking-[0.14em] text-white/45">
-            Certified minority and women owned
-          </p>
-          <ul className="mt-7 grid grid-cols-2 items-center gap-x-10 gap-y-8 sm:grid-cols-4 sm:gap-x-14">
-            {CERTS.map((c) => (
-              <li key={c.name} className="flex items-center justify-center">
-                <Image
-                  src={c.logo}
-                  alt={`${c.name} certification`}
-                  width={c.w}
-                  height={c.h}
-                  className={`${c.cls} w-auto object-contain opacity-75 brightness-0 invert transition-opacity duration-300 hover:opacity-100`}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   );

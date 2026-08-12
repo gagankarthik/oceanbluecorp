@@ -1,91 +1,70 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { Reveal } from "./motion/Primitives";
-import { Cta } from "./ui";
+import { TagMark, ArcSweep } from "./motifs/Motifs";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
-// Two columns of imagery that marquee vertically in opposite directions.
-const colA = [IMG.serviceTalent, IMG.heroSlides[1], IMG.serviceSolutions];
-const colB = [IMG.serviceManaged, IMG.serviceEngineering, IMG.caseStudy];
+/* ============================================================
+   Careers — the closing band.
 
-// Each tile occupies roughly half of the right-hand column — never the full
-// viewport — so the browser should fetch a small candidate, not the 1600w one.
-const TILE_SIZES = "(min-width: 1024px) 300px, (min-width: 640px) 40vw, 45vw";
+   The last full section before the accreditation strip, on the ink
+   ground, so the page ends on the same dark note the proof band
+   struck. One statement, one paragraph, one primary action, and a
+   single photograph held to a modest size on the right.
 
-function Tile({ src }: { src: string }) {
-  return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10">
-      <Photo src={src} sizes={TILE_SIZES} />
-      <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(5,12,28,0.4) 100%)" }} />
-    </div>
-  );
-}
+   The vertical image marquees that used to live here are gone: six
+   tiles looping in opposite directions is a lot of motion to put
+   beside an invitation, and it fetched six images to say what one
+   says.
 
-function MarqueeColumn({ imgs, direction, duration }: { imgs: string[]; direction: "up" | "down"; duration: number }) {
-  const reduce = useReducedMotion();
-  // Two identical copies → a -50% travel loops seamlessly.
-  const from = direction === "up" ? "0%" : "-50%";
-  const to = direction === "up" ? "-50%" : "0%";
-  return (
-    <motion.div
-      className="flex flex-1 flex-col gap-4"
-      // Promote to its own layer so the continuous loop stays on the compositor
-      // instead of repainting the tiles every frame.
-      style={{ willChange: "transform", backfaceVisibility: "hidden" }}
-      animate={reduce ? undefined : { y: [from, to] }}
-      transition={{ duration, repeat: Infinity, ease: "linear", repeatType: "loop" }}
-    >
-      {[...imgs, ...imgs].map((src, i) => (
-        <Tile key={i} src={src} />
-      ))}
-    </motion.div>
-  );
-}
+   The arc sweep behind it is the same motif the proof band and the
+   statement use, at the same low opacity. That repetition IS the
+   point — a shape language only reads as one if it turns up more
+   than once.
+   ============================================================ */
 
 export default function CallToAction({ content = {} }: { content?: Record<string, string> }) {
   return (
-    <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-      {/* Ambient brand glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(55% 70% at 12% 10%, rgba(29,78,216,0.4), transparent 60%), radial-gradient(45% 60% at 95% 90%, rgba(42,216,239,0.16), transparent 62%)",
-        }}
-      />
+    <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
+      <ArcSweep className="pointer-events-none absolute -right-28 -top-20 h-[520px] w-[520px] -scale-x-100 text-[var(--hz-aqua)] opacity-[0.09]" />
 
-      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-24 sm:px-8 sm:py-32 lg:grid-cols-2 lg:gap-16 2xl:max-w-[96rem]">
-        {/* ── Left half, heading, then button below ─────────── */}
+      <div className="relative z-10 mx-auto grid w-full max-w-[2200px] grid-cols-1 items-center gap-12 px-6 py-20 sm:px-10 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:px-16 2xl:px-28">
         <Reveal className="flex flex-col items-start">
-          <h2 className="hz-display max-w-[15ch] text-[clamp(1.9rem,4.6vw,3.75rem)] leading-[1.05] text-white">
-            {content.ctaHeading || "Tell us what you're building. We'll put the right team on it."}
+          <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-aqua)]">
+            <TagMark className="h-3 w-3" />
+            Careers
+          </span>
+
+          <h2 className="hz-display mt-5 max-w-[16ch] text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.04] tracking-[-0.03em] text-white">
+            {content.ctaHeading || "Build what the next decade runs on."}
           </h2>
-          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[18px]">
+
+          <p className="mt-6 max-w-[48ch] text-[16px] leading-relaxed text-white/65 sm:text-[17px]">
             {content.ctaBody ||
-              "Staffing, enterprise solutions, or managed services. Start with a conversation, and we'll stand behind the result."}
+              "Our engineers sit inside the teams they support, migrating the platforms, securing the data and keeping the systems that enterprises and state agencies depend on running. If you would rather own the outcome than hand off a ticket, we should talk."}
           </p>
-          <div className="mt-8 flex flex-col items-start gap-3 sm:mt-9 sm:flex-row sm:items-center">
-            <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.ctaButton || "Book a discovery call"}</Cta>
-            <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/careers"
+              className="inline-flex items-center rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-ink)] transition-colors hover:bg-[var(--hz-aqua)]"
+            >
+              {content.ctaButton || "Come join us"}
+            </Link>
+            <Link
+              href="/careers/search"
+              className="inline-flex items-center rounded-full border border-white/25 px-7 py-3.5 text-[15px] font-semibold text-white transition-colors hover:border-white"
+            >
+              See open positions
+            </Link>
           </div>
         </Reveal>
 
-        {/* ── Right half, vertical image marquees ───────────── */}
-        <div
-          className="relative h-[380px] overflow-hidden sm:h-[460px] lg:h-[520px]"
-          style={{
-            maskImage: "linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent)",
-            WebkitMaskImage: "linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent)",
-          }}
-        >
-          <div className="flex gap-4">
-            <MarqueeColumn imgs={colA} direction="up" duration={24} />
-            <MarqueeColumn imgs={colB} direction="down" duration={28} />
-          </div>
+        {/* One photograph, unframed apart from its radius. */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+          <Photo src={IMG.aboutTeam} sizes="(min-width: 1024px) 46vw, 92vw" />
         </div>
       </div>
     </section>
