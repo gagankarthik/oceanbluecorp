@@ -22,6 +22,7 @@ import {
   ArrowRight,
   ArrowUpRight,
 } from "lucide-react";
+import { IllDocs, IllBlog, IllNews, IllStories, IllCases } from "@/components/landing/motifs/Motifs";
 import { useAuth, UserRole } from "@/lib/auth";
 import { IconHrPortal } from "@/components/admin/icons";
 
@@ -43,6 +44,7 @@ const navigation = [
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
   { name: "Solutions", href: "/solutions", hasDropdown: true, dropdownType: "solutions" },
   { name: "Products", href: "/products" },
+  { name: "Resources", href: "/developers", hasDropdown: true, dropdownType: "resources" },
   { name: "Careers", href: "/careers" },
   // Contact is deliberately absent — it renders as an action at the right end
   // of the bar, not as a centred nav item. The mobile menu adds it back, since
@@ -68,7 +70,20 @@ const navigation = [
        belongs on the page you land on.
      · Square corners and a hairline base. No radius, no drop shadow. */
 
-type MenuColumn = { heading: string; items: { name: string; href: string }[] };
+type MenuItem = {
+  name: string;
+  href: string;
+  /** Drawn from the shared motif set. Optional — Solutions and About carry no
+   *  icons, and adding them there would be decoration, since a wrench beside
+   *  "Engineering Talent" tells you nothing the words do not. Resources is
+   *  different: the five are different KINDS of thing, and the glyph is what
+   *  separates a case study from a news item at a glance. */
+  Icon?: (p: { className?: string }) => React.ReactElement;
+  /** The icon's hue. Two tones of one colour — see the note in Motifs. */
+  tint?: string;
+};
+
+type MenuColumn = { heading: string; items: MenuItem[] };
 
 const SOLUTIONS_COLUMNS: MenuColumn[] = [
   {
@@ -116,14 +131,48 @@ const ABOUT_COLUMNS: MenuColumn[] = [
   },
 ];
 
-function MenuLink({ name, href, onClick }: { name: string; href: string; onClick?: () => void }) {
+/* The five hues are all cool blues and teals, so the row reads as coloured
+   without importing an accent the rest of the site does not use. Each icon
+   draws its line in the hue and its fill in the same hue at 22%. */
+const RESOURCES_COLUMNS: MenuColumn[] = [
+  {
+    heading: "Resources",
+    items: [
+      { name: "Developer documentation", href: "/developers", Icon: IllDocs, tint: "#1d4ed8" },
+      { name: "Blog", href: "/blog", Icon: IllBlog, tint: "#0CACCF" },
+      { name: "News", href: "/news", Icon: IllNews, tint: "#6366F1" },
+      { name: "Customer stories", href: "/customer-stories", Icon: IllStories, tint: "#0EA5E9" },
+      { name: "Case studies", href: "/case-studies", Icon: IllCases, tint: "#0D9488" },
+    ],
+  },
+];
+
+/* One table, so adding a menu is adding a row rather than extending a chain
+   of ternaries in the render. */
+const MENUS: Record<string, MenuColumn[]> = {
+  solutions: SOLUTIONS_COLUMNS,
+  about: ABOUT_COLUMNS,
+  resources: RESOURCES_COLUMNS,
+};
+
+function MenuLink({ name, href, Icon, tint, onClick }: MenuItem & { onClick?: () => void }) {
   return (
     <Link
       href={href}
       onClick={onClick}
       className="group flex items-center justify-between gap-6 py-2.5 text-[14.5px] text-[var(--hz-text)] transition-colors hover:text-[var(--hz-cobalt)]"
     >
-      {name}
+      <span className="flex min-w-0 items-center gap-3">
+        {/* A bare glyph, not a tinted rounded chip behind one. The chip is the
+            pattern this site keeps removing; the drawing can carry its own
+            colour without a box around it. */}
+        {Icon && (
+          <span style={{ color: tint }} className="flex-none">
+            <Icon className="h-[26px] w-[26px]" />
+          </span>
+        )}
+        <span className="truncate">{name}</span>
+      </span>
       {/* Parked at the column's right edge and always present, so the rows
           line up as a column of destinations rather than shifting on hover. */}
       <ArrowRight
@@ -160,7 +209,9 @@ function MegaPanel({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?
               </div>
               <div className="px-4 py-2">
                 {col.items.map((it) => (
-                  <MenuLink key={it.name} name={it.name} href={it.href} onClick={onNavigate} />
+                  // Spread, not a hand-listed set of props — the previous form
+                  // silently dropped Icon and tint when they were added.
+                  <MenuLink key={it.name} {...it} onClick={onNavigate} />
                 ))}
               </div>
             </div>
@@ -257,9 +308,21 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
     };
   }, [mobileMenuOpen]);
 
-  const getDropdownItems = (type: string) => {
-    if (type === "solutions") return solutions;
-    if (type === "about") return aboutItems;
+  // One shape for the mobile sheet, whichever menu it came from. The two
+  // legacy lists carry a lucide `icon` and a `description`; Resources carries
+  // a drawn `Icon` and a `tint`. Normalising here keeps the render from having
+  // to know which list it is walking.
+  type MobileItem = {
+    name: string;
+    href: string;
+    description?: string;
+    Icon?: (p: { className?: string }) => React.ReactElement;
+    tint?: string;
+  };
+  const getDropdownItems = (type: string): MobileItem[] => {
+    if (type === "solutions") return solutions.map(({ name, href, description }) => ({ name, href, description }));
+    if (type === "about") return aboutItems.map(({ name, href, description }) => ({ name, href, description }));
+    if (type === "resources") return RESOURCES_COLUMNS[0].items;
     return [];
   };
 
@@ -567,16 +630,25 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                       setMobileDropdown(null);
                                     }}
                                   >
-                                    <div className="w-10 h-10 rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] flex items-center justify-center flex-shrink-0">
-                                      <dropItem.icon className="w-5 h-5" strokeWidth={1.75} />
-                                    </div>
+                                    {/* Resources rows carry a drawn icon in its
+                                        own hue; Solutions and About do not, and
+                                        the tinted rounded chip that used to sit
+                                        here is the pattern the desktop menu
+                                        dropped. */}
+                                    {dropItem.Icon && (
+                                      <span style={{ color: dropItem.tint }} className="flex-shrink-0">
+                                        <dropItem.Icon className="h-7 w-7" />
+                                      </span>
+                                    )}
                                     <div className="flex-1 min-w-0">
                                       <p className="font-medium text-gray-900 text-sm">
                                         {dropItem.name}
                                       </p>
-                                      <p className="text-xs text-gray-500">
-                                        {dropItem.description}
-                                      </p>
+                                      {dropItem.description && (
+                                        <p className="text-xs text-gray-500">
+                                          {dropItem.description}
+                                        </p>
+                                      )}
                                     </div>
                                     <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                   </Link>
@@ -688,7 +760,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
             Hover handlers are repeated on the panel so moving the pointer
             down into it does not count as leaving the trigger. */}
         <AnimatePresence>
-          {(activeDropdown === "solutions" || activeDropdown === "about") && (
+          {activeDropdown && MENUS[activeDropdown] && (
             <motion.div
               key={activeDropdown}
               onMouseEnter={() => openMenu(activeDropdown)}
@@ -704,10 +776,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-x-0 top-full hidden lg:block"
             >
-              <MegaPanel
-                columns={activeDropdown === "solutions" ? SOLUTIONS_COLUMNS : ABOUT_COLUMNS}
-                onNavigate={() => setActiveDropdown(null)}
-              />
+              <MegaPanel columns={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
             </motion.div>
           )}
         </AnimatePresence>

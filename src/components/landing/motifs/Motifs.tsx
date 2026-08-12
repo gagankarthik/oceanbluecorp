@@ -229,3 +229,81 @@ export function IllGlobe({ className = "" }: MotifProps) {
     </Frame>
   );
 }
+
+/* ---------- resources menu ----------
+
+   Five drawings for the Resources dropdown, in the same 48-unit frame and
+   stroke as the rest of the set so they read as one hand.
+
+   Each one depicts its own destination — angle brackets for the API docs, a
+   nib for the blog, a folded paper for news, a quote for customer stories, a
+   measured chart for case studies. Nothing here is interchangeable, which was
+   the standing note on this icon set.
+
+   Colour comes from `color` at the call site and the accent is the same hue
+   held back to 22%, so each icon is two tones of ONE colour rather than two
+   unrelated ones. The five hues are all cool blues and teals — a family, not
+   a rainbow, so the menu stays inside the brand's range.                    */
+
+const SOFT = 0.22;
+
+/** Developer documentation: a page carrying angle brackets. */
+export function IllDocs({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M11 6h16l10 10v26a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M11 6h16l10 10v26a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+      <path d="M27 6v10h10" />
+      <path d="m20 25-4 4 4 4M28 25l4 4-4 4" />
+    </Frame>
+  );
+}
+
+/** Blog: a written sheet and a nib. */
+export function IllBlog({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M8 9h24v18H8z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M8 9h24v14" />
+      <path d="M8 9v30h22" />
+      <path d="M14 17h12M14 24h8M14 31h6" strokeWidth={1.5} />
+      <path d="m40 18-14 14-5 1 1-5 14-14a2.8 2.8 0 0 1 4 4Z" />
+    </Frame>
+  );
+}
+
+/** News: a folded broadsheet with a masthead. */
+export function IllNews({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M6 12h30v27a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M6 12h30v27a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" />
+      <path d="M36 20h5a1 1 0 0 1 1 1v18a3 3 0 0 1-6 0" />
+      <path d="M12 19h18" strokeWidth={2} />
+      <path d="M12 27h8M12 34h8M25 27h5M25 34h5" strokeWidth={1.5} />
+    </Frame>
+  );
+}
+
+/** Customer stories: a quotation, in a bubble. */
+export function IllStories({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M8 12a3 3 0 0 1 3-3h26a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H21l-9 7v-7h-1a3 3 0 0 1-3-3z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M8 12a3 3 0 0 1 3-3h26a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H21l-9 7v-7h-1a3 3 0 0 1-3-3z" />
+      <path d="M19 25c-2.8 0-4.5-1.9-4.5-4.4 0-2.9 2.2-5.4 5.5-6.6M31 25c-2.8 0-4.5-1.9-4.5-4.4 0-2.9 2.2-5.4 5.5-6.6" />
+    </Frame>
+  );
+}
+
+/** Case studies: the outcome, measured. */
+export function IllCases({ className = "" }: MotifProps) {
+  return (
+    <Frame className={className}>
+      <path d="M9 7h20l10 10v24a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
+      <path d="M9 7h20l10 10v24a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+      <path d="M29 7v10h10" />
+      <path d="M15 35v-7M23 35V23M31 35v-4" strokeWidth={2.5} />
+    </Frame>
+  );
+}
