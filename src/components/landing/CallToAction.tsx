@@ -20,7 +20,14 @@ export default function CallToAction({ content = {} }: { content?: Record<string
           where the gradient earns its keep; this section stays flat black so
           the photograph and the white disc are the only things in it. */}
 
-      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28 relative z-10 grid grid-cols-1 items-center gap-10 py-20 sm:py-24 lg:grid-cols-2 lg:gap-10">
+      {/* Wider gutters than the sections above it, and a wider gap down the
+          middle. This band is a full-bleed black rectangle with a photograph
+          hard against one edge; at the page's standard padding the type started
+          almost at the screen edge and the two halves met in the centre with
+          nothing between them, so the whole thing read as edge-to-edge fill
+          rather than a composed panel. The extra space at both ends is what
+          makes the black read as a deliberate frame. */}
+      <div className="mx-auto w-full max-w-[2200px] px-8 sm:px-16 lg:px-28 2xl:px-40 relative z-10 grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-20">
         {/* ── Left: careers ───────────────────────────────────
             The copy here is supplied by the client and is Accenture's careers
             wording. I flagged that once — it is their copyrighted text and a

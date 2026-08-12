@@ -216,20 +216,24 @@ function MenuCell({ name, href, description, Icon, tint, onClick }: MenuItem & {
 
 function MegaPanel({ menu, onNavigate }: { menu: Menu; onNavigate?: () => void }) {
   return (
-    // White, matching the bar above it, so the sheet reads as the header
-    // extending downward rather than a second surface sliding out from under it.
-    <div className="border-b border-[var(--hz-paper-line)] bg-white">
-      <div className="mx-auto w-full max-w-7xl px-6 py-6 sm:px-8 2xl:max-w-[96rem]">
-        {menu.layout === "cells" ? (
-          <div className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
-            {menu.cells.map((it) => (
-              <MenuCell key={it.name} {...it} onClick={onNavigate} />
-            ))}
-          </div>
-        ) : (
-          <MegaColumns columns={menu.columns} onNavigate={onNavigate} />
-        )}
-      </div>
+    // Sized to its contents, not stretched across the viewport. A full-bleed
+    // sheet meant a two-column menu still painted a white band the whole width
+    // of the screen, most of it empty — the panel announced far more than it
+    // contained. Shrinking it to the cards puts the weight where the links are.
+    //
+    // Still white, matching the bar it hangs from, and it keeps the square-ish
+    // radius and hairline of the cards inside rather than becoming a popup with
+    // its own personality.
+    <div className="inline-block rounded-2xl border border-[var(--hz-paper-line)] bg-white px-7 py-6 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
+      {menu.layout === "cells" ? (
+        <div className="grid w-[min(92vw,680px)] gap-3 sm:grid-cols-2">
+          {menu.cells.map((it) => (
+            <MenuCell key={it.name} {...it} onClick={onNavigate} />
+          ))}
+        </div>
+      ) : (
+        <MegaColumns columns={menu.columns} onNavigate={onNavigate} />
+      )}
     </div>
   );
 }
@@ -385,10 +389,17 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
         // `transform`; on different easings the two separate mid-flight and a
         // sliver of bar shows below the header. Same timing, and they move as
         // one piece.
-        className={`fixed left-0 right-0 ${topOffset} z-[9999] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        // Solid white in both states. Scrolled, this used to go to bg-white/60
+        // with a backdrop blur, which meant the bar took on whatever was
+        // passing beneath it — over the hero film that is a moving, changing
+        // tint, so the nav never settled on one colour and the dropdown sheet
+        // (opaque white) no longer matched the bar it hangs from. Scrolling now
+        // changes only the shadow, which is the part that actually says "there
+        // is content underneath".
+        className={`fixed left-0 right-0 ${topOffset} z-[9999] bg-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           scrolled
-            ? "border-b border-white/40 bg-white/60 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl backdrop-saturate-150"
-            : "border-b border-gray-100 bg-white"
+            ? "border-b border-[var(--hz-paper-line)] shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)]"
+            : "border-b border-gray-100"
         }`}
       >
         <nav
@@ -828,7 +839,11 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               animate={{ clipPath: "inset(0 0 0% 0)" }}
               exit={{ clipPath: "inset(0 0 100% 0)" }}
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-x-0 top-full hidden lg:block"
+              // Centred on the header rather than pinned to both edges, now
+              // that the panel is only as wide as its contents. The small top
+              // padding is inside the hover area, so the pointer can cross the
+              // gap from the trigger without the menu closing under it.
+              className="absolute left-1/2 top-full hidden -translate-x-1/2 pt-1.5 lg:block"
             >
               <MegaPanel menu={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
             </motion.div>

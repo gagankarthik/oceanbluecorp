@@ -13,8 +13,7 @@ import { useReducedMotion } from "framer-motion";
    at in the first second. So the <source> is not attached until
    after `load`, and only then does the element get told to play.
    Until that moment the section shows the gradient ground below,
-   which is a perfectly good hero on its own — the same bargain the
-   shader backdrop made.
+   which is a perfectly good hero on its own.
 
    That ordering matters here more than usual: with no photograph,
    the hero's LCP element is the HEADLINE, which is CSS-animated
@@ -36,8 +35,8 @@ import { useReducedMotion } from "framer-motion";
 export default function VideoBackdrop({
   src,
   className = "",
-  /** 0-100, matching ShaderBackdrop, so a section can dial the film back
-   *  behind its own scrim rather than fighting it with a heavier overlay. */
+  /** 0-100, so a section can dial the film back behind its own scrim rather
+   *  than fighting it with a heavier overlay. */
   intensity = 100,
 }: {
   src: string;

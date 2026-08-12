@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ThirteenYearsPage from "./_content";
-import { BRAND_NAME, FOUNDED_LONG, FOUNDED_YEAR, LEGAL_NAME, MILESTONES } from "@/lib/company";
+import { BRAND_NAME, FOUNDED_YEAR, MILESTONES } from "@/lib/company";
 import {
   ANNIVERSARY_COPY,
   ANNIVERSARY_PATH,
@@ -14,7 +14,11 @@ import {
 
 const URL = `https://oceanbluecorp.com${ANNIVERSARY_PATH}`;
 const TITLE = `${ANNIVERSARY_COPY.heading} — ${FOUNDED_YEAR}–${ANNIVERSARY_YEAR}`;
-const DESCRIPTION = `${ANNIVERSARY_COPY.tagline} ${BRAND_NAME}, part of ${LEGAL_NAME}, was founded on ${FOUNDED_LONG} in Powell, Ohio, and has spent ${ANNIVERSARY_YEARS} years delivering IT staffing, enterprise solutions, and managed services.`;
+/* Kept under ~160 characters, which is all a search result shows. The previous
+   build ran to 250 and was cut mid-clause; the founding date and the legal
+   entity are both on the page itself and in the Organization JSON-LD, so they
+   were spending the visible half of the snippet on detail nobody searches for. */
+const DESCRIPTION = `${BRAND_NAME} turns ${ANNIVERSARY_YEARS} in ${ANNIVERSARY_YEAR}: ${ANNIVERSARY_YEARS} years of IT staffing, enterprise solutions, and managed services from Powell, Ohio.`;
 
 export const metadata: Metadata = {
   title: `Celebrating ${ANNIVERSARY_YEARS} Years`,
