@@ -1153,10 +1153,29 @@
   --hz-on-dark-mute: #94a3b8;
   --hz-line-dark:   rgba(226,232,240,0.12);
 
-  /* Accent — confident "Ocean Blue" (single decisive brand color, consulting-grade) */
-  --hz-cobalt:     #1d4ed8;
-  --hz-cobalt-600: #1740ad;
-  --hz-cobalt-100: #dbe6fe;
+  /* Accent — sampled from the logo, not chosen.
+     The mark was measured pixel by pixel: its blues run #0975C1 at the base of
+     the droplet to #0CACCF at the tips of the arcs, and the wordmark is
+     #6B6F70. The site had been running #1d4ed8 — a deep indigo that is a
+     different hue from anything in the logo, so the brand mark and the brand
+     colour did not match on the company's own homepage.
+
+     --hz-cobalt now IS the logo blue. The old value is kept below as
+     --hz-indigo-legacy for anything that still wants it. */
+  --hz-cobalt:     #0975C1;
+  --hz-cobalt-600: #075E9C;
+  --hz-cobalt-100: #dbeefb;
+  --hz-cobalt-300: #6fc3e6;
+  /* The light end of the mark. Not a second accent: the same gradient. */
+  --hz-aqua:       #0CACCF;
+  --hz-indigo-legacy: #1d4ed8;
+  /* Wordmark grey, straight off the logo. */
+  --hz-logo-grey:  #6B6F70;
+
+  /* Warm off-white page ground. Pure #fff under a full-bleed layout reads as
+     a blank document; a hair of warmth reads as paper. */
+  --hz-paper:      #FAFAF7;
+  --hz-paper-line: #E8E7E1;
   --hz-cyan:       #2ad8ef;
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;

@@ -1,159 +1,127 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
+import { Plus } from "lucide-react";
+import { Reveal } from "./motion/Primitives";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
-// Cards render at ~1/4 of a 1280px container on desktop and full-width on
-// phones. Declaring that stops the browser from pulling the 1600w candidate
-// for a 300px box.
-const CARD_SIZES =
-  "(min-width: 1536px) 22vw, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 92vw";
+/* ============================================================
+   What we do — a single joined panel strip.
 
-type Service = {
-  name: string;
-  title: string;
-  desc: string;
-  href: string;
-  img: string;
-  items: string[];
-};
+   customer.io runs its capabilities as one continuous dark band of
+   full-bleed portrait images, butted edge to edge with no gaps, a
+   label at the foot of each and a small + affordance at the top.
+   It reads as one object with four faces rather than four cards on
+   a page, which is exactly the claim being made here: these are not
+   four vendors, they are four faces of one team.
 
-const services: Service[] = [
+   That is why there is no gap between the panels and no radius on
+   the inner edges. A gutter would undo the entire point.
+
+   Copy is rewritten to a plain service type and one short line. The
+   previous card carried an eyebrow, a marketing title, a prose
+   description AND a bulleted capability list — four levels of
+   hierarchy per card, sixteen across the row.
+   ============================================================ */
+
+type Practice = { name: string; line: string; href: string; img: string };
+
+const practices: Practice[] = [
   {
-    name: "IT Staffing & Talent",
-    title: "Specialists, embedded fast",
-    desc: "Pre-vetted engineers who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
+    name: "Staffing",
+    line: "Pre-vetted engineers who join your team and own the work.",
     href: "/solutions/staffing",
     img: IMG.serviceTalent,
-    items: ["Cloud, data & security engineers", "ERP & Salesforce specialists", "Shortlists in 48 hours"],
   },
   {
-    name: "Engineering Talent & Services",
-    title: "Engineers, embedded fast",
-    desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
+    name: "Engineering",
+    line: "Mechanical, electrical, aerospace and controls specialists.",
     href: "/solutions/engineering",
     img: IMG.serviceEngineering,
-    items: [
-      "Automotive, MFG, aerospace, power",
-      "Flexible, permanent, or managed teams",
-      "Shortlists in 48 hours",
-    ],
   },
   {
-    name: "Enterprise Solutions",
-    title: "Platforms, modernized",
-    desc: "Cloud migration, security, and production AI, engineered and shipped without stopping the business.",
+    name: "Platforms",
+    line: "Cloud, security and production AI, shipped without stopping the business.",
     href: "/solutions/cloud",
     img: IMG.serviceSolutions,
-    // Condensed from seven lines to four. At seven this card ran far past its
-    // three-bullet neighbours and left a large void above their bottom-aligned
-    // "Learn more", so the row of four read as broken rather than dense. Every
-    // capability is still named — merged, not dropped — and the full list lives
-    // on /solutions/cloud, which is where the card links.
-    items: [
-      "Cloud migration · AWS, Azure, GCP",
-      "DevOps, CI/CD & automation",
-      "AI, data intelligence & cybersecurity",
-      "ERP & Salesforce · SAP, Oracle, Dynamics",
-    ],
   },
   {
-    name: "Managed Services",
-    title: "Run, 24/7",
-    desc: "Monitoring, support, and continuous optimization around the clock. One team, one SLA, one number to call.",
+    name: "Operations",
+    line: "Monitoring, support and optimisation around the clock.",
     href: "/solutions/managed",
     img: IMG.serviceManaged,
-    items: ["24/7 monitoring & response", "Helpdesk & application support", "Quarterly business reviews"],
   },
 ];
 
-function ServiceCard({ s }: { s: Service }) {
-  return (
-    <Link href={s.href} className="group flex h-full flex-col">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[var(--hz-surface-2)]">
-        <Photo
-          src={s.img}
-          sizes={CARD_SIZES}
-          className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-        />
-        {/* Accent rule grows on hover, the one bit of motion the card needs. */}
-        <span className="absolute left-0 top-6 z-10 h-8 w-1 origin-left rounded-r bg-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-x-[2.5]" />
-      </div>
-
-      <div className="mt-5 flex flex-1 flex-col sm:mt-6">
-        <span className="hz-eyebrow text-[var(--hz-amber)]">{s.name}</span>
-        <h3 className="hz-display mt-3 text-[1.35rem] text-[var(--hz-text)] sm:text-[1.5rem] xl:text-[1.75rem]">
-          {s.title}
-        </h3>
-        <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[15px]">{s.desc}</p>
-
-        <ul className="mt-5 space-y-2">
-          {s.items.map((it) => (
-            <li key={it} className="flex items-start gap-2.5 text-[13.5px] text-[var(--hz-text)]">
-              <span className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full bg-[var(--hz-cobalt)]" />
-              {it}
-            </li>
-          ))}
-        </ul>
-
-        <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[14px] font-semibold text-[var(--hz-cobalt)] sm:pt-7">
-          Learn more
-          <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1" strokeWidth={1.75} />
-        </span>
-      </div>
-    </Link>
-  );
-}
+// Each panel is a quarter of the container on desktop, full width stacked.
+const PANEL_SIZES = "(min-width: 768px) 25vw, 100vw";
 
 export default function Services() {
   return (
-    <section
-      id="services"
-      className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32"
-    >
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
-        {/* Statement left, the case for it right. The row used to be a heading
-            capped at max-w-2xl with a lone "All solutions" link justified to
-            the far edge, which left roughly a third of the row empty across
-            the middle. Giving the right column something to say is the
-            editorial fix — and it is where the pitch belongs anyway. */}
-        <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-10">
-          <div className="lg:col-span-7">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">What we do</span>
-            <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
-              One partner for talent, engineering, technology, and operations.
-            </h2>
-          </div>
-
-          <div className="lg:col-span-4 lg:col-start-9">
-            <p className="text-[15px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[15.5px]">
-              Four practices, one contract, one team accountable for the
-              outcome — so the handoffs between hiring, building, and running
-              stop being your problem to manage.
-            </p>
-            <Link
-              href="/solutions"
-              className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--hz-cobalt)]"
-            >
-              All solutions
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
-                strokeWidth={1.75}
-              />
-            </Link>
-          </div>
+    <section id="services" className="relative w-full bg-[var(--hz-paper)] pb-20 sm:pb-24 lg:pb-28">
+      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+        <Reveal className="max-w-3xl pb-10 sm:pb-12">
+          <span className="hz-eyebrow text-[var(--hz-cobalt)]">What we do</span>
+          <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
+            Four practices, one accountable team.
+          </h2>
         </Reveal>
+      </div>
 
-        <Stagger className="mt-12 grid gap-x-8 gap-y-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
-          {services.map((s) => (
-            <StaggerItem key={s.name} className="h-full">
-              <ServiceCard s={s} />
-            </StaggerItem>
-          ))}
-        </Stagger>
+      {/* Full-bleed strip: the panels run the width of the viewport, which is
+          what makes them read as one band rather than a row of cards inside a
+          container. */}
+      <div className="grid w-full grid-cols-1 overflow-hidden md:grid-cols-4">
+        {practices.map((p) => (
+          <Link
+            key={p.name}
+            href={p.href}
+            className="group relative isolate flex min-h-[440px] flex-col justify-end overflow-hidden bg-[var(--hz-ink)] p-7 sm:min-h-[520px] sm:p-8"
+          >
+            <Photo
+              src={p.img}
+              sizes={PANEL_SIZES}
+              className="transition-transform duration-[900ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+            />
+            {/* Two scrims: a flat wash so the four panels read as one dark
+                family whatever their photographs are doing, and a foot
+                gradient so the label keeps contrast where the image is light.
+
+                No negative z-index. `-z-10` was tried and put both scrims
+                BEHIND the Photo — Photo is positioned with z-auto, so anything
+                at -10 sits under it and the labels ended up on bare
+                photography. Positioned, later in the tree, no z-index: that is
+                all the ordering this needs. */}
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-[#061024]/60 transition-colors duration-500 group-hover:bg-[#061024]/48"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(0deg, rgba(6,16,36,0.9) 0%, rgba(6,16,36,0.15) 45%, transparent 70%)" }}
+            />
+
+            <span className="absolute right-6 top-6 grid h-9 w-9 place-items-center rounded-full border border-white/25 text-white transition-colors duration-300 group-hover:border-white group-hover:bg-white group-hover:text-[var(--hz-ink)] sm:right-7 sm:top-7">
+              <Plus className="h-4 w-4" strokeWidth={2} />
+            </span>
+
+            {/* `relative` is load-bearing. Photo renders an absolutely
+                positioned span, and a positioned element paints above static
+                siblings regardless of DOM order — so without this the image
+                covers the label completely. The + button only survived because
+                it is absolute too and comes later in the tree. */}
+            <div className="relative">
+              <h3 className="text-[1.4rem] font-semibold tracking-[-0.015em] text-white sm:text-[1.55rem]">
+                {p.name}
+              </h3>
+              <p className="mt-2.5 max-w-[30ch] text-[14.5px] leading-relaxed text-white/70">
+                {p.line}
+              </p>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );

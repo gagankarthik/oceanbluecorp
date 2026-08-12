@@ -53,7 +53,7 @@ export default function ClientLogos() {
     // ~220px of empty canvas between a logo row and the next heading, which
     // reads as a missing section rather than as breathing room. The logos
     // belong closer to what follows them than to the hero above.
-    <section className="relative w-full overflow-hidden bg-[var(--hz-canvas)] pt-16 pb-10 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-paper)] pt-16 pb-10 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <Reveal className="flex flex-col items-center gap-4 text-center">
           <span className="hz-eyebrow text-[var(--hz-amber)]">Selected clients</span>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Hero from "@/components/landing/Hero";
 import ClientLogos from "@/components/landing/ClientLogos";
+import Statement from "@/components/landing/Statement";
 import Services from "@/components/landing/Services";
 import ImpactStats from "@/components/landing/ImpactStats";
 import Certifications from "@/components/landing/Certifications";
@@ -28,8 +29,8 @@ export const metadata: Metadata = {
    cards in grids, one decisive Ocean-Blue accent, a flat sticky
    header, and a bold image-backed CTA. (Insights / Case Study
    sections removed until the Resources content exists.)
-   Order: Hero(image) · Clients · Services · Impact · Certifications ·
-   Testimonials · CTA.
+   Order: Hero(statement + wide image) · Clients · Statement ·
+   Services (panel strip) · Impact · Certifications · Testimonials · CTA.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -111,6 +112,7 @@ export default async function Home() {
       {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
       <ClientLogos />
+      <Statement />
       <Services />
       <ImpactStats content={content} />
       <Certifications />

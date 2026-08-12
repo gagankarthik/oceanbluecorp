@@ -21,7 +21,7 @@ export default function Certifications() {
   return (
     // White, sitting between the two tinted bands (stats above, testimonials
     // below) so the page alternates cleanly instead of running one long tint.
-    <section className="relative w-full bg-[var(--hz-canvas)] py-14 sm:py-16 lg:py-20">
+    <section className="relative w-full bg-[var(--hz-paper)] py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <Reveal className="flex flex-col items-center gap-7 text-center sm:gap-8">
           <p className="hz-eyebrow text-[var(--hz-text-subtle)]">
