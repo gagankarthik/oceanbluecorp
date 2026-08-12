@@ -47,7 +47,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
       {/* The ground. Was a three-photograph crossfade; it is the shader
           gradient now, at full strength because here it IS the hero rather
           than a tint over something else. */}
-      <ShaderBackdrop className="z-0" intensity={100} />
+      <ShaderBackdrop className="z-0" intensity={80} />
 
       {/* Brand scrim */}
       <div

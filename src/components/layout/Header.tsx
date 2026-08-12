@@ -81,6 +81,8 @@ type MenuItem = {
   Icon?: (p: { className?: string }) => React.ReactElement;
   /** The icon's hue. Two tones of one colour — see the note in Motifs. */
   tint?: string;
+  /** Cell layouts only. Column layouts stay a name and an arrow. */
+  description?: string;
 };
 
 type MenuColumn = { heading: string; items: MenuItem[] };
@@ -131,28 +133,36 @@ const ABOUT_COLUMNS: MenuColumn[] = [
   },
 ];
 
-/* The five hues are all cool blues and teals, so the row reads as coloured
-   without importing an accent the rest of the site does not use. Each icon
-   draws its line in the hue and its fill in the same hue at 22%. */
-const RESOURCES_COLUMNS: MenuColumn[] = [
-  {
-    heading: "Resources",
-    items: [
-      { name: "Developer documentation", href: "/developers", Icon: IllDocs, tint: "#1d4ed8" },
-      { name: "Blog", href: "/blog", Icon: IllBlog, tint: "#0CACCF" },
-      { name: "News", href: "/news", Icon: IllNews, tint: "#6366F1" },
-      { name: "Customer stories", href: "/customer-stories", Icon: IllStories, tint: "#0EA5E9" },
-      { name: "Case studies", href: "/case-studies", Icon: IllCases, tint: "#0D9488" },
-    ],
-  },
+/* Resources is laid out as CELLS, not a link column, because the reference
+   site does exactly this: menus whose entries are all the same kind of thing
+   (its Solutions, our practices) get bordered columns of plain links, while
+   menus whose entries are different kinds of thing (its Platform, our
+   resources) get a grid of cells carrying a line of description and a
+   coloured glyph in the corner. A menu should be shaped by what is in it.
+
+   One narrow card holding five links also sat marooned in the middle of a
+   full-width sheet. Two columns of cells fill the measure the way theirs do.
+
+   The five hues are all cool blues and teals, so the grid reads as coloured
+   without importing an accent the rest of the site does not use. */
+const RESOURCES_CELLS: MenuItem[] = [
+  { name: "Developer documentation", href: "/developers", description: "The Job Feed API, authentication, and endpoints", Icon: IllDocs, tint: "#1d4ed8" },
+  { name: "Blog", href: "/blog", description: "Writing from our engineers and recruiters", Icon: IllBlog, tint: "#0CACCF" },
+  { name: "News", href: "/news", description: "Announcements, awards, and company updates", Icon: IllNews, tint: "#6366F1" },
+  { name: "Customer stories", href: "/customer-stories", description: "How clients describe working with us", Icon: IllStories, tint: "#0EA5E9" },
+  { name: "Case studies", href: "/case-studies", description: "Engagements in detail, with the outcomes", Icon: IllCases, tint: "#0D9488" },
 ];
 
 /* One table, so adding a menu is adding a row rather than extending a chain
    of ternaries in the render. */
-const MENUS: Record<string, MenuColumn[]> = {
-  solutions: SOLUTIONS_COLUMNS,
-  about: ABOUT_COLUMNS,
-  resources: RESOURCES_COLUMNS,
+type Menu =
+  | { layout: "columns"; columns: MenuColumn[] }
+  | { layout: "cells"; cells: MenuItem[] };
+
+const MENUS: Record<string, Menu> = {
+  solutions: { layout: "columns", columns: SOLUTIONS_COLUMNS },
+  about: { layout: "columns", columns: ABOUT_COLUMNS },
+  resources: { layout: "cells", cells: RESOURCES_CELLS },
 };
 
 function MenuLink({ name, href, Icon, tint, onClick }: MenuItem & { onClick?: () => void }) {
@@ -183,41 +193,88 @@ function MenuLink({ name, href, Icon, tint, onClick }: MenuItem & { onClick?: ()
   );
 }
 
-function MegaPanel({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?: () => void }) {
+/** A cell: the glyph in the corner, the name, one line saying what it is.
+ *  Used where the entries are different KINDS of thing and the name alone
+ *  does not separate them. */
+function MenuCell({ name, href, description, Icon, tint, onClick }: MenuItem & { onClick?: () => void }) {
   return (
-    <div className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
-      <div className="mx-auto w-full max-w-7xl px-6 py-6 sm:px-8 2xl:max-w-[96rem]">
-        {/* Each column is its OWN bordered card, not a track separated from its
-            neighbour by a shared rule. The difference matters: a divided grid
-            reads as one table you scan across, whereas four boxes read as four
-            independent lists you pick between, which is what these are.
+    <Link
+      href={href}
+      onClick={onClick}
+      className="group flex items-start justify-between gap-4 rounded-lg border border-[var(--hz-paper-line)] bg-white p-4 transition-colors hover:border-[var(--hz-cobalt)]/40"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14.5px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
+          {name}
+        </span>
+        {description && (
+          <span className="mt-1 block text-[12.5px] leading-snug text-[var(--hz-text-mute)]">
+            {description}
+          </span>
+        )}
+      </span>
+      {/* Corner glyph, as the reference places it — top-right of the cell,
+          where it labels the cell without displacing the sentence. */}
+      {Icon && (
+        <span style={{ color: tint }} className="flex-none">
+          <Icon className="h-7 w-7" />
+        </span>
+      )}
+    </Link>
+  );
+}
 
-            `items-stretch` squares the bottoms off — with six links in one card
-            and two in another, ragged heights would make the shortest look
-            unfinished rather than simply shorter. */}
-        <div className="flex flex-wrap items-stretch justify-center gap-3">
-          {columns.map((col) => (
-            <div
-              key={col.heading}
-              className="w-full overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white sm:w-[290px]"
-            >
-              {/* Header band: the taxonomy, and a small dot at the right edge
-                  that closes the row the arrows below open. */}
-              <div className="flex items-center justify-between gap-3 border-b border-[var(--hz-paper-line)] px-4 py-3">
-                <span className="text-[14.5px] font-semibold text-[var(--hz-text)]">{col.heading}</span>
-                <span aria-hidden className="h-2.5 w-2.5 flex-none rounded-full bg-[var(--hz-paper-line)]" />
-              </div>
-              <div className="px-4 py-2">
-                {col.items.map((it) => (
-                  // Spread, not a hand-listed set of props — the previous form
-                  // silently dropped Icon and tint when they were added.
-                  <MenuLink key={it.name} {...it} onClick={onNavigate} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+function MegaPanel({ menu, onNavigate }: { menu: Menu; onNavigate?: () => void }) {
+  return (
+    // White, matching the bar above it, so the sheet reads as the header
+    // extending downward rather than a second surface sliding out from under it.
+    <div className="border-b border-[var(--hz-paper-line)] bg-white">
+      <div className="mx-auto w-full max-w-7xl px-6 py-6 sm:px-8 2xl:max-w-[96rem]">
+        {menu.layout === "cells" ? (
+          <div className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
+            {menu.cells.map((it) => (
+              <MenuCell key={it.name} {...it} onClick={onNavigate} />
+            ))}
+          </div>
+        ) : (
+          <MegaColumns columns={menu.columns} onNavigate={onNavigate} />
+        )}
       </div>
+    </div>
+  );
+}
+
+/* Each column is its OWN bordered card, not a track separated from its
+   neighbour by a shared rule. The difference matters: a divided grid reads as
+   one table you scan across, whereas separate boxes read as separate lists you
+   pick between, which is what these are.
+
+   `items-stretch` squares the bottoms off — with four links in one card and
+   two in another, ragged heights would make the shortest look unfinished
+   rather than simply shorter. */
+function MegaColumns({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?: () => void }) {
+  return (
+    <div className="flex flex-wrap items-stretch justify-center gap-3">
+      {columns.map((col) => (
+        <div
+          key={col.heading}
+          className="w-full overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white sm:w-[290px]"
+        >
+          {/* Header band: the taxonomy, and a small dot at the right edge that
+              closes the row the arrows below open. */}
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--hz-paper-line)] px-4 py-3">
+            <span className="text-[14.5px] font-semibold text-[var(--hz-text)]">{col.heading}</span>
+            <span aria-hidden className="h-2.5 w-2.5 flex-none rounded-full bg-[var(--hz-paper-line)]" />
+          </div>
+          <div className="px-4 py-2">
+            {col.items.map((it) => (
+              // Spread, not a hand-listed set of props — the previous form
+              // silently dropped Icon and tint when they were added.
+              <MenuLink key={it.name} {...it} onClick={onNavigate} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -322,7 +379,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   const getDropdownItems = (type: string): MobileItem[] => {
     if (type === "solutions") return solutions.map(({ name, href, description }) => ({ name, href, description }));
     if (type === "about") return aboutItems.map(({ name, href, description }) => ({ name, href, description }));
-    if (type === "resources") return RESOURCES_COLUMNS[0].items;
+    if (type === "resources") return RESOURCES_CELLS;
     return [];
   };
 
@@ -762,7 +819,14 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
         <AnimatePresence>
           {activeDropdown && MENUS[activeDropdown] && (
             <motion.div
-              key={activeDropdown}
+              // A CONSTANT key, deliberately. Keyed on the menu name, moving
+              // from Solutions to Resources unmounted one panel and mounted
+              // another, so AnimatePresence rendered both at once — two sheets
+              // stacked at the same top-full position, overlapping. With one
+              // key the panel stays put and only its contents swap, which is
+              // also how the reference behaves: the sheet opens once and
+              // changes under you as you move along the bar.
+              key="mega-panel"
               onMouseEnter={() => openMenu(activeDropdown)}
               onMouseLeave={scheduleClose}
               // Wiped down from the header edge, not faded in. Opacity on the
@@ -776,7 +840,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-x-0 top-full hidden lg:block"
             >
-              <MegaPanel columns={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
+              <MegaPanel menu={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
             </motion.div>
           )}
         </AnimatePresence>
