@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Cookie, Shield, BarChart2, Settings2, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | Ocean Blue Corporation",
+  title: "Cookie Policy",
   description: "Learn how Ocean Blue Corporation uses cookies and similar tracking technologies on our website.",
 };
 

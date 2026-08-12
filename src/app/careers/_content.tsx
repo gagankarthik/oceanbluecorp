@@ -8,6 +8,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 /* ============================================================
@@ -74,40 +75,31 @@ export default function CareersPage() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* ── Hero ───────────────────────────────────────────── */}
-      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo
-          src={IMG.heroSlides[1]}
-          className="z-0"
-          fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)"
-          priority
-          sizes="100vw"
-        />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:px-8 sm:pt-32 sm:pb-20">
-          <Reveal>
-            <span className="hz-eyebrow text-white/55">Careers</span>
-            <h1 className="hz-display mt-5 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              Build your career with our team.
-            </h1>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-7 sm:text-[18px]">
-              We place engineers, recruiters, and delivery leads with enterprises and
-              government agencies across North America, and we hire for the same
-              disciplines ourselves.
-            </p>
-            <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <Cta href="/careers/search" variant="primary">View open positions</Cta>
-              <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
-            </div>
+      <PageHero
+        eyebrow="Careers"
+        title="Build your career with our team."
+        subtitle="We place engineers, recruiters, and delivery leads with enterprises and government agencies across North America, and we hire for the same disciplines ourselves."
+        image={IMG.heroSlides[1]}
+        actions={
+          <>
+            <Cta href="/careers/search" variant="primary">View open positions</Cta>
+            <Cta href="/about" variant="ghostLight">About Ocean Blue</Cta>
+          </>
+        }
+      />
 
-            <dl className="mt-12 grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 border-t border-white/15 pt-8 min-[400px]:grid-cols-3 sm:mt-14">
-              {facts.map((f) => (
-                <div key={f.k}>
-                  <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>
-                  <dd className="hz-eyebrow mt-1 text-white/55">{f.k}</dd>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
+      {/* The three figures used to sit inside the hero on a white-on-dark rule.
+          On paper they need their own band. */}
+      <section className="w-full bg-[var(--hz-paper)] py-12 sm:py-14">
+        <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+          <dl className="grid max-w-3xl grid-cols-1 gap-x-4 gap-y-6 min-[400px]:grid-cols-3">
+            {facts.map((f) => (
+              <div key={f.k}>
+                <dt className="hz-display hz-tnum text-[1.6rem] text-[var(--hz-text)] sm:text-[1.9rem]">{f.v}</dt>
+                <dd className="hz-eyebrow mt-1 text-[var(--hz-text-mute)]">{f.k}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

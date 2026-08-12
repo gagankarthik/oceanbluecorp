@@ -5,6 +5,7 @@ import { ArrowRight, Check, Wrench, ArrowUpRight } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { SOLUTIONS, SOLUTION_ORDER } from "./content";
 
 /* A self-contained solution page. Deliberately does NOT reuse the
@@ -69,37 +70,40 @@ export default function ServiceDetail({ slug }: { slug: string }) {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* ---------- Hero ---------- */}
-      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={data.image} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
-          <Reveal>
-            <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/15">
-                <Icon className="h-5 w-5" strokeWidth={1.5} />
-              </span>
-              <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-cyan-400)]">{data.eyebrow}</span>
+      <PageHero
+        eyebrow={data.eyebrow}
+        title={data.title}
+        subtitle={data.lede}
+        image={data.image}
+        actions={
+          <>
+            <Cta href="/contact" variant="primary">Start a conversation</Cta>
+            <Link
+              href="/solutions"
+              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]"
+            >
+              All solutions
+            </Link>
+          </>
+        }
+      />
+
+      {data.tags && (
+        <section className="w-full bg-[var(--hz-paper)] pb-2 pt-10">
+          <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+            <div className="flex flex-wrap gap-2.5">
+              {data.tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]"
+                >
+                  {t}
+                </span>
+              ))}
             </div>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,4.8vw,3.75rem)] break-words text-white">
-              {data.title}
-            </h1>
-            <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">{data.lede}</p>
-            {data.tags && (
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                {data.tags.map((t) => (
-                  <span key={t} className="rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-[12.5px] font-medium text-white/80">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary">Start a conversation</Cta>
-              <Link href="/solutions" className="hz-btn-ghost-dark">All solutions</Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* ---------- Overview + capabilities ---------- */}
       <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">

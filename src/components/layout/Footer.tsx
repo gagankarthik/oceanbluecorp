@@ -91,10 +91,14 @@ function FooterStatus() {
 export default function Footer() {
   return (
     <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-surface)]">
-      {/* px-6 sm:px-8 matches the header and every page section, so the logo
-          lines up with the content above it. It was px-6 lg:px-8, which put
+      {/* Container matches the HEADER exactly — max-w-7xl, px-6 sm:px-8, and
+          the same 2xl cap — so the footer logo sits directly under the nav
+          logo and the last column ends level with the Contact button. It had
+          been on the landing page's much wider max-w-[2200px] measure, which
+          pushed both edges outboard of the bar above and made the whole page
+          look like two different documents stacked. It was px-6 lg:px-8, which put
           the footer on a different gutter at sm/md widths. */}
-      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28 py-20 sm:py-24">
+      <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem] py-20 sm:py-24">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_2.2fr] lg:gap-16">
           {/* Brand + contact */}
           <div>
@@ -160,7 +164,7 @@ export default function Footer() {
       {/* Bottom bar: copyright left, system status dead centre, social right —
           three fixed zones, so the status pill anchors the middle of the row. */}
       <div className="border-t border-black/[0.07]">
-        <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28 grid grid-cols-1 items-center gap-5 py-8 sm:grid-cols-3">
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem] grid grid-cols-1 items-center gap-5 py-8 sm:grid-cols-3">
           <p className="text-center text-[13px] text-[var(--hz-text-subtle)] sm:text-left">
             © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
           </p>

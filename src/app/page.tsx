@@ -7,7 +7,7 @@ import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
 import CertificationStrip from "@/components/landing/CertificationStrip";
 import Anniversary from "@/components/landing/anniversary/Anniversary";
-import { IMG, atWidth } from "@/components/landing/media";
+
 import { getSiteContent } from "@/lib/content";
 import { isAnniversaryLive } from "@/lib/anniversary";
 
@@ -18,7 +18,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Enterprise IT Solutions, Staffing & Managed Services",
   description:
-    "Ocean Blue Corporation delivers IT and engineering staffing, enterprise solutions, and 24/7 managed services to enterprises and state government agencies across North America. Certified MBE/WBE, headquartered in Powell, Ohio.",
+    "IT and engineering staffing, enterprise solutions, and 24/7 managed services for enterprises and government agencies. Certified MBE/WBE, based in Powell, Ohio.",
   alternates: { canonical: "/" },
 };
 
@@ -28,9 +28,9 @@ export const metadata: Metadata = {
    cards in grids, one decisive Ocean-Blue accent, a flat sticky
    header, and a bold image-backed CTA. (Insights / Case Study
    sections removed until the Resources content exists.)
-   Order: Hero(statement + wide image) · Clients · Statement ·
-   Services (panel strip) · Proof (stats) · Client work (case-study
-   rows) · Accreditation strip · Careers CTA · Footer.
+   Order: Hero (video) · Services · Partnerships (the one dark beat)
+   · Clients · Client work (case-study rows) · Accreditation strip ·
+   Careers CTA · Footer.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -82,25 +82,11 @@ export default async function Home() {
   const anniversary = isAnniversaryLive(content);
   return (
     <div className="horizon relative w-full bg-[var(--hz-canvas)]">
-      {/* Warm up the LCP hero photo before React hydrates. imageSrcSet mirrors
-          the Hero's own ladder so the preload matches the request it makes.
-
-          Skipped while the anniversary band is up: the band is then the first
-          section and the hero photo is below the fold, so a high-priority
-          preload would spend the opening bandwidth on an image nobody is
-          looking at yet — and delay the thing they are. */}
-      {!anniversary && (
-        <link
-          rel="preload"
-          as="image"
-          href={IMG.heroSlides[0]}
-          imageSrcSet={[640, 960, 1280, 1600, 2000]
-            .map((w) => `${atWidth(IMG.heroSlides[0], w)} ${w}w`)
-            .join(", ")}
-          imageSizes="100vw"
-          fetchPriority="high"
-        />
-      )}
+      {/* The hero photo preload that used to sit here is gone with the photo.
+          The hero is film now, deliberately deferred until after `load`, and
+          its LCP element is the CSS-animated headline already in this HTML —
+          so a high-priority image preload was spending the opening bandwidth
+          on a file the page no longer requests at all. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}

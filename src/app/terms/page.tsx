@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Ocean Blue Corporation",
+  title: "Terms of Service",
   description: "Read the Terms of Service governing your use of Ocean Blue Corporation's website and services.",
 };
 

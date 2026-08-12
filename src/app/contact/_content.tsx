@@ -9,6 +9,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 const contactInfo: {
@@ -104,25 +105,17 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[58vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.contactHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-28 pt-32 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Contact us</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              {content.contactTitle || "Let's start a conversation."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.contactSubtitle ||
-                "A question about our services, a custom solution, or a partnership, our team is ready to help."}
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Contact us"
+        title={content.contactTitle || "Let's start a conversation."}
+        subtitle={
+          content.contactSubtitle ||
+          "A question about our services, a custom solution, or a partnership, our team is ready to help."
+        }
+      />
 
       {/* Contact info cards (overlap hero) */}
-      <section className="relative z-20 -mt-20 px-6 sm:px-8">
+      <section className="relative z-20 mt-14 px-6 sm:px-8 sm:mt-16">
         <Stagger className="mx-auto grid max-w-7xl gap-5 sm:grid-cols-2 lg:grid-cols-4" gap={0.07}>
           {methods.map((info) => {
             const Inner = (

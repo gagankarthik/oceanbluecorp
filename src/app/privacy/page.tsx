@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Ocean Blue Corporation",
+  title: "Privacy Policy",
   description: "Learn how Ocean Blue Corporation collects, uses, and protects your personal information.",
 };
 

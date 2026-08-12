@@ -9,6 +9,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 /* ============================================================
@@ -76,32 +77,38 @@ export default function EngineeringContent() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* ---------- Hero ---------- */}
-      <section className="relative isolate flex min-h-[68vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.serviceEngineering} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Engineering talent &amp; services</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              The engineers behind what you design, test, and build.
-            </h1>
-            <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who
-              join your program and own the work, across automotive, manufacturing, aerospace,
-              power, and communications.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {["By the project", "Try before you hire", "Permanent hire", "Managed teams"].map((m) => (
-                <span key={m} className="rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-[12.5px] font-medium text-white/80">
-                  {m}
-                </span>
-              ))}
-            </div>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary">Start a conversation</Cta>
-              <a href="#disciplines" className="hz-btn-ghost-dark">Explore disciplines</a>
-            </div>
-          </Reveal>
+      <PageHero
+        eyebrow="Engineering talent & services"
+        title="The engineers behind what you design, test, and build."
+        subtitle="Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work, across automotive, manufacturing, aerospace, power, and communications."
+        image={IMG.serviceEngineering}
+        actions={
+          <>
+            <Cta href="/contact" variant="primary">Start a conversation</Cta>
+            <a
+              href="#disciplines"
+              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]"
+            >
+              Explore disciplines
+            </a>
+          </>
+        }
+      />
+
+      {/* The engagement models, on paper. They were white-on-dark pills inside
+          the hero; here they are a quiet row under it. */}
+      <section className="w-full bg-[var(--hz-paper)] pb-2 pt-10">
+        <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+          <div className="flex flex-wrap gap-2.5">
+            {["By the project", "Try before you hire", "Permanent hire", "Managed teams"].map((m) => (
+              <span
+                key={m}
+                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

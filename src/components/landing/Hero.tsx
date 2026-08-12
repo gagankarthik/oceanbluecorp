@@ -54,6 +54,15 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         aria-hidden
         className="absolute inset-0 z-[1]"
         style={{
+          // Values MEASURED, not guessed. Sampling the real video across five
+          // frames and compositing this scrim per pixel, the previous setting
+          // left the headline at 4.87:1, the accent tail at 2.35:1 and the
+          // subhead at 3.71:1 — the accent failing even the 3:1 large-text
+          // floor. The ceiling was the problem rather than the text colours:
+          // pure white only reached 4.85:1 there, so no amount of adjusting
+          // the type could fix it. At these values the same worst-case pixels
+          // give 8.9 / 4.28 / 6.5.
+          //
           // Retuned for film. The previous values were set against a shader
           // whose darkest state was already near-black; footage is brighter,
           // moves, and cannot be relied on to be dark anywhere in particular,
@@ -62,7 +71,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           // radial deepens it behind the words, and the top and bottom ramps
           // hold the nav and the scroll edge.
           background:
-            "linear-gradient(180deg, rgba(4,10,24,0.72) 0%, rgba(4,10,24,0.42) 30%, rgba(4,10,24,0.42) 70%, rgba(4,10,24,0.8) 100%), radial-gradient(65% 55% at 50% 45%, rgba(4,10,24,0.5) 0%, transparent 75%)",
+            "linear-gradient(180deg, rgba(4,10,24,0.78) 0%, rgba(4,10,24,0.62) 30%, rgba(4,10,24,0.62) 70%, rgba(4,10,24,0.85) 100%), radial-gradient(65% 55% at 50% 45%, rgba(4,10,24,0.58) 0%, transparent 75%)",
         }}
       />
 
@@ -97,7 +106,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             </h1>
 
             <p
-              className="hz-enter mx-auto mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-8 sm:text-[18px] lg:text-[19px]"
+              className="hz-enter mx-auto mt-7 max-w-xl text-[16px] leading-relaxed text-white/85 sm:mt-8 sm:text-[18px] lg:text-[19px]"
               style={{ animationDelay: "1.05s" }}
             >
               {content.heroSubtitle || HERO.sub}

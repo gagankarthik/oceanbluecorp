@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Trash2, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Data Deletion Request | Ocean Blue Corporation",
+  title: "Data Deletion Request",
   description: "Request deletion of your personal data held by Ocean Blue Corporation by emailing hr@oceanbluecorp.com.",
 };
 
