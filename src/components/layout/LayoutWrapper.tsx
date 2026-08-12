@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -34,6 +35,22 @@ export default function LayoutWrapper({
   // relative spacing every page already has below the header is preserved.
   const showBar = !isAuthRoute && announcement.length > 0;
 
+  // Past the fold the strip retracts and the header takes the top edge back.
+  // The announcement is news for someone arriving; forty pixels of permanent
+  // chrome is a tax on everyone still reading. `main` keeps its pt-10 either
+  // way — animating that too would shift the whole document under the reader
+  // mid-scroll, which is a far worse trade than a fixed header moving 40px.
+  const [barRetracted, setBarRetracted] = useState(false);
+  useEffect(() => {
+    if (!showBar) return;
+    // 64px, not 0: a trackpad's elastic overscroll at the top of the document
+    // would otherwise flap the bar in and out on every small gesture.
+    const onScroll = () => setBarRetracted(window.scrollY > 64);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [showBar]);
+
   return (
     <>
       {/* Momentum scrolling, marketing routes only — this branch is already
@@ -48,8 +65,19 @@ export default function LayoutWrapper({
       >
         Skip to content
       </a>
-      {showBar && <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} />}
-      {!isAuthRoute && <Header topOffset={showBar ? "top-10" : "top-0"} />}
+      {showBar && (
+        <div
+          className={`fixed inset-x-0 top-0 z-[9990] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            barRetracted ? "-translate-y-full" : "translate-y-0"
+          }`}
+          aria-hidden={barRetracted}
+        >
+          <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} />
+        </div>
+      )}
+      {!isAuthRoute && (
+        <Header topOffset={showBar && !barRetracted ? "top-10" : "top-0"} />
+      )}
       <main id="main-content" tabIndex={-1} className={`min-h-screen outline-none ${showBar ? "pt-10" : ""}`}>{children}</main>
       {!isAuthRoute && <Footer />}
     </>

@@ -4,7 +4,6 @@ import ClientLogos from "@/components/landing/ClientLogos";
 import Statement from "@/components/landing/Statement";
 import Services from "@/components/landing/Services";
 import ImpactStats from "@/components/landing/ImpactStats";
-import Certifications from "@/components/landing/Certifications";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
 import Anniversary from "@/components/landing/anniversary/Anniversary";
@@ -30,7 +29,8 @@ export const metadata: Metadata = {
    header, and a bold image-backed CTA. (Insights / Case Study
    sections removed until the Resources content exists.)
    Order: Hero(statement + wide image) · Clients · Statement ·
-   Services (panel strip) · Impact · Certifications · Testimonials · CTA.
+   Services (panel strip) · Proof (stats + accreditations) ·
+   Client work (case-study rows) · Careers.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -115,7 +115,6 @@ export default async function Home() {
       <Statement />
       <Services />
       <ImpactStats content={content} />
-      <Certifications />
       <Testimonials />
       <CallToAction content={content} />
     </div>
