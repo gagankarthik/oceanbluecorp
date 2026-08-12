@@ -268,7 +268,12 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   return (
     <>
       <header
-        className={`fixed left-0 right-0 ${topOffset} z-[9999] transition-all duration-300 ease-out ${
+        // Duration and curve are deliberately identical to the announcement
+        // bar's wrapper in LayoutWrapper. The header slides `top` while the bar
+        // slides `transform`; on different easings the two separate mid-flight
+        // and a sliver of bar shows below the header. Same timing, and they
+        // move as one piece.
+        className={`fixed left-0 right-0 ${topOffset} z-[9999] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           scrolled
             ? "border-b border-white/40 bg-white/60 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl backdrop-saturate-150"
             : "border-b border-gray-100 bg-white"
