@@ -2,69 +2,75 @@
 
 import Link from "next/link";
 import { Reveal } from "./motion/Primitives";
-import { TagMark, ArcSweep } from "./motifs/Motifs";
-import Photo from "./Photo";
-import { IMG } from "./media";
+import { LogoMark, CheckMark } from "./motifs/Motifs";
 
 /* ============================================================
-   Careers — the closing band.
+   Closing CTA — the reference's final band.
 
-   The last full section before the accreditation strip, on the ink
-   ground, so the page ends on the same dark note the proof band
-   struck. One statement, one paragraph, one primary action, and a
-   single photograph held to a modest size on the right.
+   Its anatomy, and why each part is here:
 
-   The vertical image marquees that used to live here are gone: six
-   tiles looping in opposite directions is a lot of motion to put
-   beside an invitation, and it fetched six images to say what one
-   says.
+     · A dark band ruled into columns by vertical hairlines that
+       continue the grid from the strip above, so the two read as
+       one structure rather than two stacked sections.
+     · The brand mark, enormous and barely lighter than the ground,
+       occupying the left column. Not a photograph and not an
+       illustration — the logo itself, used as architecture. It is
+       the only ornament the band needs.
+     · One short statement, two pill actions, and the same proof
+       microcopy row the hero opened with. The page closes on the
+       promise it opened with, which is what makes it feel finished
+       rather than merely ended.
 
-   The arc sweep behind it is the same motif the proof band and the
-   statement use, at the same low opacity. That repetition IS the
-   point — a shape language only reads as one if it turns up more
-   than once.
+   There is no photograph here on purpose. Every other section on
+   this page carries one; the close is the one place the brand gets
+   to stand on its own.
    ============================================================ */
+
+const PROOF = ["Shortlists in 48 hours", "One accountable SLA", "Certified MBE / WBE"];
 
 export default function CallToAction({ content = {} }: { content?: Record<string, string> }) {
   return (
     <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-      <ArcSweep className="pointer-events-none absolute -right-28 -top-20 h-[520px] w-[520px] -scale-x-100 text-[var(--hz-aqua)] opacity-[0.09]" />
-
-      <div className="relative z-10 mx-auto grid w-full max-w-[2200px] grid-cols-1 items-center gap-12 px-6 py-20 sm:px-10 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:px-16 2xl:px-28">
-        <Reveal className="flex flex-col items-start">
-          <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-aqua)]">
-            <TagMark className="h-3 w-3" />
-            Careers
-          </span>
-
-          <h2 className="hz-display mt-5 max-w-[16ch] text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.04] tracking-[-0.03em] text-white">
-            {content.ctaHeading || "Build what the next decade runs on."}
-          </h2>
-
-          <p className="mt-6 max-w-[48ch] text-[16px] leading-relaxed text-white/65 sm:text-[17px]">
-            {content.ctaBody ||
-              "Our engineers sit inside the teams they support, migrating the platforms, securing the data and keeping the systems that enterprises and state agencies depend on running. If you would rather own the outcome than hand off a ticket, we should talk."}
-          </p>
-
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link
-              href="/careers"
-              className="inline-flex items-center rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-ink)] transition-colors hover:bg-[var(--hz-aqua)]"
-            >
-              {content.ctaButton || "Come join us"}
-            </Link>
-            <Link
-              href="/careers/search"
-              className="inline-flex items-center rounded-full border border-white/25 px-7 py-3.5 text-[15px] font-semibold text-white transition-colors hover:border-white"
-            >
-              See open positions
-            </Link>
+      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+        <div className="grid items-center gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:gap-14 lg:divide-x lg:divide-white/[0.08]">
+          {/* The mark as architecture. Sized in the hundreds of pixels and set
+              barely above the ground, so it registers as a shape in the room
+              rather than a logo asking to be read. */}
+          <div className="hidden lg:col-span-4 lg:flex lg:items-center lg:justify-center">
+            <LogoMark className="h-56 w-56 text-white opacity-[0.07] xl:h-72 xl:w-72" />
           </div>
-        </Reveal>
 
-        {/* One photograph, unframed apart from its radius. */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
-          <Photo src={IMG.aboutTeam} sizes="(min-width: 1024px) 46vw, 92vw" />
+          <Reveal className="lg:col-span-8 lg:pl-14">
+            <h2 className="hz-display max-w-[18ch] text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.04] tracking-[-0.03em] text-white">
+              {content.ctaHeading || "Put one team on the whole problem."}
+            </h2>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/contact"
+                className="inline-flex items-center rounded-full bg-[var(--hz-aqua)] px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-ink)] transition-colors hover:bg-white"
+              >
+                {content.ctaButton || "Start a conversation"}
+              </Link>
+              <Link
+                href="/careers"
+                className="inline-flex items-center rounded-full border border-[var(--hz-aqua)] px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-aqua)] transition-colors hover:bg-[var(--hz-aqua)] hover:text-[var(--hz-ink)]"
+              >
+                Come join us
+              </Link>
+            </div>
+
+            {/* The same three lines the hero opened with. Closing on them is
+                what makes the page feel like it finished an argument. */}
+            <ul className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2.5">
+              {PROOF.map((p) => (
+                <li key={p} className="flex items-center gap-2 text-[13.5px] text-white/55">
+                  <CheckMark className="h-3.5 w-3.5 flex-none text-[var(--hz-aqua)]" />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
         </div>
       </div>
     </section>

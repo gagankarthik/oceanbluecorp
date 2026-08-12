@@ -30,8 +30,8 @@ export const metadata: Metadata = {
    header, and a bold image-backed CTA. (Insights / Case Study
    sections removed until the Resources content exists.)
    Order: Hero(statement + wide image) · Clients · Statement ·
-   Services (panel strip) · Proof (stats + accreditations) ·
-   Client work (case-study rows) · Careers · Accreditation strip.
+   Services (panel strip) · Proof (stats) · Client work (case-study
+   rows) · Accreditation strip · Careers CTA · Footer.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -117,8 +117,11 @@ export default async function Home() {
       <Services />
       <ImpactStats content={content} />
       <Testimonials />
-      <CallToAction content={content} />
+      {/* The trust strip sits ABOVE the closing ask, not below it — the last
+          reassurance a reader passes before deciding, which is where the
+          reference site puts its compliance row. */}
       <CertificationStrip />
+      <CallToAction content={content} />
     </div>
   );
 }

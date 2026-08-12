@@ -1,54 +1,55 @@
 import Image from "next/image";
 
 /* ============================================================
-   Accreditation strip — the last thing before the footer.
+   Trust strip — the divided badge row above the closing CTA.
 
-   The reference site puts its trust marks at the very bottom of
-   the page, below the argument and above the sitemap. That is the
-   right position for them: nobody arrives wanting to read a
-   certification list, but plenty of people want to confirm one
-   exists before they leave. Parked here it costs the page nothing
-   and is exactly where a procurement reader will look for it.
+   Matching the reference exactly: a light band, immediately ABOVE
+   the dark call to action, split into equal cells by vertical
+   hairlines, each cell carrying one mark and one short label. It is
+   the last reassurance a reader passes before the closing ask,
+   which is precisely why it sits there and not at the very bottom.
 
-   Full colour, on paper. These are accreditations and an MBE or
-   WBE mark is recognised by its own colours — the desaturated
-   treatment used inside the dark proof band was right there
-   because they were a list; here they are the credential.
+   The mark in each cell is the real accreditation artwork rather
+   than a drawn icon, because these are issued credentials — an MBE
+   or WBE badge is recognised by its own colours and redrawing it
+   would be both wrong and, for a certification mark, not ours to
+   redraw.
 
-   Heights are per badge: the intrinsic ratios run 1:1 to 4.18:1,
-   so one uniform box lets the square hexagon fill its height while
+   Heights are per badge. Intrinsic ratios run 1:1 to 4.18:1, so a
+   single uniform box lets the square hexagon fill its height while
    the long horizontal lockups shrink to a third of it.
    ============================================================ */
 
 const CERTS = [
-  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-14 sm:h-16" },
-  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-10 sm:h-11" },
-  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-10 sm:h-11" },
-  { name: "MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-11 sm:h-12" },
+  { name: "NMSDC", label: "NMSDC certified", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-11" },
+  { name: "Ohio WBE", label: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-8" },
+  { name: "Ohio MBE", label: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-8" },
+  { name: "City of Columbus MBE", label: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9" },
 ];
 
 export default function CertificationStrip() {
   return (
-    <section className="w-full border-t border-[var(--hz-paper-line)] bg-[var(--hz-paper)] py-12 sm:py-14">
+    <section className="w-full bg-[var(--hz-paper)]">
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-        <div className="flex flex-col items-center gap-8 lg:flex-row lg:justify-between lg:gap-12">
-          <p className="max-w-[26ch] text-center text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-text-subtle)] lg:text-left">
-            A certified minority and women owned business
-          </p>
-          <ul className="grid grid-cols-2 items-center gap-x-12 gap-y-8 sm:grid-cols-4 sm:gap-x-14">
-            {CERTS.map((c) => (
-              <li key={c.name} className="flex items-center justify-center">
-                <Image
-                  src={c.logo}
-                  alt={`${c.name} certification`}
-                  width={c.w}
-                  height={c.h}
-                  className={`${c.cls} w-auto object-contain`}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Vertical rules only between cells — `divide-x` leaves the outer
+            edges open, so the row reads as a strip rather than a boxed table. */}
+        <ul className="grid grid-cols-2 divide-y divide-[var(--hz-paper-line)] border-y border-[var(--hz-paper-line)] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
+          {CERTS.map((c) => (
+            <li key={c.name} className="flex items-center justify-center gap-4 px-5 py-7 sm:px-6">
+              <Image
+                src={c.logo}
+                alt=""
+                aria-hidden
+                width={c.w}
+                height={c.h}
+                className={`${c.cls} w-auto flex-none object-contain`}
+              />
+              <span className="text-[13.5px] font-medium leading-snug text-[var(--hz-text-mute)]">
+                {c.label}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

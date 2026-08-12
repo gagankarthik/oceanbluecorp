@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { TagMark } from "./motifs/Motifs";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
@@ -30,8 +29,6 @@ import { IMG } from "./media";
    with what a buyer is actually choosing between: one accountable
    team, or a stack of vendors pointing at each other.
    ============================================================ */
-
-const PROOF = ["Shortlists in 48 hours", "One accountable SLA", "Certified MBE / WBE"];
 
 export default function Hero({ content = {} }: { content?: Record<string, string> }) {
   return (
@@ -62,17 +59,6 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             {content.heroCtaSecondary || "See what we do"}
           </Link>
         </div>
-
-        {/* Proof row: small, quiet, directly under the action — the same place
-            customer.io answers "is this going to be a fight?" */}
-        <ul className="mt-6 flex flex-wrap items-center gap-x-7 gap-y-2.5">
-          {PROOF.map((p) => (
-            <li key={p} className="flex items-center gap-2 text-[13.5px] text-[var(--hz-text-mute)]">
-              <TagMark className="h-3 w-3 flex-none text-[var(--hz-cobalt)]" />
-              {p}
-            </li>
-          ))}
-        </ul>
       </div>
 
       {/* The image sits BELOW the statement, never behind it. */}

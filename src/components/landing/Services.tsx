@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { TagMark } from "./motifs/Motifs";
 import { Reveal } from "./motion/Primitives";
 import Photo from "./Photo";
 import { IMG } from "./media";
@@ -64,7 +63,6 @@ export default function Services() {
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal className="max-w-3xl pb-10 sm:pb-12">
           <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-cobalt)]">
-            <TagMark className="h-3 w-3" />
             What we do
           </span>
           <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">

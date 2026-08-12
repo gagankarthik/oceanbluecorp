@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { TagMark } from "./motifs/Motifs";
 import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 
 /* ============================================================
@@ -129,7 +128,6 @@ export default function Testimonials() {
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-2xl">
             <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-cobalt)]">
-            <TagMark className="h-3 w-3" />
             Client work
           </span>
             <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Reveal } from "./motion/Primitives";
-import { ArcSweep, DropStack, ArcRing, ArcSpan } from "./motifs/Motifs";
+import { ArcSweep, IllContract, IllTeam, IllSeal } from "./motifs/Motifs";
 
 /* ============================================================
    Statement — the thesis, with the load-bearing words in colour.
@@ -23,19 +23,21 @@ import { ArcSweep, DropStack, ArcRing, ArcSpan } from "./motifs/Motifs";
    the claim credible.
    ============================================================ */
 
+// Each drawing depicts its own pillar: the one sheet that replaced three,
+// the team with an accountable figure at the front, the certification seal.
 const PILLARS = [
   {
-    Motif: DropStack,
+    Motif: IllContract,
     title: "One contract, not four",
     body: "Staffing, engineering, platforms and support under a single agreement and a single SLA.",
   },
   {
-    Motif: ArcRing,
+    Motif: IllTeam,
     title: "Our people, our problem",
     body: "Engineers are embedded and accountable to the outcome, not billed by the ticket.",
   },
   {
-    Motif: ArcSpan,
+    Motif: IllSeal,
     title: "Public sector ready",
     body: "Certified MBE and WBE, with the procurement history state agencies ask for.",
   },
@@ -65,7 +67,10 @@ export default function Statement() {
         <div className="mt-14 grid gap-10 border-t border-[var(--hz-paper-line)] pt-10 sm:mt-16 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--hz-paper-line)]">
           {PILLARS.map((p) => (
             <div key={p.title} className="sm:px-8 sm:first:pl-0 sm:last:pr-0">
-              <p.Motif className="h-9 w-9 text-[var(--hz-cobalt)]" />
+              {/* Line in the deep logo blue, accent in the light one — the two
+                  ends of the brand gradient, so the drawings are coloured
+                  rather than watermarked. */}
+              <p.Motif className="h-11 w-11 text-[var(--hz-cobalt)] [--motif-accent:var(--hz-aqua)]" />
               <h3 className="mt-5 text-[16px] font-semibold text-[var(--hz-text)]">{p.title}</h3>
               <p className="mt-2.5 max-w-[34ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">
                 {p.body}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion } from "framer-motion";
 import { Reveal } from "./motion/Primitives";
-import { TagMark, ArcSweep, DropGrid, ArcRing, DropStack, ArcSpan } from "./motifs/Motifs";
+import { ArcSweep, IllYears, IllBuildings, IllLoop, IllGlobe } from "./motifs/Motifs";
 
 /* ============================================================
    Proof — customer.io's "Enterprise ready" band.
@@ -61,13 +61,13 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   const stats: Stat[] = [
-    // A different motif per pane, chosen for what the figure means rather
-    // than to fill the corner: layers for time, a ruled grid for scale,
-    // closed arcs for continuity, opened arcs for reach.
-    { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA", Motif: DropStack },
-    { ...parseStatValue(content.statClients, 50, "+"), label: "Enterprise clients", sub: "Across North America", Motif: DropGrid },
-    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention", sub: "Year over year", Motif: ArcRing },
-    { ...parseStatValue(content.statOffices, 4, ""), label: "Delivery centres", sub: "US, India and UK", Motif: ArcSpan },
+    // Each drawing depicts its own figure — growth rings for years, towers
+    // for clients, a closing loop for retention, a globe for where the work
+    // physically happens. None of them is interchangeable with another.
+    { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA", Motif: IllYears },
+    { ...parseStatValue(content.statClients, 50, "+"), label: "Enterprise clients", sub: "Across North America", Motif: IllBuildings },
+    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention", sub: "Year over year", Motif: IllLoop },
+    { ...parseStatValue(content.statOffices, 4, ""), label: "Delivery centres", sub: "US, India and UK", Motif: IllGlobe },
   ];
 
   return (
@@ -76,8 +76,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
       <ArcSweep className="pointer-events-none absolute -left-24 bottom-0 h-[420px] w-[420px] text-[var(--hz-aqua)] opacity-[0.10]" />
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-aqua)]">
-            <TagMark className="h-3 w-3" />
+          <span className="hz-eyebrow text-[var(--hz-aqua)]">
             Enterprise ready
           </span>
           <h2 className="hz-display hz-h2 mt-4 text-white">
@@ -98,11 +97,11 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
                 i < 2 ? "sm:border-b sm:border-white/[0.12]" : ""
               } lg:border-b-0 lg:border-r lg:border-white/[0.12] lg:last:border-r-0`}
             >
-              {/* The motif sits in the corner at low opacity — present enough
-                  to give the pane a face, quiet enough that the figure is
-                  still the first thing read. */}
-              <s.Motif className="pointer-events-none absolute -right-5 -top-5 h-28 w-28 text-[var(--hz-aqua)] opacity-[0.16]" />
-              <p className="relative hz-display hz-tnum text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
+              {/* The drawing leads the pane, at full strength. Line in white
+                  at reading weight, accent solid in the logo's light blue —
+                  a coloured illustration, not a watermark behind the number. */}
+              <s.Motif className="h-10 w-10 text-white/45 [--motif-accent:var(--hz-aqua)]" />
+              <p className="relative hz-display hz-tnum mt-6 text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
                 <Counter target={s.value} run={inView} />
                 <span className="text-[var(--hz-aqua)]">{s.suffix}</span>
               </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -41,14 +41,36 @@ export default function LayoutWrapper({
   // way — animating that too would shift the whole document under the reader
   // mid-scroll, which is a far worse trade than a fixed header moving 40px.
   const [barRetracted, setBarRetracted] = useState(false);
+  const retractedRef = useRef(false);
   useEffect(() => {
     if (!showBar) return;
-    // 64px, not 0: a trackpad's elastic overscroll at the top of the document
-    // would otherwise flap the bar in and out on every small gesture.
-    const onScroll = () => setBarRetracted(window.scrollY > 64);
-    onScroll();
+    // Hysteresis, not a single threshold. With one trip point the bar flips
+    // state on every pixel of jitter around it — a trackpad's elastic
+    // overscroll, or a reader nudging back and forth over the line, makes it
+    // flutter. Retracting at 96 and only returning below 24 means the bar
+    // comes back when someone has genuinely gone back to the top, and the
+    // transition plays start to finish instead of being re-triggered midway.
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const next = retractedRef.current ? y > 24 : y > 96;
+      if (next === retractedRef.current) return;
+      retractedRef.current = next;
+      setBarRetracted(next);
+    };
+    // Coalesce to one read per frame. Scroll fires far more often than the
+    // screen refreshes, and each unthrottled setState is a render competing
+    // with the very animation this is driving.
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read);
+    };
+    read();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [showBar]);
 
   return (
