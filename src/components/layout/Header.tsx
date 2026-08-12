@@ -59,88 +59,95 @@ const navigation = [
    MEGA-MENU COMPONENTS — large enterprise dropdowns
    ============================================================ */
 
-function MenuTile({
-  name, href, description, icon: Icon, onClick,
+/* The menus are built from the landing page's vocabulary and nothing else:
+   the paper ground, hairline rules in --hz-paper-line, small-caps section
+   labels, and type doing the work.
+
+   Two things that used to be here are gone on purpose, because both are
+   the exact tells this site is trying to shed. The first was a tinted
+   rounded-square icon chip beside every row — decoration standing in for
+   a distinction, since a wrench and a pair of scissors tell you nothing
+   about which practice you need. The second was a blue gradient card in
+   the About menu, which is the single most template-looking object a
+   marketing site can contain. The row's own name and one line of plain
+   description carry it. */
+
+function MenuRow({
+  name, href, description, onClick,
 }: {
   name: string;
   href: string;
   description: string;
-  icon: typeof Cloud;
   onClick?: () => void;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-slate-50"
+      className="group flex items-baseline justify-between gap-6 border-b border-[var(--hz-paper-line)] py-3.5 last:border-b-0"
     >
-      <div className="flex size-9 flex-none items-center justify-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-colors duration-200 group-hover:bg-[var(--hz-cobalt)] group-hover:text-white">
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
+      <span className="min-w-0">
+        <span className="block text-[14px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
           {name}
-          <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-        </p>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--hz-text-subtle)]">{description}</p>
-      </div>
+        </span>
+        <span className="mt-1 block text-[12.5px] leading-snug text-[var(--hz-text-mute)]">
+          {description}
+        </span>
+      </span>
+      {/* The arrow is the only motion. It slides in on hover, which marks the
+          row without repainting it. */}
+      <ArrowRight
+        className="h-3.5 w-3.5 flex-none -translate-x-1 self-center text-[var(--hz-cobalt)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+        strokeWidth={2}
+      />
     </Link>
   );
 }
 
-function FeaturePanel({
-  eyebrow, title, body, href, cta, onClick,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-  onClick?: () => void;
-}) {
+/** Small-caps section label, matching the landing's eyebrows. */
+function MenuLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-text-subtle)]">
+      {children}
+    </p>
+  );
+}
+
+function MenuFooterLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-5 text-white"
+      className="group inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--hz-cobalt)]"
     >
-      <div className="relative">
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
-          {eyebrow}
-        </span>
-        <h4 className="mt-3 text-[18px] font-semibold leading-tight tracking-tight">{title}</h4>
-        <p className="mt-2 text-[12.5px] leading-relaxed text-white/75">{body}</p>
-        <span className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold transition-all group-hover:gap-1.5">
-          {cta}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </span>
-      </div>
+      {children}
+      <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
     </Link>
   );
 }
+
+const MENU_SHELL =
+  "overflow-hidden rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.22)]";
 
 function SolutionsMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-2 gap-1 p-3.5">
-        {solutions.map((it) => (
-          <MenuTile key={it.name} {...it} onClick={onNavigate} />
-        ))}
+    <div className={`w-[600px] max-w-[92vw] ${MENU_SHELL}`}>
+      <div className="px-6 pb-4 pt-5">
+        <MenuLabel>Four practices</MenuLabel>
+        {/* Two columns of hairline-divided rows — the same structure the
+            landing uses for its pillars, at menu scale. */}
+        <div className="grid gap-x-10 sm:grid-cols-2">
+          {solutions.map((it) => (
+            <MenuRow key={it.name} name={it.name} href={it.href} description={it.description} onClick={onNavigate} />
+          ))}
+        </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-[#eef2f6] bg-[#f8fafc] px-4 py-2.5">
-        <div className="flex items-center gap-2 text-[12px] text-[var(--hz-text-mute)]">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-          <span>One accountable SLA</span>
-        </div>
-        <Link
-          href="/solutions"
-          onClick={onNavigate}
-          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-cobalt)] hover:opacity-80"
-        >
+      <div className="flex items-center justify-between gap-4 border-t border-[var(--hz-paper-line)] px-6 py-3">
+        <span className="text-[12px] text-[var(--hz-text-mute)]">One accountable SLA across all four</span>
+        <MenuFooterLink href="/solutions" onClick={onNavigate}>
           View all solutions
-          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </Link>
+        </MenuFooterLink>
       </div>
     </div>
   );
@@ -148,22 +155,38 @@ function SolutionsMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
 
 function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="w-[680px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#ffffff] shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-12 gap-0">
-        <div className="col-span-12 p-6 md:col-span-7">
-          <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
-            The firm
-          </p>
-          <div className="space-y-0.5">
-            {aboutItems.map((it) => (
-              <MenuTile key={it.name} {...it} onClick={onNavigate} />
-            ))}
-          </div>
+    <div className={`w-[640px] max-w-[92vw] ${MENU_SHELL}`}>
+      <div className="grid sm:grid-cols-12">
+        <div className="px-6 pb-5 pt-5 sm:col-span-7">
+          <MenuLabel>The firm</MenuLabel>
+          {aboutItems.map((it) => (
+            <MenuRow key={it.name} name={it.name} href={it.href} description={it.description} onClick={onNavigate} />
+          ))}
+        </div>
 
-        </div>
-        <div className="col-span-12 bg-[#f8fafc] p-6 md:col-span-5">
-          <FeaturePanel {...aboutFeature} onClick={onNavigate} />
-        </div>
+        {/* The feature panel, rebuilt: separated by a rule rather than a
+            gradient fill, so it reads as the other half of one sheet. */}
+        <Link
+          href={aboutFeature.href}
+          onClick={onNavigate}
+          className="group flex flex-col justify-between border-t border-[var(--hz-paper-line)] px-6 py-5 sm:col-span-5 sm:border-l sm:border-t-0"
+        >
+          <div>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--hz-cobalt)]">
+              {aboutFeature.eyebrow}
+            </span>
+            <h4 className="mt-3 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[var(--hz-text)]">
+              {aboutFeature.title}
+            </h4>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--hz-text-mute)]">
+              {aboutFeature.body}
+            </p>
+          </div>
+          <span className="mt-5 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--hz-cobalt)]">
+            {aboutFeature.cta}
+            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </span>
+        </Link>
       </div>
     </div>
   );

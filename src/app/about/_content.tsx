@@ -9,6 +9,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { MILESTONES } from "@/lib/company";
 
@@ -163,22 +164,15 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.aboutHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">About Ocean Blue</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
-              {content.aboutTitle || "We build the technology and teams that move organizations forward."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.aboutSubtitle ||
-                "A trusted partner for IT staffing, enterprise solutions, and digital transformation — delivering clarity, expertise, and measurable results."}
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="About Ocean Blue"
+        title={content.aboutTitle || "We build the technology and teams that move organizations forward."}
+        subtitle={
+          content.aboutSubtitle ||
+          "A trusted partner for IT staffing, enterprise solutions, and digital transformation, delivering clarity, expertise, and measurable results."
+        }
+        image={IMG.aboutHero}
+      />
 
       {/* Story + Purpose */}
       <section className="relative w-full py-24 sm:py-32">
@@ -265,7 +259,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
                   Meet the leadership and the delivery bench behind every engagement.
                 </p>
               </div>
-              <Cta href="/team" variant="primary" icon={ArrowRight}>Meet the team</Cta>
+              <Cta href="/team" variant="primary">Meet the team</Cta>
             </div>
           </Reveal>
         </div>
@@ -280,7 +274,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
             <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Work with a team that owns the outcome.</h2>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
+              <Cta href="/contact" variant="primary">Start a conversation</Cta>
               <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
             </div>
           </Reveal>

@@ -68,12 +68,12 @@ const ST: Record<S, {
   unknown:      { label: "Unknown",      dot: "bg-gray-400",   ring: "ring-gray-200",    bg: "bg-gray-100",   text: "text-gray-500",    border: "border-gray-200",    bar: "bg-gray-400",    icon: Info },
 };
 
-const BANNER: Record<S, { gradient: string; heading: string; sub: string }> = {
-  operational:  { gradient: "from-emerald-600 to-emerald-500", heading: "All Systems Operational",  sub: "All platform services are running normally." },
-  investigating:{ gradient: "from-blue-600   to-blue-500",     heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
-  degraded:     { gradient: "from-amber-600  to-amber-500",    heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
-  outage:       { gradient: "from-rose-700   to-rose-600",     heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
-  unknown:      { gradient: "from-gray-600   to-gray-500",     heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
+const BANNER: Record<S, { band: string; heading: string; sub: string }> = {
+  operational:  { band: "bg-emerald-600", heading: "All Systems Operational",  sub: "All platform services are running normally." },
+  investigating:{ band: "bg-blue-600",     heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
+  degraded:     { band: "bg-amber-600",    heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
+  outage:       { band: "bg-rose-700",     heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
+  unknown:      { band: "bg-gray-600",     heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -298,7 +298,7 @@ export default function StatusContent() {
     <div className="horizon min-h-screen bg-[var(--hz-surface)]">
 
       {/* ── Banner ── */}
-      <div className={`bg-gradient-to-r ${banner.gradient} pt-28 pb-20 px-4 relative overflow-hidden`}>
+      <div className={`${banner.band} pt-28 pb-20 px-4 relative overflow-hidden`}>
         {/* subtle grid overlay */}
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />

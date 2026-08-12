@@ -7,6 +7,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 type Service = { icon: LucideIcon; title: string; desc: string; capabilities: string[] };
@@ -118,32 +119,33 @@ function ServiceDetail({ id }: { id: string }) {
 export default function ServicesPage({ content = {} }: { content?: Record<string, string> }) {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
-      <section className="relative isolate flex min-h-[64vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.servicesHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Our solutions</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              {content.servicesTitle || "Talent, engineering, technology, and managed services."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.servicesSubtitle ||
-                "From specialized staffing and engineering talent to enterprise-grade technology and managed services, four connected practices, one accountable team. Serving enterprises and state government agencies across North America."}
-            </p>
-            <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-white/55 sm:text-[15px]">
-              Trusted by Fortune 500 enterprises and state government agencies, from large-scale IT modernization programs to mission-critical managed operations.
-            </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
-              {pillars.map((p) => (
-                <a key={p.name} href={`#${p.name.toLowerCase()}`} className="hz-btn-ghost-dark">{p.name}</a>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {/* Hero — the landing page's structure, not a headline over a darkened
+          photograph. The four practice jump-links stay, since on a page this
+          long they are navigation rather than decoration. */}
+      <PageHero
+        eyebrow="Our solutions"
+        title={content.servicesTitle || "Talent, engineering, technology, and managed services."}
+        subtitle={
+          content.servicesSubtitle ||
+          "From specialized staffing and engineering talent to enterprise-grade technology and managed services, four connected practices, one accountable team. Serving enterprises and state government agencies across North America."
+        }
+        note="Trusted by Fortune 500 enterprises and state government agencies, from large-scale IT modernization programs to mission-critical managed operations."
+        image={IMG.servicesHero}
+        actions={
+          <>
+            <Cta href="/contact" variant="primary">Start a conversation</Cta>
+            {pillars.map((p) => (
+              <a
+                key={p.name}
+                href={`#${p.name.toLowerCase()}`}
+                className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-6 py-3 text-[14px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]"
+              >
+                {p.name}
+              </a>
+            ))}
+          </>
+        }
+      />
 
       {/* Service lines, image-led, alternating */}
       {pillars.map((p, i) => {
@@ -245,7 +247,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
               We&apos;ll put the right specialists on it and stand behind the result.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Book a discovery call</Cta>
+              <Cta href="/contact" variant="primary">Book a discovery call</Cta>
               <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
             </div>
           </Reveal>

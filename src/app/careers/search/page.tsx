@@ -239,7 +239,7 @@ export default function CareersSearchPage() {
       <section className="relative pt-28 pb-8 sm:pt-32 sm:pb-12">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
-            <span className="hz-eyebrow text-[var(--hz-amber)]">Careers</span>
+            <span className="hz-eyebrow text-[var(--hz-cobalt)]">Careers</span>
             <h1 className="hz-display mt-4 text-[clamp(1.9rem,5vw,3rem)] text-[var(--hz-text)]">Open positions.</h1>
             <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
               Find your next role at Ocean Blue, filter by team, type, and location.

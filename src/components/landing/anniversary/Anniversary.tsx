@@ -327,7 +327,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
             }}
             className="mt-10 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row"
           >
-            <Cta href={ANNIVERSARY_PATH} variant="primary" icon={ArrowRight}>
+            <Cta href={ANNIVERSARY_PATH} variant="primary">
               {content.anniversaryCtaText || `Read our ${ANNIVERSARY_YEARS}-year story`}
             </Cta>
             <Cta href="/careers" variant="ghostLight">

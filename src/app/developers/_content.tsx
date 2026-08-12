@@ -541,10 +541,10 @@ def get_job(job_id: str):
 
           {/* Get Access */}
           <Section id="get-access" title="Get Access">
-            <div className="bg-gradient-to-br from-[var(--hz-cobalt-100)] to-slate-50 border border-[var(--hz-cobalt-100)] rounded-2xl p-8 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--hz-cobalt)] flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <Key className="w-7 h-7 text-white" />
-              </div>
+            {/* Flat paper and a hairline, not a tinted gradient card with a
+                shadowed icon tile — the same close the marketing pages use. */}
+            <div className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-8 text-center">
+              <Key className="mx-auto mb-4 h-7 w-7 text-[var(--hz-cobalt)]" strokeWidth={1.75} />
               <h3 className="text-xl font-bold text-slate-900 mb-2">Ready to integrate?</h3>
               <p className="text-slate-600 mb-6 max-w-md mx-auto text-sm leading-relaxed">
                 API access is available to vetted job platforms and technology partners.

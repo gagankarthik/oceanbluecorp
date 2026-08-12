@@ -98,7 +98,7 @@ export default function EngineeringContent() {
               ))}
             </div>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
+              <Cta href="/contact" variant="primary">Start a conversation</Cta>
               <a href="#disciplines" className="hz-btn-ghost-dark">Explore disciplines</a>
             </div>
           </Reveal>
@@ -128,7 +128,7 @@ export default function EngineeringContent() {
       <section id="disciplines" className="relative w-full scroll-mt-24 bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Nine disciplines, real depth in each.
             </h2>
@@ -196,7 +196,7 @@ export default function EngineeringContent() {
       <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Four ways to engage the talent.
             </h2>
@@ -222,7 +222,7 @@ export default function EngineeringContent() {
       <section className="relative w-full bg-[var(--hz-surface-2)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
               Scope. Vet. Shortlist. Support.
             </h2>
@@ -253,7 +253,7 @@ export default function EngineeringContent() {
       <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-5 lg:sticky lg:top-28">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
               Why teams bring engineering to Ocean Blue.
             </h2>
@@ -262,7 +262,7 @@ export default function EngineeringContent() {
               differentiation the large engineering firms can&apos;t claim.
             </p>
             <div className="mt-8">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Talk to our engineering team</Cta>
+              <Cta href="/contact" variant="primary">Talk to our engineering team</Cta>
             </div>
           </Reveal>
 
@@ -296,7 +296,7 @@ export default function EngineeringContent() {
               We&apos;ll put the right engineers on it and stand behind the result, one accountable partner.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Book a discovery call</Cta>
+              <Cta href="/contact" variant="primary">Book a discovery call</Cta>
               <Cta href="/solutions" variant="ghostDark">All solutions</Cta>
             </div>
           </Reveal>

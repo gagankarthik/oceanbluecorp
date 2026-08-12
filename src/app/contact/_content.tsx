@@ -322,7 +322,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
             <p className="text-center text-[15px] text-[var(--hz-text-mute)] sm:text-left">
               Ready to discuss your project? Our team usually replies within a day.
             </p>
-            <Cta href="mailto:hr@oceanbluecorp.com" variant="primary" icon={ArrowRight}>Email the team</Cta>
+            <Cta href="mailto:hr@oceanbluecorp.com" variant="primary">Email the team</Cta>
           </div>
         </div>
       </section>

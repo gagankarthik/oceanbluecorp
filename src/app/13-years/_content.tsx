@@ -152,7 +152,7 @@ function Hero() {
           transition={{ duration: 0.8, delay: 0.46, ease: EASE }}
           className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
         >
-          <Cta href="/contact" variant="primary" icon={ArrowRight}>
+          <Cta href="/contact" variant="primary">
             Start a conversation
           </Cta>
           <Cta href="/about" variant="ghostLight">
@@ -458,7 +458,7 @@ function Close() {
             </p>
           </div>
           <div className="flex flex-none flex-col gap-3 sm:flex-row">
-            <Cta href="/careers" variant="primary" icon={ArrowRight}>
+            <Cta href="/careers" variant="primary">
               See open roles
             </Cta>
             <Cta href="/contact" variant="ghostLight">

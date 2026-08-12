@@ -94,7 +94,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               </div>
             )}
             <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
+              <Cta href="/contact" variant="primary">Start a conversation</Cta>
               <Link href="/solutions" className="hz-btn-ghost-dark">All solutions</Link>
             </div>
           </Reveal>
@@ -105,13 +105,13 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-6">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[2rem] leading-[1.1] text-[var(--hz-text)] sm:text-[2.6rem]">
               {data.overviewHeading}
             </h2>
             <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">{data.overviewBody}</p>
             <div className="mt-9">
-              <Cta href="/contact" variant="ghostLight" icon={ArrowRight}>Talk to a specialist</Cta>
+              <Cta href="/contact" variant="ghostLight">Talk to a specialist</Cta>
             </div>
           </Reveal>
 
@@ -159,7 +159,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
+            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
             <h2 className="hz-display mt-7 text-[2rem] text-[var(--hz-text)] sm:text-[2.75rem]">How we deliver.</h2>
             <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
               A method you can hold us to, outcomes agreed up front, progress you can see.
@@ -195,7 +195,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               Tell us the outcome you need. We&apos;ll put the right people on it and stand behind the result.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Book a discovery call</Cta>
+              <Cta href="/contact" variant="primary">Book a discovery call</Cta>
               <Cta href="/solutions" variant="ghostDark">All solutions</Cta>
             </div>
           </Reveal>

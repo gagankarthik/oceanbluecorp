@@ -95,7 +95,7 @@ export default function CareersPage() {
               disciplines ourselves.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+              <Cta href="/careers/search" variant="primary">View open positions</Cta>
               <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
             </div>
 
@@ -116,7 +116,7 @@ export default function CareersPage() {
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-2xl">
-              <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d fit</span>
+              <span className="hz-eyebrow text-[var(--hz-cobalt)]">Where you&rsquo;d fit</span>
               <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
                 The practices we hire into.
               </h2>
@@ -157,7 +157,7 @@ export default function CareersPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
-              <span className="hz-eyebrow text-[var(--hz-amber)]">Our culture</span>
+              <span className="hz-eyebrow text-[var(--hz-cobalt)]">Our culture</span>
               <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
                 A culture of growth and collaboration.
               </h2>
@@ -194,7 +194,7 @@ export default function CareersPage() {
       <section className="relative w-full border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">Benefits</span>
+            <span className="hz-eyebrow text-[var(--hz-cobalt)]">Benefits</span>
             <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
               Benefits that have your back.
             </h2>
@@ -224,7 +224,7 @@ export default function CareersPage() {
       <section className="relative w-full py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d work</span>
+            <span className="hz-eyebrow text-[var(--hz-cobalt)]">Where you&rsquo;d work</span>
             <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
               Four offices, three countries.
             </h2>
@@ -282,7 +282,7 @@ export default function CareersPage() {
               file for roles that match.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+              <Cta href="/careers/search" variant="primary">View open positions</Cta>
               <Cta href="/contact" variant="ghostDark">Get in touch</Cta>
             </div>
           </Reveal>
