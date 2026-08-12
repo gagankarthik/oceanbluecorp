@@ -1,129 +1,150 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Reveal } from "./motion/Primitives";
+import { ArrowRight } from "lucide-react";
+import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
-/* ============================================================
-   What we do — a single joined panel strip.
+// Cards render at ~1/4 of a 1280px container on desktop and full-width on
+// phones. Declaring that stops the browser from pulling the 1600w candidate
+// for a 300px box.
+const CARD_SIZES =
+  "(min-width: 1536px) 22vw, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 92vw";
 
-   customer.io runs its capabilities as one continuous dark band of
-   full-bleed portrait images, butted edge to edge with no gaps, a
-   label at the foot of each and a small + affordance at the top.
-   It reads as one object with four faces rather than four cards on
-   a page, which is exactly the claim being made here: these are not
-   four vendors, they are four faces of one team.
+type Service = {
+  name: string;
+  title: string;
+  desc: string;
+  /** One line for the card. `desc` is the long form, kept for /solutions. */
+  blurb: string;
+  href: string;
+  img: string;
+  items: string[];
+};
 
-   That is why there is no gap between the panels and no radius on
-   the inner edges. A gutter would undo the entire point.
-
-   Copy is rewritten to a plain service type and one short line. The
-   previous card carried an eyebrow, a marketing title, a prose
-   description AND a bulleted capability list — four levels of
-   hierarchy per card, sixteen across the row.
-   ============================================================ */
-
-type Practice = { name: string; line: string; href: string; img: string };
-
-const practices: Practice[] = [
+const services: Service[] = [
   {
-    name: "Staffing",
-    line: "Pre-vetted engineers who join your team and own the work.",
+    name: "IT Staffing & Talent",
+    title: "Specialists, embedded fast",
+    blurb: "Pre-vetted engineers who join your team and own the work.",
+    desc: "Pre-vetted engineers who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
     href: "/solutions/staffing",
     img: IMG.serviceTalent,
+    items: ["Cloud, data & security engineers", "ERP & Salesforce specialists", "Shortlists in 48 hours"],
   },
   {
-    name: "Engineering",
-    line: "Mechanical, electrical, aerospace and controls specialists.",
+    name: "Engineering Talent & Services",
+    title: "Engineers, embedded fast",
+    blurb: "Mechanical, electrical, aerospace and controls engineers.",
+    desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
     href: "/solutions/engineering",
     img: IMG.serviceEngineering,
+    items: [
+      "Automotive, MFG, aerospace, power",
+      "Flexible, permanent, or managed teams",
+      "Shortlists in 48 hours",
+    ],
   },
   {
-    name: "Platforms",
-    line: "Cloud, security and production AI, shipped without stopping the business.",
+    name: "Enterprise Solutions",
+    title: "Platforms, modernized",
+    blurb: "Cloud, security and production AI, shipped without stopping the business.",
+    desc: "Cloud migration, security, and production AI, engineered and shipped without stopping the business.",
     href: "/solutions/cloud",
     img: IMG.serviceSolutions,
+    // Condensed from seven lines to four. At seven this card ran far past its
+    // three-bullet neighbours and left a large void above their bottom-aligned
+    // "Learn more", so the row of four read as broken rather than dense. Every
+    // capability is still named — merged, not dropped — and the full list lives
+    // on /solutions/cloud, which is where the card links.
+    items: [
+      "Cloud migration · AWS, Azure, GCP",
+      "DevOps, CI/CD & automation",
+      "AI, data intelligence & cybersecurity",
+      "ERP & Salesforce · SAP, Oracle, Dynamics",
+    ],
   },
   {
-    name: "Operations",
-    line: "Monitoring, support and optimisation around the clock.",
+    name: "Managed Services",
+    title: "Run, 24/7",
+    blurb: "Monitoring, support and optimization around the clock.",
+    desc: "Monitoring, support, and continuous optimization around the clock. One team, one SLA, one number to call.",
     href: "/solutions/managed",
     img: IMG.serviceManaged,
+    items: ["24/7 monitoring & response", "Helpdesk & application support", "Quarterly business reviews"],
   },
 ];
 
-// Each panel is a quarter of the container on desktop, full width stacked.
-const PANEL_SIZES = "(min-width: 768px) 25vw, 100vw";
+/**
+ * One practice. Photograph on top, a flat panel beneath carrying the name,
+ * one line, and the arrow.
+ *
+ * Square corners and a flat mid-grey panel, matching the reference. The
+ * rounded card with a near-black fill read as a component; sharp corners and a
+ * panel that is clearly lighter than the section behind it read as a plate the
+ * image is mounted on, which is the whole difference between the two.
+ *
+ * The line and the arrow sit on ONE row rather than the arrow being parked at
+ * the bottom of the card. That is what keeps the panel short and even across
+ * four cards whose copy differs in length.
+ */
+function ServiceCard({ s }: { s: Service }) {
+  return (
+    <Link href={s.href} className="group flex h-full flex-col">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#141414]">
+        <Photo
+          src={s.img}
+          sizes={CARD_SIZES}
+          className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col bg-[#2a2a2a] px-6 py-7 transition-colors duration-300 group-hover:bg-[#333333] sm:px-7">
+        <h3 className="text-[1.35rem] font-normal leading-tight tracking-[-0.01em] text-white sm:text-[1.5rem]">
+          {s.name}
+        </h3>
+        <div className="mt-auto flex items-center justify-between gap-5 pt-6">
+          <p className="max-w-[24ch] text-[14.5px] leading-relaxed text-white/80 sm:text-[15px]">
+            {s.blurb}
+          </p>
+          <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-[var(--hz-cobalt)] text-white transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1">
+            <ArrowRight className="h-5 w-5" strokeWidth={2} />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Services() {
   return (
-    <section id="services" className="relative w-full bg-[var(--hz-paper)] pb-20 sm:pb-24 lg:pb-28">
+    <section id="services" className="relative w-full bg-[var(--hz-canvas)] py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-        <Reveal className="max-w-3xl pb-10 sm:pb-12">
-          <span className="hz-eyebrow inline-flex items-center gap-2 text-[var(--hz-cobalt)]">
-            What we do
-          </span>
-          <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
-            Four practices, one accountable team.
+        {/* Light ground, dark cards. The section was black for one round and
+            it broke the page: hero (dark) → services (black) → partnerships
+            (near-black) put three dark bands in a row and then flipped hard to
+            white, so the top half read as one long dark block and the bottom
+            half as a different site. The reference card treatment is untouched
+            — panel, square corners, inline arrow — it just sits on canvas now,
+            which is also where the photographs read best.
+
+            No eyebrow: the reference leads straight into the statement, and an
+            uppercase label above a heading is another line to read before the
+            one that matters. */}
+        <Reveal className="max-w-4xl">
+          <h2 className="hz-h2 font-normal leading-tight tracking-[-0.02em] text-[var(--hz-text)]">
+            One partner for talent, engineering, technology, and operations.
           </h2>
         </Reveal>
-      </div>
 
-      {/* Full-bleed strip: the panels run the width of the viewport, which is
-          what makes them read as one band rather than a row of cards inside a
-          container. */}
-      <div className="grid w-full grid-cols-1 overflow-hidden md:grid-cols-4">
-        {practices.map((p) => (
-          <Link
-            key={p.name}
-            href={p.href}
-            className="group relative isolate flex min-h-[440px] flex-col justify-end overflow-hidden bg-[var(--hz-ink)] p-7 sm:min-h-[520px] sm:p-8"
-          >
-            <Photo
-              src={p.img}
-              sizes={PANEL_SIZES}
-              className="transition-transform duration-[900ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-            />
-            {/* Two scrims: a flat wash so the four panels read as one dark
-                family whatever their photographs are doing, and a foot
-                gradient so the label keeps contrast where the image is light.
-
-                No negative z-index. `-z-10` was tried and put both scrims
-                BEHIND the Photo — Photo is positioned with z-auto, so anything
-                at -10 sits under it and the labels ended up on bare
-                photography. Positioned, later in the tree, no z-index: that is
-                all the ordering this needs. */}
-            <span
-              aria-hidden
-              className="absolute inset-0 bg-[#061024]/60 transition-colors duration-500 group-hover:bg-[#061024]/48"
-            />
-            <span
-              aria-hidden
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(0deg, rgba(6,16,36,0.9) 0%, rgba(6,16,36,0.15) 45%, transparent 70%)" }}
-            />
-
-            <span className="absolute right-6 top-6 grid h-9 w-9 place-items-center rounded-full border border-white/25 text-white transition-colors duration-300 group-hover:border-white group-hover:bg-white group-hover:text-[var(--hz-ink)] sm:right-7 sm:top-7">
-              <Plus className="h-4 w-4" strokeWidth={2} />
-            </span>
-
-            {/* `relative` is load-bearing. Photo renders an absolutely
-                positioned span, and a positioned element paints above static
-                siblings regardless of DOM order — so without this the image
-                covers the label completely. The + button only survived because
-                it is absolute too and comes later in the tree. */}
-            <div className="relative">
-              <h3 className="text-[1.4rem] font-semibold tracking-[-0.015em] text-white sm:text-[1.55rem]">
-                {p.name}
-              </h3>
-              <p className="mt-2.5 max-w-[30ch] text-[14.5px] leading-relaxed text-white/70">
-                {p.line}
-              </p>
-            </div>
-          </Link>
-        ))}
+        <Stagger className="mt-10 grid gap-6 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
+          {services.map((s) => (
+            <StaggerItem key={s.name} className="h-full">
+              <ServiceCard s={s} />
+            </StaggerItem>
+          ))}
+        </Stagger>
       </div>
     </section>
   );

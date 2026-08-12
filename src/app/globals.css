@@ -1153,29 +1153,32 @@
   --hz-on-dark-mute: #94a3b8;
   --hz-line-dark:   rgba(226,232,240,0.12);
 
-  /* Accent — sampled from the logo, not chosen.
-     The mark was measured pixel by pixel: its blues run #0975C1 at the base of
-     the droplet to #0CACCF at the tips of the arcs, and the wordmark is
-     #6B6F70. The site had been running #1d4ed8 — a deep indigo that is a
-     different hue from anything in the logo, so the brand mark and the brand
-     colour did not match on the company's own homepage.
+  /* Paper ground, carried over with the client-work and accreditation
+     sections from the other branch. Pure #fff under a full-bleed layout
+     reads as a blank document; a hair of warmth reads as paper, and the
+     hairline is the rule colour those two sections divide their rows with.
 
-     --hz-cobalt now IS the logo blue. The old value is kept below as
-     --hz-indigo-legacy for anything that still wants it. */
-  --hz-cobalt:     #0975C1;
-  --hz-cobalt-600: #075E9C;
-  --hz-cobalt-100: #dbeefb;
-  --hz-cobalt-300: #6fc3e6;
-  /* The light end of the mark. Not a second accent: the same gradient. */
-  --hz-aqua:       #0CACCF;
-  --hz-indigo-legacy: #1d4ed8;
-  /* Wordmark grey, straight off the logo. */
-  --hz-logo-grey:  #6B6F70;
-
-  /* Warm off-white page ground. Pure #fff under a full-bleed layout reads as
-     a blank document; a hair of warmth reads as paper. */
+     Kept as its own pair rather than folded into --hz-canvas, because
+     every section from this branch was designed against pure white and
+     warming the global canvas would shift all of them at once. */
   --hz-paper:      #FAFAF7;
   --hz-paper-line: #E8E7E1;
+
+  /* The light end of the logo's gradient, measured off the mark: the
+     droplet runs #0975C1 at its base to #0CACCF at the arc tips. Only
+     the light end is needed here; the deep end would be a competing
+     value for --hz-cobalt below, which is a decision left open. */
+  --hz-aqua:       #0CACCF;
+
+  /* Accent — confident "Ocean Blue" (single decisive brand color, consulting-grade) */
+  --hz-cobalt:     #1d4ed8;
+  --hz-cobalt-600: #1740ad;
+  --hz-cobalt-100: #dbe6fe;
+  /* The accent as it behaves on a dark ground. #1d4ed8 is too dark to read
+     against the hero, which is why a separate cyan got introduced and quietly
+     became a second accent. This is the SAME accent lightened for contrast,
+     not another colour — one hue, two grounds. */
+  --hz-cobalt-300: #8fb4fd;
   --hz-cyan:       #2ad8ef;
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;
@@ -1254,13 +1257,33 @@
   line-height: 1.15;
 }
 
-/* Eyebrow — mono, uppercase, tracked */
+/* NOTE: a `.hz-container` class was written here and silently never reached
+   the browser — every neighbouring rule in this file compiled, that one alone
+   was dropped from the generated stylesheet, so every section rendered flush
+   to both screen edges with zero gutter. Rather than keep guessing at the
+   toolchain, the page shell is now Tailwind utilities applied at each call
+   site (see SHELL in the landing components). Do not reintroduce it as a
+   bespoke class without checking the built CSS actually contains it. */
+
+/* Eyebrow — mono, uppercase, tracked.
+
+   The colour lives here now. Every one of the ~19 call sites was pairing this
+   class with `text-[var(--hz-amber)]`, which made amber a second accent
+   competing with cobalt across the whole site — and a third once the hero's
+   cyan is counted. Accenture is black plus one purple; EY is charcoal plus one
+   yellow. Three accents is what separates a mid-market site from those.
+
+   An eyebrow is a LABEL. It names the section it sits above; it is not the
+   thing you should be looking at. Neutral subtle is the honest weight for it,
+   and it leaves cobalt free to mean one thing: this is actionable, or this is
+   the number that matters. */
 .hz-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
+  color: var(--hz-text-subtle);
 }
 
 /* Film grain — applied only to a fixed, pointer-events-none overlay */
@@ -1367,7 +1390,29 @@
 .hz-enter {
   /* `both` holds the from-state during animation-delay, so a staged
      sequence doesn't flash all its steps before the first one runs. */
-  animation: hz-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hz-enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Cinematic hold on the hero block.
+
+   A very slow, very small push-in under the word rise. The scale is
+   1.5% over two and a half seconds — far too little to read as an
+   animation on its own, which is the point: it reads as the frame
+   settling rather than as an element sliding in. Paired with the
+   graded photograph it gives the opening the feel of a shot coming
+   to rest instead of a web page loading.
+
+   Transform and opacity only — both compositor properties, so the
+   long duration costs nothing per frame. */
+@keyframes hz-cinema {
+  from { opacity: 0; transform: scale(1.015); }
+  to   { opacity: 1; transform: none; }
+}
+.hz-cinema {
+  animation: hz-cinema 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hz-cinema { animation: none; opacity: 1; transform: none; }
 }
 
 /* Word-by-word headline rise. The parent span clips, the inner one
@@ -1379,7 +1424,7 @@
 .hz-word-clip { display: inline-block; overflow: hidden; vertical-align: top; }
 .hz-word {
   display: inline-block;
-  animation: hz-word 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hz-word 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

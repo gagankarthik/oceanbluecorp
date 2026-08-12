@@ -1,77 +1,66 @@
 "use client";
 
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Reveal } from "./motion/Primitives";
-import { LogoMark, CheckMark } from "./motifs/Motifs";
+import Link from "next/link";
+import Photo from "./Photo";
+import { IMG } from "./media";
 
-/* ============================================================
-   Closing CTA — the reference's final band.
-
-   Its anatomy, and why each part is here:
-
-     · A dark band ruled into columns by vertical hairlines that
-       continue the grid from the strip above, so the two read as
-       one structure rather than two stacked sections.
-     · The brand mark, enormous and barely lighter than the ground,
-       occupying the left column. Not a photograph and not an
-       illustration — the logo itself, used as architecture. It is
-       the only ornament the band needs.
-     · One short statement, two pill actions, and the same proof
-       microcopy row the hero opened with. The page closes on the
-       promise it opened with, which is what makes it feel finished
-       rather than merely ended.
-
-   There is no photograph here on purpose. Every other section on
-   this page carries one; the close is the one place the brand gets
-   to stand on its own.
-   ============================================================ */
-
-const PROOF = ["Shortlists in 48 hours", "One accountable SLA", "Certified MBE / WBE"];
+// One wide photograph, not two marqueeing columns. Six tiles looping in
+// opposite directions was a lot of motion to put beside a careers invitation,
+// and it fetched six images to say what one says.
+const CTA_SIZES = "(min-width: 1024px) 46vw, 92vw";
 
 export default function CallToAction({ content = {} }: { content?: Record<string, string> }) {
   return (
-    <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-        <div className="grid items-center gap-10 py-20 sm:py-24 lg:grid-cols-12 lg:gap-14 lg:divide-x lg:divide-white/[0.08]">
-          {/* The mark as architecture. Sized in the hundreds of pixels and set
-              barely above the ground, so it registers as a shape in the room
-              rather than a logo asking to be read. */}
-          <div className="hidden lg:col-span-4 lg:flex lg:items-center lg:justify-center">
-            <LogoMark className="h-56 w-56 text-white opacity-[0.07] xl:h-72 xl:w-72" />
-          </div>
+    <section className="relative isolate w-full overflow-hidden bg-black">
+      {/* No shader here. It was tried and removed: `envPreset="city"` adds
+          environment lighting on top of color1/2/3, so even at 45% over black
+          the band came out grey with a teal cast rather than dark. The hero is
+          where the gradient earns its keep; this section stays flat black so
+          the photograph and the white disc are the only things in it. */}
 
-          <Reveal className="lg:col-span-8 lg:pl-14">
-            <h2 className="hz-display max-w-[18ch] text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.04] tracking-[-0.03em] text-white">
-              {content.ctaHeading || "Put one team on the whole problem."}
-            </h2>
+      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28 relative z-10 grid grid-cols-1 items-center gap-10 py-20 sm:py-24 lg:grid-cols-2 lg:gap-10">
+        {/* ── Left: careers ───────────────────────────────────
+            The copy here is supplied by the client and is Accenture's careers
+            wording. I flagged that once — it is their copyrighted text and a
+            reader who knows their site will recognise it — and was asked to
+            use it as given, so it stands as their decision. Replace with
+            original wording when there is time to write it.
+        */}
+        <Reveal className="flex flex-col items-start">
+          <span className="hz-eyebrow text-white/55">Careers</span>
+          <h2 className="hz-display mt-4 max-w-[14ch] text-[clamp(1.9rem,4.6vw,3.75rem)] leading-[1.05] text-white">
+            {content.ctaHeading || "Seize the future"}
+          </h2>
+          <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[17px]">
+            {content.ctaBody ||
+              "Our teams are leading change on every front. From deploying the most advanced and complex technologies for the world’s most iconic companies, to building a greener, more inclusive and healthier world for our communities."}
+          </p>
+          {/* Text plus a white disc, not a filled cobalt pill. On a dark band
+              the pill was the loudest object in the section and pulled the eye
+              before the sentence that earns the click; this reads as a line of
+              type that happens to be actionable. The disc is the only white
+              solid here, so it still finds the eye. */}
+          <Link
+            href="/careers"
+            className="group mt-8 inline-flex items-center gap-4 text-[15px] font-semibold text-white sm:mt-10 sm:text-[16px]"
+          >
+            {content.ctaButton || "Come join us"}
+            <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[var(--hz-ink)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1">
+              <ArrowRight className="h-5 w-5" strokeWidth={2} />
+            </span>
+          </Link>
+        </Reveal>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link
-                href="/contact"
-                className="inline-flex items-center rounded-full bg-[var(--hz-aqua)] px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-ink)] transition-colors hover:bg-white"
-              >
-                {content.ctaButton || "Start a conversation"}
-              </Link>
-              <Link
-                href="/careers"
-                className="inline-flex items-center rounded-full border border-[var(--hz-aqua)] px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-aqua)] transition-colors hover:bg-[var(--hz-aqua)] hover:text-[var(--hz-ink)]"
-              >
-                Come join us
-              </Link>
-            </div>
-
-            {/* The same three lines the hero opened with. Closing on them is
-                what makes the page feel like it finished an argument. */}
-            <ul className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2.5">
-              {PROOF.map((p) => (
-                <li key={p} className="flex items-center gap-2 text-[13.5px] text-white/55">
-                  <CheckMark className="h-3.5 w-3.5 flex-none text-[var(--hz-aqua)]" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+        {/* ── Right: the photograph, unframed ────────────────
+            No ring, no radius, no gradient scrim — the earlier version had all
+            three and they read as chrome around the picture rather than as the
+            picture. On black an unframed image has its own edge already. */}
+        <div className="relative aspect-[16/10] w-full overflow-hidden">
+          <Photo src={IMG.aboutTeam} sizes={CTA_SIZES} />
         </div>
+
       </div>
     </section>
   );

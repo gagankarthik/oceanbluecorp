@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { Reveal } from "./motion/Primitives";
 
 type Logo = { name: string; logo: string; w: number; remote?: boolean; dark?: boolean };
 
@@ -46,40 +45,35 @@ function LogoMark({ l }: { l: Logo }) {
   );
 }
 
-export default function ClientLogos() {
+/**
+ * The client logo row, with no section around it.
+ *
+ * Rendered inside Credentials, which pairs it with the accreditation row
+ * behind a pair of tabs — clients and certifications are both answers to the
+ * same question ("who vouches for you?"), and giving each its own full-width
+ * band said it twice.
+ *
+ * Four across, so six logos land as 4 + 2 rather than a single thin line of
+ * six. Spread over the full page width the row read as six unrelated marks
+ * with too much air between them; a capped, four-column block reads as a set.
+ *
+ * The nth-child(5) offset centres that second row. Without it the last two sit
+ * in columns one and two with the right half of the row empty, which reads as
+ * a layout that ran out rather than a deliberate 4 + 2.
+ *
+ * A static row, not a marquee: the scrolling version repeated this set every
+ * ~1200px against a wider viewport, so two and sometimes three copies of the
+ * same logo were on screen at once, which reads as padding a short client list
+ * rather than showing a real one.
+ */
+export function ClientRow() {
   return (
-    // Asymmetric padding on purpose. Symmetric py- on neighbouring sections
-    // compounds: this section's 96px foot met Services' 128px head and put
-    // ~220px of empty canvas between a logo row and the next heading, which
-    // reads as a missing section rather than as breathing room. The logos
-    // belong closer to what follows them than to the hero above.
-    <section className="relative w-full overflow-hidden bg-[var(--hz-paper)] pt-16 pb-10 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
-        <Reveal className="flex flex-col items-center gap-4 text-center">
-          <span className="hz-eyebrow text-[var(--hz-amber)]">Selected clients</span>
-          <h2 className="hz-display hz-statement max-w-2xl text-[var(--hz-text)]">
-            Relied on by enterprises and state government agencies across North America.
-          </h2>
-        </Reveal>
-      </div>
-
-      {/* A static row, not a marquee. The scrolling version repeated this set
-          every ~1200px against a wider viewport, so two and sometimes three
-          copies of the same logo were on screen at once — which reads as
-          padding a short client list rather than showing a real one. Six
-          genuine enterprise logos are stronger standing still. */}
-      <div className="mx-auto mt-10 max-w-6xl px-6 sm:mt-14 sm:px-8">
-        <Reveal>
-          <ul className="grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-x-10 lg:grid-cols-6 lg:gap-x-6">
-            {clients.map((l) => (
-              <li key={l.name} className="flex items-center justify-center">
-                <LogoMark l={l} />
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-    </section>
+    <ul className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-x-10 gap-y-12 sm:grid-cols-4 sm:gap-x-14 sm:[&>li:nth-child(5)]:col-start-2">
+      {clients.map((l) => (
+        <li key={l.name} className="flex items-center justify-center">
+          <LogoMark l={l} />
+        </li>
+      ))}
+    </ul>
   );
 }
-

@@ -1,33 +1,18 @@
 import Link from "next/link";
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 /* ============================================================
-   Shared primitives for every marketing page.
-
-   These are the highest-leverage files on the site: `Cta` has 29 call
-   sites and `Eyebrow` 26, spread across solutions, products, careers,
-   about, team, contact and the service detail pages. Bringing them onto
-   the landing page's language converts the buttons and kickers on all of
-   those at once, which is why the interior pages are fixed here first
-   rather than one at a time.
-
-   What changed and why:
-
-     · `Cta` was a button-in-button pill — a label, then a separate round
-       chip holding an arrow that translated, lifted and scaled on hover,
-       over a coloured glow shadow. The landing page uses a plain filled
-       pill. Three simultaneous hover transforms and a coloured drop
-       shadow are what a template does to make a button feel designed.
-     · `Eyebrow` defaulted to `--hz-amber`. The landing has no amber in
-       it; the palette is the two ends of the logo's blue. On a light
-       ground the kicker is cobalt, on a dark one it is aqua, and the
-       `tone` prop picks between them.
-     · `Bezel` — a double-ringed "machined hardware" card — is deleted.
-       It had zero call sites, and nothing in the current design would
-       use it.
+   Shared premium primitives for the Horizon landing.
+   - Eyebrow : pill-badge kicker
+   - Bezel   : double-bezel "machined hardware" nested card
+   - Cta     : button-in-button pill with magnetic hover physics
    ============================================================ */
 
-/** Section kicker: small caps, wide tracking, one accent colour. */
+/* Section kicker. This was stubbed out to `return null`, which left ~27 call
+   sites rendering nothing while their siblings kept the `mt-6`/`mt-7` spacing
+   meant to sit below a label — so pages opened with a band of dead space. It
+   now renders the same mono kicker the landing sections use. */
 export function Eyebrow({
   children,
   tone = "light",
@@ -39,8 +24,11 @@ export function Eyebrow({
 }) {
   return (
     <span
+      // Light tone takes its colour from .hz-eyebrow now — see globals.css.
+      // Dark keeps an explicit override because the class's neutral is tuned
+      // for a light ground and disappears on a dark one.
       className={`hz-eyebrow block ${
-        tone === "dark" ? "text-[var(--hz-aqua)]" : "text-[var(--hz-cobalt)]"
+        tone === "dark" ? "text-white/60" : ""
       } ${className}`}
     >
       {children}
@@ -48,46 +36,84 @@ export function Eyebrow({
   );
 }
 
-/**
- * The site's button. One shape, one transition, three grounds.
- *
- * `primary` is the filled ink pill the landing hero uses; `ghostLight`
- * is its hairline-outlined twin for a secondary action on paper; and
- * `ghostDark` is the same outline on an ink band. Colour is the only
- * thing that moves on hover — no lift, no scale, no glow.
- */
+export function Bezel({
+  children,
+  tone = "light",
+  className = "",
+  innerClassName = "",
+  radius = 28,
+}: {
+  children: ReactNode;
+  tone?: "light" | "dark";
+  className?: string;
+  innerClassName?: string;
+  radius?: number;
+}) {
+  const shell =
+    tone === "dark"
+      ? "bg-white/[0.04] ring-1 ring-white/10"
+      : "bg-black/[0.045] ring-1 ring-black/[0.05]";
+  const innerHi =
+    tone === "dark"
+      ? "inset 0 1px 1px rgba(255,255,255,0.08)"
+      : "inset 0 1px 1px rgba(255,255,255,0.75)";
+  return (
+    <div className={`p-1.5 ${shell} ${className}`} style={{ borderRadius: radius }}>
+      <div
+        className={`relative h-full overflow-hidden ${innerClassName}`}
+        style={{ borderRadius: radius - 6, boxShadow: innerHi }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function Cta({
   href,
   children,
   variant = "primary",
+  icon: Icon = ArrowUpRight,
   className = "",
 }: {
   href: string;
   children: ReactNode;
   variant?: "primary" | "ghostLight" | "ghostDark";
+  icon?: LucideIcon;
   className?: string;
 }) {
   const base =
-    "inline-flex items-center justify-center rounded-full px-7 py-3.5 text-[15px] font-semibold transition-colors duration-200";
+    "group inline-flex items-center gap-3 rounded-full py-2 pl-6 pr-2 text-[14px] font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]";
   const variants = {
-    primary: "bg-[var(--hz-text)] text-white hover:bg-[var(--hz-cobalt)]",
+    primary:
+      "bg-[var(--hz-cobalt)] text-white hover:bg-[var(--hz-cobalt-600)] shadow-[0_14px_34px_-14px_rgba(37,99,235,0.7)]",
     ghostLight:
-      "border border-[var(--hz-text)]/25 text-[var(--hz-text)] hover:border-[var(--hz-text)]",
-    ghostDark:
-      "border border-[var(--hz-aqua)] text-[var(--hz-aqua)] hover:bg-[var(--hz-aqua)] hover:text-[var(--hz-ink)]",
+      "border border-black/[0.08] bg-[var(--hz-canvas)] text-[var(--hz-text)] hover:border-[var(--hz-cobalt)]",
+    ghostDark: "border border-white/[0.12] bg-white/[0.04] text-white hover:bg-white/[0.08]",
   } as const;
+  const iconWrap =
+    variant === "primary" ? "bg-white/20" : variant === "ghostDark" ? "bg-white/10" : "bg-black/[0.05]";
+
+  const inner = (
+    <>
+      <span>{children}</span>
+      <span
+        className={`grid h-8 w-8 place-items-center rounded-full ${iconWrap} transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px] group-hover:scale-105`}
+      >
+        <Icon className="h-4 w-4" strokeWidth={1.5} />
+      </span>
+    </>
+  );
 
   const cls = `${base} ${variants[variant]} ${className}`;
-  // mailto/tel/hash and absolute URLs are not app routes; Link would try to
-  // prefetch them.
   const isExternal = /^(#|mailto:|tel:|https?:)/.test(href);
   return isExternal ? (
     <a href={href} className={cls}>
-      {children}
+      {inner}
     </a>
   ) : (
     <Link href={href} className={cls}>
-      {children}
+      {inner}
     </Link>
   );
 }

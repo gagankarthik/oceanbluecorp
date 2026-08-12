@@ -17,36 +17,35 @@ const certs = [
   { name: "MBE",      logo: "/logos/certifications/mbe.png",      w: 707, h: 353, cls: "h-14 sm:h-16" },
 ];
 
-export default function Certifications() {
+/**
+ * The accreditation row.
+ *
+ * No longer its own section. It was the thinnest band on the page — a label
+ * and four badges between two tinted bands — and a page of eight short
+ * sections reads as a list rather than an argument. It now sits inside the
+ * Impact band, where it belongs: years delivering, clients, retention and
+ * offices are proof, and so is being a certified MBE/WBE. One section makes
+ * the whole case instead of two making half of it each.
+ *
+ * Exported as a bare row, not a <section> — the band around it owns the
+ * background and the padding.
+ */
+export function CertificationRow() {
   return (
-    // White, sitting between the two tinted bands (stats above, testimonials
-    // below) so the page alternates cleanly instead of running one long tint.
-    <section className="relative w-full bg-[var(--hz-paper)] py-14 sm:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
-        <Reveal className="flex flex-col items-center gap-7 text-center sm:gap-8">
-          <p className="hz-eyebrow text-[var(--hz-text-subtle)]">
-            A certified minority- and women-owned business
-          </p>
-          {/* No frames and full colour: these are accreditations, and an MBE or
-              WBE mark is recognised by its own colours. Boxing them in tiles
-              made four credentials read as four UI cards, and desaturating
-              them threw away the exact thing that identifies them. What they
-              needed was consistent sizing, not containment. */}
-          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-16">
-            {certs.map((c) => (
-              <li key={c.name}>
-                <Image
-                  src={c.logo}
-                  alt={`${c.name} certification`}
-                  width={c.w}
-                  height={c.h}
-                  className={`${c.cls} w-auto object-contain transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.04]`}
-                />
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-    </section>
+    <Reveal className="flex flex-col items-center gap-7 text-center sm:gap-8">
+      <ul className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-x-10 gap-y-12 sm:grid-cols-4 sm:gap-x-14">
+        {certs.map((c) => (
+          <li key={c.name} className="flex items-center justify-center">
+            <Image
+              src={c.logo}
+              alt={`${c.name} certification`}
+              width={c.w}
+              height={c.h}
+              className={`${c.cls} w-auto object-contain transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.04]`}
+            />
+          </li>
+        ))}
+      </ul>
+    </Reveal>
   );
 }

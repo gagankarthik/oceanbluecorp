@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Hero from "@/components/landing/Hero";
-import ClientLogos from "@/components/landing/ClientLogos";
-import Statement from "@/components/landing/Statement";
 import Services from "@/components/landing/Services";
-import ImpactStats from "@/components/landing/ImpactStats";
+import Partnerships from "@/components/landing/Partnerships";
+import Credentials from "@/components/landing/Credentials";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
 import CertificationStrip from "@/components/landing/CertificationStrip";
@@ -112,14 +111,16 @@ export default async function Home() {
           order with no other edit. */}
       {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
-      <ClientLogos />
-      <Statement />
       <Services />
-      <ImpactStats content={content} />
+      {/* The one dark beat between the hero and the close. */}
+      <Partnerships />
+      {/* Clients and accreditations behind one pair of tabs — who vouches for
+          you, asked once, with the visitor choosing which evidence they care
+          about. */}
+      <Credentials />
       <Testimonials />
       {/* The trust strip sits ABOVE the closing ask, not below it — the last
-          reassurance a reader passes before deciding, which is where the
-          reference site puts its compliance row. */}
+          reassurance a reader passes before deciding. */}
       <CertificationStrip />
       <CallToAction content={content} />
     </div>
