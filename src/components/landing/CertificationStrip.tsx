@@ -21,10 +21,10 @@ import Image from "next/image";
    ============================================================ */
 
 const CERTS = [
-  { name: "NMSDC", label: "NMSDC certified", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-11" },
-  { name: "Ohio WBE", label: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-8" },
-  { name: "Ohio MBE", label: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-8" },
-  { name: "City of Columbus MBE", label: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9" },
+  { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-11" },
+  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-8" },
+  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-8" },
+  { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9" },
 ];
 
 export default function CertificationStrip() {
@@ -33,20 +33,21 @@ export default function CertificationStrip() {
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         {/* Vertical rules only between cells — `divide-x` leaves the outer
             edges open, so the row reads as a strip rather than a boxed table. */}
-        <ul className="grid grid-cols-2 divide-y divide-[var(--hz-paper-line)] border-y border-[var(--hz-paper-line)] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
+        <ul className="grid grid-cols-2 divide-y divide-[var(--hz-strip-line)] border-y border-[var(--hz-strip-line)] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
           {CERTS.map((c) => (
-            <li key={c.name} className="flex items-center justify-center gap-4 px-5 py-7 sm:px-6">
+            <li key={c.name} className="flex items-center justify-center px-5 py-7 sm:px-6">
+              {/* Badge only. Each of these already carries its issuer's name in
+                  its own artwork, so the label beside it was setting the same
+                  words twice — and the pair made every cell wide enough that
+                  four of them crowded the row. The name moves to `alt`, where
+                  it does the job for anyone who cannot see the mark. */}
               <Image
                 src={c.logo}
-                alt=""
-                aria-hidden
+                alt={c.name}
                 width={c.w}
                 height={c.h}
                 className={`${c.cls} w-auto flex-none object-contain`}
               />
-              <span className="text-[13.5px] font-medium leading-snug text-[var(--hz-text-mute)]">
-                {c.label}
-              </span>
             </li>
           ))}
         </ul>

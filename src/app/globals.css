@@ -1164,6 +1164,14 @@
   --hz-paper:      #FAFAF7;
   --hz-paper-line: #E8E7E1;
 
+  /* The accreditation strip's own rules, one step lighter again. That strip
+     sits on white between two heavy neighbours — the client-work rows above
+     and the black CTA below — and at --hz-paper-line weight its dividers
+     read as a drawn table rather than as separators. This is a hairline you
+     notice only when you look for it, which is the whole job — still present,
+     just not drawing the cell. */
+  --hz-strip-line: #ECEAE3;
+
   /* The light end of the logo's gradient, measured off the mark: the
      droplet runs #0975C1 at its base to #0CACCF at the arc tips. Only
      the light end is needed here; the deep end would be a competing

@@ -65,22 +65,56 @@ export default function ShaderBackdrop({
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [show, setShow] = useState(false);
+  const [lit, setLit] = useState(false);
 
   useEffect(() => {
     if (reduce || !ref.current || !hasWebGL()) return;
     const el = ref.current;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShow(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "300px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    let io: IntersectionObserver | null = null;
+    let idle = 0;
+    let timer = 0;
+
+    // On the hero this sits in view at page load, so an IntersectionObserver
+    // alone fires instantly and starts pulling 600KB of WebGL while React is
+    // still hydrating — the two compete for the main thread and the whole
+    // opening feels slow. Intersection is necessary but not sufficient: the
+    // browser also has to be idle, and the page has to have finished loading.
+    const arm = () => {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          io?.disconnect();
+          const ric = window.requestIdleCallback;
+          if (ric) idle = ric(() => setShow(true), { timeout: 2500 });
+          else timer = window.setTimeout(() => setShow(true), 400);
+        },
+        { rootMargin: "300px" },
+      );
+      io.observe(el);
+    };
+
+    if (document.readyState === "complete") arm();
+    else {
+      window.addEventListener("load", arm, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", arm);
+      io?.disconnect();
+      if (idle && window.cancelIdleCallback) window.cancelIdleCallback(idle);
+      if (timer) clearTimeout(timer);
+    };
   }, [reduce]);
+
+  // Mount at opacity 0 and raise it on the next frame, so the shader dissolves
+  // into the static gradient underneath instead of popping in over it. Setting
+  // the final opacity at mount time gives the transition nothing to animate
+  // from, which is why the arrival used to be a hard cut.
+  useEffect(() => {
+    if (!show) return;
+    const raf = requestAnimationFrame(() => setLit(true));
+    return () => cancelAnimationFrame(raf);
+  }, [show]);
 
   return (
     <div ref={ref} aria-hidden className={`absolute inset-0 overflow-hidden ${className}`}>
@@ -95,10 +129,21 @@ export default function ShaderBackdrop({
       />
 
       {show && (
-        <div className="absolute inset-0 transition-opacity duration-1000" style={{ opacity: intensity / 100 }}>
+        <div
+          className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
+          style={{ opacity: lit ? intensity / 100 : 0 }}
+        >
           <ShaderGradientCanvas
             style={{ position: "absolute", inset: 0 }}
             pointerEvents="none"
+            // A full-bleed background does not need retina. Left at the default
+            // device ratio this renders four times the fragments on a 2x
+            // display, for a blurred gradient where nobody can see the
+            // difference — this is the single biggest cost lever here.
+            pixelDensity={1}
+            // Prefer the integrated GPU. This is ambient decoration; waking the
+            // discrete card for it costs battery and buys nothing.
+            powerPreference="low-power"
           >
             <ShaderGradient
               animate="on"
@@ -113,7 +158,12 @@ export default function ShaderBackdrop({
               cDistance={3.6}
               cPolarAngle={90}
               cameraZoom={1}
-              envPreset="city"
+              // No `envPreset`: it pulls an HDR environment map over the
+              // network before the shader can draw, which was most of the
+              // "slow to load". `lightType` must then stay "3d" — "env" lights
+              // the mesh FROM that map, so with no map to sample it renders a
+              // palette that has nothing to do with color1/2/3. "3d" lights it
+              // from the shader's own lamp and keeps these three colours.
               grain="on"
               lightType="3d"
               positionX={-1.4}
