@@ -48,14 +48,16 @@ const services: Service[] = [
     desc: "Cloud migration, security, and production AI, engineered and shipped without stopping the business.",
     href: "/solutions/cloud",
     img: IMG.serviceSolutions,
+    // Condensed from seven lines to four. At seven this card ran far past its
+    // three-bullet neighbours and left a large void above their bottom-aligned
+    // "Learn more", so the row of four read as broken rather than dense. Every
+    // capability is still named — merged, not dropped — and the full list lives
+    // on /solutions/cloud, which is where the card links.
     items: [
       "Cloud migration · AWS, Azure, GCP",
       "DevOps, CI/CD & automation",
-      "AI & data intelligence",
-      "Cybersecurity & compliance",
-      "ERP · SAP, Oracle, Dynamics",
-      "Salesforce implementation & support",
-      "Digital transformation & roadmaps",
+      "AI, data intelligence & cybersecurity",
+      "ERP & Salesforce · SAP, Oracle, Dynamics",
     ],
   },
   {
@@ -110,7 +112,7 @@ export default function Services() {
   return (
     <section
       id="services"
-      className="relative w-full border-t border-slate-200/70 bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32"
+      className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">

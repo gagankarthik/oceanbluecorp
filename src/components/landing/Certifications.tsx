@@ -20,22 +20,30 @@ export default function Certifications() {
           <p className="hz-eyebrow text-[var(--hz-text-subtle)]">
             A certified minority- and women-owned business
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-7 sm:gap-x-16 sm:gap-y-8">
+          {/* These are four raw vendor files — a blue hexagon, two red-and-blue
+              Ohio script badges, a solid MBE rectangle — at four different
+              shapes and saturations. Loose on white they were the loudest thing
+              on an otherwise restrained page. Equal neutral tiles give them one
+              shared frame, and resting desaturated (full colour on hover) lets
+              the credential read as prestige rather than clip art. */}
+          <ul className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {certs.map((c) => (
-              <div
+              <li
                 key={c.name}
-                className="relative h-14 w-20 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105 sm:h-20 sm:w-32"
+                className="group flex items-center justify-center rounded-xl border border-black/[0.06] bg-[var(--hz-band)] px-6 py-7 transition-colors duration-300 hover:border-black/[0.1] hover:bg-white"
               >
-                <Image
-                  src={c.logo}
-                  alt={`${c.name} certification`}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 640px) 80px, 128px"
-                />
-              </div>
+                <div className="relative h-12 w-24 sm:h-14 sm:w-28">
+                  <Image
+                    src={c.logo}
+                    alt={`${c.name} certification`}
+                    fill
+                    className="object-contain opacity-75 saturate-0 transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-100 group-hover:saturate-100"
+                    sizes="(max-width: 640px) 96px, 112px"
+                  />
+                </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </Reveal>
       </div>
     </section>

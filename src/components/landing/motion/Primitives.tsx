@@ -68,10 +68,16 @@ export function Reveal({
       style={{ willChange: "transform, opacity" }}
       initial={reduce ? { opacity: 0 } : { opacity: 0, y: dy }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: narrow ? "-8% 0px -6% 0px" : "-12% 0px -10% 0px" }}
+      // Negative margins delayed the trigger until a section was already ~12%
+      // into view, so content that had visibly arrived was still ghosted while
+      // you read it. Firing slightly BEFORE the edge means it is solid by the
+      // time it matters.
+      viewport={{ once, margin: narrow ? "0px 0px -4% 0px" : "0px 0px -6% 0px" }}
       transition={{
-        opacity: { duration: 0.6, delay, ease: "easeOut" },
-        y: { duration: 0.9, delay, ease: EASE },
+        // Halved from 0.6/0.9. A reveal should confirm content has arrived,
+        // not gate reading it.
+        opacity: { duration: 0.35, delay, ease: "easeOut" },
+        y: { duration: 0.5, delay, ease: EASE },
       }}
     >
       {children}
@@ -97,12 +103,12 @@ export function Stagger({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once, margin: narrow ? "-6% 0px" : "-10% 0px" }}
+      viewport={{ once, margin: narrow ? "0px 0px -2% 0px" : "0px 0px -4% 0px" }}
       variants={{
-        hidden: {},
         // On phones the cards stack vertically, so a long stagger means the last
         // card is still hidden well after it scrolls in — tighten it there.
-        show: { transition: { staggerChildren: narrow ? gap * 0.5 : gap, delayChildren: 0.05 } },
+        hidden: {},
+        show: { transition: { staggerChildren: narrow ? gap * 0.4 : gap * 0.6, delayChildren: 0.03 } },
       }}
     >
       {children}
@@ -132,8 +138,8 @@ export function StaggerItem({
           opacity: 1,
           y: 0,
           transition: {
-            opacity: { duration: 0.5, ease: "easeOut" },
-            y: { duration: 0.8, ease: EASE },
+            opacity: { duration: 0.3, ease: "easeOut" },
+            y: { duration: 0.45, ease: EASE },
           },
         },
       }}

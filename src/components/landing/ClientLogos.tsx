@@ -26,21 +26,16 @@ const clients: Logo[] = [
     remote: true,
   },
   { name: "City Barbeque", logo: "/logos/clients/citybarbeque.svg", w: 128 },
-  // Asset is a near-white wordmark, so render it dark on the white marquee.
+  // Asset is a near-white wordmark, so render it dark on the white background.
   { name: "Condado Tacos & Tequila", logo: "/logos/clients/tacos.webp", w: 150, dark: true },
 ];
 
-// One marquee "half" — the set repeated so it comfortably exceeds the widest
-// viewport (~3× ≈ 3000px). Rendering two identical halves and animating to
-// -50% gives a seamless, gap-free loop on any screen width.
-const HALF: Logo[] = [...clients, ...clients, ...clients];
-
 function LogoMark({ l }: { l: Logo }) {
   // Full-colour logos, no hover fade. `dark` is kept only for the near-white
-  // wordmark that would otherwise be invisible on the white marquee.
+  // wordmark that would otherwise be invisible on the white background.
   const cls = `h-7 w-auto object-contain sm:h-8${l.dark ? " brightness-0" : ""}`;
   return (
-    <div className="flex shrink-0 items-center px-7 sm:px-10" style={{ minWidth: l.w }}>
+    <div className="flex items-center justify-center">
       {l.remote ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={l.logo} alt={l.name} width={l.w} height={36} loading="lazy" decoding="async" className={cls} style={{ maxWidth: l.w }} />
@@ -63,22 +58,22 @@ export default function ClientLogos() {
         </Reveal>
       </div>
 
-      <div
-        className="relative mt-10 sm:mt-14"
-        style={{
-          maskImage: "linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent)",
-        }}
-      >
-        {/* Each half is the client set repeated enough to exceed any viewport, so
-            the -50% loop never reveals a gap. Two identical halves = seamless. */}
-        <div className="hz-marquee flex w-max items-center">
-          {[...HALF, ...HALF].map((l, i) => (
-            <LogoMark key={`${l.name}-${i}`} l={l} />
-          ))}
-        </div>
+      {/* A static row, not a marquee. The scrolling version repeated this set
+          every ~1200px against a wider viewport, so two and sometimes three
+          copies of the same logo were on screen at once — which reads as
+          padding a short client list rather than showing a real one. Six
+          genuine enterprise logos are stronger standing still. */}
+      <div className="mx-auto mt-10 max-w-6xl px-6 sm:mt-14 sm:px-8">
+        <Reveal>
+          <ul className="grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-x-10 lg:grid-cols-6 lg:gap-x-6">
+            {clients.map((l) => (
+              <li key={l.name} className="flex items-center justify-center">
+                <LogoMark l={l} />
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
-
     </section>
   );
 }

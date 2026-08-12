@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { WordsReveal } from "./motion/Primitives";
+import WordsRise from "./motion/WordsRise";
 import { Cta } from "./ui";
 import { IMG, srcSetFor } from "./media";
 
@@ -13,13 +13,16 @@ const slides = [
   { src: IMG.heroSlides[2], alt: "Managed infrastructure" },
 ];
 
+// Sized up from h-5/h-7: at the old scale the wordmarks were ~20px tall and
+// unreadable, which spent hero real estate on marks nobody could identify.
+// Heights are per-logo because these lock-ups have very different aspect
+// ratios — matching the raw height would make AWS's badge tower over the two
+// wordmarks. These values match them optically instead.
 const partners = [
-  { src: "/logos/partners/AWS-Partner.png", alt: "AWS Partner", cls: "h-9 sm:h-10 md:h-12" },
-  { src: "/logos/partners/snowflake.svg", alt: "Snowflake", cls: "h-5 sm:h-6 md:h-7" },
-  { src: "/logos/partners/databricks.svg", alt: "Databricks", cls: "h-5 sm:h-6 md:h-7" },
+  { src: "/logos/partners/AWS-Partner.png", alt: "AWS Partner", cls: "h-11 sm:h-12 md:h-14" },
+  { src: "/logos/partners/snowflake.svg", alt: "Snowflake", cls: "h-7 sm:h-8 md:h-9" },
+  { src: "/logos/partners/databricks.svg", alt: "Databricks", cls: "h-7 sm:h-8 md:h-9" },
 ];
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function Hero({ content = {} }: { content?: Record<string, string> }) {
   const ref = useRef<HTMLElement>(null);
@@ -128,54 +131,51 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         <div className="mx-auto w-full max-w-7xl px-6 pt-24 pb-10 sm:px-8 sm:pt-28 2xl:max-w-[96rem]">
           {/* Fluid type, scales continuously instead of jumping at breakpoints,
               so the headline never collapses to body size on small phones. */}
+          {/* Everything in this block animates from the stylesheet, not from
+              framer-motion. See WordsRise: the motion version left this copy
+              invisible until hydration finished. */}
           <h1 className="hz-display max-w-[16ch] text-[clamp(2rem,5.4vw,4.2rem)] break-words text-white">
             {content.heroTitle ? (
-              <WordsReveal text={content.heroTitle} delay={0.12} />
+              <WordsRise text={content.heroTitle} delay={0.08} />
             ) : (
               <>
-                <WordsReveal text="The people and platforms behind" delay={0.12} />{" "}
+                <WordsRise text="The people and platforms behind" delay={0.08} />{" "}
                 <span className="text-[var(--hz-cyan-400)]">
-                  <WordsReveal text="enterprises and government agencies." delay={0.6} />
+                  <WordsRise text="enterprises and government agencies." delay={0.38} />
                 </span>
               </>
             )}
           </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.9, delay: 0.85, ease: EASE }}
-            className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-7 sm:text-[18px] lg:text-[19px]"
+          <p
+            className="hz-enter mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-7 sm:text-[18px] lg:text-[19px]"
+            style={{ animationDelay: "0.6s" }}
           >
             {content.heroSubtitle ||
               "IT staffing, enterprise solutions, and managed services delivered by one accountable partner, one accountable standard."}
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1, ease: EASE }}
-            className="mt-8 flex flex-col items-start gap-3 sm:mt-9 sm:flex-row sm:items-center"
+          <div
+            className="hz-enter mt-8 flex flex-col items-start gap-3 sm:mt-9 sm:flex-row sm:items-center"
+            style={{ animationDelay: "0.72s" }}
           >
             <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.heroCtaText || "Start a conversation"}</Cta>
             <Cta href="#services" variant="ghostDark">{content.heroCtaSecondary || "Explore what we do"}</Cta>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
 
       {/* ── Bottom bar, partners (left) + slide indicators (right) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 1.15, ease: EASE }}
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 sm:px-8 sm:pb-10 2xl:max-w-[96rem]"
+      <div
+        className="hz-enter relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 sm:px-8 sm:pb-10 2xl:max-w-[96rem]"
+        style={{ animationDelay: "0.84s" }}
       >
         <div className="flex flex-col gap-5 border-t border-white/15 pt-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           {/* Technology partners */}
           <div className="flex flex-col gap-3">
             <span className="hz-eyebrow text-white/55">Technology partners</span>
             {/* min-h reserves the row before the logos decode, no layout shift. */}
-            <div className="flex min-h-[40px] flex-wrap items-center gap-x-6 gap-y-3 sm:gap-x-8 md:min-h-[48px]">
+            <div className="flex min-h-[48px] flex-wrap items-center gap-x-7 gap-y-3 sm:gap-x-9 md:min-h-[56px]">
               {partners.map((p) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -209,7 +209,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

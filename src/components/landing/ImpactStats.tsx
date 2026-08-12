@@ -50,16 +50,20 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   ];
 
   return (
-    <section className="relative w-full overflow-hidden border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
       {/* Replaced a vendored honeycomb pattern. A hexagon grid had no
           relationship to this brand or to any other section — it was
           decoration from a catalogue. The wave is the logo's own mark, it is
           the same motif everywhere it appears, and it answers to scroll.
           Anchored to the foot of the band so the stat tiles sit above the
           water rather than in it. */}
+      {/* Height cut from 62% and the fade pulled down: at the old extent the
+          wave crossed the paragraph at mid-x-height and read as a strikethrough
+          through "state government agencies across North America". It belongs
+          under the content, not through it. */}
       <WaveField
         intensity={0.85}
-        className="top-auto bottom-0 z-0 h-[62%] [mask-image:linear-gradient(to_top,#000_0%,#000_45%,transparent_100%)]"
+        className="top-auto bottom-0 z-0 h-[38%] [mask-image:linear-gradient(to_top,#000_0%,#000_25%,transparent_100%)]"
       />
 
       <div ref={ref} className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">

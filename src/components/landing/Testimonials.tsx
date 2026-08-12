@@ -82,15 +82,17 @@ function QuoteCard({ t }: { t: T }) {
 
 export default function Testimonials() {
   return (
-    <section className="relative w-full overflow-hidden border-t border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
+    <section className="relative w-full overflow-hidden bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
       {/* Replaced a vendored WebGL "retro grid" — a receding synthwave horizon,
           which is a strong and entirely unrelated aesthetic to bring to a
           consulting testimonial wall, and cost a live GL context to say
           nothing. Same wave as every other band, quieter here because three
           quote cards already fill the section. */}
+      {/* Same correction as the stats band — kept below the quote cards rather
+          than running behind them. */}
       <WaveField
         intensity={0.6}
-        className="top-auto bottom-0 z-0 h-[55%] [mask-image:linear-gradient(to_top,#000_0%,#000_40%,transparent_100%)]"
+        className="top-auto bottom-0 z-0 h-[34%] [mask-image:linear-gradient(to_top,#000_0%,#000_25%,transparent_100%)]"
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">

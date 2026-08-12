@@ -1309,6 +1309,41 @@
   .hz-marquee { animation: none; }
 }
 
+/* ── Above-the-fold entrance ──────────────────────────────────
+   The hero used framer-motion for its entrance, which meant the
+   headline was server-rendered at opacity:0 and stayed invisible
+   until React hydrated — five to eight seconds on a cold load, with
+   the LCP text absent for all of it. These run off the stylesheet
+   instead, so the copy animates on first paint and never waits for
+   JavaScript. Use ONLY above the fold; below it, framer-motion's
+   whileInView is still the right tool.                            */
+@keyframes hz-enter {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.hz-enter {
+  /* `both` holds the from-state during animation-delay, so a staged
+     sequence doesn't flash all its steps before the first one runs. */
+  animation: hz-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Word-by-word headline rise. The parent span clips, the inner one
+   travels — same effect WordsReveal produced in JS. */
+@keyframes hz-word {
+  from { transform: translate3d(0, 110%, 0); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.hz-word-clip { display: inline-block; overflow: hidden; vertical-align: top; }
+.hz-word {
+  display: inline-block;
+  animation: hz-word 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Never leave the text hidden — drop the travel, keep it legible. */
+  .hz-enter, .hz-word { animation: none; opacity: 1; transform: none; }
+}
+
 /* NOTE: a `.hz-defer { content-visibility: auto }` helper was tried here to
    skip painting below-the-fold sections. It was removed because every landing
    section reveals with framer-motion's `whileInView … once: true`: if the

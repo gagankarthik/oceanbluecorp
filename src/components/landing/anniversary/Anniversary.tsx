@@ -190,7 +190,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
     <section
       id="thirteen"
       aria-labelledby="thirteen-heading"
-      className="relative w-full overflow-hidden border-b border-[var(--hz-band-line)] bg-[var(--hz-band)] pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pb-24"
+      className="relative w-full overflow-hidden bg-[var(--hz-band)] pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pb-24"
     >
       {/* Wave motif from the celebration artwork — bottom corners only, very
           low contrast, purely atmospheric. */}
