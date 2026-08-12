@@ -1,4 +1,5 @@
-import { FilterX, FolderOpen, AlertTriangle, Lock } from "lucide-react";
+import { FilterX } from "lucide-react";
+import { IconInbox, IconWarning, IconLock } from "./icons";
 import type { IconComponent } from "./icons";
 import { tones, type Tone } from "./theme";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,7 @@ const VARIANT_DEFAULTS: Record<
   { icon: IconComponent; tone: Tone; fallbackTitle: string; fallbackDescription: string }
 > = {
   fresh: {
-    icon: FolderOpen,
+    icon: IconInbox,
     tone: "slate",
     fallbackTitle: "Nothing here yet",
     fallbackDescription: "Create your first item to get started.",
@@ -23,13 +24,13 @@ const VARIANT_DEFAULTS: Record<
     fallbackDescription: "Try adjusting or clearing your filters.",
   },
   error: {
-    icon: AlertTriangle,
+    icon: IconWarning,
     tone: "rose",
     fallbackTitle: "Could not load data",
     fallbackDescription: "An error occurred while loading. Try again.",
   },
   permission: {
-    icon: Lock,
+    icon: IconLock,
     tone: "amber",
     fallbackTitle: "Access restricted",
     fallbackDescription: "You don't have permission to view this content.",

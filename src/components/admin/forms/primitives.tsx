@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import type { IconComponent } from "../icons";
-import { AlertCircle, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { IconAlert } from "../icons";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/admin/avatar";
 
@@ -101,7 +102,7 @@ export function Field({ label, required, hint, error, helper, htmlFor, children,
           role="alert"
           className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--adm-danger)]"
         >
-          <AlertCircle className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+          <IconAlert className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
           {error}
         </p>
       ) : helper ? (

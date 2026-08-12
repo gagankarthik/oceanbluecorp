@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft, Loader2, DollarSign, Calendar, Building2, UserCheck,
-  X, Briefcase, FileText, Truck, Save, Eye, Hash, Clock, MapPin,
-} from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
+import { IconBuilding, IconCalendar, IconClock, IconEye, IconFile, IconHash, IconJob, IconLocation, IconMoney, IconSave, IconTruck, IconUserCheck } from "../icons";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { fmtDate } from "@/lib/format";
 import { US_STATES, normalizeState } from "@/components/admin/theme";
@@ -275,10 +273,10 @@ export function JobForm({
             ? "Fill in the details to create a new job listing"
             : `Editing ${job?.title || "—"}`
         }
-        icon={Briefcase}
+        icon={IconJob}
         meta={mode === "edit" && job?.postingId ? (
           <span className="inline-flex items-center gap-1 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2 py-1 font-mono text-[12px] font-semibold text-[var(--adm-accent)]">
-            <Hash className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+            <IconHash className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
             {job.postingId}
           </span>
         ) : undefined}
@@ -288,12 +286,12 @@ export function JobForm({
                 offered the same escape twice under two names. The single
                 remaining one is the Back link above the title. */}
             <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
-              <Eye className="h-4 w-4" />Preview
+              <IconEye className="h-4 w-4" />Preview
             </WorkspaceButton>
             {/* House pattern: the primary action sits in the header band and
                 reaches the form below it through form=. */}
             <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSave className="h-4 w-4" />}
               {mode === "create" ? "Create Job" : "Save Changes"}
             </WorkspaceButton>
           </>
@@ -308,7 +306,7 @@ export function JobForm({
       <form id={formId} onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-4">
         {/* ── Job Details ── */}
         <AdminCard>
-          <AdminCardHeader icon={Briefcase} title="Job details" />
+          <AdminCardHeader icon={IconJob} title="Job details" />
           <div className="p-5">
             <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
             <div className="space-y-4">
@@ -368,7 +366,7 @@ export function JobForm({
         {/* ── Client / Vendor / Deadline ── */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <AdminCard>
-            <AdminCardHeader icon={Building2} title="Client" />
+            <AdminCardHeader icon={IconBuilding} title="Client" />
             <div className="p-5">
               <FormSelect aria-label="Client" value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
                 <option value="">Select client</option>
@@ -388,7 +386,7 @@ export function JobForm({
           </AdminCard>
 
           <AdminCard>
-            <AdminCardHeader icon={Truck} title="Vendor" />
+            <AdminCardHeader icon={IconTruck} title="Vendor" />
             <div className="p-5">
               <FormSelect aria-label="Vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
                 <option value="none">No vendor</option>
@@ -398,7 +396,7 @@ export function JobForm({
           </AdminCard>
 
           <AdminCard>
-            <AdminCardHeader icon={Calendar} title="Submission deadline" />
+            <AdminCardHeader icon={IconCalendar} title="Submission deadline" />
             <div className="p-5">
               <FormInput
                 aria-label="Submission deadline"
@@ -412,7 +410,7 @@ export function JobForm({
 
         {/* ── Compensation ── */}
         <AdminCard>
-          <AdminCardHeader icon={DollarSign} title="Compensation" />
+          <AdminCardHeader icon={IconMoney} title="Compensation" />
           <div className="p-5">
             <PanelNote>Optional rate and salary details — leave blank if not applicable.</PanelNote>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -434,7 +432,7 @@ export function JobForm({
 
         {/* ── Team Assignments ── */}
         <AdminCard>
-          <AdminCardHeader icon={UserCheck} title="Team assignments" count={data.assignedToIds.length} />
+          <AdminCardHeader icon={IconUserCheck} title="Team assignments" count={data.assignedToIds.length} />
           <div className="p-5">
             <PanelNote>Assign team members to receive notifications for this job posting.</PanelNote>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -461,7 +459,7 @@ export function JobForm({
 
         {/* ── Job Description ── */}
         <AdminCard>
-          <AdminCardHeader icon={FileText} title="Job description" />
+          <AdminCardHeader icon={IconFile} title="Job description" />
           <div className="p-5">
             <PanelNote>
               What candidates see — describe the role, then list requirements and responsibilities.
@@ -580,7 +578,7 @@ function AddClientModal({
       <div className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
           <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-            <Building2 className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
+            <IconBuilding className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
             Add New Client
           </h2>
           <button type="button" onClick={onClose} className={modalCloseBtn} aria-label="Close">
@@ -625,7 +623,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
       <div className="my-auto w-full max-w-4xl overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3.5">
           <div className="flex min-w-0 items-center gap-2">
-            <Eye className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
+            <IconEye className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
             <div className="min-w-0">
               <h2 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">Public Preview</h2>
               <p className="truncate text-xs text-[var(--adm-ink-subtle)]">How this job appears to candidates</p>
@@ -641,15 +639,15 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
             <h1 className="mb-4 text-2xl font-bold text-[var(--adm-ink)]">{data.title || "—"}</h1>
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2.5 py-1 text-[13px] font-semibold text-[var(--adm-accent)]">
-                <Briefcase className="h-3.5 w-3.5 flex-none" aria-hidden="true" />{typeLabel}
+                <IconJob className="h-3.5 w-3.5 flex-none" aria-hidden="true" />{typeLabel}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
-                <MapPin className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                <IconLocation className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
                 {data.location || "—"}{data.state ? `, ${data.state}` : ""}
               </span>
               {data.submissionDueDate && (
                 <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-warning)]">
-                  <Clock className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Due {fmtDate(data.submissionDueDate)}
+                  <IconClock className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Due {fmtDate(data.submissionDueDate)}
                 </span>
               )}
             </div>

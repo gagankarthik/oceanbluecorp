@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Star } from "lucide-react";
+// IconStar over lucide's: the base sets fill="none" as a presentation
+// attribute, which a Tailwind `fill-*` class still overrides, so the filled
+// state below works exactly as before.
+import { IconStar } from "./icons";
 import { cn } from "@/lib/utils";
 
 interface StarRatingProps {
@@ -54,7 +57,7 @@ export function StarRating({
             onRate ? "cursor-pointer hover:text-amber-400" : "cursor-default",
           )}
         >
-          <Star className={sz} />
+          <IconStar className={sz} />
         </button>
       ) : (
         [1, 2, 3, 4, 5].map((n) => {
@@ -75,7 +78,7 @@ export function StarRating({
               )}
               aria-label={`Rate ${n} star${n === 1 ? "" : "s"}`}
             >
-              <Star className={cn(sz, filled ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)]")} />
+              <IconStar className={cn(sz, filled ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)]")} />
             </button>
           );
         })

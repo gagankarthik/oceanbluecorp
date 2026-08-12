@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Briefcase, Users, UserStar, MessageSquareText } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { IconJob, IconApplication, IconUserStar, IconContact } from "./icons";
 import { Avatar } from "./avatar";
 import { StatusBadge } from "./status-badge";
 import { cn } from "@/lib/utils";
@@ -109,7 +110,7 @@ export function HeaderSearch() {
           ) : hits.length > 0 ? (
             <div className="max-h-[60vh] overflow-y-auto py-1.5">
               {hits.map((h, i) => {
-                const Icon = h.type === "job" ? Briefcase : h.type === "candidate" ? UserStar : h.type === "contact" ? MessageSquareText : Users;
+                const Icon = h.type === "job" ? IconJob : h.type === "candidate" ? IconUserStar : h.type === "contact" ? IconContact : IconApplication;
                 const isPerson = h.type === "application" || h.type === "candidate";
                 return (
                   <button

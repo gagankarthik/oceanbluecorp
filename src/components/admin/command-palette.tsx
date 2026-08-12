@@ -2,10 +2,17 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+// Chrome glyphs (search, close, arrows, the ⌘ mark) stay on lucide — the
+// custom set is domain iconography and deliberately has no primitives for
+// these. Everything that names a thing in this product uses ours.
 import {
-  Search, X, ArrowRight, Plus, Briefcase, Users, UserStar, Building, MessageSquareText,
-  Boxes, LayoutDashboard, Settings, UserCog, Shield, FileText, CornerDownLeft, CommandIcon,
+  Search, ArrowRight, Plus, CornerDownLeft, CommandIcon,
 } from "lucide-react";
+import {
+  IconOverview, IconJob, IconApplication, IconBench, IconContact,
+  IconClient, IconVendor, IconStaff, IconRoles, IconContent, IconSettings,
+  IconUserStar,
+} from "./icons";
 import { cn } from "@/lib/utils";
 import { Avatar } from "./avatar";
 import { Kbd } from "./kbd";
@@ -37,17 +44,17 @@ type NavItem = {
 };
 
 const ALL_NAV_ITEMS: NavItem[] = [
-  { name: "Dashboard",     href: "/admin",                icon: LayoutDashboard },
-  { name: "Job Postings",  href: "/admin/jobs",           icon: Briefcase,       keywords: "jobs positions roles" },
-  { name: "Applications",  href: "/admin/applications",   icon: Users,           keywords: "applicants candidates talent" },
-  { name: "Talent Bench",  href: "/admin/bench",          icon: Boxes,           keywords: "bench future" },
-  { name: "Contacts",      href: "/admin/contacts",       icon: MessageSquareText, roles: ["admin", "hr"] },
-  { name: "Clients",       href: "/admin/clients",        icon: Building,        roles: ["admin", "hr"] },
-  { name: "Vendors",       href: "/admin/vendors",        icon: Building,        roles: ["admin", "hr"] },
-  { name: "Users",         href: "/admin/users",          icon: UserCog,         keywords: "team members", roles: ["admin"] },
-  { name: "Roles",         href: "/admin/roles",          icon: Shield,          roles: ["admin"] },
-  { name: "Content",       href: "/admin/content",        icon: FileText,        roles: ["admin"] },
-  { name: "Settings",      href: "/admin/settings",       icon: Settings,        roles: ["admin"] },
+  { name: "Dashboard",     href: "/admin",                icon: IconOverview },
+  { name: "Job Postings",  href: "/admin/jobs",           icon: IconJob,       keywords: "jobs positions roles" },
+  { name: "Applications",  href: "/admin/applications",   icon: IconApplication,           keywords: "applicants candidates talent" },
+  { name: "Talent Bench",  href: "/admin/bench",          icon: IconBench,           keywords: "bench future" },
+  { name: "Contacts",      href: "/admin/contacts",       icon: IconContact, roles: ["admin", "hr"] },
+  { name: "Clients",       href: "/admin/clients",        icon: IconClient,        roles: ["admin", "hr"] },
+  { name: "Vendors",       href: "/admin/vendors",        icon: IconVendor,        roles: ["admin", "hr"] },
+  { name: "Users",         href: "/admin/users",          icon: IconStaff,         keywords: "team members", roles: ["admin"] },
+  { name: "Roles",         href: "/admin/roles",          icon: IconRoles,          roles: ["admin"] },
+  { name: "Content",       href: "/admin/content",        icon: IconContent,        roles: ["admin"] },
+  { name: "Settings",      href: "/admin/settings",       icon: IconSettings,        roles: ["admin"] },
 ];
 
 export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole }: CommandPaletteProps) {
@@ -102,7 +109,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
   const canPostJob = !userRole || ["admin", "hr", "sales"].includes(userRole);
   const quickActions = [
     { id: "new-candidate", label: "Add new applicant",  icon: Plus,     hint: "Open applicant editor",  roles: undefined, onSelect: () => onCreateCandidate?.() },
-    { id: "new-job",       label: "Post new job",       icon: Briefcase, hint: "Create job posting",    roles: ["admin", "hr", "sales"] as string[], onSelect: () => { onOpenChange(false); router.push("/admin/jobs/new"); } },
+    { id: "new-job",       label: "Post new job",       icon: IconJob, hint: "Create job posting",    roles: ["admin", "hr", "sales"] as string[], onSelect: () => { onOpenChange(false); router.push("/admin/jobs/new"); } },
   ]
     .filter((a) => !a.roles || !userRole || a.roles.includes(userRole))
     .filter((a) => !query || a.label.toLowerCase().includes(query.toLowerCase()));
@@ -234,7 +241,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
             <Group title="Records">
               {hits.map((h) => {
                 const flatIdx = flatItems.findIndex((f) => f.key === `${h.type}-${h.id}`);
-                const Icon = h.type === "job" ? Briefcase : h.type === "application" ? Users : h.type === "candidate" ? UserStar : MessageSquareText;
+                const Icon = h.type === "job" ? IconJob : h.type === "application" ? IconApplication : h.type === "candidate" ? IconUserStar : IconContact;
                 return (
                   <Item
                     key={`${h.type}-${h.id}`}

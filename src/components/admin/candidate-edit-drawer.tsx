@@ -1,10 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  Loader2, AlertTriangle, X, Briefcase, MapPin, FileText,
-  Star, User2, Shield, Plus, Upload, Sparkles,
-} from "lucide-react";
+import { Loader2, X, Plus } from "lucide-react";
+import { IconFile, IconJob, IconLocation, IconShield, IconSparkles, IconStar, IconUpload, IconUser, IconWarning } from "./icons";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -20,11 +18,11 @@ import { StarRating } from "./star-rating";
 // ── Tab config ─────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: "profile",  label: "Profile",  icon: User2    },
-  { id: "resume",   label: "Resume",   icon: FileText },
-  { id: "skills",   label: "Skills",   icon: Briefcase },
-  { id: "visa",     label: "Visa",     icon: Shield   },
-  { id: "notes",    label: "Notes",    icon: Star     },
+  { id: "profile",  label: "Profile",  icon: IconUser    },
+  { id: "resume",   label: "Resume",   icon: IconFile },
+  { id: "skills",   label: "Skills",   icon: IconJob },
+  { id: "visa",     label: "Visa",     icon: IconShield   },
+  { id: "notes",    label: "Notes",    icon: IconStar },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -280,7 +278,7 @@ export function CandidateEditDrawer({
         <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center">
-              <User2 className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
+              <IconUser className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
             </div>
             <div>
               <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">
@@ -322,7 +320,7 @@ export function CandidateEditDrawer({
           <div className="p-5 space-y-5">
             {error && (
               <div className="flex items-start gap-2.5 p-3 bg-[var(--adm-danger-soft)] border border-[var(--adm-danger)] rounded-[6px]">
-                <AlertTriangle className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
+                <IconWarning className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-[var(--adm-danger)] leading-relaxed">{error}</p>
               </div>
             )}
@@ -330,7 +328,7 @@ export function CandidateEditDrawer({
             {/* ── Profile tab ── */}
             {activeTab === "profile" && (
               <>
-                <FormSection icon={User2} title="Personal Info">
+                <FormSection icon={IconUser} title="Personal Info">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="First name" required>
                       <FormInput value={form.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="Jane" />
@@ -347,7 +345,7 @@ export function CandidateEditDrawer({
                   </div>
                 </FormSection>
 
-                <FormSection icon={MapPin} title="Location">
+                <FormSection icon={IconLocation} title="Location">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="City">
                       <FormInput value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Austin" />
@@ -361,7 +359,7 @@ export function CandidateEditDrawer({
                   </div>
                 </FormSection>
 
-                <FormSection icon={Briefcase} title="Position & Pipeline">
+                <FormSection icon={IconJob} title="Position & Pipeline">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Pipeline status">
                       <FormSelect value={form.status} onChange={(e) => set("status", e.target.value as AppStatus)}>
@@ -423,12 +421,12 @@ export function CandidateEditDrawer({
 
             {/* ── Resume tab ── */}
             {activeTab === "resume" && (
-              <FormSection icon={FileText} title="Resume">
+              <FormSection icon={IconFile} title="Resume">
                 <div className="space-y-3">
                   {resumeFile ? (
                     <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3">
                       <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-                        <FileText className="h-4 w-4 text-[var(--adm-accent)]" />
+                        <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{resumeFile.name}</p>
@@ -448,7 +446,7 @@ export function CandidateEditDrawer({
                   ) : existingResume ? (
                     <div className="flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3">
                       <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-success-soft)]">
-                        <FileText className="h-4 w-4 text-[var(--adm-success)]" />
+                        <IconFile className="h-4 w-4 text-[var(--adm-success)]" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{existingResume.fileName}</p>
@@ -473,7 +471,7 @@ export function CandidateEditDrawer({
                         onChange={handleResumeSelect}
                         className="sr-only"
                       />
-                      <Upload className="h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                      <IconUpload className="h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                       <span className="text-center">
                         <span className="block text-sm font-semibold text-[var(--adm-ink-mute)]">
                           {existingResume ? "Upload a replacement" : "Upload resume"}
@@ -485,13 +483,13 @@ export function CandidateEditDrawer({
 
                   {resumeError && (
                     <p role="alert" className="flex items-start gap-2 rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-2.5 py-2 text-xs text-[var(--adm-danger)]">
-                      <AlertTriangle className="mt-px h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                      <IconWarning className="mt-px h-3.5 w-3.5 flex-none" aria-hidden="true" />
                       {resumeError}
                     </p>
                   )}
 
                   <p className="flex items-start gap-2 rounded-[6px] bg-[var(--adm-accent-tint)] px-3 py-2.5 text-xs leading-relaxed text-[var(--adm-ink-mute)]">
-                    <Sparkles className="mt-px h-3.5 w-3.5 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
+                    <IconSparkles className="mt-px h-3.5 w-3.5 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
                     Saving with a resume attached extracts the full profile — work history, education,
                     skills, certifications and projects — onto the candidate record. It usually takes
                     under a minute and appears on their page automatically.
@@ -503,7 +501,7 @@ export function CandidateEditDrawer({
             {/* ── Skills tab ── */}
             {activeTab === "skills" && (
               <>
-                <FormSection icon={Briefcase} title="Skills">
+                <FormSection icon={IconJob} title="Skills">
                   <div className="space-y-3">
                     {/* Skill chip input */}
                     <div className="flex gap-2">
@@ -559,7 +557,7 @@ export function CandidateEditDrawer({
                   </div>
                 </FormSection>
 
-                <FormSection icon={FileText} title="Experience">
+                <FormSection icon={IconFile} title="Experience">
                   <Field label="Experience summary">
                     <FormTextarea rows={5} value={form.experience} onChange={(e) => set("experience", e.target.value)} placeholder="Brief summary of candidate's experience, industries, key achievements…" />
                   </Field>
@@ -569,7 +567,7 @@ export function CandidateEditDrawer({
 
             {/* ── Visa tab ── */}
             {activeTab === "visa" && (
-              <FormSection icon={Shield} title="Work Authorization & Visa Status">
+              <FormSection icon={IconShield} title="Work Authorization & Visa Status">
                 <div className="space-y-4">
                   <Field label="Work Authorization / Visa Status">
                     <FormSelect value={form.workAuthorization} onChange={(e) => set("workAuthorization", e.target.value)}>
@@ -629,7 +627,7 @@ export function CandidateEditDrawer({
             {/* ── Notes tab ── */}
             {activeTab === "notes" && (
               <>
-                <FormSection icon={Star} title="Rating">
+                <FormSection icon={IconStar} title="Rating">
                   <Field label="Candidate rating">
                     <div className="flex items-center gap-2 px-3 py-2.5 border border-[var(--adm-line)] rounded-[8px] bg-[var(--adm-surface)]">
                       <StarRating rating={form.rating} onRate={(n) => set("rating", n === form.rating ? 0 : n)} size="md" />
@@ -640,7 +638,7 @@ export function CandidateEditDrawer({
                   </Field>
                 </FormSection>
 
-                <FormSection icon={FileText} title="Internal Notes">
+                <FormSection icon={IconFile} title="Internal Notes">
                   <Field label="Notes" hint="Internal only — not visible to candidate">
                     <FormTextarea rows={8} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Interview impressions, concerns, next steps…" />
                   </Field>

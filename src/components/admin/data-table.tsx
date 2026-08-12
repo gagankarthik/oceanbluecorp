@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import type { IconComponent } from "./icons";
-import { ArrowUp, ArrowDown, ChevronsUpDown, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { ArrowUp, ArrowDown, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { IconInbox } from "./icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "./empty-state";
 import type { Density } from "./workspace";
@@ -350,7 +351,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={colSpan} style={{ height: "auto" }}>
                   <EmptyState
-                    icon={empty?.icon ?? Inbox}
+                    icon={empty?.icon ?? IconInbox}
                     title={empty?.title ?? "Nothing here yet"}
                     description={empty?.description}
                     action={empty?.action}

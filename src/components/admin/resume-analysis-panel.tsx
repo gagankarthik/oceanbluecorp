@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  Briefcase, GraduationCap, Tag, Award, Languages as LanguagesIcon,
-  FolderGit2, BadgeCheck, TrendingUp, Building2, MapPin, Calendar,
-  Sparkles, Layers,
-} from "lucide-react";
+import { GraduationCap, Tag, Award, Languages as LanguagesIcon, FolderGit2, BadgeCheck } from "lucide-react";
+import { IconBuilding, IconCalendar, IconJob, IconLayers, IconLocation, IconSparkles, IconTrend } from "./icons";
 import type {
   ResumeAnalysis, ResumeWorkExperience, ResumeEducation, ResumeSkills,
 } from "@/lib/aws/dynamodb";
@@ -87,13 +84,13 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
         <div className="min-w-0">
           <p className="text-sm font-bold text-[var(--adm-ink)]">{w.job_title || "Role"}</p>
           <p className="text-sm text-[var(--adm-ink-mute)] flex items-center gap-1.5 flex-wrap">
-            {w.company_name && <span className="inline-flex items-center gap-1"><Building2 className="w-3.5 h-3.5 text-[var(--adm-ink-subtle)]" />{w.company_name}</span>}
-            {w.location && <span className="inline-flex items-center gap-1 text-[var(--adm-ink-subtle)]"><MapPin className="w-3 h-3" />{w.location}</span>}
+            {w.company_name && <span className="inline-flex items-center gap-1"><IconBuilding className="w-3.5 h-3.5 text-[var(--adm-ink-subtle)]" />{w.company_name}</span>}
+            {w.location && <span className="inline-flex items-center gap-1 text-[var(--adm-ink-subtle)]"><IconLocation className="w-3 h-3" />{w.location}</span>}
           </p>
         </div>
         {range && (
           <span className="inline-flex items-center gap-1 text-[11px] text-[var(--adm-ink-subtle)] tabular-nums flex-shrink-0">
-            <Calendar className="w-3 h-3" />{range}
+            <IconCalendar className="w-3 h-3" />{range}
           </span>
         )}
       </div>
@@ -158,7 +155,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
       {/* Analytics overview */}
       {a && (
         <AdminCard className="overflow-hidden">
-          <AdminCardHeader icon={TrendingUp} title="Profile summary" tone="blue" />
+          <AdminCardHeader icon={IconTrend} title="Profile summary" tone="blue" />
           <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <Stat label="Experience" value={a.total_years_of_experience != null ? `${a.total_years_of_experience} yrs` : null} />
             <Stat label="Career level" value={a.career_level} />
@@ -181,7 +178,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
       {/* Professional summary */}
       {(analysis.professional_summary || analysis.objective) && (
         <AdminCard className="overflow-hidden">
-          <AdminCardHeader icon={Sparkles} title="Professional summary" tone="blue" />
+          <AdminCardHeader icon={IconSparkles} title="Professional summary" tone="blue" />
           <div className="px-5 py-4 space-y-3">
             {analysis.professional_summary && (
               <p className="text-sm text-[var(--adm-ink-mute)] leading-relaxed whitespace-pre-line">{analysis.professional_summary}</p>
@@ -196,7 +193,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
       {/* Work experience */}
       {work.length > 0 && (
         <AdminCard className="overflow-hidden">
-          <AdminCardHeader icon={Briefcase} title="Work experience" count={work.length} />
+          <AdminCardHeader icon={IconJob} title="Work experience" count={work.length} />
           <div className="px-5 py-4">
             <ol>{work.map((w, i) => <WorkEntry key={i} w={w} />)}</ol>
           </div>
@@ -335,7 +332,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
       {/* Interests */}
       {!!(analysis.interests_and_hobbies && analysis.interests_and_hobbies.length) && (
         <AdminCard className="overflow-hidden">
-          <AdminCardHeader icon={Layers} title="Interests" />
+          <AdminCardHeader icon={IconLayers} title="Interests" />
           <div className="px-5 py-4"><Chips items={analysis.interests_and_hobbies} tone="slate" /></div>
         </AdminCard>
       )}

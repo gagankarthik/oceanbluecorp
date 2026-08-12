@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { IconWarning, IconTrash } from "./icons";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -101,9 +102,9 @@ export function ConfirmDialog({
           aria-hidden="true"
         >
           {danger ? (
-            <Trash2 className="h-5 w-5 text-[var(--adm-danger)]" />
+            <IconTrash className="h-5 w-5 text-[var(--adm-danger)]" />
           ) : (
-            <AlertTriangle className="h-5 w-5 text-[var(--adm-accent)]" />
+            <IconWarning className="h-5 w-5 text-[var(--adm-accent)]" />
           )}
         </div>
 

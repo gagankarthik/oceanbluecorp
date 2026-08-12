@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown } from "lucide-react";
+// IconTrend covers the rising case. There is no falling counterpart in the
+// custom set, so the down arrow stays on lucide rather than reusing the up
+// glyph rotated — a mirrored trend line reads as a different shape, not the
+// same one inverted.
+import { TrendingDown } from "lucide-react";
+import { IconTrend } from "./icons";
 import { tones, type Tone } from "./theme";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +81,7 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
                 : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
             )}
           >
-            {delta.direction === "up" && <TrendingUp className="h-3 w-3" />}
+            {delta.direction === "up" && <IconTrend className="h-3 w-3" />}
             {delta.direction === "down" && <TrendingDown className="h-3 w-3" />}
             {delta.value}
           </span>

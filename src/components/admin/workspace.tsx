@@ -3,11 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { Slot } from "radix-ui";
-import {
-  AlignJustify, ArrowLeft, BadgeCheck, Bookmark, Briefcase, Check, ChevronDown, CircleDot,
-  MapPin, Plus, RotateCcw, Route, Search, Settings2, Shield, SlidersHorizontal, Tag, UserRound,
-  Workflow, Wrench, X,
-} from "lucide-react";
+import { AlignJustify, ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Plus, RotateCcw, Route, Search, Settings2, SlidersHorizontal, Tag, Workflow, Wrench, X } from "lucide-react";
+import { IconBookmark, IconJob, IconLocation, IconShield, IconUser } from "./icons";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -669,14 +666,14 @@ export const FilterIcon = {
   status:   CircleDot,    // any lifecycle state: active/inactive, read/unread
   stage:    Workflow,     // position in an ordered process
   type:     Tag,          // a category the record belongs to
-  position: Briefcase,    // a job / requisition
+  position: IconJob,      // a job / requisition
   source:   Route,        // where a record came from
   skill:    Wrench,       // capability
   workAuth: BadgeCheck,   // credential / authorisation
-  person:   UserRound,    // owner, lead, added-by, uploaded-by
-  role:     Shield,       // permission level
-  view:     Bookmark,     // a saved view
-  location: MapPin,       // where the record is, geographically
+  person:   IconUser,    // owner, lead, added-by, uploaded-by
+  role:     IconShield,       // permission level
+  view:     IconBookmark,     // a saved view
+  location: IconLocation,       // where the record is, geographically
 } as const;
 
 export interface PillOption<V extends string> {

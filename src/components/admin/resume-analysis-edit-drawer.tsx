@@ -1,10 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  Loader2, AlertTriangle, X, Briefcase, GraduationCap, Tag,
-  Sparkles, TrendingUp, BadgeCheck, Plus, Trash2,
-} from "lucide-react";
+import { Loader2, X, GraduationCap, Tag, BadgeCheck, Plus } from "lucide-react";
+import { IconJob, IconSparkles, IconTrash, IconTrend, IconWarning } from "./icons";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type {
   Application, ResumeAnalysis, ResumeWorkExperience, ResumeEducation, ResumeCertification,
@@ -133,7 +131,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
         <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center">
-              <Sparkles className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
+              <IconSparkles className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
             </div>
             <div>
               <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">Edit resume analysis</SheetTitle>
@@ -150,13 +148,13 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {error && (
             <div className="flex items-start gap-2.5 p-3 bg-[var(--adm-danger-soft)] border border-[var(--adm-danger)] rounded-[6px]">
-              <AlertTriangle className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
+              <IconWarning className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
               <p className="text-xs text-[var(--adm-danger)] leading-relaxed">{error}</p>
             </div>
           )}
 
           {/* Summary */}
-          <FormSection icon={Sparkles} title="Professional summary">
+          <FormSection icon={IconSparkles} title="Professional summary">
             <div className="space-y-3">
               <Field label="Summary">
                 <FormTextarea rows={4} value={draft.professional_summary || ""} onChange={(e) => setDraft((d) => ({ ...d, professional_summary: e.target.value }))} placeholder="Headline summary of the candidate…" />
@@ -168,7 +166,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
           </FormSection>
 
           {/* Analytics */}
-          <FormSection icon={TrendingUp} title="Profile metrics">
+          <FormSection icon={IconTrend} title="Profile metrics">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Career level">
                 <select
@@ -215,7 +213,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
           {/* Work experience */}
           <FormSection
-            icon={Briefcase}
+            icon={IconJob}
             title="Work experience"
             action={
               <button type="button" onClick={addWork} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
@@ -228,7 +226,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               {work.map((w, i) => (
                 <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
                   <button type="button" onClick={() => removeWork(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <IconTrash className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Company"><FormInput value={w.company_name || ""} onChange={(e) => setWork(i, "company_name", e.target.value)} /></Field>
@@ -263,7 +261,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               {edu.map((e, i) => (
                 <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
                   <button type="button" onClick={() => removeEdu(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <IconTrash className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Institution" className="col-span-2"><FormInput value={e.institution_name || ""} onChange={(ev) => setEdu(i, "institution_name", ev.target.value)} /></Field>
@@ -293,7 +291,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
               {certs.map((c, i) => (
                 <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
                   <button type="button" onClick={() => removeCert(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <IconTrash className="w-3.5 h-3.5" />
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
                     <Field label="Name" className="col-span-2"><FormInput value={c.name || ""} onChange={(e) => setCert(i, "name", e.target.value)} /></Field>
