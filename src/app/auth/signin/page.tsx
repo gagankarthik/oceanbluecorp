@@ -161,10 +161,18 @@ export default function SignInPage() {
         password: newPassword,
         username: challengeUsername,
         requiredAttributes,
+        // Cognito burns the challenge session on any rejected answer. Keeping
+        // the temporary password to hand lets the server start a fresh one, so
+        // a corrected second attempt works instead of dying as "expired".
+        tempPassword: password,
       });
       router.push(getRoleRedirect(authUser.role));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not complete your account setup.");
+      // That session is spent whatever the reason was. Dropping it now means the
+      // next attempt starts from a fresh one — sending it again would only earn
+      // an "expired" error in place of the message the user needs to see.
+      setSession("");
     } finally {
       setSubmitting(false);
     }

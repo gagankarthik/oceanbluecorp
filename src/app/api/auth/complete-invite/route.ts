@@ -1,5 +1,6 @@
 import {
   CognitoIdentityProviderClient,
+  InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   type RespondToAuthChallengeCommandOutput,
 } from "@aws-sdk/client-cognito-identity-provider";
@@ -20,18 +21,65 @@ const cognitoErrorMessages: Record<string, string> = {
 // password. Anything else the pool requires has to be set at invite time.
 const supportedAttributes = ["name", "phone_number"] as const;
 
+interface Challenge {
+  session: string;
+  username: string;
+}
+
+// A challenge session is single-use: the moment Cognito rejects an answer the
+// session dies with it, so every follow-up attempt reports "session expired"
+// instead of the real problem. Re-running InitiateAuth with the temporary
+// password mints a fresh one — that is what makes any second attempt, ours or
+// the user's, possible at all.
+async function reissueChallenge(
+  client: CognitoIdentityProviderClient,
+  email: string,
+  tempPassword: string
+): Promise<Challenge | null> {
+  try {
+    const response = await client.send(
+      new InitiateAuthCommand({
+        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
+        AuthParameters: { USERNAME: email, PASSWORD: tempPassword },
+      })
+    );
+
+    if (response.ChallengeName !== "NEW_PASSWORD_REQUIRED" || !response.Session) {
+      return null;
+    }
+
+    return {
+      session: response.Session,
+      username: response.ChallengeParameters?.USER_ID_FOR_SRP || email,
+    };
+  } catch (err) {
+    // The temp password is gone or no longer valid — nothing to recover with.
+    console.error("Could not re-issue the invite challenge:", err);
+    return null;
+  }
+}
+
 // POST /api/auth/complete-invite
 // Answers the Cognito NEW_PASSWORD_REQUIRED challenge raised on an invited
 // user's first sign-in: sets the permanent password, then stores their full
 // name and phone number on the account.
 export async function POST(request: Request) {
   try {
-    const { email, session, name, phone, password, username, requiredAttributes } =
-      await request.json();
+    const {
+      email, session, name, phone, password, username, requiredAttributes, tempPassword,
+    } = await request.json();
 
-    if (!email || !session || !name || !phone || !password) {
+    if (!email || !name || !phone || !password) {
       return NextResponse.json(
         { error: "Name, phone, and a new password are required." },
+        { status: 400 }
+      );
+    }
+
+    if (!session && !tempPassword) {
+      return NextResponse.json(
+        { error: "Your invite session has expired. Please sign in again to restart." },
         { status: 400 }
       );
     }
@@ -55,36 +103,56 @@ export async function POST(request: Request) {
       wanted.map((attr) => [`userAttributes.${attr}`, values[attr]])
     );
 
-    const respond = (extra: Record<string, string>) =>
+    const respond = (challenge: Challenge, extra: Record<string, string>) =>
       client.send(
         new RespondToAuthChallengeCommand({
           ChallengeName: "NEW_PASSWORD_REQUIRED",
           ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
-          Session: session,
+          Session: challenge.session,
           ChallengeResponses: {
             // Cognito issues the session against this identifier — for pools
             // with UUID usernames it is not the typed email.
-            USERNAME: username || email,
+            USERNAME: challenge.username,
             NEW_PASSWORD: password,
             ...extra,
           },
         })
       );
 
+    // The session the sign-in step handed us may already be spent — by an
+    // earlier failed attempt on this same form. Mint a new one when it is
+    // missing entirely; otherwise try it and fall back below.
+    let challenge: Challenge | null = session
+      ? { session, username: username || email }
+      : await reissueChallenge(client, email, tempPassword);
+
+    if (!challenge) {
+      return NextResponse.json(
+        { error: "Your invite session has expired. Please sign in again to restart." },
+        { status: 400 }
+      );
+    }
+
     let response: RespondToAuthChallengeCommandOutput;
     try {
-      response = await respond(attributeResponses);
+      response = await respond(challenge, attributeResponses);
     } catch (err: unknown) {
       const code = (err as { name?: string }).name ?? "";
-      // The app client may not be allowed to write name/phone. Retry with the
-      // password alone and let the admin-credentialed update below set them.
-      const attributesRejected =
-        Object.keys(attributeResponses).length > 0 &&
-        (code === "NotAuthorizedException" || code === "InvalidParameterException");
-      if (!attributesRejected) throw err;
-      console.error("Challenge with user attributes failed, retrying password-only:", err);
+      // A password the pool refuses will be refused again — no fresh session
+      // changes that, so don't spend one hiding a message the user needs.
+      if (code === "InvalidPasswordException" || !tempPassword) throw err;
+
+      console.error("Challenge answer failed, retrying on a fresh session:", err);
+
+      // Whatever went wrong, the session is now spent. Re-issue, then answer
+      // with the password alone: if the app client simply isn't allowed to
+      // write name/phone, that was the failure, and the admin-credentialed
+      // update below sets them anyway.
+      const fresh = await reissueChallenge(client, email, tempPassword);
+      if (!fresh) throw err;
+      challenge = fresh;
       try {
-        response = await respond({});
+        response = await respond(fresh, {});
       } catch {
         // The password-only answer tells us nothing new — surface the original.
         throw err;
@@ -103,7 +171,7 @@ export async function POST(request: Request) {
     // Resolve the account's `sub` from the freshly issued IdToken — a reliable
     // identifier for the admin attribute update regardless of how the pool maps
     // usernames vs. the email alias.
-    let usernameForUpdate = username || email;
+    let usernameForUpdate = challenge.username;
     try {
       const payload = JSON.parse(
         Buffer.from(result.IdToken.split(".")[1], "base64").toString("utf8")

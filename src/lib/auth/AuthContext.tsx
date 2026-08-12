@@ -59,6 +59,10 @@ interface AuthContextType {
     password: string;
     username?: string;
     requiredAttributes?: string[];
+    // The temporary password from the invite email. A challenge session is
+    // single-use, so the server needs this to mint a fresh one after a failed
+    // attempt — without it, every retry dies as "session expired".
+    tempPassword?: string;
   }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
@@ -290,15 +294,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Answer the NEW_PASSWORD_REQUIRED challenge: set the permanent password and
   // store the user's full name + phone, then establish the session.
   const completeNewPassword = useCallback(async ({
-    email, session, name, phone, password, username, requiredAttributes,
+    email, session, name, phone, password, username, requiredAttributes, tempPassword,
   }: {
     email: string; session: string; name: string; phone: string; password: string;
-    username?: string; requiredAttributes?: string[];
+    username?: string; requiredAttributes?: string[]; tempPassword?: string;
   }): Promise<AuthUser> => {
     const response = await fetch("/api/auth/complete-invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, session, name, phone, password, username, requiredAttributes }),
+      body: JSON.stringify({
+        email, session, name, phone, password, username, requiredAttributes, tempPassword,
+      }),
     });
 
     const data = await response.json();
