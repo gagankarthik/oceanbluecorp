@@ -47,8 +47,12 @@ describe("formatRate", () => {
     assert.equal(formatRate(140000, "annual"), "$140,000/yr");
   });
 
-  test("shows an em dash rather than $0 when there is no figure", () => {
-    assert.equal(formatRate(undefined, "hourly"), "—");
+  test("shows a dash rather than $0 when there is no figure", () => {
+    // En dash, not em. The em dash was removed site-wide as a written-by-AI
+    // tell; as a table placeholder the glyph still belongs, so it stays as the
+    // narrower dash rather than becoming an empty cell, which would be
+    // indistinguishable from a rendering failure.
+    assert.equal(formatRate(undefined, "hourly"), "–");
   });
 
   test("zero is a figure, and prints as one", () => {

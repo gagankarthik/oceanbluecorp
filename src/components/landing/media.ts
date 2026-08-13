@@ -1,7 +1,7 @@
 /* ============================================================
    Central image map for the landing + marketing pages.
    All URLs are verified Unsplash CDN links (business / tech /
-   team). Swap any of these to rebrand — it's the single place
+   team). Swap any of these to rebrand, it's the single place
    to change site imagery. Rendered via <Photo>, which falls
    back to a clean Ocean-Blue gradient if a URL ever fails.
    ============================================================ */
@@ -9,7 +9,7 @@
 const u = (id: string, w = 1600) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
 
-/** Origin of every image above — preconnect to it in <head> so the LCP photo
+/** Origin of every image above, preconnect to it in <head> so the LCP photo
  *  doesn't pay for DNS + TLS before its first byte. */
 export const IMG_ORIGIN = "https://images.unsplash.com";
 
@@ -20,7 +20,7 @@ export function srcSetFor(src: string, widths: number[] = [640, 960, 1280, 1600,
   return widths.map((w) => `${src.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`).join(", ");
 }
 
-/** Smallest candidate — the URL to preload / use as the `src` attribute base. */
+/** Smallest candidate, the URL to preload / use as the `src` attribute base. */
 export const atWidth = (src: string, w: number) => src.replace(/([?&])w=\d+/, `$1w=${w}`);
 
 export const IMG = {

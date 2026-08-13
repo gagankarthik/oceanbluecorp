@@ -22,7 +22,7 @@
 
 ## About us
 
-**Ocean Blue Corporation** (legally *Ocean Blue Solutions, Inc.*) is a certified minority- and women-owned enterprise technology partner, founded in **2013** and headquartered in **Powell, Ohio**. We help Fortune 500 enterprises and state government agencies across North America hire the right people, build and modernize their technology, and keep it all running — under a single accountable standard.
+**Ocean Blue Corporation** (legally *Ocean Blue Solutions, Inc.*) is a certified minority- and women-owned enterprise technology partner, founded in **2013** and headquartered in **Powell, Ohio**. We help Fortune 500 enterprises and state government agencies across North America hire the right people, build and modernize their technology, and keep it all running, under a single accountable standard.
 
 We are deliberately built to be **one partner you can hold to the outcome**, not a stack of vendors pointing fingers. From the first conversation to the quarterly review, one team owns the result.
 
@@ -34,19 +34,19 @@ Four connected practices, one accountable team:
 
 ### 🧑‍💻 IT Staffing & Talent
 
-Pre-vetted specialists — cloud, data, security, ERP, Salesforce, and AI engineers — who join your team and deliver from the first sprint. Flexible or permanent hiring, or a fully managed team. Shortlists in 48 hours.
+Pre-vetted specialists, cloud, data, security, ERP, Salesforce, and AI engineers, who join your team and deliver from the first sprint. Flexible or permanent hiring, or a fully managed team. Shortlists in 48 hours.
 
 ### 🛠️ Engineering Talent & Services
 
-Mechanical, electrical, structural, aerospace, controls, and manufacturing engineers for the industries that build things — automotive, aerospace & defense, power & utilities, manufacturing, and communications.
+Mechanical, electrical, structural, aerospace, controls, and manufacturing engineers for the industries that build things, automotive, aerospace & defense, power & utilities, manufacturing, and communications.
 
 ### ☁️ Enterprise Technology Solutions
 
-Cloud engineering (AWS · Azure · GCP), cybersecurity, ERP (SAP · Oracle · Dynamics), Salesforce, AI & data intelligence, and digital transformation — engineered and shipped without stopping the business.
+Cloud engineering (AWS · Azure · GCP), cybersecurity, ERP (SAP · Oracle · Dynamics), Salesforce, AI & data intelligence, and digital transformation, engineered and shipped without stopping the business.
 
 ### 🎧 Managed Services
 
-24/7 monitoring, helpdesk, application and infrastructure support, and continuous optimization — one team, one SLA, one number to call.
+24/7 monitoring, helpdesk, application and infrastructure support, and continuous optimization, one team, one SLA, one number to call.
 
 ---
 
@@ -58,11 +58,11 @@ Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Commu
 
 ## Why Ocean Blue
 
-- **One accountable partner** — a single point of ownership across talent, engineering, technology, and operations.
-- **A decade of delivery** — serving enterprises and government agencies since 2013, held to one standard.
-- **Fast, curated shortlists** — a pre-vetted network, matched to the role, typically within 48 hours.
-- **Supplier-diversity value** — a certified minority- and women-owned business (MBE / WBE, NMSDC).
-- **Global delivery** — teams across the **United States · India · United Kingdom**.
+- **One accountable partner**, a single point of ownership across talent, engineering, technology, and operations.
+- **A decade of delivery**, serving enterprises and government agencies since 2013, held to one standard.
+- **Fast, curated shortlists**, a pre-vetted network, matched to the role, typically within 48 hours.
+- **Supplier-diversity value**, a certified minority- and women-owned business (MBE / WBE, NMSDC).
+- **Global delivery**, teams across the **United States · India · United Kingdom**.
 
 ---
 
@@ -95,7 +95,7 @@ Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Commu
 ---
 
 <div align="center">
-<sub>© Ocean Blue Corporation · Ocean Blue Solutions, Inc. — Powell, Ohio, USA</sub>
+<sub>© Ocean Blue Corporation · Ocean Blue Solutions, Inc.. Powell, Ohio, USA</sub>
 </div>
 
 <!--

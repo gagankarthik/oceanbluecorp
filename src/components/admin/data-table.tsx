@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 //
 // Whole pixels only. This was size-[17px] with a border-[1.5px]: an odd box
 // with a fractional border means neither the outer edges nor the stroke land on
-// device pixels, so the browser rounds each of the four sides independently —
+// device pixels, so the browser rounds each of the four sides independently,
 // at the 125%/150% display scaling Windows ships by default that lands as 1px
 // on some sides and 2px on others, and the "square" visibly isn't one. 16px at
 // a 1px border is the same geometry every other checkbox in the app uses, and
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 // harder to click for being a pixel smaller.
 const checkboxCobalt =
   // A 40px hit area over the 16px box: a 40px-tall row has the room, and
-  // selecting records is the most repeated action in the grid (Fitts's Law —
+  // selecting records is the most repeated action in the grid (Fitts's Law,
   // see the .adm-hit note in globals.css). The component's own default is 24px.
   "before:size-10 " +
   "size-4 rounded-[4px] border border-[var(--adm-line)] shadow-none transition-colors " +
@@ -33,7 +33,7 @@ const checkboxCobalt =
   "data-[state=indeterminate]:border-[var(--adm-accent)] data-[state=indeterminate]:bg-[var(--adm-accent)] data-[state=indeterminate]:text-white";
 
 /**
- * Generic admin data table — sorting, selection, density, column visibility,
+ * Generic admin data table, sorting, selection, density, column visibility,
  * a pinned identity column and hover-revealed row actions.
  *
  * Column conventions (see DESIGN_SYSTEM.md):
@@ -53,7 +53,7 @@ export interface DataTableColumn<T> {
   hideBelow?: "sm" | "md" | "lg" | "xl";
   /** Plain-text name for the column-visibility menu. Falls back to `header`. */
   label?: string;
-  /** Excluded from the column-visibility menu — identity and action columns. */
+  /** Excluded from the column-visibility menu, identity and action columns. */
   locked?: boolean;
   /** Fixed width, so one column cannot eat the table. */
   width?: string;
@@ -65,7 +65,7 @@ interface DataTableProps<T> {
   columns: DataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
-  /** Row click target — makes the whole row interactive. */
+  /** Row click target, makes the whole row interactive. */
   onRowClick?: (row: T) => void;
   /** Enable the selection column by passing both props. */
   selected?: string[];
@@ -82,7 +82,7 @@ interface DataTableProps<T> {
   onPageSizeChange?: (n: number) => void;
   /**
    * Plural record name for the footer tally ("… of 161 applications").
-   * Naming the records beats a bare figure — "161" alone makes you look back
+   * Naming the records beats a bare figure , "161" alone makes you look back
    * at the page heading to remember what was counted.
    */
   noun?: string;
@@ -177,7 +177,7 @@ export function DataTable<T>({
   });
   const pageSize = controlled ? initialPageSize : pageSizeState;
 
-  // A controlled page-size change arrives via props — snap back to page one.
+  // A controlled page-size change arrives via props, snap back to page one.
   React.useEffect(() => { setPage(0); }, [pageSize]);
 
   const setPageSize = (n: number) => {
@@ -422,7 +422,7 @@ export function DataTable<T>({
       {/* Single status bar: what you are looking at, how much of it fits, and
           how to move. This replaces the separate WorkspaceFooter, which stated
           the record count a second time directly underneath. It renders even
-          on one page — the rows-per-page control is how you get OFF one page. */}
+          on one page, the rows-per-page control is how you get OFF one page. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5 lg:px-5">
         <p className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
           {sorted.length === 0 ? (

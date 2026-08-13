@@ -2,14 +2,31 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion } from "framer-motion";
-import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
-import WaveField from "./motion/WaveField";
+import { Reveal } from "./motion/Primitives";
+import { ArcSweep, IllYears, IllBuildings, IllLoop, IllGlobe } from "./motifs/Motifs";
 
-type Stat = { value: number; suffix?: string; label: string; sub: string };
+/* ============================================================
+   Proof, customer.io's "Enterprise ready" band.
 
-// Parse a CMS value like "50+", "98%", "1,200" into { value, suffix } for the
-// count-up. Falls back to the provided defaults when empty/non-numeric.
-function parseStatValue(raw: string | undefined, fallbackValue: number, fallbackSuffix: string): { value: number; suffix: string } {
+   Theirs: a dark section, a centred eyebrow and heading, then a
+   single bordered grid whose cells are divided by hairlines rather
+   than floating as separate cards. One frame, several panes. It
+   reads as a specification sheet, which is the right register for
+   the part of a page that answers "can you actually be trusted
+   with this?".
+
+   The accreditations used to live in this band too. They now sit in
+   a strip directly above the footer, which is where the reference
+   site parks its trust marks, they are the last thing you pass on
+   the way out, not a competitor to the figures.
+
+   The count-up runs once the panel is in view, never for
+   prefers-reduced-motion.
+   ============================================================ */
+
+type Stat = { value: number; suffix: string; label: string; sub: string; Motif: (p: { className?: string }) => React.ReactElement };
+
+function parseStatValue(raw: string | undefined, fallbackValue: number, fallbackSuffix: string) {
   if (!raw) return { value: fallbackValue, suffix: fallbackSuffix };
   const m = raw.trim().match(/^(\d[\d,]*)(.*)$/);
   if (!m) return { value: fallbackValue, suffix: fallbackSuffix };
@@ -24,7 +41,7 @@ function Counter({ target, run }: { target: number; run: boolean }) {
       setN(target);
       return;
     }
-    const dur = 1500;
+    const dur = 1400;
     const t0 = performance.now();
     let raf = 0;
     const tick = (now: number) => {
@@ -38,67 +55,63 @@ function Counter({ target, run }: { target: number; run: boolean }) {
   return <>{n}</>;
 }
 
+
 export default function ImpactStats({ content = {} }: { content?: Record<string, string> }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   const stats: Stat[] = [
-    { ...parseStatValue(content.statYears, 13, "+"),     label: "Years delivering",  sub: "Since 2013, without a missed SLA" },
-    { ...parseStatValue(content.statClients, 50, "+"),   label: "Enterprise clients", sub: "Across North America" },
-    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention",  sub: "Year over year" },
-    { ...parseStatValue(content.statOffices, 4, ""),     label: "Global offices",    sub: "US · India · UK delivery centers" },
+    // Each drawing depicts its own figure, growth rings for years, towers
+    // for clients, a closing loop for retention, a globe for where the work
+    // physically happens. None of them is interchangeable with another.
+    { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA", Motif: IllYears },
+    { ...parseStatValue(content.statClients, 50, "+"), label: "Enterprise clients", sub: "Across North America", Motif: IllBuildings },
+    { ...parseStatValue(content.statRetention, 98, "%"), label: "Client retention", sub: "Year over year", Motif: IllLoop },
+    { ...parseStatValue(content.statOffices, 4, ""), label: "Delivery centres", sub: "US, India and UK", Motif: IllGlobe },
   ];
 
   return (
-    <section className="relative w-full overflow-hidden bg-[var(--hz-band)] py-20 sm:py-28 lg:py-32">
-      {/* Replaced a vendored honeycomb pattern. A hexagon grid had no
-          relationship to this brand or to any other section — it was
-          decoration from a catalogue. The wave is the logo's own mark, it is
-          the same motif everywhere it appears, and it answers to scroll.
-          Anchored to the foot of the band so the stat tiles sit above the
-          water rather than in it. */}
-      {/* Height cut from 62% and the fade pulled down: at the old extent the
-          wave crossed the paragraph at mid-x-height and read as a strikethrough
-          through "state government agencies across North America". It belongs
-          under the content, not through it. */}
-      <WaveField
-        intensity={0.85}
-        className="top-auto bottom-0 z-0 h-[38%] [mask-image:linear-gradient(to_top,#000_0%,#000_25%,transparent_100%)]"
-      />
-
-      <div ref={ref} className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12 2xl:max-w-[96rem]">
-        {/* Heading, left */}
-        <Reveal className="lg:col-span-5">
-          <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-amber)]" />
-          <h2 className="hz-display hz-h2 mt-6 text-[var(--hz-text)] sm:mt-7">
-            {content.statsHeading || "Over a decade of delivery, one accountable team."}
+    <section className="relative w-full overflow-hidden bg-[var(--hz-ink)] py-20 sm:py-24 lg:py-28">
+      {/* The mark's wave, enlarged into the corner of the band. */}
+      <ArcSweep className="pointer-events-none absolute -left-24 bottom-0 h-[420px] w-[420px] text-[var(--hz-aqua)] opacity-[0.10]" />
+      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <span className="hz-eyebrow text-[var(--hz-aqua)]">
+            Enterprise ready
+          </span>
+          <h2 className="hz-display hz-h2 mt-4 text-white">
+            Thirteen years of delivery, and the paperwork to prove it.
           </h2>
-          <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-[var(--hz-text-mute)] sm:mt-6 sm:text-[16px]">
-            {content.statsSubtitle ||
-              "Headquartered in Powell, Ohio. Trusted by enterprises and state government agencies across North America, and held to one standard of delivery."}
-          </p>
         </Reveal>
 
-        {/* Stat tiles, right, a connected 2×2 grid with hairline borders only */}
-        <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-[var(--hz-band-line)] bg-white/70 lg:col-span-7" gap={0.1}>
+        {/* One frame, hairline-divided panes, not four floating cards. The
+            outer ring is the object; the dividers are its internal structure. */}
+        <div
+          ref={ref}
+          className="mt-12 grid overflow-hidden rounded-2xl border border-white/[0.12] sm:mt-14 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {stats.map((s, i) => (
-            <StaggerItem
+            <div
               key={s.label}
-              className={`group p-5 transition-colors duration-300 hover:bg-white sm:p-8 ${
-                i % 2 === 0 ? "border-r border-[var(--hz-band-line)]" : ""
-              } ${i < 2 ? "border-b border-[var(--hz-band-line)]" : ""}`}
+              className={`relative overflow-hidden p-7 sm:p-8 ${i % 2 === 0 ? "sm:border-r sm:border-white/[0.12]" : ""} ${
+                i < 2 ? "sm:border-b sm:border-white/[0.12]" : ""
+              } lg:border-b-0 lg:border-r lg:border-white/[0.12] lg:last:border-r-0`}
             >
-              <p className="hz-display hz-tnum text-[clamp(2rem,6vw,3.25rem)] leading-none text-[var(--hz-text)]">
+              {/* The drawing leads the pane, at full strength. Line in white
+                  at reading weight, accent solid in the logo's light blue, a coloured illustration, not a watermark behind the number. */}
+              <s.Motif className="h-10 w-10 text-white/45 [--motif-accent:var(--hz-aqua)]" />
+              <p className="relative hz-display hz-tnum mt-6 text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
                 <Counter target={s.value} run={inView} />
-                <span className="text-[var(--hz-amber)]">{s.suffix}</span>
+                <span className="text-[var(--hz-aqua)]">{s.suffix}</span>
               </p>
-              <p className="mt-3.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text)] sm:text-[13px]">
+              <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-white">
                 {s.label}
               </p>
-              <p className="mt-1.5 text-[12.5px] leading-snug text-[var(--hz-text-mute)] sm:text-[13px]">{s.sub}</p>
-            </StaggerItem>
+              <p className="mt-1.5 text-[13px] leading-snug text-white/55">{s.sub}</p>
+            </div>
           ))}
-        </Stagger>
+        </div>
+
       </div>
     </section>
   );

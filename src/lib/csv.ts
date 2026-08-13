@@ -4,7 +4,7 @@
  * Seven list pages each had their own copy of "build headers, map rows, wrap
  * every cell in quotes, make a Blob, click an anchor". Every copy quoted with
  * `"${cell}"`, which silently corrupts the file whenever a value contains a
- * double quote (a job title like 6" Pipe Fitter, a note with a quotation) —
+ * double quote (a job title like 6" Pipe Fitter, a note with a quotation),
  * the stray quote ends the field early and the row splits. RFC 4180 escapes an
  * embedded quote by doubling it, which is what `escapeCell` does.
  */

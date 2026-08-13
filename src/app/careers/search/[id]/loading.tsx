@@ -6,7 +6,7 @@ export default function JobDetailLoading() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero band */}
-      <div className="w-full" style={{ background: "#07142b" }}>
+      <div className="w-full bg-[var(--hz-ink)]">
         <div className="mx-auto max-w-7xl px-6 pt-28 pb-14 sm:px-8 sm:pt-32 sm:pb-16">
           <div className="animate-pulse space-y-4">
             <div className="h-3 w-24 rounded bg-white/15" />
@@ -36,7 +36,7 @@ export default function JobDetailLoading() {
 
         {/* Apply card */}
         <div className="lg:col-span-4">
-          <div className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-6 lg:sticky lg:top-28">
+          <div className="animate-pulse rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 lg:sticky lg:top-28">
             <div className="h-4 w-32 rounded bg-slate-200" />
             <div className="mt-5 space-y-3">
               <div className="h-3.5 w-full rounded bg-slate-100" />

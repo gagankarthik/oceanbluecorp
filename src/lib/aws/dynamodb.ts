@@ -106,7 +106,7 @@ const getTables = () => getEnvConfig().tables;
  * LastEvaluatedKey when there is more; every list in this file issued a single
  * ScanCommand and read `result.Items`, so once a table crossed 1MB the extra
  * records simply stopped existing as far as the UI was concerned. Nothing
- * errored — the list just came back short, which is why it looked like
+ * errored, the list just came back short, which is why it looked like
  * individual records had gone missing while their detail pages still loaded
  * (those fetch by key, not by scan).
  *
@@ -114,7 +114,7 @@ const getTables = () => getEnvConfig().tables;
  * skills, projects and certifications on the record, so a few hundred analysed
  * candidates is enough to blow through the page limit.
  *
- * The page cap is a runaway guard, not a product limit — 40MB of records is far
+ * The page cap is a runaway guard, not a product limit, 40MB of records is far
  * past the point where these screens should be paginating server-side.
  */
 async function scanAll<T>(
@@ -173,7 +173,7 @@ async function queryAll<T>(
 // ===========================================
 
 /**
- * Where a candidate came from. Shared by Application and Candidate — the two
+ * Where a candidate came from. Shared by Application and Candidate, the two
  * had drifted apart (Candidate was missing "Career Portal"), so the candidate
  * form could write a value its own type rejected. Mirrors SOURCE_OPTIONS in
  * components/admin/theme.ts, which is what every picker renders.
@@ -194,7 +194,7 @@ export type BenchType = "internal" | "external";
  *
  * Widened from the original six because the pickers had already outgrown it:
  * the Applications filter offered H4 EAD / E3 / L1 and split OPT and CPT apart,
- * none of which this union permitted — the write paths cast around it, so
+ * none of which this union permitted, the write paths cast around it, so
  * invalid values were reaching the table. DynamoDB is schemaless, so widening
  * the type needs no migration.
  *
@@ -242,7 +242,7 @@ export interface Resume {
 
 // ===========================================
 // Resume Analysis (output of the resume-extraction Lambda)
-// Personal information is intentionally NOT stored here — the candidate's own
+// Personal information is intentionally NOT stored here, the candidate's own
 // name/email/phone on the Application are the source of truth and never changed.
 // ===========================================
 
@@ -480,7 +480,7 @@ export interface Application {
    * Which pool a bench record belongs to: "internal" = our own hires sitting
    * on the bench between placements, "external" = market candidates kept warm
    * for future roles. Only meaningful when addToTalentBench is true. Legacy
-   * rows predate the field — readers fall back to status === "hired" ?
+   * rows predate the field, readers fall back to status === "hired" ?
    * "internal" : "external" (same rule the backfill script applies).
    */
   benchType?: BenchType;
@@ -492,7 +492,7 @@ export interface Application {
   resumeAnalysisError?: string;       // last failure message, if any
   /**
    * Whether the last failure is worth trying again on its own (a service
-   * outage, a timeout, a rejected token — things that get fixed elsewhere) as
+   * outage, a timeout, a rejected token, things that get fixed elsewhere) as
    * opposed to a dead end (no resume attached, file gone from storage, a
    * document nothing can be read from). Drives the automatic retry; absent on
    * records that failed before the flag existed, which are retried once.
@@ -500,7 +500,7 @@ export interface Application {
   resumeAnalysisRetryable?: boolean;
   resumeAnalysisAttempts?: number;    // failed attempts since the last success
   /**
-   * Lowercased searchable text — skills, employers, role titles, technologies —
+   * Lowercased searchable text, skills, employers, role titles, technologies,
    * built by the API for LIST responses only, and never stored.
    *
    * List reads drop `resumeAnalysis` (2.43MB of a 2.76MB payload across 174
@@ -554,7 +554,7 @@ export interface Job {
   postedByRole?: string; // Role of poster (admin/hr)
   applicationsCount?: number;
 
-  // Cached "best candidates" — the matching engine's ranking of the resume bank
+  // Cached "best candidates", the matching engine's ranking of the resume bank
   // for this job. Recomputed on demand; stored so the panel loads instantly and
   // resumes aren't re-vectorized per view.
   candidateMatches?: JobCandidateMatch[];
@@ -597,7 +597,7 @@ export interface Job {
   notificationSentAt?: string;
 }
 
-// Public-safe projection of a Job — strips internal fields (pay/bill rates,
+// Public-safe projection of a Job, strips internal fields (pay/bill rates,
 // client & vendor info, recruiter assignments, emails, creator) before a job is
 // served to anonymous visitors on the careers site.
 export type PublicJob = Pick<
@@ -1017,7 +1017,7 @@ export async function updateApplicationStatus(
  *
  * `remove` deletes attributes outright, which setting them cannot do: an
  * undefined value is skipped by the loop below, and an empty string leaves a
- * present-but-blank attribute behind. Replacing a resume needs the real thing —
+ * present-but-blank attribute behind. Replacing a resume needs the real thing,
  * the previous resume's parsed analysis has to disappear, not linger as stale
  * detail attributed to a document that is no longer on file.
  */
@@ -1482,7 +1482,7 @@ export async function getAllNotifications(limit?: number): Promise<{ success: bo
   }
 
   try {
-    // Note: `limit` caps rows read per page, NOT the number returned — a Scan
+    // Note: `limit` caps rows read per page, NOT the number returned, a Scan
     // Limit is applied before sorting, so it cannot mean "the newest N".
     // Sorting happens below, over everything, then the caller slices.
     const notifications = await scanAll<Notification>(dbCheck.client!, {
@@ -1891,8 +1891,8 @@ export async function deleteVendor(id: string): Promise<{ success: boolean; erro
 // ===========================================
 // The resume bank stores raw files in S3 with no per-file record. When a bank
 // file is parsed for indexing, the extracted contact details (name, email,
-// phone) are kept here — keyed by the S3 file key, in the otherwise-idle
-// candidates table — so Lead Sourcing / Best candidates can show who a match
+// phone) are kept here, keyed by the S3 file key, in the otherwise-idle
+// candidates table, so Lead Sourcing / Best candidates can show who a match
 // actually is instead of "Unnamed candidate".
 
 export interface BankResumeContact {
@@ -2179,7 +2179,7 @@ export async function deleteCandidateApplication(id: string): Promise<{ success:
 // ===========================================
 
 export interface ContentBlock {
-  id: string;           // PK — e.g. "homepage", "about", "services", "contact"
+  id: string;           // PK, e.g. "homepage", "about", "services", "contact"
   section: string;      // Same as id, kept for clarity
   fields: Record<string, string>;  // Arbitrary key → value map
   updatedAt: string;
@@ -2273,7 +2273,7 @@ export async function getApiKeyByValue(key: string): Promise<{ success: boolean;
   try {
     // Paginated deliberately: a FilterExpression is applied AFTER each 1MB page
     // is read, so an unpaginated scan can return an empty page while the
-    // matching key sits on the next one — which would reject a valid API key
+    // matching key sits on the next one, which would reject a valid API key
     // intermittently, and more often as the table grows.
     const items = await scanAll<ApiKey>(db.client, {
       TableName: getTables().apiKeys,
@@ -2339,12 +2339,12 @@ export async function deleteApiKey(id: string): Promise<{ success: boolean; erro
 }
 
 /* ============================================================
-   RECRUITING PIPELINE — submissions, interviews, placements
+   RECRUITING PIPELINE, submissions, interviews, placements
 
    Everything after "candidate" used to be a status label on the
    application: `status: "submitted"` could not say WHO the person was
    submitted to, at what rate, or when, so none of the questions a desk
-   actually runs on could be answered — submittals this week,
+   actually runs on could be answered, submittals this week,
    submission-to-interview ratio, which client is sitting on a candidate,
    time-to-fill, margin on a placement.
 
@@ -2362,7 +2362,7 @@ export type PipelineKind = "submission" | "interview" | "placement";
 export type RateUnit = "hourly" | "daily" | "weekly" | "monthly" | "annual";
 
 /** Shared by all three kinds. `occurredAt` is the date the record is ABOUT
- *  (sent / scheduled / start date) rather than when it was typed in — it is the
+ *  (sent / scheduled / start date) rather than when it was typed in, it is the
  *  sort key on both indexes, so it is what every list and report orders by. */
 export interface PipelineBase {
   id: string;                  // PK (UUID)
@@ -2400,13 +2400,13 @@ export interface Submission extends PipelineBase {
   clientName?: string;
   vendorId?: string;
   vendorName?: string;
-  /** Person on the other side — the one to chase for a response. */
+  /** Person on the other side, the one to chase for a response. */
   submittedTo?: string;
   rate?: number;
   rateUnit?: RateUnit;
   currency?: string;
   status: SubmissionStatus;
-  /** When the client came back, whatever the answer — drives response-time reporting. */
+  /** When the client came back, whatever the answer, drives response-time reporting. */
   respondedAt?: string;
   rejectionReason?: string;
 }
@@ -2652,7 +2652,7 @@ export async function deletePipelineRecord(
 
 /**
  * Atomically count one request against a rate-limit bucket, returning the new
- * count — or null when the counter is unavailable, which callers treat as
+ * count, or null when the counter is unavailable, which callers treat as
  * "allow" (see lib/rate-limit.ts on failing open).
  *
  * `expiresAt` is written as a TTL attribute so buckets tidy themselves up if TTL

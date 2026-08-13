@@ -125,7 +125,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
 }
 
 /**
- * Reference table. Deliberately the local, static form — these rows are prose,
+ * Reference table. Deliberately the local, static form, these rows are prose,
  * not records, so they need no sorting, selection, or pagination. Chrome comes
  * from the shared `.adm-grid` rules so it reads like every other admin grid.
  */
@@ -212,7 +212,7 @@ function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PA
   );
 }
 
-/** Permission-matrix marks — glyph first, colour second. */
+/** Permission-matrix marks, glyph first, colour second. */
 function Yes() {
   return (
     <span className="inline-flex items-center text-[var(--adm-success)]">
@@ -324,7 +324,7 @@ export default function AdminDocsPage() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[232px_minmax(0,1fr)]">
 
-        {/* ── Contents — sticky beside the reference, collapsible on mobile ── */}
+        {/* ── Contents, sticky beside the reference, collapsible on mobile ── */}
         <div className="lg:sticky lg:top-[76px]">
           <AdminCard className="overflow-hidden">
             <button
@@ -788,8 +788,8 @@ export default function AdminDocsPage() {
                   ["Clients / Vendors", <Yes />, <Yes />, <No />, <No />],
                   ["Contacts", <Yes />, <Yes />, <No />, <No />],
                   ["Resume Bank", <Yes />, <Yes />, <Yes />, <No />],
-                  ["Settings — Profile / Security / Notifications", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Settings — System tab", <Yes />, <No />, <No />, <No />],
+                  ["Settings. Profile / Security / Notifications", <Yes />, <Yes />, <Yes />, <Yes />],
+                  ["Settings. System tab", <Yes />, <No />, <No />, <No />],
                   ["User Management", <Yes />, <No />, <No />, <No />],
                   ["CMS Content", <Yes />, <No />, <No />, <No />],
                   ["Developer / API Docs", <Yes />, <No />, <No />, <No />],
@@ -937,7 +937,7 @@ export default function AdminDocsPage() {
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="POST" />, "/api/resume/upload", "Upload a resume: server-side to S3 + DynamoDB record"],
-                  [<HttpBadge key="2" method="POST" />, "/api/resume/parse", "Read a resume and return its structured content — stores nothing (backs the new-applicant autofill)"],
+                  [<HttpBadge key="2" method="POST" />, "/api/resume/parse", "Read a resume and return its structured content, stores nothing (backs the new-applicant autofill)"],
                   [<HttpBadge key="3" method="GET" />, "/api/resume/[id]", "Get presigned download URL (1h expiry)"],
                   [<HttpBadge key="4" method="DELETE" />, "/api/resume/[id]", "Delete resume from S3 + DynamoDB"],
                   [<HttpBadge key="5" method="GET" />, "/api/resume-bank", "List all resume bank entries"],
@@ -1031,17 +1031,17 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Table", "PK", "GSIs", "Purpose"]}
                 rows={[
-                  ["oceanblue-jobs", "id", "—", "Job postings with all metadata"],
+                  ["oceanblue-jobs", "id", "–", "Job postings with all metadata"],
                   ["oceanblue-applications", "id", "userId-index, jobId-index", "Candidate applications (portal + HR-created)"],
                   ["oceanblue-candidates", "id", "email-index, userId-index", "Talent bench candidate profiles"],
                   ["oceanblue-resumes", "id", "userId-index", "Resume metadata (file key, size, type)"],
-                  ["oceanblue-contacts", "id", "—", "Contact form submissions"],
-                  ["oceanblue-notifications", "id", "—", "In-app notifications (7-day TTL)"],
-                  ["oceanblue-clients", "id", "—", "Client company records"],
-                  ["oceanblue-vendors", "id", "—", "Vendor partner records"],
-                  ["oceanblue-counters", "id", "—", "Auto-increment counters for Posting IDs"],
-                  ["oceanblue-content", "id", "—", "CMS content blocks with version history"],
-                  ["oceanblue-api-keys", "id", "—", "Partner API keys for the Job Feed API (v1)"],
+                  ["oceanblue-contacts", "id", "–", "Contact form submissions"],
+                  ["oceanblue-notifications", "id", "–", "In-app notifications (7-day TTL)"],
+                  ["oceanblue-clients", "id", "–", "Client company records"],
+                  ["oceanblue-vendors", "id", "–", "Vendor partner records"],
+                  ["oceanblue-counters", "id", "–", "Auto-increment counters for Posting IDs"],
+                  ["oceanblue-content", "id", "–", "CMS content blocks with version history"],
+                  ["oceanblue-api-keys", "id", "–", "Partner API keys for the Job Feed API (v1)"],
                 ]}
               />
             </SubSection>

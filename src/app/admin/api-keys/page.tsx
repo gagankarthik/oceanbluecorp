@@ -42,7 +42,7 @@ interface NewKeyData {
   name: string;
 }
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
   return <span className="text-[var(--adm-ink-subtle)]">&mdash;</span>;
 }
@@ -173,7 +173,7 @@ export default function ApiKeysPage() {
         <div className="max-w-[240px]">
           <span className="block truncate font-semibold text-[var(--adm-ink)]">{k.name}</span>
           <span className="mt-0.5 block truncate text-xs text-[var(--adm-ink-subtle)]">
-            {k.description || "—"}
+            {k.description || "–"}
           </span>
         </div>
       ),
@@ -182,7 +182,7 @@ export default function ApiKeysPage() {
       key: "keyPreview",
       header: "Key",
       cell: (k) => (
-        // Only the first 12 characters are ever returned by the API — the
+        // Only the first 12 characters are ever returned by the API, the
         // secret itself is shown once, at creation, and never again.
         <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-[11px] text-[var(--adm-ink-subtle)]">
           {k.keyPreview}

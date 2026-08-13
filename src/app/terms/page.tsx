@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Ocean Blue Corporation",
+  title: "Terms of Service",
   description: "Read the Terms of Service governing your use of Ocean Blue Corporation's website and services.",
 };
 
@@ -29,19 +29,19 @@ function Section({ id, number, title, children }: {
   id: string; number: string; title: string; children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-8 py-8 border-b border-gray-100 last:border-0">
+    <section id={id} className="scroll-mt-24 py-8 border-b border-[var(--hz-paper-line)] last:border-0">
       <div className="flex items-baseline gap-3 mb-4">
         <span className="font-mono text-[11px] font-semibold text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-2 py-0.5 rounded-md">
           {number}
         </span>
         <h2
-          className="text-xl font-bold text-gray-900"
+          className="text-xl font-bold text-[var(--hz-text)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {title}
         </h2>
       </div>
-      <div className="space-y-3 text-[15px] leading-relaxed text-gray-600">
+      <div className="space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
         {children}
       </div>
     </section>
@@ -73,7 +73,7 @@ export default function TermsPage() {
 
       {/* Hero */}
       <div
-        className="border-b border-gray-100"
+        className="border-b border-[var(--hz-paper-line)]"
         style={{
           background: [
             "radial-gradient(ellipse 70% 55% at 10% 20%, rgba(29,78,216,0.07) 0%, transparent 60%)",
@@ -85,25 +85,25 @@ export default function TermsPage() {
         <div className="mx-auto max-w-5xl px-6 pt-24 pb-12 md:pt-28 lg:px-8">
           <Link
             href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-800"
+            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             Back to Home
           </Link>
 
           <h1
-            className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-gray-900 sm:text-[2.6rem] md:text-5xl"
+            className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-[var(--hz-text)] sm:text-[2.6rem] md:text-5xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Terms of Service
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-500">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--hz-text-subtle)]">
             These Terms of Service govern your access to and use of Ocean Blue Corporation&apos;s
             website, platform, and services. Please read them carefully before using our services.
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-gray-400">
-            <span><strong className="text-gray-600">Effective:</strong> {EFFECTIVE}</span>
-            <span><strong className="text-gray-600">Jurisdiction:</strong> State of Ohio, USA</span>
+          <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-[var(--hz-text-subtle)]">
+            <span><strong className="text-[var(--hz-text-mute)]">Effective:</strong> {EFFECTIVE}</span>
+            <span><strong className="text-[var(--hz-text-mute)]">Jurisdiction:</strong> State of Ohio, USA</span>
           </div>
 
           {/* Jump links */}
@@ -112,7 +112,7 @@ export default function TermsPage() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="rounded-full border border-[var(--hz-paper-line)] bg-white px-3 py-1 text-xs font-medium text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 {s.label}
               </a>
@@ -127,8 +127,10 @@ export default function TermsPage() {
 
           {/* Sticky sidebar TOC */}
           <aside className="hidden w-56 flex-shrink-0 xl:block">
-            <div className="sticky top-8 pt-8">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+            {/* Clears the 72px fixed header. At top-8 this list scrolled up and
+                then vanished behind the bar. */}
+            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]">
                 Contents
               </p>
               <nav className="space-y-1">
@@ -136,7 +138,7 @@ export default function TermsPage() {
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-1.5 text-[13px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-[var(--hz-cobalt)]"
+                    className="block rounded-lg px-3 py-1.5 text-[13px] text-[var(--hz-text-subtle)] transition-colors hover:bg-[var(--hz-paper)] hover:text-[var(--hz-cobalt)]"
                   >
                     {s.label}
                   </a>
@@ -219,7 +221,7 @@ export default function TermsPage() {
                 Ocean Blue provides recruitment and staffing services to connect qualified candidates with
                 client companies. The following terms apply specifically to these services:
               </P>
-              <P><strong className="text-gray-800">For Candidates:</strong></P>
+              <P><strong className="text-[var(--hz-text)]">For Candidates:</strong></P>
               <UL items={[
                 "You warrant that all information in your profile and resume is accurate, truthful, and not misleading",
                 "Submitting a profile does not guarantee placement in any position",
@@ -228,7 +230,7 @@ export default function TermsPage() {
                 "You must promptly inform Ocean Blue of any changes to your availability, employment status, or contact details",
                 "Contract placements are governed by a separate Staffing Agreement which will be provided before assignment commencement",
               ]} />
-              <P><strong className="text-gray-800">For Client Companies:</strong></P>
+              <P><strong className="text-[var(--hz-text)]">For Client Companies:</strong></P>
               <UL items={[
                 "You may not directly hire any candidate introduced by Ocean Blue without Ocean Blue's written consent and applicable placement fees",
                 "You agree to accurately describe position requirements and working conditions",
@@ -460,11 +462,11 @@ export default function TermsPage() {
               <P>
                 If you have any questions about these Terms of Service, please contact our legal team:
               </P>
-              <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50/60 p-6">
-                <p className="mb-4 text-sm font-semibold text-gray-800" style={{ fontFamily: "var(--font-display)" }}>
+              <div className="mt-4 rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 p-6">
+                <p className="mb-4 text-sm font-semibold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
                   Ocean Blue Corporation, Legal Department
                 </p>
-                <div className="space-y-2.5 text-sm text-gray-600">
+                <div className="space-y-2.5 text-sm text-[var(--hz-text-mute)]">
                   <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
                     <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" />
                     hr@oceanbluecorp.com
@@ -485,14 +487,14 @@ export default function TermsPage() {
             <div className="mt-8 mb-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/privacy"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Privacy Policy</span>
                 <ExternalLink className="h-4 w-4" />
               </Link>
               <Link
                 href="/contact"
-                className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-5 py-4 text-sm font-semibold text-gray-700 transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
               >
                 <span>Contact Us</span>
                 <ExternalLink className="h-4 w-4" />

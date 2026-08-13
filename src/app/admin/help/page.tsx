@@ -40,7 +40,7 @@ interface TeamMember {
 
 const TEAMS: Team[] = ["Leadership", "People & HR", "Recruiting", "Sales"];
 
-/** Built-in seed — shown until Admin/HR save a directory to the content store. */
+/** Built-in seed, shown until Admin/HR save a directory to the content store. */
 const DEFAULT_TEAM: TeamMember[] = [
   { name: "Sarojini Gude",       designation: "President",                  email: "sgude@oceanbluecorp.com",    phone: "",                   team: "Leadership"  },
   { name: "Ravi OceanBlue",      designation: "Chief Operating Officer",    email: "ravi@oceanbluecorp.com",     phone: "+1 (614) 352-0189",  team: "Leadership"  },
@@ -106,7 +106,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-/** One contact method — the value is the link, the copy button sits beside it. */
+/** One contact method, the value is the link, the copy button sits beside it. */
 function ContactRow({
   icon: Icon,
   href,

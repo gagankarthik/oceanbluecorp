@@ -2,30 +2,13 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import {
-  Mail, Phone, MapPin, Clock, Send, CheckCircle2, Building2, Globe,
-  MessageSquare, Headphones, ArrowRight, type LucideIcon,
-} from "lucide-react";
-import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
-import { Eyebrow, Cta } from "@/components/landing/ui";
-import Photo from "@/components/landing/Photo";
+import { Phone, Send, CheckCircle2 } from "lucide-react";
+import { Reveal } from "@/components/landing/motion/Primitives";
+import { Eyebrow } from "@/components/landing/ui";
+import PageHero from "@/components/landing/PageHero";
+import { SOCIAL_LINKS } from "@/components/layout/social";
+import Locations from "@/components/landing/Locations";
 import { IMG } from "@/components/landing/media";
-
-const contactInfo: {
-  icon: LucideIcon; title: string; description: string; value: string; href: string | null;
-}[] = [
-  { icon: Phone, title: "Call us", description: "Speak with our team", value: "+1 (614) 844-6925", href: "tel:+16148446925" },
-  { icon: Mail, title: "Email us", description: "Usually answered the same business day", value: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
-  { icon: MapPin, title: "Visit us", description: "Headquarters", value: "9775 Fairway Drive, Suite C, Powell, OH 43065", href: "#locations" },
-  { icon: Clock, title: "Business hours", description: "Monday – Friday", value: "8:00 AM – 5:00 PM EST", href: null },
-];
-
-const offices = [
-  { city: "Ohio", country: "United States", flag: "🇺🇸", address: "9775 Fairway Drive, Suite #C, Powell, OH 43065", phone: "+1 (614) 844-6925" },
-  { city: "Hyderabad", country: "India", flag: "🇮🇳", address: "13th Floor, Building 9, Raheja Mindspace, Madhapur, Hyderabad 560081", phone: "+91 814 312 4665" },
-  { city: "Vizianagaram", country: "India", flag: "🇮🇳", address: "Plot No. 87, CMR Green Field Layout, Vizianagaram, Andhra Pradesh 535004", phone: "+91 814 294 9111" },
-  { city: "London", country: "United Kingdom", flag: "🇬🇧", address: "910 London Road, Thornton Heath, CR7 7PE, UK", phone: "hr@oceanbluecorp.com" },
-];
 
 const inquiryTypes = [
   "General Inquiry", "IT Staffing", "Cloud Services", "Cybersecurity",
@@ -34,15 +17,8 @@ const inquiryTypes = [
 
 /* Rewritten off vague claims ("Round-the-clock assistance from certified
    experts", "Years of delivery across regulated industries") and one promise
-   we should not be making in writing — "We reply within 24 hours, guaranteed."
+   we should not be making in writing , "We reply within 24 hours, guaranteed."
    Each line now states something specific and checkable. */
-const whyPartner: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: MessageSquare, title: "A named contact", description: "You get a person who knows your account, not a shared inbox and a ticket number." },
-  { icon: Globe, title: "Four offices, three countries", description: "Powell, Ohio; Hyderabad and Vizianagaram, India; and London." },
-  { icon: Building2, title: "Regulated industries", description: "Healthcare, state government, and financial services work under HIPAA, SOC 2, and NIST." },
-  { icon: Headphones, title: "Support that stays", description: "The team that builds it is the team that runs it, on one SLA." },
-];
-
 const inputClass =
   "w-full rounded-lg border border-black/[0.12] bg-white px-4 py-3 text-[14px] text-[var(--hz-text)] transition-all placeholder:text-[var(--hz-text-subtle)] focus:border-[var(--hz-cobalt)] focus:outline-none focus:ring-4 focus:ring-[var(--hz-cobalt-100)]";
 const labelClass = "mb-2 block text-[13px] font-medium text-[var(--hz-text)]";
@@ -89,64 +65,20 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
   };
 
   // CMS overrides for the contact-method cards (blank → built-in default)
-  const methods = contactInfo.map((m) => {
-    if (m.title === "Call us" && content.contactPhone)
-      return { ...m, value: content.contactPhone, href: `tel:${content.contactPhone.replace(/[^\d+]/g, "")}` };
-    if (m.title === "Email us" && content.contactEmail)
-      return { ...m, value: content.contactEmail, href: `mailto:${content.contactEmail}` };
-    if (m.title === "Visit us" && content.contactAddress)
-      return { ...m, value: content.contactAddress };
-    if (m.title === "Business hours" && content.contactHours)
-      return { ...m, value: content.contactHours };
-    return m;
-  });
-
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[58vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.contactHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-28 pt-32 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Contact us</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              {content.contactTitle || "Let's start a conversation."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.contactSubtitle ||
-                "A question about our services, a custom solution, or a partnership, our team is ready to help."}
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Contact info cards (overlap hero) */}
-      <section className="relative z-20 -mt-20 px-6 sm:px-8">
-        <Stagger className="mx-auto grid max-w-7xl gap-5 sm:grid-cols-2 lg:grid-cols-4" gap={0.07}>
-          {methods.map((info) => {
-            const Inner = (
-              <>
-                <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-                  <info.icon className="h-6 w-6" strokeWidth={1.5} />
-                </div>
-                <h3 className="hz-display mt-5 text-[1.15rem] text-[var(--hz-text)]">{info.title}</h3>
-                <p className="mt-1 text-[13px] text-[var(--hz-text-subtle)]">{info.description}</p>
-                <p className="mt-2 text-[13.5px] font-medium" style={{ color: info.href ? "var(--hz-cobalt)" : "var(--hz-text)" }}>{info.value}</p>
-              </>
-            );
-            const cls = "hz-card block h-full p-6";
-            return (
-              <StaggerItem key={info.title} className="h-full">
-                {info.href ? <a href={info.href} className={cls}>{Inner}</a> : <div className={cls}>{Inner}</div>}
-              </StaggerItem>
-            );
-          })}
-        </Stagger>
-      </section>
+      <PageHero
+        eyebrow="Contact us"
+        title={content.contactTitle || "Let's start a conversation."}
+        subtitle={
+          content.contactSubtitle ||
+          "A question about our services, a custom solution, or a partnership, our team is ready to help."
+        }
+      />
 
       {/* Form + side */}
-      <section className="px-6 py-24 sm:px-8 sm:py-28">
+      <section id="contact-form" className="scroll-mt-24 px-6 pb-24 pt-16 sm:px-8 sm:pb-28 sm:pt-20">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
           {/* Form */}
           <div className="rounded-3xl border border-black/[0.08] bg-white p-6 shadow-[var(--hz-shadow-lg)] sm:p-10">
@@ -245,87 +177,68 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
             )}
           </div>
 
-          {/* Side */}
+          {/* Side. Was four "why partner with us" cards, each in a tinted
+              icon chip with a hover lift, plus a third repeat of the phone
+              number. That argument belongs on the landing page, the chip and
+              the lift are patterns this site removed everywhere else, and by
+              then the page had shown the phone three times. What a person
+              needs beside a form is the way to skip it. */}
           <div className="lg:pt-2">
-            <Eyebrow>Why partner with us</Eyebrow>
-            <h2 className="hz-display mt-5 text-[1.8rem] text-[var(--hz-text)] sm:text-[2.1rem]">Built for the long term.</h2>
-            <p className="mt-3 text-[15px] text-[var(--hz-text-mute)]">
-              Join the enterprises that trust Ocean Blue for IT staffing, solutions, and managed services.
+            <Eyebrow>Rather not fill in a form?</Eyebrow>
+            <h2 className="hz-display mt-5 text-[1.6rem] text-[var(--hz-text)] sm:text-[1.9rem]">
+              Reach a person directly.
+            </h2>
+            <p className="mt-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
+              No switchboard and no ticket number. Whoever picks up can put you
+              through to the people who would actually do the work.
             </p>
 
-            <Stagger className="mt-8 space-y-3" gap={0.09}>
-              {whyPartner.map((item) => (
-                <StaggerItem key={item.title}>
-                  <div className="hz-card group flex items-start gap-4 p-5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5">
-                    <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110">
-                      <item.icon className="h-5 w-5" strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <h4 className="text-[14.5px] font-semibold text-[var(--hz-text)]">{item.title}</h4>
-                      <p className="mt-0.5 text-[13.5px] text-[var(--hz-text-mute)]">{item.description}</p>
-                    </div>
-                  </div>
-                </StaggerItem>
+            <dl className="mt-8 divide-y divide-[var(--hz-paper-line)] border-y border-[var(--hz-paper-line)]">
+              {[
+                { k: "Call", v: "+1 (614) 844-6925", href: "tel:+16148446925" },
+                { k: "Email", v: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
+                { k: "Hours", v: "Monday to Friday, 8:00 AM to 5:00 PM EST", href: null },
+                { k: "Head office", v: "Powell, Ohio", href: "#locations" },
+              ].map((row) => (
+                <div key={row.k} className="flex items-baseline justify-between gap-6 py-3.5">
+                  <dt className="text-[13px] uppercase tracking-[0.1em] text-[var(--hz-text-subtle)]">{row.k}</dt>
+                  <dd className="text-right text-[14.5px] font-medium text-[var(--hz-text)]">
+                    {row.href ? (
+                      <a href={row.href} className="text-[var(--hz-cobalt)] transition-opacity hover:opacity-80">{row.v}</a>
+                    ) : (
+                      row.v
+                    )}
+                  </dd>
+                </div>
               ))}
-            </Stagger>
+            </dl>
 
-            <div className="mt-6 rounded-2xl border border-black/[0.08] bg-[var(--hz-surface-2)] p-6">
-              <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Prefer to talk now?</p>
-              <a href="tel:+16148446925" className="mt-3 inline-flex items-center gap-2 text-[16px] font-semibold text-[var(--hz-cobalt)] hover:underline">
-                <Phone className="h-4 w-4" strokeWidth={1.75} /> +1 (614) 844-6925
-              </a>
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <span className="text-[13.5px] text-[var(--hz-text-mute)]">Or message us on</span>
+              {SOCIAL_LINKS.map((sl) => (
+                <a
+                  key={sl.name}
+                  href={sl.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={sl.name}
+                  className="text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-cobalt)]"
+                >
+                  <sl.icon className="h-[18px] w-[18px]" />
+                </a>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Offices */}
-      <section id="locations" className="border-t border-black/[0.06] bg-[var(--hz-surface-2)] px-6 py-24 sm:px-8 sm:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>Our offices</Eyebrow>
-            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">Global presence, local expertise.</h2>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              With offices across the US, India, and the UK, we&apos;re always close to our clients.
-            </p>
-          </Reveal>
-
-          <Stagger className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" gap={0.07}>
-            {offices.map((office) => (
-              <StaggerItem key={office.city} className="h-full">
-                <div className="hz-card h-full p-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{office.flag}</span>
-                    <div>
-                      <h3 className="hz-display text-[1.15rem] text-[var(--hz-text)]">{office.city}</h3>
-                      <p className="text-[12px] text-[var(--hz-text-subtle)]">{office.country}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2.5 border-t border-black/[0.07] pt-4 text-[13.5px]">
-                    <p className="flex items-start gap-2 text-[var(--hz-text-mute)]">
-                      <MapPin className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                      <span className="min-w-0 break-words">{office.address}</span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                      <a href={office.phone.includes("@") ? `mailto:${office.phone}` : `tel:${office.phone.replace(/\s/g, "")}`} className="font-medium text-[var(--hz-cobalt)] hover:underline">
-                        {office.phone}
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-black/[0.08] bg-white p-6 sm:flex-row sm:p-8">
-            <p className="text-center text-[15px] text-[var(--hz-text-mute)] sm:text-left">
-              Ready to discuss your project? Our team usually replies within a day.
-            </p>
-            <Cta href="mailto:hr@oceanbluecorp.com" variant="primary" icon={ArrowRight}>Email the team</Cta>
-          </div>
-        </div>
-      </section>
+      {/* The office list, with a map. It replaces a four-card grid that said
+          the same thing without showing the shape of it: four pins across three
+          countries reads as coverage at a glance, which a list of addresses
+          does not. The addresses are still text underneath, so nothing depends
+          on the picture. */}
+      <Locations />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { WAVE_WIDTH, wavePath } from "@/lib/motion";
 import { readScroll } from "@/lib/scroll-signal";
 
 /* ============================================================
-   WaveField — the site's one background motif.
+   WaveField, the site's one background motif.
 
    Replaces three drop-in backgrounds from component
    marketplaces (a honeycomb, a synthwave grid, a WebGL ocean)
@@ -20,7 +20,7 @@ import { readScroll } from "@/lib/scroll-signal";
    scroll velocity: still when the page is still, swelling as
    you scroll, settling back as you stop. That is the whole
    trick behind "the site feels better when you keep scrolling"
-   — the background acknowledges the input rather than looping
+  , the background acknowledges the input rather than looping
    past it indifferently.
 
    ── Why it is cheap ─────────────────────────────────────────
@@ -34,7 +34,7 @@ import { readScroll } from "@/lib/scroll-signal";
       rather than React state, so a frame costs two style writes
       per line and no render.
    3. It stops completely when off-screen, and never starts
-      under prefers-reduced-motion — where it renders as a
+      under prefers-reduced-motion, where it renders as a
       still, which is a perfectly good background.
    ============================================================ */
 
@@ -44,7 +44,7 @@ const VIEW_H = 240;
  *  deliberately non-integer multiples of each other so the stack never lands
  *  back in its starting arrangement and the loop stays unreadable. */
 /* Speeds are roughly a third of the first pass, which read as a current rather
-   than a swell. At rest the field should be almost subliminal — you notice it
+   than a swell. At rest the field should be almost subliminal, you notice it
    has moved, not that it is moving. */
 const LINES = [
   { midY: 120, amp: 30, phase: 0, speed: 0.0065, opacity: 0.5, width: 1.6 },
@@ -55,7 +55,7 @@ const LINES = [
 
 const PATHS = LINES.map((l) => wavePath(l.midY, l.amp, l.phase));
 
-/** Half the drawn width — translating by exactly this lands on an identical
+/** Half the drawn width, translating by exactly this lands on an identical
  *  phase, so the wrap is invisible. */
 const LOOP = WAVE_WIDTH / 2;
 
@@ -68,7 +68,7 @@ const SWELL = 0.45;
 /** Approach rate toward the target amplitude, per frame. Deliberately low so
  *  the swell lags the scroll and, more importantly, so it takes about a second
  *  to settle afterwards. Water has inertia; an instant response reads as a
- *  slider being dragged. Lowered further for calm — the lag IS the calm. */
+ *  slider being dragged. Lowered further for calm, the lag IS the calm. */
 const EASING = 0.03;
 
 /** Extra travel speed at full scroll intensity, as a multiplier. Was 2.2, which

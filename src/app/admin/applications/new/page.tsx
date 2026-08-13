@@ -82,7 +82,7 @@ function NewApplicationInner() {
   const [resumeUploading, setResumeUploading] = useState(false);
 
   // How this record is being created. The form stays hidden until the recruiter
-  // chooses, because reading the resume first fills most of it in — offering the
+  // chooses, because reading the resume first fills most of it in, offering the
   // empty form straight away buries that and invites re-typing what the document
   // already says.
   const [mode, setMode] = useState<"choose" | "reading" | "form">("choose");
@@ -90,15 +90,15 @@ function NewApplicationInner() {
   // Kept apart from resumeError: that one belongs to the file itself (wrong type,
   // too big, upload failed) and shows in the Documents card. A failed READ is
   // about the form the recruiter is looking at, and has to be visible from the
-  // top of the page — buried at the bottom it reads as nothing having happened.
+  // top of the page, buried at the bottom it reads as nothing having happened.
   const [parseError, setParseError] = useState<string | null>(null);
-  // Which file the current values came from, and what it filled — shown so the
+  // Which file the current values came from, and what it filled, shown so the
   // recruiter knows exactly what to double-check before saving.
   const [prefillFrom, setPrefillFrom]     = useState<string | null>(null);
   const [prefillFields, setPrefillFields] = useState<string[]>([]);
   // The extraction behind that prefill, sent with the new record so the server
   // stores it instead of putting the same document through the 30–90s pipeline a
-  // second time. Kept opaque here — this screen only reads it via the prefill.
+  // second time. Kept opaque here, this screen only reads it via the prefill.
   const [parsedAnalysis, setParsedAnalysis] = useState<unknown>(null);
   /**
    * WHICH file that analysis describes, by object identity rather than by name.
@@ -152,7 +152,7 @@ function NewApplicationInner() {
 
   /**
    * Fill blanks only, and merge skills. A field the recruiter already typed wins
-   * over the extractor — they are looking at the person's application, the
+   * over the extractor, they are looking at the person's application, the
    * parser is guessing from a document.
    */
   const applyPrefill = (p: ResumePrefill) => {
@@ -170,7 +170,7 @@ function NewApplicationInner() {
   };
 
   /**
-   * Read a resume and fill the form from it. Nothing is stored yet — the file is
+   * Read a resume and fill the form from it. Nothing is stored yet, the file is
    * attached on save like any other, so a failed read never blocks the record:
    * the recruiter just types it in.
    */
@@ -201,7 +201,7 @@ function NewApplicationInner() {
         setPrefillFields([]);
         setParsedAnalysis(null);
         parsedFile.current = null;
-        setParseError("Nothing usable could be read from this resume — fill the form in manually. The file will still be attached.");
+        setParseError("Nothing usable could be read from this resume, fill the form in manually. The file will still be attached.");
         return;
       }
       applyPrefill(prefill);
@@ -226,13 +226,13 @@ function NewApplicationInner() {
    * This used to drop straight to the form with a banner reading "you can start
    * filling the form meanwhile", which was worse than it sounds. `applyPrefill`
    * keeps whatever is already in a field (`(v) => v || p.firstName`) so the
-   * recruiter's own typing wins — meaning anything typed during the parse
+   * recruiter's own typing wins, meaning anything typed during the parse
    * silently DISCARDS the parsed value for that field. The banner invited
    * exactly the work that defeats the feature, and there was no way to tell
    * afterwards which fields had lost.
    *
    * So the read gets its own step. Nothing to race, nothing thrown away, and
-   * the form appears already filled — which is the thing being offered.
+   * the form appears already filled, which is the thing being offered.
    */
   const handleStartFromResume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -254,7 +254,7 @@ function NewApplicationInner() {
     setResumeUploading(true);
     try {
       // The route uploads to S3 server-side (multipart/form-data) to avoid
-      // browser→S3 CORS issues — send the file itself, not a presign request.
+      // browser→S3 CORS issues, send the file itself, not a presign request.
       const fd = new FormData();
       fd.append("file", resumeFile);
       fd.append("userId", userId);
@@ -286,7 +286,7 @@ function NewApplicationInner() {
         const uploaded = await uploadResume(tempId);
         if (!uploaded) { setSubmitting(false); return; }
         resumePayload = { resumeId: uploaded.resumeId, resumeFileName: uploaded.fileName, resumeFileKey: uploaded.fileKey };
-        // Only when it belongs to the file actually being attached — swapping the
+        // Only when it belongs to the file actually being attached, swapping the
         // resume after a prefill must not file the previous document's analysis
         // against the new one.
         if (parsedAnalysis && parsedFile.current === resumeFile) {
@@ -343,7 +343,7 @@ function NewApplicationInner() {
   return (
     <div className="space-y-5">
 
-      {/* Back sits at the very start of the page, ahead of the title — the
+      {/* Back sits at the very start of the page, ahead of the title, the
           same place it appears on every other record screen, so it is always
           the first thing under the cursor rather than buried in the action
           cluster on the far right. */}
@@ -436,7 +436,7 @@ function NewApplicationInner() {
             </p>
             <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-[var(--adm-ink-subtle)]">
               Pulling out name, contact details, location, skills and experience. This usually
-              takes a few seconds and can take up to a minute — the form opens filled in, ready
+              takes a few seconds and can take up to a minute, the form opens filled in, ready
               for you to check.
             </p>
             <button
@@ -458,7 +458,7 @@ function NewApplicationInner() {
             <div className="flex items-center gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-4 py-3">
               <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
               <p className="text-sm text-[var(--adm-accent)]" role="status" aria-live="polite">
-                Still reading {resumeFile?.name ?? "the resume"} — empty fields may fill in shortly.
+                Still reading {resumeFile?.name ?? "the resume"}, empty fields may fill in shortly.
                 Anything you type stays as you typed it.
               </p>
             </div>
@@ -468,7 +468,7 @@ function NewApplicationInner() {
             <div className="flex items-start gap-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-4 py-3">
               <IconSparkles className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
               <p className="text-sm text-[var(--adm-accent)]">
-                Filled from <span className="font-semibold">{prefillFrom}</span> — {prefillFields.join(", ")}.
+                Filled from <span className="font-semibold">{prefillFrom}</span> , {prefillFields.join(", ")}.
                 Check the values before saving; the file will be attached to the record.
               </p>
             </div>
@@ -480,7 +480,7 @@ function NewApplicationInner() {
             <div role="alert" className="flex flex-wrap items-start gap-2.5 rounded-[6px] border border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] px-4 py-3">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-warning)]" aria-hidden="true" />
               <p className="min-w-0 flex-1 text-sm text-[var(--adm-warning)]">
-                Couldn&apos;t read the resume — enter the details below instead. {parseError}
+                Couldn&apos;t read the resume, enter the details below instead. {parseError}
               </p>
               {resumeFile && (
                 <button
@@ -740,7 +740,7 @@ function NewApplicationInner() {
                   <FormSelect id="benchType" value={benchType} onChange={(e) => setBenchType(e.target.value as BenchType)}>
                     {POOL_ORDER.map((p) => (
                       <option key={p} value={p}>
-                        {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                        {POOL_META[p].label} , {POOL_META[p].badge.toLowerCase()}
                       </option>
                     ))}
                   </FormSelect>
@@ -804,7 +804,7 @@ function NewApplicationInner() {
               <Field label="Candidate rating">
                 <div className="flex items-center gap-2 py-1">
                   <StarRating rating={rating} onRate={(n) => setRating(n === rating ? 0 : n)} size="lg" />
-                  <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{rating > 0 ? `${rating}/5` : "—"}</span>
+                  <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{rating > 0 ? `${rating}/5` : "–"}</span>
                 </div>
               </Field>
 
@@ -822,7 +822,7 @@ function NewApplicationInner() {
         </div>
       </form>
 
-      {/* ── Anchored action bar — Save stays reachable on a long form ── */}
+      {/* ── Anchored action bar. Save stays reachable on a long form ── */}
       <div className={cn(
         "sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/90 px-5 py-3 backdrop-blur lg:-mx-6 lg:-mb-6 lg:px-6",
         mode === "choose" && "hidden",

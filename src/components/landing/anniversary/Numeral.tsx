@@ -7,14 +7,14 @@ import { FOUNDED_YEAR } from "@/lib/company";
 import { IMG, atWidth } from "../media";
 
 /* ============================================================
-   Numeral — the "13", with the photo collage showing through
+   Numeral, the "13", with the photo collage showing through
    the strokes, as on the celebration artwork.
 
    ── Why this is safe now, having failed before ──────────────
    An earlier version used `background-clip: text` and was
    pulled because it FAILS INVISIBLY: if any layer of the
    background stack has not resolved, the glyph paints nothing
-   at all — not a broken image, a transparent hole where the
+   at all, not a broken image, a transparent hole where the
    entire graphic should be.
 
    The technique is right (an SVG clipPath over <text> depends
@@ -25,7 +25,7 @@ import { IMG, atWidth } from "../media";
    - The photographs are decoded up front via the Image
      constructor, and the clip is only applied once they have
      all resolved.
-   - Until then — and forever, if a request fails — the numeral
+   - Until then, and forever, if a request fails, the numeral
      renders as solid cobalt. There is no state in which the
      mark is absent.
    - `backgroundColor` sits under the stack and is clipped with
@@ -137,7 +137,7 @@ export default function Numeral({
         {value}
       </motion.span>
 
-      {/* Cyan rule — the artwork's accent, and a visual full stop under the
+      {/* Cyan rule, the artwork's accent, and a visual full stop under the
           number. Drawn after the numeral has settled. */}
       <motion.span
         aria-hidden

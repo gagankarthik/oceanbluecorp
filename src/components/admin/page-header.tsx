@@ -25,13 +25,13 @@ interface PageHeaderProps {
  * design on all pages they look very bad."
  *
  * What went and why:
- *  - the white fill, the border and the negative margins — a band that framed
+ *  - the white fill, the border and the negative margins, a band that framed
  *    a heading the sidebar and breadcrumb had already stated twice
- *  - the tinted icon tile — decoration; the sidebar's active row carries the
+ *  - the tinted icon tile, decoration; the sidebar's active row carries the
  *    same icon 200px to the left
  *  - 20px bold title → 18px semibold; it is a label, not a banner
  *
- * List screens should not use this at all — they lead with `ViewTabs` from
+ * List screens should not use this at all, they lead with `ViewTabs` from
  * workspace.tsx. It stays for detail, form and settings screens, where the
  * title is the record's own name and so is genuinely worth stating.
  */
@@ -57,8 +57,8 @@ export function PageHeader({ title, subtitle, actions, meta, className }: PageHe
  * Action button for a header or toolbar.
  *
  * Now a thin alias over `WorkspaceButton` rather than its own styling. It had
- * drifted into a second, flatter button — same size but no elevation, no hover
- * lift and no press — so screens still using it looked a generation behind the
+ * drifted into a second, flatter button, same size but no elevation, no hover
+ * lift and no press, so screens still using it looked a generation behind the
  * ones that had been migrated. One implementation means they cannot drift
  * again; `secondary` maps to WorkspaceButton's default.
  *

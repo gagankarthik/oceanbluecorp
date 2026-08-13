@@ -16,6 +16,8 @@ type Service = {
   name: string;
   title: string;
   desc: string;
+  /** One line for the card. `desc` is the long form, kept for /solutions. */
+  blurb: string;
   href: string;
   img: string;
   items: string[];
@@ -24,7 +26,8 @@ type Service = {
 const services: Service[] = [
   {
     name: "IT Staffing & Talent",
-    title: "Specialists, embedded fast",
+    title: "People who own it",
+    blurb: "Vetted specialists who join your team and carry the work, not a ticket.",
     desc: "Pre-vetted engineers who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
     href: "/solutions/staffing",
     img: IMG.serviceTalent,
@@ -32,7 +35,8 @@ const services: Service[] = [
   },
   {
     name: "Engineering Talent & Services",
-    title: "Engineers, embedded fast",
+    title: "Engineers for the hard parts",
+    blurb: "Mechanical, electrical, aerospace and controls engineers, on your program.",
     desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
     href: "/solutions/engineering",
     img: IMG.serviceEngineering,
@@ -44,14 +48,15 @@ const services: Service[] = [
   },
   {
     name: "Enterprise Solutions",
-    title: "Platforms, modernized",
+    title: "Platforms that hold",
+    blurb: "Cloud, security and production AI, shipped without stopping the business.",
     desc: "Cloud migration, security, and production AI, engineered and shipped without stopping the business.",
     href: "/solutions/cloud",
     img: IMG.serviceSolutions,
     // Condensed from seven lines to four. At seven this card ran far past its
     // three-bullet neighbours and left a large void above their bottom-aligned
     // "Learn more", so the row of four read as broken rather than dense. Every
-    // capability is still named — merged, not dropped — and the full list lives
+    // capability is still named, merged, not dropped, and the full list lives
     // on /solutions/cloud, which is where the card links.
     items: [
       "Cloud migration · AWS, Azure, GCP",
@@ -62,7 +67,8 @@ const services: Service[] = [
   },
   {
     name: "Managed Services",
-    title: "Run, 24/7",
+    title: "Someone awake at 3am",
+    blurb: "Monitoring, support and tuning around the clock. One number to call.",
     desc: "Monitoring, support, and continuous optimization around the clock. One team, one SLA, one number to call.",
     href: "/solutions/managed",
     img: IMG.serviceManaged,
@@ -70,39 +76,42 @@ const services: Service[] = [
   },
 ];
 
+/**
+ * One practice. Photograph on top, a flat panel beneath carrying the name,
+ * one line, and the arrow.
+ *
+ * Square corners and a flat mid-grey panel, matching the reference. The
+ * rounded card with a near-black fill read as a component; sharp corners and a
+ * panel that is clearly lighter than the section behind it read as a plate the
+ * image is mounted on, which is the whole difference between the two.
+ *
+ * The line and the arrow sit on ONE row rather than the arrow being parked at
+ * the bottom of the card. That is what keeps the panel short and even across
+ * four cards whose copy differs in length.
+ */
 function ServiceCard({ s }: { s: Service }) {
   return (
     <Link href={s.href} className="group flex h-full flex-col">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[var(--hz-surface-2)]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#141414]">
         <Photo
           src={s.img}
           sizes={CARD_SIZES}
           className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
         />
-        {/* Accent rule grows on hover, the one bit of motion the card needs. */}
-        <span className="absolute left-0 top-6 z-10 h-8 w-1 origin-left rounded-r bg-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-x-[2.5]" />
       </div>
 
-      <div className="mt-5 flex flex-1 flex-col sm:mt-6">
-        <span className="hz-eyebrow text-[var(--hz-amber)]">{s.name}</span>
-        <h3 className="hz-display mt-3 text-[1.35rem] text-[var(--hz-text)] sm:text-[1.5rem] xl:text-[1.75rem]">
-          {s.title}
+      <div className="flex flex-1 flex-col bg-[#2a2a2a] px-6 py-7 transition-colors duration-300 group-hover:bg-[#333333] sm:px-7">
+        <h3 className="text-[1.35rem] font-normal leading-tight tracking-[-0.01em] text-white sm:text-[1.5rem]">
+          {s.name}
         </h3>
-        <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[15px]">{s.desc}</p>
-
-        <ul className="mt-5 space-y-2">
-          {s.items.map((it) => (
-            <li key={it} className="flex items-start gap-2.5 text-[13.5px] text-[var(--hz-text)]">
-              <span className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full bg-[var(--hz-cobalt)]" />
-              {it}
-            </li>
-          ))}
-        </ul>
-
-        <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[14px] font-semibold text-[var(--hz-cobalt)] sm:pt-7">
-          Learn more
-          <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1" strokeWidth={1.75} />
-        </span>
+        <div className="mt-auto flex items-center justify-between gap-5 pt-6">
+          <p className="max-w-[24ch] text-[14.5px] leading-relaxed text-white/80 sm:text-[15px]">
+            {s.blurb}
+          </p>
+          <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-[var(--hz-cobalt)] text-white transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1">
+            <ArrowRight className="h-5 w-5" strokeWidth={2} />
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -110,44 +119,26 @@ function ServiceCard({ s }: { s: Service }) {
 
 export default function Services() {
   return (
-    <section
-      id="services"
-      className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32"
-    >
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
-        {/* Statement left, the case for it right. The row used to be a heading
-            capped at max-w-2xl with a lone "All solutions" link justified to
-            the far edge, which left roughly a third of the row empty across
-            the middle. Giving the right column something to say is the
-            editorial fix — and it is where the pitch belongs anyway. */}
-        <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-10">
-          <div className="lg:col-span-7">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">What we do</span>
-            <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
-              One partner for talent, engineering, technology, and operations.
-            </h2>
-          </div>
+    <section id="services" className="relative w-full bg-[var(--hz-canvas)] py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+        {/* Light ground, dark cards. The section was black for one round and
+            it broke the page: hero (dark) → services (black) → partnerships
+            (near-black) put three dark bands in a row and then flipped hard to
+            white, so the top half read as one long dark block and the bottom
+            half as a different site. The reference card treatment is untouched
+           , panel, square corners, inline arrow, it just sits on canvas now,
+            which is also where the photographs read best.
 
-          <div className="lg:col-span-4 lg:col-start-9">
-            <p className="text-[15px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[15.5px]">
-              Four practices, one contract, one team accountable for the
-              outcome — so the handoffs between hiring, building, and running
-              stop being your problem to manage.
-            </p>
-            <Link
-              href="/solutions"
-              className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--hz-cobalt)]"
-            >
-              All solutions
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
-                strokeWidth={1.75}
-              />
-            </Link>
-          </div>
+            No eyebrow: the reference leads straight into the statement, and an
+            uppercase label above a heading is another line to read before the
+            one that matters. */}
+        <Reveal className="max-w-4xl">
+          <h2 className="hz-h2 font-normal leading-tight tracking-[-0.02em] text-[var(--hz-text)]">
+            One partner for talent, engineering, technology, and operations.
+          </h2>
         </Reveal>
 
-        <Stagger className="mt-12 grid gap-x-8 gap-y-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
+        <Stagger className="mt-10 grid gap-6 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4" gap={0.12}>
           {services.map((s) => (
             <StaggerItem key={s.name} className="h-full">
               <ServiceCard s={s} />

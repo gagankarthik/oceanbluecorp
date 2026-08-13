@@ -29,7 +29,7 @@ function isLikelySpam(b: { firstName?: string; lastName?: string; company?: stri
   if (linkRe.test(name) || linkRe.test(b.company || "")) return true;
   // A random-looking first or last name is almost certainly a bot
   if (looksRandom(b.firstName || "") || looksRandom(b.lastName || "")) return true;
-  // Link-farm message — a few links is plausible, four+ is spam
+  // Link-farm message, a few links is plausible, four+ is spam
   if ((message.match(/(https?:\/\/|www\.)/gi)?.length ?? 0) >= 4) return true;
   // Bloat: the same character repeated 30+ times (e.g. "aaaaaaaa…")
   if (/(.)\1{29,}/.test(message)) return true;
@@ -55,7 +55,7 @@ const INQUIRY_RE = /^[A-Za-z0-9 &/+.-]{2,60}$/;           // short label only
 function validateContact(b: Record<string, unknown>): string | null {
   const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
-  // Length caps first — reject bloat before any other work
+  // Length caps first, reject bloat before any other work
   for (const [field, max] of Object.entries(LIMITS)) {
     if (str(b[field]).length > max) return `${field} is too long (max ${max} characters).`;
   }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
      * the most expensive one per request: a contacts row, an in-app
      * notification, and an SES email to the team. The honeypot below stops
      * naive bots, but anything that reads the form first defeats it by leaving
-     * the decoy empty and waiting three seconds — so the honeypot is a filter,
+     * the decoy empty and waiting three seconds, so the honeypot is a filter,
      * not a limit.
      *
      * Fails open by design (see lib/rate-limit): a limiter that is down must
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       { message: "Contact form submitted successfully" },
       { status: 201 }
     );
-    // 1) Honeypot — humans never fill the hidden "website" field
+    // 1) Honeypot, humans never fill the hidden "website" field
     if (typeof body.website === "string" && body.website.trim() !== "") return fakeSuccess;
     // 2) Submitted too fast to be a real person (form takes >2.5s to fill)
     if (typeof body._elapsedMs === "number" && body._elapsedMs >= 0 && body._elapsedMs < 2500) return fakeSuccess;
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
      * invocation open. That works on a long-lived server and is unreliable on
      * Lambda, which is what Amplify runs: once the response is returned the
      * execution environment can freeze, and an in-flight promise nobody is
-     * tracking dies with it. The symptom is the worst kind — intermittent.
+     * tracking dies with it. The symptom is the worst kind, intermittent.
      * Some enquiries notify the team and email them, some silently do neither,
      * with nothing in between to explain the difference.
      *

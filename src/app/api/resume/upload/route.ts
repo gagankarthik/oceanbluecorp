@@ -10,11 +10,11 @@ import {
   validateResumeFile,
 } from "@/lib/aws";
 
-// Accept multipart/form-data — uploads file directly from the server to S3.
+// Accept multipart/form-data, uploads file directly from the server to S3.
 // This avoids S3 CORS restrictions that break browser-to-S3 presigned PUT requests.
 export async function POST(request: NextRequest) {
   try {
-    // Unauthenticated by design — the public careers form uploads through here —
+    // Unauthenticated by design, the public careers form uploads through here,
     // so anonymous callers are throttled. Each accepted request writes a 5MB-max
     // S3 object plus a DynamoDB row, which is worth abusing.
     const claims = await getClaims(request);
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const resumeId = uuidv4();
     const fileKey = generateResumeKey(userId, file.name);
 
-    // Upload directly from the server — no browser CORS issues
+    // Upload directly from the server, no browser CORS issues
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploadResult = await uploadResume(buffer, fileKey, file.type);
 

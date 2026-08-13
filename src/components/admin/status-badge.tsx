@@ -16,7 +16,7 @@ export function StatusBadge({ status, tone, label, withIcon = false, size = "sm"
   const resolvedTone: Tone = tone || meta?.tone || "slate";
   const t = tones[resolvedTone];
   const Icon = withIcon && meta?.icon ? meta.icon : null;
-  const text = label || meta?.label || status || "—";
+  const text = label || meta?.label || status || "–";
   // Square-cornered status chips read as record state in a business system;
   // fully-rounded pills read as consumer tags.
   const sizing = size === "md" ? "text-[11.5px] px-2 py-0.5" : "text-[10.5px] px-1.5 py-px";

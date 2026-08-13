@@ -13,7 +13,7 @@ import { POOL_LABEL, POOL_META, poolOf } from "@/lib/bench";
 import { fmtDate } from "@/lib/format";
 
 /* ============================================================
-   RecordSidebar — the record's reference rail.
+   RecordSidebar, the record's reference rail.
 
    Sticky (it already was, and correctly so): the main column
    runs ~3,700px, and un-pinned this would orphan after the
@@ -36,7 +36,7 @@ function MetaRow({ label, value }: { label: string; value?: React.ReactNode }) {
     <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
       <dt className="flex-none text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
       <dd className="min-w-0 break-words text-right text-[13.5px] text-[var(--adm-ink)]">
-        {empty ? <span className="text-[var(--adm-ink-subtle)]">—</span> : value}
+        {empty ? <span className="text-[var(--adm-ink-subtle)]"></span> : value}
       </dd>
     </div>
   );
@@ -65,7 +65,7 @@ export function RecordSidebar({
        underneath. The fallback covers the first paint, before the
        ResizeObserver has reported. */
     <div className="space-y-4 lg:sticky lg:top-[calc(var(--rec-head,7rem)+1rem)]">
-      {/* Owner — first, because whose desk this is on is the first thing a
+      {/* Owner, first, because whose desk this is on is the first thing a
           teammate opening the record wants to know. */}
       <AdminCard className="overflow-hidden">
         <AdminCardHeader icon={IconUserCheck} title="Assigned recruiter" />
@@ -107,7 +107,7 @@ export function RecordSidebar({
               className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-[var(--adm-danger)] px-3 py-2.5 text-[13px] font-semibold text-[var(--adm-danger-ink)] transition-colors hover:bg-[var(--adm-danger-soft)] disabled:opacity-60"
             >
               {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
-              Unclaimed — claim this candidate
+              Unclaimed, claim this candidate
             </button>
           )}
         </div>

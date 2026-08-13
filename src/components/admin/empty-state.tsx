@@ -4,7 +4,7 @@ import type { IconComponent } from "./icons";
 import { tones, type Tone } from "./theme";
 import { cn } from "@/lib/utils";
 
-/** Context in which the list is empty — determines the default icon + copy. */
+/** Context in which the list is empty, determines the default icon + copy. */
 export type EmptyVariant = "fresh" | "filtered" | "error" | "permission";
 
 const VARIANT_DEFAULTS: Record<
@@ -38,13 +38,13 @@ const VARIANT_DEFAULTS: Record<
 };
 
 interface EmptyStateProps {
-  /** Icon override — uses variant default when omitted. */
+  /** Icon override, uses variant default when omitted. */
   icon?: IconComponent;
   title?: string;
   description?: string;
   tone?: Tone;
   /**
-   * Semantic variant — sets defaults for icon, tone, and copy when the
+   * Semantic variant, sets defaults for icon, tone, and copy when the
    * specific props are omitted. Defaults to "fresh".
    */
   variant?: EmptyVariant;
@@ -55,7 +55,7 @@ interface EmptyStateProps {
 }
 
 /**
- * Canonical empty state — replaces the per-page hand-rolled
+ * Canonical empty state, replaces the per-page hand-rolled
  * "icon well + message" blocks. Always say what the section is for
  * and, when the viewer can act, offer the action.
  *

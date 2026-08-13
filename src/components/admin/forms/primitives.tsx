@@ -41,8 +41,7 @@ export function FormSection({
     >
       <header className="flex items-start justify-between gap-4 border-b border-[var(--adm-line)] px-6 py-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          {/* A plain muted glyph, not a tinted tile. The chip was decoration —
-              it coloured every section header the same accent regardless of
+          {/* A plain muted glyph, not a tinted tile. The chip was decoration, it coloured every section header the same accent regardless of
               what the section was, so it identified nothing. */}
           <Icon className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
           <div className="min-w-0">
@@ -65,11 +64,11 @@ interface FieldProps {
   label: string;
   required?: boolean;
   hint?: string;
-  /** Validation error message — shown below the control in rose text. */
+  /** Validation error message, shown below the control in rose text. */
   error?: string;
   /** Helper text shown below the control (only if no error). */
   helper?: string;
-  /** Unique id forwarded to the label's htmlFor — improves screen-reader pairing. */
+  /** Unique id forwarded to the label's htmlFor, improves screen-reader pairing. */
   htmlFor?: string;
   children: React.ReactNode;
   className?: string;
@@ -133,7 +132,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
     return (
       <input
         ref={ref}
-        // Default off — admin forms mostly capture third-party data (candidates,
+        // Default off, admin forms mostly capture third-party data (candidates,
         // clients), so the staffer's own browser autofill must not leak in.
         // Call sites for the user's OWN data can override with a real token.
         autoComplete="off"
@@ -182,7 +181,7 @@ export function FormSelect({
         {children}
       </select>
       {/* A plain chevron. This was a filled grey square that turned accent-blue
-          on focus — a second, louder focus indicator competing with the ring
+          on focus, a second, louder focus indicator competing with the ring
           the control already draws, and the sort of decorated control that
           reads as generated rather than designed. */}
       <svg

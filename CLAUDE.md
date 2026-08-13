@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Companion documents
 
-- **`STANDARDS.md`** — structure, naming, reuse (which shared helper to use instead
+- **`STANDARDS.md`**, structure, naming, reuse (which shared helper to use instead
   of writing another), the client/server boundary rule, security rules, and the
   pre-ship checks. Read before adding a route, a component, or a table.
-- **`DESIGN_SYSTEM.md`** — visual language and the admin component inventory.
+- **`DESIGN_SYSTEM.md`**, visual language and the admin component inventory.
 
 ## Project Overview
 
@@ -46,7 +46,7 @@ DynamoDB tables (region: us-east-2):
 - `oceanblue-contacts`
 
 ### Authentication
-AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores the session). There is **no public sign-up** — the app is staff-only and invite-based.
+AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores the session). There is **no public sign-up**, the app is staff-only and invite-based.
 - **AuthContext** (`src/lib/auth/AuthContext.tsx`) - Provides `useAuth()` hook
 - **ProtectedRoute** component for route guarding
 - Four staff roles, no public "user" role: ADMIN > HR > (RECRUITER = SALES). Hierarchy in `src/lib/auth/config.ts`. `user.role` is `UserRole | null` (null = authenticated but in no staff group → no access).
@@ -59,7 +59,7 @@ src/
 ├── app/                 # Next.js App Router pages
 │   ├── api/            # API routes (jobs, applications, contacts, resume)
 │   ├── admin/          # Admin panel (jobs, applications, contacts, users, settings)
-│   └── auth/           # Authentication pages (signin, callback, signout) — invite-only, no sign-up
+│   └── auth/           # Authentication pages (signin, callback, signout), invite-only, no sign-up
 ├── components/
 │   ├── ui/             # shadcn/ui components
 │   └── providers/      # Context providers (wraps AuthProvider)

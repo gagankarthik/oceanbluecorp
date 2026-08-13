@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-// Chrome glyphs (search, close, arrows, the ⌘ mark) stay on lucide — the
+// Chrome glyphs (search, close, arrows, the ⌘ mark) stay on lucide, the
 // custom set is domain iconography and deliberately has no primitives for
 // these. Everything that names a thing in this product uses ours.
 import {
@@ -164,9 +164,9 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
 
   return (
     <>
-      {/* transparent click-away — keeps the rest of the screen visible */}
+      {/* transparent click-away, keeps the rest of the screen visible */}
       <div className="fixed inset-0 z-[90]" onClick={() => onOpenChange(false)} />
-      {/* Anchored under the top bar (h-14) on the search side — not a centered modal */}
+      {/* Anchored under the top bar (h-14) on the search side, not a centered modal */}
       <div
         role="dialog"
         aria-modal="true"

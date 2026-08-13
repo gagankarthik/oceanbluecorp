@@ -2,7 +2,7 @@
 //
 // WHY THIS EXISTS RATHER THAN ZOD
 //
-// Not because zod is wrong — because this needs one property zod alone does not
+// Not because zod is wrong, because this needs one property zod alone does not
 // give you: a route declares the fields it accepts and everything else is
 // DROPPED. Every handler here used to read fields straight off `body`, which is
 // how an anonymous applicant could post `status: "hired"` and `ownership` to the
@@ -29,7 +29,7 @@ export interface FieldRule {
   max?: number;
   /** Closed set of accepted values (strings). */
   oneOf?: readonly string[];
-  /** Coerce a numeric string to a number — form posts arrive as strings. */
+  /** Coerce a numeric string to a number, form posts arrive as strings. */
   coerce?: boolean;
 }
 

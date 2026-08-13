@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/auth/verify";
 export const runtime = "nodejs";
 
 /**
- * GET /api/users/avatar/[userId] — streams the user's profile photo from S3.
+ * GET /api/users/avatar/[userId], streams the user's profile photo from S3.
  *
  * "No photo uploaded" is the NORMAL case for most staff, not an error, so it
  * answers 204 No Content rather than 404. The <img> still fails to decode and
@@ -44,7 +44,7 @@ export async function GET(
   });
 }
 
-// DELETE /api/users/avatar/[userId] — removes the user's profile photo.
+// DELETE /api/users/avatar/[userId], removes the user's profile photo.
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

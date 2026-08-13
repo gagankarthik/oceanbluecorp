@@ -1,7 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 
 /**
- * Any admin icon component — one of the custom glyphs in this file OR a lucide
+ * Any admin icon component, one of the custom glyphs in this file OR a lucide
  * glyph. Props typed with this accept BOTH, which the plain `LucideIcon` type
  * (a forwardRef exotic) does not: the custom icons are plain function
  * components. Use this for any `icon` prop that a page might feed a custom icon.
@@ -48,7 +48,7 @@ export function IconApplication(props: IconProps) {
   );
 }
 
-/** HR Portal: a person framed in an open doorway — people, through a portal. */
+/** HR Portal: a person framed in an open doorway, people, through a portal. */
 export function IconHrPortal(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -165,19 +165,19 @@ export function IconLive(props: IconProps) {
 
    The set above covers dashboard metrics. This block covers the
    navigation and the screen headers, which were still borrowing
-   general-purpose Lucide glyphs — a briefcase for requisitions, a
+   general-purpose Lucide glyphs, a briefcase for requisitions, a
    building for clients, a box for the bench. Those describe the
    shape of a thing, not what it means in a staffing system, and
    next to the domain icons above they read as a different family.
 
-   IDEA — one rule generates the whole set:
+   IDEA, one rule generates the whole set:
 
        every icon = a CONTAINER (the record) + a MARK (its state)
 
    The container is one of three recurring bodies:
-     · sheet     — a document with a folded corner  (a person's paper)
-     · board     — a rounded rect, r=2              (a posting, a panel)
-     · figure    — circle r≈3 + shoulder arc        (a person)
+     · sheet    , a document with a folded corner  (a person's paper)
+     · board    , a rounded rect, r=2              (a posting, a panel)
+     · figure   , circle r≈3 + shoulder arc        (a person)
 
    The mark is what distinguishes them: a funnel for flow, a key for
    access, a pulse for liveness, a plus/tick/clock for state. So
@@ -188,7 +188,7 @@ export function IconLive(props: IconProps) {
    Construction rules, so additions stay consistent:
      · 24×24 box, 1.5 stroke, round caps and joins
      · geometry on the half-pixel grid at 16px render size
-     · currentColor only — tone comes from the call site
+     · currentColor only, tone comes from the call site
      · no fills except deliberate solid state dots
      · optical weight balanced: 2–4 strokes per icon, never more
    ============================================================ */
@@ -252,7 +252,7 @@ export function IconClient(props: IconProps) {
   );
 }
 
-/** Vendor: a supply network — one hub feeding several partners. */
+/** Vendor: a supply network, one hub feeding several partners. */
 export function IconVendor(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -276,7 +276,7 @@ export function IconContent(props: IconProps) {
   );
 }
 
-/** Staff: a figure carrying an access mark — an account, not a candidate. */
+/** Staff: a figure carrying an access mark, an account, not a candidate. */
 export function IconStaff(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -298,7 +298,7 @@ export function IconBell(props: IconProps) {
   );
 }
 
-/** Help: a ring buoy — support, not a generic question mark. */
+/** Help: a ring buoy, support, not a generic question mark. */
 export function IconHelp(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -342,7 +342,7 @@ export function IconDocs(props: IconProps) {
   );
 }
 
-/** Settings: control sliders, not a cog — these are preferences, not machinery. */
+/** Settings: control sliders, not a cog, these are preferences, not machinery. */
 export function IconSettings(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -375,7 +375,7 @@ export function IconRefresh(props: IconProps) {
   );
 }
 
-/** Coverage: a gauge — supply measured against demand. */
+/** Coverage: a gauge, supply measured against demand. */
 export function IconCoverage(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -407,16 +407,16 @@ export function IconDwell(props: IconProps) {
 
      · 24×24 box, 1.5 stroke, round caps and joins
      · geometry on the half-pixel grid at 16px render size
-     · currentColor only — tone comes from the call site
+     · currentColor only, tone comes from the call site
      · no fills except deliberate solid state dots
      · 2–4 strokes per icon; a recognisable silhouette first
 
    Kept on Lucide on purpose (a bespoke version would only look
    like a broken copy, or is a trademarked brand mark):
-     · mechanical marks — chevrons, X, plus/minus, arrows,
+     · mechanical marks, chevrons, X, plus/minus, arrows,
        the loader spinner, menu, panel toggles, ellipsis, ⌘,
        search, external-link, view-mode toggles (grid/list)
-     · brand logos — LinkedIn, Twitter/X
+     · brand logos. LinkedIn, Twitter/X
    ============================================================ */
 
 /* ── Status & feedback ──────────────────────────────────────── */
@@ -432,7 +432,7 @@ export function IconAlert(props: IconProps) {
   );
 }
 
-/** Warning: a hazard triangle — a stronger note than a plain alert. */
+/** Warning: a hazard triangle, a stronger note than a plain alert. */
 export function IconWarning(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -443,7 +443,7 @@ export function IconWarning(props: IconProps) {
   );
 }
 
-/** Success: a confirmed record — ring plus tick. */
+/** Success: a confirmed record, ring plus tick. */
 export function IconSuccess(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -494,7 +494,7 @@ export function IconClock(props: IconProps) {
   );
 }
 
-/** History: a clock wound back — an audit trail. */
+/** History: a clock wound back, an audit trail. */
 export function IconHistory(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -572,7 +572,7 @@ export function IconUserStar(props: IconProps) {
   );
 }
 
-/** A person with an access role — staff, not a candidate. */
+/** A person with an access role, staff, not a candidate. */
 export function IconUserRole(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -583,7 +583,7 @@ export function IconUserRole(props: IconProps) {
   );
 }
 
-/** A group — a team or department. */
+/** A group, a team or department. */
 export function IconGroup(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -597,7 +597,7 @@ export function IconGroup(props: IconProps) {
 
 /* ── Communications ─────────────────────────────────────────── */
 
-/** Email — a sealed envelope. */
+/** Email, a sealed envelope. */
 export function IconMail(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -607,7 +607,7 @@ export function IconMail(props: IconProps) {
   );
 }
 
-/** Opened email — read correspondence. */
+/** Opened email, read correspondence. */
 export function IconMailOpen(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -617,7 +617,7 @@ export function IconMailOpen(props: IconProps) {
   );
 }
 
-/** Phone — a handset. */
+/** Phone, a handset. */
 export function IconPhone(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -635,7 +635,7 @@ export function IconMessage(props: IconProps) {
   );
 }
 
-/** A message with content — a note. */
+/** A message with content, a note. */
 export function IconMessageText(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -645,7 +645,7 @@ export function IconMessageText(props: IconProps) {
   );
 }
 
-/** Send / submit — a paper plane in flight. */
+/** Send / submit, a paper plane in flight. */
 export function IconSend(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -657,7 +657,7 @@ export function IconSend(props: IconProps) {
 
 /* ── Places & organisations ─────────────────────────────────── */
 
-/** Building — a company or client office. */
+/** Building, a company or client office. */
 export function IconBuilding(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -669,7 +669,7 @@ export function IconBuilding(props: IconProps) {
   );
 }
 
-/** Location — a map pin. */
+/** Location, a map pin. */
 export function IconLocation(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -679,7 +679,7 @@ export function IconLocation(props: IconProps) {
   );
 }
 
-/** Globe — the public site, or a region. */
+/** Globe, the public site, or a region. */
 export function IconGlobe(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -692,7 +692,7 @@ export function IconGlobe(props: IconProps) {
 
 /* ── Hiring objects ─────────────────────────────────────────── */
 
-/** Job — a briefcase, the role being filled. */
+/** Job, a briefcase, the role being filled. */
 export function IconJob(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -704,7 +704,7 @@ export function IconJob(props: IconProps) {
   );
 }
 
-/** Inbox — where new applications land. */
+/** Inbox, where new applications land. */
 export function IconInbox(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -714,7 +714,7 @@ export function IconInbox(props: IconProps) {
   );
 }
 
-/** ID card — a candidate profile. */
+/** ID card, a candidate profile. */
 export function IconIdCard(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -726,7 +726,7 @@ export function IconIdCard(props: IconProps) {
   );
 }
 
-/** Interview — a candidate in conversation. */
+/** Interview, a candidate in conversation. */
 export function IconInterview(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -737,7 +737,7 @@ export function IconInterview(props: IconProps) {
   );
 }
 
-/** Placement — a candidate seated at a client, flag planted. */
+/** Placement, a candidate seated at a client, flag planted. */
 export function IconPlacement(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -751,7 +751,7 @@ export function IconPlacement(props: IconProps) {
 
 /* ── Money & metrics ────────────────────────────────────────── */
 
-/** Money — pay rate, bill rate, margin. */
+/** Money, pay rate, bill rate, margin. */
 export function IconMoney(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -761,7 +761,7 @@ export function IconMoney(props: IconProps) {
   );
 }
 
-/** Percent — a rate or ratio. */
+/** Percent, a rate or ratio. */
 export function IconPercent(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -772,7 +772,7 @@ export function IconPercent(props: IconProps) {
   );
 }
 
-/** Trend — a rising line. */
+/** Trend, a rising line. */
 export function IconTrend(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -782,7 +782,7 @@ export function IconTrend(props: IconProps) {
   );
 }
 
-/** Chart — a bar reading. */
+/** Chart, a bar reading. */
 export function IconChart(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -794,7 +794,7 @@ export function IconChart(props: IconProps) {
 
 /* ── Actions & tools ────────────────────────────────────────── */
 
-/** Edit — a pencil. */
+/** Edit, a pencil. */
 export function IconEdit(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -804,7 +804,7 @@ export function IconEdit(props: IconProps) {
   );
 }
 
-/** Delete — a bin. */
+/** Delete, a bin. */
 export function IconTrash(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -816,7 +816,7 @@ export function IconTrash(props: IconProps) {
   );
 }
 
-/** Save — write the record to disk. */
+/** Save, write the record to disk. */
 export function IconSave(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -827,7 +827,7 @@ export function IconSave(props: IconProps) {
   );
 }
 
-/** Copy — duplicate the record. */
+/** Copy, duplicate the record. */
 export function IconCopy(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -837,7 +837,7 @@ export function IconCopy(props: IconProps) {
   );
 }
 
-/** Download — pull a record down into a tray. */
+/** Download, pull a record down into a tray. */
 export function IconDownload(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -848,7 +848,7 @@ export function IconDownload(props: IconProps) {
   );
 }
 
-/** Upload — push a record up from a tray. */
+/** Upload, push a record up from a tray. */
 export function IconUpload(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -859,7 +859,7 @@ export function IconUpload(props: IconProps) {
   );
 }
 
-/** Visible — an open eye. */
+/** Visible, an open eye. */
 export function IconEye(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -869,7 +869,7 @@ export function IconEye(props: IconProps) {
   );
 }
 
-/** Hidden — an eye struck through. */
+/** Hidden, an eye struck through. */
 export function IconEyeOff(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -881,7 +881,7 @@ export function IconEyeOff(props: IconProps) {
   );
 }
 
-/** Locked — a padlock. */
+/** Locked, a padlock. */
 export function IconLock(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -892,7 +892,7 @@ export function IconLock(props: IconProps) {
   );
 }
 
-/** Shield — security or protection. */
+/** Shield, security or protection. */
 export function IconShield(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -901,7 +901,7 @@ export function IconShield(props: IconProps) {
   );
 }
 
-/** Link — a chain joining two records. */
+/** Link, a chain joining two records. */
 export function IconLink(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -912,7 +912,7 @@ export function IconLink(props: IconProps) {
   );
 }
 
-/** Camera — capture or change a photo. */
+/** Camera, capture or change a photo. */
 export function IconCamera(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -922,7 +922,7 @@ export function IconCamera(props: IconProps) {
   );
 }
 
-/** Star — a favourite or rating. */
+/** Star, a favourite or rating. */
 export function IconStar(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -931,7 +931,7 @@ export function IconStar(props: IconProps) {
   );
 }
 
-/** Bookmark — a saved record. */
+/** Bookmark, a saved record. */
 export function IconBookmark(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -940,7 +940,7 @@ export function IconBookmark(props: IconProps) {
   );
 }
 
-/** Bookmark with a tick — saved and confirmed. */
+/** Bookmark with a tick, saved and confirmed. */
 export function IconBookmarkCheck(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -950,7 +950,7 @@ export function IconBookmarkCheck(props: IconProps) {
   );
 }
 
-/** Bookmark with a plus — add to saved. */
+/** Bookmark with a plus, add to saved. */
 export function IconBookmarkPlus(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -960,7 +960,7 @@ export function IconBookmarkPlus(props: IconProps) {
   );
 }
 
-/** Book — a guide or knowledge base. */
+/** Book, a guide or knowledge base. */
 export function IconBook(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -970,7 +970,7 @@ export function IconBook(props: IconProps) {
   );
 }
 
-/** Hash — an identifier or reference number. */
+/** Hash, an identifier or reference number. */
 export function IconHash(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -980,7 +980,7 @@ export function IconHash(props: IconProps) {
   );
 }
 
-/** Layers — stacked categories or groupings. */
+/** Layers, stacked categories or groupings. */
 export function IconLayers(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -991,7 +991,7 @@ export function IconLayers(props: IconProps) {
   );
 }
 
-/** Home — the dashboard root. */
+/** Home, the dashboard root. */
 export function IconHome(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1002,7 +1002,7 @@ export function IconHome(props: IconProps) {
   );
 }
 
-/** Sign out — leave through the door. */
+/** Sign out, leave through the door. */
 export function IconLogout(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1013,7 +1013,7 @@ export function IconLogout(props: IconProps) {
   );
 }
 
-/** Terminal — a developer console. */
+/** Terminal, a developer console. */
 export function IconTerminal(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1024,7 +1024,7 @@ export function IconTerminal(props: IconProps) {
   );
 }
 
-/** Sparkles — AI assistance, or something new. */
+/** Sparkles. AI assistance, or something new. */
 export function IconSparkles(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1034,7 +1034,7 @@ export function IconSparkles(props: IconProps) {
   );
 }
 
-/** Radar — sourcing or discovery sweep. */
+/** Radar, sourcing or discovery sweep. */
 export function IconRadar(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1046,7 +1046,7 @@ export function IconRadar(props: IconProps) {
   );
 }
 
-/** Cloud — hosted storage. */
+/** Cloud, hosted storage. */
 export function IconCloud(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1055,7 +1055,7 @@ export function IconCloud(props: IconProps) {
   );
 }
 
-/** Truck — vendor supply or delivery. */
+/** Truck, vendor supply or delivery. */
 export function IconTruck(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1068,7 +1068,7 @@ export function IconTruck(props: IconProps) {
   );
 }
 
-/** Boxes — inventory, modules, a catalogue. */
+/** Boxes, inventory, modules, a catalogue. */
 export function IconBoxes(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -1079,7 +1079,7 @@ export function IconBoxes(props: IconProps) {
   );
 }
 
-/** Calendar — a date or schedule. */
+/** Calendar, a date or schedule. */
 export function IconCalendar(props: IconProps) {
   return (
     <svg {...base} {...props}>

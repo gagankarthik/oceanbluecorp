@@ -25,19 +25,19 @@ import {
 import { cn } from "@/lib/utils";
 
 /* ============================================================================
-   Recruitment operations console — Conduktor-style dark data console.
+   Recruitment operations console. Conduktor-style dark data console.
 
    The DATA model is unchanged: every application carries a statusHistory, so we
    can measure not just "how much is there" but where the pipeline is stalling,
    which roles are starved, and what the desk earns. What changed is the
-   PRESENTATION — the screen is now a dark, dense operations console modelled on
+   PRESENTATION, the screen is now a dark, dense operations console modelled on
    Conduktor's cluster dashboard:
 
      · a header block (mark + title) followed by a hairline-divided STAT ROW
      · a green-glow "pipeline state" card with a solid green check badge, whose
        PARTITIONS-style sub-grid surfaces the exception counts
      · blue line-chart cards (application + placement volume over time)
-     · a 2×2 "data freshness" grid — per-domain icon, sync time, green check
+     · a 2×2 "data freshness" grid, per-domain icon, sync time, green check
      · a segmented "recent activity" list
      · dark analytical cards (pipeline stages, channels, coverage, clients)
      · the recruiter throughput ledger
@@ -49,7 +49,7 @@ import { cn } from "@/lib/utils";
 /**
  * Hours in a billable year, used to annualise an hourly spread. 2,080 is the
  * standard full-time year (40h × 52w). Every figure derived from it is labelled
- * an estimate in the UI — do not present these as booked revenue.
+ * an estimate in the UI, do not present these as booked revenue.
  */
 const FTE_HOURS = 2080;
 
@@ -88,7 +88,7 @@ type Period = (typeof PERIODS)[number]["value"];
 /** In-flight stages, in order. Terminal states are handled separately. */
 const FLOW: AppStatus[] = ["pending", "reviewing", "submitted", "interview", "offered"];
 
-/** Sequential blue ramp — ordered stages of one process, not five categories. */
+/** Sequential blue ramp, ordered stages of one process, not five categories. */
 const STAGE_RAMP = ["#60a5fa", "#4b91f7", "#3b82f6", "#2f6fed", "#2563eb"];
 
 /** Shared shape for the dark ranked-bar lists. */
@@ -136,7 +136,7 @@ interface StageStat {
 
 // ── presentational primitives (dark) ─────────────────────────────────────────
 
-/** Solid confirmation tick — sits on a filled state badge. */
+/** Solid confirmation tick, sits on a filled state badge. */
 function Check({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}
@@ -237,13 +237,13 @@ function DarkBars({ items, emptyMessage = "Nothing to break down yet" }: {
 }
 
 /**
- * Blue line chart — a hand-drawn SVG so it themes cleanly to the dark console
+ * Blue line chart, a hand-drawn SVG so it themes cleanly to the dark console
  * without dragging the light recharts chrome onto the screen. Dotted gridlines,
  * a soft area fill and a crisp 2px line, with tiny axis ticks. `non-scaling-
  * stroke` keeps line + dashes even while the SVG stretches to the panel width.
  */
 /* ============================================================
-   LineChart — with a hover readout.
+   LineChart, with a hover readout.
 
    The chart was a static picture: it showed a shape and no
    numbers, so "how many applications on June 15?" could only be
@@ -427,7 +427,7 @@ export default function AdminDashboard() {
   const [error, setError]       = useState<string | null>(null);
   const [recentTab, setRecentTab] = useState<"all" | "interview" | "offered">("all");
 
-  // The volume charts follow the page's date-range control — they used to have
+  // The volume charts follow the page's date-range control, they used to have
   // their own 30D/90D/1Y segmented picker, which just duplicated it.
   const period: Period = range === "7d" || range === "30d" ? "30d" : range === "90d" ? "90d" : "1y";
 
@@ -463,8 +463,8 @@ export default function AdminDashboard() {
 
   /**
    * One range, applied honestly. Anything derived from APPLICATIONS respects
-   * the range. Requisitions do not — a role that is open is open regardless of
-   * the window — so open-roles is labelled current rather than filtered.
+   * the range. Requisitions do not, a role that is open is open regardless of
+   * the window, so open-roles is labelled current rather than filtered.
    */
   const rangeStart = useMemo(() => {
     const days = RANGES.find((r) => r.value === range)?.days ?? null;
@@ -488,7 +488,7 @@ export default function AdminDashboard() {
     [jobs],
   );
 
-  /** Candidates still in play — the supply side of the coverage ratio. */
+  /** Candidates still in play, the supply side of the coverage ratio. */
   const activePipeline = useMemo(
     () => applications.filter((a) => !TERMINAL.has(a.status)),
     [applications],
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
       return {
         key,
         // The pipeline's first stage is "New" everywhere else, but on the funnel
-        // "Applied" reads truer — it is the count of everyone who applied.
+        // "Applied" reads truer, it is the count of everyone who applied.
         label: key === "pending" ? "Applied" : statusMeta[key].label,
         count,
         pass: next !== null && count > 0 ? Math.round((next / count) * 100) : null,
@@ -565,7 +565,7 @@ export default function AdminDashboard() {
   }, [applications]);
 
   /**
-   * Commercial outcome — the spread a staffing firm earns between client bill
+   * Commercial outcome, the spread a staffing firm earns between client bill
    * rate and contractor pay. Placements with no rates on file are excluded (not
    * counted as zero margin), and yearly figures annualise at FTE_HOURS, which
    * is stated in the UI as an estimate.
@@ -594,7 +594,7 @@ export default function AdminDashboard() {
     };
   }, [applications, jobs]);
 
-  /** Client concentration — one client being most of the book is a real risk. */
+  /** Client concentration, one client being most of the book is a real risk. */
   const clientMix: BarItem[] = useMemo(() => {
     const jobById = new Map(jobs.map((j) => [j.id, j]));
     const m = new Map<string, number>();
@@ -614,7 +614,7 @@ export default function AdminDashboard() {
     ];
   }, [applications, jobs]);
 
-  /** Share held by the largest client — the concentration figure. */
+  /** Share held by the largest client, the concentration figure. */
   const topClientShare = useMemo(() => {
     const total = clientMix.reduce((sum, c) => sum + c.value, 0);
     if (!total || clientMix.length === 0) return null;
@@ -632,7 +632,7 @@ export default function AdminDashboard() {
     return median(days);
   }, [applications]);
 
-  /** Offer acceptance — of everyone who reached an offer, how many were hired. */
+  /** Offer acceptance, of everyone who reached an offer, how many were hired. */
   const offerAcceptance = useMemo(() => {
     const offered = applications.filter((a) => everReached(a, "offered"));
     const decided = offered.filter((a) => a.status === "hired" || a.status === "rejected");
@@ -666,7 +666,7 @@ export default function AdminDashboard() {
 
   const starvedReqs = reqCoverage.filter((r) => r.value === 0).length;
 
-  /** Channel mix by application VOLUME — the share each source contributes. */
+  /** Channel mix by application VOLUME, the share each source contributes. */
   const channelMix = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of applications) {
@@ -808,7 +808,7 @@ export default function AdminDashboard() {
      you cannot act on is a poster; this row is the top of the funnel into the
      rest of the app, and previously every one of these was a dead <div>.
 
-     Coverage and time-to-hire carry no href on purpose — they are ratios over
+     Coverage and time-to-hire carry no href on purpose, they are ratios over
      the whole set, not a filterable subset, so there is no list to land on.
      Giving them a hover state would promise a destination that does not
      exist. */
@@ -821,8 +821,8 @@ export default function AdminDashboard() {
       href: "/admin/applications?status=interview" },
     { label: "Placements",   value: placementCount, sub: rangeStart !== null ? rangeLabel.toLowerCase() : "all time",
       href: "/admin/applications?status=hired" },
-    { label: "Coverage",     value: coverage !== null ? coverage : "—", sub: "per role" },
-    { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "—", sub: "median" },
+    { label: "Coverage",     value: coverage !== null ? coverage : "–", sub: "per role" },
+    { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "–", sub: "median" },
   ];
 
   return (
@@ -923,7 +923,7 @@ export default function AdminDashboard() {
 
       {/* ── state card + volume charts ── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Pipeline state — the card wears its state: a light green wash when
+        {/* Pipeline state, the card wears its state: a light green wash when
             everything is healthy, an amber wash + amber border when something
             needs attention, so the difference is visible from across the room. */}
         <div
@@ -1117,7 +1117,7 @@ export default function AdminDashboard() {
         />
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="overflow-hidden">
-            <CardHead icon={IconCoverage} title="Requisition coverage" subtitle="Thinnest first — the top is where to source" />
+            <CardHead icon={IconCoverage} title="Requisition coverage" subtitle="Thinnest first, the top is where to source" />
             <DarkBars items={reqCoverage} emptyMessage="No open requisitions" />
           </Card>
 
@@ -1127,8 +1127,7 @@ export default function AdminDashboard() {
             {topClientShare !== null && topClientShare >= 40 && clientMix.length > 0 && (
               <div className="border-t border-[var(--adm-line)] px-5 py-3 text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
                 <span className="font-semibold text-[var(--adm-ink-mute)]">{clientMix[0].label}</span> is{" "}
-                <span className="font-semibold text-[var(--adm-warning)]">{topClientShare}%</span> of the pipeline —
-                a concentration risk worth naming.
+                <span className="font-semibold text-[var(--adm-warning)]">{topClientShare}%</span> of the pipeline, a concentration risk worth naming.
               </div>
             )}
           </Card>
@@ -1137,7 +1136,7 @@ export default function AdminDashboard() {
 
       {/* ── recent activity + throughput ── */}
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* Recently viewed — segmented tabs. */}
+        {/* Recently viewed, segmented tabs. */}
         <Card className="overflow-hidden lg:col-span-2">
           <div className="border-b border-[var(--adm-line)] px-5 py-3.5">
             <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Recent activity</h3>

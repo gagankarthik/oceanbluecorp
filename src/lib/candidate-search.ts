@@ -1,6 +1,6 @@
 // What a candidate search actually looks at.
 //
-// The Applications search used to match six identity fields — name, email,
+// The Applications search used to match six identity fields, name, email,
 // application id, job title, phone, city. That meant searching "java" found
 // whoever applied to a job with Java in its TITLE, and missed every candidate
 // whose resume is full of Java: the parsed analysis was already loaded in the
@@ -22,10 +22,10 @@ function strings(values?: Array<string | null | undefined>): string[] {
  * Deliberately includes the parsed resume: skills by every category the
  * extractor reports, job titles and employers from the work history, the
  * technologies used on each role, certifications, and the industry. Education
- * and personal detail are left out — searching "Austin" should find a candidate
+ * and personal detail are left out, searching "Austin" should find a candidate
  * in Austin, not everyone who went to university there.
  *
- * Long prose is left out too — the professional summary and per-role
+ * Long prose is left out too, the professional summary and per-role
  * descriptions. Recruiters search skills, employers and titles, not sentences,
  * and this string is sent to the browser for every candidate in a list: paragraphs
  * would put back most of the payload it exists to avoid. Full text is still on

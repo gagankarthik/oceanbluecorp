@@ -26,7 +26,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Recruiters may view a requisition but not edit it — bounce them to the record.
+  // Recruiters may view a requisition but not edit it, bounce them to the record.
   const isRecruiter = user?.role === UserRole.RECRUITER;
 
   useEffect(() => {

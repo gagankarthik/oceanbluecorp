@@ -19,7 +19,7 @@ function deriveFileType(fileName: string): string {
   return "application/octet-stream";
 }
 
-// GET — list all resume bank items from S3 (no DynamoDB)
+// GET, list all resume bank items from S3 (no DynamoDB)
 export async function GET(request: NextRequest) {
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST — upload resume file server-side to S3 (avoids browser CORS restrictions on direct S3 PUT).
+// POST, upload resume file server-side to S3 (avoids browser CORS restrictions on direct S3 PUT).
 // File is sent as a raw binary body with metadata in headers rather than multipart/form-data,
 // because AWS Amplify's SSR compute layer does not reliably forward the multipart Content-Type
 // (boundary) to the function, which makes request.formData() throw.

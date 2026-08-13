@@ -19,7 +19,7 @@ export default function NewJobPage() {
   const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Recruiters cannot create requisitions — bounce them back to the list.
+  // Recruiters cannot create requisitions, bounce them back to the list.
   const isRecruiter = user?.role === UserRole.RECRUITER;
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function NewJobPage() {
       }),
     ]).catch((err) => {
       console.error(err);
-      toast.error("Some reference data failed to load — client, vendor and assignee lists may be incomplete.");
+      toast.error("Some reference data failed to load, client, vendor and assignee lists may be incomplete.");
     });
   }, []);
 

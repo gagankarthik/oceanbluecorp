@@ -151,17 +151,16 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
-  /* Scoped to `:not(.lenis)` — Lenis stamps `.lenis` on <html> when it takes
+  /* Scoped to `:not(.lenis)`. Lenis stamps `.lenis` on <html> when it takes
      over the scroll. Native smooth scrolling and Lenis fight for the same
      scroll position: Lenis writes it every frame, and the browser then tries to
      *animate* toward each of those writes, which reads as lag rather than
-     smoothness. This keeps native smoothing everywhere Lenis is not active —
-     the admin console, and anyone with prefers-reduced-motion set. */
+     smoothness. This keeps native smoothing everywhere Lenis is not active, the admin console, and anyone with prefers-reduced-motion set. */
   html:not(.lenis) {
     scroll-behavior: smooth;
   }
 
-  /* ADA / WCAG 2.1 AA — visible focus ring for keyboard navigation */
+  /* ADA / WCAG 2.1 AA, visible focus ring for keyboard navigation */
   :focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
@@ -174,15 +173,14 @@
   }
 
   /* Ensure interactive elements have minimum touch target size (WCAG 2.5.5).
-     Roles that draw a fixed-size box (checkbox, radio, switch) are exempt —
-     a min-height would stretch the 16px square into a 16x24 rectangle. Those
+     Roles that draw a fixed-size box (checkbox, radio, switch) are exempt, a min-height would stretch the 16px square into a 16x24 rectangle. Those
      controls carry their own transparent oversized hit area instead. */
   button:not([role="checkbox"], [role="radio"], [role="switch"]),
   a, [role="button"] {
     min-height: 24px;
   }
 
-  /* Native boxes are square by definition — a min-height turns them into
+  /* Native boxes are square by definition, a min-height turns them into
      rectangles. Size them instead, so height and width move together. */
   input[type="checkbox"], input[type="radio"] {
     width: 16px;
@@ -198,6 +196,7 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
 }
 
 /* Custom Animations */
@@ -694,7 +693,7 @@
 }
 
 /* ============================================================
-   Enterprise — landing page palette + utilities
+   Enterprise, landing page palette + utilities
    ============================================================ */
 
 :root {
@@ -714,14 +713,14 @@
   --ob-dark-2:    #0f1626;
   --ob-dark-3:    #182336;
 
-  /* Brand palette — deep ocean × warm horizon */
-  --ob-accent:        #1e4dd8;   /* confident cobalt — primary action */
+  /* Brand palette, deep ocean × warm horizon */
+  --ob-accent:        #1e4dd8;   /* confident cobalt, primary action */
   --ob-accent-hover:  #1a40b8;
   --ob-blue:          #2563eb;
   --ob-cyan:          #22d3ee;
   --ob-deep:          #0c2156;   /* deep ocean */
   --ob-deep-2:        #1a2a52;
-  /* The distinctive accent: warm coral/copper — the horizon line */
+  /* The distinctive accent: warm coral/copper, the horizon line */
   --ob-coral:         #ff6b47;
   --ob-coral-soft:    #ffa686;
   --ob-amber:         #f5b942;   /* warm gold */
@@ -785,7 +784,7 @@
     radial-gradient(at 92% 0%, rgba(255,107,71,0.05)  0px, transparent 50%);
 }
 
-/* Architectural diagonal stripes — distinctive */
+/* Architectural diagonal stripes, distinctive */
 .bg-ob-diagonal {
   background-image: repeating-linear-gradient(
     -55deg,
@@ -847,7 +846,7 @@
   100% { transform: scale(2.4); opacity: 0; }
 }
 
-/* Primary CTA — confident cobalt */
+/* Primary CTA, confident cobalt */
 .ob-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -869,7 +868,7 @@
   box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 14px 36px -10px rgba(30,77,216,0.65);
 }
 
-/* Coral accent CTA — distinctive secondary */
+/* Coral accent CTA, distinctive secondary */
 .ob-btn-coral {
   display: inline-flex;
   align-items: center;
@@ -978,7 +977,7 @@
 }
 
 /* ============================================================
-   LANDING — "Operator Console" design tokens (Register-grade)
+   LANDING , "Operator Console" design tokens (Register-grade)
    Replaces all prior landing-only tokens. Cascades after them.
    Aesthetic: Stripe / Mercury / Linear. Neutral slate base,
    one restrained cobalt accent. Used ONLY by landing components.
@@ -1008,7 +1007,7 @@
   --reg-ink-3:  #1f242f;
   --reg-ink-4:  #2d3239;
 
-  /* Brand — Ocean cobalt (restrained) */
+  /* Brand. Ocean cobalt (restrained) */
   --reg-brand-25:  #f3f7ff;
   --reg-brand-50:  #ecf2ff;
   --reg-brand-100: #dbe6ff;
@@ -1039,7 +1038,7 @@
   --reg-error-500: #f04438;
   --reg-error-700: #b42318;
 
-  /* Shadows — single ring, no multi-layer drama */
+  /* Shadows, single ring, no multi-layer drama */
   --reg-shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
   --reg-shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.10), 0 1px 2px -1px rgb(16 24 40 / 0.06);
   --reg-shadow-md: 0 4px 6px -1px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.06);
@@ -1121,7 +1120,7 @@
 }
 
 /* ============================================================
-   HORIZON — landing-page design system (current; chosen 2026-05-23,
+   HORIZON, landing-page design system (current; chosen 2026-05-23,
    supersedes the warm "Lighthouse" direction).
    Light canvas + dark navy cinematic bands. Cobalt → cyan accent
    used with restraint. Geist Sans display + Inter body + Geist Mono
@@ -1139,8 +1138,8 @@
   --hz-line:      #e2e8f0;
   --hz-line-2:    #cbd5e1;
 
-  /* Dark bands — deep, futuristic near-black blue */
-  --hz-ink:       #050912;   /* darkest — hero / CTA */
+  /* Dark bands, deep, futuristic near-black blue */
+  --hz-ink:       #050912;   /* darkest, hero / CTA */
   --hz-navy:      #0a1730;   /* feature band */
   --hz-navy-2:    #0e2147;   /* raised dark surface */
   --hz-navy-3:    #15315e;
@@ -1153,30 +1152,66 @@
   --hz-on-dark-mute: #94a3b8;
   --hz-line-dark:   rgba(226,232,240,0.12);
 
-  /* Accent — confident "Ocean Blue" (single decisive brand color, consulting-grade) */
+  /* Paper ground, carried over with the client-work and accreditation
+     sections from the other branch, and the hairline is the rule colour
+     those sections divide their rows with.
+
+     COOL, not warm. This was #FAFAF7, an off-white with yellow in it, sitting
+     next to a palette built entirely on blue: the logo blues, the cobalt
+     accent, the ink bands. Warm paper against cool everything reads as two
+     different whites rather than one ground, which is exactly the mismatch it
+     looked like. These are the same lightness, biased the other way, so the
+     ground now belongs to the same family as the accent.
+
+     Kept as its own pair rather than folded into --hz-canvas, because every
+     section on pure white was designed against pure white and tinting the
+     global canvas would shift all of them at once. */
+  --hz-paper:      #F7F9FC;
+  --hz-paper-line: #E4E9F0;
+
+  /* The accreditation strip's own rules, one step lighter again. That strip
+     sits on white between two heavy neighbours, the client-work rows above
+     and the black CTA below, and at --hz-paper-line weight its dividers
+     read as a drawn table rather than as separators. This is a hairline you
+     notice only when you look for it, which is the whole job, still present,
+     just not drawing the cell. */
+  --hz-strip-line: #EBEFF5;
+
+  /* The light end of the logo's gradient, measured off the mark: the
+     droplet runs #0975C1 at its base to #0CACCF at the arc tips. Only
+     the light end is needed here; the deep end would be a competing
+     value for --hz-cobalt below, which is a decision left open. */
+  --hz-aqua:       #0CACCF;
+
+  /* Accent, confident "Ocean Blue" (single decisive brand color, consulting-grade) */
   --hz-cobalt:     #1d4ed8;
   --hz-cobalt-600: #1740ad;
   --hz-cobalt-100: #dbe6fe;
+  /* The accent as it behaves on a dark ground. #1d4ed8 is too dark to read
+     against the hero, which is why a separate cyan got introduced and quietly
+     became a second accent. This is the SAME accent lightened for contrast,
+     not another colour, one hue, two grounds. */
+  --hz-cobalt-300: #8fb4fd;
   --hz-cyan:       #2ad8ef;
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;
 
-  /* Alternating section band. Cool slate — the warm ivory it replaced fought
+  /* Alternating section band. Cool slate, the warm ivory it replaced fought
      the cobalt accent and slate text, and read yellow next to pure white.
      --hz-ivory is kept as an alias so existing call sites keep working. */
   --hz-band:       #f4f7fb;
   --hz-band-line:  #e6ecf4;
   --hz-ivory:      var(--hz-band);
 
-  /* Amber highlight — the single warm accent (eyebrows, stat suffixes) */
+  /* Amber highlight, the single warm accent (eyebrows, stat suffixes) */
   --hz-amber:      #d97706;
   --hz-amber-600:  #b45309;
   --hz-amber-100:  #fde7c9;
 
-  /* Gold — the anniversary line-work only (anniversary/CornerArches.tsx).
+  /* Gold, the anniversary line-work only (anniversary/CornerArches.tsx).
      That component passes `var(--hz-gold, #c9a227)` rather than the bare
      token, deliberately: an unresolved var in an SVG `stroke` computes to
-     `none`, so a missing token does not degrade the ornament — it deletes
+     `none`, so a missing token does not degrade the ornament, it deletes
      it, silently and completely. The literal keeps the failure cosmetic.
      Scoped that narrowly on purpose: cobalt is the brand, and a second
      saturated accent used freely would dilute it. Gold appears here as
@@ -1195,7 +1230,7 @@
   --hz-shadow-lg: 0 30px 60px -24px rgba(10,37,64,0.35), 0 12px 24px -12px rgba(15,23,42,0.12);
 }
 
-/* Landing base — Geist Sans everywhere (no Inter body on the landing) */
+/* Landing base. Geist Sans everywhere (no Inter body on the landing) */
 .horizon {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   color: var(--hz-text);
@@ -1203,7 +1238,7 @@
   text-rendering: optimizeLegibility;
 }
 
-/* Display — Geist Sans, tight modern grotesque */
+/* Display. Geist Sans, tight modern grotesque */
 .hz-display {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: -0.035em;
@@ -1213,13 +1248,12 @@
 
 /* Section heading scale.
 
-   These had drifted into four different sizes across five sections —
-   1.5/1.85/2.1, 1.75/2.1/2.5, and two separate clamps — so the page
+   These had drifted into four different sizes across five sections, 1.5/1.85/2.1, 1.75/2.1/2.5, and two separate clamps, so the page
    spoke in four voices depending on where you were in it. Two roles,
    both fluid, both used everywhere:
 
    .hz-h2         opens a section and carries its argument.
-   .hz-statement  supports one — the centered line introducing a row of
+   .hz-statement  supports one, the centered line introducing a row of
                   client logos or certification badges. Deliberately
                   smaller: it sets up the marks beneath it rather than
                   competing with the section headings above and below.
@@ -1235,16 +1269,36 @@
   line-height: 1.15;
 }
 
-/* Eyebrow — mono, uppercase, tracked */
+/* NOTE: a `.hz-container` class was written here and silently never reached
+   the browser, every neighbouring rule in this file compiled, that one alone
+   was dropped from the generated stylesheet, so every section rendered flush
+   to both screen edges with zero gutter. Rather than keep guessing at the
+   toolchain, the page shell is now Tailwind utilities applied at each call
+   site (see SHELL in the landing components). Do not reintroduce it as a
+   bespoke class without checking the built CSS actually contains it. */
+
+/* Eyebrow, mono, uppercase, tracked.
+
+   The colour lives here now. Every one of the ~19 call sites was pairing this
+   class with `text-[var(--hz-amber)]`, which made amber a second accent
+   competing with cobalt across the whole site, and a third once the hero's
+   cyan is counted. Accenture is black plus one purple; EY is charcoal plus one
+   yellow. Three accents is what separates a mid-market site from those.
+
+   An eyebrow is a LABEL. It names the section it sits above; it is not the
+   thing you should be looking at. Neutral subtle is the honest weight for it,
+   and it leaves cobalt free to mean one thing: this is actionable, or this is
+   the number that matters. */
 .hz-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
+  color: var(--hz-text-subtle);
 }
 
-/* Film grain — applied only to a fixed, pointer-events-none overlay */
+/* Film grain, applied only to a fixed, pointer-events-none overlay */
 .hz-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
 }
@@ -1255,7 +1309,7 @@
   font-feature-settings: "tnum" 1;
 }
 
-/* Primary CTA — cobalt, with a fill-up-from-bottom hover */
+/* Primary CTA, cobalt, with a fill-up-from-bottom hover */
 .hz-btn-primary {
   position: relative; overflow: hidden; z-index: 0;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -1305,15 +1359,23 @@
 .hz-btn-ghost-dark:hover { background: rgba(241,245,249,0.10); transform: translateY(-2px); }
 
 /* Hairline card */
+/* The one card in the system, matched to the landing page and the nav menus:
+   white, a hairline in the paper rule colour, a modest radius, and NOTHING
+   else. It used to lift and cast a shadow on hover, a card that rises off the
+   page on approach is the single most template-looking interaction a marketing
+   site has, and the site had already dropped it everywhere else. Hover now
+   darkens the hairline, which is enough to say "this is clickable" without the
+   object moving. Redefined here rather than at 12 call sites, so every page
+   that uses it comes along. */
 .hz-card {
-  background: var(--hz-canvas);
-  border: 1px solid var(--hz-line);
-  border-radius: 16px;
-  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, border-color .25s ease;
+  background: #fff;
+  border: 1px solid var(--hz-paper-line);
+  border-radius: 12px;
+  transition: border-color .2s ease;
 }
-.hz-card:hover { border-color: var(--hz-cobalt-100); box-shadow: var(--hz-shadow-md); }
+.hz-card:hover { border-color: color-mix(in srgb, var(--hz-cobalt) 40%, transparent); }
 
-/* Ambient aurora wash — a soft, drifting color field (no grids) */
+/* Ambient aurora wash, a soft, drifting color field (no grids) */
 @keyframes hz-aurora {
   0%   { transform: translate3d(0,0,0) scale(1); }
   50%  { transform: translate3d(2%, -2%, 0) scale(1.08); }
@@ -1336,7 +1398,7 @@
 /* ── Above-the-fold entrance ──────────────────────────────────
    The hero used framer-motion for its entrance, which meant the
    headline was server-rendered at opacity:0 and stayed invisible
-   until React hydrated — five to eight seconds on a cold load, with
+   until React hydrated, five to eight seconds on a cold load, with
    the LCP text absent for all of it. These run off the stylesheet
    instead, so the copy animates on first paint and never waits for
    JavaScript. Use ONLY above the fold; below it, framer-motion's
@@ -1348,11 +1410,33 @@
 .hz-enter {
   /* `both` holds the from-state during animation-delay, so a staged
      sequence doesn't flash all its steps before the first one runs. */
-  animation: hz-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hz-enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Cinematic hold on the hero block.
+
+   A very slow, very small push-in under the word rise. The scale is
+   1.5% over two and a half seconds, far too little to read as an
+   animation on its own, which is the point: it reads as the frame
+   settling rather than as an element sliding in. Paired with the
+   graded photograph it gives the opening the feel of a shot coming
+   to rest instead of a web page loading.
+
+   Transform and opacity only, both compositor properties, so the
+   long duration costs nothing per frame. */
+@keyframes hz-cinema {
+  from { opacity: 0; transform: scale(1.015); }
+  to   { opacity: 1; transform: none; }
+}
+.hz-cinema {
+  animation: hz-cinema 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hz-cinema { animation: none; opacity: 1; transform: none; }
 }
 
 /* Word-by-word headline rise. The parent span clips, the inner one
-   travels — same effect WordsReveal produced in JS. */
+   travels, same effect WordsReveal produced in JS. */
 @keyframes hz-word {
   from { transform: translate3d(0, 110%, 0); opacity: 0; }
   to   { transform: none; opacity: 1; }
@@ -1360,11 +1444,11 @@
 .hz-word-clip { display: inline-block; overflow: hidden; vertical-align: top; }
 .hz-word {
   display: inline-block;
-  animation: hz-word 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hz-word 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Never leave the text hidden — drop the travel, keep it legible. */
+  /* Never leave the text hidden, drop the travel, keep it legible. */
   .hz-enter, .hz-word { animation: none; opacity: 1; transform: none; }
 }
 
@@ -1376,14 +1460,14 @@
    at opacity 0. Not worth the paint saving. */
 
 /* ============================================================
-   ADMIN — semantic design tokens (the only values admin UI may
+   ADMIN, semantic design tokens (the only values admin UI may
    reference). Components consume these; pages consume components.
    Aliases the brand --hz-* primitives so the brand can be retuned
    in one place without touching admin code. See DESIGN_SYSTEM.md.
    ============================================================ */
 
 :root {
-  /* Accent (single brand accent — cobalt; never introduce a second) */
+  /* Accent (single brand accent, cobalt; never introduce a second) */
   --adm-accent:        var(--hz-cobalt);      /* primary actions, active nav, links */
   --adm-accent-strong: var(--hz-cobalt-600);  /* hover/pressed on primary */
   --adm-accent-soft:   var(--hz-cobalt-100);  /* tinted chips, icon wells, selected pills */
@@ -1393,8 +1477,7 @@
   /* Surfaces & lines (one neutral family: slate)
 
      Retuned for the operations-workspace direction. The old canvas (#eef2f7)
-     was a heavy blue-grey that made white panels read as paper on a desk —
-     correct for a document system, wrong for a workspace where the grid IS
+     was a heavy blue-grey that made white panels read as paper on a desk, correct for a document system, wrong for a workspace where the grid IS
      the screen. The canvas is now barely tinted, so the eye goes to the data
      rather than to the frame around it, and the borders lightened to match:
      at 40px row height a #dbe3ec rule between every row is a visible ladder. */
@@ -1416,7 +1499,7 @@
   /* Ink */
   --adm-ink:        #0f172a;                  /* headings, primary values (slate-900) */
   --adm-ink-mute:   #64748b;                  /* labels, secondary text (slate-500) */
-  /* Was #94a3b8 (slate-400), which is 2.56:1 on white — a clear WCAG 1.4.3
+  /* Was #94a3b8 (slate-400), which is 2.56:1 on white, a clear WCAG 1.4.3
      failure for the labels, hints and timestamps this token colours. It reads
      as "quiet" on a designer's monitor and as "unreadable" on a laptop at an
      angle. #6b7280 is the lightest step that clears 4.5:1 (4.83). Measured by
@@ -1426,31 +1509,31 @@
   /* Status (match tones in components/admin/theme.ts) */
   --adm-success: #059669;
   --adm-warning: #d97706;
-  /* Text-weight variants. The base tokens above are tuned as FILLS — dots,
-     switch tracks, tinted chips — where they read correctly, but as TEXT they
+  /* Text-weight variants. The base tokens above are tuned as FILLS, dots,
+     switch tracks, tinted chips, where they read correctly, but as TEXT they
      are 3.77:1 (success) and 3.19:1 (warning) on white and fail 1.4.3. Two
      tokens rather than darkening the base, because darkening the base would
      also darken every dot and fill that is currently right. */
   --adm-success-ink: #047857;                 /* 5.48:1 on white */
   --adm-warning-ink: #b45309;                 /* 5.02:1 on white */
   /* --adm-danger is 4.70:1 on white and passes there, but only 4.01:1 on its
-     own 10% tint — which is exactly where it is used, in the unclaimed claim
+     own 10% tint, which is exactly where it is used, in the unclaimed claim
      button. Tinted backgrounds eat contrast, so the tint case needs its own
      value even when the plain case is fine. */
   --adm-danger-ink:  #be123c;                 /* 6.29:1 white, 5.37:1 on tint */
   --adm-danger:  #e11d48;
   --adm-info:    #4f46e5;
 
-  /* Categorical chart palette — use IN ORDER, max 7 series per chart.
+  /* Categorical chart palette, use IN ORDER, max 7 series per chart.
      Series 1 is always the brand accent; emerald is reserved for
      "hired/success" series, rose for "rejected/failure". */
-  --adm-chart-1: #1d4ed8;  /* cobalt — primary series */
+  --adm-chart-1: #1d4ed8;  /* cobalt, primary series */
   --adm-chart-2: #8b5cf6;  /* violet */
   --adm-chart-3: #06b6d4;  /* cyan */
-  --adm-chart-4: #10b981;  /* emerald — success series */
+  --adm-chart-4: #10b981;  /* emerald, success series */
   --adm-chart-5: #f59e0b;  /* amber */
   --adm-chart-6: #ec4899;  /* pink */
-  --adm-chart-7: #94a3b8;  /* slate — "other"/neutral series */
+  --adm-chart-7: #94a3b8;  /* slate , "other"/neutral series */
 
   /* Elevation. Still border-led, but with a hairline lift restored: against the
      lighter canvas a pure-border panel had no edge definition at all, so the
@@ -1486,7 +1569,7 @@
   --adm-duration-base:   300ms;   /* lifts, reveals */
   --adm-duration-slow:   700ms;   /* progress bars, chart draws */
 
-  /* Radius scale. Ant v5 territory (6px base, 8px large) — soft enough to feel
+  /* Radius scale. Ant v5 territory (6px base, 8px large), soft enough to feel
      current and comfortable, structured enough to still read as a business
      application. The earlier 3px pass was too hard and made the UI feel cramped
      and dated. */
@@ -1495,13 +1578,13 @@
   --adm-radius-chip:    6px;
   --adm-radius-card:    10px;
 
-  /* Row density for data grids — now a user-facing setting, not a constant.
+  /* Row density for data grids, now a user-facing setting, not a constant.
      `--adm-row-h` is overridden per-grid by the density toggle.
 
      THREE separate passes have now been rejected for being too tight: 34px
      ("very compact, this is very bad"), then 48px, then 40px ("too compacted
      and clumsy"). Do not propose a tighter default again. 56px is the settled
-     value — it clears a 32px avatar with real padding either side, and lets a
+     value, it clears a 32px avatar with real padding either side, and lets a
      name sit on a line with air above and below it rather than wedged between
      two rules.
 
@@ -1541,13 +1624,13 @@
 }
 
 /* ============================================================
-   ADMIN — themeable console tokens (light + dark).
+   ADMIN, themeable console tokens (light + dark).
 
    The admin section is a dense operations console, modelled on
    Conduktor's data console, that ships in BOTH a light and a dark
    theme, switchable by the viewer. Everything is driven THROUGH these
    `--adm-*` tokens, so a component never needs to know which theme is
-   active — it styles once, against the token, and both themes come for
+   active, it styles once, against the token, and both themes come for
    free.
 
    Cascade (explicit choice must beat the OS preference in BOTH
@@ -1570,39 +1653,39 @@
 
    The shell (admin/layout.tsx) sets `data-theme` on the `.adm-scope`
    root from a persisted `useLocalStorage("adminTheme", "system")`
-   choice — "system" leaves the attribute off so the media query drives
+   choice , "system" leaves the attribute off so the media query drives
    it. The public marketing site never carries `.adm-scope`, so it is
    entirely unaffected by any of this.
 
    Dark palette, read off the Conduktor reference:
      · near-black canvas (#0a0a0a), NOT pure black
      · slightly-lighter card surfaces (#141414 / #1b1b1b)
-     · hairline borders (#262626) — structure from lines, not shadow
+     · hairline borders (#262626), structure from lines, not shadow
      · GREEN (#22c55e) = healthy / success · BLUE (#3b82f6) = data / graph
    ============================================================ */
 
-/* ── LIGHT (base) — the console's default theme. Adds the newer tokens and
+/* ── LIGHT (base), the console's default theme. Adds the newer tokens and
       re-points a few :root values to the Conduktor light look; the rest of the
       light palette is inherited from :root above.
 
-      ACCENT = green (Conduktor's brand accent — active nav, primary actions,
+      ACCENT = green (Conduktor's brand accent, active nav, primary actions,
       links). A separate --adm-data = blue carries graphs/charts, so a line and
       a "healthy" tick never collide on the same hue. Semantic --adm-success
       stays green too; they are the same family by design. ── */
 .adm-scope {
-  /* Ocean Blue brand cobalt — matches the marketing site (--hz-cobalt). Green
+  /* Ocean Blue brand cobalt, matches the marketing site (--hz-cobalt). Green
      is reserved for the "healthy/success" semantic only, so accent ≠ success. */
-  --adm-accent:        #1d4ed8;                  /* cobalt-700 — primary/brand */
-  --adm-accent-strong: #1e40af;                  /* cobalt-800 — hover/pressed */
+  --adm-accent:        #1d4ed8;                  /* cobalt-700, primary/brand */
+  --adm-accent-strong: #1e40af;                  /* cobalt-800, hover/pressed */
   --adm-accent-soft:   rgba(29, 78, 216, 0.10);  /* tinted chips, active nav pill */
   --adm-accent-tint:   rgba(29, 78, 216, 0.07);  /* row hover / selected wash */
   --adm-focus-ring:    rgba(29, 78, 216, 0.28);
 
-  --adm-data:          #2563eb;                  /* blue — graphs, data series, sparklines */
+  --adm-data:          #2563eb;                  /* blue, graphs, data series, sparklines */
   --adm-data-soft:     rgba(37, 99, 235, 0.10);
 
   --adm-canvas:        #fafafa;                  /* page/content area (whiter) */
-  --adm-chrome:        #edeff2;                  /* sidebar + top bar — one shared, borderless surface, a touch greyer than the page */
+  --adm-chrome:        #edeff2;                  /* sidebar + top bar, one shared, borderless surface, a touch greyer than the page */
   --adm-line:          #ececf0;                  /* Conduktor hairline */
 
   --adm-surface-2:    #f1f5f9;   /* raised: active segmented pill, hovered well */
@@ -1623,7 +1706,7 @@
       both the media-query and the explicit-attribute selectors below. ── */
 @media (prefers-color-scheme: dark) {
   .adm-scope:not([data-theme="light"]) {
-    /* Accent — green (brand), brightened for a dark surface. Blue graphs live
+    /* Accent, green (brand), brightened for a dark surface. Blue graphs live
        on --adm-data so they stay distinct from the green success/healthy hue. */
     --adm-accent:        #22c55e;
     --adm-accent-strong: #16a34a;
@@ -1695,7 +1778,7 @@
   }
 }
 
-/* Explicit dark — wins on a light OS too. Same values as above. */
+/* Explicit dark, wins on a light OS too. Same values as above. */
 .adm-scope[data-theme="dark"] {
   --adm-accent:        #22c55e;
   --adm-accent-strong: #16a34a;
@@ -1771,7 +1854,7 @@
 .adm-scope textarea { color-scheme: inherit; }
 
 /* ============================================================
-   ADMIN — data-grid primitives.
+   ADMIN, data-grid primitives.
    A business system is read in columns, so the grid needs real
    structure: a sticky filled header, column rules, tabular
    figures, and a full-width focus row. These are utilities so
@@ -1786,7 +1869,7 @@
   font-feature-settings: "tnum" 1;
 }
 
-/* Sticky header band — stays put while a long ledger scrolls.
+/* Sticky header band, stays put while a long ledger scrolls.
 
    Sentence case at 12px, NOT 11px uppercase-tracked. The uppercase micro-label
    was singled out as a main reason the dense pass read as cramped and shouty;
@@ -1811,7 +1894,7 @@
    line token and 40px rows, ruling both axes turned the grid into graph paper.
    Alignment and whitespace separate the columns; the rules separate records. */
 /* Border on the CELLS, not the row: this table is `border-collapse: separate`,
-   where `tr` borders are never painted — so the row divider must live on td. */
+   where `tr` borders are never painted, so the row divider must live on td. */
 .adm-grid tbody td { border-bottom: 1px solid var(--adm-line-soft); }
 .adm-grid tbody tr:last-child td { border-bottom: 0; }
 
@@ -1821,7 +1904,7 @@
 
 /* ── Density. Set on the scroll container; cells read the variable so a single
    attribute retunes the whole grid without touching any cell class. Type size
-   is deliberately NOT part of density — only vertical rhythm changes. */
+   is deliberately NOT part of density, only vertical rhythm changes. */
 [data-density="compact"] { --adm-row-h: var(--adm-row-h-compact); }
 [data-density="default"] { --adm-row-h: var(--adm-row-h-default); }
 [data-density="relaxed"] { --adm-row-h: var(--adm-row-h-relaxed); }
@@ -1848,7 +1931,7 @@
    Several grid controls measured 16–28px: the selection checkboxes were
    16x24, the sort buttons 24px tall, the rating stars 16px. Those are below
    even the 24px minimum, so selecting a row or sorting a column needed real
-   aim — on a screen used for hours, all day.
+   aim, on a screen used for hours, all day.
 
    The fix extends the CLICKABLE area without changing the visual size: a
    transparent ::after is stretched to a comfortable target over the control
@@ -1904,7 +1987,7 @@
 }
 
 /* ── Smooth light⇄dark cross-fade. The shell adds `.adm-theming` to the
-   `.adm-scope` root only for the ~300ms of the switch, then removes it — so
+   `.adm-scope` root only for the ~300ms of the switch, then removes it, so
    every surface eases between palettes on toggle WITHOUT carrying a transition
    on every hover or data update, which would read as lag all day. Colour and
    shadow only; never layout. ── */
@@ -1931,7 +2014,7 @@
 }
 
 /* ============================================================
-   LENIS — momentum scrolling (see components/providers/SmoothScroll.tsx).
+   LENIS, momentum scrolling (see components/providers/SmoothScroll.tsx).
 
    Transcribed from `lenis/dist/lenis.css` rather than @import-ed:
    the ruleset is fifteen stable lines, and inlining keeps the
@@ -1941,7 +2024,7 @@
    `height: auto` is the load-bearing rule. Lenis measures the
    document to compute scroll limits, and a `height: 100%` on
    html/body reports the viewport height instead of the content
-   height — the page then refuses to scroll past one screen.
+   height, the page then refuses to scroll past one screen.
 
    `[data-lenis-prevent]` opts a scrollable child out, so an
    inner overflow container (a modal, a code block) keeps native

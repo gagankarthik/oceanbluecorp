@@ -62,9 +62,9 @@ interface FormErrors {
   email?: string;
 }
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 // ── page ─────────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ export default function ClientsPage() {
 
   const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
 
-  /** Records nobody can reach — the one client fact worth flagging up top. */
+  /** Records nobody can reach, the one client fact worth flagging up top. */
   const noContactCount = useMemo(
     () => clients.filter((c) => !c.email && !c.phone).length,
     [clients],
@@ -369,7 +369,7 @@ export default function ClientsPage() {
       cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(c.createdAt)}</span>,
     },
     // No trailing "actions" column. Edit and delete now ride in DataTable's
-    // rowActions slot, which reveals them on hover — a permanent column of
+    // rowActions slot, which reveals them on hover, a permanent column of
     // pencil-and-bin icons drew a vertical stripe of chrome down the grid and
     // competed with the records for attention.
   ];
@@ -437,7 +437,7 @@ export default function ClientsPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Active clients", value: statusCounts.active,

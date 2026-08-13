@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ThirteenYearsPage from "./_content";
-import { BRAND_NAME, FOUNDED_LONG, FOUNDED_YEAR, LEGAL_NAME, MILESTONES } from "@/lib/company";
+import { BRAND_NAME, FOUNDED_YEAR, MILESTONES } from "@/lib/company";
 import {
   ANNIVERSARY_COPY,
   ANNIVERSARY_PATH,
@@ -8,13 +8,17 @@ import {
   ANNIVERSARY_YEARS,
 } from "@/lib/anniversary";
 
-/* TEMPORARY — the 13-year anniversary story page. See lib/anniversary.ts for
+/* TEMPORARY, the 13-year anniversary story page. See lib/anniversary.ts for
    the teardown list. Unlike the homepage band this page is NOT date-gated: a
    link shared on the day should keep resolving afterwards rather than 404. */
 
 const URL = `https://oceanbluecorp.com${ANNIVERSARY_PATH}`;
-const TITLE = `${ANNIVERSARY_COPY.heading} — ${FOUNDED_YEAR}–${ANNIVERSARY_YEAR}`;
-const DESCRIPTION = `${ANNIVERSARY_COPY.tagline} ${BRAND_NAME}, part of ${LEGAL_NAME}, was founded on ${FOUNDED_LONG} in Powell, Ohio, and has spent ${ANNIVERSARY_YEARS} years delivering IT staffing, enterprise solutions, and managed services.`;
+const TITLE = `${ANNIVERSARY_COPY.heading} , ${FOUNDED_YEAR}–${ANNIVERSARY_YEAR}`;
+/* Kept under ~160 characters, which is all a search result shows. The previous
+   build ran to 250 and was cut mid-clause; the founding date and the legal
+   entity are both on the page itself and in the Organization JSON-LD, so they
+   were spending the visible half of the snippet on detail nobody searches for. */
+const DESCRIPTION = `${BRAND_NAME} turns ${ANNIVERSARY_YEARS} in ${ANNIVERSARY_YEAR}: ${ANNIVERSARY_YEARS} years of IT staffing, enterprise solutions, and managed services from Powell, Ohio.`;
 
 export const metadata: Metadata = {
   title: `Celebrating ${ANNIVERSARY_YEARS} Years`,
@@ -43,7 +47,7 @@ const jsonLd = {
     itemListElement: MILESTONES.map((m, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: `${m.year} — ${m.title}`,
+      name: `${m.year} , ${m.title}`,
       description: m.description,
     })),
   },

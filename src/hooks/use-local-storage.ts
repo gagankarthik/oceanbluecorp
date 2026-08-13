@@ -15,7 +15,7 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
-  // Lazy initializer runs only on client — never on server.
+  // Lazy initializer runs only on client, never on server.
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") return initialValue;
     try {
@@ -43,7 +43,7 @@ export function useLocalStorage<T>(
         try {
           window.localStorage.setItem(key, JSON.stringify(next));
         } catch {
-          // Storage quota or private browsing — silently ignore.
+          // Storage quota or private browsing, silently ignore.
         }
         return next;
       });

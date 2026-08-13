@@ -8,7 +8,7 @@ import { hireTypeLabel } from "@/components/admin/theme";
 import { fmtDate } from "@/lib/format";
 
 /* ============================================================
-   ApplicantDetails — the application's own fields.
+   ApplicantDetails, the application's own fields.
 
    ── Empty fields stop being rendered as data ────────────────
    This grid used to print every field whether or not it held
@@ -22,7 +22,7 @@ import { fmtDate } from "@/lib/format";
    sections say why they are empty and what to do), which the
    old grid quietly broke.
 
-   The blanks stay reachable — a recruiter checking whether work
+   The blanks stay reachable, a recruiter checking whether work
    authorisation is on file needs to see that it is missing, not
    just fail to find it. One click, and the difference between
    "absent" and "unrecorded" is explicit.
@@ -35,7 +35,7 @@ function Cell({ label, value }: Field) {
     <div className="min-w-0">
       <dt className="text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
       <dd className="mt-1 break-words text-[14px] text-[var(--adm-ink)]">
-        {value ?? <span className="text-[var(--adm-ink-subtle)]">—</span>}
+        {value ?? <span className="text-[var(--adm-ink-subtle)]"></span>}
       </dd>
     </div>
   );
@@ -99,7 +99,7 @@ export function ApplicantDetails({
           >
             {showEmpty
               ? "Hide empty fields"
-              : `${blanks.length} ${blanks.length === 1 ? "field is" : "fields are"} not recorded — show`}
+              : `${blanks.length} ${blanks.length === 1 ? "field is" : "fields are"} not recorded, show`}
           </button>
         </div>
       )}

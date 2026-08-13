@@ -49,7 +49,7 @@ export default function SignOutPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--hz-paper)] px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           {/* Logo/Icon */}
@@ -60,11 +60,11 @@ export default function SignOutPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-[var(--hz-text)] mb-2">
             {autoSignOut ? "Session Ended" : "Sign Out"}
           </h1>
 
-          <p className="text-slate-500 mb-8">
+          <p className="text-[var(--hz-text-subtle)] mb-8">
             {autoSignOut
               ? "Your session has expired. Signing you out..."
               : "Are you sure you want to sign out of your account?"}
@@ -82,7 +82,7 @@ export default function SignOutPage() {
           {isLoading || authLoading ? (
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-8 h-8 text-[var(--hz-cobalt)] animate-spin" />
-              <p className="text-slate-500">
+              <p className="text-[var(--hz-text-subtle)]">
                 {authLoading ? "Loading..." : "Signing you out..."}
               </p>
             </div>
@@ -102,7 +102,7 @@ export default function SignOutPage() {
                 <button
                   onClick={handleCancel}
                   disabled={isLoading || authLoading}
-                  className="w-full px-6 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-6 py-3 bg-slate-100 text-[var(--hz-text-mute)] font-semibold rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

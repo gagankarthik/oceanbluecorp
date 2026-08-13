@@ -6,7 +6,7 @@ function decodeKey(id: string): string {
   return Buffer.from(id, "base64url").toString("utf8");
 }
 
-// GET — presigned download URL for a bank resume
+// GET, presigned download URL for a bank resume
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -29,7 +29,7 @@ export async function GET(
   }
 }
 
-// DELETE — remove from S3 only (no DynamoDB)
+// DELETE, remove from S3 only (no DynamoDB)
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

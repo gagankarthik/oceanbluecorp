@@ -61,7 +61,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const [analysisEditOpen, setAnalysisEditOpen] = useState(false);
   /** The linked requisition, for the pipeline panel's client/vendor/rate defaults. */
   const [jobDetail, setJobDetail] = useState<Job | null>(null);
-  /** One unattended retry per visit — not per render, and not a loop. */
+  /** One unattended retry per visit, not per render, and not a loop. */
   const autoRetried = useRef(false);
 
   const fetchCandidate = useCallback(async () => {
@@ -82,7 +82,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   useEffect(() => { void fetchCandidate(); }, [fetchCandidate]);
 
-  // Enrich with the linked job's details — fetched once per job, off the render path.
+  // Enrich with the linked job's details, fetched once per job, off the render path.
   const jobEnrichedRef = useRef<string | null>(null);
   useEffect(() => {
     const jobId = candidate?.jobId;
@@ -152,7 +152,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
    * This was silent on success: the rail moved and nothing else happened, so a
    * misclick on a six-node stepper was invisible until somebody noticed the
    * candidate was in the wrong place. It is also exactly reversible, so it
-   * gets an undo rather than a confirm — a confirm on the most-used control on
+   * gets an undo rather than a confirm, a confirm on the most-used control on
    * the screen would be intolerable, which is precisely why the action was
    * left unguarded in the first place.
    */
@@ -209,7 +209,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   };
 
   /* Claim and release both succeeded silently. Ownership is a claim ON A
-     SHARED RECORD — it tells the rest of the team whose desk this is — so
+     SHARED RECORD, it tells the rest of the team whose desk this is, so
      "did that register?" is a real question, and the only answer was a chip
      quietly changing in the corner of the toolbar. Both are exactly
      reversible, so each reports and offers the inverse. */
@@ -239,7 +239,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try {
       await applyOwner("", "");
       undoable({
-        message: "Released — this candidate is unassigned",
+        message: "Released, this candidate is unassigned",
         undo: () => applyOwner(prevId, prevName),
       });
     } catch { toast.error("Failed to release ownership"); }
@@ -275,7 +275,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   /**
    * Run the analysis. `auto` is the unattended retry: it says nothing on the way
-   * in and nothing on failure, because nobody asked for it — only a success is
+   * in and nothing on failure, because nobody asked for it, only a success is
    * worth interrupting the page for.
    */
   const handleAnalyze = async ({ auto = false }: { auto?: boolean } = {}) => {
@@ -310,14 +310,14 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       if (!res.ok) return;
       const data = await res.json();
       setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
-    } catch { /* non-fatal — the stale message stays on screen */ }
+    } catch { /* non-fatal, the stale message stays on screen */ }
   };
 
   // A failed analysis retries itself once per visit. Most failures are not about
   // this candidate at all (a rejected extraction token, the service down, a
   // timeout), so the record should heal on the next view rather than sit on
-  // "didn't finish" until somebody notices the button. Dead ends — no resume, the
-  // file gone from storage, a document nothing can be read from — are flagged
+  // "didn't finish" until somebody notices the button. Dead ends, no resume, the
+  // file gone from storage, a document nothing can be read from, are flagged
   // non-retryable server-side and left alone. Records that failed before the flag
   // existed have it undefined, and get one chance.
   useEffect(() => {
@@ -331,7 +331,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   }, [candidate?.resumeId, candidate?.resumeAnalysisStatus, candidate?.resumeAnalysisRetryable]);
 
   /* The pinned header's height is measured, not assumed. The sidebar is also
-     sticky, and its top offset has to clear this block — which changes height
+     sticky, and its top offset has to clear this block, which changes height
      with the candidate (a long name wraps, a missing phone shortens the contact
      row, the bench chip appears and disappears). A hard-coded offset is right
      for exactly one record; a ResizeObserver is right for all of them. */
@@ -388,7 +388,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   const TABS = [
     { key: "overview" as TabKey, label: "Overview", icon: IconFile,        count: undefined as number | undefined },
-    // The parsed resume — work history, skills, education, projects — is ~1,660px
+    // The parsed resume, work history, skills, education, projects, is ~1,660px
     // of reference material. It was the default view; it is now a tab, so the
     // Overview answers "who is this and should we proceed" in one screen.
     { key: "resume"   as TabKey, label: "Resume",   icon: IconSparkles,    count: undefined as number | undefined },
@@ -473,7 +473,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           `top-0` the block parks 24px down and content scrolls visibly through
           the strip above it.
 
-          Solid `--adm-canvas`, never `bg-[var(--adm-canvas)]/95` — Tailwind's
+          Solid `--adm-canvas`, never `bg-[var(--adm-canvas)]/95`. Tailwind's
           opacity modifier cannot dilute a CSS variable, the utility compiles to
           nothing, and the bar renders fully transparent with the card beneath
           reading straight through the pinned text. (Found exactly that way.) */}

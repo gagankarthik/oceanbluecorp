@@ -4,7 +4,7 @@ import type { Application } from "@/lib/aws/dynamodb";
  * Pipeline timing helpers.
  *
  * These were private to the dashboard, but the Applications workspace needs the
- * same "how long has this been sitting?" arithmetic to build its Stale view —
+ * same "how long has this been sitting?" arithmetic to build its Stale view,
  * and two copies of a stage-age calculation that drift apart would let the
  * dashboard and the list disagree about which candidates are stuck.
  */

@@ -22,7 +22,7 @@ interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
 }
 
 /**
- * Clearable list-page search. Filters as you type — no submit button.
+ * Clearable list-page search. Filters as you type, no submit button.
  *
  * Fixed-width rather than `flex-1`. It used to stretch to fill the toolbar,
  * which pushed every other control to the far edge and made the row read as
@@ -61,7 +61,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
  * The single toolbar row every list page sits behind: search, then filters,
  * then (pushed right) view controls and bulk actions.
  *
- * Pages previously stacked a search row above a wrapping row of status chips —
+ * Pages previously stacked a search row above a wrapping row of status chips,
  * six or seven pills each carrying a count, which on a page like Jobs took a
  * full extra band of vertical space to say "210 / 12 / 1 / 0 / 0 / 0". Most of
  * those counts were zero and none were worth permanent real estate. Put the
@@ -74,7 +74,7 @@ export function FilterBar({
 }: {
   /** Pinned to the left edge. Always the search box. */
   search?: React.ReactNode;
-  /** Filters and view controls — pinned to the right edge, in order. */
+  /** Filters and view controls, pinned to the right edge, in order. */
   children: React.ReactNode;
   className?: string;
 }) {
@@ -92,7 +92,7 @@ export function FilterBar({
 
 /**
  * Result tally. Renders ONLY while a filter is actually narrowing the list.
- * "210 of 210" is not information — it is a label restating that nothing has
+ * "210 of 210" is not information, it is a label restating that nothing has
  * happened yet, on every page, permanently.
  */
 export function ResultCount({ shown, total }: { shown: number; total: number }) {
@@ -116,7 +116,7 @@ export interface FilterOption<V extends string> {
  *
  * Replaces the chip rows. The trigger states the current selection so the row
  * still answers "what am I looking at?" without expanding, and it takes the
- * accent treatment only when the filter is actually narrowing something — a
+ * accent treatment only when the filter is actually narrowing something, a
  * control sitting at "All" is not an active filter and shouldn't look like one.
  */
 export function FilterMenu<V extends string>({
@@ -124,7 +124,7 @@ export function FilterMenu<V extends string>({
   value,
   options,
   onChange,
-  /** The value that means "no filtering" — drives the inactive styling. */
+  /** The value that means "no filtering", drives the inactive styling. */
   allValue = "all" as V,
   className,
 }: {
@@ -168,7 +168,7 @@ export function FilterMenu<V extends string>({
         </button>
       </DropdownMenuTrigger>
 
-      {/* sideOffset 4 keeps the menu visually connected to its trigger — a
+      {/* sideOffset 4 keeps the menu visually connected to its trigger, a
           detached floating panel reads as a different surface. */}
       <DropdownMenuContent
         align="start"
@@ -295,7 +295,7 @@ export function ViewSwitcher<V extends string>({
   );
 }
 
-/** Dropdown variant of the view switcher — a "View" button that opens the options. */
+/** Dropdown variant of the view switcher, a "View" button that opens the options. */
 export function ViewMenu<V extends string>({
   options,
   value,

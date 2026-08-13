@@ -3,7 +3,7 @@ import { matchCandidates } from "@/lib/aws/match-candidates";
 import { enrichMatches } from "@/lib/aws/enrich-matches";
 import { requireStaff } from "@/lib/auth/verify";
 
-// POST /api/match — find candidates for a pasted job description.
+// POST /api/match, find candidates for a pasted job description.
 // Body: { jobText?: string, job?: {...}, topK?: number }
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);

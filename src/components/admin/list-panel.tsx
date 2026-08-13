@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /* ============================================================
-   ListPanel — the single surface every admin list page sits on.
+   ListPanel, the single surface every admin list page sits on.
 
    Replaces the old four-stack (KPI card row → search card → loose
    count paragraph → table card). Those pushed the first record
@@ -234,8 +234,8 @@ export function Empty() {
 /**
  * Select styled to sit inside a table cell.
  *
- * A bare <select> renders with the operating system's own chrome — grey bevel
- * on Windows, a different metric on macOS — which is jarring next to designed
+ * A bare <select> renders with the operating system's own chrome, grey bevel
+ * on Windows, a different metric on macOS, which is jarring next to designed
  * controls and was the most obviously unfinished thing on the bench table.
  * appearance-none plus our own chevron makes it match everything else while
  * staying a real native select (so keyboard and mobile pickers still work).

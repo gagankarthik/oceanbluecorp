@@ -6,7 +6,7 @@
  * A job used to show an application COUNT, which says how many people applied
  * and nothing about whether the desk has actually done anything with them. This
  * is the answer to "what has gone out for this role, at what rate, and what came
- * back" — the view a manager asks for in a pipeline meeting.
+ * back", the view a manager asks for in a pipeline meeting.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -104,7 +104,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
         icon={IconSend}
         tone="blue"
         title="Nothing submitted for this role yet"
-        description="Submissions are recorded from a candidate's page — open an applicant and record where you sent them."
+        description="Submissions are recorded from a candidate's page, open an applicant and record where you sent them."
       />
     );
   }
@@ -137,7 +137,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                   </Link>
                 </td>
                 <td className="px-3 py-3 text-[var(--adm-ink-mute)]">
-                  {s.clientName || s.vendorName || "—"}
+                  {s.clientName || s.vendorName || "–"}
                   {s.clientName && s.vendorName && (
                     <span className="text-[var(--adm-ink-subtle)]"> via {s.vendorName}</span>
                   )}
@@ -154,7 +154,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                 </td>
                 <td className="px-5 py-3 text-[13px] text-[var(--adm-ink-mute)]">
                   {ivCount === 0 ? (
-                    <span className="text-[var(--adm-ink-subtle)]">—</span>
+                    <span className="text-[var(--adm-ink-subtle)]"></span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5">
                       <IconInterview className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />

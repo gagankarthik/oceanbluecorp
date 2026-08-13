@@ -7,6 +7,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 type Service = { icon: LucideIcon; title: string; desc: string; capabilities: string[] };
@@ -91,10 +92,15 @@ function ServiceDetail({ id }: { id: string }) {
   const s = SERVICES[id];
   const Icon = s.icon;
   return (
-    <div id={id} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
+    // Namespaced. The pillar sections take their id from the pillar name, and
+    // one of them is "Managed", which collided with the "managed" service key
+    // here, putting two id="managed" nodes in the document. Invalid HTML, and
+    // it made the hero's #managed jump link ambiguous: the browser picks the
+    // first match, which was not necessarily the one intended.
+    <div id={`service-${id}`} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
       <a href={`/solutions/${id}`} className="group flex items-center gap-3">
-        <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-          <Icon className="h-5 w-5" strokeWidth={1.5} />
+        <span className="flex-none text-[var(--hz-cobalt)]">
+          <Icon className="h-6 w-6" strokeWidth={1.5} />
         </span>
         <h3 className="hz-display text-[1.25rem] text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">{s.title}</h3>
       </a>
@@ -118,32 +124,33 @@ function ServiceDetail({ id }: { id: string }) {
 export default function ServicesPage({ content = {} }: { content?: Record<string, string> }) {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
-      <section className="relative isolate flex min-h-[64vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.servicesHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" priority sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Our solutions</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              {content.servicesTitle || "Talent, engineering, technology, and managed services."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.servicesSubtitle ||
-                "From specialized staffing and engineering talent to enterprise-grade technology and managed services, four connected practices, one accountable team. Serving enterprises and state government agencies across North America."}
-            </p>
-            <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-white/55 sm:text-[15px]">
-              Trusted by Fortune 500 enterprises and state government agencies, from large-scale IT modernization programs to mission-critical managed operations.
-            </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
-              {pillars.map((p) => (
-                <a key={p.name} href={`#${p.name.toLowerCase()}`} className="hz-btn-ghost-dark">{p.name}</a>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {/* Hero, the landing page's structure, not a headline over a darkened
+          photograph. The four practice jump-links stay, since on a page this
+          long they are navigation rather than decoration. */}
+      <PageHero
+        eyebrow="Our solutions"
+        title={content.servicesTitle || "Talent, engineering, technology, and managed services."}
+        subtitle={
+          content.servicesSubtitle ||
+          "From specialized staffing and engineering talent to enterprise-grade technology and managed services, four connected practices, one accountable team. Serving enterprises and state government agencies across North America."
+        }
+        note="Trusted by Fortune 500 enterprises and state government agencies, from large-scale IT modernization programs to mission-critical managed operations."
+        image={IMG.servicesHero}
+        actions={
+          <>
+            <Cta href="/contact" variant="primary">Start a conversation</Cta>
+            {pillars.map((p) => (
+              <a
+                key={p.name}
+                href={`#${p.name.toLowerCase()}`}
+                className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-6 py-3 text-[14px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]"
+              >
+                {p.name}
+              </a>
+            ))}
+          </>
+        }
+      />
 
       {/* Service lines, image-led, alternating */}
       {pillars.map((p, i) => {
@@ -218,8 +225,8 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
                 <StaggerItem key={st.no} className="h-full">
                   <div className="hz-card h-full p-7">
                     <div className="flex items-center justify-between">
-                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-                        <Icon className="h-5 w-5" strokeWidth={1.5} />
+                      <div className="text-[var(--hz-cobalt)]">
+                        <Icon className="h-6 w-6" strokeWidth={1.5} />
                       </div>
                       <span className="hz-display text-[1.5rem] text-black/10">{st.no}</span>
                     </div>
@@ -234,9 +241,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       </section>
 
       {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
@@ -245,7 +250,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
               We&apos;ll put the right specialists on it and stand behind the result.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Book a discovery call</Cta>
+              <Cta href="/contact" variant="primary">Book a discovery call</Cta>
               <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
             </div>
           </Reveal>

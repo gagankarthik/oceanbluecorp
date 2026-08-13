@@ -19,7 +19,7 @@ function getRoleRedirect(role: UserRole | null): string {
     case UserRole.SALES:
       return "/admin";
     default:
-      // Authenticated but with no staff group — nowhere to send them.
+      // Authenticated but with no staff group, nowhere to send them.
       return "/";
   }
 }
@@ -45,7 +45,7 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
   { label: "an uppercase letter", test: (v) => /[A-Z]/.test(v) },
   { label: "a lowercase letter", test: (v) => /[a-z]/.test(v) },
   { label: "a number", test: (v) => /\d/.test(v) },
-  // Cognito counts only this set as a symbol — a wider test would pass here
+  // Cognito counts only this set as a symbol, a wider test would pass here
   // and still be refused server-side.
   { label: "a symbol", test: (v) => /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]/.test(v) },
 ];
@@ -53,7 +53,7 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
 type E4 = [number, number, number, number];
 const ease: E4 = [0.16, 1, 0.3, 1];
 const inputClass =
-  "w-full rounded-lg border border-gray-200 bg-gray-50/70 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#1d4ed8] focus:bg-white focus:ring-2 focus:ring-[#dbe6fe]";
+  "w-full rounded-lg border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] px-4 py-3 text-sm text-[var(--hz-text)] placeholder-[var(--hz-text-subtle)] outline-none transition focus:border-[var(--hz-cobalt)] focus:bg-white focus:ring-2 focus:ring-[var(--hz-cobalt-100)]";
 
 function PhoneInput({
   value, onChange, prefix, onPrefixChange,
@@ -74,22 +74,22 @@ function PhoneInput({
   }, []);
 
   return (
-    <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-gray-50/70 transition focus-within:border-[#1d4ed8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#dbe6fe]">
+    <div className="flex overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] transition focus-within:border-[var(--hz-cobalt)] focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--hz-cobalt-100)]">
       <div ref={ref} className="relative flex-shrink-0">
-        <button type="button" onClick={() => setOpen((v) => !v)} className="flex h-full items-center gap-1.5 border-r border-gray-200 bg-transparent px-3 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-100">
+        <button type="button" onClick={() => setOpen((v) => !v)} className="flex h-full items-center gap-1.5 border-r border-[var(--hz-paper-line)] bg-transparent px-3 py-3 text-sm text-[var(--hz-text-mute)] transition-colors hover:bg-[var(--hz-paper)]">
           <span>{selected.flag}</span>
           <span className="font-medium">{selected.code}</span>
-          <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-3.5 w-3.5 text-[var(--hz-text-subtle)] transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence>
           {open && (
-            <motion.ul initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="absolute left-0 top-full z-20 mt-1 w-36 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
+            <motion.ul initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="absolute left-0 top-full z-20 mt-1 w-36 rounded-xl border border-[var(--hz-paper-line)] bg-white py-1 shadow-lg">
               {COUNTRY_CODES.map((c) => (
                 <li key={c.code}>
-                  <button type="button" onClick={() => { onPrefixChange(c.code); setOpen(false); }} className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-50 ${c.code === prefix ? "font-semibold text-[#1d4ed8]" : "text-gray-700"}`}>
+                  <button type="button" onClick={() => { onPrefixChange(c.code); setOpen(false); }} className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[var(--hz-paper)] ${c.code === prefix ? "font-semibold text-[var(--hz-cobalt)]" : "text-[var(--hz-text-mute)]"}`}>
                     <span>{c.flag}</span>
                     <span>{c.code}</span>
-                    <span className="ml-auto text-xs text-gray-400">{c.label}</span>
+                    <span className="ml-auto text-xs text-[var(--hz-text-subtle)]">{c.label}</span>
                   </button>
                 </li>
               ))}
@@ -97,7 +97,7 @@ function PhoneInput({
           )}
         </AnimatePresence>
       </div>
-      <input type="tel" autoComplete="tel-national" inputMode="numeric" required value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder={prefix === "+1" ? "2025551234" : "9876543210"} maxLength={10} className="flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none" />
+      <input type="tel" autoComplete="tel-national" inputMode="numeric" required value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder={prefix === "+1" ? "2025551234" : "9876543210"} maxLength={10} className="flex-1 bg-transparent px-3 py-3 text-sm text-[var(--hz-text)] placeholder-[var(--hz-text-subtle)] outline-none" />
     </div>
   );
 }
@@ -135,7 +135,7 @@ export default function SignInPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-[#1d4ed8]" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-[var(--hz-cobalt)]" />
       </div>
     );
   }
@@ -190,7 +190,7 @@ export default function SignInPage() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not complete your account setup.");
       // That session is spent whatever the reason was. Dropping it now means the
-      // next attempt starts from a fresh one — sending it again would only earn
+      // next attempt starts from a fresh one, sending it again would only earn
       // an "expired" error in place of the message the user needs to see.
       setSession("");
     } finally {
@@ -200,9 +200,7 @@ export default function SignInPage() {
 
   // ── Left brand panel (shared) ─────────────────────────────
   const brandPanel = (
-    <div className="relative hidden w-1/2 overflow-hidden lg:block">
-      <Photo src={IMG.auth} className="z-0" fallback="linear-gradient(150deg, #0a2540 0%, #07142b 100%)" />
-      <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(160deg, rgba(7,20,43,0.72) 0%, rgba(5,12,28,0.9) 100%)" }} />
+    <div className="relative hidden w-1/2 overflow-hidden bg-[var(--hz-ink)] lg:block">
       <div className="relative z-10 flex h-full flex-col justify-between p-12 xl:p-14">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Back to home
@@ -262,7 +260,7 @@ export default function SignInPage() {
       {/* Form half */}
       <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-12 lg:w-1/2">
         <div className="mb-8 lg:hidden">
-          <Link href="/" className="group inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-800">
+          <Link href="/" className="group inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to home
           </Link>
         </div>
@@ -274,72 +272,72 @@ export default function SignInPage() {
 
           {step === "signin" ? (
             <>
-              <h1 className="mb-1.5 text-[1.9rem] tracking-tight text-gray-900" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
+              <h1 className="mb-1.5 text-[1.9rem] tracking-tight text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
                 Sign in
               </h1>
-              <p className="mb-8 text-sm text-gray-500">Enter your credentials to continue.</p>
+              <p className="mb-8 text-sm text-[var(--hz-text-subtle)]">Enter your credentials to continue.</p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {errorBanner}
 
                 <div className="space-y-1.5">
-                  <label htmlFor="email" className="block text-[13px] font-medium text-gray-600">Email address</label>
+                  <label htmlFor="email" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Email address</label>
                   <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="password" className="block text-[13px] font-medium text-gray-600">Password</label>
+                  <label htmlFor="password" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Password</label>
                   <div className="relative">
                     <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className={`${inputClass} pr-11`} />
-                    <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600">
+                    <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1d4ed8] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#1740ad] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
+                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--hz-cobalt)] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
                   {isSubmitting ? "Signing in…" : "Sign in"}
                 </button>
               </form>
 
-              <p className="mt-8 text-center text-xs text-gray-400">
+              <p className="mt-8 text-center text-xs text-[var(--hz-text-subtle)]">
                 Accounts are created by invitation. Contact your administrator if you need access.
               </p>
 
-              <p className="mt-6 text-center text-xs text-gray-400">
+              <p className="mt-6 text-center text-xs text-[var(--hz-text-subtle)]">
                 By signing in, you agree to our{" "}
-                <Link href="/terms" className="text-[#1d4ed8] hover:underline">Terms</Link> and{" "}
-                <Link href="/privacy" className="text-[#1d4ed8] hover:underline">Privacy Policy</Link>
+                <Link href="/terms" className="text-[var(--hz-cobalt)] hover:underline">Terms</Link> and{" "}
+                <Link href="/privacy" className="text-[var(--hz-cobalt)] hover:underline">Privacy Policy</Link>
               </p>
             </>
           ) : (
             <>
-              <h1 className="mb-1.5 text-[1.8rem] tracking-tight text-gray-900" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
+              <h1 className="mb-1.5 text-[1.8rem] tracking-tight text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
                 Complete your account
               </h1>
-              <p className="mb-7 text-sm text-gray-500">
-                Welcome to Ocean Blue. Confirm your details and choose a password for <span className="font-medium text-gray-700">{email}</span>.
+              <p className="mb-7 text-sm text-[var(--hz-text-subtle)]">
+                Welcome to Ocean Blue. Confirm your details and choose a password for <span className="font-medium text-[var(--hz-text-mute)]">{email}</span>.
               </p>
 
               <form onSubmit={handleComplete} className="space-y-4">
                 {errorBanner}
 
                 <div className="space-y-1.5">
-                  <label htmlFor="name" className="block text-[13px] font-medium text-gray-600">Full name</label>
+                  <label htmlFor="name" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Full name</label>
                   <input id="name" type="text" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Smith" className={inputClass} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[13px] font-medium text-gray-600">Phone number</label>
+                  <label className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Phone number</label>
                   <PhoneInput value={phoneNumber} onChange={setPhoneNumber} prefix={phonePrefix} onPrefixChange={setPhonePrefix} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="newPassword" className="block text-[13px] font-medium text-gray-600">New password</label>
+                  <label htmlFor="newPassword" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">New password</label>
                   <div className="relative">
                     <input id="newPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" className={`${inputClass} pr-11`} />
-                    <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600">
+                    <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -352,27 +350,27 @@ export default function SignInPage() {
                       <CheckCircle className="h-3 w-3" /> Meets all requirements
                     </p>
                   ) : (
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-[var(--hz-text-subtle)]">
                       At least 8 characters, with uppercase, lowercase, number, and symbol.
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="confirmPw" className="block text-[13px] font-medium text-gray-600">Confirm password</label>
+                  <label htmlFor="confirmPw" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Confirm password</label>
                   <div className="relative">
                     <input
                       id="confirmPw" type={showConfirm ? "text" : "password"} autoComplete="new-password" required
                       value={confirmPassword} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Re-enter your password"
-                      className={`w-full rounded-lg border bg-gray-50/70 px-4 py-3 pr-11 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:bg-white focus:ring-2 ${
+                      className={`w-full rounded-lg border bg-[var(--hz-paper)] px-4 py-3 pr-11 text-sm text-[var(--hz-text)] placeholder-[var(--hz-text-subtle)] outline-none transition focus:bg-white focus:ring-2 ${
                         !passwordsMatch
                           ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                           : confirmPassword && newPassword === confirmPassword
                           ? "border-emerald-300 focus:border-emerald-400 focus:ring-emerald-100"
-                          : "border-gray-200 focus:border-[#1d4ed8] focus:ring-[#dbe6fe]"
+                          : "border-[var(--hz-paper-line)] focus:border-[var(--hz-cobalt)] focus:ring-[var(--hz-cobalt-100)]"
                       }`}
                     />
-                    <button type="button" onClick={() => setShowConfirm((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600">
+                    <button type="button" onClick={() => setShowConfirm((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -382,7 +380,7 @@ export default function SignInPage() {
                   )}
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1d4ed8] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#1740ad] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
+                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--hz-cobalt)] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
                   {isSubmitting ? "Setting up…" : "Complete setup"}
                 </button>
@@ -390,12 +388,12 @@ export default function SignInPage() {
 
               {/* An invite session is single-use and short-lived; without this
                   an expired one strands the user on a form that can't submit. */}
-              <p className="mt-6 text-center text-xs text-gray-400">
+              <p className="mt-6 text-center text-xs text-[var(--hz-text-subtle)]">
                 Session expired?{" "}
                 <button
                   type="button"
                   onClick={() => { setStep("signin"); setError(null); setSession(""); setPassword(""); }}
-                  className="text-[#1d4ed8] hover:underline"
+                  className="text-[var(--hz-cobalt)] hover:underline"
                 >
                   Start over
                 </button>

@@ -9,6 +9,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { MILESTONES } from "@/lib/company";
 
@@ -25,18 +26,17 @@ const differentiators: { icon: LucideIcon; title: string; description: string }[
   { icon: Building2, title: "Enterprise-grade solutions", description: "From cloud to ERP to AI, we deliver technology that scales." },
   { icon: CheckCircle2, title: "Proven delivery", description: "We execute with precision, transparency, and accountability." },
   { icon: Briefcase, title: "Industry expertise", description: "Healthcare, government, financial services, manufacturing, retail, technology." },
-  { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects — we support your evolution." },
+  { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects, we support your evolution." },
 ];
 
-/* Moved to `lib/company.ts` when the anniversary page needed the same list —
-   one copy, so a corrected year can't be right here and wrong there. */
+/* Moved to `lib/company.ts` when the anniversary page needed the same list, one copy, so a corrected year can't be right here and wrong there. */
 const milestones = MILESTONES;
 
 function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
   return (
     <div className="hz-card h-full p-7">
-      <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      <div className="text-[var(--hz-cobalt)]">
+        <Icon className="h-7 w-7" strokeWidth={1.5} />
       </div>
       <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{title}</h3>
       <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{description}</p>
@@ -44,7 +44,7 @@ function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title
   );
 }
 
-/* Roadmap — a winding road through 6 evenly-spaced points, alternating up/down. */
+/* Roadmap, a winding road through 6 evenly-spaced points, alternating up/down. */
 const ROAD =
   "M100,168 C200,168 200,312 300,312 C400,312 400,168 500,168 C600,168 600,312 700,312 C800,312 800,168 900,168 C1000,168 1000,312 1100,312";
 const NODES = [
@@ -163,22 +163,15 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.aboutHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 38%, rgba(7,20,43,0.5) 72%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">About Ocean Blue</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[20ch] text-[2rem] break-words text-white sm:text-[3.25rem] lg:text-[4rem]">
-              {content.aboutTitle || "We build the technology and teams that move organizations forward."}
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              {content.aboutSubtitle ||
-                "A trusted partner for IT staffing, enterprise solutions, and digital transformation — delivering clarity, expertise, and measurable results."}
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="About Ocean Blue"
+        title={content.aboutTitle || "We build the technology and teams that move organizations forward."}
+        subtitle={
+          content.aboutSubtitle ||
+          "A trusted partner for IT staffing, enterprise solutions, and digital transformation, delivering clarity, expertise, and measurable results."
+        }
+        image={IMG.aboutHero}
+      />
 
       {/* Story + Purpose */}
       <section className="relative w-full py-24 sm:py-32">
@@ -195,14 +188,14 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
             </blockquote>
             <p className="mt-6 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
               We help organizations modernize systems, strengthen teams, and adopt the
-              technologies that drive real business impact — with a human-centered
+              technologies that drive real business impact, with a human-centered
               approach that values clarity, collaboration, and execution.
             </p>
             <div className="mt-8 border-t border-black/[0.08] pt-8">
               <Eyebrow>Why we exist</Eyebrow>
               <p className="mt-5 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
                 To give organizations the technology, talent, and support they need to
-                operate smarter, faster, and more securely — combining deep technical
+                operate smarter, faster, and more securely, combining deep technical
                 expertise with a genuine commitment to service.
               </p>
             </div>
@@ -265,22 +258,20 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
                   Meet the leadership and the delivery bench behind every engagement.
                 </p>
               </div>
-              <Cta href="/team" variant="primary" icon={ArrowRight}>Meet the team</Cta>
+              <Cta href="/team" variant="primary">Meet the team</Cta>
             </div>
           </Reveal>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
             <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Work with a team that owns the outcome.</h2>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary" icon={ArrowRight}>Start a conversation</Cta>
+              <Cta href="/contact" variant="primary">Start a conversation</Cta>
               <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
             </div>
           </Reveal>

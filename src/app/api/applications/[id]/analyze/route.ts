@@ -8,7 +8,7 @@ import { getApplication } from "@/lib/aws/dynamodb";
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
-// POST /api/applications/[id]/analyze — run resume analysis and store the result.
+// POST /api/applications/[id]/analyze, run resume analysis and store the result.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +20,7 @@ export async function POST(
 
   const result = await analyzeApplicationResume(id, auth.claims.sub);
   if (!result.success) {
-    // `retryable` tells the caller whether this is worth another attempt later —
+    // `retryable` tells the caller whether this is worth another attempt later,
     // the candidate screen uses it to decide whether to retry on its own.
     return NextResponse.json(
       { error: result.error, retryable: result.retryable ?? false },

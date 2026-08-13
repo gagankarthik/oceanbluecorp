@@ -149,7 +149,7 @@ export default function CallbackPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="rounded-3xl bg-white p-8 md:p-10 shadow-xl border border-gray-100"
+          className="rounded-3xl bg-white p-8 md:p-10 shadow-xl border border-[var(--hz-paper-line)]"
         >
           <AnimatePresence mode="wait">
             {/* Verifying State */}
@@ -175,13 +175,13 @@ export default function CallbackPage() {
                   </motion.div>
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">
+                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
                   Verifying{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                     Identity
                   </span>
                 </h1>
-                <p className="text-gray-500 mb-8">Please wait while we complete authentication</p>
+                <p className="text-[var(--hz-text-subtle)] mb-8">Please wait while we complete authentication</p>
 
                 {/* Progress Steps */}
                 <div className="space-y-4">
@@ -205,11 +205,11 @@ export default function CallbackPage() {
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                           >
-                            <Loader2 className="w-5 h-5 text-gray-400" />
+                            <Loader2 className="w-5 h-5 text-[var(--hz-text-subtle)]" />
                           </motion.div>
                         )}
                       </div>
-                      <span className={`text-sm ${step.completed ? "text-gray-900" : "text-gray-500"}`}>
+                      <span className={`text-sm ${step.completed ? "text-[var(--hz-text)]" : "text-[var(--hz-text-subtle)]"}`}>
                         {step.label}
                       </span>
                     </motion.div>
@@ -236,21 +236,21 @@ export default function CallbackPage() {
                   <CheckCircle className="h-10 w-10 text-white" />
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">
+                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
                   Welcome{" "}
                   <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                     Back!
                   </span>
                 </h1>
-                <p className="text-gray-500 mb-2">Authentication successful</p>
+                <p className="text-[var(--hz-text-subtle)] mb-2">Authentication successful</p>
                 {userRole && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-sm text-gray-400 mb-6"
+                    className="text-sm text-[var(--hz-text-subtle)] mb-6"
                   >
-                    Signed in as <span className="font-medium text-gray-600">{userRole}</span>
+                    Signed in as <span className="font-medium text-[var(--hz-text-mute)]">{userRole}</span>
                   </motion.p>
                 )}
 
@@ -289,13 +289,13 @@ export default function CallbackPage() {
                   <CheckCircle className="h-10 w-10 text-white" />
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">
+                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
                   Email{" "}
                   <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                     Verified!
                   </span>
                 </h1>
-                <p className="text-gray-500 mb-6">Your email has been verified successfully. Please sign in to continue.</p>
+                <p className="text-[var(--hz-text-subtle)] mb-6">Your email has been verified successfully. Please sign in to continue.</p>
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -332,8 +332,8 @@ export default function CallbackPage() {
                   <Shield className="h-10 w-10 text-white" />
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">No access to the staff site</h1>
-                <p className="text-gray-500 mb-6">
+                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">No access to the staff site</h1>
+                <p className="text-[var(--hz-text-subtle)] mb-6">
                   This account has no staff role here. If you were looking for your leave,
                   attendance, documents or the handbook, those live in the HR portal, which is a
                   separate sign-in with the credentials HR issued you.
@@ -347,7 +347,7 @@ export default function CallbackPage() {
                     Go to the HR portal
                     <ArrowRight className="h-4 w-4" />
                   </a>
-                  <Link href="/" className="text-sm text-gray-500 transition-colors hover:text-gray-700">
+                  <Link href="/" className="text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
                     Back to the website
                   </Link>
                 </div>
@@ -372,13 +372,13 @@ export default function CallbackPage() {
                   <XCircle className="h-10 w-10 text-white" />
                 </motion.div>
 
-                <h1 className="heading-subsection text-gray-900 mb-3">
+                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
                   Authentication{" "}
                   <span className="bg-gradient-to-r from-red-500 to-rose-500 bg-clip-text text-transparent">
                     Failed
                   </span>
                 </h1>
-                <p className="text-gray-500 mb-2">We couldn&apos;t complete the sign in process</p>
+                <p className="text-[var(--hz-text-subtle)] mb-2">We couldn&apos;t complete the sign in process</p>
                 {error && (
                   <motion.p
                     initial={{ opacity: 0 }}
@@ -411,7 +411,7 @@ export default function CallbackPage() {
                   >
                     <Link
                       href="/"
-                      className="inline-block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                      className="inline-block text-sm text-[var(--hz-text-subtle)] hover:text-[var(--hz-text)] transition-colors"
                     >
                       Return to Home
                     </Link>

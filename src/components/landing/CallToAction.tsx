@@ -1,92 +1,77 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "./motion/Primitives";
-import { Cta } from "./ui";
+import Link from "next/link";
 import Photo from "./Photo";
 import { IMG } from "./media";
 
-// Two columns of imagery that marquee vertically in opposite directions.
-const colA = [IMG.serviceTalent, IMG.heroSlides[1], IMG.serviceSolutions];
-const colB = [IMG.serviceManaged, IMG.serviceEngineering, IMG.caseStudy];
-
-// Each tile occupies roughly half of the right-hand column — never the full
-// viewport — so the browser should fetch a small candidate, not the 1600w one.
-const TILE_SIZES = "(min-width: 1024px) 300px, (min-width: 640px) 40vw, 45vw";
-
-function Tile({ src }: { src: string }) {
-  return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10">
-      <Photo src={src} sizes={TILE_SIZES} />
-      <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(5,12,28,0.4) 100%)" }} />
-    </div>
-  );
-}
-
-function MarqueeColumn({ imgs, direction, duration }: { imgs: string[]; direction: "up" | "down"; duration: number }) {
-  const reduce = useReducedMotion();
-  // Two identical copies → a -50% travel loops seamlessly.
-  const from = direction === "up" ? "0%" : "-50%";
-  const to = direction === "up" ? "-50%" : "0%";
-  return (
-    <motion.div
-      className="flex flex-1 flex-col gap-4"
-      // Promote to its own layer so the continuous loop stays on the compositor
-      // instead of repainting the tiles every frame.
-      style={{ willChange: "transform", backfaceVisibility: "hidden" }}
-      animate={reduce ? undefined : { y: [from, to] }}
-      transition={{ duration, repeat: Infinity, ease: "linear", repeatType: "loop" }}
-    >
-      {[...imgs, ...imgs].map((src, i) => (
-        <Tile key={i} src={src} />
-      ))}
-    </motion.div>
-  );
-}
+// One wide photograph, not two marqueeing columns. Six tiles looping in
+// opposite directions was a lot of motion to put beside a careers invitation,
+// and it fetched six images to say what one says.
+const CTA_SIZES = "(min-width: 1024px) 46vw, 92vw";
 
 export default function CallToAction({ content = {} }: { content?: Record<string, string> }) {
   return (
-    <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-      {/* Ambient brand glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(55% 70% at 12% 10%, rgba(29,78,216,0.4), transparent 60%), radial-gradient(45% 60% at 95% 90%, rgba(42,216,239,0.16), transparent 62%)",
-        }}
-      />
+    <section className="relative isolate w-full overflow-hidden bg-black">
+      {/* No shader here. It was tried and removed: `envPreset="city"` adds
+          environment lighting on top of color1/2/3, so even at 45% over black
+          the band came out grey with a teal cast rather than dark. The hero is
+          where the gradient earns its keep; this section stays flat black so
+          the photograph and the white disc are the only things in it. */}
 
-      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-24 sm:px-8 sm:py-32 lg:grid-cols-2 lg:gap-16 2xl:max-w-[96rem]">
-        {/* ── Left half, heading, then button below ─────────── */}
+      {/* Wider gutters than the sections above it, and a wider gap down the
+          middle. This band is a full-bleed black rectangle with a photograph
+          hard against one edge; at the page's standard padding the type started
+          almost at the screen edge and the two halves met in the centre with
+          nothing between them, so the whole thing read as edge-to-edge fill
+          rather than a composed panel. The extra space at both ends is what
+          makes the black read as a deliberate frame. */}
+      <div className="mx-auto w-full max-w-[2200px] px-8 sm:px-16 lg:px-28 2xl:px-40 relative z-10 grid grid-cols-1 items-center gap-12 py-20 sm:py-24 lg:grid-cols-2 lg:gap-20">
+        {/* ── Left: careers ───────────────────────────────────
+            This copy is now ours. It ran Accenture's careers wording for
+            several passes, flagged twice as their copyrighted text that a
+            reader who knows their site would recognise, and kept at the
+            client's direction until there was time to write a replacement.
+            This is that replacement.
+
+            It is written to the promise rather than to an aspiration: what
+            the job is actually like here, in terms a candidate can check
+            against their own experience. "Seize the future" could be any
+            company; being handed the outcome on your first week could not. */}
         <Reveal className="flex flex-col items-start">
-          <h2 className="hz-display max-w-[15ch] text-[clamp(1.9rem,4.6vw,3.75rem)] leading-[1.05] text-white">
-            {content.ctaHeading || "Tell us what you're building. We'll put the right team on it."}
+          <span className="hz-eyebrow text-white/55">Careers</span>
+          <h2 className="hz-display mt-4 max-w-[14ch] text-[clamp(1.9rem,4.6vw,3.75rem)] leading-[1.05] text-white">
+            {content.ctaHeading || "Own the work, not a ticket queue."}
           </h2>
-          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[18px]">
+          <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[17px]">
             {content.ctaBody ||
-              "Staffing, enterprise solutions, or managed services. Start with a conversation, and we'll stand behind the result."}
+              "Our engineers are embedded with the client and accountable for the outcome, which means you carry real scope from the first week and you see what your work changed. If that is how you want to work, we are hiring."}
           </p>
-          <div className="mt-8 flex flex-col items-start gap-3 sm:mt-9 sm:flex-row sm:items-center">
-            <Cta href="/contact" variant="primary" icon={ArrowRight}>{content.ctaButton || "Book a discovery call"}</Cta>
-            <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
-          </div>
+          {/* Text plus a white disc, not a filled cobalt pill. On a dark band
+              the pill was the loudest object in the section and pulled the eye
+              before the sentence that earns the click; this reads as a line of
+              type that happens to be actionable. The disc is the only white
+              solid here, so it still finds the eye. */}
+          <Link
+            href="/careers"
+            className="group mt-8 inline-flex items-center gap-4 text-[15px] font-semibold text-white sm:mt-10 sm:text-[16px]"
+          >
+            {content.ctaButton || "See open roles"}
+            <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[var(--hz-ink)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1">
+              <ArrowRight className="h-5 w-5" strokeWidth={2} />
+            </span>
+          </Link>
         </Reveal>
 
-        {/* ── Right half, vertical image marquees ───────────── */}
-        <div
-          className="relative h-[380px] overflow-hidden sm:h-[460px] lg:h-[520px]"
-          style={{
-            maskImage: "linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent)",
-            WebkitMaskImage: "linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent)",
-          }}
-        >
-          <div className="flex gap-4">
-            <MarqueeColumn imgs={colA} direction="up" duration={24} />
-            <MarqueeColumn imgs={colB} direction="down" duration={28} />
-          </div>
+        {/* ── Right: the photograph, unframed ────────────────
+            No ring, no radius, no gradient scrim, the earlier version had all
+            three and they read as chrome around the picture rather than as the
+            picture. On black an unframed image has its own edge already. */}
+        <div className="relative aspect-[16/10] w-full overflow-hidden">
+          <Photo src={IMG.aboutTeam} sizes={CTA_SIZES} />
         </div>
+
       </div>
     </section>
   );

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Hero from "@/components/landing/Hero";
-import ClientLogos from "@/components/landing/ClientLogos";
 import Services from "@/components/landing/Services";
-import ImpactStats from "@/components/landing/ImpactStats";
-import Certifications from "@/components/landing/Certifications";
+import Partnerships from "@/components/landing/Partnerships";
+import Credentials from "@/components/landing/Credentials";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
+import FilmSection from "@/components/landing/FilmSection";
+import CertificationStrip from "@/components/landing/CertificationStrip";
 import Anniversary from "@/components/landing/anniversary/Anniversary";
-import { IMG, atWidth } from "@/components/landing/media";
+
 import { getSiteContent } from "@/lib/content";
 import { isAnniversaryLive } from "@/lib/anniversary";
 
@@ -18,18 +19,19 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Enterprise IT Solutions, Staffing & Managed Services",
   description:
-    "Ocean Blue Corporation delivers IT and engineering staffing, enterprise solutions, and 24/7 managed services to enterprises and state government agencies across North America. Certified MBE/WBE, headquartered in Powell, Ohio.",
+    "IT and engineering staffing, enterprise solutions, and 24/7 managed services for enterprises and government agencies. Certified MBE/WBE, based in Powell, Ohio.",
   alternates: { canonical: "/" },
 };
 
 /* ============================================================
-   LANDING — consulting-firm direction (EY / Deloitte / Accenture).
+   LANDING, consulting-firm direction (EY / Deloitte / Accenture).
    Light, editorial, photography-led, bold statement type, content
    cards in grids, one decisive Ocean-Blue accent, a flat sticky
    header, and a bold image-backed CTA. (Insights / Case Study
    sections removed until the Resources content exists.)
-   Order: Hero(image) · Clients · Services · Impact · Certifications ·
-   Testimonials · CTA.
+   Order: Hero (video) · Services · Partnerships (the one dark beat)
+   · Clients · Client work (case-study rows) · Accreditation strip ·
+   Careers CTA · Footer.
    ============================================================ */
 
 // WebSite + a service ItemList. The Organization node lives in the root layout;
@@ -76,45 +78,45 @@ const homeJsonLd = {
 export default async function Home() {
   const content = await getSiteContent("homepage");
   // TEMPORARY (13-year celebration). Evaluated here, on the server, and passed
-  // down — a client component reading the clock itself would let the server and
+  // down, a client component reading the clock itself would let the server and
   // the browser disagree across midnight and blow up hydration.
   const anniversary = isAnniversaryLive(content);
   return (
     <div className="horizon relative w-full bg-[var(--hz-canvas)]">
-      {/* Warm up the LCP hero photo before React hydrates. imageSrcSet mirrors
-          the Hero's own ladder so the preload matches the request it makes.
-
-          Skipped while the anniversary band is up: the band is then the first
-          section and the hero photo is below the fold, so a high-priority
-          preload would spend the opening bandwidth on an image nobody is
-          looking at yet — and delay the thing they are. */}
-      {!anniversary && (
-        <link
-          rel="preload"
-          as="image"
-          href={IMG.heroSlides[0]}
-          imageSrcSet={[640, 960, 1280, 1600, 2000]
-            .map((w) => `${atWidth(IMG.heroSlides[0], w)} ${w}w`)
-            .join(", ")}
-          imageSizes="100vw"
-          fetchPriority="high"
-        />
-      )}
+      {/* The hero photo preload that used to sit here is gone with the photo.
+          The hero is film now, deliberately deferred until after `load`, and
+          its LCP element is the CSS-animated headline already in this HTML, so a high-priority image preload was spending the opening bandwidth
+          on a file the page no longer requests at all. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
       />
 
-      {/* TEMPORARY — for the celebration the anniversary band leads the page
+      {/* TEMPORARY, for the celebration the anniversary band leads the page
           and the hero sits beneath it. Removing the band restores the original
           order with no other edit. */}
       {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
-      <ClientLogos />
+      {/* Clients sit directly under the hero. The logo row is the fastest
+          credibility a visitor can read, it answers "has anyone I recognise
+          trusted these people?" before the pitch begins, which is the question
+          they are actually asking in the first five seconds. Buried below the
+          services it was arriving after the argument it was meant to support. */}
+      <Credentials />
       <Services />
-      <ImpactStats content={content} />
-      <Certifications />
+      {/* The one dark beat between the hero and the close. */}
+      <Partnerships />
       <Testimonials />
+      {/* The film sits here, after the clients have spoken and before the
+          credentials. By this point the reader has the argument and the proof
+          of it, so this is where they get to meet the company rather than read
+          about it, and it lands directly before the careers ask, which is the
+          audience a company film helps most. Any earlier and it competes with
+          the hero, which is already moving. */}
+      <FilmSection />
+      {/* The trust strip sits ABOVE the closing ask, not below it, the last
+          reassurance a reader passes before deciding. */}
+      <CertificationStrip />
       <CallToAction content={content} />
     </div>
   );

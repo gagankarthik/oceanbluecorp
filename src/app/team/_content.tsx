@@ -4,6 +4,7 @@ import { Linkedin, ArrowRight } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 const leadership = [
@@ -23,22 +24,12 @@ export default function TeamPage() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[58vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.teamHero} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:pt-32 sm:pb-20 sm:px-8">
-          <Reveal>
-            <Eyebrow tone="dark">Our team</Eyebrow>
-            <h1 className="hz-display mt-7 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              The people behind the work.
-            </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-              Senior practitioners who lead from the front, and a delivery bench that
-              integrates with your team from day one.
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Our team"
+        title="The people behind the work."
+        subtitle="Senior practitioners who lead from the front, and a delivery bench that integrates with your team from day one."
+        image={IMG.teamHero}
+      />
 
       {/* Leadership */}
       <section className="relative w-full py-20 sm:py-28 lg:py-32">
@@ -97,15 +88,13 @@ export default function TeamPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Join us</Eyebrow>
             <h2 className="hz-display mt-7 max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">Build your career with our team.</h2>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/careers" variant="primary" icon={ArrowRight}>View open roles</Cta>
+              <Cta href="/careers" variant="primary">View open roles</Cta>
               <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
             </div>
           </Reveal>

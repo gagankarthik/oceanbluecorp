@@ -8,20 +8,20 @@ import {
 } from "@/lib/anniversary";
 
 /* ============================================================
-   TEMPORARY — social card for /13-years, 1200×630.
+   TEMPORARY, social card for /13-years, 1200×630.
 
    Deliberately light and cobalt rather than the site's usual
    dark card: it mirrors the celebration artwork, so the link
    preview and the post it is shared alongside read as one piece.
 
-   Satori (next/og) renders a strict flexbox subset — every
+   Satori (next/og) renders a strict flexbox subset, every
    element with children carries an explicit `display`, and there
    are no background-clip/text-shadow tricks here because their
    support varies by satori version and a card that silently
    renders wrong is worse than a plain one.
    ============================================================ */
 
-export const alt = `${ANNIVERSARY_COPY.heading} — ${ANNIVERSARY_COPY.tagline}`;
+export const alt = `${ANNIVERSARY_COPY.heading} , ${ANNIVERSARY_COPY.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

@@ -33,7 +33,7 @@ export function generateResumeKey(userId: string, fileName: string): string {
   return `resumes/${userId}/${timestamp}-${sanitizedFileName}`;
 }
 
-// Generate a key for resume bank uploads — encodes candidateName + fileName in the key
+// Generate a key for resume bank uploads, encodes candidateName + fileName in the key
 // Format: resume-bank/{email}/{timestamp}--{candidateName}--{fileName}
 export function generateResumeBankKey(uploaderEmail: string, fileName: string, candidateName?: string): string {
   const timestamp = Date.now();
@@ -255,7 +255,7 @@ export const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".doc", ".docx"];
  * Validate a resume upload.
  *
  * A file passes on EITHER its MIME type or its extension. Browsers disagree
- * about .doc/.docx — Windows reports several different types depending on what
+ * about .doc/.docx. Windows reports several different types depending on what
  * Office writes into the registry, and a file dragged from some clients arrives
  * as an empty string or application/octet-stream. Judging on MIME alone
  * rejected legitimate resumes with a message blaming the candidate's file.

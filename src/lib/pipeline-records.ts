@@ -1,11 +1,11 @@
-// Pure helpers for pipeline RECORDS — submissions, interviews, placements:
+// Pure helpers for pipeline RECORDS, submissions, interviews, placements:
 // labels, tones, margin, and the application status each kind of event implies.
 //
 // Kept apart from lib/pipeline.ts, which is about the stage-aging arithmetic the
 // dashboard and Applications list share (how long has this sat, is it stale).
 //
 // Type-only imports from lib/aws so this stays safe in client components (see
-// CLAUDE.md — a value import from there ships the AWS SDK to the browser).
+// CLAUDE.md, a value import from there ships the AWS SDK to the browser).
 import type {
   Interview,
   InterviewMode,
@@ -67,7 +67,7 @@ export const RATE_UNIT_LABELS: Record<RateUnit, string> = {
   annual: "/yr",
 };
 
-/** Ordered for pickers — the sequence a submission actually travels. */
+/** Ordered for pickers, the sequence a submission actually travels. */
 export const SUBMISSION_STATUS_ORDER: SubmissionStatus[] = [
   "sent", "under-review", "shortlisted", "interviewing", "offered", "placed", "rejected", "withdrawn",
 ];
@@ -117,7 +117,7 @@ export function placementTone(status: PlacementStatus): "blue" | "emerald" | "am
 /**
  * Gross margin on a placement, as a percentage of the bill rate.
  *
- * Returns null unless both rates are present and the bill rate is positive —
+ * Returns null unless both rates are present and the bill rate is positive,
  * a placement recorded without a pay rate has no margin, and showing 100%
  * would read as an unusually good deal rather than as missing data.
  */
@@ -135,13 +135,13 @@ export function grossMarginAmount(placement: Pick<Placement, "billRate" | "payRa
   return billRate - payRate;
 }
 
-/** "$85.00/hr" — blank when there is no figure, never "$0". */
+/** "$85.00/hr", blank when there is no figure, never "$0". */
 export function formatRate(
   amount?: number,
   unit?: RateUnit,
   currency = "USD",
 ): string {
-  if (typeof amount !== "number") return "—";
+  if (typeof amount !== "number") return "–";
   const money = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency || "USD",

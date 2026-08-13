@@ -219,7 +219,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           url: window.location.href,
         });
       } catch (err) {
-        // User cancelled the native share sheet — not an error worth surfacing.
+        // User cancelled the native share sheet, not an error worth surfacing.
         console.error("Failed to share job link:", err);
       }
     } else {
@@ -240,15 +240,15 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
   return (
     <div className="horizon min-h-screen bg-[var(--hz-surface)] pt-32">
       {/* Breadcrumb */}
-      <div className="border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm">
+      <div className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-2 text-sm">
 
-            <Link href="/careers/search" className="text-slate-500 hover:text-[var(--hz-cobalt)] transition-colors">
+            <Link href="/careers/search" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
               Open positions
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="min-w-0 text-slate-900 font-medium truncate">{job.title}</span>
+            <span className="min-w-0 text-[var(--hz-text)] font-medium truncate">{job.title}</span>
           </div>
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
              {/* Back Link */}
               <Link
                 href="/careers/search"
-                className="group inline-flex items-center gap-2 text-slate-500 hover:text-[var(--hz-cobalt)] transition-colors text-sm font-medium"
+                className="group inline-flex items-center gap-2 text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors text-sm font-medium"
               >
                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
                 View all open positions
@@ -270,7 +270,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-6">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--hz-text)] leading-tight mb-6">
                 {job.title}
               </h1>
 
@@ -280,7 +280,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <Briefcase className="w-4 h-4" />
                   {formatJobType(job.type)}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
+                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-[var(--hz-text-mute)] rounded-full text-sm font-medium">
                   <MapPin className="w-4 h-4" />
                   {job.location}
                 </span>
@@ -292,7 +292,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 )}
                 {dueInfo && (
                   <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium ${
-                    dueInfo.isUrgent ? "bg-orange-50 text-orange-700" : "bg-slate-100 text-slate-600"
+                    dueInfo.isUrgent ? "bg-orange-50 text-orange-700" : "bg-slate-100 text-[var(--hz-text-mute)]"
                   }`}>
                     <CalendarClock className="w-4 h-4" />
                     {dueInfo.text}
@@ -301,7 +301,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               </div>
 
               {/* Posted Info */}
-              <div className="flex items-center gap-4 text-slate-500 text-sm">
+              <div className="flex items-center gap-4 text-[var(--hz-text-subtle)] text-sm">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
                   Posted {postedDate}
@@ -349,7 +349,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 transition={{ delay: 0.1 }}
               >
                 <div
-                  className="text-slate-600 text-lg leading-relaxed break-words [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
+                  className="text-[var(--hz-text-mute)] text-lg leading-relaxed break-words [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
                   dangerouslySetInnerHTML={renderRichText(job.description)}
                 />
               </motion.div>
@@ -369,7 +369,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   </div>
                   <div>
                     <p className="text-sm text-emerald-600 font-medium mb-1">Compensation</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-2xl font-bold text-[var(--hz-text)]">
                       {job.salary.currency}{job.salary.min.toLocaleString()} - {job.salary.currency}{job.salary.max.toLocaleString()}
                     </p>
                   </div>
@@ -384,10 +384,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">What you'll do</h2>
+                <h2 className="text-2xl font-bold text-[var(--hz-text)] mb-6">What you'll do</h2>
                 {typeof job.responsibilities === 'string' ? (
                   <div
-                    className="text-slate-600 text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
+                    className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
                     dangerouslySetInnerHTML={renderRichText(job.responsibilities)}
                   />
                 ) : (
@@ -397,7 +397,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
                           <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
-                        <span className="min-w-0 text-slate-600 text-lg break-words">{item}</span>
+                        <span className="min-w-0 text-[var(--hz-text-mute)] text-lg break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -412,10 +412,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
               >
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">What we're looking for</h2>
+                <h2 className="text-2xl font-bold text-[var(--hz-text)] mb-6">What we're looking for</h2>
                 {typeof job.requirements === 'string' ? (
                   <div
-                    className="text-slate-600 text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
+                    className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
                     dangerouslySetInnerHTML={renderRichText(job.requirements)}
                   />
                 ) : (
@@ -425,7 +425,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
                           <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
                         </div>
-                        <span className="min-w-0 text-slate-600 text-lg break-words">{item}</span>
+                        <span className="min-w-0 text-[var(--hz-text-mute)] text-lg break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -484,7 +484,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="hidden lg:block bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"
+                className="hidden lg:block bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 shadow-sm"
               >
                 {hasApplied ? (
                   <div className="w-full px-6 py-4 bg-green-50 border border-green-200 rounded-xl mb-4">
@@ -513,7 +513,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                     className={`flex-1 px-4 py-3 border rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
                       saved
                         ? "border-pink-200 bg-pink-50 text-pink-600"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        : "border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"
                     }`}
                   >
                     <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
@@ -521,7 +521,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   </button>
                   <button
                     onClick={handleShare}
-                    className="flex-1 px-4 py-3 border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] rounded-xl font-medium hover:bg-[var(--hz-paper)] transition-all flex items-center justify-center gap-2"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
@@ -534,19 +534,19 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"
+                className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 shadow-sm"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 rounded-2xl bg-transparent flex items-center justify-center">
                     <Image src='/favicon.png' width={48} height={48} alt="Logo" className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg">Ocean Blue Solution</h3>
-                    <p className="text-slate-500 text-sm">Enterprise IT Solutions</p>
+                    <h3 className="font-bold text-[var(--hz-text)] text-lg">Ocean Blue Solution</h3>
+                    <p className="text-[var(--hz-text-subtle)] text-sm">Enterprise IT Solutions</p>
                   </div>
                 </div>
 
-                <p className="text-slate-600 text-sm mb-6">
+                <p className="text-[var(--hz-text-mute)] text-sm mb-6">
                   Ocean Blue Corporation delivers innovative enterprise IT solutions,
                   helping businesses transform and grow with cutting-edge technology.
                 </p>
@@ -561,18 +561,18 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <ExternalLink className="w-4 h-4" aria-hidden="true" focusable="false" />
                 </Link>
 
-                <div className="border-t border-slate-100 mt-6 pt-6 space-y-4">
+                <div className="border-t border-[var(--hz-paper-line)] mt-6 pt-6 space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Company size</span>
-                    <span className="font-medium text-slate-900">50+ employees</span>
+                    <span className="text-[var(--hz-text-subtle)]">Company size</span>
+                    <span className="font-medium text-[var(--hz-text)]">50+ employees</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Industry</span>
-                    <span className="font-medium text-slate-900">IT Services</span>
+                    <span className="text-[var(--hz-text-subtle)]">Industry</span>
+                    <span className="font-medium text-[var(--hz-text)]">IT Services</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Headquarters</span>
-                    <span className="font-medium text-slate-900">United States</span>
+                    <span className="text-[var(--hz-text-subtle)]">Headquarters</span>
+                    <span className="font-medium text-[var(--hz-text)]">United States</span>
                   </div>
                 </div>
               </motion.div>
@@ -582,36 +582,36 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-slate-50 rounded-2xl border border-slate-200 p-6"
+                className="bg-[var(--hz-paper)] rounded-2xl border border-[var(--hz-paper-line)] p-6"
               >
-                <h4 className="font-semibold text-slate-900 mb-4">Job Details</h4>
+                <h4 className="font-semibold text-[var(--hz-text)] mb-4">Job Details</h4>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <Briefcase className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <Briefcase className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-500">Employment Type</p>
-                      <p className="font-medium text-slate-900">{formatJobType(job.type)}</p>
+                      <p className="text-sm text-[var(--hz-text-subtle)]">Employment Type</p>
+                      <p className="font-medium text-[var(--hz-text)]">{formatJobType(job.type)}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <MapPin className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-500">Location</p>
-                      <p className="font-medium text-slate-900">{job.location}</p>
+                      <p className="text-sm text-[var(--hz-text-subtle)]">Location</p>
+                      <p className="font-medium text-[var(--hz-text)]">{job.location}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <Building2 className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-500">Department</p>
-                      <p className="font-medium text-slate-900">{job.department}</p>
+                      <p className="text-sm text-[var(--hz-text-subtle)]">Department</p>
+                      <p className="font-medium text-[var(--hz-text)]">{job.department}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <Clock className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-500">Posted</p>
-                      <p className="font-medium text-slate-900">{postedAgo}</p>
+                      <p className="text-sm text-[var(--hz-text-subtle)]">Posted</p>
+                      <p className="font-medium text-[var(--hz-text)]">{postedAgo}</p>
                     </div>
                   </div>
                 </div>
@@ -632,14 +632,14 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
             className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Apply Now</h2>
-                <p className="text-slate-500 text-xs truncate max-w-[200px]">{job.title}</p>
+                <h2 className="text-lg font-bold text-[var(--hz-text)]">Apply Now</h2>
+                <p className="text-[var(--hz-text-subtle)] text-xs truncate max-w-[200px]">{job.title}</p>
               </div>
               <button
                 onClick={() => setShowApplyModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+                className="p-2 text-[var(--hz-text-subtle)] hover:text-[var(--hz-text-mute)] rounded-lg hover:bg-[var(--hz-paper)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -656,8 +656,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-4">
                     <CheckCircle2 className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">Application Submitted!</h3>
-                  <p className="text-slate-500 text-sm mb-6">
+                  <h3 className="text-xl font-bold text-[var(--hz-text)] mb-2">Application Submitted!</h3>
+                  <p className="text-[var(--hz-text-subtle)] text-sm mb-6">
                     Thank you for applying. We'll get back to you soon.
                   </p>
                   <button
@@ -665,7 +665,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                       setShowApplyModal(false);
                       setApplicationSubmitted(false);
                     }}
-                    className="px-5 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition-colors"
+                    className="px-5 py-2.5 bg-slate-100 text-[var(--hz-text-mute)] font-medium rounded-lg hover:bg-slate-200 transition-colors"
                   >
                     Close
                   </button>
@@ -674,26 +674,26 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 <form onSubmit={handleApply} className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1.5">First Name *</label>
+                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">First Name *</label>
                       <input
                         type="text"
                         autoComplete="given-name"
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="John"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Last Name *</label>
+                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Last Name *</label>
                       <input
                         type="text"
                         autoComplete="family-name"
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="Doe"
                       />
                     </div>
@@ -701,7 +701,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Email *</label>
+                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Email *</label>
                       <input
                         type="email"
                         autoComplete="email"
@@ -709,51 +709,51 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="john@example.com"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Phone</label>
+                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Phone</label>
                       <input
                         type="tel"
                         autoComplete="tel"
                         inputMode="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
+                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
                         placeholder="+1 (555) 000-0000"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1.5">Resume</label>
+                    <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Resume</label>
                     <div
                       className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                        resumeFile ? "border-emerald-400 bg-emerald-50" : "border-slate-200 hover:border-slate-300 bg-slate-50"
+                        resumeFile ? "border-emerald-400 bg-emerald-50" : "border-[var(--hz-paper-line)] hover:border-slate-300 bg-[var(--hz-paper)]"
                       }`}
                     >
                       {resumeFile ? (
                         <div className="flex items-center justify-center gap-2">
                           <FileText className="w-6 h-6 text-emerald-600" />
                           <div className="text-left">
-                            <p className="text-sm font-medium text-slate-900 truncate max-w-[150px]">{resumeFile.name}</p>
-                            <p className="text-xs text-slate-500">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+                            <p className="text-sm font-medium text-[var(--hz-text)] truncate max-w-[150px]">{resumeFile.name}</p>
+                            <p className="text-xs text-[var(--hz-text-subtle)]">{(resumeFile.size / 1024).toFixed(1)} KB</p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setResumeFile(null)}
                             className="p-1 hover:bg-emerald-100 rounded"
                           >
-                            <X className="w-4 h-4 text-slate-500" />
+                            <X className="w-4 h-4 text-[var(--hz-text-subtle)]" />
                           </button>
                         </div>
                       ) : (
                         <label className="cursor-pointer">
-                          <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-slate-700">Upload resume</p>
-                          <p className="text-xs text-slate-500">PDF, DOC, DOCX (max 5MB)</p>
+                          <Upload className="w-8 h-8 text-[var(--hz-text-subtle)] mx-auto mb-2" />
+                          <p className="text-sm font-medium text-[var(--hz-text-mute)]">Upload resume</p>
+                          <p className="text-xs text-[var(--hz-text-subtle)]">PDF, DOC, DOCX (max 5MB)</p>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx"
@@ -768,13 +768,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1.5">Cover Letter (Optional)</label>
+                    <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Cover Letter (Optional)</label>
                     <textarea
                       rows={3}
                       autoComplete="off"
                       value={formData.coverLetter}
                       onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-                      className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] resize-none bg-white"
+                      className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] resize-none bg-white"
                       placeholder="Tell us why you're interested..."
                     />
                   </div>

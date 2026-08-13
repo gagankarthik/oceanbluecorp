@@ -203,7 +203,7 @@ export default async function RootLayout({
   // utility sets scroll-behavior in the utilities layer, which outranks the
   // `html:not(.lenis)` guard in globals.css and would have re-introduced the
   // Lenis conflict on every page. That rule now lives entirely in the guard.
-  // `data-scroll-behavior` stays — smooth scrolling is still in use wherever
+  // `data-scroll-behavior` stays, smooth scrolling is still in use wherever
   // Lenis is not, and the attribute is what tells Next to suspend it during
   // route transitions.
   return (

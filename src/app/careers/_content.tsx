@@ -8,6 +8,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
 import { Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
+import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 /* ============================================================
@@ -21,7 +22,7 @@ import { IMG } from "@/components/landing/media";
 
    An earlier draft of this file invented benefits detail (a 401(k)
    match "from your first month", paid certifications with scheduled
-   study time). That was removed — anything stated here should be
+   study time). That was removed, anything stated here should be
    something a new hire can hold us to on day one.
    ============================================================ */
 
@@ -47,7 +48,7 @@ const practices = [
 /* Culture and benefits copy is the company's own, supplied and confirmed by
    the business. Presented in the page's editorial layout rather than the two
    flat icon-card grids it used to live in. */
-// Culture cards lead with a photo (not an icon) — imagery carries "growth /
+// Culture cards lead with a photo (not an icon), imagery carries "growth /
 // balance / inclusion" more warmly than a glyph. Sourced from the shared IMG
 // registry so they're real, valid Unsplash shots; swap for company photos when
 // available.
@@ -74,40 +75,31 @@ export default function CareersPage() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* ── Hero ───────────────────────────────────────────── */}
-      <section className="relative isolate flex min-h-[62vh] w-full items-center overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo
-          src={IMG.heroSlides[1]}
-          className="z-0"
-          fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)"
-          priority
-          sizes="100vw"
-        />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(100deg, rgba(5,12,28,0.95) 0%, rgba(7,20,43,0.86) 40%, rgba(7,20,43,0.5) 74%, rgba(7,20,43,0.3) 100%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-28 pb-16 sm:px-8 sm:pt-32 sm:pb-20">
-          <Reveal>
-            <span className="hz-eyebrow text-white/55">Careers</span>
-            <h1 className="hz-display mt-5 max-w-[16ch] text-[clamp(2rem,5vw,4rem)] break-words text-white">
-              Build your career with our team.
-            </h1>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:mt-7 sm:text-[18px]">
-              We place engineers, recruiters, and delivery leads with enterprises and
-              government agencies across North America, and we hire for the same
-              disciplines ourselves.
-            </p>
-            <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
-              <Cta href="/about" variant="ghostDark">About Ocean Blue</Cta>
-            </div>
+      <PageHero
+        eyebrow="Careers"
+        title="Build your career with our team."
+        subtitle="We place engineers, recruiters, and delivery leads with enterprises and government agencies across North America, and we hire for the same disciplines ourselves."
+        image={IMG.heroSlides[1]}
+        actions={
+          <>
+            <Cta href="/careers/search" variant="primary">View open positions</Cta>
+            <Cta href="/about" variant="ghostLight">About Ocean Blue</Cta>
+          </>
+        }
+      />
 
-            <dl className="mt-12 grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 border-t border-white/15 pt-8 min-[400px]:grid-cols-3 sm:mt-14">
-              {facts.map((f) => (
-                <div key={f.k}>
-                  <dt className="hz-display hz-tnum text-[1.6rem] text-white sm:text-[1.9rem]">{f.v}</dt>
-                  <dd className="hz-eyebrow mt-1 text-white/55">{f.k}</dd>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
+      {/* The three figures used to sit inside the hero on a white-on-dark rule.
+          On paper they need their own band. */}
+      <section className="w-full bg-[var(--hz-paper)] py-12 sm:py-14">
+        <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+          <dl className="grid max-w-3xl grid-cols-1 gap-x-4 gap-y-6 min-[400px]:grid-cols-3">
+            {facts.map((f) => (
+              <div key={f.k}>
+                <dt className="hz-display hz-tnum text-[1.6rem] text-[var(--hz-text)] sm:text-[1.9rem]">{f.v}</dt>
+                <dd className="hz-eyebrow mt-1 text-[var(--hz-text-mute)]">{f.k}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
@@ -116,7 +108,7 @@ export default function CareersPage() {
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-2xl">
-              <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d fit</span>
+              <span className="hz-eyebrow text-[var(--hz-cobalt)]">Where you&rsquo;d fit</span>
               <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
                 The practices we hire into.
               </h2>
@@ -157,7 +149,7 @@ export default function CareersPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
-              <span className="hz-eyebrow text-[var(--hz-amber)]">Our culture</span>
+              <span className="hz-eyebrow text-[var(--hz-cobalt)]">Our culture</span>
               <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
                 A culture of growth and collaboration.
               </h2>
@@ -194,7 +186,7 @@ export default function CareersPage() {
       <section className="relative w-full border-y border-[var(--hz-band-line)] bg-[var(--hz-band)] py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">Benefits</span>
+            <span className="hz-eyebrow text-[var(--hz-cobalt)]">Benefits</span>
             <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
               Benefits that have your back.
             </h2>
@@ -207,8 +199,8 @@ export default function CareersPage() {
           <Stagger className="mt-12 grid gap-5 sm:mt-14 md:grid-cols-3" gap={0.09}>
             {benefits.map((b) => (
               <StaggerItem key={b.title} className="h-full">
-                <div className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+                <div className="group flex h-full flex-col rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
+                  <span className="text-[var(--hz-cobalt)]">
                     <b.icon className="h-6 w-6" strokeWidth={1.5} />
                   </span>
                   <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{b.title}</h3>
@@ -224,7 +216,7 @@ export default function CareersPage() {
       <section className="relative w-full py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
-            <span className="hz-eyebrow text-[var(--hz-amber)]">Where you&rsquo;d work</span>
+            <span className="hz-eyebrow text-[var(--hz-cobalt)]">Where you&rsquo;d work</span>
             <h2 className="hz-display mt-4 text-[clamp(1.75rem,3.4vw,2.75rem)] text-[var(--hz-text)]">
               Four offices, three countries.
             </h2>
@@ -253,7 +245,7 @@ export default function CareersPage() {
       <section className="relative w-full py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal>
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-7 sm:p-9">
+            <div className="rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 sm:p-9">
               <h2 className="hz-display text-[1.25rem] text-[var(--hz-text)] sm:text-[1.5rem]">
                 An equal opportunity employer
               </h2>
@@ -269,9 +261,7 @@ export default function CareersPage() {
       </section>
 
       {/* ── CTA ────────────────────────────────────────────── */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">
@@ -282,7 +272,7 @@ export default function CareersPage() {
               file for roles that match.
             </p>
             <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/careers/search" variant="primary" icon={ArrowRight}>View open positions</Cta>
+              <Cta href="/careers/search" variant="primary">View open positions</Cta>
               <Cta href="/contact" variant="ghostDark">Get in touch</Cta>
             </div>
           </Reveal>

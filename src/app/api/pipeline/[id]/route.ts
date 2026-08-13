@@ -22,7 +22,7 @@ export async function GET(
 }
 
 /**
- * PUT /api/pipeline/[id] — edit a recorded event.
+ * PUT /api/pipeline/[id], edit a recorded event.
  *
  * The identity fields (id, kind, applicationId, createdAt) are not editable: an
  * interview cannot become a placement, and a record cannot be moved onto another
@@ -74,7 +74,7 @@ export async function PUT(
  * DELETE /api/pipeline/[id]
  *
  * Deleting a submission also removes the interviews and placement recorded under
- * it — see deletePipelineRecord. The candidate's stage is deliberately left where
+ * it, see deletePipelineRecord. The candidate's stage is deliberately left where
  * it is: undoing a mistyped record is not the same as saying the candidate was
  * never submitted, and guessing which it was would be worse than leaving the
  * stage for a human to correct.

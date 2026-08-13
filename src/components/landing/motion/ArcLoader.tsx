@@ -4,11 +4,11 @@ import { motion, useReducedMotion } from "framer-motion";
 import { DUR, EASE_CYCLE } from "@/lib/motion";
 
 /* ============================================================
-   ArcLoader — the brand's pending state.
+   ArcLoader, the brand's pending state.
 
    Not a spinner. A spinner is the same rotating ring every
    product ships and says nothing; this is the anniversary
-   mark's own gesture — an arc DRAWING around a ring — reused
+   mark's own gesture, an arc DRAWING around a ring, reused
    wherever the site is waiting.
 
    The arc both draws and rotates. Rotation alone reads as a
@@ -50,7 +50,7 @@ export default function ArcLoader({
 
         {/* Slow on purpose. A loader that whips round reads as anxious and, if
             the wait is real, as though something is going wrong. At ~3.4s per
-            revolution it reads as patient — the same information, calmer. */}
+            revolution it reads as patient, the same information, calmer. */}
         <motion.g
           style={{ originX: "28px", originY: "28px" }}
           animate={reduce ? undefined : { rotate: 360 }}

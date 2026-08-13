@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { fmtRelative } from "@/lib/format";
 
 /* ============================================================
-   ContactList — the index pane of the split contacts screen.
+   ContactList, the index pane of the split contacts screen.
 
    Built in the mail idiom (Jakob's Law: this reads like every
    inbox anyone already uses) rather than as a narrow table:
@@ -18,7 +18,7 @@ import { fmtRelative } from "@/lib/format";
    right-aligned, and an unanswered enquiry set in full-strength
    ink the way an unread message is. That weight difference is
    the only signal the screen needs to answer "what still needs
-   me" — the old grid said it with a status chip in the fifth
+   me", the old grid said it with a status chip in the fifth
    column, which you had to go looking for.
 
    Keyboard: ↑/↓ move the selection, because moving through a

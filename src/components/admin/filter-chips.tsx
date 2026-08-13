@@ -13,7 +13,7 @@ export interface FilterChip {
 }
 
 /**
- * Active-filter chips — rendered under the toolbar whenever advanced
+ * Active-filter chips, rendered under the toolbar whenever advanced
  * filters are applied, so the state of a filtered list is always visible
  * and individually dismissible (never make users reopen the panel to
  * see why a list looks short).

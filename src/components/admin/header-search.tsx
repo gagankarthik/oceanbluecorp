@@ -18,7 +18,7 @@ interface Hit {
 }
 
 /**
- * Regular top-bar search — a plain input with an inline results dropdown
+ * Regular top-bar search, a plain input with an inline results dropdown
  * (NOT a command-palette overlay). Type and matching jobs/candidates/contacts
  * appear right below; click or Enter to open. The ⌘K command palette still
  * exists for keyboard power users (registered in admin-provider), this just
@@ -74,7 +74,7 @@ export function HeaderSearch() {
   const showDropdown = open && q.trim().length > 0;
 
   return (
-    /* Was `w-56 / lg:w-72` — 224px, which is narrower than most of the things
+    /* Was `w-56 / lg:w-72`, 224px, which is narrower than most of the things
        it searches for. A candidate name plus a job title truncates before the
        result list even opens, and the top bar has the room: the centre of the
        chrome was mostly empty either side of it. Scales with the viewport now

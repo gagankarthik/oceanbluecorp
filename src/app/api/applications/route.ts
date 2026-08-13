@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
      * pipeline and is visible only to whoever added it, plus admins, who audit
      * the team's pipeline.
      *
-     * That rule was implemented in exactly one place — a `canView` call in the
-     * browser, in `admin/bench/page.tsx` — while this endpoint returned every
+     * That rule was implemented in exactly one place, a `canView` call in the
+     * browser, in `admin/bench/page.tsx`, while this endpoint returned every
      * application to every staff caller. The list on screen looked right, but
      * one recruiter's private pool was sitting in the JSON delivered to every
      * other recruiter's browser, readable from the network tab without any
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
      *
      * Scoped to `addToTalentBench` deliberately. `canView` resolves a record's
      * pool via `poolOf`, which falls back to "external" for anything not hired
-     * — so filtering every application through it would hide most of the
+     *, so filtering every application through it would hide most of the
      * pipeline from everyone on every other screen that reads this endpoint.
      * Only records actually on the bench carry the visibility rule.
      */
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // This route is open — the public careers portal posts through it — so a
+    // This route is open, the public careers portal posts through it, so a
     // client-supplied analysis is only trusted from a verified staff session.
     // The new-applicant screen already ran the extraction to fill its form, and
     // sends it here so the same document isn't put through the pipeline twice.
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
      * Fields only staff may set.
      *
      * This route is open so the public careers portal can post applications, and
-     * it used to take every field straight off the body — which let an anonymous
+     * it used to take every field straight off the body, which let an anonymous
      * applicant file themselves as `status: "hired"`, claim `ownership`, seed the
      * internal `notes` a recruiter would later read as a colleague's, hand
      * themselves a `rating`, or add themselves to the talent bench. A public
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
       source: body.source || (isPortalApplication ? "Career Portal" : "Other"),
       workAuthorization: body.workAuthorization,
       hireType: body.hireType || undefined,
-      // Visa details — both forms collect these; the client omits visaExpiry
+      // Visa details, both forms collect these; the client omits visaExpiry
       // when blank, so it stays undefined rather than writing an empty string.
       visaSponsorshipRequired: body.visaSponsorshipRequired || false,
       visaExpiry: body.visaExpiry || undefined,
@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
       /* after(), and AWAITED inside it.
          Both halves matter. Unawaited, this was a promise nobody tracked, and
          on Lambda the execution environment can freeze the moment the response
-         returns — so the notification landed sometimes and vanished sometimes.
+         returns, so the notification landed sometimes and vanished sometimes.
          after() alone does not fix that: it keeps the invocation alive for the
          promise its callback RETURNS, so a fire-and-forget call inside it is
          just as untracked as it was outside. */

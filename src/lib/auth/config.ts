@@ -14,7 +14,7 @@ export const cognitoAuthConfig = {
   loadUserInfo: true,
 };
 
-// Staff roles enum. These are the only assignable roles — every account is
+// Staff roles enum. These are the only assignable roles, every account is
 // created by an admin via invite and belongs to one of these groups.
 export enum UserRole {
   ADMIN = "admin",
@@ -117,7 +117,7 @@ export const getCognitoUrls = () => {
   };
 };
 
-// Route access configuration — enforced in the admin layout (RBAC). Matched by
+// Route access configuration, enforced in the admin layout (RBAC). Matched by
 // longest path prefix, so detail routes (e.g. /admin/jobs/123) inherit their
 // section's access. Every admin route should have an entry here.
 const ALL_STAFF = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
@@ -141,11 +141,11 @@ export const routeAccess: Record<string, UserRole[]> = {
   // Settings is PERSONAL for every staff member (Profile / Notifications /
   // Security); the admin-only "System" tab is gated inside the page itself
   // (visibleTabs filter + `activeTab === "site" && isAdmin`). So the route is
-  // all-staff — locking it to ADMIN wrongly denied everyone else their own
+  // all-staff, locking it to ADMIN wrongly denied everyone else their own
   // profile.
   "/admin/settings": ALL_STAFF,
   // Admin-only: the page itself wraps in ProtectedRoute[ADMIN] and the layout's
-  // "Developer" link is admin-gated, so ALL_STAFF here was the odd one out — a
+  // "Developer" link is admin-gated, so ALL_STAFF here was the odd one out, a
   // recruiter following a direct link got past the layout check only to hit the
   // page's own guard. Both gates now agree.
   "/admin/docs": [UserRole.ADMIN],

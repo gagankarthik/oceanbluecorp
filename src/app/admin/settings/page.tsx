@@ -117,7 +117,7 @@ function RecordRow({
         <Icon className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
       </span>
-      <span className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{value || "—"}</span>
+      <span className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{value || "–"}</span>
     </div>
   );
 }
@@ -416,8 +416,8 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "—"}</p>
-                    <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{user?.email || "—"}</p>
+                    <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "–"}</p>
+                    <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{user?.email || "–"}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <button
                         type="button"

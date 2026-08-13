@@ -5,7 +5,7 @@ import { enrichMatches } from "@/lib/aws/enrich-matches";
 import { requireStaff } from "@/lib/auth/verify";
 
 // GET /api/jobs/[id]/match-candidates
-// Return the CACHED ranking (instant — no embedding/LLM work). The resumes were
+// Return the CACHED ranking (instant, no embedding/LLM work). The resumes were
 // vectorized once at parse time; this just reads the last saved result.
 export async function GET(
   request: NextRequest,
@@ -48,7 +48,7 @@ export async function POST(
       topK = Math.min(50, Math.max(1, Math.floor(body.topK)));
     }
   } catch {
-    /* empty/invalid body — use default */
+    /* empty/invalid body, use default */
   }
 
   const jobResult = await getJob(id);

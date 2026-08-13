@@ -7,7 +7,7 @@ import { validateResumeFile } from "@/lib/aws";
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
-// POST /api/resume/parse — read a resume and return its structured content.
+// POST /api/resume/parse, read a resume and return its structured content.
 //
 // Deliberately stateless: nothing is written to S3 or DynamoDB. This backs the
 // "upload a resume to fill the form" step on the new-applicant screen, where the
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // contact is returned separately from analysis on purpose — the recruiter is
+    // contact is returned separately from analysis on purpose, the recruiter is
     // filling in a person's identity here, which never gets persisted as part of
     // the stored analysis.
     return NextResponse.json({

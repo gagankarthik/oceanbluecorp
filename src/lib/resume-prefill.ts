@@ -1,7 +1,7 @@
 // Maps an extraction result onto the fields of the new/edit applicant form.
 //
 // Pure and dependency-light on purpose: only TYPE imports touch the AWS modules
-// so this stays safe to use from client components (see CLAUDE.md — a value
+// so this stays safe to use from client components (see CLAUDE.md, a value
 // import from lib/aws ships the SDK and its env references to the browser).
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
 import { normalizeState } from "@/components/admin/theme";
@@ -28,7 +28,7 @@ export interface ResumePrefill {
   experience: string;
 }
 
-/** Which prefill keys actually carry a value — drives the "filled from resume" summary. */
+/** Which prefill keys actually carry a value, drives the "filled from resume" summary. */
 export type PrefillFilledKey = keyof ResumePrefill;
 
 const clean = (v: unknown): string =>
@@ -37,7 +37,7 @@ const clean = (v: unknown): string =>
 /**
  * Split a full name into first / last. Everything after the first token is the
  * surname, so "Ana Maria Ruiz" keeps "Maria Ruiz" together rather than dropping
- * the middle name — losing part of a candidate's name is worse than a long
+ * the middle name, losing part of a candidate's name is worse than a long
  * last-name field the recruiter can correct.
  */
 function splitName(full: string): { firstName: string; lastName: string } {
@@ -56,7 +56,7 @@ function splitLocation(location: string): { city: string; state: string } {
   const segments = location.split(",").map((s) => s.trim()).filter(Boolean);
   if (segments.length === 0) return { city: "", state: "" };
   if (segments.length === 1) {
-    // A bare token could be either — treat a recognised state as a state.
+    // A bare token could be either, treat a recognised state as a state.
     const asState = normalizeState(segments[0]);
     return asState ? { city: "", state: asState } : { city: segments[0], state: "" };
   }

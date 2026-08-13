@@ -68,9 +68,9 @@ interface FormErrors {
   email?: string;
 }
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 // ── page ─────────────────────────────────────────────────────────────────────
@@ -436,7 +436,7 @@ export default function VendorsPage() {
         onCancel={() => setPendingDelete(null)}
       />
 
-      {/* The KPI strip that counted these same buckets is gone — lead ownership
+      {/* The KPI strip that counted these same buckets is gone, lead ownership
           is a filter, and it now sits in the toolbar with the others rather
           than being promoted to a tab row. */}
       <WorkspaceTitle
@@ -453,7 +453,7 @@ export default function VendorsPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr") },

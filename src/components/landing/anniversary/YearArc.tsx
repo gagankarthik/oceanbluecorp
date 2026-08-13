@@ -5,7 +5,7 @@ import { yearsThrough } from "@/lib/company";
 import { ANNIVERSARY_YEAR } from "@/lib/anniversary";
 
 /* ============================================================
-   YearArc — 2013 · 2014 … 2026 set around an open ring, with the
+   YearArc, 2013 · 2014 … 2026 set around an open ring, with the
    arc drawing itself in on scroll and the closing year picked
    out in cobalt. Lifted from the celebration artwork, where the
    years wrap from roughly 8 o'clock, over the top, round to
@@ -21,7 +21,7 @@ import { ANNIVERSARY_YEAR } from "@/lib/anniversary";
      so they sit clear above the rail rather than resting on it.
    - Type size is capped at 21. Text arc length is 306 × 3.84 ≈
      1175 units and fourteen four-digit years plus separators run
-     to ~960 — about 100 units of clearance at each end for the
+     to ~960, about 100 units of clearance at each end for the
      terminal dots. Push the size past ~23 and the run overflows
      the arc, at which point the tail is silently clipped and the
      closing year, the one the whole graphic is about, is the
@@ -46,7 +46,7 @@ const TEXT_R = R + 26;
  *
  *  Quantised to 3dp on purpose. Math.cos/Math.sin are not required to be
  *  correctly rounded, and V8 can differ in the last ulp between the Node build
- *  that renders the HTML and the browser build that hydrates it — which React
+ *  that renders the HTML and the browser build that hydrates it, which React
  *  reports as a hydration mismatch on every coordinate derived from them. The
  *  same bug had to be patched in the vendored hexagon pattern. */
 function at(deg: number, radius: number) {

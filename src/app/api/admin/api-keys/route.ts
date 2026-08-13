@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error || "Failed to create API key" }, { status: 500 });
     }
 
-    // Return the full key only on creation — never shown again
+    // Return the full key only on creation, never shown again
     return NextResponse.json({ apiKey: { ...apiKey } }, { status: 201 });
   } catch (error) {
     console.error("Error creating API key:", error);

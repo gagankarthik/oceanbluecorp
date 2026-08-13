@@ -15,7 +15,7 @@ import { clearScroll, writeScroll } from "@/lib/scroll-signal";
    inside it. The /13-years journey dial is sticky. Lenis drives
    the real window scroll instead, so sticky, scroll-margin and
    the fixed header all keep working, and framer-motion's
-   `useScroll` — which 16 files depend on — still receives the
+   `useScroll`, which 16 files depend on, still receives the
    native scroll events it reads.
 
    Mounted from LayoutWrapper, which already excludes /admin.
@@ -43,7 +43,7 @@ export default function SmoothScroll() {
       smoothWheel: true,
       // Touch is left alone on purpose. Native mobile scrolling already has
       // momentum tuned by the platform, and overriding it makes a phone feel
-      // laggy rather than smooth — the opposite of the intent.
+      // laggy rather than smooth, the opposite of the intent.
       syncTouch: false,
     });
     lenisRef.current = lenis;
@@ -64,7 +64,7 @@ export default function SmoothScroll() {
     raf = requestAnimationFrame(frame);
 
     /* Same-page hash links. Left native they jump instantly, which reads as a
-       glitch on a page that otherwise eases — and `scroll-behavior: smooth`
+       glitch on a page that otherwise eases, and `scroll-behavior: smooth`
        cannot be used to fix it, because that fights Lenis for the same scroll. */
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -77,7 +77,7 @@ export default function SmoothScroll() {
       // Clear the fixed header (and the announcement bar when it is up) so the
       // section heading is not parked underneath it.
       lenis.scrollTo(target as HTMLElement, { offset: -96 });
-      // Keep the URL honest — preventDefault would otherwise drop the hash.
+      // Keep the URL honest, preventDefault would otherwise drop the hash.
       window.history.pushState(null, "", href);
     };
     document.addEventListener("click", onClick);
@@ -93,7 +93,7 @@ export default function SmoothScroll() {
 
   /* App Router navigations do not reset Lenis's internal position, so a new
      page opens scrolled to wherever the last one was. `immediate` because this
-     is a page change, not a movement within a page — easing it would animate
+     is a page change, not a movement within a page, easing it would animate
      content the visitor has not seen yet. */
   useEffect(() => {
     lenisRef.current?.scrollTo(0, { immediate: true });

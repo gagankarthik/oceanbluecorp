@@ -12,7 +12,7 @@ import type { Tone } from "@/components/admin/theme";
 import { fmtDateTime } from "@/lib/format";
 
 /* ============================================================
-   ContactDetail — the reading pane of the contacts screen.
+   ContactDetail, the reading pane of the contacts screen.
 
    Lifted out of a centred modal. A modal was the wrong container
    for this: reading an enquiry and moving to the next one is the
@@ -21,7 +21,7 @@ import { fmtDateTime } from "@/lib/format";
    view the next enquiry is one click away and the list never
    loses its position.
 
-   Deliberately presentational — every mutation is a callback, so
+   Deliberately presentational, every mutation is a callback, so
    the page keeps owning the data and this can be rendered
    anywhere (pane today, drawer on a phone).
    ============================================================ */
@@ -45,7 +45,7 @@ export function ContactDetail({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Sender — pinned, so you always know whose message you are reading */}
+      {/* Sender, pinned, so you always know whose message you are reading */}
       <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={name} email={contact.email} size="lg" />
@@ -136,7 +136,7 @@ export function ContactDetail({
           </div>
         </div>
 
-        {/* Destructive action last and quiet — it is not why anyone opened this. */}
+        {/* Destructive action last and quiet, it is not why anyone opened this. */}
         <button
           onClick={() => onDelete(contact.id)}
           className="mt-6 inline-flex items-center gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"

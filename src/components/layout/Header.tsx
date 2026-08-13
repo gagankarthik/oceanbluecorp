@@ -12,20 +12,22 @@ import {
   Cloud,
   Users,
   Cpu,
-  Building,
   Settings,
   Headphones,
-  Briefcase,
   Wrench,
   LogOut,
   LayoutDashboard,
   ArrowRight,
   ArrowUpRight,
 } from "lucide-react";
+import {
+  IllDocs, IllBlog, IllNews, IllStories, IllCases,
+  IllBuilding, IllTeam, IllCareers, IllContact, IllPositions, IllProducts, IllBrandKit,
+} from "@/components/landing/motifs/Motifs";
 import { useAuth, UserRole } from "@/lib/auth";
 import { IconHrPortal } from "@/components/admin/icons";
 
-// Four core practices — used by both the desktop dropdown and the mobile menu.
+// Four core practices, used by both the desktop dropdown and the mobile menu.
 const solutions = [
   { name: "IT Staffing & Talent",          href: "/solutions/staffing",    icon: Users,      description: "Specialists, embedded fast" },
   { name: "Engineering Talent & Services", href: "/solutions/engineering", icon: Wrench,     description: "Mechanical, electrical, aerospace" },
@@ -33,138 +35,239 @@ const solutions = [
   { name: "Managed Services",              href: "/solutions/managed",     icon: Headphones, description: "24/7 operations, one SLA" },
 ];
 
-const aboutItems = [
-  { name: "About Us",  href: "/about",      icon: Building,   description: "Our story, principles, and how we work." },
-  { name: "Our Team",  href: "/team",       icon: Users,      description: "Meet the leadership behind the practice." },
-  { name: "Careers",   href: "/careers",    icon: Briefcase,  description: "Open roles and life at Ocean Blue." },
-];
-
-const aboutFeature = {
-  eyebrow: "Our approach",
-  title: "How we partner with enterprises",
-  body:  "A single accountable team, a consolidated SLA, and quarterly business reviews against the outcomes you set.",
-  href:  "/about",
-  cta:   "Read our approach",
-};
-
 const navigation = [
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
   { name: "Solutions", href: "/solutions", hasDropdown: true, dropdownType: "solutions" },
-  { name: "Products", href: "/products" },
+  { name: "Resources", href: "/developers", hasDropdown: true, dropdownType: "resources" },
   { name: "Careers", href: "/careers" },
-  { name: "Contact", href: "/contact" },
+  // Contact is deliberately absent, it renders as an action at the right end
+  // of the bar, not as a centred nav item. The mobile menu adds it back, since
+  // there is no separate action row there.
 ];
 
 /* ============================================================
-   MEGA-MENU COMPONENTS — large enterprise dropdowns
+   MEGA-MENU COMPONENTS, large enterprise dropdowns
    ============================================================ */
 
-function MenuTile({
-  name, href, description, icon: Icon, onClick,
-}: {
+/* Built to the reference site's own menu anatomy, which is a specific and
+   deliberate shape rather than a generic dropdown:
+
+     · The panel is FULL BLEED. It spans the viewport and drops from the
+       header's bottom edge as one sheet, instead of a narrow rounded card
+       floating under whichever word you hovered. That is why theirs reads
+       as part of the chrome and a card reads as a popup.
+     · Columns, split by vertical hairlines, each under a plain heading.
+       The heading is the taxonomy; the grouping is the information.
+     · Rows are a NAME and nothing else, with a right arrow parked at the
+       column's right edge. No descriptions, no icons, no chips. A menu is
+       for choosing a destination, not for explaining it, the description
+       belongs on the page you land on.
+     · Square corners and a hairline base. No radius, no drop shadow. */
+
+type MenuItem = {
   name: string;
   href: string;
-  description: string;
-  icon: typeof Cloud;
-  onClick?: () => void;
-}) {
+  /** Drawn from the shared motif set. Optional, and carried only by the CELL
+   *  menus (About, Resources), whose entries are different kinds of thing. The
+   *  Solutions columns stay bare: those entries are all one kind of thing, and
+   *  a wrench beside "Engineering Talent" would tell you nothing the words do
+   *  not, decoration standing in for a distinction. */
+  Icon?: (p: { className?: string }) => React.ReactElement;
+  /** The icon's hue. Two tones of one colour, see the note in Motifs. */
+  tint?: string;
+  /** Cell layouts only. Column layouts stay a name and an arrow. */
+  description?: string;
+};
+
+type MenuColumn = { heading: string; items: MenuItem[] };
+
+const SOLUTIONS_COLUMNS: MenuColumn[] = [
+  {
+    heading: "Practices",
+    items: [
+      { name: "IT Staffing & Talent", href: "/solutions/staffing" },
+      { name: "Engineering Talent", href: "/solutions/engineering" },
+      { name: "Managed Services", href: "/solutions/managed" },
+    ],
+  },
+  {
+    heading: "Platform & cloud",
+    items: [
+      { name: "Cloud Engineering", href: "/solutions/cloud" },
+      { name: "Cybersecurity", href: "/solutions/cybersecurity" },
+      { name: "ERP Solutions", href: "/solutions/erp" },
+      { name: "Salesforce Services", href: "/solutions/salesforce" },
+    ],
+  },
+  {
+    heading: "Data & change",
+    items: [
+      { name: "AI & Data Intelligence", href: "/solutions/ai" },
+      { name: "Digital Transformation", href: "/solutions/transformation" },
+    ],
+  },
+];
+
+/* About moves to cells for the same reason Resources did: these six are six
+   different kinds of thing, a company page, a roster, a job board, a form, and a bare list of names makes a reader work out which is which. The two
+   headings that used to group them ("The firm" / "Working with us") were
+   doing that job with words; the drawings do it faster. */
+const ABOUT_CELLS: MenuItem[] = [
+  { name: "About Us", href: "/about", description: "Who we are, and how we actually work", Icon: IllBuilding, tint: "#1d4ed8" },
+  { name: "Our Team", href: "/team", description: "The people who lead the engagements", Icon: IllTeam, tint: "#0EA5E9" },
+  { name: "Careers", href: "/careers", description: "What the work is like, and how we hire", Icon: IllCareers, tint: "#0D9488" },
+  { name: "Open positions", href: "/careers/search", description: "Every role open right now", Icon: IllPositions, tint: "#6366F1" },
+  { name: "Contact", href: "/contact", description: "Tell us what you are trying to fix", Icon: IllContact, tint: "#0CACCF" },
+];
+
+/* Resources is laid out as CELLS, not a link column, because the reference
+   site does exactly this: menus whose entries are all the same kind of thing
+   (its Solutions, our practices) get bordered columns of plain links, while
+   menus whose entries are different kinds of thing (its Platform, our
+   resources) get a grid of cells carrying a line of description and a
+   coloured glyph in the corner. A menu should be shaped by what is in it.
+
+   One narrow card holding five links also sat marooned in the middle of a
+   full-width sheet. Two columns of cells fill the measure the way theirs do.
+
+   The five hues are all cool blues and teals, so the grid reads as coloured
+   without importing an accent the rest of the site does not use. */
+const RESOURCES_CELLS: MenuItem[] = [
+  { name: "Developer documentation", href: "/developers", description: "The Job Feed API: auth, endpoints, schemas", Icon: IllDocs, tint: "#1d4ed8" },
+  { name: "Blog", href: "/blog", description: "Notes from the people doing the work", Icon: IllBlog, tint: "#0CACCF" },
+  { name: "News", href: "/news", description: "Announcements, certifications, milestones", Icon: IllNews, tint: "#6366F1" },
+  { name: "Customer stories", href: "/customer-stories", description: "What it is like to work with us, in their words", Icon: IllStories, tint: "#0EA5E9" },
+  { name: "Case studies", href: "/case-studies", description: "The problem, the team, what changed", Icon: IllCases, tint: "#0D9488" },
+  { name: "Products", href: "/products", description: "Software we own end to end", Icon: IllProducts, tint: "#0975C1" },
+  { name: "Brand kit", href: "/brand-kit", description: "Logos, colours, and how to use them", Icon: IllBrandKit, tint: "#7C3AED" },
+];
+
+/* One table, so adding a menu is adding a row rather than extending a chain
+   of ternaries in the render. */
+type Menu =
+  | { layout: "columns"; columns: MenuColumn[] }
+  | { layout: "cells"; cells: MenuItem[] };
+
+const MENUS: Record<string, Menu> = {
+  solutions: { layout: "columns", columns: SOLUTIONS_COLUMNS },
+  about: { layout: "cells", cells: ABOUT_CELLS },
+  resources: { layout: "cells", cells: RESOURCES_CELLS },
+};
+
+function MenuLink({ name, href, Icon, tint, onClick }: MenuItem & { onClick?: () => void }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-slate-50"
+      className="group flex items-center justify-between gap-6 py-2.5 text-[14.5px] text-[var(--hz-text)] transition-colors hover:text-[var(--hz-cobalt)]"
     >
-      <div className="flex size-9 flex-none items-center justify-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-colors duration-200 group-hover:bg-[var(--hz-cobalt)] group-hover:text-white">
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
+      <span className="flex min-w-0 items-center gap-3">
+        {/* A bare glyph, not a tinted rounded chip behind one. The chip is the
+            pattern this site keeps removing; the drawing can carry its own
+            colour without a box around it. */}
+        {Icon && (
+          <span style={{ color: tint }} className="flex-none">
+            <Icon className="h-[26px] w-[26px]" />
+          </span>
+        )}
+        <span className="truncate">{name}</span>
+      </span>
+      {/* Parked at the column's right edge and always present, so the rows
+          line up as a column of destinations rather than shifting on hover. */}
+      <ArrowRight
+        className="h-3.5 w-3.5 flex-none text-[var(--hz-text-subtle)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--hz-cobalt)]"
+        strokeWidth={1.75}
+      />
+    </Link>
+  );
+}
+
+/** A cell: the glyph in the corner, the name, one line saying what it is.
+ *  Used where the entries are different KINDS of thing and the name alone
+ *  does not separate them. */
+function MenuCell({ name, href, description, Icon, tint, onClick }: MenuItem & { onClick?: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="group flex items-start justify-between gap-4 rounded-lg border border-[var(--hz-paper-line)] bg-white p-4 transition-colors hover:border-[var(--hz-cobalt)]/40"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14.5px] font-semibold text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">
           {name}
-          <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-        </p>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--hz-text-subtle)]">{description}</p>
-      </div>
+        </span>
+        {description && (
+          <span className="mt-1 block text-[12.5px] leading-snug text-[var(--hz-text-mute)]">
+            {description}
+          </span>
+        )}
+      </span>
+      {/* Corner glyph, as the reference places it, top-right of the cell,
+          where it labels the cell without displacing the sentence. */}
+      {Icon && (
+        <span style={{ color: tint }} className="flex-none">
+          <Icon className="h-7 w-7" />
+        </span>
+      )}
     </Link>
   );
 }
 
-function FeaturePanel({
-  eyebrow, title, body, href, cta, onClick,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-  onClick?: () => void;
-}) {
+function MegaPanel({ menu, onNavigate }: { menu: Menu; onNavigate?: () => void }) {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] p-5 text-white"
-    >
-      <div className="relative">
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/85">
-          {eyebrow}
-        </span>
-        <h4 className="mt-3 text-[18px] font-semibold leading-tight tracking-tight">{title}</h4>
-        <p className="mt-2 text-[12.5px] leading-relaxed text-white/75">{body}</p>
-        <span className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold transition-all group-hover:gap-1.5">
-          {cta}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function SolutionsMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <div className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-2 gap-1 p-3.5">
-        {solutions.map((it) => (
-          <MenuTile key={it.name} {...it} onClick={onNavigate} />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-[#eef2f6] bg-[#f8fafc] px-4 py-2.5">
-        <div className="flex items-center gap-2 text-[12px] text-[var(--hz-text-mute)]">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-          <span>One accountable SLA</span>
+    // Sized to its contents, not stretched across the viewport. A full-bleed
+    // sheet meant a two-column menu still painted a white band the whole width
+    // of the screen, most of it empty, the panel announced far more than it
+    // contained. Shrinking it to the cards puts the weight where the links are.
+    //
+    // Still white, matching the bar it hangs from, and it keeps the square-ish
+    // radius and hairline of the cards inside rather than becoming a popup with
+    // its own personality.
+    <div className="inline-block rounded-2xl border border-[var(--hz-paper-line)] bg-white px-7 py-6 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
+      {menu.layout === "cells" ? (
+        <div className="grid w-[min(92vw,680px)] gap-3 sm:grid-cols-2">
+          {menu.cells.map((it) => (
+            <MenuCell key={it.name} {...it} onClick={onNavigate} />
+          ))}
         </div>
-        <Link
-          href="/solutions"
-          onClick={onNavigate}
-          className="group inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--hz-cobalt)] hover:opacity-80"
-        >
-          View all solutions
-          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </Link>
-      </div>
+      ) : (
+        <MegaColumns columns={menu.columns} onNavigate={onNavigate} />
+      )}
     </div>
   );
 }
 
-function AboutMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
+/* Each column is its OWN bordered card, not a track separated from its
+   neighbour by a shared rule. The difference matters: a divided grid reads as
+   one table you scan across, whereas separate boxes read as separate lists you
+   pick between, which is what these are.
+
+   `items-stretch` squares the bottoms off, with four links in one card and
+   two in another, ragged heights would make the shortest look unfinished
+   rather than simply shorter. */
+function MegaColumns({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?: () => void }) {
   return (
-    <div className="w-[680px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#ffffff] shadow-[var(--reg-shadow-xl)]">
-      <div className="grid grid-cols-12 gap-0">
-        <div className="col-span-12 p-6 md:col-span-7">
-          <p className="mb-2.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-text-subtle)]">
-            The firm
-          </p>
-          <div className="space-y-0.5">
-            {aboutItems.map((it) => (
-              <MenuTile key={it.name} {...it} onClick={onNavigate} />
+    <div className="flex flex-wrap items-stretch justify-center gap-3">
+      {columns.map((col) => (
+        <div
+          key={col.heading}
+          className="w-full overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white sm:w-[290px]"
+        >
+          {/* Header band: the taxonomy, and a small dot at the right edge that
+              closes the row the arrows below open. */}
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--hz-paper-line)] px-4 py-3">
+            <span className="text-[14.5px] font-semibold text-[var(--hz-text)]">{col.heading}</span>
+            <span aria-hidden className="h-2.5 w-2.5 flex-none rounded-full bg-[var(--hz-paper-line)]" />
+          </div>
+          <div className="px-4 py-2">
+            {col.items.map((it) => (
+              // Spread, not a hand-listed set of props, the previous form
+              // silently dropped Icon and tint when they were added.
+              <MenuLink key={it.name} {...it} onClick={onNavigate} />
             ))}
           </div>
-
         </div>
-        <div className="col-span-12 bg-[#f8fafc] p-6 md:col-span-5">
-          <FeaturePanel {...aboutFeature} onClick={onNavigate} />
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -255,9 +358,21 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
     };
   }, [mobileMenuOpen]);
 
-  const getDropdownItems = (type: string) => {
-    if (type === "solutions") return solutions;
-    if (type === "about") return aboutItems;
+  // One shape for the mobile sheet, whichever menu it came from. The two
+  // legacy lists carry a lucide `icon` and a `description`; Resources carries
+  // a drawn `Icon` and a `tint`. Normalising here keeps the render from having
+  // to know which list it is walking.
+  type MobileItem = {
+    name: string;
+    href: string;
+    description?: string;
+    Icon?: (p: { className?: string }) => React.ReactElement;
+    tint?: string;
+  };
+  const getDropdownItems = (type: string): MobileItem[] => {
+    if (type === "solutions") return solutions.map(({ name, href, description }) => ({ name, href, description }));
+    if (type === "about") return ABOUT_CELLS;
+    if (type === "resources") return RESOURCES_CELLS;
     return [];
   };
 
@@ -268,10 +383,22 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
   return (
     <>
       <header
-        className={`fixed left-0 right-0 ${topOffset} z-[9999] transition-all duration-300 ease-out ${
+        // Duration and curve are deliberately identical to the announcement
+        // bar's in LayoutWrapper. The header slides `top` while the bar slides
+        // `transform`; on different easings the two separate mid-flight and a
+        // sliver of bar shows below the header. Same timing, and they move as
+        // one piece.
+        // Solid white in both states. Scrolled, this used to go to bg-white/60
+        // with a backdrop blur, which meant the bar took on whatever was
+        // passing beneath it, over the hero film that is a moving, changing
+        // tint, so the nav never settled on one colour and the dropdown sheet
+        // (opaque white) no longer matched the bar it hangs from. Scrolling now
+        // changes only the shadow, which is the part that actually says "there
+        // is content underneath".
+        className={`fixed left-0 right-0 ${topOffset} z-[9999] bg-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           scrolled
-            ? "border-b border-white/40 bg-white/60 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl backdrop-saturate-150"
-            : "border-b border-gray-100 bg-white"
+            ? "border-b border-[var(--hz-paper-line)] shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)]"
+            : "border-b border-gray-100"
         }`}
       >
         <nav
@@ -291,8 +418,13 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               />
             </Link>
 
-            {/* Desktop Navigation - Always visible with proper contrast */}
-            <div className="hidden lg:flex lg:items-center lg:gap-1">
+            {/* Desktop navigation, centred on the header rather than sitting
+                in the flex flow. Centred by `justify-between` it would only
+                look centred while the logo and the right-hand actions happened
+                to be the same width, sign in/out changes that width, and the
+                nav would drift. Taking it out of the flow pins it to the true
+                centre and holds it there. */}
+            <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex lg:items-center lg:gap-1">
               {navigation.map((item) =>
                 item.hasDropdown ? (
                   <div
@@ -301,39 +433,32 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                     onMouseEnter={() => openMenu(item.dropdownType || null)}
                     onMouseLeave={scheduleClose}
                   >
+                    {/* The open item is marked by a rule at the header's own
+                        bottom edge, which is what ties the panel below to the
+                        word that opened it. */}
                     <button
-                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${
+                      className={`relative flex items-center gap-1.5 px-3.5 py-2 text-[14.5px] font-medium transition-colors ${
                         activeDropdown === item.dropdownType
-                          ? "text-[var(--hz-cobalt)]"
-                          : "text-gray-700 hover:text-[var(--hz-cobalt)]"
+                          ? "text-[var(--hz-text)]"
+                          : "text-gray-700 hover:text-[var(--hz-text)]"
                       }`}
                     >
                       {item.name}
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                        activeDropdown === item.dropdownType ? "rotate-180 text-[var(--hz-cobalt)]" : "text-gray-400"
+                        activeDropdown === item.dropdownType ? "rotate-180 text-[var(--hz-text)]" : "text-gray-400"
                       }`} />
-                    </button>
-
-                    {/* Mega-menu, wide enterprise dropdown */}
-                    <AnimatePresence>
                       {activeDropdown === item.dropdownType && (
-                        <motion.div
-                          onMouseEnter={() => openMenu(item.dropdownType || null)}
-                          onMouseLeave={scheduleClose}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                          className="absolute left-1/2 top-full -translate-x-1/2 pt-2.5"
-                        >
-                          {item.dropdownType === "solutions" ? (
-                            <SolutionsMegaMenu onNavigate={() => setActiveDropdown(null)} />
-                          ) : (
-                            <AboutMegaMenu onNavigate={() => setActiveDropdown(null)} />
-                          )}
-                        </motion.div>
+                        <motion.span
+                          layoutId="nav-underline"
+                          // 18px is the measured gap between the button's box
+                          // and the header's bottom edge at both nav heights
+                          // (h-16 and md:h-[72px] each leave the same slack
+                          // around a py-2 button), so the rule lands exactly on
+                          // the edge the panel drops from.
+                          className="absolute inset-x-3 -bottom-[18px] h-[2px] bg-[var(--hz-text)]"
+                        />
                       )}
-                    </AnimatePresence>
+                    </button>
                   </div>
                 ) : (
                   <Link
@@ -345,9 +470,18 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                   </Link>
                 )
               )}
+            </div>
 
-              {/* Auth Section */}
-              <div className="ml-4 pl-4 border-l border-gray-200 flex items-center gap-2">
+            {/* Right-hand actions. Contact lives here rather than in the
+                centred nav: it is the conversion, not a section of the site,
+                and the reference site groups its actions the same way, plain
+                links in the middle, the things you want people to press at the
+                end of the bar. */}
+            <div className="hidden lg:flex lg:items-center lg:gap-4">
+              {/* Auth Section, signing in is a utility, not the thing we want
+                  people to do, so it is a plain link. The single filled pill on
+                  the bar belongs to the one action we are actually asking for. */}
+              <div className="flex items-center gap-2">
                 {isLoading ? (
                   <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
                 ) : isAuthenticated ? (
@@ -473,12 +607,20 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                 ) : (
                   <Link
                     href="/auth/signin"
-                    className="hz-btn-fill rounded-full bg-[var(--hz-cobalt)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md"
+                    className="text-[14.5px] font-medium text-gray-700 transition-colors hover:text-[var(--hz-text)]"
                   >
-                    Sign In
+                    Sign in
                   </Link>
                 )}
               </div>
+
+              {/* The one filled control on the bar. */}
+              <Link
+                href="/contact"
+                className="rounded-full bg-[var(--hz-cobalt)] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]"
+              >
+                Contact
+              </Link>
             </div>
 
             {/* Mobile menu button - Always visible */}
@@ -516,7 +658,10 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               }`}>
                 <div className="px-4 sm:px-6 py-6">
                   <div className="space-y-1">
-                    {navigation.map((item) => (
+                    {/* Contact is appended here. On desktop it is an action at
+                        the right end of the bar; the mobile sheet has no such
+                        row, so without this it would drop off the menu. */}
+                    {[...navigation, { name: "Contact", href: "/contact" }].map((item) => (
                       <div key={item.name} className="border-b border-gray-100 last:border-b-0">
                         {item.hasDropdown ? (
                           <div>
@@ -542,16 +687,25 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                                       setMobileDropdown(null);
                                     }}
                                   >
-                                    <div className="w-10 h-10 rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] flex items-center justify-center flex-shrink-0">
-                                      <dropItem.icon className="w-5 h-5" strokeWidth={1.75} />
-                                    </div>
+                                    {/* Resources rows carry a drawn icon in its
+                                        own hue; Solutions and About do not, and
+                                        the tinted rounded chip that used to sit
+                                        here is the pattern the desktop menu
+                                        dropped. */}
+                                    {dropItem.Icon && (
+                                      <span style={{ color: dropItem.tint }} className="flex-shrink-0">
+                                        <dropItem.Icon className="h-7 w-7" />
+                                      </span>
+                                    )}
                                     <div className="flex-1 min-w-0">
                                       <p className="font-medium text-gray-900 text-sm">
                                         {dropItem.name}
                                       </p>
-                                      <p className="text-xs text-gray-500">
-                                        {dropItem.description}
-                                      </p>
+                                      {dropItem.description && (
+                                        <p className="text-xs text-gray-500">
+                                          {dropItem.description}
+                                        </p>
+                                      )}
                                     </div>
                                     <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                   </Link>
@@ -653,6 +807,47 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
             </>
           )}
         </nav>
+
+        {/* The mega panel lives HERE, a sibling of the nav, not a child of
+            the hovered item. Inside the nav it would be trapped in the
+            max-w-7xl measure and anchored to one word; out here it spans the
+            fixed header's full width and drops from its bottom edge as one
+            sheet, which is the whole difference between a menu and a popup.
+
+            Hover handlers are repeated on the panel so moving the pointer
+            down into it does not count as leaving the trigger. */}
+        <AnimatePresence>
+          {activeDropdown && MENUS[activeDropdown] && (
+            <motion.div
+              // A CONSTANT key, deliberately. Keyed on the menu name, moving
+              // from Solutions to Resources unmounted one panel and mounted
+              // another, so AnimatePresence rendered both at once, two sheets
+              // stacked at the same top-full position, overlapping. With one
+              // key the panel stays put and only its contents swap, which is
+              // also how the reference behaves: the sheet opens once and
+              // changes under you as you move along the bar.
+              key="mega-panel"
+              onMouseEnter={() => openMenu(activeDropdown)}
+              onMouseLeave={scheduleClose}
+              // Wiped down from the header edge, not faded in. Opacity on the
+              // wrapper makes the whole panel translucent for the length of the
+              // transition, and over a dark, busy hero a half-opaque white
+              // sheet with the headline showing through it reads as a bug. A
+              // clip reveal keeps the panel fully opaque at every frame.
+              initial={{ clipPath: "inset(0 0 100% 0)" }}
+              animate={{ clipPath: "inset(0 0 0% 0)" }}
+              exit={{ clipPath: "inset(0 0 100% 0)" }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              // Centred on the header rather than pinned to both edges, now
+              // that the panel is only as wide as its contents. The small top
+              // padding is inside the hover area, so the pointer can cross the
+              // gap from the trigger without the menu closing under it.
+              className="absolute left-1/2 top-full hidden -translate-x-1/2 pt-1.5 lg:block"
+            >
+              <MegaPanel menu={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
     </>
   );

@@ -14,7 +14,7 @@ function toResult(fit: JobFit): JobFitResult {
   };
 }
 
-// GET — return the cached job-fit verdict (null if not scored yet).
+// GET, return the cached job-fit verdict (null if not scored yet).
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -30,8 +30,8 @@ export async function GET(
    * Never serve a verdict scored against a different job.
    *
    * The PUT handler clears the cache when a candidate is moved, which is the
-   * primary fix. This is the backstop: any other path that changes `jobId` —
-   * an import, a script, a future route — would otherwise resurrect the same
+   * primary fix. This is the backstop: any other path that changes `jobId`,
+   * an import, a script, a future route, would otherwise resurrect the same
    * bug, and the failure is silent by nature. Comparing the stamp costs one
    * field on a read that already has the record in hand.
    *
@@ -51,7 +51,7 @@ export async function GET(
   });
 }
 
-// POST — (re)score this application's resume against its job, then cache it.
+// POST, (re)score this application's resume against its job, then cache it.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -70,7 +70,7 @@ export async function POST(
     return NextResponse.json({ error: "This application isn't linked to a job." }, { status: 400 });
   }
   if (!app.resumeAnalysis) {
-    return NextResponse.json({ error: "Analyze the resume first — no parsed resume to score." }, { status: 409 });
+    return NextResponse.json({ error: "Analyze the resume first, no parsed resume to score." }, { status: 409 });
   }
 
   const jobResult = await getJob(app.jobId);
@@ -91,7 +91,7 @@ export async function POST(
 
   const jobFit = toResult(scored.fit);
   const jobFitAt = new Date().toISOString();
-  // Best-effort cache — a failed write shouldn't fail the request.
+  // Best-effort cache, a failed write shouldn't fail the request.
   await updateApplication(id, { jobFit, jobFitAt, jobFitJobId: app.jobId }).catch((e) => console.error(`[job-fit] cache write failed for ${id}:`, e));
 
   return NextResponse.json({ jobFit, jobFitAt, jobFitJobId: app.jobId });

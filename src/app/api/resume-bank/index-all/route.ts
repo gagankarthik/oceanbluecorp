@@ -15,14 +15,14 @@ import {
 import { requireStaff } from "@/lib/auth/verify";
 
 // Gathering the worklist means an S3 listing, a table scan and chunked
-// indexed-status checks — give it room beyond the default.
+// indexed-status checks, give it room beyond the default.
 export const maxDuration = 120;
 
 // POST /api/resume-bank/index-all
 // Kick off cloud-side indexing of EVERYTHING that isn't searchable yet:
 // resume-bank files plus application/bench resumes. Responds immediately;
 // the work continues server-side as a self-chaining background job, so the
-// user can close the page. Idempotent — already-indexed items are skipped,
+// user can close the page. Idempotent, already-indexed items are skipped,
 // and re-clicking resumes a broken chain from wherever it stopped.
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       getAllApplications(),
     ]);
 
-    // Duplicate files (same name + size uploaded twice) are indexed ONCE — the
+    // Duplicate files (same name + size uploaded twice) are indexed ONCE, the
     // extra copy would cost a parse and surface the same candidate twice in
     // matches. The copies are reported so the UI can flag them for deletion;
     // an already-indexed copy wins so we never re-parse a healthy group.
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Peek at indexed status for everything first so the keeper of each
     // duplicate group is the copy that's already searchable, if any.
     const allBankKeys = (bankList.objects || []).map((o) => o.key);
-    // Anything with a resume file or a stored analysis can be made searchable —
+    // Anything with a resume file or a stored analysis can be made searchable,
     // that includes bench profiles whose details were entered manually.
     const appIds = (appsResult.data || [])
       .filter((a) => a.resumeId || a.resumeAnalysis)
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       duplicateCopies += list.length - 1;
     }
 
-    // Re-index bank files that were embedded before contact cards existed —
+    // Re-index bank files that were embedded before contact cards existed,
     // they show as "Unnamed candidate" in matches until re-parsed.
     const alreadyIndexed = bankKeys.filter((k) => indexedMap[k]);
     const contacts = await getBankResumeContacts(alreadyIndexed);

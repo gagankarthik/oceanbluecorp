@@ -1,7 +1,7 @@
 # Engineering standards
 
 How code in this repo is written, where it goes, and what must be true before it
-ships. Rules are stated with the reason attached — a rule whose reason is gone
+ships. Rules are stated with the reason attached, a rule whose reason is gone
 should be deleted, not worked around.
 
 Companion documents: `CLAUDE.md` (orientation), `DESIGN_SYSTEM.md` (visual
@@ -10,7 +10,7 @@ reuse, security, and accessibility.
 
 ---
 
-## 1. Structure — where code goes
+## 1. Structure, where code goes
 
 | Kind of code | Home | Notes |
 |---|---|---|
@@ -31,7 +31,7 @@ that holds and should shed logic into `src/lib` and `src/components/admin` as
 they are next touched:
 
 ```
-2638  src/lib/aws/dynamodb.ts      (acceptable — one entity section per block)
+2638  src/lib/aws/dynamodb.ts      (acceptable, one entity section per block)
 2222  src/app/admin/bench/page.tsx           ← worst offender
 1321  src/components/admin/workspace.tsx
 1180  src/app/admin/applications/page.tsx
@@ -48,8 +48,7 @@ component or a lib helper.
 
 **Files.** `kebab-case.tsx` for everything new (`pipeline-panel.tsx`,
 `confirm-dialog.tsx`). `src/components/landing/*` and
-`src/components/auth/ProtectedRoute.tsx` use `PascalCase` for historical reasons
-— leave them, but do not add to that set. 44 admin components are kebab-case;
+`src/components/auth/ProtectedRoute.tsx` use `PascalCase` for historical reasons, leave them, but do not add to that set. 44 admin components are kebab-case;
 that is the convention.
 
 **Code.**
@@ -61,7 +60,7 @@ that is the convention.
 - Booleans read as assertions: `isStaff`, `hasAnalysis`, `resumeChanged`.
 - Async functions that hit the network: `fetchX` / `loadX` (read),
   `createX` / `updateX` / `deleteX` (write).
-- Design tokens: `--adm-*`. Never a raw hex in a component — see DESIGN_SYSTEM.md.
+- Design tokens: `--adm-*`. Never a raw hex in a component, see DESIGN_SYSTEM.md.
 
 **Data-layer return shape.** Every function in `src/lib/aws/*` returns
 `{ success: boolean; data?: T; error?: string }`. Callers check `success`; they
@@ -76,13 +75,13 @@ it will silently fall back in production: `.env.local`, `src/lib/aws/config.ts`
 
 > **Found and fixed in audit:** `.env.local` defined
 > `NEXT_AWS_DYNAMODB_TABLE_SITE_CONTENT` while the code read
-> `NEXT_AWS_DYNAMODB_TABLE_CONTENT` — it worked only because the hardcoded
+> `NEXT_AWS_DYNAMODB_TABLE_CONTENT`, it worked only because the hardcoded
 > fallback happened to name the same table. Renamed, and now echoed in
 > `amplify.yml` too. This is the failure mode the three-places rule exists for.
 
 ---
 
-## 3. Reusability — use the helper that exists
+## 3. Reusability, use the helper that exists
 
 Before writing a helper, check this list. Every entry here exists **because it
 was duplicated first**.
@@ -106,7 +105,7 @@ was duplicated first**.
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and
 `jobTitle` so cross-candidate lists need no second read. That is a considered
-trade (a renamed candidate goes stale in old records), not an accident — write
+trade (a renamed candidate goes stale in old records), not an accident, write
 the comment when you do it.
 
 ---
@@ -114,7 +113,7 @@ the comment when you do it.
 ## 4. The client/server boundary
 
 **Client components must `import type` from `src/lib/aws/*`.** A value import
-pulls the AWS SDK — and the `process.env` references around it — into the browser
+pulls the AWS SDK, and the `process.env` references around it, into the browser
 bundle.
 
 ```ts
@@ -146,7 +145,7 @@ if (!auth.ok) return auth.response;
 ```
 
 The guard is the **first statement**, before `request.json()`. Use
-`auth.claims.sub` for attribution — never a user id from the body.
+`auth.claims.sub` for attribution, never a user id from the body.
 
 Deliberately unguarded, and why:
 
@@ -192,7 +191,7 @@ const body = checked.value;   // declared fields only
 Gating dangerous fields one at a time (§5.2) fixes the instance. Declaring the
 shape fixes the class: a field nobody declared cannot reach the database however
 it arrives, including one somebody adds to the client later. Errors name the
-field — a 400 reading "Invalid request" costs an afternoon.
+field, a 400 reading "Invalid request" costs an afternoon.
 
 Applied to: `api/pipeline`. Everything else predates it; convert on next touch.
 
@@ -213,7 +212,7 @@ and should be preserved by anything added to it:
 
 - Never `NEXT_PUBLIC_` for a credential. `NEXT_EXTRACTION_SHARED_SECRET` signs
   extraction tickets and is server-side only.
-- `.env*` is gitignored (`.gitignore:34`) — confirmed. Keep it that way.
+- `.env*` is gitignored (`.gitignore:34`), confirmed. Keep it that way.
 - Amplify env vars must be declared in the console *and* echoed in `amplify.yml`,
   or the deployed runtime silently falls back.
 - Outbound service credentials belong in `src/lib/aws/*` or a server-only module,
@@ -222,11 +221,11 @@ and should be preserved by anything added to it:
 ### 5.6 HTML and injection
 
 - Rich text is sanitized **at save time** with `sanitizeRichText`
-  (`lib/sanitize-server.ts`) — see `api/jobs/route.ts` and `api/jobs/[id]/route.ts`.
+  (`lib/sanitize-server.ts`), see `api/jobs/route.ts` and `api/jobs/[id]/route.ts`.
   Any new route that stores authored HTML must do the same; `renderRichText`
   trusts what it is given.
 - `dangerouslySetInnerHTML` on public pages is JSON-LD from `JSON.stringify`
-  only — verified. Keep it to that, or sanitize.
+  only, verified. Keep it to that, or sanitize.
 - DynamoDB expressions are always parameterised
   (`ExpressionAttributeNames` / `Values`), never string-built from input.
 
@@ -251,16 +250,16 @@ privileged-field hole in §5.2 is gated.
 
 Non-negotiable, and already established in the codebase:
 
-- **Focus is always visible** — the global `:focus-visible` ring in `globals.css`.
+- **Focus is always visible**, the global `:focus-visible` ring in `globals.css`.
   Never `outline: none` without a replacement.
 - **Touch targets ≥ 24px** (WCAG 2.5.8). Controls that draw a fixed-size box
-  (checkbox, radio, switch) are exempt from the global `min-height` — a
+  (checkbox, radio, switch) are exempt from the global `min-height`, a
   `min-height` on a 16px checkbox renders a 16×24 rectangle. They carry a
   transparent oversized `::before` instead: 24px by default, 40px in a DataTable
   row where there is room.
 - **Every icon-only control gets an `aria-label`**; decorative icons get
   `aria-hidden="true"`.
-- **Errors are announced** — `role="alert"` on error blocks.
+- **Errors are announced** , `role="alert"` on error blocks.
 - **Destructive actions confirm** through `<ConfirmDialog>`, which traps focus,
   closes on Escape, and focuses Cancel first.
 - **Skip-to-content link** stays first in the admin layout tab order.
@@ -275,7 +274,7 @@ Non-negotiable, and already established in the codebase:
 One-off work lives in `scripts/*.mjs`, loads `.env.local` itself, and:
 
 - **dry run by default**, mutating only with `--apply`;
-- is **idempotent** — safe to run twice (see `create-pipeline-table.mjs`, which
+- is **idempotent**, safe to run twice (see `create-pipeline-table.mjs`, which
   reports an existing table and refuses to alter it);
 - prints what it would do before doing it.
 
@@ -284,14 +283,14 @@ One-off work lives in `scripts/*.mjs`, loads `.env.local` itself, and:
 ## 8. Before it ships
 
 ```bash
-npm test             # node --test over tests/*.test.mjs — must be green
-npm run typecheck    # tsc --noEmit — must exit 0
+npm test             # node --test over tests/*.test.mjs, must be green
+npm run typecheck    # tsc --noEmit, must exit 0
 npm run build        # before deploying
 ```
 
 There is no ESLint config, so those two are the automated gate.
 
-**What belongs in `tests/`.** Pure functions only — no AWS, no network, no React.
+**What belongs in `tests/`.** Pure functions only, no AWS, no network, no React.
 Modules are loaded through `tests/load.mjs` (jiti, already a transitive
 dependency), which resolves TypeScript and the `@/*` alias without adding a test
 framework. Business rules with money or state transitions in them get a test:
@@ -301,7 +300,7 @@ form.
 And by hand:
 
 1. Exercise the change in the running app, including its failure path.
-2. For anything touching AWS, verify against the real service — a `scripts/`
+2. For anything touching AWS, verify against the real service, a `scripts/`
    smoke test beats assuming.
 3. For a client-boundary change, confirm no `@aws-sdk` in `.next/static`.
 4. State plainly what was verified and what was not.

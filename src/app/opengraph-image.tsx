@@ -1,14 +1,14 @@
 import { ImageResponse } from "next/og";
 
 /* ============================================================
-   Social share card — 1200×630, generated at build time.
+   Social share card, 1200×630, generated at build time.
    Replaces the 400×400 logo that forced a small `summary` card;
    this lets X/LinkedIn/Slack render the large-image treatment.
    `twitter-image.tsx` re-exports this so both stay in sync.
    ============================================================ */
 
 export const alt =
-  "Ocean Blue Corporation — IT staffing, enterprise solutions, and managed services";
+  "Ocean Blue Corporation. IT staffing, enterprise solutions, and managed services";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

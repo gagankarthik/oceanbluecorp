@@ -8,7 +8,7 @@ import { IMG } from "@/components/landing/media";
 
 /* ============================================================
    Per-solution page content. Each entry powers a dedicated,
-   self-contained /solutions/<slug> page — no shared landing
+   self-contained /solutions/<slug> page, no shared landing
    sections (stats / certifications) are repeated here.
    ============================================================ */
 

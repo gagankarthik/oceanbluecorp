@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 import { isHtml } from "@/lib/rich-text";
 
 /* ============================================================
-   Minimal rich text editor — a contentEditable surface with a
+   Minimal rich text editor, a contentEditable surface with a
    small formatting toolbar. Dependency-free (uses the built-in
    execCommand); outputs HTML into a plain string field.
 
    Descriptions written before this editor existed are plain
    text with newlines, so `toHtml` converts their line breaks to
    <br> when they load, and `renderRichText` does the same at the
-   display side — old records keep their formatting, new ones get
+   display side, old records keep their formatting, new ones get
    real HTML.
    ============================================================ */
 
@@ -73,7 +73,7 @@ export function RichTextEditor({
   const ref = React.useRef<HTMLDivElement>(null);
 
   // Seed the surface on mount and when the value is replaced from OUTSIDE (e.g.
-  // switching records), but never while the user is typing in it — writing
+  // switching records), but never while the user is typing in it, writing
   // innerHTML would drop the caret back to the top on every keystroke.
   React.useEffect(() => {
     const el = ref.current;

@@ -51,13 +51,13 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
    hero 3.5rem, while the site had moved to fluid clamps and grown a second
    heading role the kit never showed. A brand kit that has to be hand-synced
    with the stylesheet stops being the source of truth the first time someone
-   edits one and not the other — the icon grid below is auto-enumerated for the
+   edits one and not the other, the icon grid below is auto-enumerated for the
    same reason. `note` is the only thing written by hand, and it describes
    where the role is used rather than what size it is. */
 const TYPE_SCALE = [
   { label: "Display / Hero", cls: "text-[clamp(2rem,5.4vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
-  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2 — opens a section", sample: "Section headline" },
-  { label: "Statement", cls: "hz-statement", note: ".hz-statement — supports one", sample: "Relied on by enterprises." },
+  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2, opens a section", sample: "Section headline" },
+  { label: "Statement", cls: "hz-statement", note: ".hz-statement, supports one", sample: "Relied on by enterprises." },
   { label: "Card title / H3", cls: "text-[1.35rem] sm:text-[1.5rem]", note: "Service and content cards", sample: "Card title" },
   { label: "Body", cls: "text-[16px] font-normal leading-relaxed", note: "Paragraphs", sample: "Body copy sets the reading rhythm at a relaxed line height for clarity." },
   { label: "Small / caption", cls: "text-[13px] font-normal text-[var(--hz-text-mute)]", note: "Captions, metadata", sample: "Captions, metadata, and labels." },
@@ -84,12 +84,12 @@ function CopyChip({ value }: { value: string }) {
 
 // Every custom glyph exported from the admin icon set. Type exports are erased
 // at runtime, so filtering to Icon-named function values yields exactly the
-// components — no manual list to keep in sync.
+// components, no manual list to keep in sync.
 const ICON_ENTRIES = (Object.entries(AdminIcons) as [string, unknown][])
   .filter(([name, v]) => name.startsWith("Icon") && typeof v === "function")
   .sort(([a], [b]) => a.localeCompare(b)) as [string, ComponentType<{ className?: string }>][];
 
-/** One icon tile — click copies the rendered <svg> markup to the clipboard. */
+/** One icon tile, click copies the rendered <svg> markup to the clipboard. */
 function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ className?: string }> }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [copied, setCopied] = useState(false);
@@ -107,7 +107,7 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ classNam
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // clipboard is permission-gated / unavailable on plain http — no-op
+      // clipboard is permission-gated / unavailable on plain http, no-op
     }
   };
 
@@ -117,17 +117,16 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ classNam
       onClick={copy}
       title={`Copy ${name} SVG`}
       aria-label={copied ? `${name} SVG copied` : `Copy ${name} SVG`}
-      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md"
-    >
+      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-[var(--hz-paper-line)]/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md bg-[var(--hz-ink)]">
       <span ref={ref} className="text-[var(--hz-cobalt)]">
-        <Icon className="h-6 w-6" />
+        <Icon className="h-7 w-7" />
       </span>
       <span className="w-full truncate text-center font-mono text-[10.5px] text-[var(--hz-text-mute)]">{name}</span>
       <span
         aria-hidden
         className={cn(
           "absolute right-1.5 top-1.5 transition-colors",
-          copied ? "text-emerald-500" : "text-slate-300 group-hover:text-slate-400",
+          copied ? "text-emerald-500" : "text-slate-300 group-hover:text-[var(--hz-text-subtle)]",
         )}
       >
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -140,7 +139,7 @@ export default function BrandKitContent() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
         <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:px-8">
           <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
@@ -158,10 +157,10 @@ export default function BrandKitContent() {
         <section>
           <SectionHeading n="01" title="Logo" sub="Primary wordmark. Keep clear space around it and don't recolor or distort." />
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-12 shadow-sm">
+            <div className="flex items-center justify-center rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-12 shadow-sm">
               <Image src="/logo.png" alt="Ocean Blue Corporation logo on light" width={220} height={60} className="h-12 w-auto" />
             </div>
-            <div className="flex items-center justify-center rounded-2xl p-12 shadow-sm" style={{ background: "#07142b" }}>
+            <div className="flex items-center justify-center rounded-2xl p-12 shadow-sm bg-[var(--hz-ink)]">
               <Image src="/logo.png" alt="Ocean Blue Corporation logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
             </div>
           </div>
@@ -179,7 +178,7 @@ export default function BrandKitContent() {
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">{g.group}</p>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {g.colors.map((c) => (
-                    <div key={c.varName} className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                    <div key={c.varName} className="overflow-hidden rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white shadow-sm">
                       <div className="flex h-24 items-end justify-end p-3" style={{ background: c.hex }}>
                         {c.dark && <span className="text-[10px] font-medium text-white/60">Aa</span>}
                       </div>
@@ -202,7 +201,7 @@ export default function BrandKitContent() {
         {/* Typography */}
         <section>
           <SectionHeading n="03" title="Typography" sub="Geist Sans across display and body; Geist Mono for code and labels. Tight tracking on large display, relaxed line height on body." />
-          <div className="mt-8 divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm">
+          <div className="mt-8 divide-y divide-slate-100 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-2 shadow-sm">
             {TYPE_SCALE.map((t) => (
               <div key={t.label} className="flex flex-col gap-2 px-5 py-5 sm:flex-row sm:items-baseline sm:gap-8">
                 <span className="w-32 flex-none">
@@ -219,7 +218,7 @@ export default function BrandKitContent() {
         <section>
           <SectionHeading n="04" title="Components" sub="Core interactive elements, buttons, chips, and cards use the rounded, cobalt-accented language sitewide." />
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div className="space-y-4 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 shadow-sm">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">Buttons</p>
               <div className="flex flex-wrap items-center gap-3">
                 <button className="inline-flex items-center rounded-full bg-[var(--hz-cobalt)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--hz-cobalt-600)]">Primary</button>
@@ -227,12 +226,12 @@ export default function BrandKitContent() {
                 <button className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-[var(--hz-cobalt)] hover:underline">Text link</button>
               </div>
             </div>
-            <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div className="space-y-4 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 shadow-sm">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">Chips & radius</p>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-[var(--hz-cobalt-100)] px-2.5 py-1 text-xs font-semibold text-[var(--hz-cobalt)]">Badge</span>
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">rounded-lg</span>
-                <span className="rounded-2xl bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">rounded-2xl (cards)</span>
+                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-[var(--hz-text-mute)]">rounded-lg</span>
+                <span className="rounded-2xl bg-slate-100 px-2.5 py-1 text-xs font-medium text-[var(--hz-text-mute)]">rounded-2xl (cards)</span>
               </div>
             </div>
           </div>
@@ -243,7 +242,7 @@ export default function BrandKitContent() {
           <SectionHeading
             n="05"
             title="Icons"
-            sub="The custom Ocean Blue icon set — drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
+            sub="The custom Ocean Blue icon set, drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
           />
           <div className="mt-8 grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
             {ICON_ENTRIES.map(([name, Icon]) => (

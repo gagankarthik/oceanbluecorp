@@ -6,7 +6,7 @@
 // fires the first hop. Each hop (/api/resume-bank/index-run) responds 202
 // immediately, processes a small batch inside `after()` (so it fits one
 // serverless invocation), then POSTs the remaining worklist back to itself with
-// an internal key. Progress is stateless — the vector store itself is the
+// an internal key. Progress is stateless, the vector store itself is the
 // record of what's done, so a broken chain resumes exactly where it left off
 // the next time "Index all" is clicked.
 //
@@ -42,8 +42,8 @@ export function indexChainKey(): string {
  * Hop authentication: an HMAC of the exact request body, NOT the raw secret.
  * The self-callback URL is partly request-derived, so if a spoofed Host header
  * ever pointed a hop at an attacker's server, they'd receive only a signature
- * for that one payload — worthless for reaching the matching engine or
- * forging different work — never the key itself.
+ * for that one payload, worthless for reaching the matching engine or
+ * forging different work, never the key itself.
  */
 export function signIndexPayload(rawBody: string): string {
   return createHmac("sha256", indexChainKey()).update(rawBody).digest("hex");
@@ -91,7 +91,7 @@ export async function indexBankFile(fileKey: string): Promise<{ indexed: boolean
   }
 
   // Bank files have no application record, so the parsed contact card is the
-  // only identity we have — store it so matches can show a real name/email/
+  // only identity we have, store it so matches can show a real name/email/
   // phone instead of "Unnamed candidate". Best-effort: indexing must not fail
   // over a contact write.
   const candidateName = meta.candidateName || parsed.contact?.name;
@@ -201,7 +201,7 @@ export async function processIndexHop(payload: IndexJobPayload, selfUrl: string)
   }
 
   try {
-    // The next hop 202s before doing any work, so this await is quick — it only
+    // The next hop 202s before doing any work, so this await is quick, it only
     // confirms the baton was handed off, it does not wait for the whole chain.
     const body = JSON.stringify(rest);
     const res = await fetch(selfUrl, {

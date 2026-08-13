@@ -2,17 +2,20 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 /**
- * Sitewide announcement strip pinned above the top navbar. Rendered only when
- * the CMS announcement field is set (see LayoutWrapper). Fixed 40px tall — the
- * header and page content are offset by the same amount so nothing underlaps.
+ * Sitewide announcement strip shown above the top navbar. Rendered only when
+ * the CMS announcement field is set (see LayoutWrapper). 40px tall.
+ *
+ * Positioning belongs to the WRAPPER in LayoutWrapper, not here: the wrapper
+ * is what slides the strip out of view once the reader is past the fold, and
+ * two elements both claiming `fixed inset-x-0 top-0` would fight over it.
  * `scroll` (CMS toggle) turns it into a continuous marquee.
  */
 export default function AnnouncementBar({ text, href, scroll }: { text: string; href?: string; scroll?: boolean }) {
   const barClass =
-    "horizon fixed inset-x-0 top-0 z-[9990] flex h-10 items-center overflow-hidden text-[13px] font-medium text-white";
+    "horizon relative flex h-10 w-full items-center overflow-hidden text-[13px] font-medium text-white";
   const barStyle = {
     background: "linear-gradient(90deg, var(--hz-cobalt-600) 0%, var(--hz-cobalt) 50%, var(--hz-cobalt-600) 100%)",
-    color: "#ffffff", // force white — beats the .horizon base color
+    color: "#ffffff", // force white, beats the .horizon base color
   } as const;
 
   // ── Scrolling / marquee mode ──

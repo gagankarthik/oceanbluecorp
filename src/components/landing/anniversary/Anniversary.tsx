@@ -17,7 +17,7 @@ import {
 } from "@/lib/anniversary";
 
 /* ============================================================
-   TEMPORARY — the 13-year celebration band.
+   TEMPORARY, the 13-year celebration band.
 
    The FIRST section on the homepage, above the hero, because for
    the days it is up it is the news. That placement is why it
@@ -33,7 +33,7 @@ import {
 
    It plays ONCE PER SESSION. A choreographed 2.5s open is a
    moment the first time and an obstacle the fourth, and this is
-   the homepage — people come back to it within a visit. The
+   the homepage, people come back to it within a visit. The
    `sessionStorage` flag is set before the first timer rather than
    after the last, so a visitor who navigates away mid-sequence
    still gets the instant version on return.
@@ -42,7 +42,7 @@ import {
    state; a staged reveal with a loader is exactly what that
    preference is asking not to see.
 
-   Delete this directory to retire the celebration — see
+   Delete this directory to retire the celebration, see
    `src/lib/anniversary.ts` for the full teardown list.
    ============================================================ */
 
@@ -65,7 +65,7 @@ const TIMINGS: [number, number][] = [
 
 function useIntroSequence() {
   const reduce = useReducedMotion();
-  // Starts PENDING so the server's HTML and the client's first render agree —
+  // Starts PENDING so the server's HTML and the client's first render agree,
   // sessionStorage cannot be read during render without a hydration mismatch.
   const [step, setStep] = useState<number>(STEP.PENDING);
 
@@ -87,7 +87,7 @@ function useIntroSequence() {
     try {
       window.sessionStorage.setItem(SEEN_KEY, "1");
     } catch {
-      /* ignore — the sequence just replays next visit */
+      /* ignore, the sequence just replays next visit */
     }
 
     setStep(STEP.LOADER);
@@ -192,7 +192,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
       aria-labelledby="thirteen-heading"
       className="relative w-full overflow-hidden bg-[var(--hz-band)] pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pb-24"
     >
-      {/* Wave motif from the celebration artwork — bottom corners only, very
+      {/* Wave motif from the celebration artwork, bottom corners only, very
           low contrast, purely atmospheric. */}
       <svg
         aria-hidden
@@ -215,7 +215,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
       {/* Gold pillar-and-arch at each corner, framing the band as a pavilion.
           Replaced a pair of mandala medallions flanking the mark: a medallion
           is an object sitting in the margin, where an arch is architecture the
-          content stands inside — which is what fills the space rather than
+          content stands inside, which is what fills the space rather than
           merely occupying it. */}
       <CornerArches />
 
@@ -243,7 +243,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
             transition={{ duration: 0.95, ease: EASE }}
           >
             {/* Mounted with the reveal, not before: YearArc animates on scroll
-                into view, and this section is above the fold — mounted earlier
+                into view, and this section is above the fold, mounted earlier
                 its 1.9s draw would run to completion behind the closed iris and
                 the ring would simply be there when it opened. */}
             {markOpen && <YearArc />}
@@ -260,7 +260,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
         {/* ── Copy, facts and actions ─────────────────────────
             One wrapper animating opacity/transform rather than per-block
             scroll reveals. The blocks stay mounted throughout so the section's
-            height never changes — mounting them at the copy step would shift
+            height never changes, mounting them at the copy step would shift
             everything below the fold mid-sequence. */}
         <motion.div
           initial={false}
@@ -275,7 +275,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
             className="mx-auto mt-6 max-w-3xl text-center sm:mt-8"
           >
             {/* Two-tone, as the artwork sets it: the company in ink, the
-                occasion in cobalt. A CMS override is rendered plain — an
+                occasion in cobalt. A CMS override is rendered plain, an
                 editor typing a custom line has no way to say where the colour
                 should break, and guessing at a delimiter would put it in the
                 wrong place the first time someone rephrased it. */}
@@ -327,7 +327,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
             }}
             className="mt-10 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row"
           >
-            <Cta href={ANNIVERSARY_PATH} variant="primary" icon={ArrowRight}>
+            <Cta href={ANNIVERSARY_PATH} variant="primary">
               {content.anniversaryCtaText || `Read our ${ANNIVERSARY_YEARS}-year story`}
             </Cta>
             <Cta href="/careers" variant="ghostLight">
