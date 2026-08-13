@@ -92,7 +92,12 @@ function ServiceDetail({ id }: { id: string }) {
   const s = SERVICES[id];
   const Icon = s.icon;
   return (
-    <div id={id} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
+    // Namespaced. The pillar sections take their id from the pillar name, and
+    // one of them is "Managed" — which collided with the "managed" service key
+    // here, putting two id="managed" nodes in the document. Invalid HTML, and
+    // it made the hero's #managed jump link ambiguous: the browser picks the
+    // first match, which was not necessarily the one intended.
+    <div id={`service-${id}`} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
       <a href={`/solutions/${id}`} className="group flex items-center gap-3">
         <span className="flex-none text-[var(--hz-cobalt)]">
           <Icon className="h-6 w-6" strokeWidth={1.5} />

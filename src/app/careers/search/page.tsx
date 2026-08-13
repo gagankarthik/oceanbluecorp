@@ -360,8 +360,12 @@ export default function CareersSearchPage() {
                 {/* Remote Toggle */}
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
+                    role="switch"
+                    aria-checked={remoteOnly}
+                    aria-label="Remote roles only"
                     onClick={() => { setRemoteOnly(!remoteOnly); setCurrentPage(1); }}
-                    className={`w-11 h-6 py-2 -my-2 rounded-full transition-colors relative ${remoteOnly ? "bg-[var(--hz-cobalt)]" : "bg-slate-200"}`}
+                    className={`w-11 h-6 py-2 -my-2 rounded-full transition-colors relative ${remoteOnly ? "bg-[var(--hz-cobalt)]" : "bg-[var(--hz-paper-line)]"}`}
                   >
                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${remoteOnly ? "left-6" : "left-1"}`} />
                   </button>
@@ -406,7 +410,7 @@ export default function CareersSearchPage() {
                             <div className="h-6 w-24 rounded-full bg-slate-100" />
                             <div className="h-6 w-20 rounded-full bg-slate-100" />
                           </div>
-                          <div className="h-5 w-3/4 max-w-xs rounded bg-slate-200" />
+                          <div className="h-5 w-3/4 max-w-xs rounded bg-[var(--hz-paper-line)]" />
                           <div className="h-3.5 w-full max-w-lg rounded bg-slate-100" />
                           <div className="h-3.5 w-2/3 max-w-md rounded bg-slate-100" />
                         </div>
@@ -515,6 +519,8 @@ export default function CareersSearchPage() {
                     {totalPages > 1 && (
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
+                          aria-label="Previous page"
                           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                           disabled={currentPage === 1}
                           className="p-2.5 rounded-lg border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -534,6 +540,8 @@ export default function CareersSearchPage() {
                           );
                         })}
                         <button
+                          type="button"
+                          aria-label="Next page"
                           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                           disabled={currentPage === totalPages}
                           className="p-2.5 rounded-lg border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)] disabled:opacity-50 disabled:cursor-not-allowed"
