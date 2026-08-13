@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Phone, Send, CheckCircle2, ArrowRight } from "lucide-react";
+import { Phone, Send, CheckCircle2 } from "lucide-react";
 import { Reveal } from "@/components/landing/motion/Primitives";
 import { Eyebrow } from "@/components/landing/ui";
 import PageHero from "@/components/landing/PageHero";
@@ -77,67 +77,8 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
         }
       />
 
-      {/* Route the visitor before the form.
-
-          Everything on this page pointed at one HR address, so a Fortune 500
-          buyer, a candidate and a client with a production incident were all
-          being asked to fill in the same box and wait. Naming the three routes
-          costs one row and gets each of them to the right place: the form for
-          new work, the job board for candidates, and the phone plus the status
-          page for anyone whose system is down right now, because someone with
-          an outage should never be told to use a form. */}
-      <section className="px-6 pt-20 sm:px-8 sm:pt-24">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>Who do you need?</Eyebrow>
-            <h2 className="hz-display mt-5 text-[clamp(1.5rem,3vw,2.25rem)] text-[var(--hz-text)]">
-              Three doors, so you do not queue behind the wrong one.
-            </h2>
-          </Reveal>
-          <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-3">
-            {[
-              {
-                title: "New work",
-                body: "Staffing, an engineering programme, a platform, or all of it. Tell us what you are trying to fix and we will put the right people on the call.",
-                meta: "Answered the same business day",
-                cta: "Use the form below",
-                href: "#contact-form",
-              },
-              {
-                title: "Looking for a role",
-                body: "Every open position is on the job board. Applying there reaches the recruiters directly rather than a general inbox.",
-                meta: "Shortlists in 48 hours",
-                cta: "See open roles",
-                href: "/careers/search",
-              },
-              {
-                title: "Already a client",
-                body: "If something is down, call. Do not use the form. Live platform status is published, and your account contact is on the same number.",
-                meta: "+1 (614) 844-6925",
-                cta: "Check system status",
-                href: "/status",
-              },
-            ].map((r) => (
-              <div key={r.title} className="hz-card flex h-full flex-col p-6">
-                <h3 className="text-[15.5px] font-semibold text-[var(--hz-text)]">{r.title}</h3>
-                <p className="mt-2.5 flex-1 text-[13.5px] leading-relaxed text-[var(--hz-text-mute)]">{r.body}</p>
-                <p className="mt-4 border-t border-[var(--hz-paper-line)] pt-3 text-[12.5px] text-[var(--hz-text-subtle)]">{r.meta}</p>
-                <a
-                  href={r.href}
-                  className="mt-5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--hz-cobalt)] transition-opacity hover:opacity-80"
-                >
-                  {r.cta}
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                </a>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
       {/* Form + side */}
-      <section id="contact-form" className="scroll-mt-24 px-6 py-24 sm:px-8 sm:py-28">
+      <section id="contact-form" className="scroll-mt-24 px-6 pb-24 pt-16 sm:px-8 sm:pb-28 sm:pt-20">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
           {/* Form */}
           <div className="rounded-3xl border border-black/[0.08] bg-white p-6 shadow-[var(--hz-shadow-lg)] sm:p-10">
