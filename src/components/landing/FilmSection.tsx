@@ -43,32 +43,38 @@ export default function FilmSection() {
   );
 
   return (
-    <section className="w-full bg-[var(--hz-ink)] py-16 sm:py-20 lg:py-24">
-      {/* Split band: the argument on the left, the film on the right, on ink.
-          The reference does this because it stops the video being the section
-          and makes it the evidence for a sentence. It also solves the size
-          problem on its own, at half the measure the frame is a companion to
-          the copy rather than the point of the page. */}
+    <section className="w-full bg-[var(--hz-paper)] py-16 sm:py-20 lg:py-24">
+      {/* Split band: the argument on the left, the film on the right. The
+          reference does this because it stops the video being the section and
+          makes it the evidence for a sentence. It also solves the size problem
+          on its own, at half the measure the frame is a companion to the copy
+          rather than the point of the page.
+
+          On paper rather than ink. The page already closes on two dark bands
+          (partners, then careers), so a third put three of them in the back
+          half and made the run bottom-heavy. The frame itself stays dark,
+          because footage is, and it is now the only dark object in the
+          section, which is what draws the eye to it. */}
       <div className="mx-auto grid w-full max-w-[2200px] items-center gap-10 px-6 sm:px-10 lg:grid-cols-2 lg:gap-16 lg:px-16 2xl:px-28">
         <Reveal>
-          <span className="hz-eyebrow block text-[var(--hz-aqua)]">Inside Ocean Blue</span>
-          <h2 className="hz-display hz-h2 mt-4 max-w-[16ch] text-white">
+          <span className="hz-eyebrow block text-[var(--hz-cobalt)]">Inside Ocean Blue</span>
+          <h2 className="hz-display hz-h2 mt-4 max-w-[16ch] text-[var(--hz-text)]">
             Meet the team behind the work.
           </h2>
-          <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-white/70 sm:mt-6 sm:text-[17px]">
+          <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:mt-6 sm:text-[17px]">
             A short introduction to who we are and how an engagement actually runs,
             from the first shortlist to the quarterly review.
           </p>
           <Link
             href="/about"
-            className="mt-8 inline-flex items-center rounded-full border border-white/25 px-6 py-3 text-[14.5px] font-semibold text-white transition-colors hover:border-white sm:mt-10"
+            className="mt-8 inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-6 py-3 text-[14.5px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)] sm:mt-10"
           >
             More about us
           </Link>
         </Reveal>
 
         <Reveal delay={0.08}>
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-[var(--hz-paper-line)]">
             {playing ? (
               <iframe
                 className="absolute inset-0 h-full w-full"
