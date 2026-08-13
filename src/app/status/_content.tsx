@@ -68,12 +68,12 @@ const ST: Record<S, {
   unknown:      { label: "Unknown",      dot: "bg-gray-400",   ring: "ring-gray-200",    bg: "bg-gray-100",   text: "text-gray-500",    border: "border-gray-200",    bar: "bg-gray-400",    icon: Info },
 };
 
-const BANNER: Record<S, { band: string; heading: string; sub: string }> = {
-  operational:  { band: "bg-emerald-600", heading: "All Systems Operational",  sub: "All platform services are running normally." },
-  investigating:{ band: "bg-blue-600",     heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
-  degraded:     { band: "bg-amber-600",    heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
-  outage:       { band: "bg-rose-700",     heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
-  unknown:      { band: "bg-gray-600",     heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
+const BANNER: Record<S, { heading: string; sub: string }> = {
+  operational:  { heading: "All Systems Operational",  sub: "All platform services are running normally." },
+  investigating:{ heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
+  degraded:     { heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
+  outage:       { heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
+  unknown:      { heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -130,13 +130,13 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
   const hasDetail = svc.message || svc.recentLogs.length > 0;
 
   return (
-    <div className={`relative bg-white rounded-2xl border ${cfg.border} shadow-sm overflow-hidden transition-all hover:shadow-md`}>
+    <div className="relative overflow-hidden rounded-xl border border-[var(--hz-paper-line)] bg-white transition-colors hover:border-[color-mix(in_srgb,var(--hz-cobalt)_40%,transparent)]">
       {/* coloured left rail */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.bar}`} />
 
       <div className="pl-5 pr-4 py-4">
         <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center text-[var(--hz-text-subtle)]">
             <Icon className={`w-[18px] h-[18px] ${cfg.text}`} />
           </div>
           <div className="flex-1 min-w-0">
@@ -189,12 +189,12 @@ function IncidentCard({ inc }: { inc: Incident }) {
   const cfg = ST[inc.status];
 
   return (
-    <div className={`bg-white rounded-2xl border ${cfg.border} shadow-sm overflow-hidden`}>
+    <div className="overflow-hidden rounded-xl border border-[var(--hz-paper-line)] bg-white">
       <button
         onClick={() => setOpen(!open)}
         className="w-full text-left px-5 py-4 flex items-start gap-3"
       >
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
+        <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center text-[var(--hz-text-subtle)]">
           <AlertTriangle className={`w-4 h-4 ${cfg.text}`} />
         </div>
         <div className="flex-1 min-w-0">
@@ -250,11 +250,15 @@ function SummaryBar({ services }: { services: ServiceItem[] }) {
         const cfg = ST[s];
         const count = counts[s] || 0;
         return (
-          <div key={s} className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm ${cfg.border} ${cfg.bg}`}>
+          // One card, not four tinted ones. Filling each tile with its state's
+          // colour meant a healthy system showed four coloured boxes, three of
+          // them reading zero — the page shouted amber and red while nothing
+          // was wrong. The dot carries the state; the tile stays paper.
+          <div key={s} className="flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-white px-4 py-3.5">
             <Dot status={s} />
             <div>
-              <p className={`text-xl font-bold ${cfg.text}`}>{count}</p>
-              <p className="text-[11px] text-gray-500 capitalize">{cfg.label}</p>
+              <p className="hz-tnum text-xl font-semibold text-[var(--hz-text)]">{count}</p>
+              <p className="text-[11px] capitalize text-[var(--hz-text-subtle)]">{cfg.label}</p>
             </div>
           </div>
         );
@@ -295,50 +299,58 @@ export default function StatusContent() {
   const banner = BANNER[overall];
 
   return (
-    <div className="horizon min-h-screen bg-[var(--hz-surface)]">
+    <div className="horizon min-h-screen bg-[var(--hz-paper)]">
 
-      {/* ── Banner ── */}
-      <div className={`${banner.band} pt-28 pb-20 px-4 relative overflow-hidden`}>
-        {/* subtle grid overlay */}
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+      {/* ── Header ──
+          Was a full-bleed colour band — emerald, amber or rose across the whole
+          width, with a dotted grid overlay, white type and blurred pill chips.
+          It made the page look like a different product from the rest of the
+          site, and it spent the loudest object on the page saying something a
+          dot says just as well.
 
-        <div className="max-w-4xl mx-auto relative z-10">
+          The status colour is real signal and it stays, but as an accent on a
+          paper ground rather than the ground itself: a dot and a label in the
+          state's own colour, next to the heading. Everything else is the
+          landing page's header. */}
+      <section className="w-full bg-[var(--hz-paper)] pt-16 sm:pt-20 lg:pt-24">
+        <div className="mx-auto w-full max-w-4xl px-6 sm:px-8">
           <Link
             href="/"
-            className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
+            className="group inline-flex items-center gap-2 text-[13px] font-medium text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-text)]"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Home
+            Back to home
           </Link>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-white/70 text-sm font-medium tracking-wide uppercase">System Status</p>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{banner.heading}</h1>
-          <p className="text-white/75 text-sm md:text-base max-w-xl">{banner.sub}</p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5">
-              <Globe className="w-3.5 h-3.5 text-white/80" />
-              <span className="text-white/90 text-xs font-medium">Region: US East (Ohio)</span>
-            </div>
+          <span className="hz-eyebrow mt-8 block text-[var(--hz-cobalt)]">System status</span>
+          <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,4.6vw,3.5rem)] leading-[1.02] tracking-[-0.03em] text-[var(--hz-text)]">
+            {banner.heading}
+          </h1>
+          <p className="mt-6 max-w-[52ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)]">
+            {banner.sub}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-[var(--hz-paper-line)] pt-6">
+            <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--hz-text)]">
+              <span className={`h-2.5 w-2.5 flex-none rounded-full ${ST[overall].dot}`} />
+              {ST[overall].label}
+            </span>
+            <span className="inline-flex items-center gap-2 text-[13px] text-[var(--hz-text-mute)]">
+              <Globe className="h-3.5 w-3.5" />
+              US East (Ohio)
+            </span>
             {data && (
-              <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5">
-                <Search className="w-3.5 h-3.5 text-white/80" />
-                <span className="text-white/90 text-xs font-medium">
-                  {data.ohioEvents ?? 0} active event{(data.ohioEvents ?? 0) !== 1 ? "s" : ""} in region
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-2 text-[13px] text-[var(--hz-text-mute)]">
+                <Search className="h-3.5 w-3.5" />
+                {data.ohioEvents ?? 0} active event{(data.ohioEvents ?? 0) !== 1 ? "s" : ""} in region
+              </span>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Content ── */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 -mt-8 pb-16 space-y-8">
+      <div className="relative z-10 mx-auto max-w-4xl px-6 pb-20 pt-14 space-y-8 sm:px-8">
 
         {/* Summary counts */}
         {!loading && data?.services && <SummaryBar services={data.services} />}

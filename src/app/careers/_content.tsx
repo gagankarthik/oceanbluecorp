@@ -200,7 +200,7 @@ export default function CareersPage() {
             {benefits.map((b) => (
               <StaggerItem key={b.title} className="h-full">
                 <div className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+                  <span className="text-[var(--hz-cobalt)]">
                     <b.icon className="h-6 w-6" strokeWidth={1.5} />
                   </span>
                   <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{b.title}</h3>
@@ -261,9 +261,7 @@ export default function CareersPage() {
       </section>
 
       {/* ── CTA ────────────────────────────────────────────── */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" sizes="100vw" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">

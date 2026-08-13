@@ -120,7 +120,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
           {methods.map((info) => {
             const Inner = (
               <>
-                <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                <div className="text-[var(--hz-cobalt)]">
                   <info.icon className="h-6 w-6" strokeWidth={1.5} />
                 </div>
                 <h3 className="hz-display mt-5 text-[1.15rem] text-[var(--hz-text)]">{info.title}</h3>

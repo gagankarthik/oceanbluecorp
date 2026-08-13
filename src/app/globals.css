@@ -1355,13 +1355,21 @@
 .hz-btn-ghost-dark:hover { background: rgba(241,245,249,0.10); transform: translateY(-2px); }
 
 /* Hairline card */
+/* The one card in the system, matched to the landing page and the nav menus:
+   white, a hairline in the paper rule colour, a modest radius, and NOTHING
+   else. It used to lift and cast a shadow on hover — a card that rises off the
+   page on approach is the single most template-looking interaction a marketing
+   site has, and the site had already dropped it everywhere else. Hover now
+   darkens the hairline, which is enough to say "this is clickable" without the
+   object moving. Redefined here rather than at 12 call sites, so every page
+   that uses it comes along. */
 .hz-card {
-  background: var(--hz-canvas);
-  border: 1px solid var(--hz-line);
-  border-radius: 16px;
-  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, border-color .25s ease;
+  background: #fff;
+  border: 1px solid var(--hz-paper-line);
+  border-radius: 12px;
+  transition: border-color .2s ease;
 }
-.hz-card:hover { border-color: var(--hz-cobalt-100); box-shadow: var(--hz-shadow-md); }
+.hz-card:hover { border-color: color-mix(in srgb, var(--hz-cobalt) 40%, transparent); }
 
 /* Ambient aurora wash — a soft, drifting color field (no grids) */
 @keyframes hz-aurora {

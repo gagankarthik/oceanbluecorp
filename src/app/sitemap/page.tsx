@@ -65,7 +65,7 @@ export default function SitemapPage() {
   return (
     <div className="horizon min-h-screen bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
         <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-14 pt-32 sm:px-8">
           <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
@@ -90,8 +90,7 @@ export default function SitemapPage() {
                   <li key={l.name + l.href}>
                     <Link
                       href={l.href}
-                      className="inline-flex items-center text-[14.5px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                    >
+                      className="inline-flex items-center text-[14.5px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)] bg-[var(--hz-ink)]">
                       {l.name}
                     </Link>
                   </li>

@@ -28,9 +28,7 @@ export default function Error({
 
   return (
     <div
-      className="horizon relative isolate flex min-h-[78svh] w-full items-center overflow-hidden"
-      style={{ background: "#07142b" }}
-    >
+      className="horizon relative isolate flex min-h-[78svh] w-full items-center overflow-hidden bg-[var(--hz-ink)]">
       <div
         aria-hidden
         className="absolute inset-0 z-0"
@@ -54,15 +52,13 @@ export default function Error({
           <button
             type="button"
             onClick={reset}
-            className="hz-btn-fill inline-flex items-center gap-2 rounded-full bg-[var(--hz-cobalt)] px-6 py-3 text-[14px] font-semibold text-white"
-          >
+            className="hz-btn-fill inline-flex items-center gap-2 rounded-full bg-[var(--hz-cobalt)] px-6 py-3 text-[14px] font-semibold text-white bg-[var(--hz-ink)]">
             <RefreshCw className="h-4 w-4" strokeWidth={1.75} />
             Try again
           </button>
           <Link
             href="/"
-            className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/70 transition-colors hover:text-white"
-          >
+            className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/70 transition-colors hover:text-white bg-[var(--hz-ink)]">
             Back to home
             <ArrowRight
               className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
@@ -71,8 +67,7 @@ export default function Error({
           </Link>
           <Link
             href="/contact"
-            className="text-[14px] font-semibold text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
-          >
+            className="text-[14px] font-semibold text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline bg-[var(--hz-ink)]">
             Report this
           </Link>
         </div>

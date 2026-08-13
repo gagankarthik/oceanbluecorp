@@ -36,8 +36,8 @@ const milestones = MILESTONES;
 function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
   return (
     <div className="hz-card h-full p-7">
-      <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      <div className="text-[var(--hz-cobalt)]">
+        <Icon className="h-7 w-7" strokeWidth={1.5} />
       </div>
       <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{title}</h3>
       <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{description}</p>
@@ -266,9 +266,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
       </section>
 
       {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>

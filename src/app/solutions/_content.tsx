@@ -94,8 +94,8 @@ function ServiceDetail({ id }: { id: string }) {
   return (
     <div id={id} className="scroll-mt-28 border-t border-black/[0.08] py-7 first:border-t-0 first:pt-0">
       <a href={`/solutions/${id}`} className="group flex items-center gap-3">
-        <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-          <Icon className="h-5 w-5" strokeWidth={1.5} />
+        <span className="flex-none text-[var(--hz-cobalt)]">
+          <Icon className="h-6 w-6" strokeWidth={1.5} />
         </span>
         <h3 className="hz-display text-[1.25rem] text-[var(--hz-text)] transition-colors group-hover:text-[var(--hz-cobalt)]">{s.title}</h3>
       </a>
@@ -220,8 +220,8 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
                 <StaggerItem key={st.no} className="h-full">
                   <div className="hz-card h-full p-7">
                     <div className="flex items-center justify-between">
-                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-                        <Icon className="h-5 w-5" strokeWidth={1.5} />
+                      <div className="text-[var(--hz-cobalt)]">
+                        <Icon className="h-6 w-6" strokeWidth={1.5} />
                       </div>
                       <span className="hz-display text-[1.5rem] text-black/10">{st.no}</span>
                     </div>
@@ -236,9 +236,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       </section>
 
       {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>

@@ -117,10 +117,9 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ classNam
       onClick={copy}
       title={`Copy ${name} SVG`}
       aria-label={copied ? `${name} SVG copied` : `Copy ${name} SVG`}
-      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md"
-    >
+      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md bg-[var(--hz-ink)]">
       <span ref={ref} className="text-[var(--hz-cobalt)]">
-        <Icon className="h-6 w-6" />
+        <Icon className="h-7 w-7" />
       </span>
       <span className="w-full truncate text-center font-mono text-[10.5px] text-[var(--hz-text-mute)]">{name}</span>
       <span
@@ -140,7 +139,7 @@ export default function BrandKitContent() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
       {/* Hero */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
         <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:px-8">
           <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
@@ -161,7 +160,7 @@ export default function BrandKitContent() {
             <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-12 shadow-sm">
               <Image src="/logo.png" alt="Ocean Blue Corporation logo on light" width={220} height={60} className="h-12 w-auto" />
             </div>
-            <div className="flex items-center justify-center rounded-2xl p-12 shadow-sm" style={{ background: "#07142b" }}>
+            <div className="flex items-center justify-center rounded-2xl p-12 shadow-sm bg-[var(--hz-ink)]">
               <Image src="/logo.png" alt="Ocean Blue Corporation logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
             </div>
           </div>

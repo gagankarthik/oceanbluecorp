@@ -87,8 +87,7 @@ export default function EngineeringContent() {
             <Cta href="/contact" variant="primary">Start a conversation</Cta>
             <a
               href="#disciplines"
-              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]"
-            >
+              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)] bg-[var(--hz-ink)]">
               Explore disciplines
             </a>
           </>
@@ -103,8 +102,7 @@ export default function EngineeringContent() {
             {["By the project", "Try before you hire", "Permanent hire", "Managed teams"].map((m) => (
               <span
                 key={m}
-                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]"
-              >
+                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)] bg-[var(--hz-ink)]">
                 {m}
               </span>
             ))}
@@ -149,7 +147,7 @@ export default function EngineeringContent() {
             {disciplines.map((d) => (
               <StaggerItem key={d.title} className="h-full">
                 <div className="hz-card h-full p-7">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                  <div className="text-[var(--hz-cobalt)]">
                     <d.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
                   <h3 className="hz-display mt-6 text-[1.3rem] text-[var(--hz-text)]">{d.title}</h3>
@@ -162,7 +160,7 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Industries (dark, with standards) ---------- */}
-      <section className="relative isolate w-full overflow-hidden py-20 sm:py-28 lg:py-32" style={{ background: "#07142b" }}>
+      <section className="relative isolate w-full overflow-hidden py-20 sm:py-28 lg:py-32 bg-[var(--hz-ink)]">
         <div aria-hidden className="absolute inset-0 z-0" style={{ background: "radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.28), transparent 60%)" }} />
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
@@ -212,7 +210,7 @@ export default function EngineeringContent() {
             {models.map((m) => (
               <StaggerItem key={m.title} className="h-full">
                 <div className="hz-card flex h-full flex-col p-7">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                  <div className="text-[var(--hz-cobalt)]">
                     <m.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
                   <h3 className="hz-display mt-6 text-[1.3rem] text-[var(--hz-text)]">{m.title}</h3>
@@ -242,7 +240,7 @@ export default function EngineeringContent() {
               <StaggerItem key={st.no} className="h-full">
                 <div className="hz-card h-full p-7">
                   <div className="flex items-center justify-between">
-                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                    <div className="text-[var(--hz-cobalt)]">
                       <st.icon className="h-5 w-5" strokeWidth={1.5} />
                     </div>
                     <span className="hz-display text-[1.5rem] text-black/10">{st.no}</span>
@@ -277,7 +275,7 @@ export default function EngineeringContent() {
             {why.map((w) => (
               <StaggerItem key={w.title} className="h-full">
                 <div className="h-full rounded-2xl border border-slate-200/80 bg-white p-7 shadow-sm">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                  <div className="text-[var(--hz-cobalt)]">
                     <w.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
                   <h3 className="hz-display mt-6 text-[1.2rem] text-[var(--hz-text)]">{w.title}</h3>
@@ -290,9 +288,7 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- CTA ---------- */}
-      <section className="relative isolate w-full overflow-hidden" style={{ background: "#07142b" }}>
-        <Photo src={IMG.cta} className="z-0" fallback="linear-gradient(135deg, #0e2147 0%, #07142b 100%)" />
-        <div aria-hidden className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(180deg, rgba(5,12,28,0.9) 0%, rgba(7,20,43,0.84) 100%), radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.4), transparent 60%)" }} />
+      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
           <Reveal className="flex flex-col items-center">
             <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>

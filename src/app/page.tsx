@@ -97,13 +97,15 @@ export default async function Home() {
           order with no other edit. */}
       {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
+      {/* Clients sit directly under the hero. The logo row is the fastest
+          credibility a visitor can read — it answers "has anyone I recognise
+          trusted these people?" before the pitch begins, which is the question
+          they are actually asking in the first five seconds. Buried below the
+          services it was arriving after the argument it was meant to support. */}
+      <Credentials />
       <Services />
       {/* The one dark beat between the hero and the close. */}
       <Partnerships />
-      {/* Clients and accreditations behind one pair of tabs — who vouches for
-          you, asked once, with the visitor choosing which evidence they care
-          about. */}
-      <Credentials />
       <Testimonials />
       {/* The trust strip sits ABOVE the closing ask, not below it — the last
           reassurance a reader passes before deciding. */}
