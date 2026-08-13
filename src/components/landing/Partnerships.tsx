@@ -1,5 +1,7 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
+import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 
 /* ============================================================
@@ -58,9 +60,35 @@ const partners: Partner[] = [
 ];
 
 export default function Partnerships() {
+  const reduce = useReducedMotion();
+
   return (
-    <section className="relative w-full bg-[var(--hz-ink)] pt-16 pb-14 sm:pt-20 sm:pb-16 lg:pt-24 lg:pb-20">
-      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
+    <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)] pt-16 pb-14 sm:pt-20 sm:pb-16 lg:pt-24 lg:pb-20">
+      {/* A flickering grid behind the one dark band on the page. It belongs
+          HERE and nowhere else: this section is about the platforms underneath
+          a system, and a grid of cells quietly switching state is a picture of
+          infrastructure doing its job. On any other section it would be
+          decoration.
+
+          Kept deliberately faint. The cards above it are white-on-ink at low
+          opacity, so a busy ground would fight the very thing it sits behind,
+          flickerChance and maxOpacity are both low enough that you notice it
+          only after the content.
+
+          It is canvas, it paints only while in view (the component observes
+          its own container), and it is skipped entirely for reduced motion,
+          where the section simply keeps its flat ink ground. */}
+      {!reduce && (
+        <FlickeringGrid
+          className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(120%_90%_at_50%_0%,black,transparent_75%)]"
+          squareSize={3}
+          gridGap={8}
+          flickerChance={0.12}
+          maxOpacity={0.16}
+          color="rgb(12, 172, 207)"
+        />
+      )}
+      <div className="relative mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal className="max-w-2xl">
           <span className="hz-eyebrow text-white/55">Technology partners</span>
           <h2 className="hz-display hz-h2 mt-4 text-white">

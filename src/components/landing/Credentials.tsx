@@ -22,7 +22,7 @@ export default function Credentials() {
         <Reveal className="flex flex-col items-center text-center">
           <span className="hz-eyebrow">Clients</span>
           <h2 className="hz-display hz-statement mt-3 max-w-2xl text-[var(--hz-text)]">
-            The people who already trusted us with it.
+            Relied on by enterprises and state government agencies across North America.
           </h2>
         </Reveal>
 

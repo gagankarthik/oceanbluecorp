@@ -29,9 +29,9 @@ import VideoBackdrop from "./VideoBackdrop";
    the headline names that choice instead of listing what we sell. The accent
    falls on "one team" because that is the whole argument. */
 const HERO = {
-  title: "Four vendors, or",
-  accent: "one team that owns it.",
-  sub: "Talent, engineering, platforms and round-the-clock operations from one partner, under one contract, answerable to one standard.",
+  title: "The people and platforms behind",
+  accent: " enterprises and government agencies.",
+  sub: "IT staffing, enterprise solutions, and managed services delivered by one accountable partner, one accountable standard.",
 };
 
 

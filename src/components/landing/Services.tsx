@@ -134,7 +134,7 @@ export default function Services() {
             one that matters. */}
         <Reveal className="max-w-4xl">
           <h2 className="hz-h2 font-normal leading-tight tracking-[-0.02em] text-[var(--hz-text)]">
-            Four practices. One contract. One team you can hold to it.
+            One partner for talent, engineering, technology, and operations.
           </h2>
         </Reveal>
 
