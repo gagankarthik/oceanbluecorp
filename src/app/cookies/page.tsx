@@ -25,7 +25,7 @@ function Section({ id, number, title, children }: {
   id: string; number: string; title: string; children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-8 border-b border-[var(--hz-paper-line)] py-8 last:border-0">
+    <section id={id} className="scroll-mt-24 border-b border-[var(--hz-paper-line)] py-8 last:border-0">
       <div className="mb-4 flex items-baseline gap-3">
         <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
           {number}
@@ -142,7 +142,9 @@ export default function CookiesPage() {
 
           {/* Sticky TOC */}
           <aside className="hidden xl:block w-64 flex-shrink-0">
-            <div className="sticky top-8">
+            {/* Clears the 72px fixed header. At top-8 this list scrolled up and
+                then vanished behind the bar. */}
+            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
               <p
                 className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]"
                 style={{ fontFamily: "var(--font-display)" }}

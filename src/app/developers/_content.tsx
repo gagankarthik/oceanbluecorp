@@ -198,7 +198,18 @@ export default function DevelopersContent() {
 
         {/* Sidebar nav */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
-          <div className="sticky top-8">
+          {/* top-24 (96px), not top-8. The site header is FIXED and 72px tall,
+              so a sticky offset of 32px parks this list underneath it — the
+              nav scrolled up and then disappeared behind the bar. 96px clears
+              the header with a 24px gap, and matches the `scroll-mt-24` on the
+              sections below so a clicked anchor lands at the same line the
+              sidebar sits on.
+
+              The max-height and overflow matter once the list plus the "Need a
+              key?" card is taller than the viewport: without them the bottom of
+              a sticky element is simply unreachable, because it never scrolls
+              relative to the page. */}
+          <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
             <p className="text-[10px] font-bold text-[var(--hz-text-subtle)] uppercase tracking-widest mb-3">On this page</p>
             <nav className="space-y-0.5">
               {NAV.map((item) => (
