@@ -61,6 +61,9 @@ const ROLE_CHIP: Record<string, { label: string; tone: Tone }> = {
 };
 const DEFAULT_ROLE_CHIP = { label: "User", tone: "slate" as Tone };
 
+const CONFIRM_OFFLINE =
+  "Take the public site offline?\n\nVisitors will see the maintenance screen until you turn this off. The admin console stays available.";
+
 /** ui/Checkbox defaults to the navy --primary; nudge it to the cobalt accent. */
 const checkboxAccent =
   "border-[var(--adm-line)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]";
@@ -161,6 +164,69 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  /* Maintenance mode.
+
+     Stored in the shared content table under the "site" block and read by the
+     root layout. Saving calls revalidatePath("/", "layout") server-side, so
+     the switch takes effect on the next request rather than after the 60s ISR
+     window. */
+  const [maint, setMaint] = useState({ enabled: false, message: "", eta: "" });
+  const [maintLoaded, setMaintLoaded] = useState(false);
+  const [maintSaving, setMaintSaving] = useState(false);
+  const [maintSaved, setMaintSaved] = useState(false);
+  const [maintError, setMaintError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/content")
+      .then((r) => r.json())
+      .then((d) => {
+        const blocks = d.blocks as { id: string; fields: Record<string, string> }[] | undefined;
+        const site = blocks?.find((b) => b.id === "site");
+        if (site?.fields) {
+          setMaint({
+            enabled: site.fields.maintenance === "true",
+            message: site.fields.maintenanceMessage || "",
+            eta: site.fields.maintenanceEta || "",
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setMaintLoaded(true));
+  }, [isAdmin]);
+
+  const saveMaintenance = async (next: { enabled: boolean; message: string; eta: string }) => {
+    setMaintSaving(true);
+    setMaintError(null);
+    try {
+      const res = await fetch("/api/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: "site",
+          fields: {
+            maintenance: next.enabled ? "true" : "false",
+            maintenanceMessage: next.message,
+            maintenanceEta: next.eta,
+          },
+          updatedBy: user?.email,
+          updatedByName: user?.name,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Could not save.");
+      }
+      setMaint(next);
+      setMaintSaved(true);
+      setTimeout(() => setMaintSaved(false), 2500);
+    } catch (err) {
+      setMaintError(err instanceof Error ? err.message : "Could not save.");
+    } finally {
+      setMaintSaving(false);
+    }
+  };
 
   // If the active tab is admin-only and this user isn't an admin (e.g. role
   // resolved after mount), fall back to Profile.
@@ -569,6 +635,109 @@ export default function SettingsPage() {
           {/* ── System (admin only) ── */}
           {activeTab === "site" && isAdmin && (
             <>
+              {/* The one destructive control on this page, styled as such and
+                  confirmed before it fires. */}
+              <AdminCard>
+                <AdminCardHeader
+                  icon={IconAlert}
+                  title="Maintenance mode"
+                  action={
+                    <StatusBadge
+                      tone={maint.enabled ? "rose" : "slate"}
+                      label={maint.enabled ? "Site is offline" : "Site is live"}
+                    />
+                  }
+                />
+                <div className="space-y-5 p-5">
+                  <p className="max-w-[68ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-2)]">
+                    Replaces the public site with a branded maintenance screen.
+                    The admin console and sign-in stay reachable, so you can
+                    always turn it back off from here.
+                  </p>
+
+                  <Field label="Message shown to visitors" hint="Optional. Leave empty for the default wording.">
+                    <FormInput
+                      value={maint.message}
+                      onChange={(e) => setMaint({ ...maint, message: e.target.value })}
+                      placeholder="We are upgrading our systems and will be back shortly."
+                      disabled={!maintLoaded || maintSaving}
+                    />
+                  </Field>
+
+                  <Field
+                    label="Expected back"
+                    hint="Fill this in for planned work. Left empty, the page reads as an unexpected outage instead."
+                  >
+                    <FormInput
+                      value={maint.eta}
+                      onChange={(e) => setMaint({ ...maint, eta: e.target.value })}
+                      placeholder="by 3:00 PM EST"
+                      disabled={!maintLoaded || maintSaving}
+                    />
+                  </Field>
+
+                  {maintError && (
+                    <p className="text-[13px] font-medium text-[var(--adm-danger)]">{maintError}</p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 border-t border-[var(--adm-line)] pt-5">
+                    <button
+                      type="button"
+                      disabled={!maintLoaded || maintSaving}
+                      onClick={() => {
+                        if (maint.enabled) {
+                          void saveMaintenance({ ...maint, enabled: false });
+                          return;
+                        }
+                        // Taking the public site down is not an undo-able
+                        // click, so it is confirmed. Bringing it back is not.
+                        if (window.confirm(CONFIRM_OFFLINE)) {
+                          void saveMaintenance({ ...maint, enabled: true });
+                        }
+                      }}
+                      className={cn(
+                        "inline-flex h-10 items-center gap-2 rounded-[8px] px-4 text-[14px] font-semibold text-white transition-colors disabled:opacity-50",
+                        maint.enabled
+                          ? "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)]"
+                          : "bg-[var(--adm-danger)] hover:opacity-90"
+                      )}
+                    >
+                      {maintSaving ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
+                      ) : maint.enabled ? (
+                        <><Check className="h-4 w-4" />Bring the site back online</>
+                      ) : (
+                        <><IconAlert className="h-4 w-4" />Take the site offline</>
+                      )}
+                    </button>
+
+                    {maint.enabled && (
+                      <button
+                        type="button"
+                        disabled={maintSaving}
+                        onClick={() => void saveMaintenance(maint)}
+                        className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--adm-line)] px-4 text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-50"
+                      >
+                        <IconSave className="h-4 w-4" />Update message
+                      </button>
+                    )}
+
+                    <a
+                      href="/maintenance"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                    >
+                      Preview what visitors will see
+                    </a>
+
+                    {maintSaved && (
+                      <span className="text-[12.5px] font-semibold text-[var(--adm-success)]">Saved</span>
+                    )}
+                  </div>
+                </div>
+              </AdminCard>
+
               <AdminCard>
                 <AdminCardHeader
                   icon={IconGlobe}

@@ -30,45 +30,34 @@ const clients: Logo[] = [
 ];
 
 function LogoMark({ l }: { l: Logo }) {
-  // Full-colour logos, no hover fade. `dark` is kept only for the near-white
-  // wordmark that would otherwise be invisible on the white background.
-  const cls = `h-7 w-auto object-contain sm:h-8${l.dark ? " brightness-0" : ""}`;
+  // `dark` exists only for the near-white wordmark that would otherwise be
+  // invisible on the white background.
+  const cls = `h-7 w-auto max-w-full object-contain sm:h-8${l.dark ? " brightness-0" : ""}`;
+  // `min(...)` rather than a flat cap: the intrinsic width is the ceiling, but
+  // in a six-across row the cell is narrower than that on most viewports.
+  const capped = { maxWidth: `min(${l.w}px, 100%)` };
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex w-full items-center justify-center">
       {l.remote ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={l.logo} alt={l.name} width={l.w} height={36} loading="lazy" decoding="async" className={cls} style={{ maxWidth: l.w }} />
+        <img src={l.logo} alt={l.name} width={l.w} height={36} loading="lazy" decoding="async" className={cls} style={capped} />
       ) : (
-        <Image src={l.logo} alt={l.name} width={l.w} height={36} className={cls} />
+        <Image src={l.logo} alt={l.name} width={l.w} height={36} className={cls} style={capped} />
       )}
     </div>
   );
 }
 
 /**
- * The client logo row, with no section around it.
+ * The client logo row, rendered inside Credentials beside its heading.
  *
- * Rendered inside Credentials, which pairs it with the accreditation row
- * behind a pair of tabs, clients and certifications are both answers to the
- * same question ("who vouches for you?"), and giving each its own full-width
- * band said it twice.
- *
- * Four across, so six logos land as 4 + 2 rather than a single thin line of
- * six. Spread over the full page width the row read as six unrelated marks
- * with too much air between them; a capped, four-column block reads as a set.
- *
- * The nth-child(5) offset centres that second row. Without it the last two sit
- * in columns one and two with the right half of the row empty, which reads as
- * a layout that ran out rather than a deliberate 4 + 2.
- *
- * A static row, not a marquee: the scrolling version repeated this set every
- * ~1200px against a wider viewport, so two and sometimes three copies of the
- * same logo were on screen at once, which reads as padding a short client list
- * rather than showing a real one.
+ * One row of six at lg, where the marks read as a single line of proof.
+ * Below that they wrap to 3 and then 2 per row, since six across a phone
+ * would shrink every mark past legibility.
  */
 export function ClientRow() {
   return (
-    <ul className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-x-10 gap-y-12 sm:grid-cols-4 sm:gap-x-14 sm:[&>li:nth-child(5)]:col-start-2">
+    <ul className="grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-x-10 lg:grid-cols-6 lg:gap-x-8 lg:gap-y-0">
       {clients.map((l) => (
         <li key={l.name} className="flex items-center justify-center">
           <LogoMark l={l} />

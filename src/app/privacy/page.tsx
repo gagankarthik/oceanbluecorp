@@ -5,6 +5,13 @@ import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Learn how Ocean Blue Corporation collects, uses, and protects your personal information.",
+  openGraph: {
+    title: "Privacy Policy | Ocean Blue Corporation",
+    description:
+      "How Ocean Blue Corporation collects, uses, retains and deletes personal data, including your rights under CCPA.",
+    url: "https://oceanbluecorp.com/privacy",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/privacy" },
 };
 
 const SECTIONS = [

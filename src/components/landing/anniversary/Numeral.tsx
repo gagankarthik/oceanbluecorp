@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { DUR, EASE } from "@/lib/motion";
 import { FOUNDED_YEAR } from "@/lib/company";
 import { IMG, atWidth } from "../media";

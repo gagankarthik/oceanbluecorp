@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { yearsThrough } from "@/lib/company";
 import { ANNIVERSARY_YEAR } from "@/lib/anniversary";
 

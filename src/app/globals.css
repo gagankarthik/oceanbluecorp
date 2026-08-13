@@ -7,7 +7,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-display: 'Space Grotesk', var(--font-inter), system-ui, sans-serif;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -34,6 +33,64 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
+  /* ── Type scale ───────────────────────────────────────────
+     Named steps, so a size is chosen by role rather than by
+     typing a pixel value. These are not invented: they are the
+     sizes already in use across the site, collected into a
+     scale. The counts behind each are why the steps sit where
+     they do (text-[13px] appeared 197 times, text-[11px] 142).
+
+     Every step ships its line-height and tracking with it, so
+     `text-body` sets all three and a heading can never end up
+     with body leading by omission. Use these in new work;
+     arbitrary values are the thing being replaced.            */
+  --text-micro:      0.6875rem;  /* 11px  · dense admin meta   */
+  --text-micro--line-height: 1.45;
+  --text-micro--letter-spacing: 0.01em;
+
+  --text-caption:    0.75rem;    /* 12px  · captions, hints    */
+  --text-caption--line-height: 1.5;
+
+  --text-fine:       0.8125rem;  /* 13px  · table + UI text    */
+  --text-fine--line-height: 1.5;
+
+  --text-small:      0.875rem;   /* 14px  · secondary body     */
+  --text-small--line-height: 1.6;
+
+  --text-body:       0.9375rem;  /* 15px  · default body       */
+  --text-body--line-height: 1.65;
+
+  --text-lead:       1.0625rem;  /* 17px  · section intros     */
+  --text-lead--line-height: 1.65;
+
+  --text-subhead:    1.1875rem;  /* 19px  · card headings      */
+  --text-subhead--line-height: 1.35;
+  --text-subhead--letter-spacing: -0.01em;
+
+  --text-title:      1.5rem;     /* 24px  · panel titles       */
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.02em;
+
+  --text-headline:   2rem;       /* 32px  · sub-section heads  */
+  --text-headline--line-height: 1.12;
+  --text-headline--letter-spacing: -0.03em;
+
+  --text-display:    2.75rem;    /* 44px  · section heads      */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.035em;
+
+  /* ── Spacing ──────────────────────────────────────────────
+     Tailwind's base-4 scale already covers component padding.
+     What was missing is the LAYOUT rhythm: the vertical beat
+     between sections and the page gutters, which were being
+     retyped as py-16 sm:py-20 lg:py-24 on every section.       */
+  --spacing-section:    4rem;    /* 64px  · band, phone        */
+  --spacing-section-sm: 5rem;    /* 80px  · band, tablet       */
+  --spacing-section-lg: 6rem;    /* 96px  · band, desktop      */
+  --spacing-gutter:     1.5rem;  /* 24px  · page edge, phone   */
+  --spacing-gutter-sm:  2.5rem;  /* 40px  · page edge, tablet  */
+  --spacing-gutter-lg:  4rem;    /* 64px  · page edge, desktop */
 }
 
 :root {
@@ -313,31 +370,9 @@
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
 }
 
-.gradient-accent {
-  background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* Glass effect */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-.glass-dark {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
 
 /* Card hover effects */
 .card-hover {
@@ -423,70 +458,18 @@
   }
 }
 
-/* Display Font - Space Grotesk for Headers */
-.font-display {
-  font-family: 'Space Grotesk', var(--font-inter), system-ui, sans-serif;
-}
 
 /* Typography System */
-.heading-display {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
 
-.heading-hero {
-  @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.heading-section {
-  @apply text-4xl md:text-5xl lg:text-6xl;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
 
 .heading-subsection {
   @apply text-2xl md:text-3xl lg:text-4xl;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
-/* Gradient Text Utilities */
-.text-gradient-primary {
-  background: linear-gradient(135deg, #0a192f 0%, #0891b2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-ocean {
-  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-indigo {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-amber {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* Enhanced Gradient Backgrounds */
 .bg-gradient-deep {
@@ -598,24 +581,7 @@
 }
 
 /* Skew backgrounds */
-.skew-section {
-  transform: skewY(-3deg);
-}
 
-.skew-section > * {
-  transform: skewY(3deg);
-}
-
-/* Card lift effect */
-.card-lift {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.3s ease;
-}
-
-.card-lift:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
-}
 
 /* Tilt card effect */
 .tilt-card {
@@ -653,29 +619,7 @@
 }
 
 /* Underline animation */
-.animated-underline {
-  position: relative;
-  display: inline-block;
-}
 
-.animated-underline::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #2563eb, #0891b2);
-  border-radius: 999px;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.animated-underline:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
@@ -692,253 +636,12 @@
   }
 }
 
-/* ============================================================
-   Enterprise, landing page palette + utilities
-   ============================================================ */
+/* NOTE: an entire `ob-*` palette and utility layer (tokens, mesh/grid/diagonal
+   backgrounds, pills, shimmer and spin keyframes) sat here from an earlier
+   design direction. Every class and every --ob-* token had zero call sites
+   outside this file. Removed rather than left to be copied by accident; the
+   live system is --hz-* above and --adm-* below. */
 
-:root {
-  /* Surfaces */
-  --ob-bg:        #ffffff;
-  --ob-bg-soft:   #f7f9fc;
-  --ob-bg-card:   #ffffff;
-  --ob-ink:       #0a1525;   /* near-black navy */
-  --ob-ink-2:     #1c2940;
-  --ob-mute:      #5b6b85;
-  --ob-mute-2:    #8492aa;
-  --ob-line:      #e5eaf2;
-  --ob-line-2:    #eef1f6;
-
-  /* Dark surfaces */
-  --ob-dark:      #0a0f1a;
-  --ob-dark-2:    #0f1626;
-  --ob-dark-3:    #182336;
-
-  /* Brand palette, deep ocean × warm horizon */
-  --ob-accent:        #1e4dd8;   /* confident cobalt, primary action */
-  --ob-accent-hover:  #1a40b8;
-  --ob-blue:          #2563eb;
-  --ob-cyan:          #22d3ee;
-  --ob-deep:          #0c2156;   /* deep ocean */
-  --ob-deep-2:        #1a2a52;
-  /* The distinctive accent: warm coral/copper, the horizon line */
-  --ob-coral:         #ff6b47;
-  --ob-coral-soft:    #ffa686;
-  --ob-amber:         #f5b942;   /* warm gold */
-  --ob-emerald:       #10b981;
-  --ob-sand:          #f6f1e7;   /* warm warm off-white for surfaces */
-  --ob-sand-2:        #efe8d8;
-}
-
-/* Tech fonts */
-.font-mono {
-  font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  font-feature-settings: "tnum", "ss01", "zero";
-}
-
-/* Eyebrow / kicker */
-.ob-eyebrow {
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 500;
-  color: var(--ob-mute);
-}
-
-/* Dot grid background */
-.bg-ob-dots {
-  background-image: radial-gradient(rgba(10,21,37,0.07) 1px, transparent 1px);
-  background-size: 22px 22px;
-}
-.bg-ob-dots-dark {
-  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
-}
-
-/* Crosshatch grid */
-.bg-ob-grid {
-  background-image:
-    linear-gradient(to right,  rgba(10,21,37,0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(10,21,37,0.04) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-.bg-ob-grid-dark {
-  background-image:
-    linear-gradient(to right,  rgba(255,255,255,0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-/* Distinctive: navy ocean × coral horizon mesh */
-.bg-ob-mesh-dark {
-  background-color: var(--ob-dark);
-  background-image:
-    radial-gradient(at 88% 8%,  rgba(255,107,71,0.22) 0px, transparent 45%),
-    radial-gradient(at 12% 24%, rgba(30,77,216,0.22)  0px, transparent 50%),
-    radial-gradient(at 60% 96%, rgba(245,185,66,0.10) 0px, transparent 55%);
-}
-.bg-ob-mesh-soft {
-  background-color: var(--ob-bg-soft);
-  background-image:
-    radial-gradient(at 8% 0%,  rgba(30,77,216,0.06) 0px, transparent 50%),
-    radial-gradient(at 92% 0%, rgba(255,107,71,0.05)  0px, transparent 50%);
-}
-
-/* Architectural diagonal stripes, distinctive */
-.bg-ob-diagonal {
-  background-image: repeating-linear-gradient(
-    -55deg,
-    transparent 0px,
-    transparent 18px,
-    rgba(255,107,71,0.05) 18px,
-    rgba(255,107,71,0.05) 19px
-  );
-}
-
-/* Status pill */
-.ob-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  border: 1px solid var(--ob-line);
-  background: var(--ob-bg);
-  color: var(--ob-ink-2);
-}
-.ob-pill-dark {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.85);
-  backdrop-filter: blur(8px);
-}
-.ob-pulse-dot {
-  position: relative;
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--ob-emerald);
-  box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
-}
-.ob-pulse-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--ob-emerald);
-  animation: ob-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-@keyframes ob-ping {
-  0%   { transform: scale(1);   opacity: 0.7; }
-  80%  { transform: scale(2.4); opacity: 0; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-
-/* Primary CTA, confident cobalt */
-.ob-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: 10px;
-  background: var(--ob-accent);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.10) inset, 0 10px 28px -10px rgba(30,77,216,0.55);
-}
-.ob-btn-primary:hover {
-  background: var(--ob-accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 14px 36px -10px rgba(30,77,216,0.65);
-}
-
-/* Coral accent CTA, distinctive secondary */
-.ob-btn-coral {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: 10px;
-  background: var(--ob-coral);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 10px 28px -10px rgba(255,107,71,0.55);
-}
-.ob-btn-coral:hover {
-  background: #ff5732;
-  transform: translateY(-1px);
-}
-.ob-btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  background: var(--ob-bg);
-  color: var(--ob-ink);
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid var(--ob-line);
-  transition: all 0.2s ease;
-}
-.ob-btn-ghost:hover {
-  border-color: var(--ob-ink);
-  transform: translateY(-1px);
-}
-
-/* Animated gradient border for cards */
-.ob-card {
-  position: relative;
-  background: var(--ob-bg-card);
-  border: 1px solid var(--ob-line);
-  border-radius: 16px;
-  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-}
-.ob-card:hover {
-  border-color: rgba(14,165,183,0.45);
-  transform: translateY(-2px);
-  box-shadow: 0 18px 40px -22px rgba(14,165,183,0.35), 0 4px 12px -6px rgba(10,21,37,0.08);
-}
-
-/* Slow shimmer for "live" data feel */
-@keyframes ob-shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%);  }
-}
-.ob-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 30%, rgba(14,165,183,0.18) 50%, transparent 70%);
-  animation: ob-shimmer 3.2s ease-in-out infinite;
-}
-
-/* Conic spinner accent */
-@keyframes ob-spin-slow {
-  to { transform: rotate(360deg); }
-}
-.ob-spin-slow { animation: ob-spin-slow 16s linear infinite; }
 
 /* Scrollbar.
    Was a cyan-to-blue gradient thumb, which put a saturated decorative stripe
@@ -1120,14 +823,11 @@
 }
 
 /* ============================================================
-   HORIZON, landing-page design system (current; chosen 2026-05-23,
-   supersedes the warm "Lighthouse" direction).
-   Light canvas + dark navy cinematic bands. Cobalt → cyan accent
-   used with restraint. Geist Sans display + Inter body + Geist Mono
-   labels. Strong parallax at every light↔dark seam.
-   Scoped to landing via the .horizon class + --hz-* tokens; does NOT
-   touch admin / dashboard / auth. Avoids gradient-text headlines,
-   animated orbs, glassmorphism, sparkle fields, rainbow gradients.
+   HORIZON, the landing-page design system.
+
+   Light canvas with dark navy bands, one cobalt accent, Geist Sans
+   display and Geist Mono labels. Scoped to the landing via the
+   .horizon class and --hz-* tokens; does not touch admin or auth.
    ============================================================ */
 
 :root {
@@ -1152,53 +852,45 @@
   --hz-on-dark-mute: #94a3b8;
   --hz-line-dark:   rgba(226,232,240,0.12);
 
-  /* Paper ground, carried over with the client-work and accreditation
-     sections from the other branch, and the hairline is the rule colour
-     those sections divide their rows with.
+  /* Paper ground and its hairline, for the alternating light sections.
+     Cool-biased so it belongs to the same family as the accent; a warm
+     off-white next to an all-blue palette reads as a second white.
 
-     COOL, not warm. This was #FAFAF7, an off-white with yellow in it, sitting
-     next to a palette built entirely on blue: the logo blues, the cobalt
-     accent, the ink bands. Warm paper against cool everything reads as two
-     different whites rather than one ground, which is exactly the mismatch it
-     looked like. These are the same lightness, biased the other way, so the
-     ground now belongs to the same family as the accent.
-
-     Kept as its own pair rather than folded into --hz-canvas, because every
-     section on pure white was designed against pure white and tinting the
-     global canvas would shift all of them at once. */
+     Kept separate from --hz-canvas: sections designed against pure white
+     would all shift if the global canvas were tinted. */
   --hz-paper:      #F7F9FC;
   --hz-paper-line: #E4E9F0;
 
-  /* The accreditation strip's own rules, one step lighter again. That strip
-     sits on white between two heavy neighbours, the client-work rows above
-     and the black CTA below, and at --hz-paper-line weight its dividers
-     read as a drawn table rather than as separators. This is a hairline you
-     notice only when you look for it, which is the whole job, still present,
-     just not drawing the cell. */
+  /* One step lighter again, for the accreditation strip. At --hz-paper-line
+     weight its dividers read as a drawn table rather than separators. */
   --hz-strip-line: #EBEFF5;
 
-  /* The light end of the logo's gradient, measured off the mark: the
-     droplet runs #0975C1 at its base to #0CACCF at the arc tips. Only
-     the light end is needed here; the deep end would be a competing
-     value for --hz-cobalt below, which is a decision left open. */
+  /* Dark plate for the service cards. Cool-tinted, not neutral grey, so the
+     panels sit in the same family as the rest of the page's neutrals. */
+  --hz-plate:       #242B38;
+  --hz-plate-hover: #2E3746;
+  --hz-plate-well:  #151A22;
+
+  /* Client-work row ground. One tint for every row: per-row hues put three
+     accents the brand does not own into a single-accent page. */
+  --hz-story:      #EDF2FB;
+
+  /* The light end of the logo gradient, measured off the mark (the droplet
+     runs #0975C1 at its base to #0CACCF at the arc tips). */
   --hz-aqua:       #0CACCF;
 
-  /* Accent, confident "Ocean Blue" (single decisive brand color, consulting-grade) */
+  /* The single brand accent. */
   --hz-cobalt:     #1d4ed8;
   --hz-cobalt-600: #1740ad;
   --hz-cobalt-100: #dbe6fe;
-  /* The accent as it behaves on a dark ground. #1d4ed8 is too dark to read
-     against the hero, which is why a separate cyan got introduced and quietly
-     became a second accent. This is the SAME accent lightened for contrast,
-     not another colour, one hue, two grounds. */
+  /* The same accent lightened for a dark ground, where #1d4ed8 is too dark
+     to read. One hue, two grounds; not a second accent. */
   --hz-cobalt-300: #8fb4fd;
   --hz-cyan:       #2ad8ef;
   --hz-cyan-400:   #5ce0f7;
   --hz-indigo:     #6366f1;
 
-  /* Alternating section band. Cool slate, the warm ivory it replaced fought
-     the cobalt accent and slate text, and read yellow next to pure white.
-     --hz-ivory is kept as an alias so existing call sites keep working. */
+  /* Alternating section band. --hz-ivory is a legacy alias. */
   --hz-band:       #f4f7fb;
   --hz-band-line:  #e6ecf4;
   --hz-ivory:      var(--hz-band);
@@ -1208,17 +900,13 @@
   --hz-amber-600:  #b45309;
   --hz-amber-100:  #fde7c9;
 
-  /* Gold, the anniversary line-work only (anniversary/CornerArches.tsx).
-     That component passes `var(--hz-gold, #c9a227)` rather than the bare
-     token, deliberately: an unresolved var in an SVG `stroke` computes to
-     `none`, so a missing token does not degrade the ornament, it deletes
-     it, silently and completely. The literal keeps the failure cosmetic.
-     Scoped that narrowly on purpose: cobalt is the brand, and a second
-     saturated accent used freely would dilute it. Gold appears here as
-     drawn geometry at very low alpha, never as a fill or a text colour,
-     so it reads as engraving rather than as a competing brand colour.
-     --hz-gold-ink is the only value dark enough for text on white, and
-     is there for a caption if one is ever needed. */
+  /* Gold, for the anniversary line-work only (anniversary/CornerArches.tsx),
+     used as low-alpha drawn geometry and never as a fill or text colour so it
+     does not compete with cobalt. That component passes
+     `var(--hz-gold, #c9a227)` with a literal fallback on purpose: an
+     unresolved var in an SVG `stroke` computes to `none`, which would delete
+     the ornament rather than degrade it. --hz-gold-ink is the only value dark
+     enough for text on white. */
   --hz-gold:      #c9a227;
   --hz-gold-300:  #e3c268;
   --hz-gold-100:  #f4e6bf;
@@ -1246,49 +934,56 @@
   font-weight: 600;
 }
 
-/* Section heading scale.
-
-   These had drifted into four different sizes across five sections, 1.5/1.85/2.1, 1.75/2.1/2.5, and two separate clamps, so the page
-   spoke in four voices depending on where you were in it. Two roles,
-   both fluid, both used everywhere:
+/* Section heading scale. Two roles, both fluid, used everywhere:
 
    .hz-h2         opens a section and carries its argument.
-   .hz-statement  supports one, the centered line introducing a row of
-                  client logos or certification badges. Deliberately
-                  smaller: it sets up the marks beneath it rather than
-                  competing with the section headings above and below.
+   .hz-statement  supports one, e.g. the line introducing a logo row.
+                  Deliberately smaller so it sets up the marks beneath it.
 
-   The hero and the closing CTA keep their own larger sizes; they are
-   the two moments that should out-scale everything else. */
+   The hero and the closing CTA keep their own larger sizes.
+
+   `text-wrap: balance` on both: these are full sentences at a large size
+   against a wide measure, which is the shape that strands single words. */
 .hz-h2 {
   font-size: clamp(1.85rem, 3.2vw, 2.6rem);
   line-height: 1.06;
+  text-wrap: balance;
 }
 .hz-statement {
   font-size: clamp(1.4rem, 2.2vw, 1.95rem);
   line-height: 1.15;
+  text-wrap: balance;
 }
 
-/* NOTE: a `.hz-container` class was written here and silently never reached
-   the browser, every neighbouring rule in this file compiled, that one alone
-   was dropped from the generated stylesheet, so every section rendered flush
-   to both screen edges with zero gutter. Rather than keep guessing at the
-   toolchain, the page shell is now Tailwind utilities applied at each call
-   site (see SHELL in the landing components). Do not reintroduce it as a
-   bespoke class without checking the built CSS actually contains it. */
+/* `pretty` rather than `balance` on body copy: it fixes the last-line orphan
+   and leaves the rest ragged. Scoped to .horizon; the admin console is
+   untouched. */
+.horizon p {
+  text-wrap: pretty;
+}
 
-/* Eyebrow, mono, uppercase, tracked.
+/* Shared focus ring, in two grounds: cobalt is not visible on the dark bands
+   and white is not visible on canvas. No border-radius here on purpose, an
+   outline already follows whatever radius the element has. */
+.hz-focus:focus-visible,
+.hz-focus-dark:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: 3px;
+}
+.hz-focus:focus-visible      { outline-color: var(--hz-cobalt); }
+.hz-focus-dark:focus-visible { outline-color: #ffffff; }
 
-   The colour lives here now. Every one of the ~19 call sites was pairing this
-   class with `text-[var(--hz-amber)]`, which made amber a second accent
-   competing with cobalt across the whole site, and a third once the hero's
-   cyan is counted. Accenture is black plus one purple; EY is charcoal plus one
-   yellow. Three accents is what separates a mid-market site from those.
+/* NOTE: a `.hz-container` shell class was tried here and was silently dropped
+   from the generated stylesheet while every neighbouring rule compiled, so
+   sections rendered with no gutter. The page shell is Tailwind utilities at
+   each call site instead. Do not reintroduce it without checking the built
+   CSS actually contains it. */
 
-   An eyebrow is a LABEL. It names the section it sits above; it is not the
-   thing you should be looking at. Neutral subtle is the honest weight for it,
-   and it leaves cobalt free to mean one thing: this is actionable, or this is
-   the number that matters. */
+/* Eyebrow: mono, uppercase, tracked. The colour lives here rather than at the
+   call sites, which had drifted into pairing it with amber and turning a
+   label into a second accent. An eyebrow names its section; cobalt is
+   reserved for what is actionable. */
 .hz-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 10.5px;
@@ -1316,10 +1011,11 @@
   padding: 12px 22px; border-radius: 10px;
   background: var(--hz-cobalt); color: #fff;
   font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
-  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -12px rgba(37,99,235,0.6);
+  transition: transform .2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .25s ease;
+  /* rgb(29,78,216) is --hz-cobalt: the shadow carries the button's own hue. */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -12px rgba(29,78,216,0.6);
 }
-.hz-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(37,99,235,0.7); }
+.hz-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(29,78,216,0.7); }
 .hz-btn-primary:active { transform: translateY(0) scale(.985); }
 
 /* Fill-up hover: a darker layer scales up from the bottom edge behind the text.
@@ -1358,15 +1054,8 @@
 }
 .hz-btn-ghost-dark:hover { background: rgba(241,245,249,0.10); transform: translateY(-2px); }
 
-/* Hairline card */
-/* The one card in the system, matched to the landing page and the nav menus:
-   white, a hairline in the paper rule colour, a modest radius, and NOTHING
-   else. It used to lift and cast a shadow on hover, a card that rises off the
-   page on approach is the single most template-looking interaction a marketing
-   site has, and the site had already dropped it everywhere else. Hover now
-   darkens the hairline, which is enough to say "this is clickable" without the
-   object moving. Redefined here rather than at 12 call sites, so every page
-   that uses it comes along. */
+/* The one card in the system: white, a hairline, a modest radius, nothing
+   else. Hover darkens the hairline rather than lifting the card. */
 .hz-card {
   background: #fff;
   border: 1px solid var(--hz-paper-line);
@@ -1395,14 +1084,9 @@
   .hz-marquee { animation: none; }
 }
 
-/* ── Above-the-fold entrance ──────────────────────────────────
-   The hero used framer-motion for its entrance, which meant the
-   headline was server-rendered at opacity:0 and stayed invisible
-   until React hydrated, five to eight seconds on a cold load, with
-   the LCP text absent for all of it. These run off the stylesheet
-   instead, so the copy animates on first paint and never waits for
-   JavaScript. Use ONLY above the fold; below it, framer-motion's
-   whileInView is still the right tool.                            */
+/* Above-the-fold entrance, in CSS so the copy animates on first paint rather
+   than waiting for hydration (which cost 5-8s of LCP when this was
+   framer-motion). Use only above the fold; below it, whileInView is right. */
 @keyframes hz-enter {
   from { opacity: 0; transform: translate3d(0, 14px, 0); }
   to   { opacity: 1; transform: none; }
@@ -1413,17 +1097,9 @@
   animation: hz-enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Cinematic hold on the hero block.
-
-   A very slow, very small push-in under the word rise. The scale is
-   1.5% over two and a half seconds, far too little to read as an
-   animation on its own, which is the point: it reads as the frame
-   settling rather than as an element sliding in. Paired with the
-   graded photograph it gives the opening the feel of a shot coming
-   to rest instead of a web page loading.
-
-   Transform and opacity only, both compositor properties, so the
-   long duration costs nothing per frame. */
+/* Cinematic hold on the hero block: a 1.5% push-in over 2.5s, small enough
+   to read as the frame settling rather than as an element sliding in.
+   Transform and opacity only, so the long duration is free per frame. */
 @keyframes hz-cinema {
   from { opacity: 0; transform: scale(1.015); }
   to   { opacity: 1; transform: none; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "motion/react";
 import { WAVE_WIDTH, wavePath } from "@/lib/motion";
 import { readScroll } from "@/lib/scroll-signal";
 

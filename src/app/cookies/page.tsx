@@ -5,6 +5,13 @@ import { ArrowLeft, Mail, Cookie, Shield, BarChart2, Settings2, ExternalLink } f
 export const metadata: Metadata = {
   title: "Cookie Policy",
   description: "Learn how Ocean Blue Corporation uses cookies and similar tracking technologies on our website.",
+  openGraph: {
+    title: "Cookie Policy | Ocean Blue Corporation",
+    description:
+      "Which cookies Ocean Blue Corporation sets, what each one does, and how to control them in your browser.",
+    url: "https://oceanbluecorp.com/cookies",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/cookies" },
 };
 
 const SECTIONS = [

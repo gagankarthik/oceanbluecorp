@@ -1,25 +1,9 @@
-/* ============================================================
-   Durable company facts, founding date and the milestone
-   timeline. Pure data: no AWS, no React, safe to import from a
-   server page, a client component, or an OG image route.
+/* Durable company facts. Pure data: no AWS, no React, safe to import from a
+   server page, a client component, or an OG image route. */
 
-   These lived inline in `src/app/about/_content.tsx` and were
-   about to be copied a second time for the anniversary section.
-   One copy, imported by both, so a corrected year can never be
-   right on one page and wrong on the other.
-   ============================================================ */
-
-/* Two names, and they are not interchangeable.
-
-   "Ocean Blue Solutions" is the operating brand, the one on the celebration
-   artwork and the one to use when the sentence is about the business people
-   deal with. "Ocean Blue Corporation" is the entity it sits under, and belongs
-   in of-record contexts: the legal footer, the colophon, structured data.
-
-   The homepage and the rest of the marketing site still say "Ocean Blue
-   Corporation" throughout, so these are NOT a site-wide rename, they exist so
-   the anniversary material gets the brand name right without either name being
-   retyped in five places. */
+/* Not interchangeable. BRAND_NAME is the operating brand, for sentences about
+   the business people deal with. LEGAL_NAME is the entity, for of-record
+   contexts: the legal footer, the colophon, structured data. */
 export const BRAND_NAME = "Ocean Blue Solutions";
 export const LEGAL_NAME = "Ocean Blue Corporation";
 
@@ -48,8 +32,7 @@ export const MILESTONES: Milestone[] = [
   { year: "2025", title: "AI practice launch", description: "Launched a dedicated AI practice for production deployments." },
 ];
 
-/** Every year from founding through `through`, inclusive, the arc of years
- *  printed around the anniversary numeral. */
+/** Every year from founding through `through`, inclusive. */
 export function yearsThrough(through: number): number[] {
   return Array.from({ length: through - FOUNDED_YEAR + 1 }, (_, i) => FOUNDED_YEAR + i);
 }

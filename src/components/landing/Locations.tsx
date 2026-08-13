@@ -70,20 +70,20 @@ export default function Locations() {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="locations" className="w-full scroll-mt-24 bg-[var(--hz-paper)] py-20 sm:py-24 lg:py-28">
+    <section id="locations" className="w-full scroll-mt-24 bg-[var(--hz-ink)] py-20 sm:py-24 lg:py-28">
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
         <Reveal className="max-w-2xl">
-          <span className="hz-eyebrow block text-[var(--hz-cobalt)]">Where we are</span>
-          <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
+          <span className="hz-eyebrow block text-[var(--hz-cobalt-300)]">Where we are</span>
+          <h2 className="hz-display hz-h2 mt-4 text-white">
             Four offices, three countries, one team.
           </h2>
-          <p className="mt-5 max-w-[54ch] text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[17px]">
+          <p className="mt-5 max-w-[54ch] text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
             Ohio, Hyderabad, Vizianagaram and London. Enough overlap to hand work
             across the day, and someone awake when your systems are not.
           </p>
         </Reveal>
 
-        <div className="relative mt-12 w-full overflow-hidden rounded-2xl border border-[var(--hz-paper-line)] bg-white sm:mt-14">
+        <div className="relative mt-12 w-full overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] sm:mt-14">
           {/* Hyderabad and Vizianagaram are about two percent apart on this
               crop, so their cards are staggered: one on a long stalk leaning
               left, the other on a short one leaning right. Without that they
@@ -118,21 +118,21 @@ export default function Locations() {
             the duplication asked to be removed. */}
         <ul className="mt-8 grid gap-4 sm:hidden">
           {OFFICES.map((o) => (
-            <li key={o.city} className="rounded-xl border border-[var(--hz-paper-line)] bg-white p-5">
-              <p className="flex items-center gap-2 text-[15px] font-semibold text-[var(--hz-text)]">
+            <li key={o.city} className="rounded-xl border border-white/12 bg-white/[0.05] p-5">
+              <p className="flex items-center gap-2 text-[15px] font-semibold text-white">
                 {o.city}
                 {o.hq && (
-                  <span className="rounded-full bg-[var(--hz-cobalt-100)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--hz-cobalt)]">
+                  <span className="rounded-full bg-[var(--hz-cobalt)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
                     HQ
                   </span>
                 )}
               </p>
-              <p className="mt-0.5 text-[12.5px] text-[var(--hz-text-subtle)]">{o.country}</p>
-              <address className="mt-2.5 not-italic text-[13px] leading-relaxed text-[var(--hz-text-mute)]">
+              <p className="mt-0.5 text-[12.5px] text-white/55">{o.country}</p>
+              <address className="mt-2.5 not-italic text-[13px] leading-relaxed text-white/70">
                 {o.address}
               </address>
               {o.phone && (
-                <a href={telHref(o.phone)} className="mt-2.5 inline-block text-[13px] font-medium text-[var(--hz-cobalt)]">
+                <a href={telHref(o.phone)} className="mt-2.5 inline-block text-[13px] font-medium text-[var(--hz-cobalt-300)]">
                   {o.phone}
                 </a>
               )}
@@ -140,11 +140,11 @@ export default function Locations() {
           ))}
         </ul>
 
-        <p className="mt-10 text-[14.5px] text-[var(--hz-text-mute)]">
+        <p className="mt-10 text-[14.5px] text-white/70">
           Or email{" "}
           <a
             href="mailto:hr@oceanbluecorp.com"
-            className="font-medium text-[var(--hz-cobalt)] transition-opacity hover:opacity-80"
+            className="font-medium text-[var(--hz-cobalt-300)] transition-opacity hover:opacity-80"
           >
             hr@oceanbluecorp.com
           </a>

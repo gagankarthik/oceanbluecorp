@@ -5,6 +5,13 @@ import { ArrowLeft, Mail, Trash2, ShieldCheck, Clock, ExternalLink } from "lucid
 export const metadata: Metadata = {
   title: "Data Deletion Request",
   description: "Request deletion of your personal data held by Ocean Blue Corporation by emailing hr@oceanbluecorp.com.",
+  openGraph: {
+    title: "Data Deletion | Ocean Blue Corporation",
+    description:
+      "How to request deletion of your personal data from Ocean Blue Corporation, what is removed, and what must be retained.",
+    url: "https://oceanbluecorp.com/data-deletion",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/data-deletion" },
 };
 
 const DELETE_EMAIL = "hr@oceanbluecorp.com";

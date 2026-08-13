@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
-/* ============================================================
-   Photo, a local image with a clean, on-brand fallback.
-   If the file at `src` is missing/broken, it hides the <img>
-   and shows the brand gradient instead (never a broken/odd
-   image). Place inside a `relative overflow-hidden` parent.
-   Drop real photos into /public/images to replace the fallback.
-   ============================================================ */
+/* Photo, an image with a clean, on-brand fallback. If `src` is missing or
+   broken it shows the brand gradient rather than a broken image. Place inside
+   a `relative overflow-hidden` parent.
+
+   Two paths, because the two kinds of source want opposite handling:
+
+   · Local files (/images/...) go through next/image, which is the only way
+     they get resized and served as avif/webp. Without it a full-resolution
+     PNG or JPEG ships as-is to every visitor.
+   · Unsplash URLs stay on a plain <img> with a srcSet built by rewriting the
+     `w=` query param. They are already optimised and CDN-served at whatever
+     width is asked for, so routing them through the optimiser would add a
+     proxy hop to gain nothing. */
 
 export default function Photo({
   src,
@@ -29,9 +36,12 @@ export default function Photo({
 }) {
   const [failed, setFailed] = useState(false);
 
-  // Build a responsive srcSet for Unsplash-hosted images by swapping the
-  // `w=` query param. Non-Unsplash / local images fall back to plain src.
-  // The ladder starts low (320) so small cards and phones fetch small files.
+  // A root-relative path is a file in /public, the case next/image handles.
+  // Anything else is remote and stays on the <img> path below.
+  const isLocal = src.startsWith("/");
+
+  // The Unsplash ladder starts low (320) so small cards and phones fetch
+  // small files rather than the 1600w candidate.
   const isUnsplash = src.includes("images.unsplash.com") && /[?&]w=\d+/.test(src);
   const srcSet = isUnsplash
     ? [320, 480, 640, 960, 1280, 1600]
@@ -45,7 +55,19 @@ export default function Photo({
       style={{ background: fallback }}
       aria-hidden={alt === "" ? true : undefined}
     >
-      {!failed && (
+      {failed ? null : isLocal ? (
+        // `fill` rather than fixed dimensions: this span is the sizing box and
+        // it is already positioned, which is what fill needs.
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          onError={() => setFailed(true)}
+          className="object-cover"
+        />
+      ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}

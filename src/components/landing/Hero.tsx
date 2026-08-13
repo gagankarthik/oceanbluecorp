@@ -1,33 +1,14 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import WordsRise from "./motion/WordsRise";
 import { Cta } from "./ui";
 import VideoBackdrop from "./VideoBackdrop";
 
-/* Three statements, no photographs. The hero is the shader gradient now, so
-   the rotation is purely editorial: same ground, three arguments.
-
-   This is also why the hero got FASTER rather than slower by adopting a WebGL
-   background. With no photo, the LCP element is the headline. CSS-animated,
-   in the server HTML, painting on first frame. The shader arrives afterwards
-   over a static gradient that is a perfectly good hero on its own.
-
-   `title` and `accent` are split at the intended line break rather than left
-   to wrapping, so the statement never breaks mid-phrase at an awkward width.
-
-   This was a three-slide rotation. It is one statement now. A hero that
-   rewrites itself every six seconds asks the reader to catch it rather than
-   read it, anyone still on the first line when it changes has to start over,
-   and the page ends up making three claims instead of standing behind one.
-   The other two survive as the openings of the sections below, which is where
-   an argument belongs. */
-/* Written to the position, not to the service list. The choice this reader is
-   actually making is between one accountable team and a stack of vendors, so
-   the headline names that choice instead of listing what we sell. The accent
-   falls on "one team" because that is the whole argument. */
+/** Split into `title` + `accent` so the colour break lands at a chosen point
+ *  in the sentence rather than wherever the line happens to wrap. */
 const HERO = {
   title: "The people and platforms behind",
   accent: " enterprises and government agencies.",
@@ -45,62 +26,60 @@ export default function Hero({ content = {} }: { content?: Record<string, string
   return (
     <section
       ref={ref}
-      className="relative isolate flex min-h-[88svh] w-full flex-col overflow-hidden sm:min-h-[92vh]"
+      // svh, not vh: vh causes the mobile-Safari address-bar jump.
+      className="relative isolate flex min-h-[90svh] w-full flex-col overflow-hidden sm:min-h-[100svh]"
       style={{ background: "#07142b" }}
     >
-      {/* The ground. Was a photo crossfade, then a WebGL gradient, now the
-          brand film. The path is URL-encoded because the asset ships with a
-          space in its filename. */}
-      <VideoBackdrop src="/video/Hero%20Video.mp4" className="z-0" intensity={100} />
+      {/* hero.mp4 is a web encode of "Hero Video.mp4" (1600x900, 30fps, no
+          audio, 666KB against the source's 10.5MB). Serve the encode, never
+          the master: at 10MB the dev server answered the media element's range
+          requests with a repeating 503 and no frame ever decoded. */}
+      <VideoBackdrop
+        src="/video/hero.mp4"
+        poster="/video/hero-poster.jpg"
+        className="z-0"
+        intensity={100}
+      />
 
-      {/* Brand scrim */}
+      {/* Scrim, in two parts that do different jobs.
+
+          The flat wash stays light (0.14 through the middle) so the film keeps
+          its own colour rather than reading as a navy rectangle. Contrast is
+          bought back by the radial alone, which sits only behind the words.
+
+          Measured against this footage over seven frames of the loop: the
+          brightest pixel behind the headline composites to 6.9:1 against
+          white, worst case, over a 4.5:1 floor for the subhead. This film is
+          a pale building, and at the radial's previous 0.50 it measured 4.73:1,
+          which passed on paper and looked washed out. Re-measure whenever the
+          film changes; a light wash leaves little room. */}
       <div
         aria-hidden
         className="absolute inset-0 z-[1]"
         style={{
-          // Values MEASURED, not guessed. Sampling the real video across five
-          // frames and compositing this scrim per pixel, the previous setting
-          // left the headline at 4.87:1, the accent tail at 2.35:1 and the
-          // subhead at 3.71:1, the accent failing even the 3:1 large-text
-          // floor. The ceiling was the problem rather than the text colours:
-          // pure white only reached 4.85:1 there, so no amount of adjusting
-          // the type could fix it. At these values the same worst-case pixels
-          // give 8.9 / 4.28 / 6.5.
-          //
-          // Retuned for film. The previous values were set against a shader
-          // whose darkest state was already near-black; footage is brighter,
-          // moves, and cannot be relied on to be dark anywhere in particular,
-          // so the headline needs a floor of contrast that does not depend on
-          // which frame is showing. A flat wash carries that floor, the centre
-          // radial deepens it behind the words, and the top and bottom ramps
-          // hold the nav and the scroll edge.
           background:
-            "linear-gradient(180deg, rgba(4,10,24,0.78) 0%, rgba(4,10,24,0.62) 30%, rgba(4,10,24,0.62) 70%, rgba(4,10,24,0.85) 100%), radial-gradient(65% 55% at 50% 45%, rgba(4,10,24,0.58) 0%, transparent 75%)",
+            "linear-gradient(180deg, rgba(4,10,24,0.58) 0%, rgba(4,10,24,0.14) 26%, rgba(4,10,24,0.14) 66%, rgba(4,10,24,0.74) 100%), radial-gradient(62% 52% at 50% 44%, rgba(4,10,24,0.62) 0%, transparent 76%)",
         }}
       />
 
-      {/* ── Focal block, vertically centered ──────────────── */}
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
         className="relative z-10 flex flex-1 items-center"
       >
-        <div className="hz-cinema mx-auto w-full max-w-[2200px] px-6 pt-24 pb-10 text-center sm:px-10 sm:pt-28 lg:px-16 2xl:px-28">
-          {/* Centred. A left-aligned statement reads as a page heading;
-              centred over the full-bleed gradient it reads as a title card.
-
-              Everything here animates from the stylesheet, not framer-motion, see WordsRise: the motion version left this copy invisible until
-              hydration finished, which cost the LCP five to eight seconds. */}
+        <div className="hz-cinema mx-auto w-full max-w-[2200px] px-6 pt-20 pb-10 text-center sm:px-10 sm:pt-24 lg:px-16 2xl:px-28">
+          {/* Entry animation is CSS, not framer-motion (see WordsRise): the
+              motion version kept this copy invisible until hydration, costing
+              5-8s of LCP. */}
           <div>
-            <h1 className="hz-display mx-auto max-w-[22ch] text-[clamp(1.9rem,4.3vw,3.35rem)] tracking-[-0.03em] break-words text-white">
+            {/* 34ch keeps the headline to two lines on desktop. */}
+            <h1 className="hz-display mx-auto max-w-[34ch] text-[clamp(1.9rem,4.3vw,3.35rem)] tracking-[-0.03em] break-words text-white">
               <WordsRise
                 text={content.heroTitle || HERO.title}
                 delay={0.18}
                 step={0.09}
               />{" "}
-              {/* The tail carries the accent, cobalt-300, the same accent
-                  lightened for a dark ground, so the page still runs on one
-                  hue. A CMS-set title is left plain: an editor writing one line
-                  has no way to say where the colour should start. */}
+              {/* CMS-set titles render plain: an editor writing one line has
+                  no way to say where the accent should start. */}
               {!content.heroTitle && (
                 <span className="text-[var(--hz-cobalt-300)]">
                   <WordsRise text={HERO.accent} delay={0.52} step={0.09} />
@@ -116,8 +95,6 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             </p>
           </div>
 
-          {/* One action, full stop. The secondary link is gone, the section it
-              pointed at is the next thing on the page. */}
           <div
             className="hz-enter mt-9 flex justify-center sm:mt-11"
             style={{ animationDelay: "1.35s" }}

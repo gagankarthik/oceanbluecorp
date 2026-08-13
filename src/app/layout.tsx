@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Bricolage_Grotesque, Instrument_Serif } from "next/font/google";
+import { Inter, Bricolage_Grotesque } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import CookieConsent from "@/components/layout/CookieConsent";
-import { getAnnouncement } from "@/lib/content";
+import { getAnnouncement, getMaintenance } from "@/lib/content";
 import { Suspense } from "react";
 
 // ISR: re-render the layout (which reads the CMS announcement) at most once a
@@ -24,12 +24,9 @@ const bricolage = Bricolage_Grotesque({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["400"],
-  style: ["normal", "italic"],
-});
+// Instrument Serif was loaded here and referenced nowhere: a webfont downloaded
+// on every page for no rendered glyph. Removed rather than left as a tax.
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -198,7 +195,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const announcement = await getAnnouncement();
+  // Both read the same ISR'd content table, so this is one extra lookup per
+  // revalidation rather than per request.
+  const [announcement, maintenance] = await Promise.all([
+    getAnnouncement(),
+    getMaintenance(),
+  ]);
   // `scroll-smooth` was removed from <html> when Lenis was added: a Tailwind
   // utility sets scroll-behavior in the utilities layer, which outranks the
   // `html:not(.lenis)` guard in globals.css and would have re-introduced the
@@ -223,12 +225,17 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${bricolage.variable} ${instrumentSerif.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${bricolage.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
         {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
             and the admin layout (→ #adm-main), so none is needed here. */}
         <Providers>
-          <LayoutWrapper announcement={announcement.text} announcementHref={announcement.href} announcementScroll={announcement.scroll}>
+          <LayoutWrapper
+            announcement={announcement.text}
+            announcementHref={announcement.href}
+            announcementScroll={announcement.scroll}
+            maintenance={maintenance}
+          >
             {children}
           </LayoutWrapper>
         </Providers>

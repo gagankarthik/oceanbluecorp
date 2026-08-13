@@ -5,6 +5,13 @@ import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Read the Terms of Service governing your use of Ocean Blue Corporation's website and services.",
+  openGraph: {
+    title: "Terms of Service | Ocean Blue Corporation",
+    description:
+      "The agreement governing use of the Ocean Blue Corporation website and services, including acceptable use and limitation of liability.",
+    url: "https://oceanbluecorp.com/terms",
+  },
+  alternates: { canonical: "https://oceanbluecorp.com/terms" },
 };
 
 const SECTIONS = [

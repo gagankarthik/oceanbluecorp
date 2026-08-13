@@ -6,8 +6,8 @@ import { UserRole } from "@/lib/auth/config";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, ShieldCheck, BarChart2, Users, CheckCircle, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle, ChevronDown } from "lucide-react";
 import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
 
@@ -24,11 +24,31 @@ function getRoleRedirect(role: UserRole | null): string {
   }
 }
 
-const FEATURES = [
-  { icon: ShieldCheck, label: "Secure, role-based access" },
-  { icon: BarChart2, label: "Real-time application tracking" },
-  { icon: Users, label: "Centralized candidate management" },
-];
+/* One entry per step, so the panel says where the person is instead of
+   showing the same welcome through a four-step flow. Each body line states
+   what happens next rather than describing the product. */
+const PANEL: Record<"signin" | "complete" | "forgot" | "reset", { eyebrow: string; title: string; body: string }> = {
+  signin: {
+    eyebrow: "Ocean Blue Corporation",
+    title: "The staff console.",
+    body: "Jobs, applications, candidates and contacts, in one place. Your role decides what you see, and an administrator set it when they added you.",
+  },
+  complete: {
+    eyebrow: "Step 2 of 2 · New account",
+    title: "Finish setting up.",
+    body: "Confirm your name and number, then choose a password you will keep. The temporary one from your invitation stops working after this.",
+  },
+  forgot: {
+    eyebrow: "Password reset",
+    title: "Locked out?",
+    body: "Give us the address on your account and we will email a six-digit code. It is good for one reset.",
+  },
+  reset: {
+    eyebrow: "Step 2 of 2 · Password reset",
+    title: "Choose a new one.",
+    body: "Enter the code from your email and set the password. We will sign you in with it straight away.",
+  },
+};
 
 const COUNTRY_CODES = [
   { code: "+1", flag: "🇺🇸", label: "US/CA" },
@@ -52,6 +72,12 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
 
 type E4 = [number, number, number, number];
 const ease: E4 = [0.16, 1, 0.3, 1];
+// Repeated verbatim on all four steps; kept here so a change lands on every
+// one of them rather than on whichever three someone remembers.
+const headingClass =
+  "hz-display mb-1.5 text-[1.8rem] font-bold text-[var(--hz-text)]";
+const submitClass =
+  "hz-focus mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--hz-cobalt)] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70";
 const inputClass =
   "w-full rounded-lg border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] px-4 py-3 text-sm text-[var(--hz-text)] placeholder-[var(--hz-text-subtle)] outline-none transition focus:border-[var(--hz-cobalt)] focus:bg-white focus:ring-2 focus:ring-[var(--hz-cobalt-100)]";
 
@@ -108,7 +134,11 @@ export default function SignInPage() {
 
   // "signin" = email + password. "complete" = invited user setting up their
   // account (full name, phone, permanent password) on first sign-in.
-  const [step, setStep] = useState<"signin" | "complete">("signin");
+  const [step, setStep] = useState<"signin" | "complete" | "forgot" | "reset">("signin");
+  // Reset flow. `resetSent` keeps the confirmation visible on the reset step
+  // so someone who lands there knows a code is actually on its way.
+  const [resetCode, setResetCode] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -198,35 +228,133 @@ export default function SignInPage() {
     }
   };
 
+  // ── Password reset ────────────────────────────────────────
+  // Step one asks Cognito to email a code. The server answers identically for
+  // an unknown address, so this always advances rather than confirming whether
+  // the account exists.
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email) { setError("Enter your email address."); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not start the reset.");
+      setResetSent(true);
+      setStep("reset");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not start the reset.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Step two exchanges the code for a new password, then signs the person in
+  // with it so they never have to type it twice.
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!resetCode.trim()) { setError("Enter the code from your email."); return; }
+    if (unmetRules.length > 0) {
+      setError(`Your password still needs ${unmetRules.map((r) => r.label).join(", ")}.`);
+      return;
+    }
+    if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: resetCode, password: newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not reset the password.");
+
+      const result = await signInWithCredentials(email, newPassword);
+      if (result.status === "NEW_PASSWORD_REQUIRED") {
+        // Should not happen after a completed reset, but never strand them.
+        setSession(result.session);
+        setChallengeUsername(result.username);
+        setRequiredAttributes(result.requiredAttributes);
+        setStep("complete");
+      } else {
+        router.push(getRoleRedirect(result.user.role));
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not reset the password.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // ── Left brand panel (shared) ─────────────────────────────
+  /* Photographic, with the same two scrim ramps every PageHero uses, so the
+     door to the console reads as part of the same site rather than as a
+     detached product screen.
+
+     The three feature bullets that used to sit here are gone on purpose. This
+     is an invite-only console: everyone who reaches this screen was already
+     added by an administrator, so selling them on "real-time tracking" is
+     copy aimed at someone who cannot be standing here. What replaced it is
+     what a person at a locked door actually needs, which of the four steps
+     they are on, and who to ask if they are stuck. */
   const brandPanel = (
     <div className="relative hidden w-1/2 overflow-hidden bg-[var(--hz-ink)] lg:block">
+      <Photo src={IMG.aboutHero} alt="" className="absolute inset-0 h-full w-full object-cover" sizes="50vw" priority />
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(4,10,24,0.78) 0%, rgba(4,10,24,0.52) 34%, rgba(4,10,24,0.72) 74%, rgba(4,10,24,0.94) 100%), linear-gradient(90deg, rgba(4,10,24,0.80) 0%, rgba(4,10,24,0.52) 40%, rgba(4,10,24,0.20) 68%, rgba(4,10,24,0.08) 100%)",
+        }}
+      />
+
       <div className="relative z-10 flex h-full flex-col justify-between p-12 xl:p-14">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white">
-          <ArrowLeft className="h-4 w-4" /> Back to home
-        </Link>
-        <div className="max-w-md">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">Ocean Blue Corporation</p>
-          <h2 className="mt-4 text-[2.4rem] font-semibold leading-[1.05] tracking-tight text-white" style={{ fontFamily: "var(--font-display)" }}>
-            {step === "complete" ? "Set up your account." : "Welcome back."}
-          </h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-white/65">
-            {step === "complete"
-              ? "Finish setting up your team account, choose a password and confirm your details."
-              : "Sign in to manage applications, track hiring progress, and connect with top talent."}
-          </p>
-          <div className="mt-9 space-y-3.5">
-            {FEATURES.map(({ icon: Icon, label }, i) => (
-              <motion.div key={label} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.1, ease }} className="flex items-center gap-3 text-[14px] text-white/80">
-                <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-white/10">
-                  <Icon className="h-4 w-4 text-[var(--hz-cyan-400)]" strokeWidth={1.75} />
-                </span>
-                {label}
-              </motion.div>
-            ))}
-          </div>
+        <div className="flex items-center justify-between gap-6">
+          <Link href="/" className="hz-focus-dark inline-block" aria-label="Ocean Blue Corporation, home">
+            {/* No white artwork exists; the colour mark inverts cleanly to white. */}
+            <Image src="/logo.png" alt="Ocean Blue Corporation" width={340} height={80} className="h-9 w-auto brightness-0 invert" />
+          </Link>
+          <Link href="/" className="hz-focus-dark group inline-flex items-center gap-2 text-[13px] text-white/70 transition-colors hover:text-white">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to site
+          </Link>
         </div>
-        <p className="text-[11px] text-white/35">© {new Date().getFullYear()} Ocean Blue Corporation</p>
+
+        <div className="max-w-md">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/50">
+            {PANEL[step].eyebrow}
+          </p>
+          <motion.h2
+            key={step}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease }}
+            className="hz-display mt-4 text-[2.6rem] font-semibold text-white"
+          >
+            {PANEL[step].title}
+          </motion.h2>
+          <p className="mt-4 max-w-[42ch] text-[15px] leading-relaxed text-white/70">
+            {PANEL[step].body}
+          </p>
+        </div>
+
+        <div className="flex items-end justify-between gap-6">
+          <p className="max-w-[34ch] text-[12px] leading-relaxed text-white/45">
+            Access is granted by an administrator. If you need an account or your
+            invitation expired, email{" "}
+            <a href="mailto:hr@oceanbluecorp.com" className="hz-focus-dark text-white/70 underline underline-offset-2 hover:text-white">
+              hr@oceanbluecorp.com
+            </a>
+            .
+          </p>
+          <p className="flex-none text-[11px] text-white/35">© {new Date().getFullYear()}</p>
+        </div>
       </div>
     </div>
   );
@@ -272,7 +400,7 @@ export default function SignInPage() {
 
           {step === "signin" ? (
             <>
-              <h1 className="mb-1.5 text-[1.9rem] tracking-tight text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
+              <h1 className={headingClass}>
                 Sign in
               </h1>
               <p className="mb-8 text-sm text-[var(--hz-text-subtle)]">Enter your credentials to continue.</p>
@@ -293,9 +421,18 @@ export default function SignInPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <div className="pt-1 text-right">
+                    <button
+                      type="button"
+                      onClick={() => { setStep("forgot"); setError(null); }}
+                      className="text-[13px] font-medium text-[var(--hz-cobalt)] underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </button>
+                  </div>
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--hz-cobalt)] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
+                <button type="submit" disabled={isSubmitting} className={submitClass}>
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
                   {isSubmitting ? "Signing in…" : "Sign in"}
                 </button>
@@ -311,9 +448,91 @@ export default function SignInPage() {
                 <Link href="/privacy" className="text-[var(--hz-cobalt)] hover:underline">Privacy Policy</Link>
               </p>
             </>
+          ) : step === "forgot" ? (
+            <>
+              <h1 className={headingClass}>
+                Reset your password
+              </h1>
+              <p className="mb-7 text-sm text-[var(--hz-text-subtle)]">
+                Enter your work email and we will send you a verification code.
+              </p>
+
+              <form onSubmit={handleForgot} className="space-y-4">
+                {errorBanner}
+
+                <div className="space-y-1.5">
+                  <label htmlFor="resetEmail" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Email address</label>
+                  <input id="resetEmail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className={submitClass}>
+                  {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
+                  {isSubmitting ? "Sending…" : "Send code"}
+                </button>
+              </form>
+
+              <button type="button" onClick={() => { setStep("signin"); setError(null); }} className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]">
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+              </button>
+            </>
+          ) : step === "reset" ? (
+            <>
+              <h1 className={headingClass}>
+                Choose a new password
+              </h1>
+              <p className="mb-7 text-sm text-[var(--hz-text-subtle)]">
+                {resetSent
+                  ? <>If an account exists for <span className="font-medium text-[var(--hz-text-mute)]">{email}</span>, a code is on its way. Enter it below.</>
+                  : <>Enter the code sent to <span className="font-medium text-[var(--hz-text-mute)]">{email}</span>.</>}
+              </p>
+
+              <form onSubmit={handleReset} className="space-y-4">
+                {errorBanner}
+
+                <div className="space-y-1.5">
+                  <label htmlFor="resetCode" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Verification code</label>
+                  <input id="resetCode" type="text" inputMode="numeric" autoComplete="one-time-code" required value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="123456" className={inputClass} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="resetPassword" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">New password</label>
+                  <div className="relative">
+                    <input id="resetPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" className={`${inputClass} pr-11`} />
+                    <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {newPassword.length > 0 && unmetRules.length > 0 && (
+                    <p className="pt-1 text-[12px] text-[var(--hz-text-subtle)]">
+                      Still needs {unmetRules.map((r) => r.label).join(", ")}.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="resetConfirm" className="block text-[13px] font-medium text-[var(--hz-text-mute)]">Confirm new password</label>
+                  <div className="relative">
+                    <input id="resetConfirm" type={showConfirm ? "text" : "password"} autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Re-enter your password" className={`${inputClass} pr-11`} />
+                    <button type="button" onClick={() => setShowConfirm((v) => !v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {!passwordsMatch && <p className="pt-1 text-[12px] text-red-600">Passwords do not match.</p>}
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className={submitClass}>
+                  {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
+                  {isSubmitting ? "Resetting…" : "Reset password and sign in"}
+                </button>
+              </form>
+
+              <button type="button" onClick={() => { setStep("forgot"); setError(null); setResetCode(""); }} className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]">
+                <ArrowLeft className="h-3.5 w-3.5" /> Send a new code
+              </button>
+            </>
           ) : (
             <>
-              <h1 className="mb-1.5 text-[1.8rem] tracking-tight text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)", fontWeight: 700, letterSpacing: "-0.025em" }}>
+              <h1 className={headingClass}>
                 Complete your account
               </h1>
               <p className="mb-7 text-sm text-[var(--hz-text-subtle)]">
@@ -380,7 +599,7 @@ export default function SignInPage() {
                   )}
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--hz-cobalt)] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--hz-cobalt-600)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70" style={{ fontFamily: "var(--font-display)" }}>
+                <button type="submit" disabled={isSubmitting} className={submitClass}>
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <ArrowRight className="h-4 w-4" />}
                   {isSubmitting ? "Setting up…" : "Complete setup"}
                 </button>

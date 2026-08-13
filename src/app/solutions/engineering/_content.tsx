@@ -1,308 +1,242 @@
 "use client";
 
-import {
-  Cog, Zap, Building2, Plane, Factory, CircuitBoard, ShieldCheck,
-  BatteryCharging, RadioTower, Search, ClipboardCheck, Users, LifeBuoy,
-  FileText, Repeat2, UserCheck, ClipboardList, Car, Truck, Wifi,
-  Handshake, Clock, Award, Layers, ArrowRight, type LucideIcon,
-} from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
-import { Eyebrow, Cta } from "@/components/landing/ui";
+import { Cta } from "@/components/landing/ui";
+import { AccentHeading } from "@/components/landing/bands";
 import Photo from "@/components/landing/Photo";
+import {
+  CalendarClock, UserRoundCheck, UserRoundPlus, PackageCheck,
+  Layers3, Factory, Handshake, ListFilter, BadgeCheck, Award,
+  type LucideIcon,
+} from "lucide-react";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
-/* ============================================================
-   Engineering segment, a co-equal fourth practice.
-   Follows the Horizon rhythm: hero → trust bar → disciplines →
-   industries → engagement → delivery → why → CTA. Self-contained:
-   no shared landing sections (stats / certifications) are repeated.
-   Positioning language is kept defensible; industry standards are
-   market context, not company-level certifications.
-   ============================================================ */
+/* Engineering is the SPEC SHEET of the site. Its reader is technical and is
+   scanning for whether we cover their discipline, their industry and their
+   standard, so the page is built as tables: dense, scannable, mono labels, no
+   photography between the reader and the answer.
 
-type Discipline = { icon: LucideIcon; title: string; roles: string };
+   Positioning language is kept defensible. The standards listed against each
+   industry are market context, not Ocean Blue certifications. */
 
-const disciplines: Discipline[] = [
-  { icon: Cog,           title: "Mechanical",              roles: "Design & CAD, FEA/simulation, thermal & HVAC, product development" },
-  { icon: Zap,           title: "Electrical & Electronics", roles: "PCB & power systems, embedded, wiring & harness, test" },
-  { icon: Building2,     title: "Structural & Civil",       roles: "Structural analysis, steel & concrete design, site & infrastructure" },
-  { icon: Plane,         title: "Aerospace",                roles: "Stress & systems, flight controls, tooling, AS9100 environments" },
-  { icon: Factory,       title: "Manufacturing & Industrial", roles: "Process & lean, tooling & fixtures, new-product introduction" },
-  { icon: CircuitBoard,  title: "Controls & Automation",    roles: "PLC/HMI, SCADA, robotics & cell integration" },
-  { icon: ShieldCheck,   title: "Quality & Reliability",    roles: "APQP/PPAP, reliability, supplier & process quality" },
-  { icon: BatteryCharging, title: "Power & Energy",         roles: "T&D, substation, protection & controls, renewables" },
-  { icon: RadioTower,    title: "Communications & RF",      roles: "RF & antenna, wireless, telecom & network engineering" },
+const disciplines = [
+  { title: "Mechanical", roles: "Design & CAD, FEA/simulation, thermal & HVAC, product development" },
+  { title: "Electrical & Electronics", roles: "PCB & power systems, embedded, wiring & harness, test" },
+  { title: "Structural & Civil", roles: "Structural analysis, steel & concrete design, site & infrastructure" },
+  { title: "Aerospace", roles: "Stress & systems, flight controls, tooling, AS9100 environments" },
+  { title: "Manufacturing & Industrial", roles: "Process & lean, tooling & fixtures, new-product introduction" },
+  { title: "Controls & Automation", roles: "PLC/HMI, SCADA, robotics & cell integration" },
+  { title: "Quality & Reliability", roles: "APQP/PPAP, reliability, supplier & process quality" },
+  { title: "Power & Energy", roles: "T&D, substation, protection & controls, renewables" },
+  { title: "Communications & RF", roles: "RF & antenna, wireless, telecom & network engineering" },
 ];
 
-type Industry = { icon: LucideIcon; name: string; standards: string };
-
-const industries: Industry[] = [
-  { icon: Car,     name: "Automotive",             standards: "IATF 16949 · APQP / PPAP" },
-  { icon: Factory, name: "Manufacturing",          standards: "ISO 9001 · Lean / Six Sigma" },
-  { icon: Plane,   name: "Aerospace & Defense",    standards: "AS9100 · ITAR-aware†" },
-  { icon: Zap,     name: "Power & Utilities",      standards: "NERC · IEEE" },
-  { icon: Wifi,    name: "Communications",         standards: "3GPP · FCC" },
-  { icon: Truck,   name: "Industrial & Heavy Equipment", standards: "ISO · CE marking" },
+const industries = [
+  { name: "Automotive", standards: "IATF 16949, APQP / PPAP" },
+  { name: "Manufacturing", standards: "ISO 9001, Lean / Six Sigma" },
+  { name: "Aerospace & Defense", standards: "AS9100, ITAR-aware" },
+  { name: "Power & Utilities", standards: "NERC, IEEE" },
+  { name: "Communications", standards: "3GPP, FCC" },
+  { name: "Industrial & Heavy Equipment", standards: "ISO, CE marking" },
 ];
 
-type Model = { icon: LucideIcon; title: string; desc: string; best: string };
-
-const models: Model[] = [
-  { icon: FileText,     title: "By the project",     desc: "Engineers who scale your program up or down as the workload moves.", best: "Best for peak demand and fixed-term programs" },
-  { icon: Repeat2,      title: "Try before you hire", desc: "Prove the fit on a real deliverable before you bring someone on permanently.", best: "Best for de-risking a permanent hire" },
-  { icon: UserCheck,    title: "Permanent hire",     desc: "We run the search and vetting; you make the permanent hire.", best: "Best for core, long-term roles" },
-  { icon: ClipboardList, title: "Managed project team", desc: "An outcome-based statement of work where we own scope, staffing, and delivery.", best: "Best for defined work packages" },
+const models: { title: string; desc: string; best: string; icon: LucideIcon }[] = [
+  { icon: CalendarClock, title: "By the project", desc: "Engineers who scale your program up or down as the workload moves.", best: "Peak demand and fixed-term programs" },
+  { icon: UserRoundCheck, title: "Try before you hire", desc: "Prove the fit on a real deliverable before you bring someone on permanently.", best: "De-risking a permanent hire" },
+  { icon: UserRoundPlus, title: "Permanent hire", desc: "We run the search and vetting; you make the permanent hire.", best: "Core, long-term roles" },
+  { icon: PackageCheck, title: "Managed project team", desc: "An outcome-based statement of work where we own scope, staffing, and delivery.", best: "Defined work packages" },
 ];
 
 const steps = [
-  { no: "01", icon: Search,        title: "Scope",     desc: "We learn the program, the disciplines, and the standards that matter, before we source anyone." },
-  { no: "02", icon: ClipboardCheck, title: "Vet",      desc: "Technical screening, background and reference checks, credential verification on request." },
-  { no: "03", icon: Users,         title: "Shortlist", desc: "A curated shortlist of pre-vetted engineers, typically within 48 hours of an agreed scope." },
-  { no: "04", icon: LifeBuoy,      title: "Support",   desc: "We stay accountable through onboarding, delivery, and the length of the engagement." },
+  { no: "01", title: "Scope", desc: "We learn the program, the disciplines, and the standards that matter, before we source anyone." },
+  { no: "02", title: "Vet", desc: "Technical screening, background and reference checks, credential verification on request." },
+  { no: "03", title: "Shortlist", desc: "A curated shortlist of pre-vetted engineers, typically within 48 hours of an agreed scope." },
+  { no: "04", title: "Support", desc: "We stay accountable through onboarding, delivery, and the length of the engagement." },
 ];
 
-type Why = { icon: LucideIcon; title: string; desc: string };
-
-const why: Why[] = [
-  { icon: Layers,      title: "Multi-discipline depth",   desc: "Mechanical to controls to RF, one partner across the disciplines your program touches." },
-  { icon: Factory,     title: "Industry fluency",         desc: "We speak automotive, aerospace, power, and manufacturing, standards and cadence included." },
-  { icon: Handshake,   title: "One accountable partner",  desc: "A single point of ownership from scope to delivery, not a resume firehose." },
-  { icon: Clock,       title: "Fast, curated shortlists", desc: "A pre-vetted engineering network, shortlisted to fit, not padded to volume." },
-  { icon: ShieldCheck, title: "Quality & compliance",     desc: "Vetting, NDAs, and secure handling built into how we work, aligned to your standards." },
-  { icon: Award,       title: "MWBE differentiation",     desc: "A certified minority- and women-owned partner that adds to your supplier-diversity goals." },
+const why: { title: string; desc: string; icon: LucideIcon }[] = [
+  { icon: Layers3, title: "Multi-discipline depth", desc: "Mechanical to controls to RF, one partner across the disciplines your program touches." },
+  { icon: Factory, title: "Industry fluency", desc: "We speak automotive, aerospace, power, and manufacturing, standards and cadence included." },
+  { icon: Handshake, title: "One accountable partner", desc: "A single point of ownership from scope to delivery, not a resume firehose." },
+  { icon: ListFilter, title: "Fast, curated shortlists", desc: "A pre-vetted engineering network, shortlisted to fit, not padded to volume." },
+  { icon: BadgeCheck, title: "Quality & compliance", desc: "Vetting, NDAs, and secure handling built into how we work, aligned to your standards." },
+  { icon: Award, title: "MWBE differentiation", desc: "A certified minority- and women-owned partner that adds to your supplier-diversity goals." },
 ];
+
+/** Column heading for the spec tables. Mono and tracked, so the tables read
+ *  as reference material rather than as marketing copy. */
+function ColHead({ children }: { children: React.ReactNode }) {
+  return <span className="hz-eyebrow block text-[var(--hz-text-subtle)]">{children}</span>;
+}
 
 export default function EngineeringContent() {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* ---------- Hero ---------- */}
       <PageHero
-        eyebrow="Engineering talent & services"
+        eyebrow="Engineering Talent & Services"
         title="The engineers behind what you design, test, and build."
-        subtitle="Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work, across automotive, manufacturing, aerospace, power, and communications."
+        subtitle="Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work."
         image={IMG.serviceEngineering}
         actions={
           <>
             <Cta href="/contact" variant="primary">Start a conversation</Cta>
-            <a
-              href="#disciplines"
-              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]">
-              Explore disciplines
-            </a>
+            <Cta href="#disciplines" variant="ghostLight">Explore disciplines</Cta>
           </>
         }
       />
 
-      {/* The engagement models, on paper. They were white-on-dark pills inside
-          the hero; here they are a quiet row under it. */}
-      <section className="w-full bg-[var(--hz-paper)] pb-2 pt-10">
-        <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-          <div className="flex flex-wrap gap-2.5">
-            {["By the project", "Try before you hire", "Permanent hire", "Managed teams"].map((m) => (
-              <span
-                key={m}
-                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]">
-                {m}
-              </span>
+      {/* Disciplines, as a two-column spec table. Nine rows, scannable. */}
+      <section
+        id="disciplines"
+        className="w-full scroll-mt-24 px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24"
+      >
+        <Reveal className="max-w-2xl">
+          <AccentHeading>Nine disciplines</AccentHeading>
+          <p className="mt-6 max-w-[52ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[19px]">
+            One partner across the engineering disciplines your program actually
+            touches, rather than a separate vendor for each.
+          </p>
+        </Reveal>
+
+        <div className="mt-12 sm:mt-14">
+          <div className="hidden grid-cols-12 gap-10 border-b border-[var(--hz-line-2)] pb-3 lg:grid">
+            <div className="col-span-4"><ColHead>Discipline</ColHead></div>
+            <div className="col-span-8"><ColHead>Typical roles</ColHead></div>
+          </div>
+          <Stagger as="dl" className="divide-y divide-[var(--hz-paper-line)] border-b border-[var(--hz-paper-line)]" gap={0.04}>
+            {disciplines.map((d) => (
+              <StaggerItem key={d.title}>
+                <div className="grid gap-1.5 py-5 lg:grid-cols-12 lg:gap-10">
+                  <dt className="hz-display text-[1.05rem] leading-tight text-[var(--hz-text)] lg:col-span-4">
+                    {d.title}
+                  </dt>
+                  <dd className="text-[14.5px] leading-relaxed text-[var(--hz-text-mute)] lg:col-span-8">
+                    {d.roles}
+                  </dd>
+                </div>
+              </StaggerItem>
             ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* Industries and standards, a second table beside the engagement
+          models, so two short reference sets share one band. */}
+      <section className="w-full border-t border-[var(--hz-line)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <div className="grid gap-14 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-5">
+            <Reveal>
+              <h2 className="hz-display hz-h2 max-w-[14ch] text-[var(--hz-text)]">
+                The markets that build things.
+              </h2>
+            </Reveal>
+            <div className="mt-8 hidden grid-cols-12 gap-6 border-b border-[var(--hz-line-2)] pb-3 sm:grid">
+              <div className="col-span-7"><ColHead>Industry</ColHead></div>
+              <div className="col-span-5"><ColHead>Standards</ColHead></div>
+            </div>
+            <Stagger as="dl" className="divide-y divide-[var(--hz-paper-line)] border-b border-[var(--hz-paper-line)]" gap={0.05}>
+              {industries.map((i) => (
+                <StaggerItem key={i.name}>
+                  <div className="grid gap-1 py-4 sm:grid-cols-12 sm:gap-6">
+                    <dt className="text-[14.5px] font-semibold text-[var(--hz-text)] sm:col-span-7">{i.name}</dt>
+                    <dd className="text-[13px] text-[var(--hz-text-subtle)] sm:col-span-5">{i.standards}</dd>
+                  </div>
+                </StaggerItem>
+              ))}
+            </Stagger>
+          </div>
+
+          <div className="lg:col-span-6 lg:col-start-7">
+            <Reveal>
+              <h2 className="hz-display hz-h2 max-w-[14ch] text-[var(--hz-text)]">Four ways to engage.</h2>
+            </Reveal>
+            <Stagger as="ul" className="mt-8 divide-y divide-[var(--hz-paper-line)] border-y border-[var(--hz-paper-line)]" gap={0.06}>
+              {models.map((m) => (
+                <StaggerItem as="li" key={m.title} className="py-5">
+                  <span className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                    <m.icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </span>
+                  <h3 className="hz-display mt-4 text-[1.05rem] leading-tight text-[var(--hz-text)]">{m.title}</h3>
+                  <p className="mt-2 max-w-[48ch] text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{m.desc}</p>
+                  <p className="mt-2.5 text-[12.5px] font-semibold text-[var(--hz-cobalt)]">
+                    Best for {m.best.toLowerCase()}
+                  </p>
+                </StaggerItem>
+              ))}
+            </Stagger>
           </div>
         </div>
       </section>
 
-      {/* ---------- Industries trust bar ---------- */}
-      <section className="relative w-full border-b border-[var(--hz-paper-line)]/70 bg-[var(--hz-ivory)] py-10">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="flex flex-col items-center gap-6 text-center">
-            <p className="text-[13px] font-medium uppercase tracking-[0.14em] text-[var(--hz-text-subtle)]">
-              Engineering talent across the markets that build things
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 sm:gap-x-12">
-              {industries.map((it) => (
-                <span key={it.name} className="flex items-center gap-2 text-[14px] font-semibold text-[var(--hz-text)]">
-                  <it.icon className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={1.75} />
-                  {it.name}
-                </span>
-              ))}
-            </div>
-          </Reveal>
-        </div>
+      {/* Method */}
+      <section className="w-full border-t border-[var(--hz-line)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <Reveal className="max-w-2xl">
+          <h2 className="hz-display hz-h2 text-[var(--hz-text)]">How we deliver.</h2>
+        </Reveal>
+        <Stagger className="mt-10 grid gap-10 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8" gap={0.08}>
+          {steps.map((st) => (
+            <StaggerItem key={st.no}>
+              <span className="hz-display hz-tnum block text-[1.6rem] leading-none text-[var(--hz-cobalt)]">
+                {st.no}
+              </span>
+              <span aria-hidden className="mt-4 block h-px w-full bg-[var(--hz-line)]" />
+              <h3 className="hz-display mt-5 text-[1.2rem] leading-tight text-[var(--hz-text)]">{st.title}</h3>
+              <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{st.desc}</p>
+            </StaggerItem>
+          ))}
+        </Stagger>
       </section>
 
-      {/* ---------- Disciplines grid (9) ---------- */}
-      <section id="disciplines" className="relative w-full scroll-mt-24 bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
-            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
-              Nine disciplines, real depth in each.
-            </h2>
-            <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              We shortlist for the specific discipline and the standards behind it, so the engineers
-              who arrive can own the work from day one.
-            </p>
-          </Reveal>
-
-          <Stagger className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" gap={0.08}>
-            {disciplines.map((d) => (
-              <StaggerItem key={d.title} className="h-full">
-                <div className="hz-card h-full p-7">
-                  <div className="text-[var(--hz-cobalt)]">
-                    <d.icon className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="hz-display mt-6 text-[1.3rem] text-[var(--hz-text)]">{d.title}</h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{d.roles}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
+      {/* Why, as a compact two-column reference rather than another card set. */}
+      <section className="w-full border-t border-[var(--hz-line)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <Reveal className="max-w-2xl">
+          <h2 className="hz-display hz-h2 max-w-[20ch] text-[var(--hz-text)]">
+            Why teams bring engineering to Ocean Blue.
+          </h2>
+        </Reveal>
+        <Stagger as="ul" className="mt-10 grid gap-x-16 gap-y-8 sm:mt-12 sm:grid-cols-2" gap={0.06}>
+          {why.map((w) => (
+            <StaggerItem as="li" key={w.title}>
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--hz-surface-2)] text-[var(--hz-cobalt)]">
+                <w.icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </span>
+              <h3 className="hz-display mt-4 text-[1.05rem] leading-tight text-[var(--hz-text)]">{w.title}</h3>
+              <p className="mt-2 max-w-[46ch] text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{w.desc}</p>
+            </StaggerItem>
+          ))}
+        </Stagger>
+        <Reveal className="mt-12">
+          <Cta href="/contact" variant="primary">Talk to our engineering team</Cta>
+        </Reveal>
       </section>
 
-      {/* ---------- Industries (dark, with standards) ---------- */}
-      <section className="relative isolate w-full overflow-hidden py-20 sm:py-28 lg:py-32 bg-[var(--hz-ink)]">
-        <div aria-hidden className="absolute inset-0 z-0" style={{ background: "radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.28), transparent 60%)" }} />
-        <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cyan-400)]" />
-            <h2 className="hz-display mt-7 text-[clamp(1.9rem,4.6vw,3rem)] text-white">
-              Fluent in the industries and their standards.
-            </h2>
-            <p className="mt-6 text-[16px] leading-relaxed text-white/70">
-              We know the frameworks each market is held to, so vetting is aligned to how you actually work.
-            </p>
-          </Reveal>
-
-          <Stagger className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" gap={0.08}>
-            {industries.map((it) => (
-              <StaggerItem key={it.name} className="h-full">
-                <div className="h-full rounded-2xl border border-white/10 bg-white/[0.04] p-7 transition-colors duration-300 hover:bg-white/[0.07]">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-white">
-                    <it.icon className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="hz-display mt-6 text-[1.3rem] text-white">{it.name}</h3>
-                  <p className="mt-2 text-[13px] font-medium uppercase tracking-[0.1em] text-[var(--hz-cyan-400)]">{it.standards}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-
-          <Reveal>
-            <p className="mt-10 max-w-3xl text-[12.5px] leading-relaxed text-white/45">
-              &dagger; Standards are shown as market context and reflect the frameworks common to each
-              industry, not company-level certifications. &ldquo;ITAR-aware&rdquo; indicates familiarity with
-              export-control requirements; cleared-personnel access is confirmed per engagement.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---------- Engagement models ---------- */}
-      <section className="relative w-full bg-[var(--hz-canvas)] py-20 sm:py-28 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
-            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
-              Four ways to engage the talent.
-            </h2>
-          </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4" gap={0.1}>
-            {models.map((m) => (
-              <StaggerItem key={m.title} className="h-full">
-                <div className="hz-card flex h-full flex-col p-7">
-                  <div className="text-[var(--hz-cobalt)]">
-                    <m.icon className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="hz-display mt-6 text-[1.3rem] text-[var(--hz-text)]">{m.title}</h3>
-                  <p className="mt-3 flex-1 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{m.desc}</p>
-                  <p className="mt-5 border-t border-black/[0.08] pt-4 text-[12.5px] font-semibold text-[var(--hz-cobalt)]">{m.best}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
-      {/* ---------- How we deliver ---------- */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-20 sm:py-28 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
-            <h2 className="hz-display mt-7 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">
-              Scope. Vet. Shortlist. Support.
-            </h2>
-            <p className="mt-6 text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              A method you can hold us to, the same discipline behind a decade of delivery without a missed SLA.
-            </p>
-          </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4" gap={0.1}>
-            {steps.map((st) => (
-              <StaggerItem key={st.no} className="h-full">
-                <div className="hz-card h-full p-7">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[var(--hz-cobalt)]">
-                      <st.icon className="h-5 w-5" strokeWidth={1.5} />
-                    </div>
-                    <span className="hz-display text-[1.5rem] text-black/10">{st.no}</span>
-                  </div>
-                  <h3 className="hz-display mt-6 text-[1.3rem] text-[var(--hz-text)]">{st.title}</h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{st.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
-      {/* ---------- Why Ocean Blue + stats ---------- */}
-      <section className="relative w-full overflow-hidden border-y border-[var(--hz-paper-line)]/70 bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
-        <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
-          <Reveal className="lg:col-span-5 lg:sticky lg:top-28">
-            <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
-            <h2 className="hz-display mt-7 text-[2rem] leading-[1.08] text-[var(--hz-text)] sm:text-[2.75rem]">
-              Why teams bring engineering to Ocean Blue.
-            </h2>
-            <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              One accountable partner across disciplines and industries, with the MWBE
-              differentiation the large engineering firms can&apos;t claim.
-            </p>
-            <div className="mt-8">
-              <Cta href="/contact" variant="primary">Talk to our engineering team</Cta>
-            </div>
-          </Reveal>
-
-          <Stagger className="grid gap-6 sm:grid-cols-2 lg:col-span-7" gap={0.08}>
-            {why.map((w) => (
-              <StaggerItem key={w.title} className="h-full">
-                <div className="h-full rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 shadow-sm">
-                  <div className="text-[var(--hz-cobalt)]">
-                    <w.icon className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="hz-display mt-6 text-[1.2rem] text-[var(--hz-text)]">{w.title}</h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{w.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
-      {/* ---------- CTA ---------- */}
-      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:px-8 sm:py-28 lg:py-32">
-          <Reveal className="flex flex-col items-center">
-            <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[18ch] text-[clamp(1.9rem,4.6vw,3rem)] text-white">
-              Tell us what you&apos;re engineering.
-            </h2>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
-              We&apos;ll put the right engineers on it and stand behind the result, one accountable partner.
-            </p>
-            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary">Book a discovery call</Cta>
-              <Cta href="/solutions" variant="ghostDark">All solutions</Cta>
-            </div>
-          </Reveal>
+      <section className="relative isolate w-full overflow-hidden">
+        <div className="relative min-h-[400px] w-full sm:min-h-[460px]">
+          <Photo src={IMG.serviceSolutions} alt="An engineering scoping session" sizes="100vw" priority={false} />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(10,23,48,0.62) 0%, rgba(10,23,48,0.82) 60%, rgba(10,23,48,0.94) 100%)",
+            }}
+          />
+          <div className="relative z-10 flex min-h-[400px] items-center px-6 py-16 sm:min-h-[460px] sm:px-10 lg:px-16 2xl:px-24">
+            <Reveal className="max-w-2xl">
+              <h2 className="hz-display max-w-[18ch] text-[clamp(1.9rem,4.4vw,3rem)] leading-[1.05] text-white">
+                Tell us what you are building.
+              </h2>
+              <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">
+                Give us the program and the disciplines, and we will come back with a
+                shortlist you can actually interview.
+              </p>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Cta href="/contact" variant="primary">Book a discovery call</Cta>
+                <Cta href="/solutions" variant="ghostDark">All solutions</Cta>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
     </div>

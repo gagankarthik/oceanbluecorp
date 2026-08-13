@@ -1,45 +1,39 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "motion/react";
 
-/* ============================================================
-   VideoBackdrop, a looping film behind a section.
-
-   ── What this costs, and how it is paid ──────────────────────
-   The hero film is 11MB. Left to itself the browser would start
-   pulling it during hydration, alongside everything else the page
-   needs to become interactive, for a background nobody is looking
-   at in the first second. So the <source> is not attached until
-   after `load`, and only then does the element get told to play.
-   Until that moment the section shows the gradient ground below,
-   which is a perfectly good hero on its own.
-
-   That ordering matters here more than usual: with no photograph,
-   the hero's LCP element is the HEADLINE, which is CSS-animated
-   and present in the server HTML. Nothing about the film should be
-   allowed to get in front of that.
-
-   ── The autoplay rules ───────────────────────────────────────
-   `muted` and `playsInline` are not optional. Every current mobile
-   browser refuses to autoplay a video with sound, and iOS will
-   take a non-inline video fullscreen. `play()` is called manually
-   and its rejection swallowed: a browser is entitled to refuse,
-   and the correct response is to keep showing the gradient, not to
-   throw.
-
-   Reduced motion gets no film at all, a looping background is
-   exactly the kind of ambient movement that setting is for.
-   ============================================================ */
+/**
+ * A looping film behind a section, deferred until after `load`.
+ *
+ * The film is not attached until the page has loaded; until then the section
+ * shows `poster`, the film's own first frame, over the gradient ground.
+ *
+ * Keep the encode small. A 13.8MB source made Next's dev server answer the
+ * media element's range requests with a repeating 503 and the film never
+ * decoded at all; re-encoded to 468KB it plays immediately. A muted, looping
+ * background has no business shipping megabytes.
+ * The hero's LCP element is the headline, and nothing about the film should
+ * get in front of it.
+ *
+ * `muted` and `playsInline` are required: mobile browsers refuse to autoplay
+ * audio, and iOS takes non-inline video fullscreen. A rejected `play()` is
+ * swallowed, leaving the gradient in place. Reduced motion gets no film.
+ */
 
 export default function VideoBackdrop({
   src,
+  poster,
   className = "",
   /** 0-100, so a section can dial the film back behind its own scrim rather
    *  than fighting it with a heavier overlay. */
   intensity = 100,
 }: {
   src: string;
+  /** First frame of `src`, shown until the film has decoded and under reduced
+   *  motion. Without it the section falls back to a bare gradient, which is a
+   *  visibly different picture rather than a still of the same one. */
+  poster?: string;
   className?: string;
   intensity?: number;
 }) {
@@ -62,23 +56,18 @@ export default function VideoBackdrop({
     });
   };
 
-  /* play() is what STARTS the download here, and it has to be called from an
-     effect rather than waited for.
-
-     `preload="none"` is deliberate, it is what keeps 11MB off the critical
-     path until after `load`. But it also means the element fetches nothing on
-     its own, so `canplay` never fires. Waiting for that event before calling
-     play() deadlocks: no play, so no fetch; no fetch, so no canplay. Calling
-     play() when armed breaks the cycle, and the event handlers below stay as a
-     second chance for the case where the first call is refused. */
+  // play() is what starts the download. With `preload="none"` the element
+  // fetches nothing on its own, so waiting for `canplay` first would deadlock:
+  // no play, no fetch; no fetch, no canplay. The handlers below are a retry
+  // for the case where this first call is refused.
   useEffect(() => {
     if (armed) start();
   }, [armed]);
 
   return (
     <div aria-hidden className={`absolute inset-0 overflow-hidden ${className}`}>
-      {/* The ground. Present from first paint, and the permanent state for
-          reduced-motion visitors and anyone whose browser declines to play. */}
+      {/* Present from first paint, and the permanent state under reduced
+          motion or when the browser declines to play. */}
       <div
         className="absolute inset-0"
         style={{
@@ -87,13 +76,19 @@ export default function VideoBackdrop({
         }}
       />
 
+      {poster && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${poster})`, opacity: playing ? 0 : intensity / 100 }}
+        />
+      )}
+
       {!reduce && (
         <video
           ref={ref}
-          // `src` rather than a <source> child, set only once armed. React
-          // updating the attribute makes the element re-resolve on its own; a
-          // conditionally rendered <source> needs a manual load() call, which
-          // is what created the race above.
+          // `src` rather than a <source> child: React updating the attribute
+          // makes the element re-resolve on its own, whereas a conditionally
+          // rendered <source> needs a manual load() call.
           src={armed ? src : undefined}
           muted
           loop
@@ -103,9 +98,8 @@ export default function VideoBackdrop({
           onLoadedData={start}
           onPlaying={() => setPlaying(true)}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-out"
-          // Faded up only once frames are actually arriving, so the swap from
-          // gradient to film is a dissolve rather than a black rectangle
-          // appearing while the first frame decodes.
+          // Faded up only once frames are arriving, so the swap is a dissolve
+          // rather than a black rectangle while the first frame decodes.
           style={{ opacity: playing ? intensity / 100 : 0 }}
         />
       )}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUserManager } from "@/lib/auth/AuthContext";
 import { UserRole, highestStaffRole } from "@/lib/auth/config";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { CheckCircle, XCircle, Loader2, Shield, ArrowRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
 

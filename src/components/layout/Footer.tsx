@@ -1,50 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { SOCIAL_LINKS } from "@/components/layout/social";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { SOCIAL_LINKS } from "@/components/layout/social";
 
-// Official X (formerly Twitter) brand mark, lucide's `X` is the close/cross icon.
-const footerLinks = {
-  Solutions: [
-    { name: "IT Staffing & Talent", href: "/solutions/staffing" },
-    { name: "Engineering Talent", href: "/solutions/engineering" },
-    { name: "Cloud Engineering", href: "/solutions/cloud" },
-    { name: "Managed Services", href: "/solutions/managed" },
-    { name: "AI & Data Intelligence", href: "/solutions/ai" },
-    { name: "Salesforce Services", href: "/solutions/salesforce" },
-  ],
-  Company: [
-    { name: "About Us", href: "/about" },
-    { name: "Our Team", href: "/team" },
-    { name: "Careers", href: "/careers" },
-    { name: "Open Positions", href: "/careers/search" },
-    { name: "Contact", href: "/contact" },
-  ],
-  // Was a "Developers" column of five entries, four of which were anchors into
-  // the same page (/developers, #endpoints, #authentication, #quickstart).
-  // A staffing firm's footer does not need four links to one API doc.
-  Resources: [
-    { name: "Products", href: "/products" },
-    { name: "Job Feed API", href: "/developers" },
-    { name: "HR Portal", href: "https://hr.oceanbluecorp.com", external: true },
-    { name: "Brand Kit", href: "/brand-kit" },
-    { name: "System Status", href: "/status" },
-    { name: "Sitemap", href: "/sitemap" },
-  ],
-  Legal: [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-    { name: "Cookie Policy", href: "/cookies" },
-    { name: "Data Deletion", href: "/data-deletion" },
-    { name: "Accessibility", href: "/accessibility" },
-  ],
-};
+/* Built to the EY footer: the mark on the left, one wrapping row of underlined
+ * links across the top, and a band of small print beneath with the social
+ * marks as outlined circles on the right.
+ *
+ * One row rather than columns is the whole point. This was four columns of
+ * six, twenty-three links, which is a directory; a footer is scanned for one
+ * of about ten things. Anything not here is on /sitemap, which is in the row.
+ *
+ * Light on purpose: every page closes on a dark band, and an ink footer
+ * stacked onto one read as a single unlit block with a rule through it.
+ */
 
+/* One row, everything in it. Two cuts from the eleven that were here:
+ * "Our team" and "Security" both sit one click inside pages already in this
+ * row (/about and /legal) and in the header's About menu, so they were costing
+ * width without adding a destination. What is left is the set somebody
+ * actually scans a footer for. Anything else is on /sitemap, which is here. */
+const links = [
+  { name: "Connect with us", href: "/contact" },
+  { name: "Solutions", href: "/solutions" },
+  { name: "About us", href: "/about" },
+  { name: "Careers", href: "/careers" },
+  { name: "Products", href: "/products" },
+  { name: "FAQ", href: "/faq" },
+  { name: "Site map", href: "/sitemap" },
+  { name: "Legal and privacy", href: "/legal" },
+  // Kept in the row rather than only inside the legal hub: an accessibility
+  // statement is looked for by name, and burying it costs a click at exactly
+  // the moment somebody is already having difficulty.
+  { name: "Accessibility", href: "/accessibility" },
+];
 
 type OverallStatus = "operational" | "degraded" | "outage" | "maintenance" | "unknown";
+
 const STATUS: Record<OverallStatus, { dot: string; label: string }> = {
   operational: { dot: "#16a34a", label: "All systems operational" },
   maintenance: { dot: "#2563eb", label: "Scheduled maintenance" },
@@ -63,10 +57,16 @@ function FooterStatus() {
   }, []);
   const cfg = STATUS[status];
   return (
-    <Link href="/status" className="group inline-flex items-center gap-2 text-[13px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-text)]">
+    <Link
+      href="/status"
+      className="hz-focus inline-flex items-center gap-2 text-micro text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
+    >
       <span className="relative flex h-2 w-2">
         {status === "operational" && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: cfg.dot }} />
+          <span
+            className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:animate-none"
+            style={{ background: cfg.dot }}
+          />
         )}
         <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: cfg.dot }} />
       </span>
@@ -77,89 +77,51 @@ function FooterStatus() {
 
 export default function Footer() {
   return (
-    <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-surface)]">
-      {/* Container matches the HEADER exactly, max-w-7xl, px-6 sm:px-8, and
-          the same 2xl cap, so the footer logo sits directly under the nav
-          logo and the last column ends level with the Contact button. It had
-          been on the landing page's much wider max-w-[2200px] measure, which
-          pushed both edges outboard of the bar above and made the whole page
-          look like two different documents stacked. It was px-6 lg:px-8, which put
-          the footer on a different gutter at sm/md widths. */}
-      <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem] py-20 sm:py-24">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_2.2fr] lg:gap-16">
-          {/* Brand + contact */}
-          <div>
-            <Link href="/" className="inline-block">
-              <Image src="/logo.png" alt="Ocean Blue Corporation" width={170} height={40} className="h-8 w-auto" />
+    <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-canvas)]">
+      {/* Container matches the HEADER exactly, so the footer mark sits directly
+          under the nav mark. Do not put this on the landing page's wider
+          measure. */}
+      <div className="mx-auto w-full max-w-7xl px-6 py-14 sm:px-8 sm:py-16 2xl:max-w-[96rem]">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-16">
+          {/* Mark */}
+          <div className="flex-none">
+            <Link href="/" className="hz-focus inline-block" aria-label="Ocean Blue Corporation, home">
+              <Image src="/logo.png" alt="Ocean Blue Corporation" width={340} height={80} className="h-11 w-auto sm:h-12" />
             </Link>
-            <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
-              Talent, engineering, platforms and operations for enterprises and
-              government agencies. One team, one contract, one number to call.
-            </p>
-            <div className="mt-8 space-y-3 text-[14px]">
-              <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
-                <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                hr@oceanbluecorp.com
-              </a>
-              <a href="tel:+16148446925" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
-                <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                +1 (614) 844-6925
-              </a>
-              <p className="flex items-start gap-3 text-[var(--hz-text-subtle)]">
-                <MapPin className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                9775 Fairway Drive, Suite C<br />Powell, OH 43065
-              </p>
-            </div>
           </div>
 
-          {/* Link columns, 4-up only from md. At sm they were four ~140px
-              columns, which wrapped headings like "Resources" onto two lines
-              and left the lists visibly ragged. */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 md:grid-cols-4">
-            {Object.entries(footerLinks).map(([heading, links]) => (
-              <div key={heading} className="min-w-0">
-                <h3 className="hz-eyebrow text-[var(--hz-text-subtle)]">{heading}</h3>
-                <ul className="mt-5 space-y-3">
-                  {links.map((l) => (
-                    <li key={l.name}>
-                      {"external" in l && l.external ? (
-                        <a
-                          href={l.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                        >
-                          {l.name}
-                        </a>
-                      ) : (
-                        <Link
-                          href={l.href}
-                          className="inline-block text-[14px] leading-snug text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                        >
-                          {l.name}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          {/* One wrapping row of links, underlined the way the reference sets
+              them, so they read as a directory line rather than as body copy. */}
+          <nav aria-label="Footer" className="lg:ml-auto">
+            <ul className="flex flex-wrap gap-x-6 gap-y-3 lg:justify-end">
+              {links.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="hz-focus text-small font-semibold text-[var(--hz-text)] underline decoration-[var(--hz-text)] decoration-1 underline-offset-[5px] transition-colors hover:text-[var(--hz-cobalt)] hover:decoration-[var(--hz-cobalt)]"
+                  >
+                    {l.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-      </div>
 
-      {/* Bottom bar: copyright left, system status dead centre, social right, three fixed zones, so the status pill anchors the middle of the row. */}
-      <div className="border-t border-black/[0.07]">
-        <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem] grid grid-cols-1 items-center gap-5 py-8 sm:grid-cols-3">
-          <p className="text-center text-[13px] text-[var(--hz-text-subtle)] sm:text-left">
-            © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
-          </p>
+        {/* Small print, with the social marks opposite. */}
+        <div className="mt-12 flex flex-col gap-8 sm:mt-14 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-micro text-[var(--hz-text-subtle)]">
+              © {new Date().getFullYear()} Ocean Blue Corporation. All rights reserved.
+            </p>
+          </div>
 
-          <div className="flex justify-center">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
             <FooterStatus />
           </div>
 
-          <div className="flex items-center justify-center gap-1 sm:justify-end">
+          {/* Outlined circles, as in the reference. */}
+          <div className="flex items-center gap-2.5">
             {SOCIAL_LINKS.map((s) => (
               <a
                 key={s.name}
@@ -167,9 +129,9 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.name}
-                className="grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text-mute)] transition-all duration-300 hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                className="hz-focus grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text)] ring-1 ring-[var(--hz-line-2)] transition-all duration-300 hover:bg-[var(--hz-text)] hover:text-white hover:ring-[var(--hz-text)]"
               >
-                <s.icon className="h-4 w-4" strokeWidth={1.5} />
+                <s.icon className="h-[17px] w-[17px]" strokeWidth={1.5} />
               </a>
             ))}
           </div>

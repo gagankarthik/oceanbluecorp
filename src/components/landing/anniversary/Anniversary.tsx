@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, CalendarDays, TrendingUp } from "lucide-react";
 import { Cta } from "../ui";
 import Confetti from "./Confetti";

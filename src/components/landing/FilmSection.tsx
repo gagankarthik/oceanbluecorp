@@ -4,35 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { Reveal } from "./motion/Primitives";
 
-/* ============================================================
-   The company film.
-
-   ── Why this is not the iframe as given ──────────────────────
-   Dropping YouTube's <iframe> straight into the page makes every
-   visitor pay for it whether or not they ever press play: roughly
-   a megabyte of player JavaScript, several extra connections, and
-   third-party cookies set before anyone has consented to
-   anything. On a page where the hero video is deliberately
-   deferred until after `load` and a hero photo preload was
-   removed for spending bandwidth on nothing, shipping that at the
-   top of the section would undo the lot.
-
-   So this is a facade. Until someone clicks, the section is one
-   JPEG and a button. The iframe is created on that click, with
-   autoplay, so the first press is also the press that starts it,
-   not a click that loads a player you then have to click again.
-
-   ── The other two choices ────────────────────────────────────
-   · youtube-nocookie.com, which does not set tracking cookies
-     until playback starts. It costs nothing and it is the right
-     default for a site with a cookie policy page.
-   · The poster comes from i.ytimg.com as a plain <img> rather
-     than next/image. It is already an optimised JPEG at a fixed
-     size, so routing it through the image optimiser would add a
-     proxy hop and a remotePatterns entry to gain nothing.
-     maxresdefault is not guaranteed to exist for every upload, so
-     onError falls back to hqdefault, which always does.
-   ============================================================ */
+/**
+ * The company film, as a click-to-load facade.
+ *
+ * A bare YouTube <iframe> costs every visitor ~1MB of player JS and sets
+ * third-party cookies before anyone presses play. Until the click, this is a
+ * poster and a button; the iframe is created on click with autoplay, so the
+ * first press is also the press that starts playback.
+ *
+ * Uses youtube-nocookie.com. The poster is a plain <img> because it is
+ * already an optimised JPEG at a fixed size; maxresdefault does not exist for
+ * every upload, so onError falls back to hqdefault, which always does.
+ */
 
 const VIDEO_ID = "aNqPIFgkja4";
 
@@ -44,21 +27,18 @@ export default function FilmSection() {
 
   return (
     <section className="w-full bg-[var(--hz-paper)] py-16 sm:py-20 lg:py-24">
-      {/* Split band: the argument on the left, the film on the right. The
-          reference does this because it stops the video being the section and
-          makes it the evidence for a sentence. It also solves the size problem
-          on its own, at half the measure the frame is a companion to the copy
-          rather than the point of the page.
+      {/* Film left, copy right. Mirrored and re-proportioned against the
+          closing careers band, which is otherwise the same composition with
+          only the accreditation strip between them. `order` applies at lg
+          only; on a phone the copy still comes first.
 
-          On paper rather than ink. The page already closes on two dark bands
-          (partners, then careers), so a third put three of them in the back
-          half and made the run bottom-heavy. The frame itself stays dark,
-          because footage is, and it is now the only dark object in the
-          section, which is what draws the eye to it. */}
-      <div className="mx-auto grid w-full max-w-[2200px] items-center gap-10 px-6 sm:px-10 lg:grid-cols-2 lg:gap-16 lg:px-16 2xl:px-28">
-        <Reveal>
-          <span className="hz-eyebrow block text-[var(--hz-cobalt)]">Inside Ocean Blue</span>
-          <h2 className="hz-display hz-h2 mt-4 max-w-[16ch] text-[var(--hz-text)]">
+          Narrower than the page container and centred, so the pair sits as one
+          centred block with equal air at both ends. The columns are adjacent,
+          which leaves the grid gap as the only gutter between them rather than
+          a whole empty column down the middle. */}
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-6 sm:px-10 lg:grid-cols-12 lg:gap-14 lg:px-8">
+        <Reveal className="lg:order-2 lg:col-span-5">
+          <h2 className="hz-display hz-h2 max-w-[16ch] text-[var(--hz-text)]">
             Meet the team behind the work.
           </h2>
           <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:mt-6 sm:text-[17px]">
@@ -67,14 +47,14 @@ export default function FilmSection() {
           </p>
           <Link
             href="/about"
-            className="mt-8 inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-6 py-3 text-[14.5px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)] sm:mt-10"
+            className="hz-focus mt-8 inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-6 py-3 text-[14.5px] font-semibold text-[var(--hz-text)] transition-all duration-200 hover:border-[var(--hz-text)] active:scale-[0.98] sm:mt-10"
           >
             More about us
           </Link>
         </Reveal>
 
-        <Reveal delay={0.08}>
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-[var(--hz-paper-line)]">
+        <Reveal delay={0.08} className="lg:order-1 lg:col-span-7">
+          <div className="relative aspect-video w-full max-w-[520px] overflow-hidden rounded-xl bg-[var(--hz-plate-well)] ring-1 ring-[var(--hz-paper-line)] lg:max-w-none">
             {playing ? (
               <iframe
                 className="absolute inset-0 h-full w-full"
@@ -89,7 +69,9 @@ export default function FilmSection() {
                 type="button"
                 onClick={() => setPlaying(true)}
                 aria-label="Play the Ocean Blue Solutions film"
-                className="group absolute inset-0 h-full w-full cursor-pointer"
+                // Light ring: the button covers the poster frame, where a
+                // cobalt one is not reliably visible.
+                className="hz-focus-dark group absolute inset-0 h-full w-full cursor-pointer"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -105,9 +87,6 @@ export default function FilmSection() {
                   aria-hidden
                   className="absolute inset-0 bg-[rgba(4,10,24,0.25)] transition-colors duration-300 group-hover:bg-[rgba(4,10,24,0.4)]"
                 />
-                {/* The reference uses a plain white triangle rather than a
-                    filled disc, which keeps the frame reading as footage
-                    instead of a card with a button on it. */}
                 <span
                   aria-hidden
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/90 drop-shadow-[0_4px_18px_rgba(0,0,0,0.65)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110"

@@ -1,280 +1,166 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
-import {
-  Target, Award, Cpu, Shield, MessageSquare, Users, Building2,
-  CheckCircle2, Briefcase, Heart, ArrowRight, type LucideIcon,
-} from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
-import { Eyebrow, Cta } from "@/components/landing/ui";
+import { Cta } from "@/components/landing/ui";
+import { SplitBand, ArrowRows, AccentHeading } from "@/components/landing/bands";
 import Photo from "@/components/landing/Photo";
+import { UserCheck, Server, Landmark, type LucideIcon } from "lucide-react";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
-import { MILESTONES } from "@/lib/company";
+import { MILESTONES, FOUNDED_YEAR } from "@/lib/company";
 
-const approach: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Target, title: "Outcome-first", description: "We focus on business impact, not buzzwords." },
-  { icon: Award, title: "Expert-led execution", description: "Senior-level talent drives every engagement." },
-  { icon: Cpu, title: "AI-enabled by default", description: "We use intelligent tools and automation to accelerate results." },
-  { icon: Shield, title: "Security at the core", description: "Every solution is built with compliance and protection in mind." },
-  { icon: MessageSquare, title: "Human-centered delivery", description: "Clear communication, collaborative execution, no surprises." },
+/* About is the NARRATIVE page, and the thing it owns that no other page has is
+   thirteen years of history. So the timeline is the spine here, given real
+   scale as a vertical rail, rather than one list among several. */
+
+const values = [
+  { title: "People who own the outcome, not the ticket", href: "/careers" },
+  { title: "Senior practitioners on the work from day one", href: "/team" },
+  { title: "Security and compliance designed in, never retrofitted", href: "/solutions/cloud" },
+  { title: "One accountable team across talent and technology", href: "/solutions" },
 ];
 
-const differentiators: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Users, title: "Specialized talent", description: "Highly skilled IT professionals who integrate seamlessly into your teams." },
-  { icon: Building2, title: "Enterprise-grade solutions", description: "From cloud to ERP to AI, we deliver technology that scales." },
-  { icon: CheckCircle2, title: "Proven delivery", description: "We execute with precision, transparency, and accountability." },
-  { icon: Briefcase, title: "Industry expertise", description: "Healthcare, government, financial services, manufacturing, retail, technology." },
-  { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects, we support your evolution." },
+const strengths: { title: string; body: string; icon: LucideIcon }[] = [
+  { icon: UserCheck, title: "Specialized talent", body: "Skilled IT professionals who integrate into your teams rather than sit alongside them." },
+  { icon: Server, title: "Enterprise-grade delivery", body: "Cloud, ERP and AI work built to survive contact with a real production estate." },
+  { icon: Landmark, title: "Industry depth", body: "Healthcare, government, financial services, manufacturing, retail and technology." },
 ];
-
-/* Moved to `lib/company.ts` when the anniversary page needed the same list, one copy, so a corrected year can't be right here and wrong there. */
-const milestones = MILESTONES;
-
-function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
-  return (
-    <div className="hz-card h-full p-7">
-      <div className="text-[var(--hz-cobalt)]">
-        <Icon className="h-7 w-7" strokeWidth={1.5} />
-      </div>
-      <h3 className="hz-display mt-6 text-[1.25rem] text-[var(--hz-text)]">{title}</h3>
-      <p className="mt-3 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{description}</p>
-    </div>
-  );
-}
-
-/* Roadmap, a winding road through 6 evenly-spaced points, alternating up/down. */
-const ROAD =
-  "M100,168 C200,168 200,312 300,312 C400,312 400,168 500,168 C600,168 600,312 700,312 C800,312 800,168 900,168 C1000,168 1000,312 1100,312";
-const NODES = [
-  { x: 8.33, y: 35, above: true },
-  { x: 25, y: 65, above: false },
-  { x: 41.67, y: 35, above: true },
-  { x: 58.33, y: 65, above: false },
-  { x: 75, y: 35, above: true },
-  { x: 91.67, y: 65, above: false },
-];
-const COLORS = ["#2563eb", "#06b6d4", "#6366f1", "#0ea5e9", "#14b8a6", "#8b5cf6"];
-
-function MobileRoadmap() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 60%"] });
-  const draw = useSpring(scrollYProgress, { stiffness: 80, damping: 28 });
-  return (
-    <div ref={ref} className="relative pl-16 lg:hidden">
-      <div className="absolute left-[19px] top-1 bottom-1 w-[3px] rounded bg-black/[0.08]" />
-      <motion.div className="absolute left-[19px] top-1 bottom-1 w-[3px] origin-top rounded bg-[var(--hz-cobalt)]" style={{ scaleY: draw }} />
-      <div className="flex flex-col gap-10">
-        {milestones.map((m, i) => {
-          const color = COLORS[i % COLORS.length];
-          return (
-            <Reveal key={m.year} y={22}>
-              <div className="relative">
-                <motion.span
-                  className="absolute -left-16 top-0 grid h-10 w-10 place-items-center rounded-full text-[13px] font-semibold text-white"
-                  style={{ background: color, boxShadow: `0 0 0 5px var(--hz-canvas), 0 8px 18px -6px ${color}` }}
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  viewport={{ once: true, margin: "-12% 0px" }}
-                  transition={{ type: "spring", stiffness: 320, damping: 16 }}
-                >
-                  {i + 1}
-                </motion.span>
-                <span className="hz-display hz-tnum text-[1.4rem]" style={{ color }}>{m.year}</span>
-                <h3 className="hz-display mt-1 text-[1.2rem] text-[var(--hz-text)]">{m.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-[var(--hz-text-mute)]">{m.description}</p>
-              </div>
-            </Reveal>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function JourneyTimeline() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 65%"] });
-  const draw = useSpring(scrollYProgress, { stiffness: 70, damping: 26 });
-
-  return (
-    <div className="mt-16">
-      {/* Desktop winding roadmap */}
-      <div ref={ref} className="relative hidden h-[480px] w-full lg:block">
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1200 480" preserveAspectRatio="none" fill="none" aria-hidden>
-          <defs>
-            <linearGradient id="roadgrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#2563eb" />
-              <stop offset="50%" stopColor="#06b6d4" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-          </defs>
-          <path d={ROAD} stroke="rgba(15,23,42,0.08)" strokeWidth={10} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-          <motion.path d={ROAD} stroke="url(#roadgrad)" strokeWidth={5} strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ pathLength: draw }} />
-        </svg>
-
-        {milestones.map((m, i) => {
-          const n = NODES[i];
-          const color = COLORS[i % COLORS.length];
-          return (
-            <div key={m.year}>
-              <div
-                className="absolute z-0 w-[2px] -translate-x-1/2"
-                style={{ left: `${n.x}%`, top: n.above ? `calc(${n.y}% - 36px)` : `${n.y}%`, height: 36, background: color, opacity: 0.35 }}
-              />
-              <motion.div
-                className="absolute z-10 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[15px] font-semibold text-white"
-                style={{ left: `${n.x}%`, top: `${n.y}%`, background: color, boxShadow: `0 10px 22px -8px ${color}` }}
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true, margin: "-8% 0px" }}
-                transition={{ type: "spring", stiffness: 320, damping: 16, delay: i * 0.06 }}
-              >
-                {i + 1}
-              </motion.div>
-              <div
-                className="absolute w-40"
-                style={{ left: `${n.x}%`, top: `${n.y}%`, transform: `translate(-50%, ${n.above ? "calc(-100% - 38px)" : "38px"})` }}
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: n.above ? -8 : 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-8% 0px" }}
-                  transition={{ duration: 0.5, delay: i * 0.06 + 0.12 }}
-                  className="rounded-2xl border border-black/[0.06] bg-white p-4 text-center shadow-[var(--hz-shadow-md)]"
-                >
-                  <span className="hz-display hz-tnum text-[1.15rem]" style={{ color }}>{m.year}</span>
-                  <h3 className="hz-display mt-1 text-[0.95rem] leading-tight text-[var(--hz-text)]">{m.title}</h3>
-                  <p className="mt-1.5 text-[11.5px] leading-snug text-[var(--hz-text-mute)]">{m.description}</p>
-                </motion.div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <MobileRoadmap />
-    </div>
-  );
-}
 
 export default function AboutPage({ content = {} }: { content?: Record<string, string> }) {
+  const years = new Date().getFullYear() - FOUNDED_YEAR;
+
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
       <PageHero
-        eyebrow="About Ocean Blue"
+        eyebrow="Who we are"
         title={content.aboutTitle || "We build the technology and teams that move organizations forward."}
         subtitle={
           content.aboutSubtitle ||
-          "A trusted partner for IT staffing, enterprise solutions, and digital transformation, delivering clarity, expertise, and measurable results."
+          "A partner for IT staffing, enterprise solutions, and digital transformation, delivering clarity, expertise, and measurable results."
         }
         image={IMG.aboutHero}
       />
 
-      {/* Story + Purpose */}
-      <section className="relative w-full py-24 sm:py-32">
-        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 sm:px-8 lg:grid-cols-2 lg:gap-20">
-          <Reveal>
-            <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl">
-              <Photo src={IMG.aboutTeam} alt="The Ocean Blue team" />
-            </div>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <Eyebrow>Who we are</Eyebrow>
-            <blockquote className="hz-display mt-6 text-[1.6rem] leading-snug text-[var(--hz-text)] sm:text-[2rem]">
-              “Technology should empower people, not complicate their work.”
-            </blockquote>
-            <p className="mt-6 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-              We help organizations modernize systems, strengthen teams, and adopt the
-              technologies that drive real business impact, with a human-centered
-              approach that values clarity, collaboration, and execution.
+      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <Reveal className="w-full">
+          <AccentHeading>Our purpose</AccentHeading>
+          <div className="mt-8 grid gap-8 sm:mt-10 lg:grid-cols-2 lg:gap-16">
+            <p className="text-[17px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[19px]">
+              Technology should make people&apos;s work simpler, not give them a
+              second job managing it. We help organizations modernize the systems
+              they already run, strengthen the teams around them, and adopt what
+              actually changes how the business performs.
             </p>
-            <div className="mt-8 border-t border-black/[0.08] pt-8">
-              <Eyebrow>Why we exist</Eyebrow>
-              <p className="mt-5 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-                To give organizations the technology, talent, and support they need to
-                operate smarter, faster, and more securely, combining deep technical
-                expertise with a genuine commitment to service.
-              </p>
-            </div>
-          </Reveal>
-        </div>
+            <p className="text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[17px]">
+              Thirteen years of doing that has left us with a bias toward clarity
+              and very little patience for complexity that serves the vendor rather
+              than the client. We exist to give organizations the technology, talent
+              and support to operate faster and more securely, with deep technical
+              expertise and a genuine commitment to service behind it.
+            </p>
+          </div>
+        </Reveal>
       </section>
 
-      {/* How we work */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>How we work</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Principles we hold to.</h2>
-          </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" gap={0.08}>
-            {approach.map((a) => (
-              <StaggerItem key={a.title} className="h-full"><ValueCard {...a} /></StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
+      {/* The spine. A vertical rail with the years running down it, given the
+          full width of the page. This is the page's one big moment. */}
+      <section className="w-full border-t border-[var(--hz-line)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <Reveal className="flex flex-wrap items-end justify-between gap-8">
+          <h2 className="hz-display max-w-[14ch] text-[clamp(2rem,4.6vw,3.4rem)] leading-[1.03] text-[var(--hz-text)]">
+            {years} years, in order.
+          </h2>
+          <p className="max-w-[38ch] text-[15px] leading-relaxed text-[var(--hz-text-subtle)] sm:text-[16px]">
+            From a single office in Ohio to four across three countries, with the
+            practices added as clients asked for them.
+          </p>
+        </Reveal>
 
-      {/* Milestones */}
-      <section className="relative w-full py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>Our journey</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">Milestones that define us.</h2>
-          </Reveal>
-          <JourneyTimeline />
-        </div>
-      </section>
-
-      {/* What sets us apart */}
-      <section className="relative w-full bg-[var(--hz-surface-2)] py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>What sets us apart</Eyebrow>
-            <h2 className="hz-display mt-6 text-[2.25rem] text-[var(--hz-text)] sm:text-[3rem]">A partner you can trust.</h2>
-          </Reveal>
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" gap={0.08}>
-            {differentiators.map((d) => (
-              <StaggerItem key={d.title} className="h-full"><ValueCard {...d} /></StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
-      {/* Team teaser → /team */}
-      <section className="relative w-full py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <Reveal>
-            <div className="flex flex-col items-start gap-7 rounded-3xl bg-[var(--hz-surface-2)] p-10 sm:flex-row sm:items-center sm:justify-between sm:p-14">
-              <div className="max-w-xl">
-                <Eyebrow>Our team</Eyebrow>
-                <h2 className="hz-display mt-5 text-[1.9rem] text-[var(--hz-text)] sm:text-[2.4rem]">
-                  Senior practitioners who lead from the front.
-                </h2>
-                <p className="mt-4 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-                  Meet the leadership and the delivery bench behind every engagement.
+        <Stagger as="ol" className="relative mt-14 sm:mt-16" gap={0.09}>
+          {/* The rail itself, behind the entries. */}
+          <span
+            aria-hidden
+            className="absolute left-[7px] top-2 bottom-2 w-px bg-[var(--hz-line)] sm:left-[9px]"
+          />
+          {MILESTONES.map((m) => (
+            <StaggerItem as="li" key={m.year} className="relative pl-10 pb-12 last:pb-0 sm:pl-14">
+              <span
+                aria-hidden
+                className="absolute left-0 top-[6px] h-[15px] w-[15px] rounded-full border-2 border-[var(--hz-cobalt)] bg-[var(--hz-canvas)] sm:left-[2px] sm:h-[17px] sm:w-[17px]"
+              />
+              <div className="grid gap-2 lg:grid-cols-12 lg:items-baseline lg:gap-10">
+                <span className="hz-display hz-tnum block text-[1.75rem] leading-none text-[var(--hz-cobalt)] lg:col-span-2 sm:text-[2rem]">
+                  {m.year}
+                </span>
+                <h3 className="hz-display text-[1.3rem] leading-tight text-[var(--hz-text)] lg:col-span-4 sm:text-[1.5rem]">
+                  {m.title}
+                </h3>
+                <p className="max-w-[52ch] text-[15px] leading-relaxed text-[var(--hz-text-mute)] lg:col-span-6 sm:text-[16px]">
+                  {m.description}
                 </p>
               </div>
-              <Cta href="/team" variant="primary">Meet the team</Cta>
-            </div>
-          </Reveal>
-        </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
       </section>
 
-      {/* CTA */}
-      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-32">
-          <Reveal className="flex flex-col items-center">
-            <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
-            <h2 className="hz-display mt-7 max-w-[16ch] text-[2.25rem] text-white sm:text-[3rem]">Work with a team that owns the outcome.</h2>
-            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-              <Cta href="/contact" variant="primary">Start a conversation</Cta>
-              <Cta href="/solutions" variant="ghostDark">Explore solutions</Cta>
-            </div>
-          </Reveal>
+      {/* One split band on this page, not four. It carries the values, which
+          are the only part of About that wants a face beside it. */}
+      <SplitBand
+        image={IMG.servicesHero}
+        alt="Ocean Blue engineers working with a client team"
+        side="right"
+        caption="Engineers embedded with the client, accountable for the outcome."
+      >
+        <h2 className="hz-display hz-h2 max-w-[16ch] text-[var(--hz-text)]">
+          What we hold ourselves to.
+        </h2>
+        <ArrowRows rows={values} className="mt-9" />
+      </SplitBand>
+
+      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
+        <Reveal className="max-w-2xl">
+          <h2 className="hz-display hz-h2 text-[var(--hz-text)]">A partner you can hold to it.</h2>
+        </Reveal>
+        <Stagger className="mt-10 grid gap-10 sm:mt-12 sm:grid-cols-3 lg:gap-12" gap={0.08}>
+          {strengths.map((s) => (
+            <StaggerItem key={s.title}>
+              <span aria-hidden className="block h-px w-full bg-[var(--hz-line)]" />
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                <s.icon className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              <h3 className="hz-display mt-5 text-[1.2rem] leading-tight text-[var(--hz-text)]">{s.title}</h3>
+              <p className="mt-3 max-w-[42ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{s.body}</p>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
+
+      {/* Closing photograph, full-bleed with the ask over it. */}
+      <section className="relative isolate w-full overflow-hidden">
+        <div className="relative min-h-[400px] w-full sm:min-h-[460px]">
+          <Photo src={IMG.aboutTeam} alt="An Ocean Blue engagement meeting" sizes="100vw" priority={false} />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(10,23,48,0.60) 0%, rgba(10,23,48,0.80) 60%, rgba(10,23,48,0.94) 100%)",
+            }}
+          />
+          <div className="relative z-10 flex min-h-[400px] items-center px-6 py-16 sm:min-h-[460px] sm:px-10 lg:px-16 2xl:px-24">
+            <Reveal className="max-w-2xl">
+              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.4vw,3rem)] leading-[1.05] text-white">
+                Work with a team that owns the outcome.
+              </h2>
+              <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">
+                Tell us what you are trying to change and we will tell you, plainly,
+                whether we are the right people for it.
+              </p>
+              <div className="mt-9">
+                <Cta href="/contact" variant="primary">Start a conversation</Cta>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
     </div>

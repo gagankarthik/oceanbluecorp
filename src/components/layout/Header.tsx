@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Menu,
   X,
@@ -117,7 +117,7 @@ const ABOUT_CELLS: MenuItem[] = [
   { name: "Our Team", href: "/team", description: "The people who lead the engagements", Icon: IllTeam, tint: "#0EA5E9" },
   { name: "Careers", href: "/careers", description: "What the work is like, and how we hire", Icon: IllCareers, tint: "#0D9488" },
   { name: "Open positions", href: "/careers/search", description: "Every role open right now", Icon: IllPositions, tint: "#6366F1" },
-  { name: "Contact", href: "/contact", description: "Tell us what you are trying to fix", Icon: IllContact, tint: "#0CACCF" },
+  { name: "Connect with us", href: "/contact", description: "Tell us what you are trying to fix", Icon: IllContact, tint: "#0CACCF" },
 ];
 
 /* Resources is laid out as CELLS, not a link column, because the reference
@@ -139,7 +139,7 @@ const RESOURCES_CELLS: MenuItem[] = [
   { name: "Customer stories", href: "/customer-stories", description: "What it is like to work with us, in their words", Icon: IllStories, tint: "#0EA5E9" },
   { name: "Case studies", href: "/case-studies", description: "The problem, the team, what changed", Icon: IllCases, tint: "#0D9488" },
   { name: "Products", href: "/products", description: "Software we own end to end", Icon: IllProducts, tint: "#0975C1" },
-  { name: "Brand kit", href: "/brand-kit", description: "Logos, colours, and how to use them", Icon: IllBrandKit, tint: "#7C3AED" },
+  { name: "Media kit", href: "/brand-kit", description: "Logos, colours, and how to use them", Icon: IllBrandKit, tint: "#7C3AED" },
 ];
 
 /* One table, so adding a menu is adding a row rather than extending a chain
@@ -619,7 +619,7 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                 href="/contact"
                 className="rounded-full bg-[var(--hz-cobalt)] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]"
               >
-                Contact
+                Connect with us <ArrowRight className="ml-1.5 inline-block h-3.5 w-3.5" />
               </Link>
             </div>
 

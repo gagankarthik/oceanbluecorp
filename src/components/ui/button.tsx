@@ -1,64 +1,84 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+"use client";
 
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
+/**
+ * The shared button.
+ *
+ * Before this there was no button component at all: the marketing site used
+ * the `Cta` pill, the admin console used raw `<button>` with the classes
+ * retyped at every call site, and the two drifted. This is the one for
+ * application UI. `Cta` stays what it is, the marketing pill, and is not
+ * replaced by this.
+ *
+ * Sizes and colours come from the --adm-* token set, so a brand retune moves
+ * every button without touching this file.
+ */
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
+type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Size = "sm" | "md" | "lg";
 
-  return (
-    <Comp
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
+const VARIANTS: Record<Variant, string> = {
+  primary:
+    "bg-[var(--adm-accent)] text-white hover:bg-[var(--adm-accent-strong)] active:bg-[var(--adm-accent-strong)]",
+  secondary:
+    "bg-white text-[var(--adm-ink)] ring-1 ring-inset ring-[var(--adm-line)] hover:bg-[var(--adm-surface-2)] active:bg-[var(--adm-surface-2)]",
+  ghost:
+    "bg-transparent text-[var(--adm-ink-2)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+  // Destructive actions are the one place the accent is not used: a delete
+  // that looks like a save is a UI that gets people into trouble.
+  danger:
+    "bg-[var(--adm-danger)] text-white hover:opacity-90 active:opacity-90",
+};
+
+const SIZES: Record<Size, string> = {
+  sm: "h-8 gap-1.5 px-3 text-fine",
+  md: "h-9 gap-2 px-4 text-fine",
+  lg: "h-11 gap-2 px-5 text-small",
+};
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  size?: Size;
+  /** Renders a spinner and blocks input. Keeps its width so the row is stable. */
+  loading?: boolean;
+  /** Square, for a single icon. */
+  iconOnly?: boolean;
 }
 
-export { Button, buttonVariants }
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { className, variant = "primary", size = "md", loading = false, iconOnly = false, disabled, children, ...props },
+  ref
+) {
+  return (
+    <button
+      ref={ref}
+      // A loading button must not be clickable, but `disabled` alone removes it
+      // from the tab order mid-interaction, which moves focus unexpectedly.
+      // aria-busy tells assistive tech what is happening either way.
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={cn(
+        "inline-flex select-none items-center justify-center rounded-lg font-semibold",
+        "transition-[background-color,box-shadow,transform] duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-accent)] focus-visible:ring-offset-2",
+        "active:scale-[0.985]",
+        "disabled:pointer-events-none disabled:opacity-55",
+        VARIANTS[variant],
+        SIZES[size],
+        iconOnly && (size === "sm" ? "w-8 px-0" : size === "lg" ? "w-11 px-0" : "w-9 px-0"),
+        className
+      )}
+      {...props}
+    >
+      {loading && (
+        <span
+          aria-hidden
+          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current motion-reduce:animate-none"
+        />
+      )}
+      {children}
+    </button>
+  );
+});

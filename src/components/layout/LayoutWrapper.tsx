@@ -6,17 +6,21 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
+import Maintenance from "@/components/layout/Maintenance";
 
 export default function LayoutWrapper({
   children,
   announcement = "",
   announcementHref = "",
   announcementScroll = false,
+  maintenance,
 }: {
   children: React.ReactNode;
   announcement?: string;
   announcementHref?: string;
   announcementScroll?: boolean;
+  /** Read server-side in the root layout; see lib/content getMaintenance. */
+  maintenance?: { enabled: boolean; message: string; eta: string };
 }) {
   const pathname = usePathname();
 
@@ -24,10 +28,23 @@ export default function LayoutWrapper({
   const isAdminRoute = pathname?.startsWith("/admin");
   const isAuthRoute = pathname?.startsWith("/auth");
 
-  const hideHeaderFooter = isAdminRoute;
+  // /maintenance is the preview of the maintenance screen. The real one
+  // replaces the entire public shell, so the preview has to render bare too or
+  // it shows an admin a header that will not be there.
+  const isMaintenanceRoute = pathname?.startsWith("/maintenance");
+
+  const hideHeaderFooter = isAdminRoute || isMaintenanceRoute;
 
   if (hideHeaderFooter) {
     return <>{children}</>;
+  }
+
+  // Maintenance gates the PUBLIC site only. /admin and /auth stay reachable on
+  // purpose: the switch is turned off from /admin/settings, and locking staff
+  // out of the page that turns it off would leave nobody able to bring the
+  // site back without a deploy.
+  if (maintenance?.enabled && !isAuthRoute) {
+    return <Maintenance message={maintenance.message} eta={maintenance.eta} />;
   }
 
   // Announcement strip sits above the navbar. When present it's a fixed 40px

@@ -1,105 +1,205 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import {
+  Building2, Layers, Briefcase, Newspaper, Code2, Scale,
+  type LucideIcon,
+} from "lucide-react";
+import { Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
+
+/**
+ * Human sitemap.
+ *
+ * The previous version listed four groups as bare columns of blue text and was
+ * missing a third of the site: no blog, no news, no case studies, no customer
+ * stories, and FAQ filed under Legal. Every link also carried a dark ink
+ * background on a light page, which drew a black chip behind each one.
+ *
+ * Grouped by errand rather than by URL depth, because somebody who opens a
+ * sitemap is looking for a page they could not find in the nav, and the nav is
+ * organised by product, not by what they came to do.
+ */
 
 export const metadata: Metadata = {
-  title: "Sitemap",
-  description: "A directory of every page on the Ocean Blue Corporation website, services, careers, products, and more.",
+  title: "Site map",
+  description:
+    "Every page on the Ocean Blue Corporation website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
+  openGraph: {
+    title: "Site map | Ocean Blue Corporation",
+    description:
+      "A directory of every page on oceanbluecorp.com, grouped by what you came to do.",
+    url: "https://oceanbluecorp.com/sitemap",
+  },
   alternates: { canonical: "https://oceanbluecorp.com/sitemap" },
 };
 
-const SECTIONS: { group: string; links: { name: string; href: string }[] }[] = [
+type Group = {
+  group: string;
+  note: string;
+  icon: LucideIcon;
+  links: { name: string; href: string }[];
+};
+
+const SECTIONS: Group[] = [
   {
     group: "Company",
+    note: "Who we are and how to reach us.",
+    icon: Building2,
     links: [
       { name: "Home", href: "/" },
-      { name: "About Us", href: "/about" },
-      { name: "Our Team", href: "/team" },
+      { name: "About us", href: "/about" },
+      { name: "Our team", href: "/team" },
       { name: "Products", href: "/products" },
-      { name: "Contact", href: "/contact" },
+      { name: "Thirteen years", href: "/13-years" },
+      { name: "Connect with us", href: "/contact" },
     ],
   },
   {
     group: "Solutions",
+    note: "What we are engaged to do.",
+    icon: Layers,
     links: [
-      { name: "All Solutions", href: "/solutions" },
-      { name: "IT Staffing & Talent", href: "/solutions/staffing" },
-      { name: "Engineering Talent & Services", href: "/solutions/engineering" },
-      { name: "Cloud Engineering", href: "/solutions/cloud" },
+      { name: "All solutions", href: "/solutions" },
+      { name: "IT staffing & talent", href: "/solutions/staffing" },
+      { name: "Engineering talent & services", href: "/solutions/engineering" },
+      { name: "Cloud engineering", href: "/solutions/cloud" },
       { name: "Cybersecurity", href: "/solutions/cybersecurity" },
-      { name: "ERP Solutions", href: "/solutions/erp" },
-      { name: "Salesforce Services", href: "/solutions/salesforce" },
-      { name: "AI & Data Intelligence", href: "/solutions/ai" },
-      { name: "Managed Services", href: "/solutions/managed" },
-      { name: "Digital Transformation", href: "/solutions/transformation" },
+      { name: "ERP solutions", href: "/solutions/erp" },
+      { name: "Salesforce services", href: "/solutions/salesforce" },
+      { name: "AI & data intelligence", href: "/solutions/ai" },
+      { name: "Managed services", href: "/solutions/managed" },
+      { name: "Digital transformation", href: "/solutions/transformation" },
     ],
   },
   {
     group: "Careers",
+    note: "Working here, and what is open.",
+    icon: Briefcase,
     links: [
       { name: "Careers", href: "/careers" },
-      { name: "Open Positions", href: "/careers/search" },
+      { name: "Open positions", href: "/careers/search" },
+    ],
+  },
+  {
+    group: "Insights",
+    note: "What we have written and shipped.",
+    icon: Newspaper,
+    links: [
+      { name: "Blog", href: "/blog" },
+      { name: "News", href: "/news" },
+      { name: "Case studies", href: "/case-studies" },
+      { name: "Customer stories", href: "/customer-stories" },
     ],
   },
   {
     group: "Developers",
+    note: "Build against us, or use our marks.",
+    icon: Code2,
     links: [
-      { name: "Developers & API", href: "/developers" },
-      { name: "Brand Kit", href: "/brand-kit" },
-      { name: "System Status", href: "/status" },
+      { name: "Developer documentation", href: "/developers" },
+      { name: "Brand kit", href: "/brand-kit" },
+      { name: "System status", href: "/status" },
     ],
   },
   {
-    group: "Legal",
+    group: "Legal and help",
+    note: "The documents, and answers to the usual questions.",
+    icon: Scale,
     links: [
-      { name: "Privacy Policy", href: "/privacy" },
-      { name: "Terms of Service", href: "/terms" },
-      { name: "Cookie Policy", href: "/cookies" },
-      { name: "Data Deletion", href: "/data-deletion" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Legal and privacy", href: "/legal" },
+      { name: "Privacy policy", href: "/privacy" },
+      { name: "Terms of service", href: "/terms" },
+      { name: "Cookie policy", href: "/cookies" },
+      { name: "Data deletion", href: "/data-deletion" },
       { name: "Accessibility", href: "/accessibility" },
+      { name: "Security", href: "/security" },
     ],
   },
 ];
 
+const TOTAL = SECTIONS.reduce((n, s) => n + s.links.length, 0);
+
 export default function SitemapPage() {
   return (
-    <div className="horizon min-h-screen bg-[var(--hz-canvas)]">
-      {/* Hero */}
-      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-        <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-14 pt-32 sm:px-8">
-          <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Home
-          </Link>
-          <h1 className="hz-display text-[2.25rem] text-white sm:text-[3rem]">Sitemap</h1>
-          <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/75">
-            Every page on oceanbluecorp.com, organized in one place. Looking for the machine-readable version?{" "}
-            <a href="/sitemap.xml" className="font-medium text-[var(--hz-cyan-400)] underline underline-offset-2">sitemap.xml</a>.
-          </p>
+    <div className="horizon min-h-screen w-full bg-[var(--hz-canvas)]">
+      {/* Utility header, not a marketing one. This page is an index, so it
+          opens with the two things an index is asked for — how many pages and
+          where the machine-readable copy is — and gets out of the way. The
+          legal index next door is deliberately set differently: that one is
+          read, this one is scanned. */}
+      <header className="w-full border-b border-[var(--hz-line)] px-6 pb-10 pt-28 sm:px-10 sm:pt-32 lg:px-16 2xl:px-24">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+          <div>
+            <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Site map</p>
+            <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,4.5vw,3rem)] leading-[1.05] text-[var(--hz-text)]">
+              Every page, in one directory.
+            </h1>
+          </div>
+          <dl className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <dt className="text-caption text-[var(--hz-text-subtle)]">Pages</dt>
+              <dd className="hz-display mt-1 text-[1.6rem] tabular-nums text-[var(--hz-text)]">{TOTAL}</dd>
+            </div>
+            <div>
+              <dt className="text-caption text-[var(--hz-text-subtle)]">Sections</dt>
+              <dd className="hz-display mt-1 text-[1.6rem] tabular-nums text-[var(--hz-text)]">{SECTIONS.length}</dd>
+            </div>
+            <div>
+              <dt className="text-caption text-[var(--hz-text-subtle)]">For crawlers</dt>
+              <dd className="mt-1">
+                <a
+                  href="/sitemap.xml"
+                  className="hz-focus font-mono text-small font-semibold text-[var(--hz-cobalt)] underline underline-offset-4"
+                >
+                  /sitemap.xml
+                </a>
+              </dd>
+            </div>
+          </dl>
         </div>
-      </section>
+        <p className="mt-8 max-w-[62ch] text-small leading-relaxed text-[var(--hz-text-mute)]">
+          Grouped by what you came here to do rather than by how the URLs nest.
+        </p>
+      </header>
 
-      {/* Directory */}
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-8">
-        <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="w-full px-6 py-14 sm:px-10 sm:py-16 lg:px-16 2xl:px-24">
+        <Stagger as="div" className="grid gap-x-12 gap-y-14 lg:grid-cols-2 2xl:grid-cols-3" gap={0.06}>
           {SECTIONS.map((s) => (
-            <div key={s.group}>
-              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--hz-text-subtle)]">{s.group}</h2>
-              <ul className="space-y-1.5">
+            <StaggerItem as="section" key={s.group}>
+              <div className="flex items-start gap-4 border-b border-[var(--hz-line)] pb-5">
+                <span className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
+                  <s.icon className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <h2 className="hz-display text-[1.15rem] leading-tight text-[var(--hz-text)]">
+                    {s.group}
+                  </h2>
+                  <p className="mt-1 text-caption text-[var(--hz-text-subtle)]">{s.note}</p>
+                </div>
+              </div>
+
+              <ul className="mt-1 divide-y divide-[var(--hz-line)]">
                 {s.links.map((l) => (
-                  <li key={l.name + l.href}>
+                  <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="inline-flex items-center text-[14.5px] text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)] bg-[var(--hz-ink)]">
-                      {l.name}
+                      className="hz-focus group flex items-baseline justify-between gap-4 py-2.5 text-small text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
+                    >
+                      <span>{l.name}</span>
+                      {/* The path is the reason someone is on this page rather
+                          than in the nav, so it is shown, not hidden. */}
+                      <span className="hidden font-mono text-fine text-[var(--hz-text-subtle)] transition-colors group-hover:text-[var(--hz-cobalt)] sm:block">
+                        {l.href}
+                      </span>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
-      </div>
+        </Stagger>
+
+      </section>
     </div>
   );
 }

@@ -32,3 +32,30 @@ export async function getSiteContent(pageId: string): Promise<Record<string, str
   }
   return {};
 }
+
+/**
+ * Site-wide maintenance switch, toggled at /admin/settings.
+ *
+ * Stored in the same content table as everything else and read by the root
+ * layout, which is ISR at 60s; the settings API calls
+ * revalidatePath("/", "layout") on save, so flipping it takes effect at once
+ * rather than on the next revalidation.
+ *
+ * Deliberately NOT enforced in middleware. Middleware would need a database
+ * read on every single request, and if that read failed the whole site would
+ * go dark. Read here it fails safe: a lookup error returns `false` and the
+ * site stays up, which is the correct way round for a switch whose job is
+ * taking the site down.
+ */
+export async function getMaintenance(): Promise<{
+  enabled: boolean;
+  message: string;
+  eta: string;
+}> {
+  const c = await getSiteContent("site");
+  return {
+    enabled: c.maintenance === "true",
+    message: (c.maintenanceMessage || "").trim(),
+    eta: (c.maintenanceEta || "").trim(),
+  };
+}

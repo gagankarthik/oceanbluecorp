@@ -75,6 +75,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
           content.contactSubtitle ||
           "A question about our services, a custom solution, or a partnership, our team is ready to help."
         }
+        image="/images/office.png"
       />
 
       {/* Form + side */}
@@ -144,8 +145,8 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                   <div>
                     <label htmlFor="inquiryType" className={labelClass}>Inquiry type *</label>
                     <select id="inquiryType" name="inquiryType" required value={formData.inquiryType} onChange={handleChange} className={inputClass}>
-                      <option value="">Select an option</option>
-                      {inquiryTypes.map((type) => (<option key={type} value={type}>{type}</option>))}
+                      <option value="" className="bg-[var(--hz-canvas)] text-[var(--hz-text)]">Select an option</option>
+                      {inquiryTypes.map((type) => (<option key={type} value={type} className="bg-[var(--hz-canvas)] text-[var(--hz-text)]">{type}</option>))}
                     </select>
                   </div>
                   <div>
@@ -183,7 +184,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
               the lift are patterns this site removed everywhere else, and by
               then the page had shown the phone three times. What a person
               needs beside a form is the way to skip it. */}
-          <div className="lg:pt-2">
+          <div className="lg:self-center">
             <Eyebrow>Rather not fill in a form?</Eyebrow>
             <h2 className="hz-display mt-5 text-[1.6rem] text-[var(--hz-text)] sm:text-[1.9rem]">
               Reach a person directly.
@@ -204,7 +205,7 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                   <dt className="text-[13px] uppercase tracking-[0.1em] text-[var(--hz-text-subtle)]">{row.k}</dt>
                   <dd className="text-right text-[14.5px] font-medium text-[var(--hz-text)]">
                     {row.href ? (
-                      <a href={row.href} className="text-[var(--hz-cobalt)] transition-opacity hover:opacity-80">{row.v}</a>
+                      <a href={row.href} className="hz-focus text-[var(--hz-cobalt)] transition-opacity hover:opacity-80">{row.v}</a>
                     ) : (
                       row.v
                     )}
