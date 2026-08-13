@@ -1152,15 +1152,21 @@
   --hz-line-dark:   rgba(226,232,240,0.12);
 
   /* Paper ground, carried over with the client-work and accreditation
-     sections from the other branch. Pure #fff under a full-bleed layout
-     reads as a blank document; a hair of warmth reads as paper, and the
-     hairline is the rule colour those two sections divide their rows with.
+     sections from the other branch, and the hairline is the rule colour
+     those sections divide their rows with.
 
-     Kept as its own pair rather than folded into --hz-canvas, because
-     every section from this branch was designed against pure white and
-     warming the global canvas would shift all of them at once. */
-  --hz-paper:      #FAFAF7;
-  --hz-paper-line: #E8E7E1;
+     COOL, not warm. This was #FAFAF7, an off-white with yellow in it, sitting
+     next to a palette built entirely on blue: the logo blues, the cobalt
+     accent, the ink bands. Warm paper against cool everything reads as two
+     different whites rather than one ground, which is exactly the mismatch it
+     looked like. These are the same lightness, biased the other way, so the
+     ground now belongs to the same family as the accent.
+
+     Kept as its own pair rather than folded into --hz-canvas, because every
+     section on pure white was designed against pure white and tinting the
+     global canvas would shift all of them at once. */
+  --hz-paper:      #F7F9FC;
+  --hz-paper-line: #E4E9F0;
 
   /* The accreditation strip's own rules, one step lighter again. That strip
      sits on white between two heavy neighbours, the client-work rows above
@@ -1168,7 +1174,7 @@
      read as a drawn table rather than as separators. This is a hairline you
      notice only when you look for it, which is the whole job, still present,
      just not drawing the cell. */
-  --hz-strip-line: #ECEAE3;
+  --hz-strip-line: #EBEFF5;
 
   /* The light end of the logo's gradient, measured off the mark: the
      droplet runs #0975C1 at its base to #0CACCF at the arc tips. Only
