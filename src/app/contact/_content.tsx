@@ -10,6 +10,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primit
 import { Eyebrow, Cta } from "@/components/landing/ui";
 import Photo from "@/components/landing/Photo";
 import PageHero from "@/components/landing/PageHero";
+import Locations from "@/components/landing/Locations";
 import { IMG } from "@/components/landing/media";
 
 const contactInfo: {
@@ -19,13 +20,6 @@ const contactInfo: {
   { icon: Mail, title: "Email us", description: "Usually answered the same business day", value: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
   { icon: MapPin, title: "Visit us", description: "Headquarters", value: "9775 Fairway Drive, Suite C, Powell, OH 43065", href: "#locations" },
   { icon: Clock, title: "Business hours", description: "Monday – Friday", value: "8:00 AM – 5:00 PM EST", href: null },
-];
-
-const offices = [
-  { city: "Ohio", country: "United States", flag: "🇺🇸", address: "9775 Fairway Drive, Suite #C, Powell, OH 43065", phone: "+1 (614) 844-6925" },
-  { city: "Hyderabad", country: "India", flag: "🇮🇳", address: "13th Floor, Building 9, Raheja Mindspace, Madhapur, Hyderabad 560081", phone: "+91 814 312 4665" },
-  { city: "Vizianagaram", country: "India", flag: "🇮🇳", address: "Plot No. 87, CMR Green Field Layout, Vizianagaram, Andhra Pradesh 535004", phone: "+91 814 294 9111" },
-  { city: "London", country: "United Kingdom", flag: "🇬🇧", address: "910 London Road, Thornton Heath, CR7 7PE, UK", phone: "hr@oceanbluecorp.com" },
 ];
 
 const inquiryTypes = [
@@ -273,52 +267,12 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
       </section>
 
       {/* Offices */}
-      <section id="locations" className="border-t border-black/[0.06] bg-[var(--hz-surface-2)] px-6 py-24 sm:px-8 sm:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="max-w-2xl">
-            <Eyebrow>Our offices</Eyebrow>
-            <h2 className="hz-display mt-6 text-[clamp(1.75rem,3.6vw,3rem)] text-[var(--hz-text)]">Global presence, local expertise.</h2>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--hz-text-mute)]">
-              With offices across the US, India, and the UK, we&apos;re always close to our clients.
-            </p>
-          </Reveal>
-
-          <Stagger className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" gap={0.07}>
-            {offices.map((office) => (
-              <StaggerItem key={office.city} className="h-full">
-                <div className="hz-card h-full p-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{office.flag}</span>
-                    <div>
-                      <h3 className="hz-display text-[1.15rem] text-[var(--hz-text)]">{office.city}</h3>
-                      <p className="text-[12px] text-[var(--hz-text-subtle)]">{office.country}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2.5 border-t border-black/[0.07] pt-4 text-[13.5px]">
-                    <p className="flex items-start gap-2 text-[var(--hz-text-mute)]">
-                      <MapPin className="mt-0.5 h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                      <span className="min-w-0 break-words">{office.address}</span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 flex-none text-[var(--hz-cobalt)]" strokeWidth={1.5} />
-                      <a href={office.phone.includes("@") ? `mailto:${office.phone}` : `tel:${office.phone.replace(/\s/g, "")}`} className="font-medium text-[var(--hz-cobalt)] hover:underline">
-                        {office.phone}
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-black/[0.08] bg-white p-6 sm:flex-row sm:p-8">
-            <p className="text-center text-[15px] text-[var(--hz-text-mute)] sm:text-left">
-              Ready to discuss your project? Our team usually replies within a day.
-            </p>
-            <Cta href="mailto:hr@oceanbluecorp.com" variant="primary">Email the team</Cta>
-          </div>
-        </div>
-      </section>
+      {/* The office list, with a map. It replaces a four-card grid that said
+          the same thing without showing the shape of it: four pins across three
+          countries reads as coverage at a glance, which a list of addresses
+          does not. The addresses are still text underneath, so nothing depends
+          on the picture. */}
+      <Locations />
     </div>
   );
 }

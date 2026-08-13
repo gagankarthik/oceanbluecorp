@@ -5,6 +5,7 @@ import Partnerships from "@/components/landing/Partnerships";
 import Credentials from "@/components/landing/Credentials";
 import Testimonials from "@/components/landing/Testimonials";
 import CallToAction from "@/components/landing/CallToAction";
+import FilmSection from "@/components/landing/FilmSection";
 import CertificationStrip from "@/components/landing/CertificationStrip";
 import Anniversary from "@/components/landing/anniversary/Anniversary";
 
@@ -106,6 +107,13 @@ export default async function Home() {
       {/* The one dark beat between the hero and the close. */}
       <Partnerships />
       <Testimonials />
+      {/* The film sits here, after the clients have spoken and before the
+          credentials. By this point the reader has the argument and the proof
+          of it, so this is where they get to meet the company rather than read
+          about it, and it lands directly before the careers ask, which is the
+          audience a company film helps most. Any earlier and it competes with
+          the hero, which is already moving. */}
+      <FilmSection />
       {/* The trust strip sits ABOVE the closing ask, not below it, the last
           reassurance a reader passes before deciding. */}
       <CertificationStrip />
