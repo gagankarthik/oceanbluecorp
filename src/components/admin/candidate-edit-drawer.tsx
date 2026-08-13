@@ -80,7 +80,7 @@ export function CandidateEditDrawer({
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
-  // Resume — a new applicant added from this drawer had no way to attach one,
+  // Resume, a new applicant added from this drawer had no way to attach one,
   // so their record could never be parsed. The file is uploaded on submit and
   // the API queues extraction from there.
   const [resumeFile, setResumeFile] = React.useState<File | null>(null);
@@ -149,7 +149,7 @@ export function CandidateEditDrawer({
   /**
    * Validate by file extension rather than by MIME type. Browsers report
    * inconsistent types for .doc/.docx depending on what is installed, and
-   * Windows has been known to hand over an empty string — a MIME allow-list
+   * Windows has been known to hand over an empty string, a MIME allow-list
    * rejected perfectly good resumes. The extraction service reads the bytes
    * regardless, so the extension is the honest gate here.
    */
@@ -408,7 +408,7 @@ export function CandidateEditDrawer({
                         <FormSelect value={form.benchType} onChange={(e) => set("benchType", e.target.value as BenchType)}>
                           {POOL_ORDER.map((p) => (
                             <option key={p} value={p}>
-                              {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                              {POOL_META[p].label} , {POOL_META[p].badge.toLowerCase()}
                             </option>
                           ))}
                         </FormSelect>
@@ -490,8 +490,8 @@ export function CandidateEditDrawer({
 
                   <p className="flex items-start gap-2 rounded-[6px] bg-[var(--adm-accent-tint)] px-3 py-2.5 text-xs leading-relaxed text-[var(--adm-ink-mute)]">
                     <IconSparkles className="mt-px h-3.5 w-3.5 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
-                    Saving with a resume attached extracts the full profile — work history, education,
-                    skills, certifications and projects — onto the candidate record. It usually takes
+                    Saving with a resume attached extracts the full profile, work history, education,
+                    skills, certifications and projects, onto the candidate record. It usually takes
                     under a minute and appears on their page automatically.
                   </p>
                 </div>
@@ -580,7 +580,7 @@ export function CandidateEditDrawer({
                     </FormSelect>
                   </Field>
 
-                  {/* Visa expiry — only where an expiry is a real fact */}
+                  {/* Visa expiry, only where an expiry is a real fact */}
                   {workAuthExpires(form.workAuthorization) && (
                     <Field label="Visa / OPT Expiry Date">
                       <FormInput type="date" value={form.visaExpiry} onChange={(e) => set("visaExpiry", e.target.value)} />
@@ -616,7 +616,7 @@ export function CandidateEditDrawer({
                         : form.workAuthorization === "H1-B"
                           ? "H-1B holders require employer sponsorship to maintain status."
                           : ["OPT", "CPT"].includes(form.workAuthorization)
-                            ? "OPT/CPT is time-limited — verify expiry date before extending an offer."
+                            ? "OPT/CPT is time-limited, verify expiry date before extending an offer."
                             : "Verify work authorization documents before extending an offer."}
                     </div>
                   )}
@@ -639,7 +639,7 @@ export function CandidateEditDrawer({
                 </FormSection>
 
                 <FormSection icon={IconFile} title="Internal Notes">
-                  <Field label="Notes" hint="Internal only — not visible to candidate">
+                  <Field label="Notes" hint="Internal only, not visible to candidate">
                     <FormTextarea rows={8} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Interview impressions, concerns, next steps…" />
                   </Field>
                 </FormSection>

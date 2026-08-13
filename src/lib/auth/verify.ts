@@ -6,7 +6,7 @@
 // automatically with same-origin API requests, so protected route handlers can
 // authorize the caller without any change to client fetch call sites.
 //
-// Verification is done with Node's built-in crypto against Cognito's JWKS — no
+// Verification is done with Node's built-in crypto against Cognito's JWKS, no
 // extra dependency. Route handlers run in the Node.js runtime, so this is safe.
 import crypto from "crypto";
 import type { NextRequest } from "next/server";

@@ -25,7 +25,7 @@ export const tones: Record<Tone, {
  * Raw CSS colour per tone.
  *
  * `tones` above is Tailwind classes, which covers most cases but cannot reach
- * an inline `style` — a dot's `background`, a `<select>`'s own text colour, a
+ * an inline `style`, a dot's `background`, a `<select>`'s own text colour, a
  * computed ramp. Without this, any control that needs a colour as a *value*
  * silently falls back to grey, which is exactly what happened to every editable
  * status cell in the app: the tone was defined, and nothing could read it.
@@ -40,7 +40,7 @@ export const tones: Record<Tone, {
  */
 export const toneColor: Record<Tone, string> = {
   blue:    "var(--adm-accent)",       // 6.70:1
-  indigo:  "#4f46e5",                 // was #6366f1 at 4.47:1 — just under AA
+  indigo:  "#4f46e5",                 // was #6366f1 at 4.47:1, just under AA
   violet:  "#7c3aed",                 // was #8b5cf6 at 4.23:1
   emerald: "var(--adm-success-ink)",  // the fill token is 3.77:1 as text
   amber:   "var(--adm-warning-ink)",  // the fill token is 3.19:1 as text
@@ -58,7 +58,7 @@ export type AppStatus =
 
 /**
  * Icon slot shared by the status/theme tables. Widened from `{ className }` to
- * the props these icons are actually given at call sites — stage marks take an
+ * the props these icons are actually given at call sites, stage marks take an
  * inline `style` colour (the stage ramp is computed, so it can't be a class)
  * and panel headers set `strokeWidth`. Lucide accepts all SVG props, so this
  * only makes the declared type match reality.
@@ -87,7 +87,7 @@ export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: Th
 };
 
 /**
- * A status's colour as a CSS value — for dots, inline styles and editable
+ * A status's colour as a CSS value, for dots, inline styles and editable
  * controls. Unknown statuses fall back to the neutral tone rather than throwing:
  * these strings come from the database, and a status nobody has themed yet
  * should render plainly, not break the row it is in.
@@ -107,17 +107,17 @@ export const PIPELINE_STAGES: { key: AppStatus; label: string; tone: Tone }[] = 
 /**
  * Work authorization.
  *
- * This was a flat 11-item list that conflated three different things —
+ * This was a flat 11-item list that conflated three different things,
  * permanent status, employer-sponsored visas, and time-limited student or
- * dependent permits — so a recruiter scanning it could not tell the two facts
+ * dependent permits, so a recruiter scanning it could not tell the two facts
  * that actually drive a decision: whether the employer has to sponsor, and
  * whether the authorization expires.
  *
  * Both are now encoded per option:
- *   sponsorship "none"     — works for any employer, nothing to file
- *               "transfer" — already sponsored; a new employer files a transfer
- *               "required" — employer must sponsor to convert/continue
- *   timeLimited            — has an end date, so an expiry is worth capturing
+ *   sponsorship "none"    , works for any employer, nothing to file
+ *               "transfer", already sponsored; a new employer files a transfer
+ *               "required", employer must sponsor to convert/continue
+ *   timeLimited           , has an end date, so an expiry is worth capturing
  *
  * Forms render these as <optgroup>s and use `timeLimited` to decide whether to
  * show the expiry field at all, instead of showing a date input that is
@@ -132,28 +132,28 @@ export interface WorkAuthOption {
 
 export const WORK_AUTH_GROUPS: { label: string; options: WorkAuthOption[] }[] = [
   {
-    label: "Permanent — no sponsorship",
+    label: "Permanent, no sponsorship",
     options: [
       { value: "US Citizen",  label: "US Citizen",             sponsorship: "none", timeLimited: false },
       { value: "Green Card",  label: "Green Card (Permanent Resident)", sponsorship: "none", timeLimited: false },
     ],
   },
   {
-    label: "Employment visa — transfer required",
+    label: "Employment visa, transfer required",
     options: [
-      { value: "H1-B",     label: "H-1B — Specialty Occupation", sponsorship: "transfer", timeLimited: true },
-      { value: "L1 Visa",  label: "L-1 — Intracompany Transfer",  sponsorship: "transfer", timeLimited: true },
-      { value: "O1 Visa",  label: "O-1 — Extraordinary Ability",  sponsorship: "transfer", timeLimited: true },
-      { value: "E3 Visa",  label: "E-3 — Australian Specialty",   sponsorship: "transfer", timeLimited: true },
-      { value: "TN Visa",  label: "TN — USMCA Professional",      sponsorship: "transfer", timeLimited: true },
+      { value: "H1-B",     label: "H-1B. Specialty Occupation", sponsorship: "transfer", timeLimited: true },
+      { value: "L1 Visa",  label: "L-1. Intracompany Transfer",  sponsorship: "transfer", timeLimited: true },
+      { value: "O1 Visa",  label: "O-1. Extraordinary Ability",  sponsorship: "transfer", timeLimited: true },
+      { value: "E3 Visa",  label: "E-3. Australian Specialty",   sponsorship: "transfer", timeLimited: true },
+      { value: "TN Visa",  label: "TN. USMCA Professional",      sponsorship: "transfer", timeLimited: true },
     ],
   },
   {
-    label: "Time-limited — sponsorship needed to continue",
+    label: "Time-limited, sponsorship needed to continue",
     options: [
-      { value: "OPT",     label: "OPT — Post-completion",        sponsorship: "required", timeLimited: true },
-      { value: "CPT",     label: "CPT — Curricular training",    sponsorship: "required", timeLimited: true },
-      { value: "H4 EAD",  label: "H-4 EAD — Dependent",          sponsorship: "required", timeLimited: true },
+      { value: "OPT",     label: "OPT. Post-completion",        sponsorship: "required", timeLimited: true },
+      { value: "CPT",     label: "CPT. Curricular training",    sponsorship: "required", timeLimited: true },
+      { value: "H4 EAD",  label: "H-4 EAD. Dependent",          sponsorship: "required", timeLimited: true },
     ],
   },
   {
@@ -167,7 +167,7 @@ export const WORK_AUTH_GROUPS: { label: string; options: WorkAuthOption[] }[] = 
 /** Every option, flattened. Used by filters and by legacy-value checks. */
 export const WORK_AUTH_ALL: WorkAuthOption[] = WORK_AUTH_GROUPS.flatMap((g) => g.options);
 
-/** Stored values only — the shape list-page filters and <option> loops expect. */
+/** Stored values only, the shape list-page filters and <option> loops expect. */
 export const WORK_AUTH_OPTIONS: string[] = WORK_AUTH_ALL.map((o) => o.value);
 
 /** Look up an option's metadata by its stored value. */
@@ -177,7 +177,7 @@ export function workAuthMeta(value?: string | null): WorkAuthOption | undefined 
 
 /**
  * Whether an expiry date is meaningful for this authorization. Drives whether
- * the forms render the expiry field — a US citizen has no expiry to record, and
+ * the forms render the expiry field, a US citizen has no expiry to record, and
  * an always-visible date input invited junk data.
  */
 export function workAuthExpires(value?: string | null): boolean {
@@ -199,7 +199,7 @@ export const SOURCE_OPTIONS = [
 ];
 
 /**
- * Type of hire — the engagement a candidate is placed on.
+ * Type of hire, the engagement a candidate is placed on.
  *
  * This is the candidate's payroll/contracting arrangement, not the
  * requisition's employment type: one contract req can be filled W2 by one
@@ -221,7 +221,7 @@ export const HIRE_TYPE_OPTIONS: HireTypeOption[] = [
   { value: "Internal",         label: "Internal / Employee", hint: "Our own employee" },
 ];
 
-/** Stored values only — the shape filters and <option> loops expect. */
+/** Stored values only, the shape filters and <option> loops expect. */
 export const HIRE_TYPE_VALUES: string[] = HIRE_TYPE_OPTIONS.map((o) => o.value);
 
 /** Display label for a stored hire-type value; unknown values pass through. */
@@ -231,7 +231,7 @@ export function hireTypeLabel(value?: string | null): string {
 }
 
 /**
- * Categorical chart palette — consume IN ORDER, never cycled.
+ * Categorical chart palette, consume IN ORDER, never cycled.
  *
  * Validated with the dataviz six-checks validator against the #ffffff panel
  * surface, in `--pairs all` mode (any two series may end up adjacent in a
@@ -244,7 +244,7 @@ export function hireTypeLabel(value?: string | null): string {
  *   Contrast vs surface PASS   all 5 >= 3:1
  *
  * The protan WARN sits in the 6–8 floor band, which is legal ONLY alongside
- * secondary encoding — so every chart built on this palette ships a legend,
+ * secondary encoding, so every chart built on this palette ships a legend,
  * direct value labels, and a 2px surface gap between fills. Do not drop those
  * affordances without re-validating.
  *
@@ -255,7 +255,7 @@ export function hireTypeLabel(value?: string | null): string {
  * Recharts needs literal values, not CSS vars, for SVG fills in all browsers.
  */
 export const CHART_COLORS = [
-  "#1d4ed8", // cobalt  — primary series
+  "#1d4ed8", // cobalt , primary series
   "#ea580c", // orange
   "#0d9488", // teal
   "#a855f7", // violet
@@ -264,14 +264,14 @@ export const CHART_COLORS = [
 
 /**
  * Reserved neutral for an explicit "Other"/unattributed bucket. Deliberately
- * below the categorical chroma floor — it is not an identity slot and must
+ * below the categorical chroma floor, it is not an identity slot and must
  * never be handed out as "series 6". Past five real categories, roll the tail
  * into this bucket rather than inventing a hue.
  */
 export const CHART_NEUTRAL = "#64748b";
 
 /**
- * Status series — fixed meanings across every admin chart, and reserved: these
+ * Status series, fixed meanings across every admin chart, and reserved: these
  * never stand in for a categorical slot. Stepped to match the --adm-* semantic
  * tokens in globals.css so a chart mark and its status chip are the same ink,
  * and darkened from the old emerald-500/amber-500/rose-500 which all sat under
@@ -305,13 +305,13 @@ export const COMMON_SKILLS = [
  * resume/bench filters), while job-form.tsx and bench/page.tsx each held their
  * own 51-item list of full names with "Remote" appended. Jobs and Applications
  * therefore wrote `state` in different formats, so any cross-module match on
- * location silently failed — a candidate in "TX" never matched a job in "Texas".
+ * location silently failed, a candidate in "TX" never matched a job in "Texas".
  *
  * The canonical stored value is the CODE. Pickers display the name and submit
  * the code; `normalizeState` converts legacy full-name records on read, so
  * existing rows keep working without a migration.
  *
- * "Remote" is deliberately absent — it is a job *type*, and JOB_TYPES in
+ * "Remote" is deliberately absent, it is a job *type*, and JOB_TYPES in
  * job-form.tsx already carries it. Putting it in the state list made "Remote"
  * and "Texas" mutually exclusive, which they are not.
  */

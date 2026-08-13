@@ -35,7 +35,7 @@ const TRACKED_SERVICES = [
   { id: "amplify",  key: "amplify-us-east-2",    label: "Web Hosting",     category: "Platform" },
 ] as const;
 
-// Try multiple URLs in order — AWS redirects the legacy URL
+// Try multiple URLs in order. AWS redirects the legacy URL
 const FEED_URLS = [
   "https://health.aws.amazon.com/public/currentevents",
   "https://status.aws.amazon.com/data.json",

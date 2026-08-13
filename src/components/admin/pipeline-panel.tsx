@@ -5,7 +5,7 @@
  * interviews that came of it, and the placement at the end.
  *
  * Reads as a spine rather than three lists, because that is the shape of the
- * work — a submission goes out, interviews hang off it, a placement closes it.
+ * work, a submission goes out, interviews hang off it, a placement closes it.
  * Interviews and placements recorded without a submission (a direct-hire
  * conversation, a rehire) are still shown, grouped separately, rather than
  * hidden for failing to fit the common case.
@@ -92,7 +92,7 @@ export function PipelinePanel({
   const [drawerKind, setDrawerKind] = useState<PipelineKind | null>(null);
   const [editing, setEditing] = useState<PipelineRecord | null>(null);
   const [parentSubmission, setParentSubmission] = useState<Submission | null>(null);
-  /** The record awaiting delete confirmation — ConfirmDialog, not window.confirm. */
+  /** The record awaiting delete confirmation. ConfirmDialog, not window.confirm. */
   const [pendingDelete, setPendingDelete] = useState<PipelineRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -117,7 +117,7 @@ export function PipelinePanel({
     [records],
   );
 
-  /** Interviews and placements that belong to no submission — shown on their own. */
+  /** Interviews and placements that belong to no submission, shown on their own. */
   const unattached = useMemo(
     () => records.filter((r) => r.kind !== "submission" && !r.submissionId),
     [records],
@@ -716,7 +716,7 @@ function PipelineRecordDrawer({
 
             {kind === "submission" && (
               <>
-                <Field label="Client" htmlFor="pl-client" helper={clients.length ? undefined : "No clients on file yet — add them under Clients."}>
+                <Field label="Client" htmlFor="pl-client" helper={clients.length ? undefined : "No clients on file yet, add them under Clients."}>
                   <FormSelect id="pl-client" value={clientId} onChange={(e) => setClientId(e.target.value)}>
                     <option value="">{defaults.clientName ? `${defaults.clientName} (from the job)` : "Select…"}</option>
                     {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

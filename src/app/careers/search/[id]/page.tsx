@@ -21,7 +21,7 @@ const loadJob = cache(getJob);
  *
  * JSON.stringify escapes quotes but NOT `<`, so a job description containing
  * "</script>" would close the tag early and let the remainder be parsed as
- * markup — stored XSS via the admin job editor. Escaping `<` (and the JS line
+ * markup, stored XSS via the admin job editor. Escaping `<` (and the JS line
  * terminators U+2028/U+2029, which are literal in JSON but illegal in JS
  * string literals) makes the payload inert while staying valid JSON-LD.
  */
@@ -46,7 +46,7 @@ const EMPLOYMENT_TYPE: Record<string, string> = {
 
 /**
  * JobPosting structured data. Without this, listings cannot appear in Google
- * Jobs at all — the single largest source of organic traffic for a careers
+ * Jobs at all, the single largest source of organic traffic for a careers
  * board. Only fields we genuinely hold are emitted; Google penalises padded
  * or invented values.
  */
@@ -127,7 +127,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const result = await loadJob(id);
 
     if (!result.success || !result.data) {
-      // Bare string — the root layout template adds the " | Ocean Blue
+      // Bare string, the root layout template adds the " | Ocean Blue
       // Corporation" suffix, so we must not repeat it here.
       return {
         title: "Job Not Found",
@@ -147,7 +147,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : ogDescription;
 
     return {
-      // Bare job title — the layout template appends the brand suffix once.
+      // Bare job title, the layout template appends the brand suffix once.
       title: job.title,
       description: metaDescription,
       openGraph: {

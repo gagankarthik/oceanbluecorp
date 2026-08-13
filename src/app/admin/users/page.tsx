@@ -43,7 +43,7 @@ interface User {
 
 /**
  * The four assignable staff roles in access-hierarchy order. One table drives
- * the badge, the invite/change-role pickers, and the role filter — so a role
+ * the badge, the invite/change-role pickers, and the role filter, so a role
  * can never render as two different things on the same screen.
  */
 const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter"];
@@ -62,7 +62,7 @@ const STATUS_META: Record<User["status"], { label: string; tone: Tone }> = {
   active:   { label: "Active",   tone: "emerald" },
   pending:  { label: "Invited",  tone: "amber"   },
   // `rose`, not `slate`. Neutral made a revoked account read as "no status
-  // recorded" rather than "cannot sign in" — an absence rather than a state.
+  // recorded" rather than "cannot sign in", an absence rather than a state.
   // Inactive is a deliberate act with a real consequence and should look like
   // one wherever it appears, including the filter pill and the counts.
   inactive: { label: "Inactive", tone: "rose"    },
@@ -76,9 +76,9 @@ const ROLE_TABS: { key: string; label: string }[] = [
   { key: "recruiter", label: "Recruiters" },
 ];
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 export default function UsersPage() {
@@ -193,7 +193,7 @@ export default function UsersPage() {
    * reasoning that revoking a colleague's access should not be one stray click.
    * That reasoning was half right and the remedy was wrong: a confirm taxes
    * every correct invocation to half-protect the rare mistake, and because it
-   * fires every time, it trains people to dismiss it — so the one that mattered
+   * fires every time, it trains people to dismiss it, so the one that mattered
    * gets clicked through too.
    *
    * Deactivation has an exact inverse, so it does not need to be prevented, it
@@ -399,7 +399,7 @@ export default function UsersPage() {
 
   return (
     <>
-      {/* The KPI strip counted staff by role and state — the two filters in the
+      {/* The KPI strip counted staff by role and state, the two filters in the
           toolbar below. "Admins 4, 31%" was a share of headcount nothing
           followed from. */}
       <WorkspaceTitle
@@ -418,7 +418,7 @@ export default function UsersPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Active staff", value: stats.active,

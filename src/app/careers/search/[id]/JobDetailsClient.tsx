@@ -219,7 +219,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           url: window.location.href,
         });
       } catch (err) {
-        // User cancelled the native share sheet — not an error worth surfacing.
+        // User cancelled the native share sheet, not an error worth surfacing.
         console.error("Failed to share job link:", err);
       }
     } else {

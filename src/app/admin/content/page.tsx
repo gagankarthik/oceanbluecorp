@@ -63,7 +63,7 @@ const PAGES: PageDef[] = [
         { key: "heroCtaText", label: "Primary CTA Button", type: "text", placeholder: "Start a conversation" },
         { key: "heroCtaSecondary", label: "Secondary CTA Button", type: "text", placeholder: "Explore what we do" },
       ],
-      // TEMPORARY — the 13-year celebration band. Delete this section with
+      // TEMPORARY, the 13-year celebration band. Delete this section with
       // src/components/landing/anniversary/. The toggle is the kill switch:
       // off hides the band immediately, and with it left untouched the band
       // retires itself after the celebration window (see lib/anniversary.ts).
@@ -139,7 +139,7 @@ const PAGES: PageDef[] = [
 
 // Intentionally empty: a blank field means "use the site's built-in copy".
 // (The page components hold the real default text and fall back to it when a
-// field is empty.) This keeps the editor and the live site in sync — saving a
+// field is empty.) This keeps the editor and the live site in sync, saving a
 // page never overwrites unedited copy with generic placeholder text. The
 // helpful guidance text lives in each field's `placeholder`.
 const DEFAULT_FIELDS: Record<string, string> = {};
@@ -315,7 +315,7 @@ export default function ContentPage() {
       ) : (
         <div className="grid items-start gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
 
-          {/* ── Section nav — sticks while the editor scrolls ── */}
+          {/* ── Section nav, sticks while the editor scrolls ── */}
           <div className="space-y-4 lg:sticky lg:top-[76px]">
             <AdminCard className="overflow-hidden">
               <NavLabel>Pages</NavLabel>
@@ -510,7 +510,7 @@ export default function ContentPage() {
               })}
             </div>
 
-            {/* Save bar — the sheet's own footer, not a floating card. */}
+            {/* Save bar, the sheet's own footer, not a floating card. */}
             <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-zebra)] px-5 py-3">
               <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
                 {lastSaved[activePage]

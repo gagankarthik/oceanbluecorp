@@ -15,7 +15,7 @@ export default function AnnouncementBar({ text, href, scroll }: { text: string; 
     "horizon relative flex h-10 w-full items-center overflow-hidden text-[13px] font-medium text-white";
   const barStyle = {
     background: "linear-gradient(90deg, var(--hz-cobalt-600) 0%, var(--hz-cobalt) 50%, var(--hz-cobalt-600) 100%)",
-    color: "#ffffff", // force white — beats the .horizon base color
+    color: "#ffffff", // force white, beats the .horizon base color
   } as const;
 
   // ── Scrolling / marquee mode ──

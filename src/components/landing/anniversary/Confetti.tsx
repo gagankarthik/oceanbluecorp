@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
 
 /* ============================================================
-   Confetti — one canvas burst, fired once when the anniversary
+   Confetti, one canvas burst, fired once when the anniversary
    section scrolls into view.
 
    Deliberately not a library: ~90 rectangles on a single canvas
@@ -20,8 +20,8 @@ import { useReducedMotion } from "framer-motion";
 export const CONFETTI_ON_DARK = ["#1d4ed8", "#2ad8ef", "#5ce0f7", "#6366f1", "#ffffff", "#93b4f7"];
 
 /** For light grounds. The dark palette's white and pale cyan are effectively
- *  invisible on a near-white band — a third of the burst would simply not be
- *  there — so this substitutes saturated and deep blues that hold their edge. */
+ *  invisible on a near-white band, a third of the burst would simply not be
+ *  there, so this substitutes saturated and deep blues that hold their edge. */
 export const CONFETTI_ON_LIGHT = ["#1d4ed8", "#1740ad", "#0ea5e9", "#06b6d4", "#6366f1", "#0a1730"];
 
 const COUNT = 90;
@@ -43,7 +43,7 @@ type Particle = {
   decay: number;
 };
 
-/** Builds the burst. Called only from inside the effect, never during render —
+/** Builds the burst. Called only from inside the effect, never during render,
  *  the randomness here would otherwise differ between the server's HTML and the
  *  browser's hydration and trip a mismatch on every particle. */
 function makeParticles(w: number, h: number, colors: string[], spread: number): Particle[] {
@@ -91,7 +91,7 @@ export default function Confetti({
   spread = 300,
 }: {
   run: boolean;
-  /** Defaults to the light palette — both surfaces that use this today are
+  /** Defaults to the light palette, both surfaces that use this today are
    *  light bands. Pass CONFETTI_ON_DARK on an ink ground. */
   colors?: string[];
   /** Pixels from centre to each launch point. Match it to the half-width of
@@ -104,7 +104,7 @@ export default function Confetti({
   const firedRef = useRef(false);
 
   useEffect(() => {
-    // Reduced motion gets no burst at all — a confetti animation is exactly the
+    // Reduced motion gets no burst at all, a confetti animation is exactly the
     // kind of thing the preference exists to suppress.
     if (!run || reduce || firedRef.current) return;
     const canvas = canvasRef.current;
@@ -114,7 +114,7 @@ export default function Confetti({
 
     firedRef.current = true;
 
-    // Size to the parent box at device pixel ratio, capped at 2 — a 3x phone
+    // Size to the parent box at device pixel ratio, capped at 2, a 3x phone
     // would otherwise paint 9x the pixels for no visible gain.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = canvas.parentElement?.getBoundingClientRect();

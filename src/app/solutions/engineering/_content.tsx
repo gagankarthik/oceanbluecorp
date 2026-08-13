@@ -13,7 +13,7 @@ import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 
 /* ============================================================
-   Engineering segment — a co-equal fourth practice.
+   Engineering segment, a co-equal fourth practice.
    Follows the Horizon rhythm: hero → trust bar → disciplines →
    industries → engagement → delivery → why → CTA. Self-contained:
    no shared landing sections (stats / certifications) are repeated.

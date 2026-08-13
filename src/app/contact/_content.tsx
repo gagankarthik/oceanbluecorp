@@ -35,7 +35,7 @@ const inquiryTypes = [
 
 /* Rewritten off vague claims ("Round-the-clock assistance from certified
    experts", "Years of delivery across regulated industries") and one promise
-   we should not be making in writing — "We reply within 24 hours, guaranteed."
+   we should not be making in writing , "We reply within 24 hours, guaranteed."
    Each line now states something specific and checkable. */
 const whyPartner: { icon: LucideIcon; title: string; description: string }[] = [
   { icon: MessageSquare, title: "A named contact", description: "You get a person who knows your account, not a shared inbox and a ticket number." },

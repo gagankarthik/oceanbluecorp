@@ -7,7 +7,7 @@ import {
 } from "@/lib/aws/index-resumes";
 import { requireStaff } from "@/lib/auth/verify";
 
-// One hop = up to 3 resumes, and a full parse can take 30–90s each — the batch
+// One hop = up to 3 resumes, and a full parse can take 30–90s each, the batch
 // runs in parallel so 120s covers the worst case plus the next-hop handoff.
 export const maxDuration = 120;
 
@@ -17,7 +17,7 @@ export const maxDuration = 120;
 // resumed manually. Responds 202 before doing any work.
 export async function POST(request: NextRequest) {
   // Internal hops authenticate with an HMAC of the exact body (see
-  // signIndexPayload) — the raw secret never travels in a request.
+  // signIndexPayload), the raw secret never travels in a request.
   const rawBody = await request.text();
   const signature = (request.headers.get("x-index-sig") || "").trim();
   const internal = verifyIndexSignature(rawBody, signature);

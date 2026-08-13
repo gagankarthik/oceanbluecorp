@@ -17,7 +17,7 @@ function cookieOptions(maxAge: number) {
   };
 }
 
-// POST — verify the token and set the session cookie.
+// POST, verify the token and set the session cookie.
 export async function POST(req: NextRequest) {
   let body: { token?: unknown; expiresIn?: unknown };
   try {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   return res;
 }
 
-// DELETE — clear the session cookie (sign-out).
+// DELETE, clear the session cookie (sign-out).
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, "", cookieOptions(0));

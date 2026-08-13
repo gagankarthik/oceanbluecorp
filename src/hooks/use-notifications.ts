@@ -40,7 +40,7 @@ export function useNotifications() {
         setUnreadCount(data.unreadCount ?? 0);
       }
     } catch {
-      // Fail silently — notifications are non-critical.
+      // Fail silently, notifications are non-critical.
     } finally {
       setLoading(false);
     }

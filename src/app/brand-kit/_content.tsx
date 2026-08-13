@@ -51,13 +51,13 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
    hero 3.5rem, while the site had moved to fluid clamps and grown a second
    heading role the kit never showed. A brand kit that has to be hand-synced
    with the stylesheet stops being the source of truth the first time someone
-   edits one and not the other — the icon grid below is auto-enumerated for the
+   edits one and not the other, the icon grid below is auto-enumerated for the
    same reason. `note` is the only thing written by hand, and it describes
    where the role is used rather than what size it is. */
 const TYPE_SCALE = [
   { label: "Display / Hero", cls: "text-[clamp(2rem,5.4vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
-  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2 — opens a section", sample: "Section headline" },
-  { label: "Statement", cls: "hz-statement", note: ".hz-statement — supports one", sample: "Relied on by enterprises." },
+  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2, opens a section", sample: "Section headline" },
+  { label: "Statement", cls: "hz-statement", note: ".hz-statement, supports one", sample: "Relied on by enterprises." },
   { label: "Card title / H3", cls: "text-[1.35rem] sm:text-[1.5rem]", note: "Service and content cards", sample: "Card title" },
   { label: "Body", cls: "text-[16px] font-normal leading-relaxed", note: "Paragraphs", sample: "Body copy sets the reading rhythm at a relaxed line height for clarity." },
   { label: "Small / caption", cls: "text-[13px] font-normal text-[var(--hz-text-mute)]", note: "Captions, metadata", sample: "Captions, metadata, and labels." },
@@ -84,12 +84,12 @@ function CopyChip({ value }: { value: string }) {
 
 // Every custom glyph exported from the admin icon set. Type exports are erased
 // at runtime, so filtering to Icon-named function values yields exactly the
-// components — no manual list to keep in sync.
+// components, no manual list to keep in sync.
 const ICON_ENTRIES = (Object.entries(AdminIcons) as [string, unknown][])
   .filter(([name, v]) => name.startsWith("Icon") && typeof v === "function")
   .sort(([a], [b]) => a.localeCompare(b)) as [string, ComponentType<{ className?: string }>][];
 
-/** One icon tile — click copies the rendered <svg> markup to the clipboard. */
+/** One icon tile, click copies the rendered <svg> markup to the clipboard. */
 function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ className?: string }> }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [copied, setCopied] = useState(false);
@@ -107,7 +107,7 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ classNam
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // clipboard is permission-gated / unavailable on plain http — no-op
+      // clipboard is permission-gated / unavailable on plain http, no-op
     }
   };
 
@@ -242,7 +242,7 @@ export default function BrandKitContent() {
           <SectionHeading
             n="05"
             title="Icons"
-            sub="The custom Ocean Blue icon set — drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
+            sub="The custom Ocean Blue icon set, drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
           />
           <div className="mt-8 grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
             {ICON_ENTRIES.map(([name, Icon]) => (

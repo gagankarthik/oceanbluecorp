@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
       // Any attribute the pool marks required but the invite didn't set has to
       // travel with the challenge answer. Cognito lists them here as
-      // ["userAttribute.name","userAttribute.phone_number"] — strip the prefix.
+      // ["userAttribute.name","userAttribute.phone_number"], strip the prefix.
       let requiredAttributes: string[] = [];
       try {
         const raw = JSON.parse(params.requiredAttributes || "[]");
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
           requiredAttributes = raw.map((a: string) => String(a).replace(/^userAttribute\./, ""));
         }
       } catch {
-        // Malformed list — the complete-invite route falls back to its defaults.
+        // Malformed list, the complete-invite route falls back to its defaults.
       }
 
       return NextResponse.json({

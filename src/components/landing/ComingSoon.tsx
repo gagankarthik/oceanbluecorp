@@ -21,7 +21,7 @@ import PageHero from "./PageHero";
        body is "nothing here yet" is thin content, and publishing
        four of them to an index does the domain harm rather than
        good. The flag comes off with the first real entry.
-     · They stay OUT of sitemap.xml for the same reason — a sitemap
+     · They stay OUT of sitemap.xml for the same reason, a sitemap
        is a list of pages worth crawling.
    ============================================================ */
 

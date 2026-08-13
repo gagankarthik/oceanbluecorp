@@ -150,7 +150,7 @@ function EditApplicationInner() {
     setResumeUploading(true);
     try {
       // The route uploads to S3 server-side (multipart/form-data) to avoid
-      // browser→S3 CORS issues — send the file itself, not a presign request.
+      // browser→S3 CORS issues, send the file itself, not a presign request.
       const fd = new FormData();
       fd.append("file", resumeFile);
       fd.append("userId", id);
@@ -246,7 +246,7 @@ function EditApplicationInner() {
   return (
     <div className="space-y-5">
 
-      {/* Back leads the page, ahead of the title — same position on every
+      {/* Back leads the page, ahead of the title, same position on every
           record screen. */}
       <button
         type="button"
@@ -530,7 +530,7 @@ function EditApplicationInner() {
                   <FormSelect id="benchType" value={benchType} onChange={(e) => setBenchType(e.target.value as BenchType)}>
                     {POOL_ORDER.map((p) => (
                       <option key={p} value={p}>
-                        {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                        {POOL_META[p].label} , {POOL_META[p].badge.toLowerCase()}
                       </option>
                     ))}
                   </FormSelect>
@@ -598,7 +598,7 @@ function EditApplicationInner() {
               <Field label="Candidate rating">
                 <div className="flex items-center gap-2 py-1">
                   <StarRating rating={rating} onRate={(n) => setRating(n === rating ? 0 : n)} size="lg" />
-                  <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{rating > 0 ? `${rating}/5` : "—"}</span>
+                  <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{rating > 0 ? `${rating}/5` : "–"}</span>
                 </div>
               </Field>
 
@@ -616,7 +616,7 @@ function EditApplicationInner() {
         </div>
       </form>
 
-      {/* ── Anchored action bar — Save stays reachable on a long form ── */}
+      {/* ── Anchored action bar. Save stays reachable on a long form ── */}
       <div className="sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/90 px-5 py-3 backdrop-blur lg:-mx-6 lg:-mb-6 lg:px-6">
         {error && <p className="mr-auto text-[13px] font-medium text-[var(--adm-danger)]">{error}</p>}
         <WorkspaceButton type="button" onClick={() => router.push("/admin/applications")}>

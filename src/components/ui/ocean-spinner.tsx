@@ -36,7 +36,7 @@ export function OceanSpinner({ size = 88, label, className }: OceanSpinnerProps)
         <circle cx="50" cy="50" r="30" fill="none" stroke="#e0f2fe" strokeWidth="4" />
         <circle cx="50" cy="50" r="17" fill="none" stroke="#ecfdf5" strokeWidth="3.5" />
 
-        {/* Outer arc — blue, clockwise, slow */}
+        {/* Outer arc, blue, clockwise, slow */}
         <circle
           cx="50" cy="50" r="43"
           fill="none" stroke="#2563eb" strokeWidth="5"
@@ -50,7 +50,7 @@ export function OceanSpinner({ size = 88, label, className }: OceanSpinnerProps)
           />
         </circle>
 
-        {/* Middle arc — cyan, counter-clockwise, medium */}
+        {/* Middle arc, cyan, counter-clockwise, medium */}
         <circle
           cx="50" cy="50" r="30"
           fill="none" stroke="#0891b2" strokeWidth="4"
@@ -63,7 +63,7 @@ export function OceanSpinner({ size = 88, label, className }: OceanSpinnerProps)
           />
         </circle>
 
-        {/* Inner arc — emerald, clockwise, fast */}
+        {/* Inner arc, emerald, clockwise, fast */}
         <circle
           cx="50" cy="50" r="17"
           fill="none" stroke="#059669" strokeWidth="3.5"
@@ -93,7 +93,7 @@ export function OceanSpinner({ size = 88, label, className }: OceanSpinnerProps)
   );
 }
 
-/** Full-viewport-height centred spinner — drop-in for page-level loading guards */
+/** Full-viewport-height centred spinner, drop-in for page-level loading guards */
 export function PageLoading({ label = "Loading…" }: { label?: string }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

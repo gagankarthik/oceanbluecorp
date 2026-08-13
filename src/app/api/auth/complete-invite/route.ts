@@ -29,7 +29,7 @@ interface Challenge {
 // A challenge session is single-use: the moment Cognito rejects an answer the
 // session dies with it, so every follow-up attempt reports "session expired"
 // instead of the real problem. Re-running InitiateAuth with the temporary
-// password mints a fresh one — that is what makes any second attempt, ours or
+// password mints a fresh one, that is what makes any second attempt, ours or
 // the user's, possible at all.
 async function reissueChallenge(
   client: CognitoIdentityProviderClient,
@@ -54,7 +54,7 @@ async function reissueChallenge(
       username: response.ChallengeParameters?.USER_ID_FOR_SRP || email,
     };
   } catch (err) {
-    // The temp password is gone or no longer valid — nothing to recover with.
+    // The temp password is gone or no longer valid, nothing to recover with.
     console.error("Could not re-issue the invite challenge:", err);
     return null;
   }
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     });
 
     // The invite only sets `email`, so any other attribute the pool marks
-    // required is still missing — and Cognito refuses the challenge until it
+    // required is still missing, and Cognito refuses the challenge until it
     // travels with the new password. Sign-in reports which ones; without that
     // list, send both the form collects.
     const values: Record<string, string> = { name, phone_number: phone };
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
           ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
           Session: challenge.session,
           ChallengeResponses: {
-            // Cognito issues the session against this identifier — for pools
+            // Cognito issues the session against this identifier, for pools
             // with UUID usernames it is not the typed email.
             USERNAME: challenge.username,
             NEW_PASSWORD: password,
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
         })
       );
 
-    // The session the sign-in step handed us may already be spent — by an
+    // The session the sign-in step handed us may already be spent, by an
     // earlier failed attempt on this same form. Mint a new one when it is
     // missing entirely; otherwise try it and fall back below.
     let challenge: Challenge | null = session
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
       response = await respond(challenge, attributeResponses);
     } catch (err: unknown) {
       const code = (err as { name?: string }).name ?? "";
-      // A password the pool refuses will be refused again — no fresh session
+      // A password the pool refuses will be refused again, no fresh session
       // changes that, so don't spend one hiding a message the user needs.
       if (code === "InvalidPasswordException" || !tempPassword) throw err;
 
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
       try {
         response = await respond(fresh, {});
       } catch {
-        // The password-only answer tells us nothing new — surface the original.
+        // The password-only answer tells us nothing new, surface the original.
         throw err;
       }
     }
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Resolve the account's `sub` from the freshly issued IdToken — a reliable
+    // Resolve the account's `sub` from the freshly issued IdToken, a reliable
     // identifier for the admin attribute update regardless of how the pool maps
     // usernames vs. the email alias.
     let usernameForUpdate = challenge.username;
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
 
     // Persist name + phone now that the account is active. Uses admin
     // credentials (server-side) so it works regardless of token scope. A
-    // failure here shouldn't block the user from getting in — log and continue.
+    // failure here shouldn't block the user from getting in, log and continue.
     const attrResult = await updateCognitoUserAttributes(usernameForUpdate, [
       { Name: "name", Value: name },
       { Name: "phone_number", Value: phone },
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     const name = (err as { name?: string }).name ?? "";
     const message = cognitoErrorMessages[name] ?? "Could not complete your account setup. Please try again.";
     // Cognito's own wording ("Attributes did not conform to the schema…") is
-    // what makes a rejected setup diagnosable — pass it through as a detail.
+    // what makes a rejected setup diagnosable, pass it through as a detail.
     const detail = (err as { message?: string }).message;
     return NextResponse.json({ error: message, code: name, detail }, { status: 400 });
   }

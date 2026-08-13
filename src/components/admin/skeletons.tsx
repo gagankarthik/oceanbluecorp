@@ -5,7 +5,7 @@ export function Skel({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-[6px] bg-[var(--adm-line-soft)]/70", className)} />;
 }
 
-/** Plain divide-y rows — drop inside an existing card/table container while data loads. */
+/** Plain divide-y rows, drop inside an existing card/table container while data loads. */
 export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className="divide-y divide-[var(--adm-line-soft)]" aria-hidden="true">
@@ -160,7 +160,7 @@ export function AdminFormSkeleton() {
   );
 }
 
-/** Kanban board skeleton — a row of stage columns, each with stacked cards. */
+/** Kanban board skeleton, a row of stage columns, each with stacked cards. */
 export function KanbanSkeleton({
   columns = 5,
   cardsPerColumn = 3,
@@ -211,14 +211,14 @@ export function KanbanSkeleton({
   );
 }
 
-/** Dashboard skeleton — stat cards + chart placeholder + recent list. */
+/** Dashboard skeleton, stat cards + chart placeholder + recent list. */
 /**
- * Mirrors /admin exactly — six bands in the order the page renders them.
+ * Mirrors /admin exactly, six bands in the order the page renders them.
  *
  * The version this replaced described a layout the dashboard had not had for
  * some time: a 4-up stat-card row that no longer exists, and nothing at all for
  * three of the six sections. A skeleton that does not match is worse than none,
- * because it promises a shape and then the content arrives somewhere else — the
+ * because it promises a shape and then the content arrives somewhere else, the
  * page appears to jump, which is the exact thing a skeleton exists to prevent.
  *
  * If you move a band on the dashboard, move it here. The two are a pair.
@@ -226,8 +226,7 @@ export function KanbanSkeleton({
 export function DashboardSkeleton() {
   return (
     <div className="space-y-8 pb-12" aria-hidden="true">
-      {/* 1. Greeting + scope filter. Plain content on the canvas, NOT a card —
-             the old skeleton drew a bordered card here and the real page has
+      {/* 1. Greeting + scope filter. Plain content on the canvas, NOT a card, the old skeleton drew a bordered card here and the real page has
              none, so the whole page shifted up when it loaded. */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="flex min-w-0 items-center gap-4">
@@ -265,7 +264,7 @@ export function DashboardSkeleton() {
       </div>
 
       {/* 4 and 5 are `space-y-3` wrappers, each a small section LABEL above its
-          grid — not bare grids. Leaving the label out shifted everything below
+          grid, not bare grids. Leaving the label out shifted everything below
           by ~24px twice over, which is precisely the jump a skeleton is for. */}
       <div className="space-y-3">
         <Skel className="h-3 w-44" />
@@ -320,7 +319,7 @@ export function ChartSkeleton({ height = 180 }: { height?: number }) {
   );
 }
 
-/** Card grid skeleton — matches a 3-up or 4-up responsive card layout. */
+/** Card grid skeleton, matches a 3-up or 4-up responsive card layout. */
 export function CardGridSkeleton({
   cards = 6,
   columns = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",

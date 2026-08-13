@@ -395,7 +395,7 @@ export default function CareersSearchPage() {
               </div>
 
               {loading ? (
-                /* Skeleton rows rather than a lone spinner — the list shape is
+                /* Skeleton rows rather than a lone spinner, the list shape is
                    known, so showing it avoids a jarring swap when data lands. */
                 <div className="grid gap-4">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -551,26 +551,37 @@ export default function CareersSearchPage() {
                       </div>
                     )}
 
-                    {/* Per-page selector */}
+                    {/* Per-page selector.
+
+                        Four buttons in a row put a permanent, always-visible
+                        control beside the pagination for a setting most people
+                        change once or never, and the "All" option had a real
+                        bug in it: its active state compared itemsPerPage
+                        against filteredJobs.length, so it lit up on its own
+                        whenever a filter narrowed the list below the current
+                        page size. A select collapses it to one line, states the
+                        current value in words, and cannot disagree with itself.
+
+                        It uses the same native <select> as the filters above,
+                        so keyboard and screen-reader behaviour is the platform's
+                        rather than something reimplemented here. */}
                     <div className="flex items-center gap-2 text-sm text-[var(--hz-text-subtle)]">
-                      <span>Jobs per page:</span>
-                      <div className="flex items-center gap-1">
+                      <label htmlFor="per-page">Jobs per page</label>
+                      <select
+                        id="per-page"
+                        value={itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "all" : String(itemsPerPage)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setItemsPerPage(v === "all" ? (filteredJobs.length || 999) : Number(v));
+                          setCurrentPage(1);
+                        }}
+                        className="rounded-lg border border-[var(--hz-paper-line)] bg-white px-3 py-2 text-sm font-medium text-[var(--hz-text)] transition-colors hover:bg-[var(--hz-paper)] focus:border-[var(--hz-cobalt)] focus:outline-none"
+                      >
                         {PER_PAGE_OPTIONS.map((n) => (
-                          <button
-                            key={n}
-                            onClick={() => { setItemsPerPage(n); setCurrentPage(1); }}
-                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"}`}
-                          >
-                            {n}
-                          </button>
+                          <option key={n} value={n}>{n}</option>
                         ))}
-                        <button
-                          onClick={() => { setItemsPerPage(filteredJobs.length || 999); setCurrentPage(1); }}
-                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-[var(--hz-cobalt)] text-white" : "border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"}`}
-                        >
-                          All
-                        </button>
-                      </div>
+                        <option value="all">All</option>
+                      </select>
                     </div>
                   </div>
                 </>

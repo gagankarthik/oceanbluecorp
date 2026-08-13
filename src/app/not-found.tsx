@@ -31,11 +31,11 @@ function FluffyCharacter() {
       <ellipse cx="130" cy="323" rx="56" ry="7" fill="#000" opacity="0.18" />
 
       {/* ════════════════════════
-          HAIR — big puffy cloud
+          HAIR, big puffy cloud
           (dark→light, bottom→top)
          ════════════════════════ */}
 
-      {/* Deepest base blobs — widest lateral spread */}
+      {/* Deepest base blobs, widest lateral spread */}
       <circle cx="74"  cy="148" r="42" fill="#3B0764" />
       <circle cx="186" cy="148" r="42" fill="#3B0764" />
       <circle cx="130" cy="132" r="50" fill="#3B0764" />
@@ -105,14 +105,14 @@ function FluffyCharacter() {
       {/* Right eyelash */}
       <path d="M143 160 Q148 157 152 161" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" fill="none" />
 
-      {/* Eyebrows — raised / surprised */}
+      {/* Eyebrows, raised / surprised */}
       <path d="M102 153 Q112 146 122 151" stroke="#5B21B6" strokeWidth="3.5" strokeLinecap="round" fill="none" />
       <path d="M138 151 Q148 146 158 153" stroke="#5B21B6" strokeWidth="3.5" strokeLinecap="round" fill="none" />
 
       {/* Nose */}
       <circle cx="130" cy="180" r="3" fill="#F59E0B" opacity="0.55" />
 
-      {/* Mouth — surprised O */}
+      {/* Mouth, surprised O */}
       <ellipse cx="130" cy="196" rx="9" ry="10" fill="#F97316" />
       <ellipse cx="130" cy="197" rx="6"  ry="7"  fill="#7C2D12" />
 
@@ -260,7 +260,7 @@ export default function NotFound() {
             className="text-xl sm:text-2xl font-bold text-white/90 tracking-tight"
             style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
           >
-            Oops — page not found
+            Oops, page not found
           </motion.p>
         </div>
 

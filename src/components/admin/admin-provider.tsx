@@ -59,7 +59,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       router.push(url);
       return;
     }
-    // Edit mode — navigate to full-page edit form
+    // Edit mode, navigate to full-page edit form
     if (opts.candidate?.id) {
       router.push(`/admin/applications/${opts.candidate.id}/edit`);
     }

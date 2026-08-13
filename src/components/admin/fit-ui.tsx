@@ -1,4 +1,4 @@
-// Shared presentational atoms for candidate/job fit results — reused by the
+// Shared presentational atoms for candidate/job fit results, reused by the
 // Best Candidates panel, the Job Fit card, and Lead Sourcing so the verdict
 // styling, score colour, and skill chips live in one place.
 import { Check, X } from "lucide-react";

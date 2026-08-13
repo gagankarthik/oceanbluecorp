@@ -47,8 +47,8 @@ export async function GET(
      *
      * The list endpoint filters these out, but filtering a list is not access
      * control on its own: the ids are guessable from anywhere else they appear,
-     * and this route would happily return the full record — resume analysis
-     * included — to any staff caller who asked for one directly.
+     * and this route would happily return the full record, resume analysis
+     * included, to any staff caller who asked for one directly.
      *
      * 404 rather than 403 on purpose. A 403 confirms the record exists, which
      * is itself the thing being protected: whether a given person is in a
@@ -218,13 +218,13 @@ export async function PUT(
        * The verdict is cached on the application as `{ jobFit, jobFitAt }` and
        * was scored against whichever requisition they were on at the time. Move
        * them and nothing cleared it, so the card went on presenting a number
-       * computed for a job the candidate is no longer applying to — as the fit
+       * computed for a job the candidate is no longer applying to, as the fit
        * for the one they are. A stale score is worse than none: it is confident
        * and specific, so nobody thinks to question it.
        *
        * Cleared here rather than only marked stale, because this is the one
        * place every move goes through, and it fixes records written before
-       * `jobFitJobId` existed too — they carry no job to compare against.
+       * `jobFitJobId` existed too, they carry no job to compare against.
        */
       if (body.jobId !== undefined && body.jobId !== existingApp.data.jobId) {
         updates.jobFit = undefined;
@@ -235,7 +235,7 @@ export async function PUT(
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;
       if (body.hireType !== undefined) updates.hireType = body.hireType;
-      // Visa details — the edit form omits visaExpiry entirely when it is blank,
+      // Visa details, the edit form omits visaExpiry entirely when it is blank,
       // so an explicit "" is the only way it can be cleared.
       if (body.visaSponsorshipRequired !== undefined) updates.visaSponsorshipRequired = body.visaSponsorshipRequired;
       if (body.visaExpiry !== undefined) updates.visaExpiry = body.visaExpiry;
@@ -294,7 +294,7 @@ export async function PUT(
        *
        * Queued only when the attached file actually changed, so re-saving a
        * profile does not re-run a 90-second LLM pipeline for nothing. A manual
-       * resumeAnalysis edit in the same request wins — that is someone
+       * resumeAnalysis edit in the same request wins, that is someone
        * correcting the extraction by hand, and re-parsing would overwrite it.
        */
       const newResumeId = typeof updates.resumeId === "string" ? updates.resumeId : undefined;
@@ -303,7 +303,7 @@ export async function PUT(
         && body.resumeAnalysis === undefined;
 
       // Detaching the resume: an empty id where one used to be. The parsed
-      // detail goes with it — leaving it behind would describe a document the
+      // detail goes with it, leaving it behind would describe a document the
       // record no longer has.
       const resumeDetached = newResumeId === "" && !!existingApp.data.resumeId;
 
@@ -311,8 +311,8 @@ export async function PUT(
         updates.resumeAnalysisStatus = "pending";
         updates.resumeAnalysisError = "";
         // A new document starts with a clean slate. Without this a record that
-        // had exhausted its retry budget — or was marked a dead end because the
-        // OLD file was a scan — would refuse to analyse the new one.
+        // had exhausted its retry budget, or was marked a dead end because the
+        // OLD file was a scan, would refuse to analyse the new one.
         updates.resumeAnalysisAttempts = 0;
         updates.resumeAnalysisRetryable = false;
       }

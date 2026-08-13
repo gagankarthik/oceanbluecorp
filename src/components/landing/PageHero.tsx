@@ -8,7 +8,7 @@ import Photo from "./Photo";
    before the rebuild: a full-bleed photograph, a near-opaque dark
    gradient dropped over it to claw back enough contrast to read,
    and the headline set in white on top. The landing page now does
-   the exact opposite, deliberately — near-black type on warm paper,
+   the exact opposite, deliberately, near-black type on warm paper,
    with the photograph BELOW the sentence rather than under it. That
    single decision is most of why the landing reads as confident:
    nothing competes with the words, and the image gets to be a
@@ -19,8 +19,8 @@ import Photo from "./Photo";
    which is what keeps eight pages in the same voice as the ninth
    without eight chances to drift.
 
-   `image` is optional. A page with nothing worth showing — contact,
-   a policy — opens on the statement alone rather than reaching for
+   `image` is optional. A page with nothing worth showing, contact,
+   a policy, opens on the statement alone rather than reaching for
    a stock photo to fill the slot.
    ============================================================ */
 
@@ -48,7 +48,7 @@ export default function PageHero({
         {eyebrow && (
           <span className="hz-eyebrow block text-[var(--hz-cobalt)]">{eyebrow}</span>
         )}
-        {/* One step down from the landing's own h1 — that page is the front
+        {/* One step down from the landing's own h1, that page is the front
             door and should stay the loudest thing on the site. Measure is in
             ch so the line count holds its shape as the clamp scales, instead
             of rewrapping differently at every width. */}

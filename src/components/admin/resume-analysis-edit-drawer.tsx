@@ -175,7 +175,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                   onChange={(e) => setAnalytics("career_level", e.target.value || null)}
                   className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink)] focus:outline-none focus:border-[var(--adm-accent)] focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 >
-                  <option value="">—</option>
+                  <option value=""></option>
                   {CAREER_LEVELS.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>

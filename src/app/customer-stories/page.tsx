@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oceanbluecorp.com/customer-stories" },
   // Deliberate: this section has no entries yet, and four thin pages in an
   // index hurt the domain rather than help it. Remove once real content lands
-  // — and add the route to sitemap.xml at the same time.
+  //, and add the route to sitemap.xml at the same time.
   robots: { index: false, follow: true },
 };
 
@@ -21,9 +21,9 @@ export default function CustomerStories() {
   return (
     <ComingSoon
       eyebrow="Customer stories"
-      title="How clients describe working with us."
-      subtitle="In their words: what changed, how long it took, and what they would tell a peer."
-      note="We are collecting these with our clients' approval rather than publishing anything unreviewed. If you would like to speak with a reference directly, we can arrange it."
+      title="What it is like to work with us."
+      subtitle="In our clients' words: what changed, how long it took, and what they would tell a peer."
+      note="We publish these only once the client has approved the wording, so there is nothing here yet. If you would rather skip the write-up and speak to a reference directly, we can arrange that."
     />
   );
 }

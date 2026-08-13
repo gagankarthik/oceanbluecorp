@@ -8,12 +8,12 @@ import {
   ANNIVERSARY_YEARS,
 } from "@/lib/anniversary";
 
-/* TEMPORARY — the 13-year anniversary story page. See lib/anniversary.ts for
+/* TEMPORARY, the 13-year anniversary story page. See lib/anniversary.ts for
    the teardown list. Unlike the homepage band this page is NOT date-gated: a
    link shared on the day should keep resolving afterwards rather than 404. */
 
 const URL = `https://oceanbluecorp.com${ANNIVERSARY_PATH}`;
-const TITLE = `${ANNIVERSARY_COPY.heading} — ${FOUNDED_YEAR}–${ANNIVERSARY_YEAR}`;
+const TITLE = `${ANNIVERSARY_COPY.heading} , ${FOUNDED_YEAR}–${ANNIVERSARY_YEAR}`;
 /* Kept under ~160 characters, which is all a search result shows. The previous
    build ran to 250 and was cut mid-clause; the founding date and the legal
    entity are both on the page itself and in the Organization JSON-LD, so they
@@ -47,7 +47,7 @@ const jsonLd = {
     itemListElement: MILESTONES.map((m, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: `${m.year} — ${m.title}`,
+      name: `${m.year} , ${m.title}`,
       description: m.description,
     })),
   },

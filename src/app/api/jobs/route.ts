@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Staff get full records for all statuses. Public visitors only see
-    // active/open jobs with internal fields stripped — drafts, on-hold, and
+    // active/open jobs with internal fields stripped, drafts, on-hold, and
     // closed postings are never exposed outside the admin.
     const claims = await getClaims(request);
     const isStaff = !!claims?.groups?.some((g) => ["admin", "hr", "recruiter", "sales"].includes(g));

@@ -9,13 +9,13 @@
 
    Instead: SmoothScroll writes here, and consumers READ it from
    inside their own requestAnimationFrame loop. No subscriptions,
-   no re-renders, no scheduling — the value is simply current
+   no re-renders, no scheduling, the value is simply current
    whenever anyone looks at it.
 
    This is safe as a module global specifically because it is
    ephemeral, browser-only display state with a single writer. It
    is not a pattern to reach for with anything that belongs in
-   React's tree, and nothing here may be read during render — an
+   React's tree, and nothing here may be read during render, an
    SSR pass would see the initial values and disagree with the
    client on hydration.
    ============================================================ */

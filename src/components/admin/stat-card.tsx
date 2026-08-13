@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 // IconTrend covers the rising case. There is no falling counterpart in the
 // custom set, so the down arrow stays on lucide rather than reusing the up
-// glyph rotated — a mirrored trend line reads as a different shape, not the
+// glyph rotated, a mirrored trend line reads as a different shape, not the
 // same one inverted.
 import { TrendingDown } from "lucide-react";
 import { IconTrend } from "./icons";
@@ -23,7 +23,7 @@ interface StatCardProps {
   /**
    * Renders a proportion bar under the figure: this metric's share of a whole.
    *
-   * A KPI row of six bare integers gives no sense of scale — "12" means nothing
+   * A KPI row of six bare integers gives no sense of scale , "12" means nothing
    * until you know whether the total is 14 or 1,400. The bar answers that in
    * the same glance, without a second panel or a legend.
    *
@@ -134,7 +134,7 @@ const STRIP_COLS: Record<number, string> = {
  * with gaps between them.
  *
  * Every list page was rebuilding this border/divider arithmetic inline and
- * getting a slightly different answer — different radii, doubled borders at
+ * getting a slightly different answer, different radii, doubled borders at
  * the wrap point, a stray right edge on the last cell of a row. Pass StatCards
  * as children and the strip handles it:
  *
@@ -163,7 +163,7 @@ export function KpiStrip({
         // that still use KpiStrip were the only places left rendering it, so
         // they read as a different design from every list screen. Changing it
         // here rather than at those four call sites keeps them in step for
-        // free — and StatCard already carries its own radius and shadow, so
+        // free, and StatCard already carries its own radius and shadow, so
         // the cells no longer need them stripped off.
         "grid gap-3",
         STRIP_COLS[cols],

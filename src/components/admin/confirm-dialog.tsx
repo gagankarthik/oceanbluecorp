@@ -18,7 +18,7 @@ interface ConfirmDialogProps {
 }
 
 /**
- * Shared confirmation modal — replaces native window.confirm() across the admin.
+ * Shared confirmation modal, replaces native window.confirm() across the admin.
  * Render it once per page with controlled `open` state.
  *
  * A11y: focus is trapped inside the dialog while open; Escape closes it;

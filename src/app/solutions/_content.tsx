@@ -93,7 +93,7 @@ function ServiceDetail({ id }: { id: string }) {
   const Icon = s.icon;
   return (
     // Namespaced. The pillar sections take their id from the pillar name, and
-    // one of them is "Managed" — which collided with the "managed" service key
+    // one of them is "Managed", which collided with the "managed" service key
     // here, putting two id="managed" nodes in the document. Invalid HTML, and
     // it made the hero's #managed jump link ambiguous: the browser picks the
     // first match, which was not necessarily the one intended.
@@ -124,7 +124,7 @@ function ServiceDetail({ id }: { id: string }) {
 export default function ServicesPage({ content = {} }: { content?: Record<string, string> }) {
   return (
     <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero — the landing page's structure, not a headline over a darkened
+      {/* Hero, the landing page's structure, not a headline over a darkened
           photograph. The four practice jump-links stay, since on a page this
           long they are navigation rather than decoration. */}
       <PageHero

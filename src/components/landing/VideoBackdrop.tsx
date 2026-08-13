@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
 /* ============================================================
-   VideoBackdrop — a looping film behind a section.
+   VideoBackdrop, a looping film behind a section.
 
    ── What this costs, and how it is paid ──────────────────────
    The hero film is 11MB. Left to itself the browser would start
@@ -28,7 +28,7 @@ import { useReducedMotion } from "framer-motion";
    and the correct response is to keep showing the gradient, not to
    throw.
 
-   Reduced motion gets no film at all — a looping background is
+   Reduced motion gets no film at all, a looping background is
    exactly the kind of ambient movement that setting is for.
    ============================================================ */
 
@@ -65,7 +65,7 @@ export default function VideoBackdrop({
   /* play() is what STARTS the download here, and it has to be called from an
      effect rather than waited for.
 
-     `preload="none"` is deliberate — it is what keeps 11MB off the critical
+     `preload="none"` is deliberate, it is what keeps 11MB off the critical
      path until after `load`. But it also means the element fetches nothing on
      its own, so `canplay` never fires. Waiting for that event before calling
      play() deadlocks: no play, so no fetch; no fetch, so no canplay. Calling

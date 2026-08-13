@@ -6,7 +6,7 @@ import { Reveal } from "./motion/Primitives";
 import { ArcSweep, IllYears, IllBuildings, IllLoop, IllGlobe } from "./motifs/Motifs";
 
 /* ============================================================
-   Proof — customer.io's "Enterprise ready" band.
+   Proof, customer.io's "Enterprise ready" band.
 
    Theirs: a dark section, a centred eyebrow and heading, then a
    single bordered grid whose cells are divided by hairlines rather
@@ -17,7 +17,7 @@ import { ArcSweep, IllYears, IllBuildings, IllLoop, IllGlobe } from "./motifs/Mo
 
    The accreditations used to live in this band too. They now sit in
    a strip directly above the footer, which is where the reference
-   site parks its trust marks — they are the last thing you pass on
+   site parks its trust marks, they are the last thing you pass on
    the way out, not a competitor to the figures.
 
    The count-up runs once the panel is in view, never for
@@ -61,7 +61,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   const stats: Stat[] = [
-    // Each drawing depicts its own figure — growth rings for years, towers
+    // Each drawing depicts its own figure, growth rings for years, towers
     // for clients, a closing loop for retention, a globe for where the work
     // physically happens. None of them is interchangeable with another.
     { ...parseStatValue(content.statYears, 13, "+"), label: "Years delivering", sub: "Since 2013, without a missed SLA", Motif: IllYears },
@@ -84,7 +84,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
           </h2>
         </Reveal>
 
-        {/* One frame, hairline-divided panes — not four floating cards. The
+        {/* One frame, hairline-divided panes, not four floating cards. The
             outer ring is the object; the dividers are its internal structure. */}
         <div
           ref={ref}
@@ -98,8 +98,7 @@ export default function ImpactStats({ content = {} }: { content?: Record<string,
               } lg:border-b-0 lg:border-r lg:border-white/[0.12] lg:last:border-r-0`}
             >
               {/* The drawing leads the pane, at full strength. Line in white
-                  at reading weight, accent solid in the logo's light blue —
-                  a coloured illustration, not a watermark behind the number. */}
+                  at reading weight, accent solid in the logo's light blue, a coloured illustration, not a watermark behind the number. */}
               <s.Motif className="h-10 w-10 text-white/45 [--motif-accent:var(--hz-aqua)]" />
               <p className="relative hz-display hz-tnum mt-6 text-[clamp(2.2rem,5vw,3.1rem)] leading-none text-white">
                 <Counter target={s.value} run={inView} />

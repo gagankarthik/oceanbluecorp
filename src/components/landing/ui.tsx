@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 
 /* Section kicker. This was stubbed out to `return null`, which left ~27 call
    sites rendering nothing while their siblings kept the `mt-6`/`mt-7` spacing
-   meant to sit below a label — so pages opened with a band of dead space. It
+   meant to sit below a label, so pages opened with a band of dead space. It
    now renders the same mono kicker the landing sections use. */
 export function Eyebrow({
   children,
@@ -24,7 +24,7 @@ export function Eyebrow({
 }) {
   return (
     <span
-      // Light tone takes its colour from .hz-eyebrow now — see globals.css.
+      // Light tone takes its colour from .hz-eyebrow now, see globals.css.
       // Dark keeps an explicit override because the class's neutral is tuned
       // for a light ground and disappears on a dark one.
       className={`hz-eyebrow block ${

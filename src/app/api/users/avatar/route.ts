@@ -5,8 +5,8 @@ import { requireStaff } from "@/lib/auth/verify";
 export const runtime = "nodejs";
 
 // POST /api/users/avatar?userId=...
-// Body is the raw image bytes (Content-Type = the image MIME type). Raw body —
-// not multipart — to stay reliable behind Amplify/Lambda. Uploads to S3 under a
+// Body is the raw image bytes (Content-Type = the image MIME type). Raw body,
+// not multipart, to stay reliable behind Amplify/Lambda. Uploads to S3 under a
 // stable per-user key; the photo is served back via /api/users/avatar/[userId].
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);

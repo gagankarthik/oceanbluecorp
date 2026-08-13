@@ -5,7 +5,7 @@ const BASE = "https://oceanbluecorp.com";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      // Main crawler rules — allow all public pages, block private areas
+      // Main crawler rules, allow all public pages, block private areas
       {
         userAgent: "*",
         allow: [
@@ -21,7 +21,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
         disallow: [
           "/admin/",      // Private HR/admin panel
-          "/api/",        // API routes — never index
+          "/api/",        // API routes, never index
           "/auth/",       // Auth flows
           "/_next/",      // Next.js internals
         ],

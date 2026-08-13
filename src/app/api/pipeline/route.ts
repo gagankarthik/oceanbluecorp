@@ -27,7 +27,7 @@ const PLACEMENT_STATUSES = ["active", "completed", "terminated", "extended"] as 
 
 /**
  * What each kind of record accepts. Anything not declared here is dropped before
- * it can reach the table — see lib/validate.ts on why the shape is declared
+ * it can reach the table, see lib/validate.ts on why the shape is declared
  * rather than the dangerous fields blocked one at a time.
  */
 const BASE_FIELDS: Schema = {
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/pipeline — record a submission, interview or placement.
+ * POST /api/pipeline, record a submission, interview or placement.
  *
  * Also advances the parent application's stage, because that is the whole point:
  * a candidate's stage becomes a consequence of what actually happened instead of
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     const actorName = auth.claims.email || "Staff";
 
-    // The date the record is ABOUT — sent / scheduled / start — which is what
+    // The date the record is ABOUT, sent / scheduled / start, which is what
     // every list and report sorts and filters on. Falls back to now so a record
     // saved without a date still lands somewhere sensible rather than at the
     // epoch, where it would sort ahead of everything ever recorded.

@@ -1,7 +1,7 @@
 /* ============================================================
    WCAG contrast maths.
 
-   Pure functions, no DOM — so the colour choices in this app can
+   Pure functions, no DOM, so the colour choices in this app can
    be asserted in a test rather than eyeballed in a screenshot.
    Eyeballing is how a 3.9:1 ships: it looks fine to whoever
    picked it, on their monitor, at their size.
@@ -45,7 +45,7 @@ export function parseColor(css: string): { rgb: Rgb; a: number } {
  * Composite a translucent colour over an opaque one.
  *
  * Every `*-soft` token in this system is a 10% tint, so the colour a reader
- * actually sees behind text is never the token itself — it is the token
+ * actually sees behind text is never the token itself, it is the token
  * composited over whatever surface it sits on. Comparing text against the
  * un-composited tint overstates the contrast and passes things that fail.
  */
@@ -86,10 +86,10 @@ export function ratioOn(colorCss: string, surfaceCss: string, base = "#ffffff"):
 
 /** WCAG 2.2 thresholds. */
 export const AA = {
-  /** 1.4.3 — body text below 18.66px regular / 24px bold. */
+  /** 1.4.3, body text below 18.66px regular / 24px bold. */
   text: 4.5,
-  /** 1.4.3 — large text at or above those sizes. */
+  /** 1.4.3, large text at or above those sizes. */
   largeText: 3,
-  /** 1.4.11 — icons, borders, control boundaries. */
+  /** 1.4.11, icons, borders, control boundaries. */
   nonText: 3,
 } as const;

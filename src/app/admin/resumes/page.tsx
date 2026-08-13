@@ -67,16 +67,16 @@ function isPdf(type: string) { return type === "application/pdf"; }
 function isWord(type: string) { return type === "application/msword" || type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"; }
 function formatLabel(type: string) { return isPdf(type) ? "PDF" : isWord(type) ? "Word" : "Other"; }
 
-/** Byte size for a file listing. No shared equivalent — resumes is the only screen weighing files. */
+/** Byte size for a file listing. No shared equivalent, resumes is the only screen weighing files. */
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 /**
@@ -148,13 +148,13 @@ export default function ResumeBankPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  /** Re-fetch without flashing the skeleton — used by the cloud-indexing poll. */
+  /** Re-fetch without flashing the skeleton, used by the cloud-indexing poll. */
   const refreshSilently = useCallback(async () => {
     try {
       const res = await fetch("/api/resume-bank");
       const data = await res.json();
       if (res.ok) setResumes(data.resumes || []);
-    } catch { /* transient — keep showing the last data */ }
+    } catch { /* transient, keep showing the last data */ }
   }, []);
 
   // ── derived ───────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export default function ResumeBankPage() {
   // ── duplicates ────────────────────────────────────────────────────────────
   // Same file name AND same byte size = the same resume uploaded twice. Only
   // one copy per group is indexed (server-side), so the extras just clutter
-  // the bank and would show the candidate twice — flag them for deletion.
+  // the bank and would show the candidate twice, flag them for deletion.
 
   const groupKeyOf = (r: BankResume) => `${r.fileName.toLowerCase()}|${r.fileSize}`;
 
@@ -178,7 +178,7 @@ export default function ResumeBankPage() {
   const duplicateCount = useMemo(() => resumes.filter(isDuplicate).length, [resumes, isDuplicate]);
   const [showDupsOnly, setShowDupsOnly] = useState(false);
 
-  /** Groups that already have a searchable copy — their unindexed extras don't count as work. */
+  /** Groups that already have a searchable copy, their unindexed extras don't count as work. */
   const indexedGroups = useMemo(
     () => new Set(resumes.filter((r) => r.indexed).map(groupKeyOf)),
     [resumes],
@@ -410,7 +410,7 @@ export default function ResumeBankPage() {
 
   // ── cloud indexing ────────────────────────────────────────────────────────
   // "Index all" runs server-side as a self-chaining background job (see
-  // /api/resume-bank/index-all) — the old browser-driven loop died the moment
+  // /api/resume-bank/index-all), the old browser-driven loop died the moment
   // the tab closed, which for hundreds of resumes it always eventually did.
   // The flag persists so the progress banner survives a reload.
 
@@ -434,9 +434,9 @@ export default function ResumeBankPage() {
       }
       setCloudTotals({ bank: data.bank || 0, applications: data.applications || 0 });
       setCloudIndexing(true);
-      toast.success(`Indexing started in the cloud — ${(data.bank || 0) + (data.applications || 0)} resumes queued`);
+      toast.success(`Indexing started in the cloud , ${(data.bank || 0) + (data.applications || 0)} resumes queued`);
       if (data.duplicateCopies > 0) {
-        toast.warning(`${data.duplicateCopies} duplicate ${data.duplicateCopies === 1 ? "copy was" : "copies were"} skipped — review and delete them below`);
+        toast.warning(`${data.duplicateCopies} duplicate ${data.duplicateCopies === 1 ? "copy was" : "copies were"} skipped, review and delete them below`);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start indexing");
@@ -451,7 +451,7 @@ export default function ResumeBankPage() {
   }, [cloudIndexing, refreshSilently]);
 
   // The job is done (for this page's purposes) when nothing actionable is left
-  // to index — skipped duplicate copies don't count as pending work.
+  // to index, skipped duplicate copies don't count as pending work.
   useEffect(() => {
     if (!cloudIndexing || loading) return;
     if (resumes.length > 0 && pendingIndex.length === 0) {
@@ -475,7 +475,7 @@ export default function ResumeBankPage() {
       ),
     },
     {
-      // The format mark is the cell — a coloured PDF/DOC tile says it without
+      // The format mark is the cell, a coloured PDF/DOC tile says it without
       // repeating the word next to a filename that already ends in ".pdf".
       key: "type", header: "Type", sortValue: (r) => formatLabel(r.fileType), hideBelow: "md",
       cell: (r) => <FileTypeIcon type={r.fileType} size="sm" />,
@@ -658,7 +658,7 @@ export default function ResumeBankPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Files", value: resumes.length },
@@ -744,11 +744,11 @@ export default function ResumeBankPage() {
             <Loader2 className="mt-0.5 h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
             <div>
               <p className="text-[14px] font-medium text-[var(--adm-ink)]">
-                Indexing in the cloud — {pendingIndex.length} of {resumes.length} bank resumes remaining
+                Indexing in the cloud , {pendingIndex.length} of {resumes.length} bank resumes remaining
                 {cloudTotals && cloudTotals.applications > 0 ? `, plus ${cloudTotals.applications} bench and applicant resumes` : ""}.
               </p>
               <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
-                Runs on the server — you can close this page. If the count stops moving, a few files may have failed; retry them from the Indexed column.
+                Runs on the server, you can close this page. If the count stops moving, a few files may have failed; retry them from the Indexed column.
               </p>
             </div>
           </div>
@@ -765,7 +765,7 @@ export default function ResumeBankPage() {
         <div className="mb-3 flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
           <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
           <span className="text-[14px] text-[var(--adm-ink)]">
-            Indexing resumes… {bulkProgress.done}/{bulkProgress.total}. This can take a while — you can keep working.
+            Indexing resumes… {bulkProgress.done}/{bulkProgress.total}. This can take a while, you can keep working.
           </span>
         </div>
       )}
@@ -773,7 +773,7 @@ export default function ResumeBankPage() {
         <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[14px] text-[var(--adm-ink)]">
             <span className="font-semibold">{pendingIndex.length}</span>{" "}
-            {pendingIndex.length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet — index them so they appear in Lead Sourcing and Best candidates. Already-indexed resumes are skipped; runs in the cloud, you don&apos;t need to keep this page open.
+            {pendingIndex.length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet, index them so they appear in Lead Sourcing and Best candidates. Already-indexed resumes are skipped; runs in the cloud, you don&apos;t need to keep this page open.
           </p>
           <WorkspaceButton variant="primary" onClick={startCloudIndexing} className="sm:flex-none">
             Index all
@@ -786,7 +786,7 @@ export default function ResumeBankPage() {
         <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[14px] text-[var(--adm-ink)]">
             <span className="font-semibold">{duplicateCount}</span> files look like duplicates (same name and size).
-            Only one copy per file is indexed — delete the extras so a candidate never appears twice in matches.
+            Only one copy per file is indexed, delete the extras so a candidate never appears twice in matches.
           </p>
           <WorkspaceButton onClick={() => setShowDupsOnly((v) => !v)} className="sm:flex-none">
             {showDupsOnly ? "Show all files" : "Review duplicates"}
@@ -862,7 +862,7 @@ export default function ResumeBankPage() {
                 >
                   {r.fileName}
                 </button>
-                <p className="mt-0.5 truncate text-xs text-[var(--adm-ink-subtle)]">{r.candidateName || "—"}</p>
+                <p className="mt-0.5 truncate text-xs text-[var(--adm-ink-subtle)]">{r.candidateName || "–"}</p>
               </div>
 
               <div className="space-y-1.5 border-t border-[var(--adm-line-soft)] pt-2.5">

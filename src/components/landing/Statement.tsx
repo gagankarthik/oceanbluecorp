@@ -4,12 +4,12 @@ import { Reveal } from "./motion/Primitives";
 import { ArcSweep, IllContract, IllTeam, IllSeal } from "./motifs/Motifs";
 
 /* ============================================================
-   Statement — the thesis, with the load-bearing words in colour.
+   Statement, the thesis, with the load-bearing words in colour.
 
    customer.io's signature move: one long centred sentence at
    heading scale, with individual words tinted so the sentence
    carries its own emphasis map. It works because the colour is
-   doing SEMANTIC work — it marks the nouns the whole argument
+   doing SEMANTIC work, it marks the nouns the whole argument
    rests on, so you can read the sentence in one pass or read only
    the coloured words and still get the point.
 
@@ -18,7 +18,7 @@ import { ArcSweep, IllContract, IllTeam, IllSeal } from "./motifs/Motifs";
    the deep logo blue for the practices, the light end for the
    promise. Two tones of one hue, not five colours.
 
-   Beneath it, three columns divided by hairlines — the same
+   Beneath it, three columns divided by hairlines, the same
    structure customer.io uses to land the three things that make
    the claim credible.
    ============================================================ */
@@ -67,7 +67,7 @@ export default function Statement() {
         <div className="mt-14 grid gap-10 border-t border-[var(--hz-paper-line)] pt-10 sm:mt-16 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--hz-paper-line)]">
           {PILLARS.map((p) => (
             <div key={p.title} className="sm:px-8 sm:first:pl-0 sm:last:pr-0">
-              {/* Line in the deep logo blue, accent in the light one — the two
+              {/* Line in the deep logo blue, accent in the light one, the two
                   ends of the brand gradient, so the drawings are coloured
                   rather than watermarked. */}
               <p.Motif className="h-11 w-11 text-[var(--hz-cobalt)] [--motif-accent:var(--hz-aqua)]" />

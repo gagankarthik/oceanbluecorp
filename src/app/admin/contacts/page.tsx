@@ -156,7 +156,7 @@ export default function ContactsPage() {
 
   const responseRate = contacts.length > 0
     ? `${Math.round(((statusCounts.responded || 0) / contacts.length) * 100)}%`
-    : "—";
+    : "–";
 
   const clearFilters = () => { setStatusFilter("all"); setInquiryFilter("all"); setSearchQuery(""); };
 
@@ -203,7 +203,7 @@ export default function ContactsPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Awaiting a reply", value: statusCounts.new || 0,
@@ -323,7 +323,7 @@ export default function ContactsPage() {
         <Workspace className={cn("min-h-0 flex-1", !selectedContact && "hidden lg:flex")}>
           {selectedContact ? (
             <>
-              {/* Back to the list — mobile only, where the panes swap. */}
+              {/* Back to the list, mobile only, where the panes swap. */}
               <button
                 onClick={() => setSelectedContact(null)}
                 className="flex flex-none items-center gap-1.5 border-b border-[var(--adm-line)] px-4 py-2.5 text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)] lg:hidden"

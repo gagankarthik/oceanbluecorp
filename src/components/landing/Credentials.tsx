@@ -2,7 +2,7 @@ import { Reveal } from "./motion/Primitives";
 import { ClientRow } from "./ClientLogos";
 
 /* ============================================================
-   Clients — the logo row, on its own.
+   Clients, the logo row, on its own.
 
    This was a tab pair: clients on one panel, accreditations on the
    other. The tabs are gone and so are the accreditations, because
@@ -22,7 +22,7 @@ export default function Credentials() {
         <Reveal className="flex flex-col items-center text-center">
           <span className="hz-eyebrow">Clients</span>
           <h2 className="hz-display hz-statement mt-3 max-w-2xl text-[var(--hz-text)]">
-            Relied on by enterprises and state government agencies across North America.
+            The people who already trusted us with it.
           </h2>
         </Reveal>
 

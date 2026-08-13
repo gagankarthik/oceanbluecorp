@@ -7,7 +7,7 @@ import { Reveal } from "./motion/Primitives";
    size made these look mismatched: object-contain inside one frame lets the
    square badge fill the full height while the long horizontal lockups shrink
    to a third of it. Heights are set per badge so they carry comparable visual
-   weight — the square one shorter than its box would allow, the wide ones
+   weight, the square one shorter than its box would allow, the wide ones
    taller. Width/height are the real pixel dimensions, so next/image keeps the
    aspect and only CSS scales them. */
 const certs = [
@@ -20,14 +20,14 @@ const certs = [
 /**
  * The accreditation row.
  *
- * No longer its own section. It was the thinnest band on the page — a label
- * and four badges between two tinted bands — and a page of eight short
+ * No longer its own section. It was the thinnest band on the page, a label
+ * and four badges between two tinted bands, and a page of eight short
  * sections reads as a list rather than an argument. It now sits inside the
  * Impact band, where it belongs: years delivering, clients, retention and
  * offices are proof, and so is being a certified MBE/WBE. One section makes
  * the whole case instead of two making half of it each.
  *
- * Exported as a bare row, not a <section> — the band around it owns the
+ * Exported as a bare row, not a <section>, the band around it owns the
  * background and the padding.
  */
 export function CertificationRow() {

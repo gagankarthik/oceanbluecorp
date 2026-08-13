@@ -252,7 +252,7 @@ function SummaryBar({ services }: { services: ServiceItem[] }) {
         return (
           // One card, not four tinted ones. Filling each tile with its state's
           // colour meant a healthy system showed four coloured boxes, three of
-          // them reading zero — the page shouted amber and red while nothing
+          // them reading zero, the page shouted amber and red while nothing
           // was wrong. The dot carries the state; the tile stays paper.
           <div key={s} className="flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-white px-4 py-3.5">
             <Dot status={s} />
@@ -302,7 +302,7 @@ export default function StatusContent() {
     <div className="horizon min-h-screen bg-[var(--hz-paper)]">
 
       {/* ── Header ──
-          Was a full-bleed colour band — emerald, amber or rose across the whole
+          Was a full-bleed colour band, emerald, amber or rose across the whole
           width, with a dotted grid overlay, white type and blurred pill chips.
           It made the page look like a different product from the rest of the
           site, and it spent the loudest object on the page saying something a

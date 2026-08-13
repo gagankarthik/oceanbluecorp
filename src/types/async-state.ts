@@ -29,12 +29,12 @@ export type AsyncDataState<T> =
   | { status: "error"; error: Error; onRetry?: () => void }
   | { status: "success"; data: T };
 
-/** Narrow helper — true when state is success (use for TypeScript narrowing). */
+/** Narrow helper, true when state is success (use for TypeScript narrowing). */
 export function isSuccess<T>(s: AsyncState<T>): s is { status: "success"; data: T } {
   return s.status === "success";
 }
 
-/** Narrow helper — true when state is error. */
+/** Narrow helper, true when state is error. */
 export function isError<T>(
   s: AsyncState<T>,
 ): s is { status: "error"; error: Error; onRetry?: () => void } {

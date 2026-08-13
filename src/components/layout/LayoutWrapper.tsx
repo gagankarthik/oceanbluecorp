@@ -38,14 +38,14 @@ export default function LayoutWrapper({
   // Past the fold the strip retracts and the header takes the top edge back.
   // The announcement is news for someone arriving; forty pixels of permanent
   // chrome is a tax on everyone still reading. `main` keeps its pt-10 either
-  // way — animating that too would shift the whole document under the reader
+  // way, animating that too would shift the whole document under the reader
   // mid-scroll, which is a far worse trade than a fixed header moving 40px.
   const [barRetracted, setBarRetracted] = useState(false);
   const retractedRef = useRef(false);
   useEffect(() => {
     if (!showBar) return;
     // Hysteresis, not a single threshold. With one trip point the bar flips
-    // state on every pixel of jitter around it — a trackpad's elastic
+    // state on every pixel of jitter around it, a trackpad's elastic
     // overscroll, or a reader nudging back and forth over the line, makes it
     // flutter. Retracting at 96 and only returning below 24 means it comes
     // back when someone has genuinely returned to the top, and the transition
@@ -75,7 +75,7 @@ export default function LayoutWrapper({
 
   return (
     <>
-      {/* Momentum scrolling, marketing routes only — this branch is already
+      {/* Momentum scrolling, marketing routes only, this branch is already
           past the /admin early return above, and eased scrolling in a dense
           data table fights the person trying to find a row in it. */}
       <SmoothScroll />
@@ -88,8 +88,7 @@ export default function LayoutWrapper({
         Skip to content
       </a>
       {/* The wrapper owns the positioning and the slide; the bar inside it is
-          just a 40px strip. Duration and curve are mirrored on the header —
-          see the note there. */}
+          just a 40px strip. Duration and curve are mirrored on the header, see the note there. */}
       {showBar && (
         <div
           className={`fixed inset-x-0 top-0 z-[9990] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${

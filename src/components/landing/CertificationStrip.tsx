@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 /* ============================================================
-   Trust strip — the divided badge row above the closing CTA.
+   Trust strip, the divided badge row above the closing CTA.
 
    Matching the reference exactly: a light band, immediately ABOVE
    the dark call to action, split into equal cells by vertical
@@ -10,7 +10,7 @@ import Image from "next/image";
    which is precisely why it sits there and not at the very bottom.
 
    The mark in each cell is the real accreditation artwork rather
-   than a drawn icon, because these are issued credentials — an MBE
+   than a drawn icon, because these are issued credentials, an MBE
    or WBE badge is recognised by its own colours and redrawing it
    would be both wrong and, for a certification mark, not ours to
    redraw.
@@ -33,14 +33,14 @@ export default function CertificationStrip() {
   return (
     <section className="w-full bg-[var(--hz-paper)]">
       <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-        {/* Vertical rules only between cells — `divide-x` leaves the outer
+        {/* Vertical rules only between cells , `divide-x` leaves the outer
             edges open, so the row reads as a strip rather than a boxed table. */}
         <ul className="grid grid-cols-2 divide-y divide-[var(--hz-strip-line)] border-y border-[var(--hz-strip-line)] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
           {CERTS.map((c) => (
             <li key={c.name} className="flex items-center justify-center px-5 py-9 sm:px-6">
               {/* Badge only. Each of these already carries its issuer's name in
                   its own artwork, so the label beside it was setting the same
-                  words twice — and the pair made every cell wide enough that
+                  words twice, and the pair made every cell wide enough that
                   four of them crowded the row. The name moves to `alt`, where
                   it does the job for anyone who cannot see the mark. */}
               <Image

@@ -25,7 +25,7 @@ const escapeHtml = (s: string) =>
 
 /**
  * Render a LIST field (requirements / responsibilities) to HTML. New records
- * store rich HTML; legacy records store a `string[]` — those become a <ul>.
+ * store rich HTML; legacy records store a `string[]`, those become a <ul>.
  * Also used to SEED the rich editor from a legacy array.
  */
 export function renderListField(value: string | string[] | undefined | null): { __html: string } {
@@ -37,7 +37,7 @@ export function renderListField(value: string | string[] | undefined | null): { 
   return renderRichText(value);
 }
 
-/** Coerce a rich-text-or-array field to PLAIN text — for JSON-LD, email text
+/** Coerce a rich-text-or-array field to PLAIN text, for JSON-LD, email text
  *  parts, search indexing. Strips tags from HTML; joins arrays. */
 export function richTextToPlain(value: string | string[] | undefined | null): string {
   if (!value) return "";

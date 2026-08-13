@@ -9,7 +9,7 @@ import PageHero from "@/components/landing/PageHero";
 import { SOLUTIONS, SOLUTION_ORDER } from "./content";
 
 /* A self-contained solution page. Deliberately does NOT reuse the
-   landing stats / certifications sections — each page stands alone. */
+   landing stats / certifications sections, each page stands alone. */
 
 function Related({ current }: { current: string }) {
   const siblings = SOLUTION_ORDER.filter((s) => s !== current)

@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getAllContentBlocks, upsertContentBlock } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
 
-// GET /api/content — fetch all content blocks
+// GET /api/content, fetch all content blocks
 export async function GET() {
   try {
     const result = await getAllContentBlocks();
@@ -17,7 +17,7 @@ export async function GET() {
   }
 }
 
-// PUT /api/content — upsert a content block
+// PUT /api/content, upsert a content block
 export async function PUT(request: NextRequest) {
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
@@ -35,8 +35,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Push the edit live immediately: clear the cached announcement and
-    // re-render the layout + content pages (so removing the announcement —
-    // or any CMS copy — reflects on the site right away, not after 60s).
+    // re-render the layout + content pages (so removing the announcement,
+    // or any CMS copy, reflects on the site right away, not after 60s).
     try {
       revalidatePath("/", "layout");
     } catch {

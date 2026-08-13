@@ -2,11 +2,11 @@
 
 The single source of truth for how the admin app (`/admin/*`) looks, behaves, and grows.
 Anatomy follows the three-layer model from
-[Pencil & Paper — Anatomy of a Design System](https://www.pencilandpaper.io/articles/anatomy-design-system):
+[Pencil & Paper. Anatomy of a Design System](https://www.pencilandpaper.io/articles/anatomy-design-system):
 a **design layer** (principles, style, components, patterns), a **development layer**
-(tokens + coded components — the part people actually use), and a **design-ops layer**
+(tokens + coded components, the part people actually use), and a **design-ops layer**
 (governance, contribution, maintenance). Scope is deliberately small: this system serves
-one staff-only ATS/CRM used by four roles — it does not need to rival Material or Polaris,
+one staff-only ATS/CRM used by four roles, it does not need to rival Material or Polaris,
 it needs to keep ~25 admin screens consistent.
 
 ---
@@ -47,7 +47,7 @@ one-file change). TypeScript-side constants live in `src/components/admin/theme.
 | Motion | `--adm-ease`, `--adm-duration-fast/base/slow` | One easing curve everywhere |
 | Radius | `--adm-radius-control/input/chip/card` (8/10/12/16px) | Size ↔ roundness scale |
 
-Type ramp (Geist Sans, compact density — tuned for 13–14" laptops): page title
+Type ramp (Geist Sans, compact density, tuned for 13–14" laptops): page title
 19px bold · KPI value 25px (sm 20px) · card title 14px bold · body 14px · secondary
 13px · labels/hints 11–12px · table headers 11px uppercase tracking-wider. Numbers
 always `tabular-nums`. Density lives in the shared atoms (StatCard, PageHeader,
@@ -58,7 +58,7 @@ AdminCardHeader, FormSection padding, control `py-2`, layout `p-3 lg:p-4`, sideb
 
 ## 3. Components (atoms)
 
-**Reuse `src/components/ui/` (shadcn) for base primitives — do not fork parallel admin
+**Reuse `src/components/ui/` (shadcn) for base primitives, do not fork parallel admin
 copies.** The ui library is themed to navy `--primary` + cyan `--ring`; the admin language
 is cobalt + slate, so apply a cobalt override class at the admin call site (see
 `PageHeaderButton` and the `checkboxCobalt` const in `data-table.tsx` for the pattern).
@@ -69,12 +69,12 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 | Button | `ui/button.tsx` | The one button. `PageHeaderButton` (`page-header.tsx`) is a thin cobalt-styling layer over it (`primary`/`secondary`/`ghost` → ui variants + accent class). Never fork a button. |
 | Checkbox | `ui/checkbox.tsx` | Supports `indeterminate` (DataTable select-all); pass the cobalt override class. |
 | Select / Input / Label / Avatar / Card / DropdownMenu / Sheet / Separator | `ui/*` | Use these; don't recreate. |
-| Switch, Tooltip | _not yet in ui/_ | Add to `ui/` (shadcn style) when first needed — do **not** create an admin-only copy. |
+| Switch, Tooltip | _not yet in ui/_ | Add to `ui/` (shadcn style) when first needed, do **not** create an admin-only copy. |
 | `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
 | `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. |
-| `StarRating`, `OceanSpinner` | `admin/*`, `ui/ocean-spinner` | — |
-| Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection` — admin-form-specific wrappers. |
+| `StarRating`, `OceanSpinner` | `admin/*`, `ui/ocean-spinner` | , |
+| Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
 
 ## 4. Patterns (components composed to solve a problem)
 
@@ -102,13 +102,13 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 Hierarchy (in `src/lib/auth/config.ts`): **ADMIN > HR > (RECRUITER = SALES)**; `role`
 may be `null` (authenticated, no access). Three gating altitudes:
 
-1. **Route** — `ProtectedRoute requiredRoles` (layout) + `routeAccess`.
-2. **Navigation** — `roles` arrays on `NAV_GROUPS` items (layout). A role's sidebar *is*
+1. **Route** , `ProtectedRoute requiredRoles` (layout) + `routeAccess`.
+2. **Navigation** , `roles` arrays on `NAV_GROUPS` items (layout). A role's sidebar *is*
    its complexity budget: recruiters/sales see Recruitment only; HR adds CRM; admins add
-   Administration. Don't add nav items visible to all roles by default — start narrow.
-3. **In-content** — `RoleGate` / `useCan` (`role-gate.tsx`):
+   Administration. Don't add nav items visible to all roles by default, start narrow.
+3. **In-content** , `RoleGate` / `useCan` (`role-gate.tsx`):
    - `mode="hide"` (default) when the role will *never* use it (admin settings inside a
-     shared page). Removing beats disabling — fewer dead controls, calmer screens.
+     shared page). Removing beats disabling, fewer dead controls, calmer screens.
    - `mode="disable"` when the capability exists for the role but isn't currently
      permitted; preserve layout, pair with a `Tooltip` saying why.
 
@@ -120,17 +120,17 @@ Always: server-side check in the API route too. UI gating is UX, not security.
 
 Strategy for dashboards (implemented in `/admin`):
 
-1. **Layered altitude.** Row 1: 4 KPI `StatCard`s (value + delta + sparkline) — answer
+1. **Layered altitude.** Row 1: 4 KPI `StatCard`s (value + delta + sparkline), answer
    "is anything wrong?" in 5 seconds. Row 2: behavior over time (area chart) + composition
    (donut). Row 3: process diagnostics (funnel, sources, leaderboards). Row 4: work queues
-   ("Needs attention", recent items) — every insight ends in a clickable action.
+   ("Needs attention", recent items), every insight ends in a clickable action.
 2. **Chart choice.** Trend → area/line; composition at a point → donut (≤7 segments,
    merge the tail into "Other"); stage conversion → funnel with explicit % between stages;
    ranking → horizontal bars; tiny trend in a card/cell → `Sparkline`. No 3D, no dual axes,
    no pie with >7 slices.
 3. **Color discipline.** Series 1 is always cobalt (`SERIES.primary`); emerald is reserved
    for success/hired, rose for rejected/failure, amber for at-risk, slate for "other".
-   Categorical palettes come from `CHART_COLORS` **in order** — never invent hex values
+   Categorical palettes come from `CHART_COLORS` **in order**, never invent hex values
    in a page.
 4. **Annotation over legend-hunting.** Put numbers on the chart (funnel counts, conversion
    pills); axis labels 10px slate-400; gridlines horizontal-only, slate-100.
@@ -149,9 +149,9 @@ Strategy for dashboards (implemented in `/admin`):
 `src/components/admin/` and consumes `--adm-*` tokens. One-off page logic stays in the page.
 
 **Contribution checklist** (PR review gate for admin UI):
-- [ ] No raw hex/rgba in pages — tokens or `theme.ts` constants only.
-- [ ] Reused `ui/` primitives (Button, Checkbox, Select, …) with a cobalt override class — did NOT fork a parallel admin copy.
-- [ ] No hand-rolled buttons, search inputs, badges, empty states, or tables — use §3/§4.
+- [ ] No raw hex/rgba in pages, tokens or `theme.ts` constants only.
+- [ ] Reused `ui/` primitives (Button, Checkbox, Select, …) with a cobalt override class, did NOT fork a parallel admin copy.
+- [ ] No hand-rolled buttons, search inputs, badges, empty states, or tables, use §3/§4.
 - [ ] New status/tone added to `theme.ts` (`statusMeta`/`tones`), not inline.
 - [ ] Focus ring (`--adm-focus-ring`) visible on every new interactive element; icon-only
       buttons have `aria-label` or `Tooltip`.
@@ -162,17 +162,16 @@ Strategy for dashboards (implemented in `/admin`):
 **Change management.** Token changes = system-wide, need a screenshot pass of dashboard,
 one list page, one form page. Component API changes must keep existing call sites compiling
 (extend, don't break). Deprecations: mark with `@deprecated` JSDoc, migrate call sites,
-then delete — no parallel duplicates.
+then delete, no parallel duplicates.
 
 **Migration backlog** (legacy → system, in this order of payoff):
-1. Replace hand-rolled search/filter toolbars with the `toolbar.tsx` kit —
-   DONE across all pages: contacts, clients, vendors, resumes, users, applications,
+1. Replace hand-rolled search/filter toolbars with the `toolbar.tsx` kit. DONE across all pages: contacts, clients, vendors, resumes, users, applications,
    jobs, bench, jobs/[id] (SearchInput/FilterToggle/ViewSwitcher/BulkBar/FilterChips).
-2. Replace inline empty states with `EmptyState` — DONE on migrated pages (incl. jobs/[id]).
+2. Replace inline empty states with `EmptyState`. DONE on migrated pages (incl. jobs/[id]).
 3. Replace ad-hoc tables with `DataTable` where columns are simple cells (optional; the
    complex multi-view tables on applications/jobs/bench keep their bespoke rendering).
 4. Replace remaining `--hz-*` references in admin pages with `--adm-*`.
-5. Modal forms on `Field`/`FormInput`/`FormSelect` — DONE: clients, vendors.
+5. Modal forms on `Field`/`FormInput`/`FormSelect`. DONE: clients, vendors.
 
 **Health metrics.** Adoption = count of hand-rolled search inputs remaining
 (`grep 'placeholder="Search' src/app/admin` → should trend to 0); consistency = no new
@@ -180,7 +179,7 @@ hex values in `src/app/admin` diffs; bundle = `@aws-sdk` count in `.next/static`
 
 ---
 
-## 8. Laws of UX — how they bind here
+## 8. Laws of UX, how they bind here
 
 Reference: [Laws of UX](https://lawsofux.com), Jon Yablonski. Listing a law is
 worthless; what follows is the **rule this codebase enforces** because of it, and
@@ -189,7 +188,7 @@ slogan, so each rule below is either a number or a structural check.
 
 Audited 2026-08-07 against the admin app.
 
-### Load-bearing — violations are bugs
+### Load-bearing, violations are bugs
 
 | Law | The rule here | Check |
 |---|---|---|
@@ -197,16 +196,16 @@ Audited 2026-08-07 against the admin app.
 | **Fitts's Law** | A control used while reading a long record is pinned, not parked at the top. The candidate record scrolls ~4,100px, so identity, stage and the primary action ride in a sticky header. | No primary action may require a scroll round-trip to reach |
 | **Miller's Law** | Max ~7 peer items in one view. The candidate record was 10 stacked cards under one tab; it is now 5 labelled tabs. Sidebar is 22 links in 3 named sections, never a flat list. | Count peers per view; if > 7, chunk or tab |
 | **Hick's Law** | One control per decision, not one per dimension. The applications toolbar was 4 filter pills + an "Advanced" drawer of 4 more; it is now a single `FilterMenu`. | Count filter controls in a toolbar: 1 |
-| **Von Restorff** | **Filled = action. Outlined or tinted = state.** Exactly one filled control per surface. This is what stops semantic colour (red "Unclaimed", green owner, stage tints) from cancelling the primary action out — they are different *kinds* of thing, not competing buttons. | One `variant="primary"` per view |
+| **Von Restorff** | **Filled = action. Outlined or tinted = state.** Exactly one filled control per surface. This is what stops semantic colour (red "Unclaimed", green owner, stage tints) from cancelling the primary action out, they are different *kinds* of thing, not competing buttons. | One `variant="primary"` per view |
 | **Postel's Law** | Be liberal inbound: ownership matches on email *or* id, case-insensitively (`isOwnRecord`). Conservative outbound: `validate.ts` declares accepted fields; undeclared ones cannot reach a record. | New routes declare a schema |
 | **Tesler's Law** | Irreducible complexity belongs to the system, not the user. Resume parsing extracts name, contact, location, skills and experience so nobody retypes a document we can read. | Prefer a parse/derive over a field |
 
-### Structural — followed by construction
+### Structural, followed by construction
 
 - **Law of Common Region / Proximity / Uniform Connectedness.** `AdminCard` is the
   only grouping device. Related fields share one card; unrelated fields never do.
   Hairlines separate bands *within* a card, whitespace separates cards.
-- **Law of Similarity.** One status colour per state everywhere it appears —
+- **Law of Similarity.** One status colour per state everywhere it appears,
   `statusColor()` is the single source, so a stage is the same colour in the rail,
   the badge, the list cell and the dropdown.
 - **Jakob's Law.** ATS conventions are kept deliberately: record header with
@@ -217,12 +216,12 @@ Audited 2026-08-07 against the admin app.
 - **Selective Attention.** Empty fields are not rendered as data. A grid of nine
   cells with four em-dashes made the reader parse four cells to learn nothing;
   they collapse behind one line that says how many are missing.
-- **Zeigarnik Effect.** That same line is the open loop — "4 fields are not
+- **Zeigarnik Effect.** That same line is the open loop , "4 fields are not
   recorded" states an incomplete task rather than hiding it.
 - **Goal-Gradient.** The pipeline stepper shows position and distance to hire;
   progress bars fill toward a stated end.
 
-### Judgement — no automatic check
+### Judgement, no automatic check
 
 - **Aesthetic-Usability Effect.** Justifies polish, never at the cost of the rules
   above. Decoration that competes with data loses: four marketplace background
@@ -241,7 +240,7 @@ Audited 2026-08-07 against the admin app.
    the fields stay labelled and scannable; if a screen needs more than ~8, group
    them or make the menu two-column. Watch it.
 2. **Tables scroll the page, not themselves.** `DataTable` already has everything
-   needed to scroll internally — an `overflow-auto` container, a `maxHeight` prop,
+   needed to scroll internally, an `overflow-auto` container, a `maxHeight` prop,
    and a sticky `thead` (`.adm-grid thead th`, in `globals.css` rather than the
    component, which is easy to miss). What is missing is at the page level: list
    pages do not bound its height, so the whole page scrolls and the header sticks

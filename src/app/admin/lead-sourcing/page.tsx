@@ -1,6 +1,6 @@
 "use client";
 
-// Lead Sourcing — find the best-matching candidates from the resume bank for a
+// Lead Sourcing, find the best-matching candidates from the resume bank for a
 // job. Two inputs: pick one of your jobs, or paste a job description. Results are
 // ranked by fit with matched/missing skills. Resumes are vectorized once at
 // upload; searching only embeds the job + re-ranks, so it's fast.
@@ -115,7 +115,7 @@ export default function LeadSourcingPage() {
       <header>
         <h1 className="text-[22px] font-semibold text-[var(--adm-ink)]">Lead Sourcing</h1>
         <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">
-          Find the best-matching candidates across your resume bank and talent bench for a job — by fit score, with the skills they match and miss.
+          Find the best-matching candidates across your resume bank and talent bench for a job, by fit score, with the skills they match and miss.
         </p>
       </header>
 
@@ -157,7 +157,7 @@ export default function LeadSourcingPage() {
                   {jobs.map((j) => (
                     <option key={j.id} value={j.id}>
                       {j.title}
-                      {j.department ? ` — ${j.department}` : ""}
+                      {j.department ? ` , ${j.department}` : ""}
                       {j.status ? ` (${j.status})` : ""}
                     </option>
                   ))}
@@ -210,7 +210,7 @@ export default function LeadSourcingPage() {
           <div className="flex flex-col items-center gap-2 p-10 text-center">
             <IconGroup className="h-8 w-8 text-[var(--adm-ink-subtle)]" strokeWidth={1.5} />
             <p className="text-[14px] text-[var(--adm-ink-mute)]">
-              No candidates found. Resumes become searchable once indexed — open{" "}
+              No candidates found. Resumes become searchable once indexed, open{" "}
               <Link href="/admin/resumes" className="font-semibold text-[var(--adm-accent)] hover:underline">Resumes</Link>{" "}
               and click &ldquo;Index all&rdquo; to make existing ones searchable.
             </p>
@@ -272,7 +272,7 @@ export default function LeadSourcingPage() {
                         </div>
                       )}
                       <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
-                      {/* Bank hits are files, not candidate records — link each
+                      {/* Bank hits are files, not candidate records, link each
                           hit to the thing it actually is. */}
                       {c.profileId ? (
                         <Link

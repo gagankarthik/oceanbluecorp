@@ -19,7 +19,7 @@ import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 
 /* ============================================================
-   RecordBar — identity, status, stage control and the record's
+   RecordBar, identity, status, stage control and the record's
    primary actions, pinned to the top of the scroll container.
 
    ── Why it is sticky ────────────────────────────────────────
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
    ordinary content at the top of it, so from roughly the second
    screen onward there was nothing on the page saying whose
    record you were reading, what stage they were at, or offering
-   any way to act on them — you had to scroll back up to do
+   any way to act on them, you had to scroll back up to do
    anything, then scroll down again to find your place. Pinning
    identity, status and the stage control puts the most-used
    controls a pointer-move away instead of a round trip (Fitts),
@@ -38,8 +38,8 @@ import { cn } from "@/lib/utils";
    A first pass condensed this to a single line once scrolled,
    reasoning that a full header pinned would cost too much of
    every screen. It cost something worse: the contact details and
-   the rating — the two things a recruiter reaches for while
-   reading a resume — vanished at exactly the moment they were
+   the rating, the two things a recruiter reaches for while
+   reading a resume, vanished at exactly the moment they were
    being read. The header now stays whole and stays put, the tab
    bar rides with it, and everything below scrolls beneath the
    pair.
@@ -81,7 +81,7 @@ function StageSelect({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {/* Tinted by the stage it is showing, so the pipeline position is
-            legible without reading the word — the same colour the stage carries
+            legible without reading the word, the same colour the stage carries
             in the rail, the badge and every list on the site. Inline, because
             the value is resolved at runtime and Tailwind cannot compile a class
             for it. `color-mix` gives the soft fill from the one colour rather
@@ -100,7 +100,7 @@ function StageSelect({
           )}
           <span className="hidden sm:inline opacity-70">Stage:</span>
           <span className="font-semibold">
-            {isRejected ? "Rejected" : current?.label ?? "—"}
+            {isRejected ? "Rejected" : current?.label ?? "–"}
           </span>
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         </WorkspaceButton>
@@ -147,7 +147,7 @@ function StageSelect({
 }
 
 /* Talent-bench control. Extracted so the pinned and expanded bars share one
-   implementation — the pool list, its hints and the remove action were about to
+   implementation, the pool list, its hints and the remove action were about to
    be a second copy, and two copies of a menu is how the two drift. */
 function BenchMenu({
   candidate,
@@ -171,8 +171,7 @@ function BenchMenu({
           ) : (
             <IconBookmarkPlus className="h-4 w-4" />
           )}
-          {/* Compact keeps the icon as the affordance and drops the words —
-              the pinned bar has to hold five controls on one line. */}
+          {/* Compact keeps the icon as the affordance and drops the words, the pinned bar has to hold five controls on one line. */}
           <span className={cn(compact && "hidden xl:inline")}>
             {candidate.addToTalentBench ? `In ${POOL_LABEL[poolOf(candidate)]}` : "Add to bench"}
           </span>
@@ -305,7 +304,7 @@ export function RecordBar({
 
       {/* ── Actions ──
           One row. Rating leads it because it is a control like the rest, not a
-          figure — it used to sit on its own line below the buttons, which cost
+          figure, it used to sit on its own line below the buttons, which cost
           a whole row of header height to display five stars. */}
       <div className="flex flex-none flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5 pr-1">
@@ -326,12 +325,12 @@ export function RecordBar({
             Unowned is a problem, so it looks like one: an outlined danger
             button that reads as unfinished next to the neutral controls beside
             it. An unclaimed candidate is nobody's job, which is how records go
-            stale — the state should be visible from the pinned bar without
+            stale, the state should be visible from the pinned bar without
             anyone going looking for it.
 
             Claimed is a green CHIP, not a green button. Once someone owns the
-            record the action is no longer "claim", and putting Release — which
-            takes a candidate off a colleague's desk — behind a green control
+            record the action is no longer "claim", and putting Release, which
+            takes a candidate off a colleague's desk, behind a green control
             styled as success would invite exactly the click nobody means to
             make. Release stays in the sidebar, where it is labelled. */}
         {candidate.ownership ? (

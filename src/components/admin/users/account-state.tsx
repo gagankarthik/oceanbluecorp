@@ -6,7 +6,7 @@ import type { Tone } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
 
 /* ============================================================
-   AccountState — whether a staff account can sign in.
+   AccountState, whether a staff account can sign in.
 
    Was a StatusBadge wrapped in a bare button whose only hover
    affordance was `opacity-75`. Two problems with that:
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
      something. Nothing said it could be clicked.
    - Inactive used the neutral `slate` tone, so a revoked
      account read as "no status set" rather than "cannot sign
-     in" — the two states looked like a value and its absence,
+     in", the two states looked like a value and its absence,
      not like on and off.
 
    A switch says both things at once: it is obviously operable,
@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
    so the difference survives a glance down a column.
 
    `pending` gets no switch. An invited person has not accepted
-   yet, so there is nothing to turn off — offering a control
+   yet, so there is nothing to turn off, offering a control
    that cannot do anything is worse than not offering one.
    ============================================================ */
 
@@ -77,7 +77,7 @@ export function AccountState({
         className={cn(
           "relative inline-flex h-[18px] w-8 flex-none items-center rounded-full border transition-colors duration-200",
           // The OFF track carries a border because no light-grey fill can reach
-          // 3:1 against white (1.4.11 Non-text Contrast) — the boundary is what
+          // 3:1 against white (1.4.11 Non-text Contrast), the boundary is what
           // makes the control discernible, not the fill.
           on
             ? "border-[var(--adm-success)] bg-[var(--adm-success)]"

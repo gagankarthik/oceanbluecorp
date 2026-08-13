@@ -7,7 +7,7 @@ import { toast } from "sonner";
    dialogs and nothing else. A confirm is a poor instrument: it
    interrupts EVERY invocation including the ninety-nine correct
    ones, and because it interrupts every one, people learn to
-   dismiss it without reading — so the single time it mattered is
+   dismiss it without reading, so the single time it mattered is
    the time it gets clicked through. It taxes the common case to
    half-protect the rare one.
 
@@ -44,7 +44,7 @@ export type UndoableOptions = {
 /**
  * Announce a completed, reversible action and offer to reverse it.
  *
- * Call AFTER the mutation has succeeded — this reports, it does not perform.
+ * Call AFTER the mutation has succeeded, this reports, it does not perform.
  * Reporting an action that has not landed yet is how an undo offer appears for
  * something that then fails, leaving the user to reverse a change that never
  * happened.
@@ -68,7 +68,7 @@ export function undoable({ message, undo, undoErrorMessage, onUndone }: Undoable
             onUndone?.();
           })
           .catch(() => {
-            toast.error(undoErrorMessage || "Couldn't undo that — the change is still applied.", { id });
+            toast.error(undoErrorMessage || "Couldn't undo that, the change is still applied.", { id });
           });
       },
     },

@@ -1,12 +1,12 @@
 /* ============================================================
-   TEMPORARY — the 13-year celebration (August 8, 2026).
+   TEMPORARY, the 13-year celebration (August 8, 2026).
 
    Everything the anniversary needs lives here and in
    `src/components/landing/anniversary/`. To retire the whole
    thing: delete both, drop the `<Anniversary>` line and the
    `anniversary` prop in `src/app/page.tsx`, delete
    `src/app/13-years/`. Nothing else on the landing page depends
-   on this module — permanent company facts are in `lib/company.ts`.
+   on this module, permanent company facts are in `lib/company.ts`.
    ============================================================ */
 
 import { BRAND_NAME, FOUNDED_YEAR, FOUNDED_LONG } from "./company";
@@ -17,18 +17,18 @@ export const ANNIVERSARY_YEAR = 2026;
 export const ANNIVERSARY_YEARS = ANNIVERSARY_YEAR - FOUNDED_YEAR;
 
 export const ANNIVERSARY_LONG = "August 8, 2026";
-export const ANNIVERSARY_SPAN = `${FOUNDED_YEAR}—${ANNIVERSARY_YEAR}`;
+export const ANNIVERSARY_SPAN = `${FOUNDED_YEAR}${ANNIVERSARY_YEAR}`;
 export const ANNIVERSARY_PATH = "/13-years";
 
 /** The celebration graphic (1024×1024), shown on /13-years. If the file ever
  *  goes missing the page renders the brand gradient in its place rather than a
- *  broken image — see <Photo>. */
+ *  broken image, see <Photo>. */
 export const ANNIVERSARY_ARTWORK = "/anniversary/13-years.jpg";
 
 /** Headline copy, mirrored from the celebration artwork so the site and the
  *  social post say the same thing. Overridable per-field from /admin/content. */
 export const ANNIVERSARY_COPY = {
-  eyebrow: `${FOUNDED_LONG} — ${ANNIVERSARY_LONG}`,
+  eyebrow: `${FOUNDED_LONG} , ${ANNIVERSARY_LONG}`,
   /* Split in two so the second half can carry the cobalt, exactly as the
      artwork sets it: the company name in ink, "Turns 13" in brand blue.
      Kept as a joined string too, for anywhere that needs the plain sentence
@@ -42,7 +42,7 @@ export const ANNIVERSARY_COPY = {
 } as const;
 
 /* The celebration is a single day, but the band should not vanish at midnight
-   while people are still reading the LinkedIn post — and it must not still be
+   while people are still reading the LinkedIn post, and it must not still be
    up at Christmas because somebody forgot to switch it off. So: a window that
    opens a week before and closes two weeks after, with the CMS toggle able to
    override in either direction. */

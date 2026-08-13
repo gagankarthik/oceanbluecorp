@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oceanbluecorp.com/blog" },
   // Deliberate: this section has no entries yet, and four thin pages in an
   // index hurt the domain rather than help it. Remove once real content lands
-  // — and add the route to sitemap.xml at the same time.
+  //, and add the route to sitemap.xml at the same time.
   robots: { index: false, follow: true },
 };
 
@@ -21,9 +21,9 @@ export default function Blog() {
   return (
     <ComingSoon
       eyebrow="Blog"
-      title="Writing from the people doing the work."
-      subtitle="Notes from our engineers and recruiters on hiring, delivery, and the platforms we run."
-      note="We are still writing the first posts. In the meantime, the fastest way to get a specific question answered is to ask us directly."
+      title="Notes from the people doing the work."
+      subtitle="Our engineers and recruiters write about hiring, delivery, and the platforms we run."
+      note="The first pieces are being written. If you have a specific question now, ask us directly and you will get an answer from the person who does the work, not a form response."
     />
   );
 }

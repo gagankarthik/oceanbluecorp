@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, type SVGProps } from "react";
 import { Mail, Phone, MapPin, Linkedin, Youtube, Instagram } from "lucide-react";
 
-// Official X (formerly Twitter) brand mark — lucide's `X` is the close/cross icon.
+// Official X (formerly Twitter) brand mark, lucide's `X` is the close/cross icon.
 function XLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
@@ -91,8 +91,8 @@ function FooterStatus() {
 export default function Footer() {
   return (
     <footer className="relative w-full border-t border-black/[0.08] bg-[var(--hz-surface)]">
-      {/* Container matches the HEADER exactly — max-w-7xl, px-6 sm:px-8, and
-          the same 2xl cap — so the footer logo sits directly under the nav
+      {/* Container matches the HEADER exactly, max-w-7xl, px-6 sm:px-8, and
+          the same 2xl cap, so the footer logo sits directly under the nav
           logo and the last column ends level with the Contact button. It had
           been on the landing page's much wider max-w-[2200px] measure, which
           pushed both edges outboard of the bar above and made the whole page
@@ -106,8 +106,8 @@ export default function Footer() {
               <Image src="/logo.png" alt="Ocean Blue Corporation" width={170} height={40} className="h-8 w-auto" />
             </Link>
             <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-[var(--hz-text-mute)]">
-              IT staffing, enterprise solutions, and managed services. One
-              accountable partner for enterprises and government agencies.
+              Talent, engineering, platforms and operations for enterprises and
+              government agencies. One team, one contract, one number to call.
             </p>
             <div className="mt-8 space-y-3 text-[14px]">
               <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]">
@@ -161,8 +161,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar: copyright left, system status dead centre, social right —
-          three fixed zones, so the status pill anchors the middle of the row. */}
+      {/* Bottom bar: copyright left, system status dead centre, social right, three fixed zones, so the status pill anchors the middle of the row. */}
       <div className="border-t border-black/[0.07]">
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem] grid grid-cols-1 items-center gap-5 py-8 sm:grid-cols-3">
           <p className="text-center text-[13px] text-[var(--hz-text-subtle)] sm:text-left">

@@ -53,9 +53,9 @@ const STATUS_FILTERS = [
   ...APP_STATUSES.map((s) => ({ key: s.value as string, label: s.label })),
 ];
 
-/** Empty-cell placeholder — an em-dash, aligned with the other columns. */
+/** Empty-cell placeholder, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 /** Right-aligned metadata row used by the sidebar panels. */
@@ -179,7 +179,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         <div className="flex items-center gap-3">
           <Avatar name={a.name} email={a.email} size="sm" />
           <div className="min-w-0 max-w-[200px]">
-            <span className="block truncate font-semibold text-[var(--adm-ink)]">{a.name || "—"}</span>
+            <span className="block truncate font-semibold text-[var(--adm-ink)]">{a.name || "–"}</span>
             <span className="block truncate text-xs text-[var(--adm-ink-subtle)]">{a.email}</span>
           </div>
         </div>

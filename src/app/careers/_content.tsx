@@ -22,7 +22,7 @@ import { IMG } from "@/components/landing/media";
 
    An earlier draft of this file invented benefits detail (a 401(k)
    match "from your first month", paid certifications with scheduled
-   study time). That was removed — anything stated here should be
+   study time). That was removed, anything stated here should be
    something a new hire can hold us to on day one.
    ============================================================ */
 
@@ -48,7 +48,7 @@ const practices = [
 /* Culture and benefits copy is the company's own, supplied and confirmed by
    the business. Presented in the page's editorial layout rather than the two
    flat icon-card grids it used to live in. */
-// Culture cards lead with a photo (not an icon) — imagery carries "growth /
+// Culture cards lead with a photo (not an icon), imagery carries "growth /
 // balance / inclusion" more warmly than a glyph. Sourced from the shared IMG
 // registry so they're real, valid Unsplash shots; swap for company photos when
 // available.

@@ -49,7 +49,7 @@ function LogoMark({ l }: { l: Logo }) {
  * The client logo row, with no section around it.
  *
  * Rendered inside Credentials, which pairs it with the accreditation row
- * behind a pair of tabs — clients and certifications are both answers to the
+ * behind a pair of tabs, clients and certifications are both answers to the
  * same question ("who vouches for you?"), and giving each its own full-width
  * band said it twice.
  *

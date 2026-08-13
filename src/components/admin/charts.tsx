@@ -12,18 +12,18 @@ import { cn } from "@/lib/utils";
 
    Every analytical panel in the admin console is built from these four forms:
    trend, ranked breakdown, donut, funnel. The point is not to wrap recharts for
-   its own sake — it is that axis ink, grid weight, tooltip chrome, empty states,
+   its own sake, it is that axis ink, grid weight, tooltip chrome, empty states,
    and series colour were being re-decided on every screen, so no two charts read
    as the same instrument.
 
    Rules baked in here, so call sites cannot drift:
-     · one y-axis, never two — a second measure gets its own panel
+     · one y-axis, never two, a second measure gets its own panel
      · categorical hue assigned in fixed order from CHART_COLORS, never cycled;
        past five categories the caller folds the tail into an explicit "Other"
        bucket coloured with theme.ts's CHART_NEUTRAL
      · grid and axes are recessive (hairline #eef2f7, 10px slate-400 ticks)
      · ≥2 series always carry a legend, and bar/donut marks are directly
-       labelled — this is the secondary encoding that licenses the palette's
+       labelled, this is the secondary encoding that licenses the palette's
        protan ΔE 7.8 pair (see CHART_COLORS in theme.ts)
      · 2px surface gap between adjacent fills, 4px rounded data-ends
      · a hover tooltip is present on every plotted form
@@ -283,7 +283,7 @@ export interface BreakdownItem {
 }
 
 /**
- * Ranked horizontal bars — the workhorse for "top N by count" and for source
+ * Ranked horizontal bars, the workhorse for "top N by count" and for source
  * or department breakdowns. Preferred over a pie for ranking, and over a
  * vertical bar chart whenever the labels are prose.
  *
@@ -375,7 +375,7 @@ export interface DonutSegment {
 /**
  * Part-to-whole for a small number of segments. Hand-drawn SVG rather than
  * recharts' Pie so the segments can carry a 2px surface gap and the centre can
- * hold a live readout on hover — both of which the recharts Pie fights.
+ * hold a live readout on hover, both of which the recharts Pie fights.
  *
  * A donut is only correct when the segments are parts of one meaningful total
  * and there are ≲6 of them; for a ranking, use BreakdownBars.
@@ -407,7 +407,7 @@ export function DonutChart({
   };
 
   // 2px surface gap between adjacent fills, expressed as the arc-degrees that
-  // 2px subtends at this radius — so the gap stays 2px at any panel size.
+  // 2px subtends at this radius, so the gap stays 2px at any panel size.
   const gapDeg = total > 0 && shown.length > 1 ? (2 / (2 * Math.PI * r)) * 360 : 0;
 
   const active = hover !== null ? shown[hover] : null;
@@ -453,7 +453,7 @@ export function DonutChart({
         </div>
       </div>
 
-      {/* Legend doubles as the value table — identity is never colour-alone. */}
+      {/* Legend doubles as the value table, identity is never colour-alone. */}
       <div className="grid w-full grid-cols-2 gap-x-4 gap-y-0.5">
         {shown.map((seg, i) => {
           const color = seg.color ?? CHART_COLORS[i % CHART_COLORS.length];
@@ -493,7 +493,7 @@ export interface FunnelStage {
   /**
    * Use a COHORT count ("how many ever got at least this far"), not current
    * occupancy. The chart derives each conversion badge from value/previous, so
-   * feeding it occupancy produces nonsense — a stage that has emptied out
+   * feeding it occupancy produces nonsense, a stage that has emptied out
    * reads as a collapse, and a stage people were moved into directly can
    * exceed 100%.
    */
@@ -535,7 +535,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
               {i > 0 && (
                 <div className="relative z-10 -my-1 flex justify-center">
                   <span className="rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-[10px] font-bold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]">
-                    {conv !== null ? `${conv}%` : "—"}
+                    {conv !== null ? `${conv}%` : "–"}
                   </span>
                 </div>
               )}

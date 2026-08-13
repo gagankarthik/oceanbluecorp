@@ -11,7 +11,7 @@ import { requireStaff } from "@/lib/auth/verify";
  */
 const BLOCK_ID = "help-directory";
 
-// GET — the stored members (empty array if never edited; the page falls back to
+// GET, the stored members (empty array if never edited; the page falls back to
 // its built-in defaults in that case). Any signed-in staff member may read.
 export async function GET(request: NextRequest) {
   const auth = await requireStaff(request);
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT — replace the directory. ADMIN or HR only.
+// PUT, replace the directory. ADMIN or HR only.
 export async function PUT(request: NextRequest) {
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest) {
     if (!Array.isArray(body.members)) {
       return NextResponse.json({ error: "members must be an array" }, { status: 400 });
     }
-    // Persist only the known fields — never trust arbitrary keys off the wire.
+    // Persist only the known fields, never trust arbitrary keys off the wire.
     const members = body.members.map((m: Record<string, unknown>) => ({
       name: String(m.name ?? "").slice(0, 120),
       designation: String(m.designation ?? "").slice(0, 120),

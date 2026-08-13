@@ -3,7 +3,7 @@
 /* ============================================================
    Root error boundary. This one replaces the entire document
    (including the root layout), so it cannot depend on the layout
-   fonts, providers, or globals.css being applied — everything
+   fonts, providers, or globals.css being applied, everything
    here is inline and self-contained on purpose.
 
    It only fires when the root layout itself throws; ordinary

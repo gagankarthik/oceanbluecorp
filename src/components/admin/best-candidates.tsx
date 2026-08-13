@@ -1,6 +1,6 @@
 "use client";
 
-// "Best candidates" — ranks the resume bank against a job. Loads the cached
+// "Best candidates", ranks the resume bank against a job. Loads the cached
 // ranking on open (instant; resumes are vectorized once), re-runs on demand.
 // `bare` renders it inside a tab panel (no card shell); default is a standalone
 // AdminCard.
@@ -39,7 +39,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [matchedAt, setMatchedAt] = useState<string | null>(null);
 
-  // Load the cached ranking on open — instant, no re-vectorizing.
+  // Load the cached ranking on open, instant, no re-vectorizing.
   useEffect(() => {
     let active = true;
     fetch(`/api/jobs/${jobId}/match-candidates`)

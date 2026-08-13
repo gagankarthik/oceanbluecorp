@@ -73,7 +73,7 @@ const roleBadgeColor: Record<string, string> = {
   [UserRole.SALES]:     "bg-amber-500/15 text-amber-600",
 };
 
-// ── Section aliases — maps path prefixes with no nav entry to their parent ────
+// ── Section aliases, maps path prefixes with no nav entry to their parent ────
 const SECTION_ALIASES: Record<string, { name: string; href: string }> = {
   "/admin/candidates":    { name: "Applications",  href: "/admin/applications" },
   "/admin/roles":         { name: "Roles",         href: "/admin/roles" },
@@ -81,7 +81,7 @@ const SECTION_ALIASES: Record<string, { name: string; href: string }> = {
   "/admin/api-keys":      { name: "API Keys",      href: "/admin/api-keys" },
   // These three have no sidebar entry either, so without an alias they fell
   // through to the "Dashboard" fallback and the breadcrumb lied about where
-  // you were — /admin/help read "Dashboard" while showing the directory.
+  // you were , /admin/help read "Dashboard" while showing the directory.
   "/admin/help":          { name: "Help",          href: "/admin/help" },
   "/admin/notifications": { name: "Notifications", href: "/admin/notifications" },
   "/admin/docs":          { name: "Developer",     href: "/admin/docs" },
@@ -178,7 +178,7 @@ function Sidebar({
           </button>
         </div>
 
-        {/* Navigation — grouped under uppercase section headers. */}
+        {/* Navigation, grouped under uppercase section headers. */}
         <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
           {SECTION_ORDER.map((section, groupIdx) => {
             const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
@@ -266,7 +266,7 @@ function Sidebar({
         {/* Collapse / expand toggle (desktop only).
             Rendered in BOTH states, and always in this same spot. An earlier
             version dropped it when collapsed and left only the brand mark as the
-            way back — a logo gives no hint that it is a control, so the rail read
+            way back, a logo gives no hint that it is a control, so the rail read
             as having no way out of itself. */}
         <div className="hidden lg:block px-2 py-2">
           <button
@@ -437,7 +437,7 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
 
   // Uploaded photo if there is one, otherwise the initials Avatar used
   // everywhere else in admin. This used to fall back to a generated cartoon
-  // face from api.dicebear.com — a third-party request on every admin page
+  // face from api.dicebear.com, a third-party request on every admin page
   // load that leaked the user's email as a seed in the URL, and produced an
   // avatar that matched nothing else in the console.
   const photoSrc = user?.id && !avatarFailed ? `/api/users/avatar/${user.id}` : null;
@@ -695,7 +695,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Fixed height, not min-height, and the scroll container itself.
             `min-h` let the content grow past the viewport, so a Workspace
             panel's `flex-1` had nothing to bound it: the whole document
-            scrolled and the grid's own footer — pager and rows-per-page — sat
+            scrolled and the grid's own footer, pager and rows-per-page, sat
             below the fold. With a real height the panel claims exactly what is
             left after any overview strip and scrolls its rows internally,
             while taller pages (dashboard, settings, docs) still scroll here. */}

@@ -42,7 +42,7 @@ function useIsNarrow(px = 640) {
   return narrow;
 }
 
-/* Reveal — fade + rise on scroll into view. */
+/* Reveal, fade + rise on scroll into view. */
 export function Reveal({
   children,
   delay = 0,
@@ -106,7 +106,7 @@ export function Stagger({
       viewport={{ once, margin: narrow ? "0px 0px -2% 0px" : "0px 0px -4% 0px" }}
       variants={{
         // On phones the cards stack vertically, so a long stagger means the last
-        // card is still hidden well after it scrolls in — tighten it there.
+        // card is still hidden well after it scrolls in, tighten it there.
         hidden: {},
         show: { transition: { staggerChildren: narrow ? gap * 0.4 : gap * 0.6, delayChildren: 0.03 } },
       }}
@@ -149,7 +149,7 @@ export function StaggerItem({
   );
 }
 
-/* Parallax — translate Y as the element crosses the viewport. */
+/* Parallax, translate Y as the element crosses the viewport. */
 export function Parallax({
   children,
   className,
@@ -175,7 +175,7 @@ export function Parallax({
   );
 }
 
-/* Tilt3D — pointer-reactive perspective tilt. */
+/* Tilt3D, pointer-reactive perspective tilt. */
 export function Tilt3D({
   children,
   className,
@@ -216,7 +216,7 @@ export function Tilt3D({
   );
 }
 
-/* WordsReveal — headline rising word-by-word. */
+/* WordsReveal, headline rising word-by-word. */
 export function WordsReveal({
   text,
   className,

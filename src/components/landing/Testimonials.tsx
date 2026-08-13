@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 
 /* ============================================================
-   Client work — customer.io's case-study rows.
+   Client work, customer.io's case-study rows.
 
    Theirs is the strongest pattern on that page and the one this
    site had no equivalent of. Each entry is a full-width tinted
@@ -22,7 +22,7 @@ import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 
    ── The honest limitation ────────────────────────────────────
    customer.io can do this because it has published metrics per
-   client. Ocean Blue does not — so `metrics` below is optional,
+   client. Ocean Blue does not, so `metrics` below is optional,
    and a row without it degrades to logo + quote + attribution
    rather than inventing a statistic. Nothing here fabricates a
    number. Fill them in as real, client-approved figures land, and
@@ -131,7 +131,7 @@ export default function Testimonials() {
             Client work
           </span>
             <h2 className="hz-display hz-h2 mt-4 text-[var(--hz-text)]">
-              The partners who know our work best.
+              Ask the people who have already worked with us.
             </h2>
           </div>
           <Link

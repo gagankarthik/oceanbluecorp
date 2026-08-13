@@ -52,9 +52,9 @@ const STATUS_TABS = [
 ];
 
 
-/** Placeholder for an empty cell — an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]">—</span>;
+  return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
 
 export default function JobsPage() {
@@ -164,7 +164,7 @@ export default function JobsPage() {
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
   [jobs, debouncedSearch, statusFilter]);
 
-  /** Open roles nobody has sourced for — the number worth acting on. */
+  /** Open roles nobody has sourced for, the number worth acting on. */
   const starvedRoles = useMemo(
     () => jobs.filter(
       (j) => (j.status === "active" || j.status === "open") && !(j.applicationsCount || 0),
@@ -338,7 +338,7 @@ export default function JobsPage() {
 
   // Two lenses over the same rows, both eight columns wide: "compact" answers
   // where a role is and how it's doing, "detailed" answers what it pays.
-  // Neither stacks a second fact under a first — a value worth showing gets a
+  // Neither stacks a second fact under a first, a value worth showing gets a
   // column of its own, and everything else stays on the record page.
   const payCol: DataTableColumn<Job> = {
     key: "payRate", header: "Pay", label: "Pay rate", align: "right", width: "110px",
@@ -360,7 +360,7 @@ export default function JobsPage() {
    * ONE column list.
    *
    * There used to be two hard-coded sets, "Compact" and "Detailed", swapped by
-   * a ViewMenu that sat next to the density control — whose first option is
+   * a ViewMenu that sat next to the density control, whose first option is
    * also called "Compact". Two adjacent menus, both offering "Compact", doing
    * completely different things: one changed which columns existed, the other
    * changed row height.
@@ -412,7 +412,7 @@ export default function JobsPage() {
           </>
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Open roles", value: stats.active, onClick: () => setStatusFilter("active") },
@@ -426,8 +426,7 @@ export default function JobsPage() {
         ]}
       />
 
-      {/* Toolbar sits on the canvas between the stat strip and the table —
-          one slim line of search + filters + table controls. */}
+      {/* Toolbar sits on the canvas between the stat strip and the table, one slim line of search + filters + table controls. */}
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -495,7 +494,7 @@ export default function JobsPage() {
                     {job.title}
                   </button>
                   <p className="mt-0.5 text-xs capitalize text-[var(--adm-ink-subtle)]">
-                    {[job.department, job.type].filter(Boolean).join(" · ") || "—"}
+                    {[job.department, job.type].filter(Boolean).join(" · ") || "–"}
                   </p>
                 </div>
                 <StatusBadge status={job.status} size="md" />

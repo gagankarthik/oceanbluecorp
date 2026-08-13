@@ -19,7 +19,7 @@ function getRoleRedirect(role: UserRole | null): string {
     case UserRole.SALES:
       return "/admin";
     default:
-      // Authenticated but with no staff group — nowhere to send them.
+      // Authenticated but with no staff group, nowhere to send them.
       return "/";
   }
 }
@@ -45,7 +45,7 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
   { label: "an uppercase letter", test: (v) => /[A-Z]/.test(v) },
   { label: "a lowercase letter", test: (v) => /[a-z]/.test(v) },
   { label: "a number", test: (v) => /\d/.test(v) },
-  // Cognito counts only this set as a symbol — a wider test would pass here
+  // Cognito counts only this set as a symbol, a wider test would pass here
   // and still be refused server-side.
   { label: "a symbol", test: (v) => /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]/.test(v) },
 ];
@@ -190,7 +190,7 @@ export default function SignInPage() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not complete your account setup.");
       // That session is spent whatever the reason was. Dropping it now means the
-      // next attempt starts from a fresh one — sending it again would only earn
+      // next attempt starts from a fresh one, sending it again would only earn
       // an "expired" error in place of the message the user needs to see.
       setSession("");
     } finally {

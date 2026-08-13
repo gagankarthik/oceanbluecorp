@@ -160,7 +160,7 @@ const NAV = [
 export default function DevelopersContent() {
   return (
     <div className="horizon min-h-screen bg-[var(--hz-paper)]">
-      {/* Hero — the landing page's header, on paper. It was a dark diagonal
+      {/* Hero, the landing page's header, on paper. It was a dark diagonal
           gradient with white type and three translucent pill chips, each chip
           carrying a differently-coloured icon (yellow, emerald, cyan), which
           put three accents on a page that runs on one. The CODE BLOCKS below
@@ -199,7 +199,7 @@ export default function DevelopersContent() {
         {/* Sidebar nav */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
           {/* top-24 (96px), not top-8. The site header is FIXED and 72px tall,
-              so a sticky offset of 32px parks this list underneath it — the
+              so a sticky offset of 32px parks this list underneath it, the
               nav scrolled up and then disappeared behind the bar. 96px clears
               the header with a 24px gap, and matches the `scroll-mt-24` on the
               sections below so a clicked anchor lands at the same line the
@@ -555,7 +555,7 @@ def get_job(job_id: str):
           {/* Get Access */}
           <Section id="get-access" title="Get Access">
             {/* Flat paper and a hairline, not a tinted gradient card with a
-                shadowed icon tile — the same close the marketing pages use. */}
+                shadowed icon tile, the same close the marketing pages use. */}
             <div className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-8 text-center">
               <Key className="mx-auto mb-4 h-7 w-7 text-[var(--hz-cobalt)]" strokeWidth={1.75} />
               <h3 className="text-xl font-bold text-[var(--hz-text)] mb-2">Ready to integrate?</h3>

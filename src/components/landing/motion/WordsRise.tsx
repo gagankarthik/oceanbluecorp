@@ -1,13 +1,13 @@
 /* ============================================================
-   WordsRise — the headline entrance for above-the-fold copy.
+   WordsRise, the headline entrance for above-the-fold copy.
 
    Deliberately NOT a framer-motion component and deliberately not
    "use client": it renders plain markup whose animation lives in
    the stylesheet (.hz-word in globals.css). That distinction is the
    whole point. The motion version set opacity:0 as the server-
    rendered state and only revealed the text once React hydrated,
-   which left the hero headline — the LCP element and the page's
-   single most important sentence — blank for five to eight seconds
+   which left the hero headline, the LCP element and the page's
+   single most important sentence, blank for five to eight seconds
    on a cold load. A CSS animation starts at first paint and owes
    nothing to the bundle.
 

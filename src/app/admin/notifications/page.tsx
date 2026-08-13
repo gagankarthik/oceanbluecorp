@@ -32,7 +32,7 @@ interface Notification {
 
 type NotificationType = Notification["type"];
 
-/** One table for the three notification kinds — label and chip tone. */
+/** One table for the three notification kinds, label and chip tone. */
 const NOTIFICATION_TYPES: {
   key: NotificationType;
   label: string;
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
       sortValue: (n) => n.title,
       cell: (n) => (
         <div className="flex items-center gap-2">
-          {/* Unread marker — the accent dot survives the zebra banding. */}
+          {/* Unread marker, the accent dot survives the zebra banding. */}
           <span
             aria-hidden
             className={cn(
@@ -267,7 +267,7 @@ export default function NotificationsPage() {
           ) : undefined
         }
       />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Unread", value: unreadCount,

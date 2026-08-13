@@ -23,12 +23,12 @@ import {
 } from "@/lib/anniversary";
 
 /* ============================================================
-   TEMPORARY — /13-years.
+   TEMPORARY , /13-years.
 
    Light and modern. Two earlier passes are worth recording so
    neither gets re-attempted:
 
-   1. A print-style commemorative edition — masthead, hairline
+   1. A print-style commemorative edition, masthead, hairline
       rules, a year-by-year record. Coherent, but cold.
    2. A dark cinematic version. Premium, but it fought the rest
       of the site and the near-white artwork sat on it like a
@@ -36,7 +36,7 @@ import {
 
    This keeps the second pass's structure and restraint and puts
    it back on a light ground, which is also where the artwork
-   belongs — the graphic has a near-white field, so a light page
+   belongs, the graphic has a near-white field, so a light page
    lets it sit in the surface rather than on top of one.
 
    Depth on white is harder than on ink and comes from four
@@ -60,7 +60,7 @@ const RAIL = [
     year: String(ANNIVERSARY_YEAR),
     title: `${ANNIVERSARY_YEARS} years on`,
     description:
-      "Still one accountable partner, held to one standard of delivery — across IT staffing, enterprise solutions, and managed services.",
+      "Still one accountable partner, held to one standard of delivery, across IT staffing, enterprise solutions, and managed services.",
   },
 ];
 
@@ -84,7 +84,7 @@ function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  // The plate drifts up and dims as the page moves off it — enough to feel like
+  // The plate drifts up and dims as the page moves off it, enough to feel like
   // depth, not enough to notice as an effect.
   const plateY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const plateOpacity = useTransform(scrollYProgress, [0, 0.92], [1, 0.25]);
@@ -94,8 +94,7 @@ function Hero() {
       ref={ref}
       className="relative isolate w-full overflow-hidden bg-[var(--hz-canvas)] pt-28 pb-20 sm:pt-32 sm:pb-28"
     >
-      {/* Replaced a vendored WebGL ocean shader. It looked expensive and was —
-          a raymarched fragment shader plus the `ogl` runtime, for a background.
+      {/* Replaced a vendored WebGL ocean shader. It looked expensive and was, a raymarched fragment shader plus the `ogl` runtime, for a background.
           This is the same wave the rest of the site uses, drawn as four SVG
           paths, and it responds to scroll where the shader only looped. */}
       <WaveField
@@ -163,7 +162,7 @@ function Hero() {
 
       {/* ── The artwork ────────────────────────────────────────
           On white the plate needs separating from the page, which a border
-          alone will not do — a hairline ring reads as a table cell. So: a soft
+          alone will not do, a hairline ring reads as a table cell. So: a soft
           cobalt bloom pooled beneath it, a wide low-opacity shadow, and a very
           light ring. The bloom is scaled on the y-axis so it sits under the
           plate like light on a surface rather than haloing it evenly. */}
@@ -188,7 +187,7 @@ function Hero() {
           <div className="relative z-10 aspect-square w-full overflow-hidden rounded-[28px] bg-white ring-1 ring-[var(--hz-line)] shadow-[0_40px_90px_-32px_rgba(15,23,42,0.35)]">
             <Photo
               src={ANNIVERSARY_ARTWORK}
-              alt={`${BRAND_NAME} ${ANNIVERSARY_YEARS}-year anniversary artwork — celebrating ${ANNIVERSARY_YEARS} years of innovation, trust, and excellence, ${ANNIVERSARY_SPAN}`}
+              alt={`${BRAND_NAME} ${ANNIVERSARY_YEARS}-year anniversary artwork, celebrating ${ANNIVERSARY_YEARS} years of innovation, trust, and excellence, ${ANNIVERSARY_SPAN}`}
               sizes="(max-width: 640px) 90vw, 600px"
               priority
               fallback="linear-gradient(150deg, #dbe6fe 0%, #f4f7fb 55%, #dbe6fe 100%)"
@@ -206,7 +205,7 @@ function Numbers() {
   return (
     <section className="relative w-full overflow-hidden border-y border-[var(--hz-band-line)] bg-[var(--hz-band)]">
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
-        {/* Divided by hairlines rather than boxed into cards — four numbers in
+        {/* Divided by hairlines rather than boxed into cards, four numbers in
             four tiles is the shape every SaaS page uses, and the numbers stop
             being the subject the moment they get borders and icons. */}
         <div className="grid grid-cols-2 lg:grid-cols-4">
@@ -238,7 +237,7 @@ function Numbers() {
 
 /* The journey.
 
-   A plain vertical rail of cards was the first attempt and it was inert — six
+   A plain vertical rail of cards was the first attempt and it was inert, six
    identical boxes and a line. This instead pins the year: one enormous numeral
    sits inside a progress ring on the left and swaps as you scroll through the
    panels on the right, so the ring fills as the story advances and the year is
@@ -246,7 +245,7 @@ function Numbers() {
    a number inside a ring of years.
 
    The ring is the desktop treatment only. Under `lg` there is no second column
-   to pin it against, so each panel carries its own year inline — a sticky
+   to pin it against, so each panel carries its own year inline, a sticky
    element in a single-column layout just covers the content it describes. */
 
 const RING_R = 88;
@@ -274,8 +273,7 @@ function YearDial({ index, total, year }: { index: number; total: number; year: 
         />
       </svg>
 
-      {/* `mode="wait"` so the outgoing year clears before the next arrives —
-          two enormous numerals cross-fading on top of each other is mush. */}
+      {/* `mode="wait"` so the outgoing year clears before the next arrives, two enormous numerals cross-fading on top of each other is mush. */}
       <AnimatePresence mode="wait">
         <motion.span
           key={year}
@@ -329,7 +327,7 @@ function Panel({
           one-time entrance, and a plain CSS transition owns the active/inactive
           dimming. Animating opacity from both at once multiplies them and the
           panel settles at the wrong value. Inactive panels sit back rather than
-          vanish — the reader keeps sight of what came before and what is next. */}
+          vanish, the reader keeps sight of what came before and what is next. */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -338,7 +336,7 @@ function Panel({
       >
         {/* The dimming is a DESKTOP affordance and is gated to `lg` for it.
             Below that the dial is hidden, and the active panel is decided by a
-            narrow band across the middle of the viewport — with the taller
+            narrow band across the middle of the viewport, with the taller
             mobile gaps, scroll positions exist where no panel is in that band,
             which would leave every panel on the page sitting at 50%. */}
         <div
@@ -427,7 +425,7 @@ function Statement() {
           <span className="hz-eyebrow text-[var(--hz-text-subtle)]">Thank you</span>
           {/* The one place on the page that raises its voice. */}
           <p className="hz-display mt-8 text-[clamp(1.9rem,5.4vw,4rem)] leading-[1.1] text-[var(--hz-text)]">
-            To our employees, our clients, and our partners —{" "}
+            To our employees, our clients, and our partners,{" "}
             <span className="text-[var(--hz-cobalt)]">
               thank you for thirteen years of trust.
             </span>

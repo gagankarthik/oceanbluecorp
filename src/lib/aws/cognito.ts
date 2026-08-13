@@ -16,7 +16,7 @@ import {
 
 import { groupNameForRole, highestStaffRole, normalizeStaffRole } from "@/lib/auth/config";
 
-// Assignable staff roles. There is no public "user" role — every account is
+// Assignable staff roles. There is no public "user" role, every account is
 // created by an admin and belongs to exactly one of these groups.
 export type StaffRole = "admin" | "hr" | "recruiter" | "sales";
 export const STAFF_ROLES: StaffRole[] = ["admin", "hr", "recruiter", "sales"];
@@ -214,7 +214,7 @@ async function ensureGroup(groupName: string): Promise<void> {
       new CreateGroupCommand({ UserPoolId: config.userPoolId, GroupName: groupName }),
     );
   } catch {
-    // Group already exists, or we lack CreateGroup — the add below reports it.
+    // Group already exists, or we lack CreateGroup, the add below reports it.
   }
 }
 
@@ -274,7 +274,7 @@ export async function removeUserFromGroup(username: string, groupName: string): 
  * matters: reads accept both shapes, so leaving an old bare `admin` behind would
  * make a demotion no demotion at all.
  *
- * Groups belonging to another application (`hr:*`) are left strictly alone —
+ * Groups belonging to another application (`hr:*`) are left strictly alone,
  * this site does not manage the HR portal's access.
  */
 export async function updateUserRole(username: string, newRole: StaffRole): Promise<{ success: boolean; error?: string }> {

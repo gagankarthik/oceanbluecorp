@@ -33,7 +33,7 @@ import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
 type Partner = { name: string; logo: string; cls: string; work: string };
 
 // `work` describes capabilities already claimed on the Services cards.
-// Nothing here asserts a partnership tier or certification level — those
+// Nothing here asserts a partnership tier or certification level, those
 // are factual claims about the business and belong to whoever can verify
 // them, not to a layout.
 const partners: Partner[] = [
@@ -64,7 +64,7 @@ export default function Partnerships() {
         <Reveal className="max-w-2xl">
           <span className="hz-eyebrow text-white/55">Technology partners</span>
           <h2 className="hz-display hz-h2 mt-4 text-white">
-            Built on the platforms you already run.
+            We build on what you already run.
           </h2>
         </Reveal>
 

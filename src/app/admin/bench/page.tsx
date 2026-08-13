@@ -77,9 +77,9 @@ type PageMode = "list" | "create" | "edit" | "view";
 /**
  * The stages a bench record can sit in.
  *
- * There used to be three disagreeing copies of this list on the page — the row
+ * There used to be three disagreeing copies of this list on the page, the row
  * select carried seven stages, the filter dropdown dropped "inactive", and the
- * create form dropped "hired" — so a candidate could be set to a state the
+ * create form dropped "hired", so a candidate could be set to a state the
  * filter could never find again. One list now feeds the tabs, the row select,
  * the detail select and the form.
  */
@@ -95,8 +95,8 @@ const STATUS_TABS = [
 /**
  * The bench splits into two pools, defined once in lib/bench:
  *
- *   Talent Bench (internal)  our own consultants — the whole team sees them
- *   My Pool      (external)  candidates you sourced — private to you
+ *   Talent Bench (internal)  our own consultants, the whole team sees them
+ *   My Pool      (external)  candidates you sourced, private to you
  *
  * The tabs sit above the KPI strip because every number below them is scoped
  * to the selected pool.
@@ -344,7 +344,7 @@ export default function TalentBenchPage() {
         setSelectedApplication((prev) => (prev && prev.id === appId ? { ...prev, ...updated } : prev));
         setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, ...updated } : a)));
         if (updated.resumeAnalysisStatus === "completed") toast.success("Resume analyzed");
-      } catch { /* non-fatal — the next tick retries */ }
+      } catch { /* non-fatal, the next tick retries */ }
     }, 5000);
 
     return () => clearInterval(timer);
@@ -400,7 +400,7 @@ export default function TalentBenchPage() {
    * Visibility follows the pool, not the person: Talent Bench (internal) holds
    * our own consultants and is company property, so every staff member sees
    * the whole list. My Pool (external) is the pipeline a recruiter built
-   * themselves and stays private to them — admins excepted, since auditing the
+   * themselves and stays private to them, admins excepted, since auditing the
    * team's pipeline is their job.
    *
    * This replaces a blanket "non-admins only ever see their own records" rule,
@@ -421,7 +421,7 @@ export default function TalentBenchPage() {
 
   /**
    * The selected pool. The KPI strip, status counts and the grid are all built
-   * from this list — switching tabs re-scopes the whole page, not just the rows.
+   * from this list, switching tabs re-scopes the whole page, not just the rows.
    */
   const pooledApplications = useMemo(
     () => (poolFilter === "all"
@@ -490,7 +490,7 @@ export default function TalentBenchPage() {
   const [rows, setRows] = useLocalStorage<number>("adm.bench.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.bench.hiddenCols", []);
 
-  /** On the bench a month or more without moving — the re-engagement list. */
+  /** On the bench a month or more without moving, the re-engagement list. */
   const staleBench = useMemo(
     () => pooledApplications.filter(
       (a) => (Date.now() - new Date(a.appliedAt).getTime()) / 86_400_000 >= 30,
@@ -684,8 +684,8 @@ export default function TalentBenchPage() {
   const handleViewApplication = (app: ApplicationWithJob) => {
     // Render the row immediately, then pull the full record.
     //
-    // List responses no longer carry `resumeAnalysis` — sending every parsed
-    // resume to the browser cost megabytes per page load — so the analysis panel
+    // List responses no longer carry `resumeAnalysis`, sending every parsed
+    // resume to the browser cost megabytes per page load, so the analysis panel
     // below needs the record fetched by key. One item, and the row is already on
     // screen while it lands.
     setSelectedApplication(app);
@@ -732,7 +732,7 @@ export default function TalentBenchPage() {
 
     if (!file) return;
 
-    // Validated on the extension rather than the MIME type — browsers report
+    // Validated on the extension rather than the MIME type, browsers report
     // .doc/.docx inconsistently, and a type allow-list rejected valid resumes.
     const name = file.name.toLowerCase();
     if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
@@ -1094,7 +1094,7 @@ export default function TalentBenchPage() {
    * authorisation, the application ID and the resume link all live on the
    * record itself, which is one click away, and work auth is already a filter
    * on the toolbar. Location and hire type are columns rather than record-only
-   * facts because both are now filters — a filter you cannot see the result of
+   * facts because both are now filters, a filter you cannot see the result of
    * in the grid leaves you guessing why rows disappeared.
    */
   const columns: DataTableColumn<ApplicationWithJob>[] = [
@@ -1413,7 +1413,7 @@ export default function TalentBenchPage() {
                   <SelectContent>
                     {POOL_ORDER.map((p) => (
                       <SelectItem key={p} value={p}>
-                        {POOL_META[p].label} — {POOL_META[p].badge.toLowerCase()}
+                        {POOL_META[p].label} , {POOL_META[p].badge.toLowerCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1620,7 +1620,7 @@ export default function TalentBenchPage() {
           }
         />
 
-        {/* Identity band — the facts a recruiter reads first, on one rule. */}
+        {/* Identity band, the facts a recruiter reads first, on one rule. */}
         <AdminCard className="flex flex-wrap items-center gap-x-6 gap-y-3 p-4 text-[13px] text-[var(--adm-ink-mute)]">
           <Avatar name={app.name} email={app.email} size="md" />
           <span className="inline-flex items-center gap-1.5"><IconMail className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.email}</span>
@@ -1660,7 +1660,7 @@ export default function TalentBenchPage() {
 
             {/* Parsed resume.
                 A bench profile could always carry a resume, but nothing on this
-                screen ever showed what was in it — the extraction ran (or, for
+                screen ever showed what was in it, the extraction ran (or, for
                 older records, never ran) and the result was only visible on the
                 candidate page. Same panel as the candidate record, so a
                 consultant reads identically wherever you open them. */}
@@ -1697,7 +1697,7 @@ export default function TalentBenchPage() {
                 {app.resumeAnalysisStatus === "pending" || app.resumeAnalysisStatus === "processing" ? (
                   <p className="flex items-center gap-2 text-sm text-[var(--adm-ink-mute)]">
                     <Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" />
-                    Analyzing the attached resume — experience, education, skills and more. Usually under a minute.
+                    Analyzing the attached resume, experience, education, skills and more. Usually under a minute.
                   </p>
                 ) : (
                   <>
@@ -1893,7 +1893,7 @@ export default function TalentBenchPage() {
         }
       />
 
-      {/* Pool tabs — everything below (KPIs, counts, grid) is scoped to the
+      {/* Pool tabs, everything below (KPIs, counts, grid) is scoped to the
           selected pool, so they sit above the KPI strip, not among the filter
           pills. */}
       <div
@@ -1929,7 +1929,7 @@ export default function TalentBenchPage() {
         })}
       </div>
 
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Available now", value: kpis.available, hint: "Not currently in a process" },

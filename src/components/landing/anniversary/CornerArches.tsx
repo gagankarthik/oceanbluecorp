@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { DUR, EASE } from "@/lib/motion";
 
 /* ============================================================
-   CornerArches — a gold pillar-and-arch framing the anniversary
+   CornerArches, a gold pillar-and-arch framing the anniversary
    band at its four corners.
 
    The device is a mandapa / Indo-Islamic pavilion: a slender
@@ -13,7 +13,7 @@ import { DUR, EASE } from "@/lib/motion";
    the centre. Four of them, mirrored into each corner, so the
    section reads as being seen THROUGH a pavilion rather than
    decorated at the edges. That is also why it beats the
-   medallion it replaced — a medallion is an object sitting in
+   medallion it replaced, a medallion is an object sitting in
    the margin; an arch is architecture the content occupies.
 
    Ocean Blue has run a delivery centre in India since 2022, so
@@ -70,7 +70,7 @@ const FOILS = 5;
 const SPRING = { x: COL_X + 2, y: CAP_Y - 2 };
 const APEX = { x: W + 6, y: 14 };
 /** Control point pulled up and left, so the curve leaves the capital steeply
- *  and flattens toward the crown — the proportion of a real arch, not an arc. */
+ *  and flattens toward the crown, the proportion of a real arch, not an arc. */
 const CTRL = { x: COL_X + 58, y: 4 };
 
 function quadAt(t: number) {
@@ -93,7 +93,7 @@ const ARCH_CUSPED = (() => {
   return d;
 })();
 
-/** A plain companion curve just outside the foils — the extrados, the outer
+/** A plain companion curve just outside the foils, the extrados, the outer
  *  face of the arch ring. Gives the arch thickness without a fill. */
 const ARCH_EXTRADOS = (() => {
   const pts = Array.from({ length: 13 }, (_, i) => quadAt(i / 12));
@@ -123,7 +123,7 @@ const FLIP: Record<Corner, string> = {
    This section is the first on the page and its top edge sits at y≈40 (under
    the announcement bar), while the fixed header occupies down to ~112px. An
    arch springs UPWARD toward its crown, so anchored at `top-0` the entire
-   sweep — everything the shape is actually about — renders behind the header
+   sweep, everything the shape is actually about, renders behind the header
    and only the springing curl at the capital escapes. The column reads fine
    either way, which is what makes this easy to miss.
 
@@ -138,7 +138,7 @@ const PLACE: Record<Corner, string> = {
 function Arch({ corner, delay = 0 }: { corner: Corner; delay?: number }) {
   const reduce = useReducedMotion();
 
-  /* Drawn in build order — column first, then the arch it carries, then the
+  /* Drawn in build order, column first, then the arch it carries, then the
      carving. `pathLength` rules each line on rather than fading it in. */
   const draw = (i: number) => ({
     initial: reduce ? { opacity: 0 } : { pathLength: 0, opacity: 0 },

@@ -1,7 +1,7 @@
 // Resolve matching-engine results back to what they actually are in this app.
 // The engine only knows opaque resume_ids: a resume-bank S3 key, or an
 // application id (talent-bench profiles and applicants). The UI needs to know
-// which — a bank hit links to a downloadable file and gets its identity from
+// which, a bank hit links to a downloadable file and gets its identity from
 // the parsed contact card; an application hit links to the candidate's
 // profile page. Server-side only (reads DynamoDB).
 import { getApplication, getBankResumeContacts } from "./dynamodb";

@@ -27,7 +27,7 @@ type MotifProps = { className?: string };
 
 const ACCENT = "var(--motif-accent, var(--hz-aqua))";
 
-/** Shared frame — every mark is drawn in the same 48-unit box with the
+/** Shared frame, every mark is drawn in the same 48-unit box with the
  *  same stroke discipline, which is what makes eight separate drawings
  *  look like one set. */
 function Frame({ className, children }: MotifProps & { children: React.ReactNode }) {
@@ -73,7 +73,7 @@ export function CheckMark({ className = "" }: MotifProps) {
   );
 }
 
-/** The full mark — droplet plus the wave sweeping off it. Sized in the
+/** The full mark, droplet plus the wave sweeping off it. Sized in the
  *  hundreds of pixels it becomes architecture rather than a logo, which
  *  is how the closing band is built. */
 export function LogoMark({ className = "" }: MotifProps) {
@@ -173,7 +173,7 @@ export function IllYears({ className = "" }: MotifProps) {
       {[21, 16, 11].map((r, i) => (
         <circle key={r} cx="24" cy="24" r={r} strokeOpacity={0.35 + i * 0.2} />
       ))}
-      {/* The heartwood at the centre of the rings — the year it started. */}
+      {/* The heartwood at the centre of the rings, the year it started. */}
       <circle cx="24" cy="24" r="6" fill={ACCENT} stroke="none" />
     </Frame>
   );
@@ -194,7 +194,7 @@ export function IllBuildings({ className = "" }: MotifProps) {
 }
 
 /** Client retention: the relationship closing back on itself. Two arrows
- *  round a droplet — renewal, not a generic circle. */
+ *  round a droplet, renewal, not a generic circle. */
 export function IllLoop({ className = "" }: MotifProps) {
   return (
     <Frame className={className}>
@@ -235,14 +235,14 @@ export function IllGlobe({ className = "" }: MotifProps) {
    Five drawings for the Resources dropdown, in the same 48-unit frame and
    stroke as the rest of the set so they read as one hand.
 
-   Each one depicts its own destination — angle brackets for the API docs, a
+   Each one depicts its own destination, angle brackets for the API docs, a
    nib for the blog, a folded paper for news, a quote for customer stories, a
    measured chart for case studies. Nothing here is interchangeable, which was
    the standing note on this icon set.
 
    Colour comes from `color` at the call site and the accent is the same hue
    held back to 22%, so each icon is two tones of ONE colour rather than two
-   unrelated ones. The five hues are all cool blues and teals — a family, not
+   unrelated ones. The five hues are all cool blues and teals, a family, not
    a rainbow, so the menu stays inside the brand's range.                    */
 
 const SOFT = 0.22;
@@ -383,7 +383,7 @@ export function IllBrandKit({ className = "" }: MotifProps) {
     <Frame className={className}>
       <path d="M8 10h32a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2Z" fill="currentColor" fillOpacity={SOFT} stroke="none" />
       <path d="M8 10h32a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2Z" />
-      {/* Four swatches along the base — the palette itself. */}
+      {/* Four swatches along the base, the palette itself. */}
       <path d="M12 31h5M21 31h5M30 31h5" strokeWidth={3} />
       <path d="M13 17.5c3 3 5 5 5 7a5 5 0 0 1-10 0c0-2 2-4 5-7Z" />
       <path d="M24 17h12M24 23h8" strokeWidth={1.75} />

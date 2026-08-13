@@ -17,8 +17,8 @@ interface StarRatingProps {
    *
    * In a grid this matters more than it sounds: most records are unrated, so a
    * permanently-drawn five-star control printed hundreds of empty grey stars
-   * down the page. They read as data — as if every candidate had been scored
-   * zero — and they were the loudest thing in a column that is usually empty.
+   * down the page. They read as data, as if every candidate had been scored
+   * zero, and they were the loudest thing in a column that is usually empty.
    */
   collapseWhenEmpty?: boolean;
   className?: string;

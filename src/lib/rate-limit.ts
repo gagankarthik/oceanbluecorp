@@ -1,7 +1,7 @@
 // Rate limiting for the routes that have no authentication.
 //
-// `POST /api/applications` and `POST /api/resume/upload` are open by design —
-// the public careers form posts through both — which means anyone can drive them
+// `POST /api/applications` and `POST /api/resume/upload` are open by design,
+// the public careers form posts through both, which means anyone can drive them
 // in a loop: S3 objects, DynamoDB rows, an LLM extraction pipeline and an
 // outbound email per iteration. That is a cost attack and a deliverability
 // attack in one, and it is the likeliest route to another sending shutdown.
@@ -17,7 +17,7 @@
 // FAILING OPEN
 //
 // If the counter cannot be read or written, the request is ALLOWED. A limiter
-// that is down must never be the reason a genuine applicant cannot apply — the
+// that is down must never be the reason a genuine applicant cannot apply, the
 // failure mode of blocking real candidates is worse than the failure mode of
 // briefly not throttling an attacker.
 import { NextResponse } from "next/server";
@@ -37,7 +37,7 @@ export interface RateLimitRule {
  *
  * `x-forwarded-for` is client-controlled in principle, so the LEFTMOST entry is
  * taken only as a bucket key, never as an identity. A caller who forges it just
- * spreads their own traffic across buckets — which is why the limits below are
+ * spreads their own traffic across buckets, which is why the limits below are
  * per-IP but deliberately not the only protection.
  */
 export function clientKey(request: Request): string {
@@ -102,7 +102,7 @@ export async function checkRateLimit(
 export const RATE_LIMITS = {
   /** Public job application. */
   application: { action: "apply", limit: 5, windowSeconds: 60 } as RateLimitRule,
-  /** Public resume upload — heavier, since each one writes to S3. */
+  /** Public resume upload, heavier, since each one writes to S3. */
   resumeUpload: { action: "resume-upload", limit: 10, windowSeconds: 300 } as RateLimitRule,
   /**
    * Public contact form.
@@ -111,7 +111,7 @@ export const RATE_LIMITS = {
    * out: a contacts row, an in-app notification, AND an SES email to the team.
    * The route already carries a honeypot field and a submit-timing check, but
    * both are trivially defeated by anything that reads the form before posting
-   * to it — leave the decoy input empty, wait three seconds, and you are through.
+   * to it, leave the decoy input empty, wait three seconds, and you are through.
    * A real person sends one of these; three in five minutes is already generous.
    */
   contact: { action: "contact", limit: 3, windowSeconds: 300 } as RateLimitRule,

@@ -59,7 +59,7 @@ interface RouteRow {
   icon: typeof IconShield;
 }
 
-// One row per route — paths are unique (the duplicate "/admin" entry was the
+// One row per route, paths are unique (the duplicate "/admin" entry was the
 // source of a React key collision).
 const routes: RouteRow[] = [
   { path: "/admin",              name: "Dashboard",    icon: IconOverview },
@@ -80,7 +80,7 @@ function hasAccess(route: string, role: UserRole): boolean {
   return routeAccess[route]?.includes(role) ?? false;
 }
 
-/** Allow / deny mark. Never colour alone — each carries its own glyph. */
+/** Allow / deny mark. Never colour alone, each carries its own glyph. */
 function Allow() {
   return (
     <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--adm-success)]">
@@ -100,7 +100,7 @@ function Deny() {
 }
 
 export default function RolesPage() {
-  // Derived from the same routeAccess table the grid renders — no extra data.
+  // Derived from the same routeAccess table the grid renders, no extra data.
   const grantedCount = (role: UserRole) => routes.filter((r) => hasAccess(r.path, role)).length;
 
   const columns: DataTableColumn<RouteRow>[] = [
@@ -163,7 +163,7 @@ export default function RolesPage() {
         })}
       </KpiStrip>
 
-      {/* Permission matrix — routes down, roles across. */}
+      {/* Permission matrix, routes down, roles across. */}
       <AdminCard className="overflow-hidden">
         <AdminCardHeader icon={IconShield} tone="blue" title="Route access" count={routes.length} />
         <DataTable

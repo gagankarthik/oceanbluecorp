@@ -26,8 +26,8 @@ type Service = {
 const services: Service[] = [
   {
     name: "IT Staffing & Talent",
-    title: "Specialists, embedded fast",
-    blurb: "Pre-vetted engineers who join your team and own the work.",
+    title: "People who own it",
+    blurb: "Vetted specialists who join your team and carry the work, not a ticket.",
     desc: "Pre-vetted engineers who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
     href: "/solutions/staffing",
     img: IMG.serviceTalent,
@@ -35,8 +35,8 @@ const services: Service[] = [
   },
   {
     name: "Engineering Talent & Services",
-    title: "Engineers, embedded fast",
-    blurb: "Mechanical, electrical, aerospace and controls engineers.",
+    title: "Engineers for the hard parts",
+    blurb: "Mechanical, electrical, aerospace and controls engineers, on your program.",
     desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers who join your program and own the work.",
     href: "/solutions/engineering",
     img: IMG.serviceEngineering,
@@ -48,7 +48,7 @@ const services: Service[] = [
   },
   {
     name: "Enterprise Solutions",
-    title: "Platforms, modernized",
+    title: "Platforms that hold",
     blurb: "Cloud, security and production AI, shipped without stopping the business.",
     desc: "Cloud migration, security, and production AI, engineered and shipped without stopping the business.",
     href: "/solutions/cloud",
@@ -56,7 +56,7 @@ const services: Service[] = [
     // Condensed from seven lines to four. At seven this card ran far past its
     // three-bullet neighbours and left a large void above their bottom-aligned
     // "Learn more", so the row of four read as broken rather than dense. Every
-    // capability is still named — merged, not dropped — and the full list lives
+    // capability is still named, merged, not dropped, and the full list lives
     // on /solutions/cloud, which is where the card links.
     items: [
       "Cloud migration · AWS, Azure, GCP",
@@ -67,8 +67,8 @@ const services: Service[] = [
   },
   {
     name: "Managed Services",
-    title: "Run, 24/7",
-    blurb: "Monitoring, support and optimization around the clock.",
+    title: "Someone awake at 3am",
+    blurb: "Monitoring, support and tuning around the clock. One number to call.",
     desc: "Monitoring, support, and continuous optimization around the clock. One team, one SLA, one number to call.",
     href: "/solutions/managed",
     img: IMG.serviceManaged,
@@ -126,7 +126,7 @@ export default function Services() {
             (near-black) put three dark bands in a row and then flipped hard to
             white, so the top half read as one long dark block and the bottom
             half as a different site. The reference card treatment is untouched
-            — panel, square corners, inline arrow — it just sits on canvas now,
+           , panel, square corners, inline arrow, it just sits on canvas now,
             which is also where the photographs read best.
 
             No eyebrow: the reference leads straight into the statement, and an
@@ -134,7 +134,7 @@ export default function Services() {
             one that matters. */}
         <Reveal className="max-w-4xl">
           <h2 className="hz-h2 font-normal leading-tight tracking-[-0.02em] text-[var(--hz-text)]">
-            One partner for talent, engineering, technology, and operations.
+            Four practices. One contract. One team you can hold to it.
           </h2>
         </Reveal>
 

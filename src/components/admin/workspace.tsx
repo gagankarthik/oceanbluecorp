@@ -13,7 +13,7 @@ import { Kbd } from "./kbd";
 import { cn } from "@/lib/utils";
 
 /* ============================================================================
-   Workspace — the shell an operations screen is built from.
+   Workspace, the shell an operations screen is built from.
 
    The list pages were assembled from four stacked surfaces: a full-bleed
    PageHeader band, a KPI strip, a standalone toolbar card, then the table card.
@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
  * the panel had no edge, so the header, the tabs, the toolbar and the grid all
  * ran together into one undifferentiated block pinned to the chrome. Giving it
  * a real border, a radius and canvas around it restores the thing the eye
- * actually needs — a boundary telling it where the screen's content begins.
+ * actually needs, a boundary telling it where the screen's content begins.
  */
 export function Workspace({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
@@ -83,7 +83,7 @@ export function Workspace({ className, children }: { className?: string; childre
  * Screen title with its primary actions.
  *
  * The earlier full-bleed white title BAND was rejected, and that judgement
- * stands — this is plain content on the canvas, no fill and no bottom rule.
+ * stands, this is plain content on the canvas, no fill and no bottom rule.
  * What it restores is the convention every admin tool shares (Jakob's Law):
  * the screen's name anchors the top-left, its primary actions sit top-right,
  * and the toolbar below is left to do filtering only. Actions were previously
@@ -118,7 +118,7 @@ export function WorkspaceTitle({
 /**
  * Toolbar button. One geometry for every control in the workspace chrome.
  *
- * `asChild` renders the styling onto the child element instead of a <button> —
+ * `asChild` renders the styling onto the child element instead of a <button>,
  * needed wherever the action is really navigation and must be a real <a>, so
  * it keeps middle-click, "open in new tab" and the browser's own link
  * affordances. Without it the prop fell through to the DOM and React warned
@@ -168,7 +168,7 @@ export function WorkspaceButton({
  *
  * Unlike a list screen, a record screen SHOULD state its title: it is the
  * record's own name, and it is the one thing the sidebar and breadcrumb cannot
- * tell you. What it must not do is rebuild the rejected page band — so there is
+ * tell you. What it must not do is rebuild the rejected page band, so there is
  * no white fill, no bottom rule and no icon tile, just the back link, the name,
  * its status, and the actions.
  */
@@ -265,7 +265,7 @@ export function RecordFact({
  * Sticky action bar for a form.
  *
  * Long forms put Save at the bottom, which on a ten-section page means
- * scrolling past everything you just filled in to reach it — and gives no
+ * scrolling past everything you just filled in to reach it, and gives no
  * persistent signal that there are unsaved changes. Pinned to the foot of the
  * viewport, the commit is always one click away and `dirty` can say so.
  */
@@ -343,7 +343,7 @@ export function KpiRow({ items, className }: { items: KpiItem[]; className?: str
   return (
     <div
       className={cn(
-        // Static class names only — Tailwind cannot see an interpolated
+        // Static class names only. Tailwind cannot see an interpolated
         // `lg:grid-cols-${n}`, so that variant would never be generated.
         "mb-4 grid flex-none gap-3 grid-cols-2",
         KPI_COLS[Math.min(items.length, 5) as 1 | 2 | 3 | 4 | 5],
@@ -460,7 +460,7 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
  * and the screen read as a list of widgets rather than as a report.
  *
  * A section states what a group of panels is FOR before you read any of them,
- * and the space around it is what makes the grouping legible — the gap between
+ * and the space around it is what makes the grouping legible, the gap between
  * sections is deliberately much larger than the gap between panels inside one.
  */
 export function Section({
@@ -520,7 +520,7 @@ export function NotePanel({ children, className }: { children: React.ReactNode; 
  * are not designed properly, unwanted tabs thing."
  *
  * The criticism is correct and worth stating so it is not repeated. A tab row
- * means "these are sibling PAGES" — in the Datadog console the user pointed at,
+ * means "these are sibling PAGES", in the Datadog console the user pointed at,
  * the tabs are Users / Roles / Mappings, three different screens, while the
  * filtering on those screens is done with checkboxes and dropdowns. Rendering
  * "Active / Inactive" as tabs borrows the visual language of navigation for
@@ -559,7 +559,7 @@ export function WorkspaceToolbar({
   className?: string;
   /**
    * "panel" fuses the toolbar to the table panel (band + border). "canvas"
-   * floats it on the page between the stat strip and the table — the
+   * floats it on the page between the stat strip and the table, the
    * Conduktor arrangement, one slim line, no chrome of its own.
    */
   variant?: "panel" | "canvas";
@@ -651,7 +651,7 @@ export function WorkspaceSearch({
  *
  * The icons were picked ad hoc and were both wrong and inconsistent: a download
  * arrow for "Source", a bookmark for "Position", and "Status" rendered as a
- * briefcase on Jobs but a tick on Clients. Two faults there —
+ * briefcase on Jobs but a tick on Clients. Two faults there,
  *
  *   1. several depicted the page's ENTITY (a job is a briefcase) rather than
  *      the filter's dimension (status is a state), so the icon said nothing the
@@ -688,12 +688,12 @@ export interface PillOption<V extends string> {
  * Compact filter control.
  *
  * Reads as one word plus its value ("Source: Career Portal") and takes the
- * accent only when it is actually narrowing something — a control resting at
+ * accent only when it is actually narrowing something, a control resting at
  * "All" is not an active filter and must not look like one, or a toolbar of six
  * filters looks permanently engaged and you stop reading it.
  */
 /* ============================================================
-   FilterMenu — every filter on a screen, behind one control.
+   FilterMenu, every filter on a screen, behind one control.
 
    Replaces a toolbar that had grown to four pills plus an
    "Advanced" toggle that swung open a fifth row of four more.
@@ -771,7 +771,7 @@ export function FilterMenu({
           </button>
         </div>
 
-        {/* Fields are plain content, not menu items — a DropdownMenuItem
+        {/* Fields are plain content, not menu items, a DropdownMenuItem
             swallows the click and closes the menu, which makes setting two
             filters in a row impossible. */}
         <div
@@ -823,8 +823,8 @@ export function FilterPill<V extends string>({
           className={cn(
             // Dashed "+ Label" add-filter pill when idle; once a value is picked
             // it fills solid with the accent tint and shows the chosen value.
-            // h-8: the toolbar is one slim line — search, filters and table
-            // controls together — so the grid starts as high as possible.
+            // h-8: the toolbar is one slim line, search, filters and table
+            // controls together, so the grid starts as high as possible.
             "inline-flex h-8 max-w-[240px] items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
@@ -925,8 +925,8 @@ export function AdvancedFilterToggle({
 /**
  * Editable cell control.
  *
- * A bare `<select>` is drawn by the operating system — a grey bevel on Windows,
- * a different metric on macOS — so it was the one element inside a designed
+ * A bare `<select>` is drawn by the operating system, a grey bevel on Windows,
+ * a different metric on macOS, so it was the one element inside a designed
  * grid that looked unfinished, and it resized itself as the selected label
  * changed. `appearance-none` plus a fixed width and our own chevron fixes both
  * while keeping a real native select, so keyboard use and mobile pickers still
@@ -942,7 +942,7 @@ export function GridSelect({
 }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  /** Status colour for the current value — renders the leading dot AND tints
+  /** Status colour for the current value, renders the leading dot AND tints
    *  the label. Pass `statusColor(status)` from theme.ts.
    *
    *  Both, not just the dot: a 8px dot is a poor carrier for the one fact this
@@ -950,7 +950,7 @@ export function GridSelect({
    *  200 rows needs the word itself to be the signal. Without a colour the
    *  control inherits `--adm-ink-mute`, which is why every editable status in
    *  the app rendered grey while the read-only badge beside it was in full
-   *  colour — the tone was there the whole time, nothing passed it. */
+   *  colour, the tone was there the whole time, nothing passed it. */
   dot?: string;
   width?: number;
   ariaLabel?: string;
@@ -1135,7 +1135,7 @@ export function ColumnsMenu({
 /**
  * The table's single settings control (Conduktor's "Display" popover): column
  * visibility toggles, rows-per-page and a reset, behind one gear. Replaces the
- * separate Columns and Density menus — row density is gone entirely; every
+ * separate Columns and Density menus, row density is gone entirely; every
  * grid uses the one comfortable height.
  */
 export function DisplayMenu({
@@ -1234,7 +1234,7 @@ export function DisplayMenu({
                   className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]"
                 >
                   <span className="flex-1 truncate">{c.label}</span>
-                  {/* Mini switch, like the reference — reads as on/off at a glance. */}
+                  {/* Mini switch, like the reference, reads as on/off at a glance. */}
                   <span
                     aria-hidden
                     className={cn(
@@ -1317,7 +1317,7 @@ export function ActiveFilters({
 }: {
   chips: { label: string; onClear: () => void }[];
   onClearAll: () => void;
-  /** Match the toolbar it sits under — see WorkspaceToolbar. */
+  /** Match the toolbar it sits under, see WorkspaceToolbar. */
   variant?: "panel" | "canvas";
 }) {
   if (chips.length === 0) return null;

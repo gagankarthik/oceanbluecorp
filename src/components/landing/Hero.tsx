@@ -11,7 +11,7 @@ import VideoBackdrop from "./VideoBackdrop";
    the rotation is purely editorial: same ground, three arguments.
 
    This is also why the hero got FASTER rather than slower by adopting a WebGL
-   background. With no photo, the LCP element is the headline — CSS-animated,
+   background. With no photo, the LCP element is the headline. CSS-animated,
    in the server HTML, painting on first frame. The shader arrives afterwards
    over a static gradient that is a perfectly good hero on its own.
 
@@ -20,14 +20,18 @@ import VideoBackdrop from "./VideoBackdrop";
 
    This was a three-slide rotation. It is one statement now. A hero that
    rewrites itself every six seconds asks the reader to catch it rather than
-   read it — anyone still on the first line when it changes has to start over,
+   read it, anyone still on the first line when it changes has to start over,
    and the page ends up making three claims instead of standing behind one.
    The other two survive as the openings of the sections below, which is where
    an argument belongs. */
+/* Written to the position, not to the service list. The choice this reader is
+   actually making is between one accountable team and a stack of vendors, so
+   the headline names that choice instead of listing what we sell. The accent
+   falls on "one team" because that is the whole argument. */
 const HERO = {
-  title: "Specialists who join your team and",
-  accent: "own the work.",
-  sub: "Pre-vetted engineers on flexible, permanent, or fully managed terms, with shortlists in 48 hours.",
+  title: "Four vendors, or",
+  accent: "one team that owns it.",
+  sub: "Talent, engineering, platforms and round-the-clock operations from one partner, under one contract, answerable to one standard.",
 };
 
 
@@ -57,7 +61,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           // Values MEASURED, not guessed. Sampling the real video across five
           // frames and compositing this scrim per pixel, the previous setting
           // left the headline at 4.87:1, the accent tail at 2.35:1 and the
-          // subhead at 3.71:1 — the accent failing even the 3:1 large-text
+          // subhead at 3.71:1, the accent failing even the 3:1 large-text
           // floor. The ceiling was the problem rather than the text colours:
           // pure white only reached 4.85:1 there, so no amount of adjusting
           // the type could fix it. At these values the same worst-case pixels
@@ -84,8 +88,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
           {/* Centred. A left-aligned statement reads as a page heading;
               centred over the full-bleed gradient it reads as a title card.
 
-              Everything here animates from the stylesheet, not framer-motion —
-              see WordsRise: the motion version left this copy invisible until
+              Everything here animates from the stylesheet, not framer-motion, see WordsRise: the motion version left this copy invisible until
               hydration finished, which cost the LCP five to eight seconds. */}
           <div>
             <h1 className="hz-display mx-auto max-w-[22ch] text-[clamp(1.9rem,4.3vw,3.35rem)] tracking-[-0.03em] break-words text-white">
@@ -94,7 +97,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
                 delay={0.18}
                 step={0.09}
               />{" "}
-              {/* The tail carries the accent — cobalt-300, the same accent
+              {/* The tail carries the accent, cobalt-300, the same accent
                   lightened for a dark ground, so the page still runs on one
                   hue. A CMS-set title is left plain: an editor writing one line
                   has no way to say where the colour should start. */}
@@ -113,7 +116,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
             </p>
           </div>
 
-          {/* One action, full stop. The secondary link is gone — the section it
+          {/* One action, full stop. The secondary link is gone, the section it
               pointed at is the next thing on the page. */}
           <div
             className="hz-enter mt-9 flex justify-center sm:mt-11"

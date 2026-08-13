@@ -1,5 +1,5 @@
 // Client for the Resume Matching Engine (FastAPI behind a Lambda Function URL).
-// Server-side ONLY — it reads the secret RESUME_MATCH_API_KEY.
+// Server-side ONLY, it reads the secret RESUME_MATCH_API_KEY.
 //
 // Why the key cannot leak to the browser:
 //   1. RESUME_MATCH_API_KEY is a non-`NEXT_PUBLIC_` env var. Next.js only inlines
@@ -26,10 +26,10 @@ function apiKey(): string {
   return (process.env.RESUME_MATCH_API_KEY || "").trim();
 }
 
-// Match/score involve an LLM call — allow a generous timeout. /embed is quick.
+// Match/score involve an LLM call, allow a generous timeout. /embed is quick.
 const MATCH_TIMEOUT_MS = Number(process.env.RESUME_MATCH_TIMEOUT_MS || 45_000);
 const EMBED_TIMEOUT_MS = Number(process.env.RESUME_EMBED_TIMEOUT_MS || 30_000);
-// Status checks run on page loads — keep them snappy so a slow engine can't hang the UI.
+// Status checks run on page loads, keep them snappy so a slow engine can't hang the UI.
 const STATUS_TIMEOUT_MS = Number(process.env.RESUME_STATUS_TIMEOUT_MS || 12_000);
 
 export interface MatchCandidate {

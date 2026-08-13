@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 /* ============================================================
-   Photo — a local image with a clean, on-brand fallback.
+   Photo, a local image with a clean, on-brand fallback.
    If the file at `src` is missing/broken, it hides the <img>
    and shows the brand gradient instead (never a broken/odd
    image). Place inside a `relative overflow-hidden` parent.
@@ -22,7 +22,7 @@ export default function Photo({
   alt?: string;
   className?: string;
   fallback?: string;
-  /** CSS `sizes`. Always pass the real rendered width — without it the browser
+  /** CSS `sizes`. Always pass the real rendered width, without it the browser
    *  assumes 100vw and downloads the largest candidate for a 300px card. */
   sizes?: string;
   priority?: boolean;

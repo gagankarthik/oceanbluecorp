@@ -1,5 +1,5 @@
 // Client for the resume-extraction Lambda (FastAPI behind a Lambda Function URL).
-// Server-side only — never import this into client components.
+// Server-side only, never import this into client components.
 //
 // The Lambda exposes POST /extract which accepts a multipart file upload and
 // returns a fully structured JSON document. The multi-agent LLM pipeline can
@@ -28,17 +28,17 @@ const PARSE_TIMEOUT_MS = Number(process.env.RESUME_PARSER_TIMEOUT_MS || 110_000)
    The engine runs behind a Lambda Function URL with no AWS authentication (a
    30–90s pipeline does not fit behind an API Gateway's 30s timeout), so it
    guards /extract itself: callers must present a short-lived HS256 JWT signed
-   with a secret shared between the two services. Sending nothing — which is
-   what this app did — earns a 401 "Upload authorisation failed or expired." on
+   with a secret shared between the two services. Sending nothing, which is
+   what this app did, earns a 401 "Upload authorisation failed or expired." on
    every resume.
 
    The ticket is minted per request rather than held anywhere: it lives five
    minutes, and the engine independently refuses any ticket claiming more than
-   fifteen. Signed with node:crypto rather than a JWT library — the format is
+   fifteen. Signed with node:crypto rather than a JWT library, the format is
    three base64url segments and an HMAC, and the engine verifies it with Python's
    stdlib hmac for the same reason.
 
-   Contract, mirrored from the engine's auth.py — changing either side breaks
+   Contract, mirrored from the engine's auth.py, changing either side breaks
    uploads: alg HS256, aud "resume-extraction-engine", iat/exp required, and
    exp - iat must not exceed fifteen minutes. */
 
@@ -49,7 +49,7 @@ const TICKET_AUDIENCE = "resume-extraction-engine";
 const TICKET_TTL_SECONDS = 300;
 
 /**
- * The shared signing secret. Server-side only — it must never be NEXT_PUBLIC_,
+ * The shared signing secret. Server-side only, it must never be NEXT_PUBLIC_,
  * because a leaked secret lets anyone run a ten-agent GPT pipeline on our key.
  * RESUME_PARSER_TOKEN is accepted as a legacy alias for the same value.
  */
@@ -92,7 +92,7 @@ function authFailureMessage(status: number, detail: string): string {
   if (!getExtractionSecret()) {
     return "Resume extraction is not authorised: NEXT_EXTRACTION_SHARED_SECRET is not set on this deployment, so no upload ticket can be signed.";
   }
-  return `The extraction service rejected our upload ticket (${status}) — NEXT_EXTRACTION_SHARED_SECRET no longer matches the engine's EXTRACTION_SHARED_SECRET. Service said: ${detail}`;
+  return `The extraction service rejected our upload ticket (${status}). NEXT_EXTRACTION_SHARED_SECRET no longer matches the engine's EXTRACTION_SHARED_SECRET. Service said: ${detail}`;
 }
 
 export interface ParsedContact {
@@ -102,7 +102,7 @@ export interface ParsedContact {
   lastName?: string;
   email?: string;
   phone?: string;
-  /** From personal_information.address — analytics.primary_location is often null. */
+  /** From personal_information.address, analytics.primary_location is often null. */
   city?: string;
   state?: string;
 }
@@ -113,7 +113,7 @@ export interface ParseResult {
   /**
    * Contact details the extractor found. Deliberately NOT part of `analysis`
    * (which gets persisted onto applications, where the candidate's own details
-   * are the source of truth) — callers that have no other identity for the
+   * are the source of truth), callers that have no other identity for the
    * person, like resume-bank indexing, read it from here explicitly.
    */
   contact?: ParsedContact;
@@ -179,7 +179,7 @@ export async function parseResumeBuffer(
   const first = await attemptParse(bytes, fileName, contentType, subject, PARSE_TIMEOUT_MS);
   if (first.success || !first.transient) return first;
 
-  // One immediate retry for a service that was merely unavailable — a cold
+  // One immediate retry for a service that was merely unavailable, a cold
   // start, a throttle, a dropped connection. Only worth it with enough of the
   // deadline left for the pipeline to actually finish.
   const remaining = deadline - Date.now() - RETRY_DELAY_MS;
@@ -239,7 +239,7 @@ async function attemptParse(
         const err = await res.json();
         if (err?.detail) detail = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
       } catch {
-        /* response body wasn't JSON — keep the status-based message */
+        /* response body wasn't JSON, keep the status-based message */
       }
       if (res.status === 401 || res.status === 403) {
         // A rejected token is not fixed by trying again a second later.
@@ -264,7 +264,7 @@ async function attemptParse(
         : err instanceof Error
           ? err.message
           : "Failed to reach the resume extraction service.",
-      // A timeout is not retried inside one request — there is no time left for
+      // A timeout is not retried inside one request, there is no time left for
       // it. Reaching the service failing outright is.
       transient: !aborted,
     };

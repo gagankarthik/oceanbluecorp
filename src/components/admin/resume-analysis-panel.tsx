@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 function dateRange(start?: string | null, end?: string | null, isCurrent?: boolean | null): string {
   const s = (start || "").trim();
   const e = isCurrent ? "Present" : (end || "").trim();
-  if (s && e) return `${s} — ${e}`;
+  if (s && e) return `${s} , ${e}`;
   return s || e || "";
 }
 

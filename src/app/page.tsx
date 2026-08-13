@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 /* ============================================================
-   LANDING — consulting-firm direction (EY / Deloitte / Accenture).
+   LANDING, consulting-firm direction (EY / Deloitte / Accenture).
    Light, editorial, photography-led, bold statement type, content
    cards in grids, one decisive Ocean-Blue accent, a flat sticky
    header, and a bold image-backed CTA. (Insights / Case Study
@@ -77,28 +77,27 @@ const homeJsonLd = {
 export default async function Home() {
   const content = await getSiteContent("homepage");
   // TEMPORARY (13-year celebration). Evaluated here, on the server, and passed
-  // down — a client component reading the clock itself would let the server and
+  // down, a client component reading the clock itself would let the server and
   // the browser disagree across midnight and blow up hydration.
   const anniversary = isAnniversaryLive(content);
   return (
     <div className="horizon relative w-full bg-[var(--hz-canvas)]">
       {/* The hero photo preload that used to sit here is gone with the photo.
           The hero is film now, deliberately deferred until after `load`, and
-          its LCP element is the CSS-animated headline already in this HTML —
-          so a high-priority image preload was spending the opening bandwidth
+          its LCP element is the CSS-animated headline already in this HTML, so a high-priority image preload was spending the opening bandwidth
           on a file the page no longer requests at all. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
       />
 
-      {/* TEMPORARY — for the celebration the anniversary band leads the page
+      {/* TEMPORARY, for the celebration the anniversary band leads the page
           and the hero sits beneath it. Removing the band restores the original
           order with no other edit. */}
       {anniversary && <Anniversary content={content} />}
       <Hero content={content} />
       {/* Clients sit directly under the hero. The logo row is the fastest
-          credibility a visitor can read — it answers "has anyone I recognise
+          credibility a visitor can read, it answers "has anyone I recognise
           trusted these people?" before the pitch begins, which is the question
           they are actually asking in the first five seconds. Buried below the
           services it was arriving after the argument it was meant to support. */}
@@ -107,7 +106,7 @@ export default async function Home() {
       {/* The one dark beat between the hero and the close. */}
       <Partnerships />
       <Testimonials />
-      {/* The trust strip sits ABOVE the closing ask, not below it — the last
+      {/* The trust strip sits ABOVE the closing ask, not below it, the last
           reassurance a reader passes before deciding. */}
       <CertificationStrip />
       <CallToAction content={content} />

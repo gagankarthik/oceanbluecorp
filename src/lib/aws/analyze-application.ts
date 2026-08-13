@@ -2,7 +2,7 @@
 // S3, runs it through the extraction Lambda, and persists the structured result
 // back onto the application. Server-side only.
 //
-// Personal information is never written back — only the structured resume
+// Personal information is never written back, only the structured resume
 // sections (experience, education, skills, analytics, …) are stored.
 import type { ResumeAnalysis } from "./dynamodb";
 import { getApplication, getJob, getResume, updateApplication } from "./dynamodb";
@@ -26,7 +26,7 @@ export interface AnalyzeResult {
 export const MAX_ANALYSIS_ATTEMPTS = 5;
 
 /**
- * Dead ends — nothing about these changes by waiting. Everything else (token
+ * Dead ends, nothing about these changes by waiting. Everything else (token
  * rejected, service 5xx, timeout, network) is treated as retryable, because
  * those are fixed by an env var or by the service coming back, and the record
  * should heal itself once they are.
@@ -58,7 +58,7 @@ export async function analyzeApplicationResume(
    * An extraction this caller already ran, to be stored instead of running the
    * pipeline again. The new-applicant screen reads the resume up front to fill
    * the form, so without this the same document went through a 30–90 second,
-   * ten-agent LLM run twice for one record — paid for twice.
+   * ten-agent LLM run twice for one record, paid for twice.
    */
   options?: { analysis?: ResumeAnalysis },
 ): Promise<AnalyzeResult> {
@@ -150,7 +150,7 @@ export async function analyzeApplicationResume(
 
   // Auto-score this candidate against the job they applied for, so the
   // application shows "matched / not matched" + missing skills without anyone
-  // clicking. Best-effort — never fails the analysis.
+  // clicking. Best-effort, never fails the analysis.
   if (app.jobId) {
     try {
       const jobRes = await getJob(app.jobId);

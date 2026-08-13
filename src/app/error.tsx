@@ -7,7 +7,7 @@ import { RefreshCw, ArrowRight } from "lucide-react";
 /* ============================================================
    Route-level error boundary for the public site. Without this,
    an unhandled render error dropped visitors on Next's stock
-   error screen — unstyled, off-brand, and with no way back.
+   error screen, unstyled, off-brand, and with no way back.
 
    Matches the 404 treatment: navy band, cobalt accent, plain
    language, and a route out. The digest is surfaced so someone
@@ -35,7 +35,7 @@ export default function Error({
           This page didn&rsquo;t load.
         </h1>
         <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
-          The problem is on our end, not yours. Try again — if it keeps happening,
+          The problem is on our end, not yours. Try again, if it keeps happening,
           get in touch and we&rsquo;ll look into it.
         </p>
 

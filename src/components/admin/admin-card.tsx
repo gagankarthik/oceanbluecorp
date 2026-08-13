@@ -34,7 +34,7 @@ export function AdminCard({
   );
 }
 
-/** Section header for an AdminCard — a titled band, as in a report subsection. */
+/** Section header for an AdminCard, a titled band, as in a report subsection. */
 export function AdminCardHeader({
   icon: Icon,
   title,

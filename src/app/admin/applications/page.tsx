@@ -56,7 +56,7 @@ import { downloadCsv } from "@/lib/csv";
       also the control that filters to them.
 
    2. The pipeline band's conversion figures. They divided each stage's CURRENT
-      occupancy by the previous stage's, which is not a conversion rate — with
+      occupancy by the previous stage's, which is not a conversion rate, with
       1 record in New and 113 in Screening it rendered "11300%". Occupancy-based
       conversion cannot be fixed by clamping; the honest version needs
       ever-reached cohorts, which the dashboard already computes and shows.
@@ -101,7 +101,7 @@ function Blank() {
 /**
  * A record's state as a canonical 2-letter code. Older rows stored the full
  * name ("Texas"), so every read goes through here to land in the same bucket as
- * a row saved as "TX" — otherwise one filter option per spelling appears and
+ * a row saved as "TX", otherwise one filter option per spelling appears and
  * neither finds the whole set. Unrecognised values pass through rather than
  * disappearing.
  */
@@ -111,7 +111,7 @@ function stateOf(value?: string | null): string {
 
 const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
 
-/** "Austin, TX" — what a recruiter actually calls the location. */
+/** "Austin, TX", what a recruiter actually calls the location. */
 function locationOf(a: Pick<App, "city" | "state">): string {
   return [a.city?.trim(), stateOf(a.state)].filter(Boolean).join(", ");
 }
@@ -226,10 +226,10 @@ export default function ApplicationsPage() {
   const [view, setView]       = useState<ViewMode>("table");
   const [savedView, setSavedView] = useState<ViewKey>("all");
 
-  // Workspace preferences persist — a density or column choice that resets on
+  // Workspace preferences persist, a density or column choice that resets on
   // every navigation is not a preference, it is a toy.
   const [rows, setRows] = useLocalStorage<number>("adm.applications.rows", 25);
-  // Source starts hidden — it only matters in aggregate, which the dashboard's
+  // Source starts hidden, it only matters in aggregate, which the dashboard's
   // channel panel already answers. The key is versioned (v2) because the
   // previous default was persisted to localStorage, and a stored value always
   // wins over a changed default; without a new key, anyone who loaded the old
@@ -356,8 +356,7 @@ export default function ApplicationsPage() {
     { key: "hired",        label: "Hired",          count: viewCounts.hired },
   ];
 
-  /* The badge on the single Filters control. Counts every dimension it owns —
-     the old split counted only the four that lived behind the drawer, because
+  /* The badge on the single Filters control. Counts every dimension it owns, the old split counted only the four that lived behind the drawer, because
      the other four had their own pills to show state. With one control there is
      nowhere else for that state to show. `savedView` is excluded: it selects
      WHICH records are in scope rather than narrowing them, and its own label is
@@ -379,7 +378,7 @@ export default function ApplicationsPage() {
 
   /**
    * Searchable text per record, built once per loaded list rather than on every
-   * keystroke — walking a few hundred parsed resumes on each character typed is
+   * keystroke, walking a few hundred parsed resumes on each character typed is
    * what would make a skill search feel slow.
    */
   const haystacks = useMemo(() => {
@@ -392,7 +391,7 @@ export default function ApplicationsPage() {
     // All terms must match, so "java aws" means both.
     const terms = searchTerms(debouncedSearch.trim());
     return inView.filter((a) => {
-    // Matches identity fields AND the parsed resume — skills, employers, role
+    // Matches identity fields AND the parsed resume, skills, employers, role
     // titles, technologies, certifications. Searching a skill finds people who
     // have it, not just people who applied to a job named after it.
     if (terms.length && !matchesTerms(haystacks.get(a.id) ?? haystackOf(a), terms)) return false;
@@ -449,7 +448,7 @@ export default function ApplicationsPage() {
     finally { setDeleting(false); setBulkDeleteOpen(false); }
   };
 
-  /** Bulk stage move — the action a multi-select is actually for. */
+  /** Bulk stage move, the action a multi-select is actually for. */
   const bulkStage = async (status: Application["status"]) => {
     const ids = [...selected];
     setApplications((p) => p.map((a) => (ids.includes(a.id) ? { ...a, status } : a)));
@@ -619,7 +618,7 @@ export default function ApplicationsPage() {
        overflow, so the only thing standing between this screen and an
        internal scroll was the page itself being taller than that box. As a
        full-height flex column, the chrome above (title, stats, toolbar) takes
-       its natural height and `Workspace` — already `flex-1` — absorbs the
+       its natural height and `Workspace`, already `flex-1`, absorbs the
        rest, which makes DataTable's `overflow-auto` container the scrolling
        element.
 
@@ -629,7 +628,7 @@ export default function ApplicationsPage() {
        scrolls exactly as before.
 
        This is also what finally makes the sticky `thead` (`.adm-grid thead th`
-       in globals.css) do anything — a sticky header only sticks to a scroll
+       in globals.css) do anything, a sticky header only sticks to a scroll
        container, and until now the container it sat in never scrolled. */
     <div className="flex h-full min-h-0 flex-col">
     <WorkspaceTitle
@@ -645,7 +644,7 @@ export default function ApplicationsPage() {
         </>
       }
     />
-      {/* Inline stat strip — the table gets the vertical space, not stat cards. */}
+      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Needs review", value: viewCounts.review,
@@ -676,8 +675,7 @@ export default function ApplicationsPage() {
         trailing={
           <>
             {/* Every filter on this screen, in one control. It was four pills
-                plus an "Advanced" toggle opening a fifth row of four more —
-                a split that decided for the user which filters mattered, and
+                plus an "Advanced" toggle opening a fifth row of four more, a split that decided for the user which filters mattered, and
                 pushed the table down the page whenever the drawer was open. */}
             <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
               <Field label="Saved view" htmlFor="filter-view">

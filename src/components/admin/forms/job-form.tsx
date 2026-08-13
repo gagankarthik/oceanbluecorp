@@ -97,7 +97,7 @@ export function jobToFormData(job: Job): JobFormData {
     location: job.location || "",
     // Legacy records store the full name ("California"); the canonical stored
     // value is now the 2-letter code, so coerce on read or the picker blanks.
-    // A legacy `state: "Remote"` normalises to "" — Remote is a job *type*.
+    // A legacy `state: "Remote"` normalises to "". Remote is a job *type*.
     state: normalizeState(job.state),
     clientId: job.clientId || "",
     clientName: job.clientName || "",
@@ -116,7 +116,7 @@ export function jobToFormData(job: Job): JobFormData {
     assignedToNames: job.assignedToNames || (job.assignedToName ? [job.assignedToName] : []),
     assignedToEmails: job.assignedToEmails || [],
     description: job.description || "",
-    // Seed the rich editor with HTML — a legacy string[] becomes a <ul>, HTML
+    // Seed the rich editor with HTML, a legacy string[] becomes a <ul>, HTML
     // passes through unchanged.
     requirements: renderListField(job.requirements).__html,
     responsibilities: renderListField(job.responsibilities).__html,
@@ -172,7 +172,7 @@ interface JobFormProps {
   formId?: string;
 }
 
-/** Lead-in line for a panel — replaces FormSection's header `description`. */
+/** Lead-in line for a panel, replaces FormSection's header `description`. */
 function PanelNote({ children }: { children: React.ReactNode }) {
   return <p className="mb-4 text-[13px] leading-relaxed text-[var(--adm-ink-subtle)]">{children}</p>;
 }
@@ -250,7 +250,7 @@ export function JobForm({
 
   return (
     <>
-      {/* Back leads the page, ahead of the title — the same position it holds
+      {/* Back leads the page, ahead of the title, the same position it holds
           on every record screen, rather than sitting in the action cluster on
           the far right where it competed with Save for the eye. */}
       <button
@@ -271,7 +271,7 @@ export function JobForm({
         subtitle={
           mode === "create"
             ? "Fill in the details to create a new job listing"
-            : `Editing ${job?.title || "—"}`
+            : `Editing ${job?.title || "–"}`
         }
         icon={IconJob}
         meta={mode === "edit" && job?.postingId ? (
@@ -412,7 +412,7 @@ export function JobForm({
         <AdminCard>
           <AdminCardHeader icon={IconMoney} title="Compensation" />
           <div className="p-5">
-            <PanelNote>Optional rate and salary details — leave blank if not applicable.</PanelNote>
+            <PanelNote>Optional rate and salary details, leave blank if not applicable.</PanelNote>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Bill Rate ($/hr)" htmlFor="job-bill-rate">
                 <MoneyInput id="job-bill-rate" value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
@@ -462,7 +462,7 @@ export function JobForm({
           <AdminCardHeader icon={IconFile} title="Job description" />
           <div className="p-5">
             <PanelNote>
-              What candidates see — describe the role, then list requirements and responsibilities.
+              What candidates see, describe the role, then list requirements and responsibilities.
             </PanelNote>
             <div className="space-y-4">
               <Field label="Description" required htmlFor="job-description">
@@ -507,7 +507,7 @@ export function JobForm({
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Posted by</span>
-              {job.postedByName || "—"}
+              {job.postedByName || "–"}
             </span>
           </div>
         )}
@@ -636,14 +636,14 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
 
         <div className="space-y-4 p-5">
           <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
-            <h1 className="mb-4 text-2xl font-bold text-[var(--adm-ink)]">{data.title || "—"}</h1>
+            <h1 className="mb-4 text-2xl font-bold text-[var(--adm-ink)]">{data.title || "–"}</h1>
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2.5 py-1 text-[13px] font-semibold text-[var(--adm-accent)]">
                 <IconJob className="h-3.5 w-3.5 flex-none" aria-hidden="true" />{typeLabel}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
                 <IconLocation className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
-                {data.location || "—"}{data.state ? `, ${data.state}` : ""}
+                {data.location || "–"}{data.state ? `, ${data.state}` : ""}
               </span>
               {data.submissionDueDate && (
                 <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-warning)]">

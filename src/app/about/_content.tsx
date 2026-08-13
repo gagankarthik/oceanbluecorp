@@ -26,11 +26,10 @@ const differentiators: { icon: LucideIcon; title: string; description: string }[
   { icon: Building2, title: "Enterprise-grade solutions", description: "From cloud to ERP to AI, we deliver technology that scales." },
   { icon: CheckCircle2, title: "Proven delivery", description: "We execute with precision, transparency, and accountability." },
   { icon: Briefcase, title: "Industry expertise", description: "Healthcare, government, financial services, manufacturing, retail, technology." },
-  { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects — we support your evolution." },
+  { icon: Heart, title: "Long-term partnership", description: "We don't just deliver projects, we support your evolution." },
 ];
 
-/* Moved to `lib/company.ts` when the anniversary page needed the same list —
-   one copy, so a corrected year can't be right here and wrong there. */
+/* Moved to `lib/company.ts` when the anniversary page needed the same list, one copy, so a corrected year can't be right here and wrong there. */
 const milestones = MILESTONES;
 
 function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
@@ -45,7 +44,7 @@ function ValueCard({ icon: Icon, title, description }: { icon: LucideIcon; title
   );
 }
 
-/* Roadmap — a winding road through 6 evenly-spaced points, alternating up/down. */
+/* Roadmap, a winding road through 6 evenly-spaced points, alternating up/down. */
 const ROAD =
   "M100,168 C200,168 200,312 300,312 C400,312 400,168 500,168 C600,168 600,312 700,312 C800,312 800,168 900,168 C1000,168 1000,312 1100,312";
 const NODES = [
@@ -189,14 +188,14 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
             </blockquote>
             <p className="mt-6 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
               We help organizations modernize systems, strengthen teams, and adopt the
-              technologies that drive real business impact — with a human-centered
+              technologies that drive real business impact, with a human-centered
               approach that values clarity, collaboration, and execution.
             </p>
             <div className="mt-8 border-t border-black/[0.08] pt-8">
               <Eyebrow>Why we exist</Eyebrow>
               <p className="mt-5 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
                 To give organizations the technology, talent, and support they need to
-                operate smarter, faster, and more securely — combining deep technical
+                operate smarter, faster, and more securely, combining deep technical
                 expertise with a genuine commitment to service.
               </p>
             </div>

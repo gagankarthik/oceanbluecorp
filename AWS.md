@@ -7,7 +7,7 @@ backend up. All resources live in **us-east-2** and the app is hosted on **AWS A
 | Service | Used for |
 | --- | --- |
 | **Amazon Cognito** | Authentication (OIDC) and role mapping |
-| **Amazon DynamoDB** | Primary datastore — jobs, applications, candidates, CMS content, etc. |
+| **Amazon DynamoDB** | Primary datastore, jobs, applications, candidates, CMS content, etc. |
 | **Amazon S3** | Resume file storage |
 | **Amazon SES** | Transactional email (application confirmations, job-posting notifications) |
 
@@ -15,7 +15,7 @@ backend up. All resources live in **us-east-2** and the app is hosted on **AWS A
 
 ## 1. The AWS code layer (`src/lib/aws/`)
 
-All AWS access is isolated in one folder. **These modules are server-only** — client
+All AWS access is isolated in one folder. **These modules are server-only**, client
 components may import their *types* (`import type { Job } from "@/lib/aws/dynamodb"`)
 but must never value-import them, or the AWS SDK and credentials would ship to the
 browser.
@@ -25,7 +25,7 @@ browser.
 | `config.ts` | Reads env vars at runtime via getter functions; builds the shared credentials/region/table config |
 | `dynamodb.ts` | All DynamoDB CRUD (jobs, applications, resumes, candidates, contacts, clients, vendors, content, notifications, counters, API keys) |
 | `s3.ts` | Resume uploads/downloads (presigned URLs and server-side upload) |
-| `ses.ts` | Transactional email — sends over SMTP via `nodemailer` (application confirmation, job notifications) |
+| `ses.ts` | Transactional email, sends over SMTP via `nodemailer` (application confirmation, job notifications) |
 | `cognito.ts` | Cognito admin operations (user/group lookups for the admin user manager) |
 | `index.ts` | Barrel re-export of the above |
 
@@ -51,7 +51,7 @@ work). `NEXT_PUBLIC_*` values are exposed to the browser; everything else is ser
 | Variable | Scope | Required | Description |
 | --- | --- | --- | --- |
 | `NEXT_AWS_ACCESS_KEY_ID` | server | yes | IAM access key (DynamoDB/S3) |
-| `NEXT_AWS_SECRET_ACCESS_KEY` | server | yes | IAM secret key — never expose to the browser |
+| `NEXT_AWS_SECRET_ACCESS_KEY` | server | yes | IAM secret key, never expose to the browser |
 | `NEXT_PUBLIC_AWS_REGION` | public | yes | `us-east-2` |
 | `NEXT_PUBLIC_COGNITO_USER_POOL_ID` | public | yes | Cognito user pool id |
 | `NEXT_PUBLIC_COGNITO_CLIENT_ID` | public | yes | Cognito app client id |
@@ -80,13 +80,13 @@ be overridden by the matching `NEXT_AWS_DYNAMODB_TABLE_*` env var; the default i
 | `oceanblue-applications` | `id` (S) | `userId-index` (userId, appliedAt), `jobId-index` (jobId, appliedAt) | `…_TABLE_APPLICATIONS` | Job applications |
 | `oceanblue-resumes` | `id` (S) | `userId-index` (userId, uploadedAt) | `…_TABLE_RESUMES` | Resume metadata |
 | `oceanblue-candidates` | `id` (S) | `email-index` (email), `userId-index` (userId) | `…_TABLE_CANDIDATES` | Candidate profiles / bench |
-| `oceanblue-contacts` | `id` (S) | — | `…_TABLE_CONTACTS` | Contact-form submissions |
-| `oceanblue-clients` | `id` (S) | — | `…_TABLE_CLIENTS` | Client accounts |
-| `oceanblue-vendors` | `id` (S) | — | `…_TABLE_VENDORS` | Vendor records |
-| `oceanblue-content` | `id` (S) | — | `…_TABLE_CONTENT` | CMS content blocks (`/admin/content`) |
-| `oceanblue-notifications` | `id` (S) | — | `…_TABLE_NOTIFICATIONS` | Admin notifications |
-| `oceanblue-counters` | `id` (S) | — | `…_TABLE_COUNTERS` | Sequence counters (e.g. job posting ids) |
-| `oceanblue-api-keys` | `id` (S) | — | `…_TABLE_API_KEYS` | Public API keys for `/api/v1` |
+| `oceanblue-contacts` | `id` (S) | , | `…_TABLE_CONTACTS` | Contact-form submissions |
+| `oceanblue-clients` | `id` (S) | , | `…_TABLE_CLIENTS` | Client accounts |
+| `oceanblue-vendors` | `id` (S) | , | `…_TABLE_VENDORS` | Vendor records |
+| `oceanblue-content` | `id` (S) | , | `…_TABLE_CONTENT` | CMS content blocks (`/admin/content`) |
+| `oceanblue-notifications` | `id` (S) | , | `…_TABLE_NOTIFICATIONS` | Admin notifications |
+| `oceanblue-counters` | `id` (S) | , | `…_TABLE_COUNTERS` | Sequence counters (e.g. job posting ids) |
+| `oceanblue-api-keys` | `id` (S) | , | `…_TABLE_API_KEYS` | Public API keys for `/api/v1` |
 
 > **Item schemas** are the TypeScript interfaces in `src/lib/aws/dynamodb.ts`
 > (`Job`, `Application`, `Resume`, `Candidate`, `Contact`, `Client`, `Vendor`,
@@ -138,7 +138,7 @@ to **On-demand**, and add the GSIs listed above where applicable.
 
 ## 5. Amazon S3 (resumes)
 
-Create the bucket in `us-east-2` with **Block all public access ON** — files are served
+Create the bucket in `us-east-2` with **Block all public access ON**, files are served
 through the app via presigned URLs, never publicly. Apply this CORS configuration
 (Permissions › Cross-origin resource sharing), replacing the origins with your domains:
 
@@ -171,7 +171,7 @@ through the app via presigned URLs, never publicly. Apply this CORS configuratio
 - **OAuth:** Authorization code grant; scopes `openid`, `email`, `phone`.
 - **Roles:** Cognito groups map to app roles. The hierarchy (see
   `src/lib/auth/config.ts`) is **ADMIN (4) > HR (3) > RECRUITER / SALES (2) > USER (1)**.
-  RECRUITER and SALES sit at the same level as HR but with narrower access — for
+  RECRUITER and SALES sit at the same level as HR but with narrower access, for
   example, they can reach jobs/applications/candidates but not contacts, clients, or
   vendors. ADMIN-only areas include `/admin/roles`, `/admin/content`, `/admin/settings`.
 
@@ -186,7 +186,7 @@ through the app via presigned URLs, never publicly. Apply this CORS configuratio
 Email is sent over **SMTP** via `nodemailer` (the `@aws-sdk/client-ses` SDK is not used).
 
 - Verify the sending domain or the from-address (`NEXT_AWS_SES_FROM_EMAIL`).
-- If the account is in the **SES sandbox**, request production access — otherwise only
+- If the account is in the **SES sandbox**, request production access, otherwise only
   verified recipients receive mail.
 - Create **SMTP credentials** and set `NEXT_AWS_STMP` / `NEXT_AWS_STMP_PASSWORD`.
 

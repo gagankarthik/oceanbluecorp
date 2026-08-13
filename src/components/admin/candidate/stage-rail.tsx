@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/format";
 
 /* ============================================================
-   StageRail — the full six-stage stepper.
+   StageRail, the full six-stage stepper.
 
    Moved OUT of the top of the record and into the Pipeline tab.
    It previously occupied ~180px of the most valuable space on
    the page, permanently, and duplicated a tab that already
-   existed. For a terminal candidate — hired or rejected — every
+   existed. For a terminal candidate, hired or rejected, every
    node is checked and the control is a receipt, not a control:
    prime real estate spent on a finished process.
 

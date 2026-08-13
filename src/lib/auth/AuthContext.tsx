@@ -39,7 +39,7 @@ type SignInResult =
       status: "NEW_PASSWORD_REQUIRED";
       session: string;
       // The identifier Cognito issued the session for, and the attributes it
-      // still needs — both have to come back with the challenge answer.
+      // still needs, both have to come back with the challenge answer.
       username: string;
       requiredAttributes: string[];
     };
@@ -61,7 +61,7 @@ interface AuthContextType {
     requiredAttributes?: string[];
     // The temporary password from the invite email. A challenge session is
     // single-use, so the server needs this to mint a fresh one after a failed
-    // attempt — without it, every retry dies as "session expired".
+    // attempt, without it, every retry dies as "session expired".
     tempPassword?: string;
   }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
@@ -124,7 +124,7 @@ const parseUser = (oidcUser: User): AuthUser => {
 // Mirror the client OIDC session into an httpOnly cookie that authorizes the
 // internal API (verified server-side in src/lib/auth/verify.ts). Called whenever
 // a session is established or renewed; cleared on sign-out. This is what lets the
-// existing admin fetch calls stay unchanged — the browser sends the cookie
+// existing admin fetch calls stay unchanged, the browser sends the cookie
 // automatically.
 async function syncServerSession(idToken: string | undefined, expiresIn?: number) {
   if (!idToken) return;
@@ -311,7 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       // Cognito's own reason, when there is one, says far more than the
-      // friendly headline — keep it attached so the banner can show it.
+      // friendly headline, keep it attached so the banner can show it.
       throw new Error(
         [data.error || "Could not complete your account setup.", data.detail]
           .filter(Boolean)
@@ -325,7 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     // Always clear the local session first, so the app reads as signed-out
     // regardless of what the identity provider does next. Each step is guarded
-    // so one failure never blocks the sign-out (this was the "try again" bug —
+    // so one failure never blocks the sign-out (this was the "try again" bug,
     // a failed Cognito hosted-logout redirect surfaced as an error).
     try {
       const userManager = getUserManager();
@@ -358,7 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Always a clean LOCAL sign-out → go home. We deliberately do NOT redirect
     // to the Cognito hosted `/logout` endpoint: it only works if logout_uri is
     // registered as an Allowed sign-out URL, otherwise Cognito shows a "please
-    // try again" error page — which is exactly what broke sign-out in
+    // try again" error page, which is exactly what broke sign-out in
     // production. `replace` so Back doesn't return to an authed page.
     if (typeof window !== "undefined") {
       window.location.replace("/");
