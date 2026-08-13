@@ -258,10 +258,10 @@ export default function CareersSearchPage() {
             <div className="lg:w-72 flex-shrink-0">
               <button
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="lg:hidden w-full flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 mb-4"
+                className="lg:hidden w-full flex items-center justify-between p-4 bg-white rounded-xl border border-[var(--hz-paper-line)] mb-4"
               >
                 <div className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-slate-600" />
+                  <Filter className="w-5 h-5 text-[var(--hz-text-mute)]" />
                   <span className="font-medium">Filters</span>
                   {activeFiltersCount > 0 && (
                     <span className="px-2 py-0.5 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] text-xs font-medium rounded-full">
@@ -269,12 +269,12 @@ export default function CareersSearchPage() {
                     </span>
                   )}
                 </div>
-                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showMobileFilters ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-5 h-5 text-[var(--hz-text-subtle)] transition-transform ${showMobileFilters ? "rotate-180" : ""}`} />
               </button>
 
-              <div className={`bg-white rounded-2xl border border-slate-200 p-6 sticky top-24 ${showMobileFilters ? "block" : "hidden lg:block"}`}>
+              <div className={`bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 sticky top-24 ${showMobileFilters ? "block" : "hidden lg:block"}`}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-semibold text-slate-900">Filters</h3>
+                  <h3 className="font-semibold text-[var(--hz-text)]">Filters</h3>
                   {activeFiltersCount > 0 && (
                     <button onClick={clearFilters} className="text-sm text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium">
                       Clear all
@@ -284,9 +284,9 @@ export default function CareersSearchPage() {
 
                 {/* Search */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Search</label>
+                  <label className="block text-sm font-medium text-[var(--hz-text-mute)] mb-2">Search</label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--hz-text-subtle)]" />
                     <input
                       type="search"
                       autoComplete="off"
@@ -294,18 +294,18 @@ export default function CareersSearchPage() {
                       placeholder="Job title or keyword..."
                       value={searchQuery}
                       onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[var(--hz-paper)] border border-[var(--hz-paper-line)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                     />
                   </div>
                 </div>
 
                 {/* Department */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Department</label>
+                  <label className="block text-sm font-medium text-[var(--hz-text-mute)] mb-2">Department</label>
                   <select
                     value={selectedDepartment}
                     onChange={(e) => { setSelectedDepartment(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-[var(--hz-paper)] border border-[var(--hz-paper-line)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {departments.map((dept) => (
                       <option key={dept} value={dept}>{dept}</option>
@@ -315,11 +315,11 @@ export default function CareersSearchPage() {
 
                 {/* Job Type */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Job Type</label>
+                  <label className="block text-sm font-medium text-[var(--hz-text-mute)] mb-2">Job Type</label>
                   <select
                     value={selectedType}
                     onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-[var(--hz-paper)] border border-[var(--hz-paper-line)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {jobTypes.map((type) => (
                       <option key={type} value={type}>{type === "All Types" ? type : formatJobType(type)}</option>
@@ -329,11 +329,11 @@ export default function CareersSearchPage() {
 
                 {/* Location */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-[var(--hz-text-mute)] mb-2">Location</label>
                   <select
                     value={selectedLocation}
                     onChange={(e) => { setSelectedLocation(e.target.value); setCurrentPage(1); }}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-[var(--hz-paper)] border border-[var(--hz-paper-line)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                   >
                     {locations.map((loc) => (
                       <option key={loc} value={loc}>{loc}</option>
@@ -344,11 +344,11 @@ export default function CareersSearchPage() {
                 {/* State */}
                 {states.length > 1 && (
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">State</label>
+                    <label className="block text-sm font-medium text-[var(--hz-text-mute)] mb-2">State</label>
                     <select
                       value={selectedState}
                       onChange={(e) => { setSelectedState(e.target.value); setCurrentPage(1); }}
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-[var(--hz-paper)] border border-[var(--hz-paper-line)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] focus:border-transparent"
                     >
                       {states.map((st) => (
                         <option key={st} value={st}>{st}</option>
@@ -365,7 +365,7 @@ export default function CareersSearchPage() {
                   >
                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${remoteOnly ? "left-6" : "left-1"}`} />
                   </button>
-                  <span className="text-sm text-slate-700">Remote only</span>
+                  <span className="text-sm text-[var(--hz-text-mute)]">Remote only</span>
                 </div>
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function CareersSearchPage() {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
                       key={i}
-                      className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+                      className="animate-pulse rounded-2xl border border-[var(--hz-paper-line)] bg-white p-5 sm:p-6"
                       style={{ animationDelay: `${i * 70}ms` }}
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -416,7 +416,7 @@ export default function CareersSearchPage() {
                   ))}
                 </div>
               ) : error ? (
-                <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center sm:p-12">
+                <div className="rounded-2xl border border-[var(--hz-paper-line)] bg-white p-10 text-center sm:p-12">
                   <p className="hz-display text-[1.25rem] text-[var(--hz-text)]">
                     We couldn&rsquo;t load the positions.
                   </p>
@@ -440,7 +440,7 @@ export default function CareersSearchPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         whileHover={{ y: -2 }}
-                        className="bg-white rounded-2xl border border-slate-200 p-6 transition-all hover:border-slate-300 hover:shadow-md"
+                        className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 transition-all hover:border-slate-300 hover:shadow-md"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                           <Link href={`/careers/search/${job.id}`} className="flex-1 group cursor-pointer min-w-0">
@@ -451,7 +451,7 @@ export default function CareersSearchPage() {
                                   Applied
                                 </span>
                               )}
-                              <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+                              <span className="px-3 py-1 rounded-full bg-slate-100 text-[var(--hz-text-mute)] text-xs font-medium">
                                 {job.department}
                               </span>
                               {(job.type === "remote" || job.location.toLowerCase().includes("remote")) && (
@@ -467,7 +467,7 @@ export default function CareersSearchPage() {
                                 if (!dueInfo) return null;
                                 return (
                                   <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
-                                    dueInfo.isUrgent ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-600"
+                                    dueInfo.isUrgent ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-[var(--hz-text-mute)]"
                                   }`}>
                                     <CalendarClock className="w-3 h-3" />
                                     {dueInfo.text}
@@ -475,8 +475,8 @@ export default function CareersSearchPage() {
                                 );
                               })()}
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-[var(--hz-cobalt)] transition-colors break-words">{job.title}</h3>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                            <h3 className="text-lg font-semibold text-[var(--hz-text)] mb-2 group-hover:text-[var(--hz-cobalt)] transition-colors break-words">{job.title}</h3>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--hz-text-subtle)]">
                               <span className="flex items-center gap-1.5">
                                 <MapPin className="w-4 h-4" />
                                 {job.location}
@@ -490,7 +490,7 @@ export default function CareersSearchPage() {
                             </div>
                           </Link>
                           <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                            <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <span className="text-xs text-[var(--hz-text-subtle)] flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
                               {job.postedAgo}
                             </span>
@@ -507,8 +507,8 @@ export default function CareersSearchPage() {
                   </div>
 
                   {/* Pagination + Per-page */}
-                  <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-200">
-                    <p className="text-sm text-slate-500">
+                  <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--hz-paper-line)]">
+                    <p className="text-sm text-[var(--hz-text-subtle)]">
                       Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredJobs.length)}–{Math.min(currentPage * itemsPerPage, filteredJobs.length)} of {filteredJobs.length} positions
                     </p>
 
@@ -517,7 +517,7 @@ export default function CareersSearchPage() {
                         <button
                           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                           disabled={currentPage === 1}
-                          className="p-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2.5 rounded-lg border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronLeft className="w-5 h-5" />
                         </button>
@@ -527,7 +527,7 @@ export default function CareersSearchPage() {
                             <button
                               key={page}
                               onClick={() => setCurrentPage(page)}
-                              className={`w-10 h-10 rounded-lg font-medium ${currentPage === page ? "bg-[var(--hz-cobalt)] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                              className={`w-10 h-10 rounded-lg font-medium ${currentPage === page ? "bg-[var(--hz-cobalt)] text-white" : "text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"}`}
                             >
                               {page}
                             </button>
@@ -536,7 +536,7 @@ export default function CareersSearchPage() {
                         <button
                           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2.5 rounded-lg border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronRight className="w-5 h-5" />
                         </button>
@@ -544,21 +544,21 @@ export default function CareersSearchPage() {
                     )}
 
                     {/* Per-page selector */}
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-[var(--hz-text-subtle)]">
                       <span>Jobs per page:</span>
                       <div className="flex items-center gap-1">
                         {PER_PAGE_OPTIONS.map((n) => (
                           <button
                             key={n}
                             onClick={() => { setItemsPerPage(n); setCurrentPage(1); }}
-                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${itemsPerPage === n ? "bg-[var(--hz-cobalt)] text-white" : "border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"}`}
                           >
                             {n}
                           </button>
                         ))}
                         <button
                           onClick={() => { setItemsPerPage(filteredJobs.length || 999); setCurrentPage(1); }}
-                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-[var(--hz-cobalt)] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+                          className={`px-3 h-9 rounded-lg font-medium transition-colors text-xs ${itemsPerPage >= filteredJobs.length && filteredJobs.length > 0 ? "bg-[var(--hz-cobalt)] text-white" : "border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"}`}
                         >
                           All
                         </button>
@@ -567,12 +567,12 @@ export default function CareersSearchPage() {
                   </div>
                 </>
               ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                <div className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-12 text-center">
                   <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-slate-400" />
+                    <Search className="w-8 h-8 text-[var(--hz-text-subtle)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No positions found</h3>
-                  <p className="text-slate-500 mb-4">Try adjusting your filters or search query</p>
+                  <h3 className="text-lg font-semibold text-[var(--hz-text)] mb-2">No positions found</h3>
+                  <p className="text-[var(--hz-text-subtle)] mb-4">Try adjusting your filters or search query</p>
                   <button onClick={clearFilters} className="px-4 py-2 bg-[var(--hz-cobalt)] text-white font-medium rounded-lg">
                     Clear filters
                   </button>

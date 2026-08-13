@@ -199,7 +199,7 @@ export default function CareersPage() {
           <Stagger className="mt-12 grid gap-5 sm:mt-14 md:grid-cols-3" gap={0.09}>
             {benefits.map((b) => (
               <StaggerItem key={b.title} className="h-full">
-                <div className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
+                <div className="group flex h-full flex-col rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt-100)] hover:shadow-[var(--hz-shadow-md)] sm:p-8">
                   <span className="text-[var(--hz-cobalt)]">
                     <b.icon className="h-6 w-6" strokeWidth={1.5} />
                   </span>
@@ -245,7 +245,7 @@ export default function CareersPage() {
       <section className="relative w-full py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal>
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-7 sm:p-9">
+            <div className="rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 sm:p-9">
               <h2 className="hz-display text-[1.25rem] text-[var(--hz-text)] sm:text-[1.5rem]">
                 An equal opportunity employer
               </h2>

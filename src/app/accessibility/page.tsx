@@ -25,7 +25,7 @@ const MEASURES = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-slate-100 py-8 first:border-0 first:pt-0">
+    <section className="border-t border-[var(--hz-paper-line)] py-8 first:border-0 first:pt-0">
       <h2 className="hz-display text-[1.4rem] text-[var(--hz-text)]">{title}</h2>
       <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{children}</div>
     </section>
@@ -114,14 +114,14 @@ export default function AccessibilityPage() {
             or need information in an alternative format, please contact us and we&apos;ll respond as soon as we can:
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <a href="mailto:hr@oceanbluecorp.com" className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-colors hover:border-[var(--hz-cobalt-100)]">
+            <a href="mailto:hr@oceanbluecorp.com" className="group flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)]/80 bg-white p-4 shadow-sm transition-colors hover:border-[var(--hz-cobalt-100)]">
               <span className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"><Mail className="h-4 w-4" /></span>
               <span>
                 <span className="block text-[12px] text-[var(--hz-text-subtle)]">Email</span>
                 <span className="block text-[14px] font-medium text-[var(--hz-text)]">hr@oceanbluecorp.com</span>
               </span>
             </a>
-            <a href="tel:+16148446925" className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-colors hover:border-[var(--hz-cobalt-100)]">
+            <a href="tel:+16148446925" className="group flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)]/80 bg-white p-4 shadow-sm transition-colors hover:border-[var(--hz-cobalt-100)]">
               <span className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]"><Phone className="h-4 w-4" /></span>
               <span>
                 <span className="block text-[12px] text-[var(--hz-text-subtle)]">Phone</span>

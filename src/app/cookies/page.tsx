@@ -25,19 +25,19 @@ function Section({ id, number, title, children }: {
   id: string; number: string; title: string; children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-8 border-b border-gray-100 py-8 last:border-0">
+    <section id={id} className="scroll-mt-8 border-b border-[var(--hz-paper-line)] py-8 last:border-0">
       <div className="mb-4 flex items-baseline gap-3">
         <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
           {number}
         </span>
         <h2
-          className="text-xl font-bold text-gray-900"
+          className="text-xl font-bold text-[var(--hz-text)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {title}
         </h2>
       </div>
-      <div className="space-y-3 text-[15px] leading-relaxed text-gray-600">
+      <div className="space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
         {children}
       </div>
     </section>
@@ -68,11 +68,11 @@ function CookieCard({ icon: Icon, title, color, children }: {
     <div className={`rounded-xl border p-5 ${color}`}>
       <div className="mb-3 flex items-center gap-3">
         <Icon className="h-5 w-5" />
-        <p className="font-semibold text-gray-900" style={{ fontFamily: "var(--font-display)" }}>
+        <p className="font-semibold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
           {title}
         </p>
       </div>
-      <div className="text-sm leading-relaxed text-gray-600">{children}</div>
+      <div className="text-sm leading-relaxed text-[var(--hz-text-mute)]">{children}</div>
     </div>
   );
 }
@@ -102,11 +102,11 @@ export default function CookiesPage() {
       }}
     >
       {/* Hero */}
-      <div className="border-b border-gray-100 bg-white/70 backdrop-blur-sm">
+      <div className="border-b border-[var(--hz-paper-line)] bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-6 pt-24 pb-14 md:pt-28 lg:px-8 lg:pb-20">
           <Link
             href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-900"
+            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             Back to Home
@@ -117,19 +117,19 @@ export default function CookiesPage() {
             </div>
             <div>
               <h1
-                className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
+                className="text-3xl font-extrabold tracking-tight text-[var(--hz-text)] sm:text-4xl lg:text-5xl"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.025em" }}
               >
                 Cookie Policy
               </h1>
-              <p className="mt-2 text-base text-gray-500">
-                Effective date: <span className="font-medium text-gray-700">{EFFECTIVE}</span>
+              <p className="mt-2 text-base text-[var(--hz-text-subtle)]">
+                Effective date: <span className="font-medium text-[var(--hz-text-mute)]">{EFFECTIVE}</span>
                 &nbsp;·&nbsp;
-                Last updated: <span className="font-medium text-gray-700">{EFFECTIVE}</span>
+                Last updated: <span className="font-medium text-[var(--hz-text-mute)]">{EFFECTIVE}</span>
               </p>
-              <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-gray-500">
+              <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--hz-text-subtle)]">
                 This Cookie Policy explains how Ocean Blue Corporation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "}
-                <span className="font-medium text-gray-700">oceanbluecorp.com</span>.
+                <span className="font-medium text-[var(--hz-text-mute)]">oceanbluecorp.com</span>.
               </p>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function CookiesPage() {
           <aside className="hidden xl:block w-64 flex-shrink-0">
             <div className="sticky top-8">
               <p
-                className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-gray-400"
+                className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 Contents
@@ -154,7 +154,7 @@ export default function CookiesPage() {
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+                    className="block rounded-lg px-3 py-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
                   >
                     {s.label}
                   </a>
@@ -216,11 +216,11 @@ export default function CookiesPage() {
                     </p>
                     <p className="mt-2 text-xs font-medium text-green-700">Optional, enabled by default</p>
                   </CookieCard>
-                  <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-slate-200 bg-slate-50">
+                  <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
                     <p>
                       Help us understand how visitors interact with our website by collecting and reporting information anonymously. We use Google Analytics 4 for this purpose. No personally identifiable information is transmitted.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-slate-600">Optional, requires consent</p>
+                    <p className="mt-2 text-xs font-medium text-[var(--hz-text-mute)]">Optional, requires consent</p>
                   </CookieCard>
                   <CookieCard icon={ExternalLink} title="Marketing / Targeting" color="border-rose-100 bg-rose-50/50">
                     <p>
@@ -236,32 +236,32 @@ export default function CookiesPage() {
                   Some cookies on our website are placed by third-party service providers. We do not control these cookies, and they are governed by each provider&apos;s own privacy policy.
                 </P>
                 <P>The following table lists the specific cookies currently in use:</P>
-                <div className="mt-4 overflow-hidden rounded-xl border border-gray-100">
+                <div className="mt-4 overflow-hidden rounded-xl border border-[var(--hz-paper-line)]">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700">Cookie Name</th>
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700">Provider</th>
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Purpose</th>
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700">Duration</th>
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700">Type</th>
+                        <tr className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
+                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Cookie Name</th>
+                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Provider</th>
+                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)] hidden lg:table-cell">Purpose</th>
+                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Duration</th>
+                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Type</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {COOKIE_TABLE.map((row, i) => (
-                          <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-4 py-3 font-mono text-xs text-gray-700">{row.name}</td>
-                            <td className="px-4 py-3 text-gray-600">{row.provider}</td>
-                            <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">{row.purpose}</td>
-                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.duration}</td>
+                          <tr key={i} className="hover:bg-[var(--hz-paper)]/50 transition-colors">
+                            <td className="px-4 py-3 font-mono text-xs text-[var(--hz-text-mute)]">{row.name}</td>
+                            <td className="px-4 py-3 text-[var(--hz-text-mute)]">{row.provider}</td>
+                            <td className="px-4 py-3 text-[var(--hz-text-subtle)] hidden lg:table-cell">{row.purpose}</td>
+                            <td className="px-4 py-3 text-[var(--hz-text-subtle)] whitespace-nowrap">{row.duration}</td>
                             <td className="px-4 py-3">
                               <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
                                 row.type === "Security"    ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" :
-                                row.type === "Analytics"  ? "bg-slate-100 text-slate-600" :
+                                row.type === "Analytics"  ? "bg-slate-100 text-[var(--hz-text-mute)]" :
                                 row.type === "Marketing"  ? "bg-rose-50 text-rose-700" :
                                 row.type === "Functional" ? "bg-green-50 text-green-700" :
-                                "bg-gray-100 text-gray-600"
+                                "bg-gray-100 text-[var(--hz-text-mute)]"
                               }`}>{row.type}</span>
                             </td>
                           </tr>
@@ -278,8 +278,8 @@ export default function CookiesPage() {
               <Section id="duration" number="05" title="Cookie Duration">
                 <P>Cookies can remain on your device for different periods of time. We use two types based on duration:</P>
                 <UL items={[
-                  <><strong className="text-gray-800">Session cookies</strong>, These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
-                  <><strong className="text-gray-800">Persistent cookies</strong>, These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
+                  <><strong className="text-[var(--hz-text)]">Session cookies</strong>, These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
+                  <><strong className="text-[var(--hz-text)]">Persistent cookies</strong>, These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
                 ]} />
               </Section>
 
@@ -321,7 +321,7 @@ export default function CookiesPage() {
                       href={b.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition-colors hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)]"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--hz-paper-line)] bg-white px-3 py-2 text-sm text-[var(--hz-text-mute)] transition-colors hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)]"
                     >
                       {b.name}
                       <ExternalLink className="h-3 w-3" />
@@ -377,23 +377,23 @@ export default function CookiesPage() {
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <a
                     href="mailto:privacy@oceanbluecorp.com"
-                    className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)]"
+                    className="group flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-4 transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)]"
                   >
                     <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100 group-hover:bg-[var(--hz-cobalt-100)] group-hover:ring-[var(--hz-cobalt-100)] transition-colors">
-                      <Mail className="h-4 w-4 text-gray-500 group-hover:text-[var(--hz-cobalt)] transition-colors" />
+                      <Mail className="h-4 w-4 text-[var(--hz-text-subtle)] group-hover:text-[var(--hz-cobalt)] transition-colors" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Privacy Team</p>
-                      <p className="text-sm font-medium text-gray-700">privacy@oceanbluecorp.com</p>
+                      <p className="text-xs text-[var(--hz-text-subtle)]">Privacy Team</p>
+                      <p className="text-sm font-medium text-[var(--hz-text-mute)]">privacy@oceanbluecorp.com</p>
                     </div>
                   </a>
-                  <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <div className="flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-4">
                     <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
-                      <Cookie className="h-4 w-4 text-gray-500" />
+                      <Cookie className="h-4 w-4 text-[var(--hz-text-subtle)]" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Mailing Address</p>
-                      <p className="text-sm font-medium text-gray-700">
+                      <p className="text-xs text-[var(--hz-text-subtle)]">Mailing Address</p>
+                      <p className="text-sm font-medium text-[var(--hz-text-mute)]">
                         9775 Fairway Drive, Suite #C<br />
                         Powell, OH 43065
                       </p>
@@ -413,10 +413,10 @@ export default function CookiesPage() {
             {/* Footer nav */}
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white px-8 py-5 shadow-sm ring-1 ring-gray-100">
               <div className="flex items-center gap-6 text-sm">
-                <Link href="/privacy" className="text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors">
+                <Link href="/privacy" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
                   Privacy Policy
                 </Link>
-                <Link href="/terms" className="text-gray-500 hover:text-[var(--hz-cobalt)] transition-colors">
+                <Link href="/terms" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
                   Terms of Service
                 </Link>
               </div>

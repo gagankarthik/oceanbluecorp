@@ -17,7 +17,7 @@ export default function JobSearchLoading() {
 
       <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
         {/* Filter bar */}
-        <div className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-4">
+        <div className="animate-pulse rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="h-10 flex-1 rounded-lg bg-slate-100" />
             <div className="h-10 w-full rounded-lg bg-slate-100 sm:w-44" />
@@ -30,7 +30,7 @@ export default function JobSearchLoading() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6"
+              className="animate-pulse rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-5 sm:p-6"
               style={{ animationDelay: `${i * 70}ms` }}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

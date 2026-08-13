@@ -87,7 +87,7 @@ export default function EngineeringContent() {
             <Cta href="/contact" variant="primary">Start a conversation</Cta>
             <a
               href="#disciplines"
-              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)] bg-[var(--hz-ink)]">
+              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]">
               Explore disciplines
             </a>
           </>
@@ -102,7 +102,7 @@ export default function EngineeringContent() {
             {["By the project", "Try before you hire", "Permanent hire", "Managed teams"].map((m) => (
               <span
                 key={m}
-                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)] bg-[var(--hz-ink)]">
+                className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]">
                 {m}
               </span>
             ))}
@@ -111,7 +111,7 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Industries trust bar ---------- */}
-      <section className="relative w-full border-b border-slate-200/70 bg-[var(--hz-ivory)] py-10">
+      <section className="relative w-full border-b border-[var(--hz-paper-line)]/70 bg-[var(--hz-ivory)] py-10">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="flex flex-col items-center gap-6 text-center">
             <p className="text-[13px] font-medium uppercase tracking-[0.14em] text-[var(--hz-text-subtle)]">
@@ -255,7 +255,7 @@ export default function EngineeringContent() {
       </section>
 
       {/* ---------- Why Ocean Blue + stats ---------- */}
-      <section className="relative w-full overflow-hidden border-y border-slate-200/70 bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
+      <section className="relative w-full overflow-hidden border-y border-[var(--hz-paper-line)]/70 bg-[var(--hz-ivory)] py-20 sm:py-28 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-6 sm:px-8 lg:grid-cols-12 lg:gap-12">
           <Reveal className="lg:col-span-5 lg:sticky lg:top-28">
             <span aria-hidden className="block h-[3px] w-12 rounded-full bg-[var(--hz-cobalt)]" />
@@ -274,7 +274,7 @@ export default function EngineeringContent() {
           <Stagger className="grid gap-6 sm:grid-cols-2 lg:col-span-7" gap={0.08}>
             {why.map((w) => (
               <StaggerItem key={w.title} className="h-full">
-                <div className="h-full rounded-2xl border border-slate-200/80 bg-white p-7 shadow-sm">
+                <div className="h-full rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 shadow-sm">
                   <div className="text-[var(--hz-cobalt)]">
                     <w.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>

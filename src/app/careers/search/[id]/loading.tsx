@@ -36,7 +36,7 @@ export default function JobDetailLoading() {
 
         {/* Apply card */}
         <div className="lg:col-span-4">
-          <div className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-6 lg:sticky lg:top-28">
+          <div className="animate-pulse rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 lg:sticky lg:top-28">
             <div className="h-4 w-32 rounded bg-slate-200" />
             <div className="mt-5 space-y-3">
               <div className="h-3.5 w-full rounded bg-slate-100" />

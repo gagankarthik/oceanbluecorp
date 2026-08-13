@@ -29,15 +29,6 @@ export default function Error({
   return (
     <div
       className="horizon relative isolate flex min-h-[78svh] w-full items-center overflow-hidden bg-[var(--hz-ink)]">
-      <div
-        aria-hidden
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(55% 70% at 12% 10%, rgba(29,78,216,0.4), transparent 60%), radial-gradient(45% 60% at 95% 90%, rgba(42,216,239,0.14), transparent 62%)",
-        }}
-      />
-
       <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-24 sm:px-8 sm:py-28">
         <p className="hz-eyebrow text-white/55">Something went wrong</p>
         <h1 className="hz-display mt-5 text-[clamp(1.9rem,4.6vw,3.25rem)] text-white">
@@ -52,7 +43,7 @@ export default function Error({
           <button
             type="button"
             onClick={reset}
-            className="hz-btn-fill inline-flex items-center gap-2 rounded-full bg-[var(--hz-cobalt)] px-6 py-3 text-[14px] font-semibold text-white bg-[var(--hz-ink)]">
+            className="hz-btn-fill inline-flex items-center gap-2 rounded-full bg-[var(--hz-cobalt)] px-6 py-3 text-[14px] font-semibold text-white">
             <RefreshCw className="h-4 w-4" strokeWidth={1.75} />
             Try again
           </button>

@@ -65,7 +65,7 @@ const ST: Record<S, {
   investigating:{ label: "Investigating",dot: "bg-blue-500",    ring: "ring-blue-200",    bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    bar: "bg-blue-500",    icon: Info },
   degraded:     { label: "Degraded",     dot: "bg-amber-500",  ring: "ring-amber-200",   bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   bar: "bg-amber-500",   icon: AlertTriangle },
   outage:       { label: "Outage",       dot: "bg-rose-500",   ring: "ring-rose-200",    bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200",    bar: "bg-rose-500",    icon: XCircle },
-  unknown:      { label: "Unknown",      dot: "bg-gray-400",   ring: "ring-gray-200",    bg: "bg-gray-100",   text: "text-gray-500",    border: "border-gray-200",    bar: "bg-gray-400",    icon: Info },
+  unknown:      { label: "Unknown",      dot: "bg-gray-400",   ring: "ring-gray-200",    bg: "bg-gray-100",   text: "text-[var(--hz-text-subtle)]",    border: "border-[var(--hz-paper-line)]",    bar: "bg-gray-400",    icon: Info },
 };
 
 const BANNER: Record<S, { heading: string; sub: string }> = {
@@ -140,8 +140,8 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
             <Icon className={`w-[18px] h-[18px] ${cfg.text}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{svc.label}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{svc.category} · US East (Ohio)</p>
+            <p className="text-sm font-semibold text-[var(--hz-text)] truncate">{svc.label}</p>
+            <p className="text-[11px] text-[var(--hz-text-subtle)] mt-0.5">{svc.category} · US East (Ohio)</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Dot status={svc.status} pulse />
@@ -150,7 +150,7 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
         </div>
 
         {svc.message && (
-          <p className="mt-2.5 text-xs text-gray-500 leading-relaxed line-clamp-2 pl-12">
+          <p className="mt-2.5 text-xs text-[var(--hz-text-subtle)] leading-relaxed line-clamp-2 pl-12">
             {svc.message}
           </p>
         )}
@@ -167,12 +167,12 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
         {open && svc.recentLogs.length > 0 && (
           <div className="mt-3 pl-12 space-y-2">
             {svc.recentLogs.map((l, i) => (
-              <div key={i} className="bg-gray-50 rounded-lg px-3 py-2.5 text-xs">
+              <div key={i} className="bg-[var(--hz-paper)] rounded-lg px-3 py-2.5 text-xs">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <StatusBadge status={l.status} />
-                  <span className="text-gray-400">{relTime(l.time)}</span>
+                  <span className="text-[var(--hz-text-subtle)]">{relTime(l.time)}</span>
                 </div>
-                <p className="text-gray-600 leading-relaxed">{l.message || l.summary}</p>
+                <p className="text-[var(--hz-text-mute)] leading-relaxed">{l.message || l.summary}</p>
               </div>
             ))}
           </div>
@@ -200,18 +200,18 @@ function IncidentCard({ inc }: { inc: Incident }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center flex-wrap gap-2 mb-1">
             <StatusBadge status={inc.status} />
-            <span className="text-[11px] text-gray-400">{inc.regionName} · {inc.serviceName}</span>
+            <span className="text-[11px] text-[var(--hz-text-subtle)]">{inc.regionName} · {inc.serviceName}</span>
           </div>
-          <p className="text-sm font-semibold text-gray-900">{inc.summary}</p>
-          <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+          <p className="text-sm font-semibold text-[var(--hz-text)]">{inc.summary}</p>
+          <p className="text-[11px] text-[var(--hz-text-subtle)] mt-1 flex items-center gap-1">
             <Clock className="w-3 h-3" /> Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
           </p>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />}
+        {open ? <ChevronUp className="w-4 h-4 text-[var(--hz-text-subtle)] mt-1 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-[var(--hz-text-subtle)] mt-1 flex-shrink-0" />}
       </button>
 
       {open && inc.log.length > 0 && (
-        <div className="border-t border-gray-100 px-5 pb-4 pt-3 space-y-0">
+        <div className="border-t border-[var(--hz-paper-line)] px-5 pb-4 pt-3 space-y-0">
           {inc.log.map((entry, i) => (
             <div key={i} className="relative flex gap-4 pb-4 last:pb-0">
               {/* vertical connector */}
@@ -223,10 +223,10 @@ function IncidentCard({ inc }: { inc: Incident }) {
               </div>
               <div className="flex-1 pt-0.5">
                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <span className="text-xs font-semibold text-gray-800">{entry.summary}</span>
-                  <span className="text-[10px] text-gray-400 whitespace-nowrap">{relTime(entry.time)}</span>
+                  <span className="text-xs font-semibold text-[var(--hz-text)]">{entry.summary}</span>
+                  <span className="text-[10px] text-[var(--hz-text-subtle)] whitespace-nowrap">{relTime(entry.time)}</span>
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">{entry.message}</p>
+                <p className="text-xs text-[var(--hz-text-mute)] leading-relaxed">{entry.message}</p>
               </div>
             </div>
           ))}
@@ -358,17 +358,17 @@ export default function StatusContent() {
         {/* Header row */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Platform Services</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Tracked platform services</p>
+            <h2 className="text-base font-bold text-[var(--hz-text)]">Platform Services</h2>
+            <p className="text-xs text-[var(--hz-text-subtle)] mt-0.5">Tracked platform services</p>
           </div>
-          <div className="flex items-center gap-2.5 text-xs text-gray-500">
+          <div className="flex items-center gap-2.5 text-xs text-[var(--hz-text-subtle)]">
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />{countdown}s
             </span>
             <button
               onClick={() => void load(true)}
               disabled={refreshing}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[var(--hz-paper-line)] rounded-lg text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)] disabled:opacity-50 transition-colors"
             >
               {refreshing
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -382,14 +382,14 @@ export default function StatusContent() {
         {loading ? (
           <div className="grid sm:grid-cols-2 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-200 h-[76px] animate-pulse" />
+              <div key={i} className="bg-white rounded-2xl border border-[var(--hz-paper-line)] h-[76px] animate-pulse" />
             ))}
           </div>
         ) : !data?.ok ? (
           <div className="bg-white border border-rose-200 rounded-2xl p-8 text-center">
             <XCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Could not load status data</p>
-            <p className="text-xs text-gray-400 mt-1">The status feed may be temporarily unavailable.</p>
+            <p className="text-sm font-medium text-[var(--hz-text-mute)]">Could not load status data</p>
+            <p className="text-xs text-[var(--hz-text-subtle)] mt-1">The status feed may be temporarily unavailable.</p>
             <button onClick={() => void load(true)} className="mt-4 text-xs text-blue-600 underline">Try again</button>
           </div>
         ) : (
@@ -403,9 +403,9 @@ export default function StatusContent() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <h2 className="text-base font-bold text-gray-900">
+              <h2 className="text-base font-bold text-[var(--hz-text)]">
                 Active Incidents
-                <span className="ml-2 text-xs font-normal text-gray-400">({data.activeIncidents.length})</span>
+                <span className="ml-2 text-xs font-normal text-[var(--hz-text-subtle)]">({data.activeIncidents.length})</span>
               </h2>
             </div>
             <div className="space-y-3">
@@ -423,8 +423,8 @@ export default function StatusContent() {
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">No active incidents</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-sm font-semibold text-[var(--hz-text)]">No active incidents</p>
+              <p className="text-xs text-[var(--hz-text-subtle)] mt-0.5">
                 No active events reported for the US East (Ohio) region.
               </p>
             </div>
@@ -433,7 +433,7 @@ export default function StatusContent() {
 
         {/* Footer */}
         {data && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-4 border-t border-gray-200 text-xs text-gray-400">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-4 border-t border-[var(--hz-paper-line)] text-xs text-[var(--hz-text-subtle)]">
             <span className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" />
               Last checked: {new Date(data.checkedAt).toLocaleString()}

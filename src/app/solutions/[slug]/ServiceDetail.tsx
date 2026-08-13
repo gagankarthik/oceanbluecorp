@@ -32,7 +32,7 @@ function Related({ current }: { current: string }) {
             <Link
               key={s.slug}
               href={`/solutions/${s.slug}`}
-              className="group flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-sm bg-[var(--hz-ink)]">
+              className="group flex items-center gap-3.5 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-sm bg-[var(--hz-ink)]">
               <span className="flex-none text-[var(--hz-cobalt)]">
                 <s.icon className="h-5 w-5" strokeWidth={1.5} />
               </span>
@@ -46,7 +46,7 @@ function Related({ current }: { current: string }) {
           {/* Engineering, the fourth practice, on its own page */}
           <Link
             href="/solutions/engineering"
-            className="group flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-sm bg-[var(--hz-ink)]">
+            className="group flex items-center gap-3.5 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-sm bg-[var(--hz-ink)]">
             <span className="flex-none text-[var(--hz-cobalt)]">
               <Wrench className="h-5 w-5" strokeWidth={1.5} />
             </span>
@@ -78,7 +78,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
             <Cta href="/contact" variant="primary">Start a conversation</Cta>
             <Link
               href="/solutions"
-              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)] bg-[var(--hz-ink)]">
+              className="inline-flex items-center rounded-full border border-[var(--hz-text)]/25 px-7 py-3.5 text-[15px] font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-text)]">
               All solutions
             </Link>
           </>
@@ -92,7 +92,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               {data.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)] bg-[var(--hz-ink)]">
+                  className="rounded-full border border-[var(--hz-paper-line)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--hz-text-mute)]">
                   {t}
                 </span>
               ))}
@@ -116,7 +116,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           </Reveal>
 
           <Reveal delay={0.08} className="lg:col-span-6">
-            <div className="rounded-3xl border border-slate-200/80 bg-[var(--hz-surface-2)] p-8 sm:p-10">
+            <div className="rounded-3xl border border-[var(--hz-paper-line)]/80 bg-[var(--hz-surface-2)] p-8 sm:p-10">
               <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--hz-text-subtle)]">What we cover</p>
               <ul className="mt-6 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
                 {data.capabilities.map((c) => (
@@ -134,7 +134,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       </section>
 
       {/* ---------- Highlights ---------- */}
-      <section className="relative w-full border-y border-slate-200/70 bg-[var(--hz-ivory)] py-24 sm:py-28">
+      <section className="relative w-full border-y border-[var(--hz-paper-line)]/70 bg-[var(--hz-ivory)] py-24 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal className="max-w-2xl">
             <h2 className="hz-display text-[2rem] text-[var(--hz-text)] sm:text-[2.5rem]">What you get.</h2>
@@ -142,7 +142,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           <Stagger className="mt-12 grid gap-6 md:grid-cols-3" gap={0.1}>
             {data.highlights.map((h) => (
               <StaggerItem key={h.title} className="h-full">
-                <div className="h-full rounded-2xl border border-slate-200/80 bg-white p-7 shadow-sm">
+                <div className="h-full rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-7 shadow-sm">
                   <div className="text-[var(--hz-cobalt)]">
                     <h.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
@@ -183,7 +183,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       <Related current={data.slug} />
 
       {/* ---------- CTA ---------- */}
-      <section className="relative isolate w-full overflow-hidden border-t border-slate-200/70 bg-[var(--hz-ink)]">
+      <section className="relative isolate w-full overflow-hidden border-t border-[var(--hz-paper-line)]/70 bg-[var(--hz-ink)]">
         <div aria-hidden className="absolute inset-0 z-0" style={{ background: "radial-gradient(60% 80% at 50% 0%, rgba(29,78,216,0.35), transparent 60%)" }} />
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center sm:px-8 sm:py-28">
           <Reveal className="flex flex-col items-center">

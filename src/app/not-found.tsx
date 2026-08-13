@@ -182,13 +182,13 @@ export default function NotFound() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#050D1A] flex flex-col items-center justify-center overflow-hidden px-4 py-20">
+    <div className="relative min-h-screen bg-[var(--hz-ink)] flex flex-col items-center justify-center overflow-hidden px-4 py-20">
 
       {/* Ambient glow blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-violet-950/40 blur-[130px]" />
-        <div className="absolute top-1/3 right-1/4 w-[350px] h-[350px] rounded-full bg-indigo-950/30 blur-[90px]" />
-        <div className="absolute bottom-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-blue-950/30 blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[color-mix(in_srgb,var(--hz-cobalt)_35%,transparent)] blur-[130px]" />
+        <div className="absolute top-1/3 right-1/4 w-[350px] h-[350px] rounded-full bg-[color-mix(in_srgb,var(--hz-cobalt)_22%,transparent)] blur-[90px]" />
+        <div className="absolute bottom-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-[color-mix(in_srgb,var(--hz-aqua)_18%,transparent)] blur-[80px]" />
       </div>
 
       {/* Twinkling stars */}
@@ -269,7 +269,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.55, delay: 0.45 }}
-          className="text-slate-400 text-sm sm:text-base max-w-xs sm:max-w-sm leading-relaxed"
+          className="text-[var(--hz-text-subtle)] text-sm sm:text-base max-w-xs sm:max-w-sm leading-relaxed"
         >
           Even our fluffiest helper searched everywhere and came up empty.
           The page you&rsquo;re looking for doesn&rsquo;t exist or has been moved.
@@ -291,7 +291,7 @@ export default function NotFound() {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-700 hover:border-violet-500/60 text-slate-400 hover:text-white text-sm font-semibold rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 bg-white/[0.03] hover:bg-white/[0.07]"
+            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-700 hover:border-violet-500/60 text-[var(--hz-text-subtle)] hover:text-white text-sm font-semibold rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 bg-white/[0.03] hover:bg-white/[0.07]"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
@@ -303,7 +303,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="text-[11px] text-slate-600 mt-2"
+          className="text-[11px] text-[var(--hz-text-mute)] mt-2"
         >
           Error code 404 &middot; Page not found
         </motion.p>
