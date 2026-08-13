@@ -95,9 +95,14 @@ export async function POST(request: Request) {
     const values: Record<string, string> = { name, phone_number: phone };
     const candidates: string[] =
       Array.isArray(requiredAttributes) && requiredAttributes.length > 0
-        ? requiredAttributes.map(String)
+        ? // Strip the "userAttributes." prefix again in case an older client
+          // forwards Cognito's list verbatim.
+          requiredAttributes.map((a) => String(a).replace(/^userAttributes?\./, ""))
         : [...supportedAttributes];
-    const wanted = candidates.filter((attr) => attr in values);
+    const matched = candidates.filter((attr) => attr in values);
+    // An unrecognised list would leave us sending nothing, and Cognito answers
+    // "name is missing". Fall back to everything the form collected.
+    const wanted = matched.length > 0 ? matched : [...supportedAttributes];
 
     const attributeResponses = Object.fromEntries(
       wanted.map((attr) => [`userAttributes.${attr}`, values[attr]])
