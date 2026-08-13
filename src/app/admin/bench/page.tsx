@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
@@ -18,7 +19,6 @@ import {
 } from "@/components/ui/select";
 
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { ResumeAnalysisPanel } from "@/components/admin/resume-analysis-panel";
 import { FormSelect } from "@/components/admin/forms/primitives";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
@@ -41,6 +41,7 @@ import {
   type AppStatus,
 } from "@/components/admin/theme";
 import { POOL_META, POOL_ORDER, poolOf, canView } from "@/lib/bench";
+import { CandidateTabs } from "@/components/admin/candidate-tabs";
 import {
   IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
   IconFile, IconHistory, IconJob, IconLocation, IconMail, IconPhone,
@@ -70,7 +71,7 @@ interface CognitoUser {
 }
 
 type ViewMode = "table" | "cards";
-type PageMode = "list" | "create" | "edit" | "view";
+type PageMode = "list" | "create" | "edit";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -99,13 +100,9 @@ const STATUS_TABS = [
  *   My Pool      (external)  candidates you sourced, private to you
  *
  * The tabs sit above the KPI strip because every number below them is scoped
- * to the selected pool.
+ * to the selected pool. The strip itself lives in components/admin/
+ * candidate-tabs.tsx, because Lead Sourcing renders the same row.
  */
-const POOL_TABS = [
-  { key: "all" as const, label: "All candidates", hint: "" },
-  ...POOL_ORDER.map((p) => ({ key: p, label: POOL_META[p].label, hint: POOL_META[p].badge })),
-];
-
 type PoolKey = "all" | BenchType;
 
 // These used to be narrower private lists, because the Application unions were
@@ -209,9 +206,19 @@ export default function TalentBenchPage() {
   const [locationFilter, setLocationFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [poolFilter, setPoolFilter] = useState<PoolKey>("all");
+
+  // Lead Sourcing links back here with the pool it was opened from, so the
+  // tab you left is the tab you return to. Same deep-link pattern the other
+  // list pages use for ?search=.
+  useEffect(() => {
+    const pool = new URLSearchParams(window.location.search).get("pool");
+    if (pool === "all" || pool === "internal" || pool === "external") setPoolFilter(pool);
+  }, []);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   const debouncedSearch = useDebouncedValue(searchQuery, 250);
+
+  const router = useRouter();
 
   // Form states
   const [pageMode, setPageMode] = useState<PageMode>("list");
@@ -681,28 +688,24 @@ export default function TalentBenchPage() {
     setPageMode("edit");
   };
 
+  /**
+   * Open the candidate record, the same one Applications opens.
+   *
+   * This page used to render its own detail in place: ten stacked panels under
+   * a back link, ~300 lines living inside the list screen. The candidate record
+   * at /admin/candidates/[id] is the same underlying Application and had
+   * already been through exactly that problem, DESIGN_SYSTEM §8 records it
+   * ("10 stacked cards under one tab; it is now 5 labelled tabs" ,  Miller's
+   * Law). Keeping a second, flatter view of one record meant a bench candidate
+   * and an applicant candidate were the same person shown two different ways,
+   * and every panel added to one had to be remembered for the other.
+   *
+   * The prefetch that used to sit here is gone with it: the record page fetches
+   * by key on mount, so warming a copy the list was about to discard was work
+   * for nothing.
+   */
   const handleViewApplication = (app: ApplicationWithJob) => {
-    // Render the row immediately, then pull the full record.
-    //
-    // List responses no longer carry `resumeAnalysis`, sending every parsed
-    // resume to the browser cost megabytes per page load, so the analysis panel
-    // below needs the record fetched by key. One item, and the row is already on
-    // screen while it lands.
-    setSelectedApplication(app);
-    setPageMode("view");
-
-    if (!app.resumeAnalysis) {
-      void (async () => {
-        try {
-          const res = await fetch(`/api/applications/${app.id}`);
-          if (!res.ok) return;
-          const data = await res.json();
-          const full = data.application as ApplicationWithJob | undefined;
-          if (!full) return;
-          setSelectedApplication((prev) => (prev && prev.id === app.id ? { ...prev, ...full } : prev));
-        } catch { /* non-fatal: the row still renders, minus the parsed detail */ }
-      })();
-    }
+    router.push(`/admin/candidates/${app.id}`);
   };
 
   const handleOwnershipSelect = (userId: string) => {
@@ -1565,301 +1568,6 @@ export default function TalentBenchPage() {
 
   // ── record detail ─────────────────────────────────────────────────────────
 
-  if (pageMode === "view" && selectedApplication) {
-    const app = selectedApplication;
-    const location = [app.city, stateOf(app.state)].filter(Boolean).join(", ");
-    const adder = isAdmin ? resolveAdder(app) : null;
-    const age = daysOnBench(app);
-
-    const backToList = () => { setPageMode("list"); setSelectedApplication(null); };
-
-    return (
-      <div className="space-y-5 pb-10">
-        {/* Back leads the page, ahead of the title. */}
-        <button
-          type="button"
-          onClick={backToList}
-          className="-mb-1 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-
-        <PageHeader
-          title={app.name || "Unknown"}
-          subtitle={app.applicationId || `ID: ${app.id.slice(0, 8)}`}
-          icon={IconUser}
-          meta={
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={app.status} size="md" />
-              <PoolBadge pool={poolOf(app)} />
-              {age !== null && (
-                <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">{age}d on bench</span>
-              )}
-            </div>
-          }
-          actions={
-            <>
-              <a
-                href={`mailto:${app.email}`}
-                className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
-              >
-                <IconMail className="h-4 w-4" /><span className="hidden sm:inline">Email</span>
-              </a>
-              {app.phone && (
-                <a
-                  href={`tel:${app.phone}`}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
-                >
-                  <IconPhone className="h-4 w-4" /><span className="hidden sm:inline">Call</span>
-                </a>
-              )}
-              <PageHeaderButton variant="primary" onClick={() => handleEditApplication(app)}>
-                <IconEdit className="h-4 w-4" />Edit
-              </PageHeaderButton>
-            </>
-          }
-        />
-
-        {/* Identity band, the facts a recruiter reads first, on one rule. */}
-        <AdminCard className="flex flex-wrap items-center gap-x-6 gap-y-3 p-4 text-[13px] text-[var(--adm-ink-mute)]">
-          <Avatar name={app.name} email={app.email} size="md" />
-          <span className="inline-flex items-center gap-1.5"><IconMail className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.email}</span>
-          {app.phone && <span className="inline-flex items-center gap-1.5"><IconPhone className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.phone}</span>}
-          {location && <span className="inline-flex items-center gap-1.5"><IconLocation className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{location}</span>}
-          {app.workAuthorization && <span className="inline-flex items-center gap-1.5"><IconShield className="h-4 w-4 text-[var(--adm-ink-subtle)]" />{app.workAuthorization}</span>}
-          <span className="ml-auto"><StarRating rating={app.rating || 0} size="md" /></span>
-        </AdminCard>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {/* Left column */}
-          <div className="space-y-4 lg:col-span-2">
-            <AdminCard className="p-5">
-              <h3 className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-                <IconJob className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Skills &amp; experience
-              </h3>
-              {app.skills && app.skills.length > 0 && (
-                <div className="mb-5">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Skills</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {app.skills.map((skill) => (
-                      <span key={skill} className={cn(skillChip, "text-[12px]")}>{skill}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {app.experience && (
-                <div>
-                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Experience</p>
-                  <p className="text-sm leading-relaxed text-[var(--adm-ink-mute)]">{app.experience}</p>
-                </div>
-              )}
-              {!app.skills?.length && !app.experience && (
-                <p className="text-sm text-[var(--adm-ink-subtle)]">No skills or experience recorded yet.</p>
-              )}
-            </AdminCard>
-
-            {/* Parsed resume.
-                A bench profile could always carry a resume, but nothing on this
-                screen ever showed what was in it, the extraction ran (or, for
-                older records, never ran) and the result was only visible on the
-                candidate page. Same panel as the candidate record, so a
-                consultant reads identically wherever you open them. */}
-            {app.resumeAnalysis ? (
-              <div className="space-y-4">
-                <AdminCard className="flex flex-wrap items-center justify-between gap-3 p-5">
-                  <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-                    <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-accent)]" />Resume analysis
-                    {app.resumeAnalyzedAt && (
-                      <span className="text-[12px] font-normal text-[var(--adm-ink-subtle)]">
-                        · {fmtDate(app.resumeAnalyzedAt)}
-                      </span>
-                    )}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => void handleAnalyzeResume(app.id)}
-                    disabled={analyzingId === app.id}
-                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60"
-                  >
-                    {analyzingId === app.id
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <IconRefresh className="h-3.5 w-3.5" />}
-                    Re-analyze
-                  </button>
-                </AdminCard>
-                <ResumeAnalysisPanel analysis={app.resumeAnalysis} />
-              </div>
-            ) : app.resumeId ? (
-              <AdminCard className="p-5">
-                <h3 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-                  <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Resume analysis
-                </h3>
-                {app.resumeAnalysisStatus === "pending" || app.resumeAnalysisStatus === "processing" ? (
-                  <p className="flex items-center gap-2 text-sm text-[var(--adm-ink-mute)]">
-                    <Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" />
-                    Analyzing the attached resume, experience, education, skills and more. Usually under a minute.
-                  </p>
-                ) : (
-                  <>
-                    <p className="mb-3 text-sm text-[var(--adm-ink-subtle)]">
-                      {app.resumeAnalysisStatus === "failed" && app.resumeAnalysisError
-                        ? app.resumeAnalysisError
-                        : "Extract the full profile from the resume on file."}
-                    </p>
-                    <WorkspaceButton
-                      variant="primary"
-                      onClick={() => void handleAnalyzeResume(app.id)}
-                      disabled={analyzingId === app.id}
-                    >
-                      {analyzingId === app.id
-                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                        : <IconSparkles className="h-4 w-4" />}
-                      {analyzingId === app.id
-                        ? "Analyzing…"
-                        : app.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
-                    </WorkspaceButton>
-                  </>
-                )}
-              </AdminCard>
-            ) : null}
-
-            <AdminCard className="p-5">
-              <h3 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-                <IconFile className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Notes
-              </h3>
-              {app.notes
-                ? <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--adm-ink-mute)]">{app.notes}</p>
-                : <p className="text-sm text-[var(--adm-ink-subtle)]">No notes added yet.</p>}
-            </AdminCard>
-
-            {app.statusHistory && app.statusHistory.length > 0 && (
-              <AdminCard className="p-5">
-                <h3 className="mb-5 flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-                  <IconHistory className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />Stage timeline
-                </h3>
-                <div className="relative pl-1">
-                  <div className="absolute bottom-1 left-[5px] top-1 w-px bg-[var(--adm-line)]" />
-                  <div className="space-y-4">
-                    {[...app.statusHistory].reverse().map((entry, idx) => {
-                      const meta = statusMeta[entry.status as AppStatus] ?? statusMeta.pending;
-                      return (
-                        <div key={idx} className="relative pl-6">
-                          <span className={cn("absolute left-0 top-1 h-[11px] w-[11px] rounded-full ring-2 ring-[var(--adm-surface)]", tones[meta.tone].dot)} />
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <StatusBadge status={entry.status} />
-                            <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(entry.changedAt)}</span>
-                            {entry.changedByName && <span className="text-xs text-[var(--adm-ink-subtle)]">&middot; by {entry.changedByName}</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </AdminCard>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <AdminCard className="p-5">
-              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Stage</h3>
-              {/* The house select. This was a bare <select> whose local class
-                  omitted appearance-none, so the OS drew the control and its
-                  own corner radius won over ours. */}
-              <FormSelect
-                value={app.status}
-                aria-label="Stage"
-                onChange={(e) => void handleStatusChange(app.id, e.target.value as Application["status"])}
-              >
-                {BENCH_STATUSES.map((s) => (
-                  <option key={s} value={s}>{statusMeta[s].label}</option>
-                ))}
-              </FormSelect>
-            </AdminCard>
-
-            <AdminCard className="p-5">
-              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Rating</h3>
-              <StarRating
-                size="lg"
-                rating={app.rating || 0}
-                onRate={(n) => void handleRatingChange(app.id, n)}
-              />
-            </AdminCard>
-
-            <AdminCard className="p-5">
-              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Resume</h3>
-              {app.resumeId && app.resumeFileName ? (
-                <button
-                  onClick={() => void handleDownloadResume(app.resumeId!)}
-                  className="flex w-full items-center gap-3 rounded-[6px] border border-[var(--adm-line)] p-3 text-left transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]"
-                >
-                  <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-                    <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-[var(--adm-ink)]">{app.resumeFileName}</span>
-                    <span className="text-xs text-[var(--adm-ink-subtle)]">Click to download</span>
-                  </span>
-                  <IconDownload className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 rounded-[6px] border border-dashed border-[var(--adm-line)] p-3 text-sm text-[var(--adm-ink-subtle)]">
-                  <IconFile className="h-4 w-4" />No resume on file
-                </div>
-              )}
-            </AdminCard>
-
-            <AdminCard className="p-5">
-              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Details</h3>
-              <dl className="space-y-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Pool</dt>
-                  <dd className="font-medium text-[var(--adm-ink-mute)]">
-                    {POOL_META[poolOf(app)].label} ({POOL_META[poolOf(app)].badge})
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Type of hire</dt>
-                  <dd className="font-medium text-[var(--adm-ink-mute)]">
-                    {app.hireType ? hireTypeLabel(app.hireType) : <BlankCell />}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Source</dt>
-                  <dd className="font-medium text-[var(--adm-ink-mute)]">{app.source || <BlankCell />}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Last position</dt>
-                  <dd className="max-w-[60%] truncate font-medium text-[var(--adm-ink-mute)]">{app.jobTitle || <BlankCell />}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Assigned to</dt>
-                  <dd className="font-medium text-[var(--adm-ink-mute)]">{app.ownershipName || <BlankCell />}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[var(--adm-ink-subtle)]">Added</dt>
-                  <dd className="font-medium tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(app.createdAt || app.appliedAt)}</dd>
-                </div>
-                {adder && (
-                  <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line-soft)] pt-3">
-                    <dt className="text-[var(--adm-ink-subtle)]">Added by</dt>
-                    <dd className="flex items-center gap-1.5 font-medium text-[var(--adm-ink-mute)]">
-                      {adder.name}
-                      {adder.role && (
-                        <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-[var(--adm-ink-mute)]">
-                          {adder.role}
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </AdminCard>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── list ──────────────────────────────────────────────────────────────────
 
@@ -1895,39 +1603,9 @@ export default function TalentBenchPage() {
 
       {/* Pool tabs, everything below (KPIs, counts, grid) is scoped to the
           selected pool, so they sit above the KPI strip, not among the filter
-          pills. */}
-      <div
-        role="tablist"
-        aria-label="Talent pool"
-        className="flex max-w-full items-center gap-0.5 self-start overflow-x-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5 sm:inline-flex sm:w-auto"
-      >
-        {POOL_TABS.map((t) => {
-          const active = poolFilter === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setPoolFilter(t.key)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-semibold transition-colors",
-                active
-                  ? "bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-sm"
-                  : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",
-              )}
-            >
-              {t.label}
-              {"hint" in t && (
-                <span className="text-[11px] font-medium text-[var(--adm-ink-subtle)]">{t.hint}</span>
-              )}
-              <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-px text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
-                {poolCounts[t.key]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+          pills. Lead Sourcing rides at the end of the same row (it moved out
+          of the sidebar) and is a link, not a filter. */}
+      <CandidateTabs active={poolFilter} counts={poolCounts} onSelect={setPoolFilter} />
 
       {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip

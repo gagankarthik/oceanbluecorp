@@ -32,6 +32,9 @@ const getEnvConfig = () => {
       clients: process.env.NEXT_AWS_DYNAMODB_TABLE_CLIENTS || "oceanblue-clients",
       vendors: process.env.NEXT_AWS_DYNAMODB_TABLE_VENDORS || "oceanblue-vendors",
       counters: process.env.NEXT_AWS_DYNAMODB_TABLE_COUNTERS || "oceanblue-counters",
+      // Holds two kinds of record: the CMS blocks behind /admin/content, and
+      // the published articles (blog, case studies, news, customer stories).
+      // They are told apart by `recordType`, see the ARTICLES section below.
       content: process.env.NEXT_AWS_DYNAMODB_TABLE_CONTENT || "oceanblue-content",
       apiKeys: process.env.NEXT_AWS_DYNAMODB_TABLE_API_KEYS || "oceanblue-api-keys",
       pipeline: process.env.NEXT_AWS_DYNAMODB_TABLE_PIPELINE || "oceanblue-pipeline",
@@ -2193,7 +2196,11 @@ export async function getContentBlock(id: string): Promise<{ success: boolean; d
   if (!db.available || !db.client) return { success: false, error: db.error };
   try {
     const result = await db.client.send(new GetCommand({ TableName: getTables().content, Key: { id } }));
-    return { success: true, data: result.Item as ContentBlock | undefined };
+    const item = result.Item as (ContentBlock & { recordType?: string }) | undefined;
+    // Articles share this table (see the ARTICLES section). One asked for by id
+    // here would be handed back as a block whose `fields` is undefined, and
+    // every reader of this function does `c.someField` on that.
+    return { success: true, data: item?.recordType ? undefined : item };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to get content" };
   }
@@ -2203,7 +2210,13 @@ export async function getAllContentBlocks(): Promise<{ success: boolean; data?: 
   const db = checkDbAvailable();
   if (!db.available || !db.client) return { success: false, error: db.error };
   try {
-    const data = await scanAll<ContentBlock>(db.client, { TableName: getTables().content });
+    const data = await scanAll<ContentBlock>(db.client, {
+      TableName: getTables().content,
+      // Blocks written before articles existed carry no `recordType` at all, so
+      // this tests for absence rather than a value: no backfill needed, and a
+      // block saved by the old code still shows up.
+      FilterExpression: "attribute_not_exists(recordType)",
+    });
     return { success: true, data };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to get content" };
@@ -2232,10 +2245,360 @@ export async function upsertContentBlock(
         updatedByName,
         version: currentVersion + 1,
       } as ContentBlock,
+      // The mirror of the guards on the article side: a Put replaces the whole
+      // item, so an upsert aimed at an article's id would silently turn a
+      // published post into an empty CMS block.
+      ConditionExpression: "attribute_not_exists(recordType)",
     }));
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to save content" };
+  }
+}
+
+// ===========================================
+// ARTICLES, the published content library
+// ===========================================
+
+/**
+ * Blog posts, case studies, news and customer stories.
+ *
+ * TWO discriminators are in play here, and they do different jobs.
+ *
+ * `kind` separates the four sections from each other. They share almost
+ * everything an editorial record needs, slug, status, headline, deck, excerpt,
+ * body, hero image, author, tags, SEO block, and differ in about eight fields
+ * each, so four record types would have meant four copies of the CRUD, of the
+ * slug-uniqueness check and of the publish rules.
+ *
+ * `recordType` separates articles from the OTHER thing living in the content
+ * table: the CMS blocks behind /admin/content, which are a completely different
+ * shape (`{ id, section, fields }`). Articles ride in that same table rather
+ * than a new one, so nothing extra has to be provisioned, and every read on
+ * either side filters on `recordType` to stay in its own lane. That filter is
+ * load-bearing, drop it from one of these functions and articles start
+ * appearing in the CMS editor as nameless sections, or a content block starts
+ * showing up in the blog index.
+ *
+ * Existing CMS blocks carry no `recordType` at all, which is why the content
+ * side tests `attribute_not_exists` rather than a value: no migration, and a
+ * block written by the old code still behaves.
+ */
+export type ArticleKind = "blog" | "case-study" | "news" | "customer-story";
+
+/** Marks an item in the content table as an article rather than a CMS block. */
+export const ARTICLE_RECORD_TYPE = "article";
+
+/**
+ * Editorial workflow. This is the newsroom sequence real teams run, an author
+ * drafts, someone else reads it, then it goes out, and archived retires a piece
+ * without deleting it (old URLs and inbound links survive).
+ *
+ * `scheduled` is a publish DATE in the future, not a background job. Nothing
+ * flips the row over; the public reader treats a piece as live only when its
+ * status is published-or-scheduled AND `publishedAt` has passed
+ * (`isLive` in lib/articles.ts). A cron that mutates rows would be a second
+ * source of truth for "is this out yet", and one that could fail silently.
+ */
+export type ArticleStatus = "draft" | "in-review" | "scheduled" | "published" | "archived";
+
+/** One proof point on a case study or customer story. */
+export interface ArticleMetric {
+  /** What was measured: "Time to fill". */
+  label: string;
+  /** The figure, as written: "38% faster", "$1.2M", "12 of 12". */
+  value: string;
+  /** The baseline the figure is against, without which it means nothing. */
+  note?: string;
+}
+
+export interface Article {
+  /**
+   * PK, a uuid. Deliberately not namespaced: a CMS block's id is a hand-chosen
+   * section name ("homepage", "site"), so a uuid cannot collide with one, and
+   * the id stays clean in the admin URL.
+   */
+  id: string;
+  /** Always ARTICLE_RECORD_TYPE. Set on write; never accepted from a request. */
+  recordType?: string;
+  kind: ArticleKind;
+  /** URL segment. Unique within a kind, /blog/<slug>, /news/<slug>. */
+  slug: string;
+  status: ArticleStatus;
+
+  title: string;
+  /** Deck / standfirst, the single line under the headline. */
+  subtitle?: string;
+  /** Card summary, and the fallback for the meta description. */
+  excerpt?: string;
+  /** The piece itself. Sanitized rich HTML (sanitizeRichText at save). */
+  body?: string;
+
+  heroImageUrl?: string;
+  heroImageAlt?: string;
+
+  category?: string;
+  tags?: string[];
+  /** Pins the piece to the top of its index. */
+  featured?: boolean;
+
+  authorName?: string;
+  authorRole?: string;
+
+  /** Derived from the body at save time, so an index needs no HTML parsing. */
+  readingMinutes?: number;
+
+  /** When this goes, or went, live. A future value is a scheduled publish. */
+  publishedAt?: string;
+
+  // ── SEO ──
+  seoTitle?: string;
+  seoDescription?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+
+  // ── Case study + customer story ──
+  clientName?: string;
+  clientLogoUrl?: string;
+  industry?: string;
+  /** What we delivered: "Contract search", "Managed team", "SAP rollout". */
+  services?: string[];
+  /** Shape and length of the engagement: "18-month managed team". */
+  engagement?: string;
+  challenge?: string; // rich HTML
+  approach?: string;  // rich HTML
+  results?: string;   // rich HTML
+  metrics?: ArticleMetric[];
+  quote?: string;
+  quoteAuthor?: string;
+  quoteAuthorRole?: string;
+  /**
+   * Written sign-off from the client on file.
+   *
+   * Naming a client and quoting their staff is the one thing in this table that
+   * can cost an account, so publishing a case study or a customer story is
+   * blocked without it (`publishBlockers` in lib/articles.ts) rather than left
+   * to whoever is in a hurry.
+   */
+  approvalOnFile?: boolean;
+  /** Who approved it and when, in their words. */
+  approvalNote?: string;
+
+  // ── News ──
+  /** press-release | award | certification | partnership | milestone | event | coverage */
+  newsType?: string;
+  /** Dateline city, "COLUMBUS, Ohio". The date half comes from publishedAt. */
+  datelineCity?: string;
+  pressContactName?: string;
+  pressContactEmail?: string;
+  pressContactPhone?: string;
+  /** Third-party coverage this announcement points at. */
+  externalUrl?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  createdByName?: string;
+  updatedBy?: string;
+  updatedByName?: string;
+}
+
+/**
+ * Public-safe projection. Strips who touched the record and the client-approval
+ * trail, which is internal even on a piece whose whole point is being public,
+ * plus the storage discriminator, which is nobody's business outside this file.
+ */
+export type PublicArticle = Omit<
+  Article,
+  | "recordType" | "createdBy" | "createdByName" | "updatedBy" | "updatedByName"
+  | "approvalOnFile" | "approvalNote"
+>;
+
+export function toPublicArticle(article: Article): PublicArticle {
+  const {
+    recordType: _recordType,
+    createdBy: _createdBy,
+    createdByName: _createdByName,
+    updatedBy: _updatedBy,
+    updatedByName: _updatedByName,
+    approvalOnFile: _approvalOnFile,
+    approvalNote: _approvalNote,
+    ...rest
+  } = article;
+  return rest;
+}
+
+/**
+ * Every article, optionally of one kind.
+ *
+ * A filtered Scan rather than a GSI query: the content table holds the pieces a
+ * marketing team writes plus a handful of CMS blocks, hundreds of items over
+ * years, not thousands a day, and an index would be another thing to keep in
+ * sync for a read that is already one call. Returns an empty list on failure so
+ * an index page renders empty (§2).
+ */
+export async function getAllArticles(
+  kind?: ArticleKind,
+): Promise<{ success: boolean; data?: Article[]; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) {
+    console.warn("DynamoDB not available:", db.error);
+    return { success: true, data: [] };
+  }
+
+  try {
+    const data = await scanAll<Article>(db.client, {
+      TableName: getTables().content,
+      FilterExpression: kind ? "#rt = :rt AND #kind = :kind" : "#rt = :rt",
+      ExpressionAttributeNames: { "#rt": "recordType", ...(kind && { "#kind": "kind" }) },
+      ExpressionAttributeValues: { ":rt": ARTICLE_RECORD_TYPE, ...(kind && { ":kind": kind }) },
+    });
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error getting articles:", error);
+    return { success: true, data: [] };
+  }
+}
+
+/**
+ * One article by id.
+ *
+ * Returns undefined for an item that is not an article, so asking this for
+ * "homepage" cannot hand a CMS block to a caller that will treat it as a post.
+ */
+export async function getArticle(
+  id: string,
+): Promise<{ success: boolean; data?: Article; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    const result = await db.client.send(
+      new GetCommand({ TableName: getTables().content, Key: { id } }),
+    );
+    const item = result.Item as Article | undefined;
+    return { success: true, data: item?.recordType === ARTICLE_RECORD_TYPE ? item : undefined };
+  } catch (error) {
+    console.error("Error getting article:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get article" };
+  }
+}
+
+/**
+ * Find a piece by its public URL, /blog/<slug>. Also the slug-uniqueness check
+ * on save, which is why it takes the kind: two sections may each have a
+ * "hiring-in-2026" without colliding.
+ */
+export async function getArticleBySlug(
+  kind: ArticleKind,
+  slug: string,
+): Promise<{ success: boolean; data?: Article; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    const data = await scanAll<Article>(db.client, {
+      TableName: getTables().content,
+      FilterExpression: "#rt = :rt AND #kind = :kind AND #slug = :slug",
+      ExpressionAttributeNames: { "#rt": "recordType", "#kind": "kind", "#slug": "slug" },
+      ExpressionAttributeValues: { ":rt": ARTICLE_RECORD_TYPE, ":kind": kind, ":slug": slug },
+    });
+    return { success: true, data: data[0] };
+  } catch (error) {
+    console.error("Error getting article by slug:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get article" };
+  }
+}
+
+export async function createArticle(
+  article: Article,
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    await db.client.send(
+      new PutCommand({
+        TableName: getTables().content,
+        // recordType is stamped here rather than trusted from the caller: it is
+        // what keeps this item out of the CMS editor, so it is not the sort of
+        // thing a route handler should be able to get wrong.
+        Item: { ...article, recordType: ARTICLE_RECORD_TYPE },
+        // Never overwrite an existing item, whether a repeated uuid or, far
+        // more importantly, a CMS block that happens to share the key.
+        ConditionExpression: "attribute_not_exists(id)",
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating article:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create article" };
+  }
+}
+
+export async function updateArticle(
+  id: string,
+  updates: Partial<Omit<Article, "id" | "createdAt">>,
+): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    const sets: string[] = ["#updatedAt = :updatedAt"];
+    const names: Record<string, string> = { "#updatedAt": "updatedAt", "#rt": "recordType" };
+    const values: Record<string, unknown> = {
+      ":updatedAt": new Date().toISOString(),
+      ":rt": ARTICLE_RECORD_TYPE,
+    };
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined || key === "recordType") continue;
+      names[`#${key}`] = key;
+      sets.push(`#${key} = :${key}`);
+      values[`:${key}`] = value;
+    }
+
+    await db.client.send(
+      new UpdateCommand({
+        TableName: getTables().content,
+        Key: { id },
+        UpdateExpression: `SET ${sets.join(", ")}`,
+        // Refuses to touch anything that is not an article. Without it, an
+        // update aimed at "homepage" would bolt article fields onto the CMS
+        // block for the front page, and an Update creates the item if it is
+        // missing, so a typo'd id would invent one.
+        ConditionExpression: "#rt = :rt",
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: values,
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating article:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update article" };
+  }
+}
+
+export async function deleteArticle(id: string): Promise<{ success: boolean; error?: string }> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return { success: false, error: db.error };
+
+  try {
+    await db.client.send(
+      new DeleteCommand({
+        TableName: getTables().content,
+        Key: { id },
+        // The article table and the CMS table are the same table. A delete that
+        // did not check this could take the homepage copy out with one bad id.
+        ConditionExpression: "#rt = :rt",
+        ExpressionAttributeNames: { "#rt": "recordType" },
+        ExpressionAttributeValues: { ":rt": ARTICLE_RECORD_TYPE },
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting article:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete article" };
   }
 }
 

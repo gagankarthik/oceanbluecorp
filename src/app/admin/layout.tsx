@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu, X, ChevronRight, Search,
   PanelLeftClose, PanelLeft, Loader2, ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth, UserRole, routeAccess } from "@/lib/auth";
+import {
+  useAuth, UserRole, routeAccess, PUBLISHING_ROLES, RECRUITING_ROLES, landingRouteFor,
+} from "@/lib/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 import { HeaderSearch } from "@/components/admin/header-search";
@@ -17,7 +19,8 @@ import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs,
-  IconHome, IconHrPortal, IconLogout, IconShield, IconSource,
+  IconHome, IconHrPortal, IconLogout, IconShield,
+  IconBook, IconChart, IconMessage, IconRadar,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useNotifications, formatTimeAgo } from "@/hooks/use-notifications";
@@ -31,23 +34,34 @@ type NavItem = {
   section: string;
 };
 
+// The four RECRUITING roles. Media is deliberately absent, so every nav item
+// written against ALL_ROLES stays hidden from it; Media's two sections name the
+// role explicitly below.
 const ALL_ROLES = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 
 // Grouped under uppercase section headers, the way a data console organises its
 // nav (Conduktor: CONSOLE / INSIGHTS / SELF-SERVICE). Order here is the render
 // order; SECTION_ORDER drives the grouping.
-const SECTION_ORDER = ["Recruiting", "Relationships", "Workspace"] as const;
+const SECTION_ORDER = ["Recruiting", "Relationships", "Publishing", "Workspace"] as const;
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
-  { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: ALL_ROLES, section: "Recruiting" },
+  // Media reads postings to promote them, so it gets this one Recruiting item
+  // and nothing else from the section.
+  { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
-  { name: "Lead Sourcing",href: "/admin/lead-sourcing",icon: IconSource,       roles: ALL_ROLES, section: "Recruiting" },
   { name: "Resumes",      href: "/admin/resumes",      icon: IconResume,       roles: ALL_ROLES, section: "Recruiting" },
   { name: "Contacts",     href: "/admin/contacts",     icon: IconContact,      roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Clients",      href: "/admin/clients",      icon: IconClient,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Vendors",      href: "/admin/vendors",      icon: IconVendor,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
+  // Publishing is Admin + HR + Media: the roles that speak for the company in
+  // public. Recruiters and sales read the site, they do not write it.
+  // PUBLISHING_ROLES is the same constant routeAccess and requirePublisher use.
+  { name: "Blog",             href: "/admin/blog",             icon: IconBook,    roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "Case Studies",     href: "/admin/case-studies",     icon: IconChart,   roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "Customer Stories", href: "/admin/customer-stories", icon: IconMessage, roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "News",             href: "/admin/news",             icon: IconRadar,   roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "Content",      href: "/admin/content",      icon: IconContent,      roles: [UserRole.ADMIN], section: "Workspace" },
   { name: "Users",        href: "/admin/users",        icon: IconStaff,        roles: [UserRole.ADMIN], section: "Workspace" },
 ];
@@ -71,11 +85,16 @@ const roleBadgeColor: Record<string, string> = {
   [UserRole.HR]:        "bg-violet-500/15 text-violet-500",
   [UserRole.RECRUITER]: "bg-teal-500/15 text-teal-600",
   [UserRole.SALES]:     "bg-amber-500/15 text-amber-600",
+  [UserRole.MEDIA]:     "bg-cyan-500/15 text-cyan-600",
 };
 
 // ── Section aliases, maps path prefixes with no nav entry to their parent ────
 const SECTION_ALIASES: Record<string, { name: string; href: string }> = {
   "/admin/candidates":    { name: "Applications",  href: "/admin/applications" },
+  // Lead Sourcing lost its sidebar entry and now rides at the end of the Talent
+  // Bench tab row. Without this alias the breadcrumb fell through to
+  // "Dashboard" and told you the wrong place.
+  "/admin/lead-sourcing": { name: "Talent Bench",  href: "/admin/bench" },
   "/admin/roles":         { name: "Roles",         href: "/admin/roles" },
   "/admin/settings":      { name: "Settings",      href: "/admin/settings" },
   "/admin/api-keys":      { name: "API Keys",      href: "/admin/api-keys" },
@@ -560,6 +579,9 @@ function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"];
 }
 
 function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
+  // "Back to dashboard" pointed at /admin, which Media cannot reach either, so
+  // the escape hatch from an access error led straight to another one.
+  const home = landingRouteFor(userRole as UserRole | null);
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
       <div className="max-w-sm text-center">
@@ -572,10 +594,10 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
           administrator if you think this is a mistake.
         </p>
         <Link
-          href="/admin"
+          href={home}
           className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
-          Back to dashboard
+          {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
         </Link>
       </div>
     </div>
@@ -591,6 +613,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, signOut, hasAnyRole } = useAuth();
   const { openCommandPalette, pageCrumb } = useAdmin();
   const section = useCurrentSection(pathname);
+  const router = useRouter();
+
+  // Every sign-in lands on /admin, which is a recruiting report Media has no
+  // access to, so without this the first thing a new media account ever saw was
+  // "Access restricted". Only the dashboard is redirected: a deliberate deep
+  // link to a page the role cannot see should still say so rather than bounce.
+  const home = landingRouteFor(user?.role);
+  useEffect(() => {
+    if (pathname === "/admin" && home !== "/admin") router.replace(home);
+  }, [pathname, home, router]);
+
+  /** Global search reads recruiting data, so it is for recruiting roles only. */
+  const canSearch = hasAnyRole(RECRUITING_ROLES);
 
   const toggleSidebarCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
@@ -658,21 +693,32 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </h1>
           </div>
 
-          {/* Centered search, Conduktor-style. */}
-          <div className="absolute left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
-            <HeaderSearch />
-          </div>
+          {/* Centered search, Conduktor-style.
+
+              Hidden for Media. It searches jobs, applications and contacts
+              through /api/admin/search, which is recruiting-only and rightly
+              answers 403 to a media account, so leaving the box on screen would
+              be a control that looks broken rather than one that is restricted.
+              Removing beats disabling here (DESIGN_SYSTEM §5): a media account
+              will never gain this. */}
+          {canSearch && (
+            <div className="absolute left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
+              <HeaderSearch />
+            </div>
+          )}
 
           <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5">
             {/* Mobile search */}
-            <button
-              type="button"
-              onClick={openCommandPalette}
-              aria-label="Open search"
-              className="md:hidden p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
-            >
-              <Search className="w-5 h-5" aria-hidden="true" />
-            </button>
+            {canSearch && (
+              <button
+                type="button"
+                onClick={openCommandPalette}
+                aria-label="Open search"
+                className="md:hidden p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
+              >
+                <Search className="w-5 h-5" aria-hidden="true" />
+              </button>
+            )}
 
             <NotificationsPanel />
 
@@ -712,7 +758,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES]}>
+    <ProtectedRoute requiredRoles={[UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.MEDIA]}>
       <AdminProvider>
         <AdminLayoutContent>{children}</AdminLayoutContent>
       </AdminProvider>

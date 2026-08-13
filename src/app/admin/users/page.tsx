@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { IconComponent } from "@/components/admin/icons";
 import {
-  IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup,
+  IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup, IconRadar,
   IconUserPlus, IconSend,
 } from "@/components/admin/icons";
 import { fmtDate } from "@/lib/format";
@@ -26,7 +26,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { type Tone } from "@/components/admin/theme";
 
-type Role = "admin" | "hr" | "recruiter" | "sales";
+type Role = "admin" | "hr" | "recruiter" | "sales" | "media";
 
 interface User {
   id: string;
@@ -46,13 +46,16 @@ interface User {
  * the badge, the invite/change-role pickers, and the role filter, so a role
  * can never render as two different things on the same screen.
  */
-const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter"];
+// Media sits last and apart: it is not a junior recruiter, it is a different
+// job, and it is the only role here that never sees a candidate.
+const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter", "media"];
 
 const ROLE_META: Record<Role, { label: string; tone: Tone; icon: IconComponent; desc: string }> = {
   admin:     { label: "Admin",     tone: "rose",   icon: IconShield,    desc: "Full access to all features, settings, and user management" },
   hr:        { label: "HR",        tone: "violet", icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
   sales:     { label: "Sales",     tone: "amber",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
   recruiter: { label: "Recruiter", tone: "teal",   icon: IconUserCheck, desc: "View-only jobs, plus applications, candidates, and bench" },
+  media:     { label: "Media",     tone: "cyan",   icon: IconRadar,     desc: "Blog, case studies, news, and customer stories, plus view-only job postings. No candidate, client, or rate data" },
 };
 
 const NO_ROLE = { label: "No role", tone: "slate" as Tone };
@@ -74,6 +77,7 @@ const ROLE_TABS: { key: string; label: string }[] = [
   { key: "hr",        label: "HR" },
   { key: "sales",     label: "Sales" },
   { key: "recruiter", label: "Recruiters" },
+  { key: "media",     label: "Media" },
 ];
 
 /** Placeholder for an empty cell, an em-dash, aligned with the other columns. */

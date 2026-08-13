@@ -18,8 +18,8 @@ import { groupNameForRole, highestStaffRole, normalizeStaffRole } from "@/lib/au
 
 // Assignable staff roles. There is no public "user" role, every account is
 // created by an admin and belongs to exactly one of these groups.
-export type StaffRole = "admin" | "hr" | "recruiter" | "sales";
-export const STAFF_ROLES: StaffRole[] = ["admin", "hr", "recruiter", "sales"];
+export type StaffRole = "admin" | "hr" | "recruiter" | "sales" | "media";
+export const STAFF_ROLES: StaffRole[] = ["admin", "hr", "recruiter", "sales", "media"];
 
 // Get configuration at runtime
 const getConfig = () => ({

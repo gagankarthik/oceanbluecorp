@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -35,22 +35,54 @@ export default function LayoutWrapper({
 
   const hideHeaderFooter = isAdminRoute || isMaintenanceRoute;
 
-  if (hideHeaderFooter) {
-    return <>{children}</>;
-  }
-
-  // Maintenance gates the PUBLIC site only. /admin and /auth stay reachable on
-  // purpose: the switch is turned off from /admin/settings, and locking staff
-  // out of the page that turns it off would leave nobody able to bring the
-  // site back without a deploy.
-  if (maintenance?.enabled && !isAuthRoute) {
-    return <Maintenance message={maintenance.message} eta={maintenance.eta} />;
-  }
+  // ── Every hook runs before any early return ──────────────────────────────
+  //
+  // The returns below are conditional on the ROUTE, and this component lives
+  // in the root layout, so it survives client navigation. With hooks declared
+  // after them, walking from /blog to /admin changed the hook count between
+  // renders and React throws ("rendered more hooks than during the previous
+  // render"). They are all hoisted here; the ones that do work guard on
+  // `showBar`, which is already false on the routes that return early.
 
   // Announcement strip sits above the navbar. When present it's a fixed 40px
   // bar (top-0); the header drops to top-10 and content gets pt-10 so the
   // relative spacing every page already has below the header is preserved.
-  const showBar = !isAuthRoute && announcement.length > 0;
+  /**
+   * Dismissal, remembered.
+   *
+   * Keyed by the announcement TEXT, not a fixed flag: closing "Celebrating 13
+   * Years" must not also swallow the next announcement, which is the whole
+   * point of the strip. A new message is a new key, so it shows again.
+   *
+   * Starts false and is corrected in an effect rather than read during render.
+   * localStorage does not exist on the server, so seeding state from it would
+   * hydrate a bar the client then removes, and React would log a mismatch.
+   * The cost is one frame of the strip for someone who dismissed it, which is
+   * the right trade against a hydration error on every page.
+   */
+  const dismissKey = `ob.announcement.dismissed:${announcement}`;
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (!announcement) return;
+    try {
+      if (window.localStorage.getItem(dismissKey) === "1") setDismissed(true);
+    } catch {
+      // Private mode or storage disabled: the strip simply stays dismissible
+      // per page load rather than per browser.
+    }
+  }, [announcement, dismissKey]);
+
+  const dismissBar = useCallback(() => {
+    setDismissed(true);
+    try {
+      window.localStorage.setItem(dismissKey, "1");
+    } catch {
+      // Non-fatal, see above.
+    }
+  }, [dismissKey]);
+
+  const showBar =
+    !isAuthRoute && !hideHeaderFooter && announcement.length > 0 && !dismissed;
 
   // Past the fold the strip retracts and the header takes the top edge back.
   // The announcement is news for someone arriving; forty pixels of permanent
@@ -90,6 +122,20 @@ export default function LayoutWrapper({
     };
   }, [showBar]);
 
+  // ── Early returns, all hooks are above ───────────────────────────────────
+
+  if (hideHeaderFooter) {
+    return <>{children}</>;
+  }
+
+  // Maintenance gates the PUBLIC site only. /admin and /auth stay reachable on
+  // purpose: the switch is turned off from /admin/settings, and locking staff
+  // out of the page that turns it off would leave nobody able to bring the
+  // site back without a deploy.
+  if (maintenance?.enabled && !isAuthRoute) {
+    return <Maintenance message={maintenance.message} eta={maintenance.eta} />;
+  }
+
   return (
     <>
       {/* Momentum scrolling, marketing routes only, this branch is already
@@ -113,7 +159,7 @@ export default function LayoutWrapper({
           }`}
           aria-hidden={barRetracted}
         >
-          <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} />
+          <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} onDismiss={dismissBar} />
         </div>
       )}
       {!isAuthRoute && <Header topOffset={showBar && !barRetracted ? "top-10" : "top-0"} />}

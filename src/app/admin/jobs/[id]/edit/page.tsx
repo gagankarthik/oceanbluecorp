@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconWarning } from "@/components/admin/icons";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, canEditJobs } from "@/lib/auth";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, jobToFormData, formDataToPayload,
@@ -27,10 +27,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [submitting, setSubmitting] = useState(false);
 
   // Recruiters may view a requisition but not edit it, bounce them to the record.
-  const isRecruiter = user?.role === UserRole.RECRUITER;
+  const isRecruiter = !canEditJobs(user?.role);
 
   useEffect(() => {
-    if (user?.role === UserRole.RECRUITER) router.replace(`/admin/jobs/${id}`);
+    if (user?.role && !canEditJobs(user.role)) router.replace(`/admin/jobs/${id}`);
   }, [user, router, id]);
 
   useEffect(() => {

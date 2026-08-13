@@ -1,4 +1,6 @@
 import { getAllJobs } from "@/lib/aws/dynamodb";
+import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
+import { getLiveArticles } from "@/lib/articles-public";
 
 const BASE = "https://oceanbluecorp.com";
 
@@ -64,6 +66,44 @@ export async function GET() {
     }
   } catch {
     // Non-fatal: still serve the static URLs if the DB is unavailable.
+  }
+
+  /*
+   * Published articles, and the section index once it holds anything.
+   *
+   * The four section pages are deliberately NOT in STATIC above. They carry
+   * `robots: index:false` while empty (see sectionMetadata), and listing a page
+   * in a sitemap while asking robots not to index it is a contradiction search
+   * engines report as an error. Both come off together, driven by the same
+   * fact: whether the section has a live entry.
+   */
+  try {
+    for (const kind of ARTICLE_KINDS) {
+      const articles = await getLiveArticles(kind);
+      if (articles.length === 0) continue;
+
+      const base = ARTICLE_KIND_CONFIG[kind].publicPath;
+      entries.push({
+        url: `${BASE}${base}`,
+        lastmod: new Date(articles[0].publishedAt || articles[0].createdAt).toISOString(),
+        changefreq: "weekly",
+        priority: 0.7,
+      });
+
+      for (const article of articles) {
+        // A piece marked "keep out of search results" is excluded here too,
+        // otherwise the sitemap invites the crawler the page then turns away.
+        if (article.noIndex) continue;
+        entries.push({
+          url: `${BASE}${base}/${article.slug}`,
+          lastmod: new Date(article.updatedAt || article.publishedAt || article.createdAt).toISOString(),
+          changefreq: "monthly",
+          priority: 0.65,
+        });
+      }
+    }
+  } catch {
+    // Non-fatal, same contract as the jobs block above.
   }
 
   const body =

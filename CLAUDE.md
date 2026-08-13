@@ -44,27 +44,49 @@ DynamoDB tables (region: us-east-2):
 - `oceanblue-resumes` (GSI: userId-index)
 - `oceanblue-candidates` (GSI: email-index, userId-index)
 - `oceanblue-contacts`
+- `oceanblue-content` holds **two** record types, told apart by `recordType`:
+  the CMS blocks behind `/admin/content` (no `recordType`), and the published
+  articles — blog, case studies, news, customer stories — behind a further
+  `kind` discriminator (`recordType: "article"`). Every read on either side
+  filters on it; see the ARTICLES section in `dynamodb.ts`.
 
 ### Authentication
 AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores the session). There is **no public sign-up**, the app is staff-only and invite-based.
 - **AuthContext** (`src/lib/auth/AuthContext.tsx`) - Provides `useAuth()` hook
 - **ProtectedRoute** component for route guarding
-- Four staff roles, no public "user" role: ADMIN > HR > (RECRUITER = SALES). Hierarchy in `src/lib/auth/config.ts`. `user.role` is `UserRole | null` (null = authenticated but in no staff group → no access).
-- Cognito groups map to roles: "admin" -> ADMIN, "hr" -> HR, "recruiter" -> RECRUITER, "sales" -> SALES.
+- Five staff roles, no public "user" role: ADMIN > HR > (RECRUITER = SALES) > MEDIA. Hierarchy in `src/lib/auth/config.ts`. `user.role` is `UserRole | null` (null = authenticated but in no staff group → no access).
+- Cognito groups map to roles: "admin" -> ADMIN, "hr" -> HR, "recruiter" -> RECRUITER, "sales" -> SALES, "media" -> MEDIA. Groups are namespaced (`web:media`) and auto-created on first invite by `ensureGroup`.
+- **MEDIA is not a junior recruiter, it is a different job**, so access is granted
+  by naming the role, never by clearing a hierarchy level. Three sets in
+  `config.ts` say what a role is *for*:
+  - `RECRUITING_ROLES` (admin, hr, recruiter, sales) — what `requireStaff` guards:
+    candidates, applications, resumes, pipeline, CRM, job writes. **Excludes MEDIA.**
+  - `PUBLISHING_ROLES` (admin, hr, media) — `requirePublisher`, `/api/articles`,
+    and the four `/admin/<section>` routes.
+  - `JOB_EDIT_ROLES` (admin, hr, sales) — `canEditJobs()`. Recruiter and media read
+    postings without editing them.
+  Media additionally gets `requireSignedIn` routes (own profile, avatar,
+  notifications, help directory) and nothing else. `/api/jobs` and
+  `/api/jobs/[id]` resolve their projection from the caller, so media receives
+  `toPublicJob` — no rates, client, vendor or assignees.
 - **Invite flow**: an admin invites a teammate from `/admin/users` (email + role). `/api/users/invite` calls Cognito `AdminCreateUser` (Cognito emails a temporary password) and assigns the role group. On first sign-in Cognito raises `NEW_PASSWORD_REQUIRED`; the sign-in page collects full name, phone, and a new password, and `/api/auth/complete-invite` answers the challenge + sets those attributes.
 
 ### Key Directories
 ```
 src/
 ├── app/                 # Next.js App Router pages
-│   ├── api/            # API routes (jobs, applications, contacts, resume)
-│   ├── admin/          # Admin panel (jobs, applications, contacts, users, settings)
+│   ├── api/            # API routes (jobs, applications, contacts, resume, articles)
+│   ├── admin/          # Admin panel (jobs, applications, contacts, users, settings,
+│   │                   # and the four publishing sections: blog, case-studies,
+│   │                   # news, customer-stories)
 │   └── auth/           # Authentication pages (signin, callback, signout), invite-only, no sign-up
 ├── components/
 │   ├── ui/             # shadcn/ui components
 │   └── providers/      # Context providers (wraps AuthProvider)
 ├── lib/
 │   ├── auth/           # Cognito auth config and context
+│   ├── articles.ts     # Editorial model for the four public content sections
+│   ├── editorial.ts    # House style: structure, rules and body templates per kind
 │   └── aws/            # AWS service clients (S3, DynamoDB)
 └── hooks/              # Custom React hooks
 ```

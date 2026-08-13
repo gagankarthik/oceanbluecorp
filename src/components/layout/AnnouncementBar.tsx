@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 
 /**
  * Sitewide announcement strip shown above the top navbar. Rendered only when
@@ -10,13 +10,45 @@ import { ArrowRight } from "lucide-react";
  * two elements both claiming `fixed inset-x-0 top-0` would fight over it.
  * `scroll` (CMS toggle) turns it into a continuous marquee.
  */
-export default function AnnouncementBar({ text, href, scroll }: { text: string; href?: string; scroll?: boolean }) {
+export default function AnnouncementBar({
+  text,
+  href,
+  scroll,
+  onDismiss,
+}: {
+  text: string;
+  href?: string;
+  scroll?: boolean;
+  /** Renders the close control. Owned by LayoutWrapper, which remembers it. */
+  onDismiss?: () => void;
+}) {
   const barClass =
     "horizon relative flex h-10 w-full items-center overflow-hidden text-[13px] font-medium text-white";
   const barStyle = {
     background: "linear-gradient(90deg, var(--hz-cobalt-600) 0%, var(--hz-cobalt) 50%, var(--hz-cobalt-600) 100%)",
     color: "#ffffff", // force white, beats the .horizon base color
   } as const;
+
+  /**
+   * The close control, pinned to the right end of the strip.
+   *
+   * Absolutely positioned rather than placed in the flow: the static mode
+   * centres its label in the full width, and the marquee mode runs a track
+   * across it, so a button taking part in either layout would shift the text
+   * off-centre or interrupt the loop. `pr-12` on the label keeps a long
+   * announcement from sliding under it.
+   */
+  const dismissButton = onDismiss ? (
+    <button
+      type="button"
+      onClick={onDismiss}
+      aria-label="Dismiss announcement"
+      title="Dismiss"
+      className="absolute right-2 top-1/2 z-[2] grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+    >
+      <X className="h-4 w-4" aria-hidden="true" />
+    </button>
+  ) : null;
 
   // ── Scrolling / marquee mode ──
   if (scroll) {
@@ -36,6 +68,7 @@ export default function AnnouncementBar({ text, href, scroll }: { text: string; 
         ) : (
           track
         )}
+        {dismissButton}
       </div>
     );
   }
@@ -48,12 +81,13 @@ export default function AnnouncementBar({ text, href, scroll }: { text: string; 
     </span>
   );
   return (
-    <div className={`${barClass} justify-center px-4`} style={barStyle}>
+    <div className={`${barClass} justify-center px-4 ${onDismiss ? "pr-12" : ""}`} style={barStyle}>
       {href ? (
         <Link href={href} className="group inline-flex max-w-full items-center transition-opacity hover:opacity-90">{label}</Link>
       ) : (
         label
       )}
+      {dismissButton}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, Minus } from "lucide-react";
 import {
   IconShield, IconGroup, IconJob, IconFile, IconMessage, IconBuilding,
-  IconSettings, IconOverview, IconBoxes, IconUserStar, IconInfo,
+  IconSettings, IconOverview, IconBoxes, IconUserStar, IconInfo, IconRadar,
 } from "@/components/admin/icons";
 import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
@@ -49,9 +49,16 @@ const roleConfigs: Record<string, RoleConfig> = {
     icon: IconJob,
     level: roleHierarchy[UserRole.SALES],
   },
+  [UserRole.MEDIA]: {
+    name: "Media",
+    short: "Media",
+    description: "Blog, case studies, news, and customer stories. Jobs view-only, no rates or clients. Never sees candidate data.",
+    icon: IconRadar,
+    level: roleHierarchy[UserRole.MEDIA],
+  },
 };
 
-const roles = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
+const roles = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.MEDIA];
 
 interface RouteRow {
   path: string;

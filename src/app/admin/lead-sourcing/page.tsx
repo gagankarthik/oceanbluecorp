@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { RecordHeader } from "@/components/admin/workspace";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconSource, IconWarning, IconRequisition, IconGroup } from "@/components/admin/icons";
 import { VerdictBadge, SkillChips, OriginBadge, fitScoreColor, type Verdict, type MatchOrigin } from "@/components/admin/fit-ui";
@@ -39,6 +40,17 @@ interface JobOption {
 }
 
 export default function LeadSourcingPage() {
+  /**
+   * The bench tab the Lead Sourcing button was pressed from, so the back link
+   * returns there instead of resetting to "All candidates". Defaults to "all"
+   * for anyone arriving by a bare URL or a bookmark.
+   */
+  const [backPool, setBackPool] = useState("all");
+  useEffect(() => {
+    const from = new URLSearchParams(window.location.search).get("from");
+    if (from === "all" || from === "internal" || from === "external") setBackPool(from);
+  }, []);
+
   const [mode, setMode] = useState<"job" | "paste">("job");
   const [jobs, setJobs] = useState<JobOption[]>([]);
   const [jobId, setJobId] = useState("");
@@ -112,12 +124,16 @@ export default function LeadSourcingPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header>
-        <h1 className="text-[22px] font-semibold text-[var(--adm-ink)]">Lead Sourcing</h1>
-        <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">
-          Find the best-matching candidates across your resume bank and talent bench for a job, by fit score, with the skills they match and miss.
-        </p>
-      </header>
+      {/* Lead Sourcing left the sidebar, so this is the way back. It carries
+          the pool the button was pressed from (?from=), which means a round
+          trip returns you to the tab you left rather than to "All".
+          RecordHeader gives the same back link every detail screen uses. */}
+      <RecordHeader
+        back={{ label: "Talent Bench", href: `/admin/bench?pool=${backPool}` }}
+        title="Lead Sourcing"
+        subtitle="Find the best-matching candidates across your resume bank and talent bench for a job, by fit score, with the skills they match and miss."
+      />
+
 
       <AdminCard>
         <AdminCardHeader icon={IconSource} title="Find candidates" />

@@ -11,7 +11,9 @@
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { UserRole, hasStaffAccess, staffRolesOf } from "./config";
+import {
+  UserRole, hasStaffAccess, hasRecruitingAccess, hasPublishingAccess, staffRolesOf,
+} from "./config";
 
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2";
 const POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "";
@@ -101,15 +103,59 @@ type Guard = { ok: true; claims: Claims } | { ok: false; response: NextResponse 
 const unauthorized = (): NextResponse => NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 const forbidden = (): NextResponse => NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-// Require a signed-in user belonging to any staff group of THIS site. Groups
-// are matched through the namespace rules in config.ts, so `web:hr` and legacy
-// `hr` both pass while an HR-portal group such as `hr:employee` does not: a
-// placed-workforce account is authenticated against the shared pool but is not
-// staff here.
+/**
+ * Require a RECRUITING role: admin, hr, recruiter or sales.
+ *
+ * This is the guard on ~40 routes covering candidates, applications, resumes,
+ * the pipeline, clients, vendors, contacts and job writes. It used to mean
+ * "belongs to any staff group of this site", which was the same thing right up
+ * until the Media role existed.
+ *
+ * It now excludes Media, and that is the point: a media account is a real
+ * account on this site and would otherwise have walked through every one of
+ * those routes on the day it was created, with only the sidebar hiding the
+ * data. Roles added later inherit the same default of nothing.
+ *
+ * Use {@link requireSignedIn} for a route that serves a person's OWN account,
+ * and {@link requirePublisher} for the content sections.
+ *
+ * Groups are matched through the namespace rules in config.ts, so `web:hr` and
+ * legacy `hr` both pass while an HR-portal group such as `hr:employee` does
+ * not: a placed-workforce account is authenticated against the shared pool but
+ * is not staff here.
+ */
 export async function requireStaff(req: NextRequest): Promise<Guard> {
   const claims = await getClaims(req);
   if (!claims) return { ok: false, response: unauthorized() };
+  if (!hasRecruitingAccess(claims.groups)) return { ok: false, response: forbidden() };
+  return { ok: true, claims };
+}
+
+/**
+ * Require any account on this site, Media included.
+ *
+ * For routes that serve the caller their OWN things: profile, avatar,
+ * notifications, the staff directory. Never for anything that returns another
+ * person's record.
+ */
+export async function requireSignedIn(req: NextRequest): Promise<Guard> {
+  const claims = await getClaims(req);
+  if (!claims) return { ok: false, response: unauthorized() };
   if (!hasStaffAccess(claims.groups)) return { ok: false, response: forbidden() };
+  return { ok: true, claims };
+}
+
+/**
+ * Require a publishing role: admin, hr or media.
+ *
+ * Guards /api/articles. Mirrors the PUBLISHING_ROLES entries in `routeAccess`,
+ * so the sidebar and the API cannot drift apart — and a recruiter who follows a
+ * link to a draft gets the same answer from both.
+ */
+export async function requirePublisher(req: NextRequest): Promise<Guard> {
+  const claims = await getClaims(req);
+  if (!claims) return { ok: false, response: unauthorized() };
+  if (!hasPublishingAccess(claims.groups)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
 }
 

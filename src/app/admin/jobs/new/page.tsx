@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, canEditJobs } from "@/lib/auth";
 import type { Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload,
@@ -20,10 +20,10 @@ export default function NewJobPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Recruiters cannot create requisitions, bounce them back to the list.
-  const isRecruiter = user?.role === UserRole.RECRUITER;
+  const isRecruiter = !canEditJobs(user?.role);
 
   useEffect(() => {
-    if (user?.role === UserRole.RECRUITER) router.replace("/admin/jobs");
+    if (user?.role && !canEditJobs(user.role)) router.replace("/admin/jobs");
   }, [user, router]);
 
   useEffect(() => {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateCognitoUserAttributes } from "@/lib/aws/cognito";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireSignedIn } from "@/lib/auth/verify";
 
 // PATCH /api/users/me - Update current user's Cognito profile attributes
 export async function PATCH(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   try {
     const body = await request.json();

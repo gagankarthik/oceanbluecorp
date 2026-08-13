@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getContentBlock, upsertContentBlock } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireSignedIn } from "@/lib/auth/verify";
 
 /**
  * Help directory CMS. The team/contacts list on /admin/help is stored as a
@@ -14,7 +14,7 @@ const BLOCK_ID = "help-directory";
 // GET, the stored members (empty array if never edited; the page falls back to
 // its built-in defaults in that case). Any signed-in staff member may read.
 export async function GET(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   try {
     const result = await getContentBlock(BLOCK_ID);
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
 // PUT, replace the directory. ADMIN or HR only.
 export async function PUT(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   if (!auth.claims.groups.some((g) => g === "admin" || g === "hr")) {
     return NextResponse.json({ error: "Only Admin or HR can edit the help directory." }, { status: 403 });

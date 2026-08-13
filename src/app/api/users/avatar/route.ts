@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAvatarKey, uploadAvatar, validateAvatarFile } from "@/lib/aws/s3";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireSignedIn } from "@/lib/auth/verify";
 
 export const runtime = "nodejs";
 
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 // not multipart, to stay reliable behind Amplify/Lambda. Uploads to S3 under a
 // stable per-user key; the photo is served back via /api/users/avatar/[userId].
 export async function POST(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   try {
     const userId = request.nextUrl.searchParams.get("userId");

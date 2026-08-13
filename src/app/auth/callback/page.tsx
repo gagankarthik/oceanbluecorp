@@ -16,6 +16,7 @@ const ROLE_TITLES: Record<UserRole, string> = {
   [UserRole.HR]: "HR Manager",
   [UserRole.RECRUITER]: "Recruiter",
   [UserRole.SALES]: "Sales",
+  [UserRole.MEDIA]: "Media",
 };
 
 /** The HR portal, which is a separate sign-in with its own accounts. */

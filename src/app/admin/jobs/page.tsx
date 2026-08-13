@@ -7,7 +7,7 @@ import {
   Plus, Loader2, MoreHorizontal, X,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, canEditJobs } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
@@ -71,7 +71,10 @@ export default function JobsPage() {
   const [duplicating, setDuplicating]   = useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 250);
-  const canEdit = user?.role !== UserRole.RECRUITER;
+  // Recruiters and media both read postings without editing them. Named in
+  // JOB_EDIT_ROLES rather than spelled as "not a recruiter", which quietly
+  // granted edit rights to every role added afterwards.
+  const canEdit = canEditJobs(user?.role);
 
   // ── data ──────────────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import {
   Check, ChevronLeft, MoreHorizontal, Plus, X,
 } from "lucide-react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, canEditJobs } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
@@ -18,6 +18,7 @@ import { WorkspaceButton } from "@/components/admin/workspace";
 import { BestCandidates } from "@/components/admin/best-candidates";
 import { JobSubmissions } from "@/components/admin/job-submissions";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { JobTeamCard } from "@/components/admin/job-team-card";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { SearchInput } from "@/components/admin/toolbar";
@@ -25,7 +26,7 @@ import { Avatar } from "@/components/admin/avatar";
 import {
   IconRequisition, IconWarning, IconBuilding, IconCopy, IconMoney,
   IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
-  IconUserCheck, IconGroup, IconSource, IconSend,
+  IconGroup, IconSource, IconSend,
 } from "@/components/admin/icons";
 import { statusMeta, PIPELINE_STAGES, SERIES, type AppStatus } from "@/components/admin/theme";
 import {
@@ -75,7 +76,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const { id: jobId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const canEdit = user?.role !== UserRole.RECRUITER;
+  const canEdit = canEditJobs(user?.role);
 
   const [job, setJob]                     = useState<Job | null>(null);
   const [applications, setApplications]   = useState<Application[]>([]);
@@ -541,32 +542,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             </dl>
           </AdminCard>
 
-          {/* Team */}
-          {(job.recruitmentManagerName || assignees.length > 0) && (
-            <AdminCard className="overflow-hidden">
-              <AdminCardHeader icon={IconUserCheck} title="Team" count={(job.recruitmentManagerName ? 1 : 0) + assignees.length} />
-              <div className="divide-y divide-[var(--adm-line-soft)]">
-                {job.recruitmentManagerName && (
-                  <div className="flex items-center gap-2.5 px-5 py-3">
-                    <Avatar name={job.recruitmentManagerName} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{job.recruitmentManagerName}</p>
-                      <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">Recruitment manager</p>
-                    </div>
-                  </div>
-                )}
-                {assignees.map((name, i) => (
-                  <div key={i} className="flex items-center gap-2.5 px-5 py-3">
-                    <Avatar name={name} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{name}</p>
-                      <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">Assignee</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AdminCard>
-          )}
+          {/* Team. Always rendered now, even when empty: the + in its header
+              is how a recruiter gets added, so hiding the card when nobody is
+              assigned hid the only way to assign the first one. */}
+          <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />
 
           {/* Client notes */}
           {job.clientNotes && (

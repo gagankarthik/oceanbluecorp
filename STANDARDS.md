@@ -67,6 +67,22 @@ that is the convention.
 never catch a thrown SDK error. List functions return `{ success: true, data: [] }`
 on a missing table so a screen renders empty instead of erroring.
 
+**Two record types share `oceanblue-content`.** The CMS blocks behind
+`/admin/content` (`{ id, section, fields }`, no `recordType`) and the published
+articles (`recordType: "article"`, plus a `kind` of blog / case-study / news /
+customer-story). They are told apart by `recordType` and nothing else, so:
+
+- every article read filters `recordType = "article"`, every content read filters
+  `attribute_not_exists(recordType)`;
+- every article `Update`/`Delete` carries `ConditionExpression: "#rt = :rt"`, and
+  `upsertContentBlock` carries the mirror image. Without them one bad id turns
+  the homepage copy into a blog post, or deletes it — an `UpdateCommand` creates
+  the item when it is missing, so a typo is not a no-op.
+
+Verified against the real table: an article never appears in the CMS editor, a
+block never appears in a section index, and each side refuses to write the
+other's records.
+
 **Environment variables.** `NEXT_AWS_*` server-side, `NEXT_PUBLIC_*` only for
 values safe in a browser bundle. A table name is
 `NEXT_AWS_DYNAMODB_TABLE_<PLURAL_ENTITY>`, and it must appear in three places or
@@ -101,6 +117,8 @@ was duplicated first**.
 | Rich text out of the DB | `renderRichText` / `renderListField` | raw `dangerouslySetInnerHTML` |
 | CSV export | `lib/csv.ts` `downloadCsv` | building a blob inline |
 | Validate a request body | `lib/validate.ts` | reading fields straight off `body` |
+| Free-text chip input (tags, service lines) | `<TagInput>` (`forms/tag-input.tsx`) | a comma-separated `<input>` split on save |
+| Anything about a blog post / case study / news item / customer story | `lib/articles.ts`, `lib/editorial.ts` | a per-page copy of the publish or slug rules |
 | Throttle an open route | `lib/rate-limit.ts` | an in-memory counter (see §5.4) |
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and
@@ -143,6 +161,23 @@ A pure helper that needs an AWS *type* (`lib/pipeline-records.ts`,
 const auth = await requireStaff(request);   // or requireAdmin / requireUserAdmin
 if (!auth.ok) return auth.response;
 ```
+
+**Pick the guard by what the route serves, not by seniority.**
+
+| Guard | Passes | For |
+|---|---|---|
+| `requireStaff` | admin, hr, recruiter, sales | Recruiting data: candidates, applications, resumes, pipeline, CRM, job writes. **Not media.** |
+| `requirePublisher` | admin, hr, media | `/api/articles`, the four public content sections |
+| `requireSignedIn` | any role, media included | The caller's OWN things: profile, avatar, notifications, staff directory |
+| `requireUserAdmin` | admin, hr | Account administration |
+| `requireAdmin` | admin | API keys, roles, site content |
+
+`requireStaff` used to mean "any staff group", which was the same thing until
+the Media role existed. It now means RECRUITING, and that is deliberate: a new
+limited role must default to **nothing** and be granted access by being named,
+or adding one is a single forgotten guard away from handing over the candidate
+database. `hasStaffAccess` is the *sign-in* gate and is not an authorization
+check — guarding a recruiting route with it re-opens exactly that hole.
 
 The guard is the **first statement**, before `request.json()`. Use
 `auth.claims.sub` for attribution, never a user id from the body.
@@ -193,7 +228,8 @@ shape fixes the class: a field nobody declared cannot reach the database however
 it arrives, including one somebody adds to the client later. Errors name the
 field, a 400 reading "Invalid request" costs an afternoon.
 
-Applied to: `api/pipeline`. Everything else predates it; convert on next touch.
+Applied to: `api/pipeline`, `api/articles`. Everything else predates it; convert
+on next touch.
 
 ### 5.4 Rate limiting
 
@@ -243,6 +279,17 @@ Recorded honestly rather than left implied:
 
 Closed since the audit: the public routes are now rate limited (§5.4), and the
 privileged-field hole in §5.2 is gated.
+
+> **Found and fixed while adding the Media role:** `GET /api/jobs/[id]` had **no
+> guard at all** and returned the complete job record — pay rate, client bill
+> rate, client and vendor names, the recruitment manager and every assignee's
+> email — to any caller with a job id. Nothing depended on it: the public
+> careers page reads DynamoDB directly and applies `toPublicJob` itself, so the
+> only callers were admin screens. It now resolves the projection from the
+> caller like the list route, and non-recruiting callers get the public fields
+> for open postings only. Separately, that list route decided "is staff" with
+> `["admin","hr","recruiter","sales"].includes(rawGroup)`, which does not match
+> the namespaced `web:admin` this pool writes; it now uses `hasRecruitingAccess`.
 
 ---
 

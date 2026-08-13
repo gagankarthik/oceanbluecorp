@@ -5,11 +5,11 @@ import {
   markAllNotificationsAsRead,
   Notification,
 } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireSignedIn } from "@/lib/auth/verify";
 
 // GET /api/notifications - Get all notifications or unread only
 export async function GET(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/notifications - Mark all notifications as read
 export async function PUT(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireSignedIn(request);
   if (!auth.ok) return auth.response;
   try {
     const result = await markAllNotificationsAsRead();

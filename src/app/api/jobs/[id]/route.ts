@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getJob, updateJob, deleteJob, Job } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { getJob, updateJob, deleteJob, toPublicJob, Job } from "@/lib/aws/dynamodb";
+import { requireStaff, getClaims } from "@/lib/auth/verify";
+import { hasRecruitingAccess } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 
-// GET /api/jobs/[id] - Get a specific job
+/**
+ * GET /api/jobs/[id]
+ *
+ * The projection is resolved from the caller, matching the list route:
+ * recruiting staff get the full record, everyone else gets the public one.
+ *
+ * This used to return the WHOLE record, unguarded, to anyone who had a job id,
+ * pay rate, client bill rate, client and vendor names, the recruitment manager
+ * and every assignee's email address. Nothing legitimate depended on that: the
+ * public careers page reads DynamoDB directly and applies `toPublicJob` itself,
+ * so the only callers of this route are admin screens. Found while giving Media
+ * read-only postings, since "media must not see commercials" is unenforceable
+ * while an unauthenticated GET hands them over.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,7 +41,18 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ job: result.data });
+    const claims = await getClaims(request);
+    if (hasRecruitingAccess(claims?.groups)) {
+      return NextResponse.json({ job: result.data });
+    }
+
+    // Media and anonymous callers: public fields only, and only for a posting
+    // that is actually open. A draft or closed req is not theirs to read.
+    const status = result.data.status;
+    if (status !== "active" && status !== "open") {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+    return NextResponse.json({ job: toPublicJob(result.data) });
   } catch (error) {
     console.error("Error fetching job:", error);
     return NextResponse.json(

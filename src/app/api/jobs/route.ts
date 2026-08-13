@@ -3,6 +3,7 @@ import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPub
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff, getClaims } from "@/lib/auth/verify";
+import { hasRecruitingAccess } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -27,11 +28,19 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    // Staff get full records for all statuses. Public visitors only see
-    // active/open jobs with internal fields stripped, drafts, on-hold, and
-    // closed postings are never exposed outside the admin.
+    // Recruiting staff get full records for all statuses. Everyone else, Media
+    // and anonymous visitors alike, sees only active/open jobs with the
+    // internal fields stripped: drafts, on-hold and closed postings are never
+    // exposed outside the recruiting side, and neither are rates, client and
+    // vendor names or recruiter assignments.
+    //
+    // The role test goes through hasRecruitingAccess rather than a literal list
+    // of group names. The list it replaces was `["admin","hr","recruiter",
+    // "sales"]` compared against the RAW group, which does not match the
+    // namespaced `web:admin` this pool writes, so it was one pool migration
+    // away from silently serving staff the public projection.
     const claims = await getClaims(request);
-    const isStaff = !!claims?.groups?.some((g) => ["admin", "hr", "recruiter", "sales"].includes(g));
+    const isStaff = hasRecruitingAccess(claims?.groups);
     const payload = isStaff
       ? jobs
       : jobs
