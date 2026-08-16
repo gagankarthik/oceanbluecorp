@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import WordsRise from "./motion/WordsRise";
 import { Cta } from "./ui";
 import VideoBackdrop from "./VideoBackdrop";
+import Image from "next/image";
 
 /** Split into `title` + `accent` so the colour break lands at a chosen point
  *  in the sentence rather than wherever the line happens to wrap. */
@@ -30,29 +31,9 @@ export default function Hero({ content = {} }: { content?: Record<string, string
       className="relative isolate flex min-h-[90svh] w-full flex-col overflow-hidden sm:min-h-[100svh]"
       style={{ background: "#07142b" }}
     >
-      {/* hero.mp4 is a web encode of "Hero Video.mp4" (1600x900, 30fps, no
-          audio, 666KB against the source's 10.5MB). Serve the encode, never
-          the master: at 10MB the dev server answered the media element's range
-          requests with a repeating 503 and no frame ever decoded. */}
-      <VideoBackdrop
-        src="/video/hero.mp4"
-        poster="/video/hero-poster.jpg"
-        className="z-0"
-        intensity={100}
-      />
+      <Image src="/images/hero-bg.png" alt="" fill className="absolute inset-0 -z-10 object-cover" />
+      
 
-      {/* Scrim, in two parts that do different jobs.
-
-          The flat wash stays light (0.14 through the middle) so the film keeps
-          its own colour rather than reading as a navy rectangle. Contrast is
-          bought back by the radial alone, which sits only behind the words.
-
-          Measured against this footage over seven frames of the loop: the
-          brightest pixel behind the headline composites to 6.9:1 against
-          white, worst case, over a 4.5:1 floor for the subhead. This film is
-          a pale building, and at the radial's previous 0.50 it measured 4.73:1,
-          which passed on paper and looked washed out. Re-measure whenever the
-          film changes; a light wash leaves little room. */}
       <div
         aria-hidden
         className="absolute inset-0 z-[1]"
@@ -67,9 +48,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
         className="relative z-10 flex flex-1 items-center"
       >
         <div className="hz-cinema mx-auto w-full max-w-[2200px] px-6 pt-20 pb-10 text-center sm:px-10 sm:pt-24 lg:px-16 2xl:px-28">
-          {/* Entry animation is CSS, not framer-motion (see WordsRise): the
-              motion version kept this copy invisible until hydration, costing
-              5-8s of LCP. */}
+         
           <div>
             {/* 34ch keeps the headline to two lines on desktop. */}
             <h1 className="hz-display mx-auto max-w-[34ch] text-[clamp(1.9rem,4.3vw,3.35rem)] tracking-[-0.03em] break-words text-white">
