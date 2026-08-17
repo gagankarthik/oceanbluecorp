@@ -47,18 +47,20 @@ export default function CookieConsent() {
 
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">We use cookies &amp; similar technologies</p>
-            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+            <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
               We use essential cookies to make our site work, and optional analytics cookies to understand how you use it.
               By clicking <strong>Accept All</strong> you consent to all cookies.{" "}
-              <Link href="/cookies" className="text-[var(--hz-cobalt)] hover:underline">Cookie Policy</Link>
+              {/* Underlined, not just coloured. Colour alone is not a
+                  distinguishing cue inside a run of body text. */}
+              <Link href="/cookies" className="text-[var(--hz-cobalt)] underline underline-offset-2">Cookie Policy</Link>
               {" · "}
-              <Link href="/privacy" className="text-[var(--hz-cobalt)] hover:underline">Privacy Policy</Link>
+              <Link href="/privacy" className="text-[var(--hz-cobalt)] underline underline-offset-2">Privacy Policy</Link>
             </p>
 
             {/* Details toggle */}
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mt-1.5 -my-1 py-1.5 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 mt-1.5 -my-1 py-1.5 transition-colors"
               aria-expanded={showDetails}
             >
               {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -69,7 +71,7 @@ export default function CookieConsent() {
           <button
             onClick={() => save("essential")}
             aria-label="Dismiss and accept essential cookies only"
-            className="grid h-10 w-10 flex-shrink-0 place-items-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="grid h-10 w-10 flex-shrink-0 place-items-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -113,7 +115,9 @@ export default function CookieConsent() {
 
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center gap-1 text-[11px] text-gray-400 flex-1">
+          {/* gray-600, not gray-400: 11px on bg-gray-50 needs the darker step
+              to clear 4.5:1. */}
+          <div className="flex items-center gap-1 text-[11px] text-gray-600 flex-1">
             <Shield className="w-3 h-3" aria-hidden="true" />
             <span>We never sell your personal data. SOC 2 Type II &middot; GDPR &amp; CCPA compliant.</span>
           </div>

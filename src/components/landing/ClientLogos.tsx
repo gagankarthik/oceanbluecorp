@@ -36,13 +36,28 @@ function LogoMark({ l }: { l: Logo }) {
   // `min(...)` rather than a flat cap: the intrinsic width is the ceiling, but
   // in a six-across row the cell is narrower than that on most viewports.
   const capped = { maxWidth: `min(${l.w}px, 100%)` };
+
+  // Remote rasters go through the optimiser. Hotlinked they arrive at the
+  // origin's full resolution and cache policy, the Ohio mark is a 2192x604,
+  // 86 KiB PNG for a 132px slot. Remote SVG stays on <img>: next/image refuses
+  // it without dangerouslyAllowSVG, and a wordmark SVG is already a few KiB.
+  const plain = l.remote && /\.svg(\?|$)/i.test(l.logo);
+
   return (
     <div className="flex w-full items-center justify-center">
-      {l.remote ? (
+      {plain ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={l.logo} alt={l.name} width={l.w} height={36} loading="lazy" decoding="async" className={cls} style={capped} />
       ) : (
-        <Image src={l.logo} alt={l.name} width={l.w} height={36} className={cls} style={capped} />
+        <Image
+          src={l.logo}
+          alt={l.name}
+          width={l.w}
+          height={36}
+          sizes={`${l.w}px`}
+          className={cls}
+          style={capped}
+        />
       )}
     </div>
   );

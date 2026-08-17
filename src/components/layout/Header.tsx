@@ -9,12 +9,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Cloud,
-  Users,
-  Cpu,
   Settings,
-  Headphones,
-  Wrench,
   LogOut,
   LayoutDashboard,
   ArrowRight,
@@ -26,14 +21,6 @@ import {
 } from "@/components/landing/motifs/Motifs";
 import { useAuth, UserRole } from "@/lib/auth";
 import { IconHrPortal } from "@/components/admin/icons";
-
-// Four core practices, used by both the desktop dropdown and the mobile menu.
-const solutions = [
-  { name: "IT Staffing & Talent",          href: "/solutions/staffing",    icon: Users,      description: "Specialists, embedded fast" },
-  { name: "Engineering Talent & Services", href: "/solutions/engineering", icon: Wrench,     description: "Mechanical, electrical, aerospace" },
-  { name: "IT Solutions",                  href: "/solutions/cloud",       icon: Cpu,        description: "Cloud, AI, security & ERP" },
-  { name: "Managed Services",              href: "/solutions/managed",     icon: Headphones, description: "24/7 operations, one SLA" },
-];
 
 const navigation = [
   { name: "About", href: "/about", hasDropdown: true, dropdownType: "about" },
@@ -358,22 +345,18 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
     };
   }, [mobileMenuOpen]);
 
-  // One shape for the mobile sheet, whichever menu it came from. The two
-  // legacy lists carry a lucide `icon` and a `description`; Resources carries
-  // a drawn `Icon` and a `tint`. Normalising here keeps the render from having
-  // to know which list it is walking.
-  type MobileItem = {
-    name: string;
-    href: string;
-    description?: string;
-    Icon?: (p: { className?: string }) => React.ReactElement;
-    tint?: string;
-  };
-  const getDropdownItems = (type: string): MobileItem[] => {
-    if (type === "solutions") return solutions.map(({ name, href, description }) => ({ name, href, description }));
-    if (type === "about") return ABOUT_CELLS;
-    if (type === "resources") return RESOURCES_CELLS;
-    return [];
+  // The sheet walks the SAME tables the desktop panel does. It used to walk a
+  // separate four-item `solutions` list, so below lg the menu offered
+  // staffing/engineering/cloud/managed and Cybersecurity, ERP, Salesforce, AI
+  // and Digital Transformation had no entry at all — five destinations reachable
+  // on a laptop and not on a tablet. One source, or they drift again.
+  //
+  // Groups, not a flat nine: the headings are what make a list this long
+  // choosable, and they are the same three the desktop columns carry.
+  const getDropdownGroups = (type: string): MenuColumn[] => {
+    const menu = MENUS[type];
+    if (!menu) return [];
+    return menu.layout === "columns" ? menu.columns : [{ heading: "", items: menu.cells }];
   };
 
   const toggleMobileDropdown = (type: string) => {
@@ -676,39 +659,50 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
                             </button>
 
                             {mobileDropdown === item.dropdownType && (
-                              <div className="pb-4 space-y-2">
-                                {getDropdownItems(item.dropdownType || "").map((dropItem) => (
-                                  <Link
-                                    key={dropItem.name}
-                                    href={dropItem.href}
-                                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all"
-                                    onClick={() => {
-                                      setMobileMenuOpen(false);
-                                      setMobileDropdown(null);
-                                    }}
-                                  >
-                                    {/* Resources rows carry a drawn icon in its
-                                        own hue; Solutions and About do not, and
-                                        the tinted rounded chip that used to sit
-                                        here is the pattern the desktop menu
-                                        dropped. */}
-                                    {dropItem.Icon && (
-                                      <span style={{ color: dropItem.tint }} className="flex-shrink-0">
-                                        <dropItem.Icon className="h-7 w-7" />
-                                      </span>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 text-sm">
-                                        {dropItem.name}
+                              <div className="pb-4 space-y-3">
+                                {getDropdownGroups(item.dropdownType || "").map((group) => (
+                                  <div key={group.heading || "all"} className="space-y-1.5">
+                                    {/* Solutions carries three; About and
+                                        Resources come back as one unnamed group
+                                        and print no heading. */}
+                                    {group.heading && (
+                                      <p className="px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                                        {group.heading}
                                       </p>
-                                      {dropItem.description && (
-                                        <p className="text-xs text-gray-500">
-                                          {dropItem.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  </Link>
+                                    )}
+                                    {group.items.map((dropItem) => (
+                                      <Link
+                                        key={dropItem.name}
+                                        href={dropItem.href}
+                                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all"
+                                        onClick={() => {
+                                          setMobileMenuOpen(false);
+                                          setMobileDropdown(null);
+                                        }}
+                                      >
+                                        {/* About and Resources rows carry a drawn
+                                            icon in its own hue. Solutions rows do
+                                            not: those nine are all one kind of
+                                            thing, as in the desktop columns. */}
+                                        {dropItem.Icon && (
+                                          <span style={{ color: dropItem.tint }} className="flex-shrink-0">
+                                            <dropItem.Icon className="h-7 w-7" />
+                                          </span>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-gray-900 text-sm">
+                                            {dropItem.name}
+                                          </p>
+                                          {dropItem.description && (
+                                            <p className="text-xs text-gray-500">
+                                              {dropItem.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      </Link>
+                                    ))}
+                                  </div>
                                 ))}
 
                                 {item.dropdownType === "solutions" && (

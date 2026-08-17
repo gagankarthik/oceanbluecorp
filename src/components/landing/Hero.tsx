@@ -31,8 +31,19 @@ export default function Hero({ content = {} }: { content?: Record<string, string
       className="relative isolate flex min-h-[90svh] w-full flex-col overflow-hidden sm:min-h-[100svh]"
       style={{ background: "#07142b" }}
     >
-      <Image src="/images/hero-bg.png" alt="" fill className="absolute inset-0 -z-10 object-cover" />
-      
+      {/* This is the LCP element. `priority` drops loading="lazy" and emits a
+          <link rel=preload as=image> in the initial HTML; without it the request
+          waited on hydration, 1.45s of pure load delay on mobile. next/image
+          puts the priority on that preload link and not on the element, so
+          passing fetchPriority here does nothing, it is stripped. */}
+      <Image
+        src="/images/hero-bg.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="absolute inset-0 -z-10 object-cover"
+      />
 
       <div
         aria-hidden

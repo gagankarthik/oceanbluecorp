@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useReducedMotion } from "motion/react";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
@@ -13,7 +14,10 @@ import { Reveal, Stagger, StaggerItem } from "./motion/Primitives";
  * sections read as one section with a line through it.
  */
 
-type Partner = { name: string; logo: string; cls: string; work: string };
+/** `w`/`h` are the asset's intrinsic pixels. Rendered size comes from `cls`,
+ *  but the attributes have to be there or the row reflows once each mark
+ *  decodes. */
+type Partner = { name: string; logo: string; cls: string; w: number; h: number; work: string };
 
 // `work` only restates capabilities already claimed on the Services cards.
 // Deliberately asserts no partnership tier or certification level.
@@ -22,18 +26,24 @@ const partners: Partner[] = [
     name: "AWS",
     logo: "/logos/partners/aws-partner-trimmed.png",
     cls: "h-12 sm:h-14",
+    w: 492,
+    h: 492,
     work: "Cloud migration, security, and the managed infrastructure we run around the clock.",
   },
   {
     name: "Snowflake",
     logo: "/logos/partners/snowflake.svg",
     cls: "h-9 sm:h-10",
+    w: 146,
+    h: 139,
     work: "Warehousing and analytics, the reporting layer the rest of the data work feeds.",
   },
   {
     name: "Databricks",
     logo: "/logos/partners/databricks.svg",
     cls: "h-9 sm:h-10",
+    w: 300,
+    h: 331,
     work: "Lakehouse and ML pipelines behind the AI and data intelligence work.",
   },
 ];
@@ -81,21 +91,21 @@ export default function Partnerships() {
                 {/* Fixed cell so marks of differing proportions share one
                     left edge and one baseline. */}
                 <div className="flex h-12 items-center sm:h-14">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  {/* Snowflake and Databricks ship symbol-only marks, so the
+                      name is set in type. The image is aria-hidden because the
+                      text below is the accessible name. */}
+                  <Image
                     src={p.logo}
                     alt=""
                     aria-hidden
-                    loading="lazy"
-                    decoding="async"
+                    width={p.w}
+                    height={p.h}
+                    sizes="64px"
                     className={`${p.cls} max-w-full w-auto object-contain`}
                   />
                 </div>
 
                 <div>
-                  {/* Snowflake and Databricks ship symbol-only marks, so the
-                      name is set in type. The <img> is aria-hidden because
-                      this text is the accessible name. */}
                   <p className="hz-display text-[1.05rem] text-white">{p.name}</p>
                   <p className="mt-1.5 max-w-[46ch] text-[14.5px] leading-relaxed text-white/60 sm:text-[15px]">
                     {p.work}
