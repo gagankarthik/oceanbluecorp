@@ -1,20 +1,13 @@
 import { Metadata } from "next";
-import { cache } from "react";
 import { notFound } from "next/navigation";
-import { getJob, toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
+import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
 import JobDetailsClient from "./JobDetailsClient";
+import { loadJob } from "./job";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-/**
- * generateMetadata and the page component both need the job, which meant two
- * DynamoDB reads for every request. React's cache() dedupes them to one per
- * render pass.
- */
-const loadJob = cache(getJob);
 
 /**
  * Serialize JSON-LD for embedding in a <script> tag.
@@ -126,14 +119,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const result = await loadJob(id);
 
-    if (!result.success || !result.data) {
-      // Bare string, the root layout template adds the " | Ocean Blue
-      // Corporation" suffix, so we must not repeat it here.
-      return {
-        title: "Job Not Found",
-        description: "The job you are looking for could not be found.",
-      };
-    }
+    // layout.tsx has already 404'd a missing job by the time this runs; the
+    // branch only exists so the type narrows.
+    if (!result.success || !result.data) return {};
 
     const job = result.data;
     const jobType = formatJobType(job.type);
@@ -184,27 +172,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function JobDetailsPage({ params }: Props) {
   const { id } = await params;
 
-  try {
-    const result = await loadJob(id);
+  // No try/catch: layout.tsx already resolved this id and 404'd anything
+  // missing, and wrapping notFound() swallows the NEXT_HTTP_ERROR_FALLBACK
+  // signal it throws — the old catch logged that control-flow throw as
+  // "Error fetching job" on every 404.
+  const result = await loadJob(id);
+  if (!result.success || !result.data) notFound();
 
-    if (!result.success || !result.data) {
-      notFound();
-    }
-
-    // Strip internal fields (rates, client/recruiter info) before sending to the
-    // public client component.
-    const job = toPublicJob(result.data);
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: safeJsonLd(jobPostingLd(job, id)) }}
-        />
-        <JobDetailsClient job={job} jobId={id} />
-      </>
-    );
-  } catch (error) {
-    console.error("Error fetching job:", error);
-    notFound();
-  }
+  // Strip internal fields (rates, client/recruiter info) before sending to the
+  // public client component.
+  const job = toPublicJob(result.data);
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jobPostingLd(job, id)) }}
+      />
+      <JobDetailsClient job={job} jobId={id} />
+    </>
+  );
 }

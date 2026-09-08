@@ -5,12 +5,9 @@ import Image from "next/image";
 type Logo = { name: string; logo: string; w: number; remote?: boolean; dark?: boolean };
 
 const clients: Logo[] = [
-  {
-    name: "Ohio Development",
-    logo: "https://development.ohio.gov/wps/wcm/connect/gov/7efff5ea-f9fd-4c0f-9a71-401183103f50/development-logo.png?MOD=AJPERES",
-    w: 132,
-    remote: true,
-  },
+  // Self-hosted: development.ohio.gov's WAF 404s any request without a browser
+  // User-Agent, so the image optimiser could never fetch it.
+  { name: "Ohio Department of Development", logo: "/logos/clients/ohio-development.png", w: 132 },
   { name: "HGS", logo: "/logos/clients/hgs.svg", w: 104 },
   {
     name: "Diebold Nixdorf",
@@ -37,10 +34,10 @@ function LogoMark({ l }: { l: Logo }) {
   // in a six-across row the cell is narrower than that on most viewports.
   const capped = { maxWidth: `min(${l.w}px, 100%)` };
 
-  // Remote rasters go through the optimiser. Hotlinked they arrive at the
-  // origin's full resolution and cache policy, the Ohio mark is a 2192x604,
-  // 86 KiB PNG for a 132px slot. Remote SVG stays on <img>: next/image refuses
-  // it without dangerouslyAllowSVG, and a wordmark SVG is already a few KiB.
+  // Remote rasters go through the optimiser, which resizes them down to the
+  // ~130px slot they render in and caches them off the origin. Remote SVG stays
+  // on <img>: next/image refuses it without dangerouslyAllowSVG, and a wordmark
+  // SVG is already a few KiB.
   const plain = l.remote && /\.svg(\?|$)/i.test(l.logo);
 
   return (

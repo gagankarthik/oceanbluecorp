@@ -6,13 +6,101 @@ const nextConfig: NextConfig = {
   compress: true,
 
   // ── Redirects ─────────────────────────────────────────────────────────────
-  // /services was renamed to /solutions — forward old URLs (and any indexed
-  // per-service pages) permanently.
   async redirects() {
     return [
+      // www and the apex both answered 200 with the same body, so every page
+      // existed at two URLs. Canonical tags, the sitemap and robots' Host all
+      // already name the apex; this makes the server agree instead of leaving
+      // Google to work it out (it was reporting the www copies as "Alternate
+      // page with proper canonical tag"). Absolute destination, so no loop.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.oceanbluecorp.com" }],
+        destination: "https://oceanbluecorp.com/:path*",
+        permanent: true,
+      },
+
+      // /services was renamed to /solutions — forward old URLs (and any indexed
+      // per-service pages) permanently.
       { source: "/services", destination: "/solutions", permanent: true },
       { source: "/engineering", destination: "/solutions/engineering", permanent: true },
       { source: "/services/:slug", destination: "/solutions/:slug", permanent: true },
+
+      // The /resources hub was split into the four publishing sections. Left
+      // as bare 404s these stayed in Search Console's coverage report instead
+      // of handing their equity to the pages that replaced them.
+      { source: "/resources", destination: "/blog", permanent: true },
+      { source: "/resources/blog", destination: "/blog", permanent: true },
+      { source: "/resources/blog/:slug", destination: "/blog/:slug", permanent: true },
+      { source: "/resources/case-studies", destination: "/case-studies", permanent: true },
+      { source: "/resources/case-studies/:slug", destination: "/case-studies/:slug", permanent: true },
+      { source: "/resources/ebook", destination: "/blog", permanent: true },
+
+      // Public sign-up is gone; the app is invite-only.
+      { source: "/auth/signup", destination: "/auth/signin", permanent: true },
+
+      // ── Pre-Next.js URLs ──────────────────────────────────────────────────
+      // oceanbluecorp.com ran a DotNetNuke storefront, then a static .html
+      // site, then WordPress before this app. Google still holds ~200 of those
+      // URLs, which is what Search Console reports as "Not found (404)".
+      //
+      // Only mapped where a real successor exists. The DNN storefront
+      // (/Store/**, **/tabid/NN/**, *.aspx) and the discontinued training line
+      // are deliberately left to 404: they have no equivalent here, and
+      // pointing them at a loosely-related page is the soft redirect Google
+      // discards anyway.
+
+      // Service lines → /solutions
+      { source: "/staffing", destination: "/solutions/staffing", permanent: true },
+      { source: "/cloud-services", destination: "/solutions/cloud", permanent: true },
+      { source: "/data-analytics", destination: "/solutions/ai", permanent: true },
+      { source: "/data-analytics-and-ai", destination: "/solutions/ai", permanent: true },
+      { source: "/erp", destination: "/solutions/erp", permanent: true },
+      { source: "/sap-erp", destination: "/solutions/erp", permanent: true },
+      { source: "/oracle-erp", destination: "/solutions/erp", permanent: true },
+      { source: "/salesforce-services", destination: "/solutions/salesforce", permanent: true },
+      { source: "/managed-services", destination: "/solutions/managed", permanent: true },
+      { source: "/managed-services-2", destination: "/solutions/managed", permanent: true },
+      { source: "/outsourcing-services", destination: "/solutions/managed", permanent: true },
+      { source: "/all-services", destination: "/solutions", permanent: true },
+      { source: "/services/item/:slug*", destination: "/solutions", permanent: true },
+      // Enumerated, not "/services-:n(\d+)": inside a double-quoted TS string
+      // that \d collapses to a literal "d" and the rule silently matches
+      // nothing. These are the only numbered duplicates the old site left.
+      { source: "/services-2", destination: "/solutions", permanent: true },
+      { source: "/services-3", destination: "/solutions", permanent: true },
+      { source: "/services-4", destination: "/solutions", permanent: true },
+      { source: "/services-5", destination: "/solutions", permanent: true },
+      { source: "/solution", destination: "/solutions", permanent: true },
+      { source: "/solution-2", destination: "/solutions", permanent: true },
+      { source: "/solution-3", destination: "/solutions", permanent: true },
+      { source: "/our-process", destination: "/solutions", permanent: true },
+
+      // The WordPress-era job board → the live one
+      { source: "/jobs/:path*", destination: "/careers/search", permanent: true },
+      { source: "/job/:path*", destination: "/careers/search", permanent: true },
+
+      // WordPress taxonomy and content archives → the sections that replaced them
+      { source: "/category/:slug*", destination: "/blog", permanent: true },
+      { source: "/tag/:slug*", destination: "/blog", permanent: true },
+      { source: "/author/:slug*", destination: "/blog", permanent: true },
+      { source: "/ebooks", destination: "/blog", permanent: true },
+      { source: "/ebooks/:slug*", destination: "/blog", permanent: true },
+      { source: "/ebooks_category/:slug*", destination: "/blog", permanent: true },
+      { source: "/cases/:slug*", destination: "/case-studies", permanent: true },
+      { source: "/case-category/:slug*", destination: "/case-studies", permanent: true },
+      { source: "/portfolio/:slug*", destination: "/case-studies", permanent: true },
+      { source: "/team/item/:slug*", destination: "/team", permanent: true },
+
+      // Static .html site
+      { source: "/about.html", destination: "/about", permanent: true },
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/about-us-2", destination: "/about", permanent: true },
+      { source: "/careers.html", destination: "/careers", permanent: true },
+      { source: "/contact.html", destination: "/contact", permanent: true },
+      { source: "/clients", destination: "/about", permanent: true },
+      { source: "/clients.html", destination: "/about", permanent: true },
+      { source: "/terms-and-conditions", destination: "/terms", permanent: true },
     ];
   },
 
@@ -105,11 +193,6 @@ const nextConfig: NextConfig = {
       },
       // Client wordmarks hotlinked from the client's own site. Allowed so
       // next/image can resize them down to the ~130px slot they render in.
-      {
-        protocol: "https",
-        hostname: "development.ohio.gov",
-        pathname: "/**",
-      },
       {
         protocol: "https",
         hostname: "www.satyawholesalers.com",
