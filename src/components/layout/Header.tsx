@@ -231,14 +231,18 @@ function MegaPanel({ menu, onNavigate }: { menu: Menu; onNavigate?: () => void }
 
    `items-stretch` squares the bottoms off, with four links in one card and
    two in another, ragged heights would make the shortest look unfinished
-   rather than simply shorter. */
+   rather than simply shorter.
+
+   One row, no wrapping: three fixed 290px cards plus gaps come to 894px, which
+   the panel only ever renders above lg. This is desktop-only markup, the mobile
+   sheet walks the same columns through getDropdownGroups and stacks them. */
 function MegaColumns({ columns, onNavigate }: { columns: MenuColumn[]; onNavigate?: () => void }) {
   return (
-    <div className="flex flex-wrap items-stretch justify-center gap-3">
+    <div className="flex items-stretch justify-center gap-3">
       {columns.map((col) => (
         <div
           key={col.heading}
-          className="w-full overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white sm:w-[290px]"
+          className="w-[290px] flex-none overflow-hidden rounded-lg border border-[var(--hz-paper-line)] bg-white"
         >
           {/* Header band: the taxonomy, and a small dot at the right edge that
               closes the row the arrows below open. */}
@@ -836,7 +840,12 @@ export default function Header({ topOffset = "top-0" }: { topOffset?: string }) 
               // that the panel is only as wide as its contents. The small top
               // padding is inside the hover area, so the pointer can cross the
               // gap from the trigger without the menu closing under it.
-              className="absolute left-1/2 top-full hidden -translate-x-1/2 pt-1.5 lg:block"
+              // w-max matters: an absolutely positioned box shrink-to-fits into
+              // the space from its `left` to the container's right edge, so
+              // `left-1/2` capped the panel at half the nav (~616px) and the
+              // third Solutions column wrapped underneath. The translate only
+              // moves it afterwards; it does not give the width back.
+              className="absolute left-1/2 top-full hidden w-max -translate-x-1/2 pt-1.5 lg:block"
             >
               <MegaPanel menu={MENUS[activeDropdown]} onNavigate={() => setActiveDropdown(null)} />
             </motion.div>
