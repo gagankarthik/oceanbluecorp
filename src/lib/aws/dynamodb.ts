@@ -9,6 +9,7 @@ import {
   DeleteCommand,
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
+import type { ApiScope } from "@/lib/api-scopes";
 
 // Read environment variables directly every time (no caching)
 const getEnvConfig = () => {
@@ -628,6 +629,44 @@ export function toPublicJob(job: Job): PublicJob {
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     applicationsCount: job.applicationsCount,
+  };
+}
+
+// Partner-feed projection, served by the key-authenticated /api/v1 routes.
+//
+// Wider than PublicJob by three fields the feed contract documents on
+// /developers (client, vendor, poster) and narrower than Job by everything a
+// partner has no business seeing: pay and bill rates, recruiter assignments,
+// emails, cached candidate matches. Both v1 routes had their own identical copy
+// of this; the contract is published, so it gets one definition.
+export type FeedJob = Pick<
+  Job,
+  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type"
+  | "description" | "requirements" | "responsibilities" | "salary" | "status"
+  | "submissionDueDate" | "clientName" | "vendorName" | "postedByName"
+  | "createdAt" | "updatedAt"
+>;
+
+export function toFeedJob(job: Job): FeedJob {
+  return {
+    id: job.id,
+    postingId: job.postingId,
+    title: job.title,
+    department: job.department,
+    location: job.location,
+    state: job.state,
+    type: job.type,
+    description: job.description,
+    requirements: job.requirements,
+    responsibilities: job.responsibilities,
+    salary: job.salary,
+    status: job.status,
+    submissionDueDate: job.submissionDueDate,
+    clientName: job.clientName,
+    vendorName: job.vendorName,
+    postedByName: job.postedByName,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
   };
 }
 
@@ -2611,6 +2650,10 @@ export interface ApiKey {
   key: string;        // The actual API key string (obk_live_...)
   name: string;       // Platform / partner name
   description?: string;
+  // What the key may do, from lib/api-scopes. Absent on keys issued before
+  // scopes existed; `scopesOf` reads that as read-only, which is what they
+  // could do at the time. Never widen an absent list to "everything".
+  scopes?: ApiScope[];
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -2663,7 +2706,7 @@ export async function getAllApiKeys(): Promise<{ success: boolean; data?: ApiKey
 
 export async function updateApiKey(
   id: string,
-  updates: Partial<Pick<ApiKey, "name" | "description" | "isActive" | "lastUsedAt">>
+  updates: Partial<Pick<ApiKey, "name" | "description" | "isActive" | "lastUsedAt" | "scopes">>
 ): Promise<{ success: boolean; error?: string }> {
   const db = checkDbAvailable();
   if (!db.available || !db.client) return { success: false, error: db.error };
@@ -2676,6 +2719,7 @@ export async function updateApiKey(
     if (updates.description !== undefined) { expressions.push("#desc = :desc"); names["#desc"] = "description"; values[":desc"] = updates.description; }
     if (updates.isActive !== undefined) { expressions.push("#active = :active"); names["#active"] = "isActive"; values[":active"] = updates.isActive; }
     if (updates.lastUsedAt !== undefined) { expressions.push("#used = :used"); names["#used"] = "lastUsedAt"; values[":used"] = updates.lastUsedAt; }
+    if (updates.scopes !== undefined) { expressions.push("#scopes = :scopes"); names["#scopes"] = "scopes"; values[":scopes"] = updates.scopes; }
 
     await db.client.send(new UpdateCommand({
       TableName: getTables().apiKeys,

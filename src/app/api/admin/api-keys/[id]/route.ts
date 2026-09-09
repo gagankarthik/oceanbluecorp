@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateApiKey, deleteApiKey } from "@/lib/aws/dynamodb";
 import { requireAdmin } from "@/lib/auth/verify";
+import { isApiAccessLevel, scopesForLevel } from "@/lib/api-scopes";
 
 // PUT /api/admin/api-keys/[id] - Update name, description, or toggle active
 export async function PUT(
@@ -17,6 +18,14 @@ export async function PUT(
     if (body.name !== undefined) updates.name = body.name;
     if (body.description !== undefined) updates.description = body.description;
     if (body.isActive !== undefined) updates.isActive = body.isActive;
+    // Access is changed by level, not by a raw scope list: the caller cannot
+    // invent a scope, and cannot grant write without read.
+    if (body.accessLevel !== undefined) {
+      if (!isApiAccessLevel(body.accessLevel)) {
+        return NextResponse.json({ error: "Unknown access level" }, { status: 400 });
+      }
+      updates.scopes = scopesForLevel(body.accessLevel);
+    }
 
     const result = await updateApiKey(id, updates);
     if (!result.success) {

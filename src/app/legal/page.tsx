@@ -81,7 +81,7 @@ export default function Legal() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
           <div>
             <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Legal and privacy</p>
-            <h1 className="hz-display mt-5 max-w-[16ch] text-[clamp(2.25rem,5.5vw,3.75rem)] leading-[1.02] text-[var(--hz-text)]">
+            <h1 className="hz-display mt-5 max-w-[16ch] text-[clamp(2.25rem,3.33vw,3.75rem)] leading-[1.02] text-[var(--hz-text)]">
               The documents, in one place.
             </h1>
           </div>

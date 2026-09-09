@@ -23,6 +23,7 @@ import {
   IconBook, IconChart, IconMessage, IconRadar,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useNotifications, formatTimeAgo } from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
 
@@ -609,7 +610,20 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage("adminSidebarCollapsed", false);
+
+  /* Sidebar width is the single biggest thing standing between this app and a
+     14" laptop: 224px of a 1280px viewport, on every screen, always. Below
+     1440 it collapses to the 64px rail by default, which hands the content
+     pane back 160px, roughly the gap between what the `lg:`/`xl:` rules assume
+     is available and what actually is.
+
+     Stored as `boolean | null`, not a boolean: null means "never chosen", and
+     only that state follows the viewport. Someone who has explicitly expanded
+     or collapsed the rail keeps their choice at every width — an automatic
+     default that overrides a stated preference is a bug, not a convenience. */
+  const [storedCollapsed, setStoredCollapsed] = useLocalStorage<boolean | null>("adminSidebarCollapsed", null);
+  const narrowViewport = useMediaQuery("(max-width: 1439.98px)");
+  const sidebarCollapsed = storedCollapsed ?? narrowViewport;
   const { user, signOut, hasAnyRole } = useAuth();
   const { openCommandPalette, pageCrumb } = useAdmin();
   const section = useCurrentSection(pathname);
@@ -627,9 +641,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   /** Global search reads recruiting data, so it is for recruiting roles only. */
   const canSearch = hasAnyRole(RECRUITING_ROLES);
 
+  // Toggling is the explicit choice, so it always writes a boolean and the
+  // viewport stops deciding from here on.
   const toggleSidebarCollapse = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, [setSidebarCollapsed]);
+    setStoredCollapsed(!sidebarCollapsed);
+  }, [sidebarCollapsed, setStoredCollapsed]);
 
   const routeAllowed = (() => {
     if (!user?.role) return false;
@@ -747,7 +763,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             while taller pages (dashboard, settings, docs) still scroll here. */}
         <main
           id="adm-main"
-          className="flex h-[calc(100vh-4rem)] min-w-0 flex-col overflow-y-auto overflow-x-hidden rounded-tl-2xl bg-[var(--adm-canvas)] p-5 lg:p-6"
+          className="flex h-[calc(100dvh-4rem)] min-w-0 flex-col overflow-y-auto overflow-x-hidden rounded-tl-2xl bg-[var(--adm-canvas)] p-4 sm:p-5 xl:p-6"
         >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>

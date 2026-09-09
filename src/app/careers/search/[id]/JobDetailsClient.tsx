@@ -237,26 +237,16 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
     day: "numeric",
   });
 
+  // The breadcrumb band is gone. It carried a link to /careers/search and the
+  // job title; the back link below goes to the same place and the h1 states the
+  // title, so it was a band of chrome repeating the two things directly under
+  // it — on a page whose first job is to be readable on a laptop.
   return (
-    <div className="horizon min-h-screen bg-[var(--hz-surface)] pt-32">
-      {/* Breadcrumb */}
-      <div className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2 text-sm">
-
-            <Link href="/careers/search" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
-              Open positions
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="min-w-0 text-[var(--hz-text)] font-medium truncate">{job.title}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+    <div className="horizon min-h-screen bg-[var(--hz-surface)] pt-24 lg:pt-28">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        <div className="grid gap-8 lg:grid-cols-3 lg:gap-10">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-6 lg:col-span-2">
              {/* Back Link */}
               <Link
                 href="/careers/search"
@@ -270,28 +260,28 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--hz-text)] leading-tight mb-6">
+              <h1 className="text-[26px] font-bold leading-tight text-[var(--hz-text)] mb-4 sm:text-3xl lg:text-4xl 2xl:text-5xl">
                 {job.title}
               </h1>
 
               {/* Meta Tags */}
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] rounded-full text-sm font-medium">
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--hz-cobalt-100)] px-3 py-1.5 text-[13px] font-medium text-[var(--hz-cobalt)]">
                   <Briefcase className="w-4 h-4" />
                   {formatJobType(job.type)}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-[var(--hz-text-mute)] rounded-full text-sm font-medium">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-medium text-[var(--hz-text-mute)]">
                   <MapPin className="w-4 h-4" />
                   {job.location}
                 </span>
                 {isRemote && (
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[13px] font-medium text-emerald-700">
                     <Globe className="w-4 h-4" />
                     Remote Friendly
                   </span>
                 )}
                 {dueInfo && (
-                  <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium ${
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ${
                     dueInfo.isUrgent ? "bg-orange-50 text-orange-700" : "bg-slate-100 text-[var(--hz-text-mute)]"
                   }`}>
                     <CalendarClock className="w-4 h-4" />
@@ -318,7 +308,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
             {/* Apply Button (Mobile) */}
             <div className="lg:hidden">
               {hasApplied ? (
-                <div className="w-full px-6 py-4 bg-green-50 border border-green-200 rounded-xl">
+                <div className="w-full rounded-xl border border-green-200 bg-green-50 px-5 py-3">
                   <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
                     <CheckCircle2 className="w-5 h-5" />
                     Already Applied
@@ -332,7 +322,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               ) : (
                 <button
                   onClick={() => setShowApplyModal(true)}
-                  className="group w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg"
+                  className="group w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-5 py-3 font-semibold text-white transition-all hover:shadow-lg"
                 >
                   Apply for this position
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
@@ -361,7 +351,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100"
+                className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 p-5"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
@@ -384,7 +374,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="text-2xl font-bold text-[var(--hz-text)] mb-6">What you'll do</h2>
+                <h2 className="mb-4 text-xl font-bold text-[var(--hz-text)] lg:text-2xl">What you'll do</h2>
                 {typeof job.responsibilities === 'string' ? (
                   <div
                     className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
@@ -412,7 +402,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
               >
-                <h2 className="text-2xl font-bold text-[var(--hz-text)] mb-6">What we're looking for</h2>
+                <h2 className="mb-4 text-xl font-bold text-[var(--hz-text)] lg:text-2xl">What we're looking for</h2>
                 {typeof job.requirements === 'string' ? (
                   <div
                     className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
@@ -438,13 +428,13 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className={`rounded-2xl p-8 text-center ${hasApplied ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)]"}`}
+              className={`rounded-2xl p-6 text-center lg:p-7 ${hasApplied ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)]"}`}
             >
               {hasApplied ? (
                 <>
                   <div className="flex items-center justify-center gap-2 mb-3">
                     <CheckCircle2 className="w-8 h-8 text-white" />
-                    <h3 className="text-2xl font-bold text-white">Application Submitted</h3>
+                    <h3 className="text-xl font-bold text-white lg:text-2xl">Application Submitted</h3>
                   </div>
                   <p className="text-green-100 mb-4">You have already applied for this position.</p>
                   {applicationStatus && (
@@ -455,7 +445,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                   <div className="mt-6">
                     <Link
                       href="/careers/search"
-                      className="px-8 py-4 bg-white text-green-600 font-semibold rounded-xl hover:shadow-lg transition-all inline-flex items-center gap-2"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-green-600 transition-all hover:shadow-lg"
                     >
                       Browse more openings
                     </Link>
@@ -463,11 +453,11 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 </>
               ) : (
                 <>
-                  <h3 className="text-2xl font-bold text-white mb-3">Ready to apply?</h3>
+                  <h3 className="mb-2.5 text-xl font-bold text-white lg:text-2xl">Ready to apply?</h3>
                   <p className="text-[var(--hz-cobalt-100)] mb-6">Join our team and help shape the future of enterprise IT.</p>
                   <button
                     onClick={() => setShowApplyModal(true)}
-                    className="group px-8 py-4 bg-white text-[var(--hz-cobalt)] font-semibold rounded-xl hover:shadow-lg transition-all inline-flex items-center gap-2"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-[var(--hz-cobalt)] transition-all hover:shadow-lg"
                   >
                     Apply for this position
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
@@ -479,15 +469,19 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-6">
+            {/* The rail is taller than a 14" laptop's viewport once the apply
+                card, the recruiter card and the share card are stacked, and a
+                sticky element taller than the screen pins its top and hides
+                its bottom for good. Bounded and scrolled instead. */}
+            <div className="sticky top-24 max-h-[calc(100dvh-7rem)] space-y-5 overflow-y-auto pb-2">
               {/* Apply Card */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="hidden lg:block bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 shadow-sm"
+                className="hidden lg:block bg-white rounded-2xl border border-[var(--hz-paper-line)] p-5 shadow-sm"
               >
                 {hasApplied ? (
-                  <div className="w-full px-6 py-4 bg-green-50 border border-green-200 rounded-xl mb-4">
+                  <div className="w-full rounded-xl border border-green-200 bg-green-50 px-5 py-3 mb-4">
                     <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
                       <CheckCircle2 className="w-5 h-5" />
                       Already Applied
@@ -501,7 +495,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 ) : (
                   <button
                     onClick={() => setShowApplyModal(true)}
-                    className="group w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-xl hover:shadow-lg transition-all text-lg mb-4"
+                    className="group w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-5 py-3 font-semibold text-white transition-all hover:shadow-lg mb-4"
                   >
                     Apply for this position
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
@@ -534,10 +528,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-6 shadow-sm"
+                className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-5 shadow-sm"
               >
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-transparent flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-transparent">
                     <Image src='/favicon.png' width={48} height={48} alt="Logo" className="w-8 h-8" />
                   </div>
                   <div>
@@ -582,7 +576,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-[var(--hz-paper)] rounded-2xl border border-[var(--hz-paper-line)] p-6"
+                className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-5"
               >
                 <h4 className="font-semibold text-[var(--hz-text)] mb-4">Job Details</h4>
                 <div className="space-y-4">

@@ -171,7 +171,7 @@ export default function DevelopersContent() {
       <section className="w-full bg-[var(--hz-paper)] pt-16 sm:pt-20 lg:pt-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <span className="hz-eyebrow block text-[var(--hz-cobalt)]">Developer documentation</span>
-          <h1 className="hz-display mt-5 max-w-[18ch] text-[clamp(2.25rem,5vw,4rem)] leading-[1.0] tracking-[-0.03em] text-[var(--hz-text)]">
+          <h1 className="hz-display mt-5 max-w-[18ch] text-[clamp(2.25rem,3.56vw,4rem)] leading-[1.0] tracking-[-0.03em] text-[var(--hz-text)]">
             Job Feed API
           </h1>
           <p className="mt-7 max-w-[54ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[19px]">
@@ -298,6 +298,38 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
                   <tr><td className="py-3 px-4"><Badge label="401" color="bg-rose-100 text-rose-700" /></td><td className="py-3 px-4 font-mono text-xs text-[var(--hz-text-mute)]">Missing API key</td><td className="py-3 px-4 text-[var(--hz-text-mute)]">No X-API-Key header provided</td></tr>
                   <tr><td className="py-3 px-4"><Badge label="401" color="bg-rose-100 text-rose-700" /></td><td className="py-3 px-4 font-mono text-xs text-[var(--hz-text-mute)]">Invalid API key</td><td className="py-3 px-4 text-[var(--hz-text-mute)]">Key not found in our system</td></tr>
                   <tr><td className="py-3 px-4"><Badge label="403" color="bg-orange-100 text-orange-700" /></td><td className="py-3 px-4 font-mono text-xs text-[var(--hz-text-mute)]">Key disabled</td><td className="py-3 px-4 text-[var(--hz-text-mute)]">Key has been revoked or disabled</td></tr>
+                  <tr><td className="py-3 px-4"><Badge label="403" color="bg-orange-100 text-orange-700" /></td><td className="py-3 px-4 font-mono text-xs text-[var(--hz-text-mute)]">Missing scope</td><td className="py-3 px-4 text-[var(--hz-text-mute)]">Key does not hold the scope this endpoint needs</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="mt-8 text-lg font-semibold text-[var(--hz-text)]">Scopes</h3>
+            <p className="mt-2 mb-4 leading-relaxed text-[var(--hz-text-mute)]">
+              Each key is issued at one of two access levels. A read-only key that calls a write
+              endpoint gets a <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono">403</code> naming
+              the scope it is missing, in a <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono">requiredScope</code> field.
+              Ask your Ocean Blue contact if you need a level changed; the key value itself does not change.
+            </p>
+            <div className="overflow-x-auto rounded-xl border border-[var(--hz-paper-line)]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[var(--hz-paper)] border-b border-[var(--hz-paper-line)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--hz-text-subtle)] uppercase tracking-wider">Access level</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--hz-text-subtle)] uppercase tracking-wider">Scopes</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--hz-text-subtle)] uppercase tracking-wider">Endpoints</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[
+                    ["View jobs", "jobs:read", "GET /api/v1/jobs, GET /api/v1/jobs/:id"],
+                    ["Create and view jobs", "jobs:read, jobs:write", "All of the above, plus POST /api/v1/jobs"],
+                  ].map(([level, scopes, endpoints]) => (
+                    <tr key={level} className="hover:bg-[var(--hz-paper)]">
+                      <td className="py-3 px-4 font-medium text-[var(--hz-text)]">{level}</td>
+                      <td className="py-3 px-4"><code className="text-xs font-mono text-[var(--hz-cobalt)]">{scopes}</code></td>
+                      <td className="py-3 px-4 text-xs text-[var(--hz-text-mute)]">{endpoints}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -378,6 +410,52 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
   }
 }`}
             />
+
+            <EndpointCard
+              method="POST"
+              path="/api/v1/jobs"
+              description="Files a new job posting. Requires a key with the jobs:write scope."
+              params={[
+                { name: "title", type: "string", required: true, description: "Job title, up to 200 characters" },
+                { name: "department", type: "string", required: true, description: "Business unit / practice area" },
+                { name: "location", type: "string", required: true, description: "City and state, e.g. Columbus, OH" },
+                { name: "type", type: "string", required: true, description: "full-time | part-time | contract | contract-to-hire | direct-hire | managed-teams | remote" },
+                { name: "description", type: "string", required: true, description: "Job description. Basic HTML is accepted and sanitized on save" },
+                { name: "state", type: "string", required: false, description: "Two-letter state code" },
+                { name: "requirements", type: "string", required: false, description: "Requirements, as HTML or plain text" },
+                { name: "responsibilities", type: "string", required: false, description: "Responsibilities, as HTML or plain text" },
+                { name: "salary", type: "object", required: false, description: "{ min, max, currency }. Dropped unless min and max are both numbers" },
+                { name: "status", type: "string", required: false, description: "draft (default) | active | open. Anything else is rejected" },
+                { name: "submissionDueDate", type: "string", required: false, description: "ISO 8601 application deadline" },
+              ]}
+              responseExample={`// 201 Created
+{
+  "data": {
+    "id": "9c2e77a1-...",
+    "postingId": "OB-2025-0043",
+    "title": "Senior SAP Consultant",
+    "department": "SAP Practice",
+    "location": "Columbus, OH",
+    "type": "contract",
+    "status": "draft",
+    "createdAt": "2025-05-04T11:02:00.000Z"
+  }
+}
+
+// 403 when the key is read-only
+{
+  "error": "This API key does not have the \"jobs:write\" scope.",
+  "requiredScope": "jobs:write"
+}`}
+            />
+            <div className="mt-3 rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-4">
+              <p className="text-sm text-[var(--hz-text-mute)]">
+                Postings created over the API arrive as <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">draft</code> unless
+                you send <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">status</code>, so a
+                recruiter reviews them before they reach the public careers site. Rates, client and
+                vendor details and recruiter assignments cannot be set through this endpoint.
+              </p>
+            </div>
           </Section>
 
           {/* Filtering & Pagination */}

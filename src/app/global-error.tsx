@@ -67,7 +67,7 @@ export default function GlobalError({
           <h1
             style={{
               margin: "20px 0 0",
-              fontSize: "clamp(1.85rem, 5vw, 2.6rem)",
+              fontSize: "clamp(1.85rem, 2.31vw, 2.6rem)",
               lineHeight: 1.06,
               letterSpacing: "-0.035em",
               fontWeight: 600,

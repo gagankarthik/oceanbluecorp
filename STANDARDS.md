@@ -166,7 +166,8 @@ if (!auth.ok) return auth.response;
 
 | Guard | Passes | For |
 |---|---|---|
-| `requireStaff` | admin, hr, recruiter, sales | Recruiting data: candidates, applications, resumes, pipeline, CRM, job writes. **Not media.** |
+| `requireStaff` | admin, hr, recruiter, sales | Recruiting data: candidates, applications, resumes, pipeline, CRM, job deletion. **Not media.** |
+| `requireJobEditor` | admin, hr, sales, media | Job create/update. Passing it does **not** grant the commercial fields; handlers gate those on `hasJobCommercialAccess` separately. |
 | `requirePublisher` | admin, hr, media | `/api/articles`, the four public content sections |
 | `requireSignedIn` | any role, media included | The caller's OWN things: profile, avatar, notifications, staff directory |
 | `requireUserAdmin` | admin, hr | Account administration |

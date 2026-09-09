@@ -131,7 +131,7 @@ export default function SitemapPage() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
           <div>
             <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Site map</p>
-            <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,4.5vw,3rem)] leading-[1.05] text-[var(--hz-text)]">
+            <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,2.67vw,3rem)] leading-[1.05] text-[var(--hz-text)]">
               Every page, in one directory.
             </h1>
           </div>

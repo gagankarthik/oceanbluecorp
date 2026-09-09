@@ -57,18 +57,25 @@ AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores
 - Five staff roles, no public "user" role: ADMIN > HR > (RECRUITER = SALES) > MEDIA. Hierarchy in `src/lib/auth/config.ts`. `user.role` is `UserRole | null` (null = authenticated but in no staff group → no access).
 - Cognito groups map to roles: "admin" -> ADMIN, "hr" -> HR, "recruiter" -> RECRUITER, "sales" -> SALES, "media" -> MEDIA. Groups are namespaced (`web:media`) and auto-created on first invite by `ensureGroup`.
 - **MEDIA is not a junior recruiter, it is a different job**, so access is granted
-  by naming the role, never by clearing a hierarchy level. Three sets in
+  by naming the role, never by clearing a hierarchy level. Four sets in
   `config.ts` say what a role is *for*:
   - `RECRUITING_ROLES` (admin, hr, recruiter, sales) — what `requireStaff` guards:
-    candidates, applications, resumes, pipeline, CRM, job writes. **Excludes MEDIA.**
+    candidates, applications, resumes, pipeline, CRM, job deletion. **Excludes MEDIA.**
   - `PUBLISHING_ROLES` (admin, hr, media) — `requirePublisher`, `/api/articles`,
     and the four `/admin/<section>` routes.
-  - `JOB_EDIT_ROLES` (admin, hr, sales) — `canEditJobs()`. Recruiter and media read
-    postings without editing them.
+  - `JOB_EDIT_ROLES` (admin, hr, sales, **media**) — `canEditJobs()`, guarded by
+    `requireJobEditor`. A recruiter reads postings without editing them; media
+    writes them, because a posting is public copy before it is a requisition.
+  - `JOB_COMMERCIAL_ROLES` (= `RECRUITING_ROLES`) — `canSeeJobCommercials()`.
+    Who may read or set the commercial half of a job record: bill rate, pay
+    rate, client, vendor, recruitment manager, assignees
+    (`JOB_COMMERCIAL_FIELDS`). **Media is excluded**, so it edits a posting it
+    cannot price: `/api/jobs` and `/api/jobs/[id]` hand it `toPublicJob` (at any
+    status, so it can open its own drafts) and drop those fields from anything
+    it writes. Deleting a posting stays `requireStaff` — it destroys the
+    applications attached to it.
   Media additionally gets `requireSignedIn` routes (own profile, avatar,
-  notifications, help directory) and nothing else. `/api/jobs` and
-  `/api/jobs/[id]` resolve their projection from the caller, so media receives
-  `toPublicJob` — no rates, client, vendor or assignees.
+  notifications, help directory) and nothing else.
 - **Invite flow**: an admin invites a teammate from `/admin/users` (email + role). `/api/users/invite` calls Cognito `AdminCreateUser` (Cognito emails a temporary password) and assigns the role group. On first sign-in Cognito raises `NEW_PASSWORD_REQUIRED`; the sign-in page collects full name, phone, and a new password, and `/api/auth/complete-invite` answers the challenge + sets those attributes.
 
 ### Key Directories

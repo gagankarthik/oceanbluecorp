@@ -375,7 +375,7 @@ function Journey() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
         <Reveal className="max-w-2xl">
           <span className="hz-eyebrow text-[var(--hz-text-subtle)]">The journey</span>
-          <h2 className="hz-display mt-5 text-[clamp(1.85rem,4.2vw,3rem)] leading-[1.08] text-[var(--hz-text)]">
+          <h2 className="hz-display mt-5 text-[clamp(1.85rem,2.67vw,3rem)] leading-[1.08] text-[var(--hz-text)]">
             {ANNIVERSARY_SPAN}, milestone by milestone.
           </h2>
         </Reveal>
@@ -424,7 +424,7 @@ function Statement() {
         <Reveal>
           <span className="hz-eyebrow text-[var(--hz-text-subtle)]">Thank you</span>
           {/* The one place on the page that raises its voice. */}
-          <p className="hz-display mt-8 text-[clamp(1.9rem,5.4vw,4rem)] leading-[1.1] text-[var(--hz-text)]">
+          <p className="hz-display mt-8 text-[clamp(1.9rem,3.56vw,4rem)] leading-[1.1] text-[var(--hz-text)]">
             To our employees, our clients, and our partners,{" "}
             <span className="text-[var(--hz-cobalt)]">
               thank you for thirteen years of trust.
@@ -447,7 +447,7 @@ function Close() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 2xl:max-w-[96rem]">
         <div className="flex flex-col gap-9 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="hz-display max-w-lg text-[clamp(1.5rem,3.4vw,2.4rem)] leading-[1.12] text-[var(--hz-text)]">
+            <p className="hz-display max-w-lg text-[clamp(1.5rem,2.13vw,2.4rem)] leading-[1.12] text-[var(--hz-text)]">
               The next thirteen start now.
             </p>
             <p className="hz-eyebrow mt-5 text-[var(--hz-text-subtle)]">

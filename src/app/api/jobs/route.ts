@@ -2,8 +2,10 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff, getClaims } from "@/lib/auth/verify";
-import { hasRecruitingAccess } from "@/lib/auth/config";
+import { requireJobEditor, getClaims } from "@/lib/auth/verify";
+import {
+  hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess, highestStaffRole,
+} from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -41,11 +43,18 @@ export async function GET(request: NextRequest) {
     // away from silently serving staff the public projection.
     const claims = await getClaims(request);
     const isStaff = hasRecruitingAccess(claims?.groups);
+    // Media authors postings now, so it must see the drafts it is working on —
+    // the open-only filter would hide a posting from the person writing it. It
+    // still gets the public projection: no rates, client, vendor or assignees.
+    // Anonymous visitors keep the old rule exactly.
+    const isEditor = hasJobEditAccess(claims?.groups);
     const payload = isStaff
       ? jobs
-      : jobs
-          .filter((j) => j.status === "active" || j.status === "open")
-          .map(toPublicJob);
+      : isEditor
+        ? jobs.map(toPublicJob)
+        : jobs
+            .filter((j) => j.status === "active" || j.status === "open")
+            .map(toPublicJob);
 
     console.log("API /api/jobs GET - success, count:", jobs.length);
     return NextResponse.json({ jobs: payload });
@@ -61,10 +70,19 @@ export async function GET(request: NextRequest) {
 
 // POST /api/jobs - Create a new job
 export async function POST(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireJobEditor(request);
   if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
+
+    /* Media may author a posting and may not price one. `commercial` is the
+       gate on every field in JOB_COMMERCIAL_FIELDS: for a recruiting caller it
+       passes the value through, for media it returns undefined so the field
+       never reaches the record. Gating at the assignment, rather than trusting
+       the form not to send them, is the point — the form is UX, this is the
+       rule (STANDARDS §5.2). */
+    const canPrice = hasJobCommercialAccess(auth.claims.groups);
+    const commercial = <T,>(value: T): T | undefined => (canPrice ? value : undefined);
 
     // Validate required fields
     const requiredFields = ["title", "department", "location", "type", "description"];
@@ -97,26 +115,32 @@ export async function POST(request: NextRequest) {
       status: body.status || "draft",
       submissionDueDate: body.submissionDueDate,
       createdAt: new Date().toISOString(),
-      createdBy: body.createdBy || "system",
+      // Attribution from the verified token, not the body (STANDARDS §5.1).
+      // These were read straight off the request, so the poster's identity and
+      // role were whatever the caller typed — harmless while only recruiting
+      // staff could reach the route, and not worth keeping now that a role
+      // with no recruiting access can.
+      createdBy: auth.claims.sub || "system",
       postedByName: body.postedByName,
-      postedByEmail: body.postedByEmail,
-      postedByRole: body.postedByRole,
+      postedByEmail: auth.claims.email || body.postedByEmail,
+      postedByRole: highestStaffRole(auth.claims.groups) ?? undefined,
       applicationsCount: 0,
       // New fields
       postingId: postingIdResult.postingId,
-      clientId: body.clientId,
-      clientName: body.clientName,
       state: body.state,
-      clientBillRate: body.clientBillRate,
-      payRate: body.payRate,
-      recruitmentManagerId: body.recruitmentManagerId,
-      recruitmentManagerName: body.recruitmentManagerName,
-      recruitmentManagerEmail: body.recruitmentManagerEmail,
+      // Commercial half of the record, recruiting roles only.
+      clientId: commercial(body.clientId),
+      clientName: commercial(body.clientName),
+      clientBillRate: commercial(body.clientBillRate),
+      payRate: commercial(body.payRate),
+      recruitmentManagerId: commercial(body.recruitmentManagerId),
+      recruitmentManagerName: commercial(body.recruitmentManagerName),
+      recruitmentManagerEmail: commercial(body.recruitmentManagerEmail),
       // Multi-select assignees
-      assignedToIds: body.assignedToIds || [],
-      assignedToNames: body.assignedToNames || [],
-      assignedToEmails: body.assignedToEmails || [],
-      excludedDepartments: body.excludedDepartments || [],
+      assignedToIds: commercial(body.assignedToIds) || [],
+      assignedToNames: commercial(body.assignedToNames) || [],
+      assignedToEmails: commercial(body.assignedToEmails) || [],
+      excludedDepartments: commercial(body.excludedDepartments) || [],
     };
 
     const result = await createJob(job);
@@ -187,8 +211,11 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 4. Add sendEmailNotification recipients (individually selected)
-      if (body.sendEmailNotification && Array.isArray(body.sendEmailNotification)) {
+      // 4. Add sendEmailNotification recipients (individually selected).
+      //    Gated with the rest of the commercial half: this is an arbitrary
+      //    list of addresses off the request body, and the picker that fills
+      //    it is a team-assignment control media never sees.
+      if (canPrice && body.sendEmailNotification && Array.isArray(body.sendEmailNotification)) {
         for (const email of body.sendEmailNotification) {
           if (email && !notifiedEmails.has(email.toLowerCase())) {
             emailRecipients.push({ name: email.split("@")[0], email });

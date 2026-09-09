@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, X } from "lucide-react";
 import { IconBuilding, IconCalendar, IconClock, IconEye, IconFile, IconHash, IconJob, IconLocation, IconMoney, IconSave, IconTruck, IconUserCheck } from "../icons";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import { fmtDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { US_STATES, normalizeState } from "@/components/admin/theme";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
@@ -13,6 +14,7 @@ import { WorkspaceButton } from "@/components/admin/workspace";
 import { Field, FormInput, MoneyInput, FormSelect, AssigneePicker, AssigneeUser } from "./primitives";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { renderRichText, renderListField } from "@/lib/rich-text";
+import { useAuth, canSeeJobCommercials } from "@/lib/auth";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -183,9 +185,20 @@ export function JobForm({
   mode, initialData, job, clients, vendors, hrUsers, submitting, onSubmit, onAddClient, formId = "job-form",
 }: JobFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [data, setData] = React.useState<JobFormData>(initialData || DEFAULT_JOB_FORM);
   const [showPreview, setShowPreview] = React.useState(false);
   const [showAddClient, setShowAddClient] = React.useState(false);
+
+  /* Media authors postings but never prices them, so client, vendor, rates and
+     team assignment are not rendered for it — removed, not disabled
+     (DESIGN_SYSTEM §5): a media account will never gain these, and a column of
+     greyed-out controls is a screen full of dead ends.
+
+     Read from the session here rather than taken as a prop so a third page
+     rendering this form cannot forget to pass it. The API enforces the same
+     split independently; this is the courtesy half. */
+  const canPrice = canSeeJobCommercials(user?.role);
 
   React.useEffect(() => {
     if (initialData) setData(initialData);
@@ -303,14 +316,18 @@ export function JobForm({
           full-bleed band, so a max-width wrapper around the whole component
           would leave the band sticking out past the form column on wide
           screens. Header spans, body is measured. */}
-      <form id={formId} onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-4">
+      {/* @container: the field grids below size off the form column, which is
+          capped at max-w-5xl and sits inside a pane already narrowed by the
+          sidebar — `lg:grid-cols-4` was measuring the window instead and put
+          four money inputs in ~150px each on a 14" screen. */}
+      <form id={formId} onSubmit={handleSubmit} className="@container mx-auto max-w-5xl space-y-4">
         {/* ── Job Details ── */}
         <AdminCard>
           <AdminCardHeader icon={IconJob} title="Job details" />
           <div className="p-5">
             <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
                 <div className="lg:col-span-2">
                   <Field label="Job Title" required htmlFor="job-title">
                     <FormInput
@@ -336,7 +353,7 @@ export function JobForm({
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
                 <Field label="Department" required htmlFor="job-department">
                   <FormSelect id="job-department" required value={data.department} onChange={(e) => set("department", e.target.value)}>
                     {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -363,8 +380,11 @@ export function JobForm({
           </div>
         </AdminCard>
 
-        {/* ── Client / Vendor / Deadline ── */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* ── Client / Vendor / Deadline ──
+            Three cards for a recruiter, one for media: the deadline is public
+            and stays, the other two are commercial and go. */}
+        <div className={cn("grid grid-cols-1 gap-4", canPrice && "@2xl:grid-cols-3")}>
+          {canPrice && (
           <AdminCard>
             <AdminCardHeader icon={IconBuilding} title="Client" />
             <div className="p-5">
@@ -384,7 +404,9 @@ export function JobForm({
               )}
             </div>
           </AdminCard>
+          )}
 
+          {canPrice && (
           <AdminCard>
             <AdminCardHeader icon={IconTruck} title="Vendor" />
             <div className="p-5">
@@ -394,6 +416,7 @@ export function JobForm({
               </FormSelect>
             </div>
           </AdminCard>
+          )}
 
           <AdminCard>
             <AdminCardHeader icon={IconCalendar} title="Submission deadline" />
@@ -412,14 +435,25 @@ export function JobForm({
         <AdminCard>
           <AdminCardHeader icon={IconMoney} title="Compensation" />
           <div className="p-5">
-            <PanelNote>Optional rate and salary details, leave blank if not applicable.</PanelNote>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <PanelNote>
+              {canPrice
+                ? "Optional rate and salary details, leave blank if not applicable."
+                : "The salary range candidates see on the posting. Leave blank if not disclosed."}
+            </PanelNote>
+            {/* Bill and pay rate are the margin on the placement; the salary
+                range is published on the careers site. Different audiences, so
+                only the first pair is gated. */}
+            <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-2", canPrice && "@3xl:grid-cols-4")}>
+              {canPrice && (
               <Field label="Bill Rate ($/hr)" htmlFor="job-bill-rate">
                 <MoneyInput id="job-bill-rate" value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
               </Field>
+              )}
+              {canPrice && (
               <Field label="Pay Rate ($/hr)" htmlFor="job-pay-rate">
                 <MoneyInput id="job-pay-rate" value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
               </Field>
+              )}
               <Field label="Min Salary (Annual)" htmlFor="job-salary-min">
                 <MoneyInput id="job-salary-min" value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
               </Field>
@@ -431,11 +465,12 @@ export function JobForm({
         </AdminCard>
 
         {/* ── Team Assignments ── */}
+        {canPrice && (
         <AdminCard>
           <AdminCardHeader icon={IconUserCheck} title="Team assignments" count={data.assignedToIds.length} />
           <div className="p-5">
             <PanelNote>Assign team members to receive notifications for this job posting.</PanelNote>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
               <Field label="Recruitment Manager" htmlFor="job-manager">
                 <FormSelect id="job-manager" value={data.recruitmentManagerId} onChange={(e) => handleManagerSelect(e.target.value)}>
                   <option value="">Select manager</option>
@@ -456,6 +491,7 @@ export function JobForm({
             </div>
           </div>
         </AdminCard>
+        )}
 
         {/* ── Job Description ── */}
         <AdminCard>
@@ -575,8 +611,8 @@ function AddClientModal({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
           <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
             <IconBuilding className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
             Add New Client
@@ -585,7 +621,7 @@ function AddClientModal({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 p-5">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           {error && (
             <p role="alert" className="rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2 text-xs text-[var(--adm-danger)]">{error}</p>
           )}
@@ -595,7 +631,7 @@ function AddClientModal({
           <Field label="Website URL" required htmlFor="client-website">
             <FormInput id="client-website" required type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
           </Field>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
             <Field label="Email" htmlFor="client-email">
               <FormInput id="client-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
             </Field>
@@ -603,7 +639,7 @@ function AddClientModal({
               <FormInput id="client-phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
             </Field>
           </div>
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className={modalGhostBtn}>Cancel</button>
             <button type="submit" disabled={submitting} className={modalPrimaryBtn}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}Add Client

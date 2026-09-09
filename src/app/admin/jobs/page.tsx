@@ -7,7 +7,7 @@ import {
   Plus, Loader2, MoreHorizontal, X,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
-import { useAuth, canEditJobs } from "@/lib/auth";
+import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
@@ -75,6 +75,11 @@ export default function JobsPage() {
   // JOB_EDIT_ROLES rather than spelled as "not a recruiter", which quietly
   // granted edit rights to every role added afterwards.
   const canEdit = canEditJobs(user?.role);
+  // Media edits postings but is served the public projection, so client and
+  // the two rate columns would be three columns of em-dashes for it — an
+  // absence rendered as data (DESIGN_SYSTEM §8, Selective Attention). They are
+  // not in its column list at all.
+  const canPrice = canSeeJobCommercials(user?.role);
 
   // ── data ──────────────────────────────────────────────────────────────────
 
@@ -206,21 +211,34 @@ export default function JobsPage() {
   const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
   const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
 
+  // Same split as the grid: the export cannot be the way round the projection.
   const exportCSV = () => downloadCsv(
     "jobs",
-    ["Job ID","Title","Client","Location","Status","Pay Rate","Bill Rate","Manager","Created","Deadline"],
-    filteredJobs.map((job) => [
-      job.postingId || "",
-      job.title,
-      job.clientName || "",
-      `${job.location}${job.state ? `, ${job.state}` : ""}`,
-      job.status,
-      job.payRate        ? `$${job.payRate}/hr`        : "",
-      job.clientBillRate ? `$${job.clientBillRate}/hr` : "",
-      job.recruitmentManagerName || "",
-      fmtDate(job.createdAt),
-      job.submissionDueDate ? fmtDate(job.submissionDueDate) : "",
-    ]),
+    canPrice
+      ? ["Job ID","Title","Client","Location","Status","Pay Rate","Bill Rate","Manager","Created","Deadline"]
+      : ["Job ID","Title","Department","Location","Status","Created","Deadline"],
+    filteredJobs.map((job) => canPrice
+      ? [
+          job.postingId || "",
+          job.title,
+          job.clientName || "",
+          `${job.location}${job.state ? `, ${job.state}` : ""}`,
+          job.status,
+          job.payRate        ? `$${job.payRate}/hr`        : "",
+          job.clientBillRate ? `$${job.clientBillRate}/hr` : "",
+          job.recruitmentManagerName || "",
+          fmtDate(job.createdAt),
+          job.submissionDueDate ? fmtDate(job.submissionDueDate) : "",
+        ]
+      : [
+          job.postingId || "",
+          job.title,
+          job.department || "",
+          `${job.location}${job.state ? `, ${job.state}` : ""}`,
+          job.status,
+          fmtDate(job.createdAt),
+          job.submissionDueDate ? fmtDate(job.submissionDueDate) : "",
+        ]),
   );
 
   // ── grid columns ──────────────────────────────────────────────────────────
@@ -372,10 +390,12 @@ export default function JobsPage() {
    * precisely than two fixed presets, so the ViewMenu is gone and the extra
    * "detailed" columns simply start hidden.
    */
-  const columns: DataTableColumn<Job>[] = [
-    idCol, titleCol, departmentCol, clientCol, locationCol,
-    payCol, billCol, statusCol, applicantsCol, createdCol, actionsCol,
-  ];
+  const columns: DataTableColumn<Job>[] = canPrice
+    ? [
+        idCol, titleCol, departmentCol, clientCol, locationCol,
+        payCol, billCol, statusCol, applicantsCol, createdCol, actionsCol,
+      ]
+    : [idCol, titleCol, departmentCol, locationCol, statusCol, createdCol, actionsCol];
 
   // ── states ────────────────────────────────────────────────────────────────
 
@@ -504,7 +524,7 @@ export default function JobsPage() {
               </div>
 
               <div className="mb-4 flex-1 space-y-1.5 text-xs text-[var(--adm-ink-subtle)]">
-                {job.clientName && (
+                {canPrice && job.clientName && (
                   <div className="flex items-center gap-1.5">
                     <IconBuilding className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
                     <span className="truncate">{job.clientName}</span>

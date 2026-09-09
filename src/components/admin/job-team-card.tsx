@@ -58,7 +58,8 @@ export function JobTeamCard({
   onJobChange,
 }: {
   job: Job;
-  /** Mirrors JOB_EDIT_ROLES. Recruiters and media read the team, never edit it. */
+  /** Mirrors JOB_COMMERCIAL_ROLES, not JOB_EDIT_ROLES: media edits a posting's
+   *  copy but assignment is recruiting's, and the card is not rendered for it. */
   canEdit: boolean;
   onJobChange: (job: Job) => void;
 }) {

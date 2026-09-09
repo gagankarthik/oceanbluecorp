@@ -943,14 +943,20 @@
    The hero and the closing CTA keep their own larger sizes.
 
    `text-wrap: balance` on both: these are full sentences at a large size
-   against a wide measure, which is the shape that strands single words. */
+   against a wide measure, which is the shape that strands single words.
+
+   The vw coefficients are set so each clamp reaches its maximum at roughly
+   1800px, not at ~1300px as they used to. Saturating that early meant a 1280
+   laptop and a 27" monitor rendered these headings at the same size, which is
+   why the site read as oversized on a 14" screen: the fluid range covered
+   phone-to-laptop and then stopped. Large displays are unchanged. */
 .hz-h2 {
-  font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+  font-size: clamp(1.6rem, 2.31vw, 2.6rem);
   line-height: 1.06;
   text-wrap: balance;
 }
 .hz-statement {
-  font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+  font-size: clamp(1.25rem, 1.73vw, 1.95rem);
   line-height: 1.15;
   text-wrap: balance;
 }

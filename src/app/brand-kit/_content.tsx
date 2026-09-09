@@ -55,7 +55,7 @@ const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
    same reason. `note` is the only thing written by hand, and it describes
    where the role is used rather than what size it is. */
 const TYPE_SCALE = [
-  { label: "Display / Hero", cls: "text-[clamp(2rem,5.4vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
+  { label: "Display / Hero", cls: "text-[clamp(2rem,3.73vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
   { label: "Section / H2", cls: "hz-h2", note: ".hz-h2, opens a section", sample: "Section headline" },
   { label: "Statement", cls: "hz-statement", note: ".hz-statement, supports one", sample: "Relied on by enterprises." },
   { label: "Card title / H3", cls: "text-[1.35rem] sm:text-[1.5rem]", note: "Service and content cards", sample: "Card title" },
@@ -145,7 +145,7 @@ export default function BrandKitContent() {
           <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Home
           </Link>
-          <h1 className="hz-display max-w-[18ch] text-[clamp(2rem,5vw,4rem)] text-white">Brand kit & design system</h1>
+          <h1 className="hz-display max-w-[18ch] text-[clamp(2rem,3.56vw,4rem)] text-white">Brand kit & design system</h1>
           <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
             The colors, type, logo, and components behind Ocean Blue Corporation, the single source of truth for a consistent brand.
           </p>

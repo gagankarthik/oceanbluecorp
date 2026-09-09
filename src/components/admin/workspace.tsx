@@ -309,12 +309,16 @@ export interface KpiItem {
   onClick?: () => void;
 }
 
+/* Container widths, not viewport widths: this strip sits inside the content
+   pane, which is narrower than the window by the sidebar and the padding, so
+   `lg:` was promising room the row did not have. @xl 576 · @2xl 672 · @3xl 768
+   · @4xl 896. */
 const KPI_COLS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "lg:grid-cols-1",
-  2: "lg:grid-cols-2",
-  3: "lg:grid-cols-3",
-  4: "lg:grid-cols-4",
-  5: "lg:grid-cols-5",
+  1: "@md:grid-cols-1",
+  2: "@md:grid-cols-2",
+  3: "@2xl:grid-cols-3",
+  4: "@3xl:grid-cols-4",
+  5: "@4xl:grid-cols-5",
 };
 
 const KPI_TONE = {
@@ -341,13 +345,15 @@ const KPI_TONE = {
 export function KpiRow({ items, className }: { items: KpiItem[]; className?: string }) {
   if (items.length === 0) return null;
   return (
+    // The container is measured, the grid inside it reads the measurement — a
+    // container query never applies to the element that declares the container.
+    <div className={cn("@container mb-4 flex-none", className)}>
     <div
       className={cn(
         // Static class names only. Tailwind cannot see an interpolated
-        // `lg:grid-cols-${n}`, so that variant would never be generated.
-        "mb-4 grid flex-none gap-3 grid-cols-2",
+        // `@3xl:grid-cols-${n}`, so that variant would never be generated.
+        "grid gap-3 grid-cols-1 @md:grid-cols-2",
         KPI_COLS[Math.min(items.length, 5) as 1 | 2 | 3 | 4 | 5],
-        className,
       )}
     >
       {items.map((k) => {
@@ -387,6 +393,7 @@ export function KpiRow({ items, className }: { items: KpiItem[]; className?: str
           <div key={k.label} className={cls}>{body}</div>
         );
       })}
+    </div>
     </div>
   );
 }

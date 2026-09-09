@@ -323,7 +323,7 @@ export default function StatusContent() {
           </Link>
 
           <span className="hz-eyebrow mt-8 block text-[var(--hz-cobalt)]">System status</span>
-          <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,4.6vw,3.5rem)] leading-[1.02] tracking-[-0.03em] text-[var(--hz-text)]">
+          <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,3.11vw,3.5rem)] leading-[1.02] tracking-[-0.03em] text-[var(--hz-text)]">
             {banner.heading}
           </h1>
           <p className="mt-6 max-w-[52ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)]">

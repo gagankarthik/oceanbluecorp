@@ -984,8 +984,9 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Method", "Route", "Auth", "Description"]}
                 rows={[
-                  [<HttpBadge key="1" method="GET" />, "/api/v1/jobs", "X-API-Key header", "Paginated list of active/open jobs. Query: status, department, type, page, limit"],
-                  [<HttpBadge key="2" method="GET" />, "/api/v1/jobs/[id]", "X-API-Key header", "Single job by UUID, strips all internal fields"],
+                  [<HttpBadge key="1" method="GET" />, "/api/v1/jobs", "X-API-Key, jobs:read", "Paginated list of active/open jobs. Query: status, department, type, page, limit"],
+                  [<HttpBadge key="2" method="GET" />, "/api/v1/jobs/[id]", "X-API-Key, jobs:read", "Single job by UUID, strips all internal fields"],
+                  [<HttpBadge key="3" method="POST" />, "/api/v1/jobs", "X-API-Key, jobs:write", "Partner files a posting. Declared fields only, sanitized, draft unless status is sent"],
                 ]}
               />
             </SubSection>
@@ -996,7 +997,7 @@ export default function AdminDocsPage() {
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/admin/api-keys", "List all partner API keys (key value previewed only)"],
                   [<HttpBadge key="2" method="POST" />, "/api/admin/api-keys", "Generate a new API key, full value returned once only"],
-                  [<HttpBadge key="3" method="PUT" />, "/api/admin/api-keys/[id]", "Enable / disable key or update name/description"],
+                  [<HttpBadge key="3" method="PUT" />, "/api/admin/api-keys/[id]", "Enable / disable key, update name/description, or change accessLevel"],
                   [<HttpBadge key="4" method="DELETE" />, "/api/admin/api-keys/[id]", "Permanently revoke and delete a key"],
                 ]}
               />

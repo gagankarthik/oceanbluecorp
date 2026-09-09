@@ -62,7 +62,7 @@ export default function Hero({ content = {} }: { content?: Record<string, string
          
           <div>
             {/* 34ch keeps the headline to two lines on desktop. */}
-            <h1 className="hz-display mx-auto max-w-[34ch] text-[clamp(1.9rem,4.3vw,3.35rem)] tracking-[-0.03em] break-words text-white">
+            <h1 className="hz-display mx-auto max-w-[34ch] text-[clamp(1.9rem,2.98vw,3.35rem)] tracking-[-0.03em] break-words text-white">
               <WordsRise
                 text={content.heroTitle || HERO.title}
                 delay={0.18}

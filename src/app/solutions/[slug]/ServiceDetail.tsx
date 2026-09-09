@@ -172,7 +172,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           />
           <div className="relative z-10 flex min-h-[380px] items-center px-6 py-16 sm:min-h-[440px] sm:px-10 lg:px-16 2xl:px-24">
             <Reveal className="max-w-2xl">
-              <h2 className="hz-display max-w-[18ch] text-[clamp(1.9rem,4.4vw,3rem)] leading-[1.05] text-white">
+              <h2 className="hz-display max-w-[18ch] text-[clamp(1.9rem,2.67vw,3rem)] leading-[1.05] text-white">
                 Ready to move on {data.eyebrow.toLowerCase()}?
               </h2>
               <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">

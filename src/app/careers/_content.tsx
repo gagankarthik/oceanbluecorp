@@ -88,7 +88,7 @@ export default function CareersPage() {
         <div className="mx-auto grid w-full max-w-[2200px] grid-cols-2 divide-x divide-y divide-[var(--hz-line)] sm:grid-cols-4 sm:divide-y-0">
           {facts.map((f) => (
             <div key={f.k} className="px-6 py-8 sm:px-10 sm:py-10">
-              <p className="hz-display hz-tnum text-[clamp(1.9rem,3.6vw,2.75rem)] leading-none text-[var(--hz-cobalt)]">
+              <p className="hz-display hz-tnum text-[clamp(1.9rem,2.44vw,2.75rem)] leading-none text-[var(--hz-cobalt)]">
                 {f.v}
               </p>
               <p className="hz-eyebrow mt-3 text-[var(--hz-text-subtle)]">{f.k}</p>
@@ -272,7 +272,7 @@ export default function CareersPage() {
           />
           <div className="relative z-10 flex min-h-[420px] items-center px-6 py-16 sm:min-h-[480px] sm:px-10 lg:px-16 2xl:px-24">
             <Reveal className="max-w-2xl">
-              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.4vw,3rem)] leading-[1.05] text-white">
+              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,2.67vw,3rem)] leading-[1.05] text-white">
                 Ready to join our team?
               </h2>
               <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">

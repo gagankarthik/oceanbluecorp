@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useAuth, canEditJobs } from "@/lib/auth";
+import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload,
@@ -26,7 +26,14 @@ export default function NewJobPage() {
     if (user?.role && !canEditJobs(user.role)) router.replace("/admin/jobs");
   }, [user, router]);
 
+  // Clients, vendors and the staff list are the reference data behind the
+  // commercial half of the form. Media does not render those panels and the
+  // three routes rightly answer it 403, so it does not ask: fetching them
+  // would buy three failed requests and a toast about data it cannot use.
+  const canPrice = canSeeJobCommercials(user?.role);
+
   useEffect(() => {
+    if (!canPrice) return;
     Promise.all([
       fetch("/api/clients?status=active").then((r) => r.json()).then((d) => setClients(d.clients || [])),
       fetch("/api/vendors").then((r) => r.json()).then((d) => setVendors(d.vendors || [])),
@@ -41,7 +48,7 @@ export default function NewJobPage() {
       console.error(err);
       toast.error("Some reference data failed to load, client, vendor and assignee lists may be incomplete.");
     });
-  }, []);
+  }, [canPrice]);
 
   const handleSubmit = async (data: JobFormData) => {
     setSubmitting(true);

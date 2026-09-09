@@ -12,7 +12,8 @@ import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
-  UserRole, hasStaffAccess, hasRecruitingAccess, hasPublishingAccess, staffRolesOf,
+  UserRole, hasStaffAccess, hasRecruitingAccess, hasPublishingAccess,
+  hasJobEditAccess, staffRolesOf,
 } from "./config";
 
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2";
@@ -156,6 +157,25 @@ export async function requirePublisher(req: NextRequest): Promise<Guard> {
   const claims = await getClaims(req);
   if (!claims) return { ok: false, response: unauthorized() };
   if (!hasPublishingAccess(claims.groups)) return { ok: false, response: forbidden() };
+  return { ok: true, claims };
+}
+
+/**
+ * Require a job-editing role: admin, hr, sales or media.
+ *
+ * Job writes used to run through {@link requireStaff}, which is the RECRUITING
+ * set — right up until media was given postings to author. The two sets are not
+ * the same and cannot be merged: media may write a posting and may not see a
+ * candidate, so this guard exists rather than widening requireStaff.
+ *
+ * Passing it does NOT mean the caller may set rates, client, vendor or
+ * assignees. Handlers gate those separately on `hasJobCommercialAccess`; a
+ * guard says who may act, not what they may write.
+ */
+export async function requireJobEditor(req: NextRequest): Promise<Guard> {
+  const claims = await getClaims(req);
+  if (!claims) return { ok: false, response: unauthorized() };
+  if (!hasJobEditAccess(claims.groups)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
 }
 

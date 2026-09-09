@@ -66,7 +66,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
           full width of the page. This is the page's one big moment. */}
       <section className="w-full border-t border-[var(--hz-line)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
         <Reveal className="flex flex-wrap items-end justify-between gap-8">
-          <h2 className="hz-display max-w-[14ch] text-[clamp(2rem,4.6vw,3.4rem)] leading-[1.03] text-[var(--hz-text)]">
+          <h2 className="hz-display max-w-[14ch] text-[clamp(2rem,3.02vw,3.4rem)] leading-[1.03] text-[var(--hz-text)]">
             {years} years, in order.
           </h2>
           <p className="max-w-[38ch] text-[15px] leading-relaxed text-[var(--hz-text-subtle)] sm:text-[16px]">
@@ -149,7 +149,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
           />
           <div className="relative z-10 flex min-h-[400px] items-center px-6 py-16 sm:min-h-[460px] sm:px-10 lg:px-16 2xl:px-24">
             <Reveal className="max-w-2xl">
-              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,4.4vw,3rem)] leading-[1.05] text-white">
+              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,2.67vw,3rem)] leading-[1.05] text-white">
                 Work with a team that owns the outcome.
               </h2>
               <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">

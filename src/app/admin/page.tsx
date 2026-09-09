@@ -881,8 +881,13 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Hairline-divided stat columns, the Conduktor signature. */}
-          <div className="grid flex-1 grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-0">
+          {/* Hairline-divided stat columns, the Conduktor signature.
+              Six across is measured off this strip, not the window: the title
+              block to its left takes 240px and the pane has already lost the
+              sidebar, so `lg:grid-cols-6` was laying six figures out in ~100px
+              each on a 14" screen. @xl 576 · @4xl 896. */}
+          <div className="@container flex-1">
+          <div className="grid grid-cols-2 gap-y-5 @xl:grid-cols-3 @4xl:grid-cols-6 @4xl:gap-y-0">
             {headStats.map((s, i) => {
               const body = (
                 <>
@@ -917,6 +922,7 @@ export default function AdminDashboard() {
                 <div key={s.label} className={cn("px-0 lg:px-5", divider)}>{body}</div>
               );
             })}
+          </div>
           </div>
         </div>
       </Card>

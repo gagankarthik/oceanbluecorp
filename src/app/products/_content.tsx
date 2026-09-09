@@ -289,7 +289,7 @@ export default function ProductsPage() {
 
       <section className="w-full border-t border-[var(--hz-line)] px-6 py-20 sm:px-10 sm:py-24 lg:px-16 2xl:px-24">
         <Reveal className="max-w-3xl">
-          <h2 className="hz-display max-w-[18ch] text-[clamp(2rem,5vw,3.4rem)] leading-[1.03] text-[var(--hz-text)]">
+          <h2 className="hz-display max-w-[18ch] text-[clamp(2rem,3.02vw,3.4rem)] leading-[1.03] text-[var(--hz-text)]">
             Have a product to build or scale?
           </h2>
           <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[18px]">

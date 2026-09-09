@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconWarning } from "@/components/admin/icons";
-import { useAuth, canEditJobs } from "@/lib/auth";
+import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, jobToFormData, formDataToPayload,
@@ -28,6 +28,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
   // Recruiters may view a requisition but not edit it, bounce them to the record.
   const isRecruiter = !canEditJobs(user?.role);
+  // Media edits the posting's copy and never its commercials, so the three
+  // reference lists behind those panels are not fetched for it — all three
+  // routes answer a media account 403, and it renders none of the fields.
+  const canPrice = canSeeJobCommercials(user?.role);
 
   useEffect(() => {
     if (user?.role && !canEditJobs(user.role)) router.replace(`/admin/jobs/${id}`);
@@ -36,25 +40,29 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [jobRes, clientsRes, vendorsRes, usersRes] = await Promise.all([
-          fetch(`/api/jobs/${id}`),
-          fetch("/api/clients?status=active"),
-          fetch("/api/vendors"),
-          fetch("/api/users"),
-        ]);
-        const [jobData, clientsData, vendorsData, usersData] = await Promise.all([
-          jobRes.json(), clientsRes.json(), vendorsRes.json(), usersRes.json(),
-        ]);
+        const jobRes = await fetch(`/api/jobs/${id}`);
+        const jobData = await jobRes.json();
         if (!jobRes.ok) throw new Error(jobData.error || "Failed to fetch job");
         setJob(jobData.job);
         setInitialData(jobToFormData(jobData.job));
-        setClients(clientsData.clients || []);
-        setVendors(vendorsData.vendors || []);
-        setHrUsers(
-          (usersData.users || []).filter((u: AssigneeUser) =>
-            ["hr", "admin", "recruiter", "sales"].includes(u.role),
-          ),
-        );
+
+        if (canPrice) {
+          const [clientsRes, vendorsRes, usersRes] = await Promise.all([
+            fetch("/api/clients?status=active"),
+            fetch("/api/vendors"),
+            fetch("/api/users"),
+          ]);
+          const [clientsData, vendorsData, usersData] = await Promise.all([
+            clientsRes.json(), vendorsRes.json(), usersRes.json(),
+          ]);
+          setClients(clientsData.clients || []);
+          setVendors(vendorsData.vendors || []);
+          setHrUsers(
+            (usersData.users || []).filter((u: AssigneeUser) =>
+              ["hr", "admin", "recruiter", "sales"].includes(u.role),
+            ),
+          );
+        }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to load job");
         router.push("/admin/jobs");
@@ -63,7 +71,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       }
     };
     void fetchAll();
-  }, [id, router]);
+  }, [id, router, canPrice]);
 
   const handleSubmit = async (data: JobFormData) => {
     setSubmitting(true);

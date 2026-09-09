@@ -55,7 +55,7 @@ const ROLE_META: Record<Role, { label: string; tone: Tone; icon: IconComponent; 
   hr:        { label: "HR",        tone: "violet", icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
   sales:     { label: "Sales",     tone: "amber",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
   recruiter: { label: "Recruiter", tone: "teal",   icon: IconUserCheck, desc: "View-only jobs, plus applications, candidates, and bench" },
-  media:     { label: "Media",     tone: "cyan",   icon: IconRadar,     desc: "Blog, case studies, news, and customer stories, plus view-only job postings. No candidate, client, or rate data" },
+  media:     { label: "Media",     tone: "cyan",   icon: IconRadar,     desc: "Blog, case studies, news, customer stories, and writing job postings. No candidate, client, or rate data" },
 };
 
 const NO_ROLE = { label: "No role", tone: "slate" as Tone };
@@ -534,8 +534,14 @@ export default function UsersPage() {
       {/* ── invite modal ── */}
       {showInviteModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <form onSubmit={handleInvite} className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
+          {/* Bounded and internally scrolling. This dialog is a header, an
+              email field and one card per role, and the role list grows every
+              time a role is added — on a 14" laptop (~700px of viewport) it
+              already ran off both ends of the screen, with `overflow-hidden`
+              and a centred flex parent leaving no way to reach the Send
+              button. Chrome stays put, the middle scrolls. */}
+          <form onSubmit={handleInvite} className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
+            <div className="flex flex-none items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
               <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Invite a teammate</h2>
               <button
                 type="button"
@@ -547,7 +553,7 @@ export default function UsersPage() {
               </button>
             </div>
 
-            <div className="space-y-5 p-5">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
               <div className="space-y-1.5">
                 <label htmlFor="inviteEmail" className="block text-sm font-medium text-[var(--adm-ink-mute)]">Email address</label>
                 <input
@@ -592,7 +598,7 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
+            <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
               <button
                 type="button"
                 onClick={() => { setShowInviteModal(false); setInviteEmail(""); }}
@@ -615,8 +621,8 @@ export default function UsersPage() {
       {/* ── change-role modal ── */}
       {showRoleModal && userToEdit && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar name={userToEdit.name} email={userToEdit.email} size="md" />
                 <div className="min-w-0">
@@ -633,7 +639,7 @@ export default function UsersPage() {
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
               <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">Select a role</p>
               <div className="space-y-1.5">
                 {ROLE_ORDER.map(role => {
@@ -679,7 +685,7 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
+            <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
               <button
                 onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
                 className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"

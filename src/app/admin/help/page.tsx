@@ -234,7 +234,7 @@ function DirectoryEditor({
       aria-label="Edit directory"
     >
       <div
-        className="flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        className="flex max-h-[86dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">

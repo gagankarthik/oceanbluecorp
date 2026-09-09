@@ -11,10 +11,14 @@ const {
   RECRUITING_ROLES,
   PUBLISHING_ROLES,
   JOB_EDIT_ROLES,
+  JOB_COMMERCIAL_ROLES,
   hasStaffAccess,
   hasRecruitingAccess,
   hasPublishingAccess,
   canEditJobs,
+  canSeeJobCommercials,
+  hasJobEditAccess,
+  hasJobCommercialAccess,
   landingRouteFor,
   normalizeStaffRole,
   staffRolesOf,
@@ -89,15 +93,14 @@ describe("publishing access", () => {
 });
 
 describe("job editing", () => {
-  test("recruiter and media read postings without editing them", () => {
+  test("a recruiter reads postings without editing them", () => {
     assert.equal(canEditJobs(UserRole.RECRUITER), false);
-    assert.equal(canEditJobs(UserRole.MEDIA), false);
   });
 
-  test("admin, hr and sales edit them", () => {
-    assert.equal(canEditJobs(UserRole.ADMIN), true);
-    assert.equal(canEditJobs(UserRole.HR), true);
-    assert.equal(canEditJobs(UserRole.SALES), true);
+  test("admin, hr, sales and media edit them", () => {
+    for (const role of [UserRole.ADMIN, UserRole.HR, UserRole.SALES, UserRole.MEDIA]) {
+      assert.equal(canEditJobs(role), true, role);
+    }
   });
 
   test("no role at all edits nothing", () => {
@@ -105,8 +108,36 @@ describe("job editing", () => {
     assert.equal(canEditJobs(undefined), false);
   });
 
-  test("JOB_EDIT_ROLES is a subset of the recruiting roles", () => {
-    assert.ok(JOB_EDIT_ROLES.every((r) => RECRUITING_ROLES.includes(r)));
+  test("editing a posting is not the same permission as pricing one", () => {
+    // The whole point of media being in JOB_EDIT_ROLES: it writes the copy and
+    // never sees the rate. If these two sets ever collapse into one, a media
+    // account gains bill rates, pay rates, client and vendor names.
+    assert.equal(canEditJobs(UserRole.MEDIA), true);
+    assert.equal(canSeeJobCommercials(UserRole.MEDIA), false);
+    assert.ok(!JOB_COMMERCIAL_ROLES.includes(UserRole.MEDIA));
+  });
+
+  test("every commercial role is a recruiting role, and vice versa", () => {
+    assert.deepEqual([...JOB_COMMERCIAL_ROLES].sort(), [...RECRUITING_ROLES].sort());
+  });
+
+  test("JOB_EDIT_ROLES is the recruiting editors plus media, and nothing else", () => {
+    assert.deepEqual(
+      [...JOB_EDIT_ROLES].sort(),
+      [UserRole.ADMIN, UserRole.HR, UserRole.SALES, UserRole.MEDIA].sort(),
+    );
+  });
+
+  test("the group-based guards agree with the role-based ones", () => {
+    assert.equal(hasJobEditAccess(["web:media"]), true);
+    assert.equal(hasJobCommercialAccess(["web:media"]), false);
+    assert.equal(hasJobEditAccess(["web:recruiter"]), false);
+    assert.equal(hasJobCommercialAccess(["web:recruiter"]), true);
+    // A group from the HR portal is not a role here, on either question.
+    assert.equal(hasJobEditAccess(["hr:employee"]), false);
+    assert.equal(hasJobCommercialAccess(["hr:employee"]), false);
+    assert.equal(hasJobEditAccess(null), false);
+    assert.equal(hasJobCommercialAccess([]), false);
   });
 });
 

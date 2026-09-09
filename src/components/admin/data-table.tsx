@@ -49,7 +49,11 @@ export interface DataTableColumn<T> {
   /** Provide to make the column sortable. */
   sortValue?: (row: T) => string | number;
   align?: "left" | "right" | "center";
-  /** Hide the column below this breakpoint. */
+  /**
+   * Hide the column below this width — of THE TABLE, not of the window.
+   * A table in a split view or a narrow card sheds its secondary columns at
+   * the same point a full-width one does.
+   */
   hideBelow?: "sm" | "md" | "lg" | "xl";
   /** Plain-text name for the column-visibility menu. Falls back to `header`. */
   label?: string;
@@ -127,11 +131,16 @@ interface DataTableProps<T> {
   className?: string;
 }
 
+/* Container widths, not viewport widths. `xl:table-cell` used to reveal a
+   column at a 1280px window, where the table itself had ~1000px after the
+   sidebar and the pane padding, so the columns that were supposed to appear
+   only when there was room appeared when there was not, and the row ran off
+   under `overflow-x-hidden`. @md 448 · @xl 576 · @3xl 768 · @5xl 1024. */
 const HIDE = {
-  sm: "hidden sm:table-cell",
-  md: "hidden md:table-cell",
-  lg: "hidden lg:table-cell",
-  xl: "hidden xl:table-cell",
+  sm: "hidden @md:table-cell",
+  md: "hidden @xl:table-cell",
+  lg: "hidden @3xl:table-cell",
+  xl: "hidden @5xl:table-cell",
 } as const;
 
 const ALIGN = { left: "text-left", right: "text-right", center: "text-center" } as const;
@@ -266,7 +275,10 @@ export function DataTable<T>({
   return (
     // min-w-0 for the same reason as the panel: without it this flex column
     // adopts the table's intrinsic width and pushes its parent wide.
-    <div className={cn("flex min-h-0 w-full min-w-0 flex-1 flex-col", className)}>
+    // @container is what HIDE measures; a container query never applies to the
+    // container itself, and every column class sits on a descendant, so the
+    // two can share this element.
+    <div className={cn("@container flex min-h-0 w-full min-w-0 flex-1 flex-col", className)}>
       <div
         ref={scrollRef}
         data-density={density}

@@ -281,7 +281,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
                 wrong place the first time someone rephrased it. */}
             <h2
               id="thirteen-heading"
-              className="hz-display text-[clamp(1.9rem,5vw,3.25rem)] text-[var(--hz-text)]"
+              className="hz-display text-[clamp(1.9rem,2.89vw,3.25rem)] text-[var(--hz-text)]"
             >
               {content.anniversaryHeading ? (
                 content.anniversaryHeading
@@ -294,7 +294,7 @@ export default function Anniversary({ content = {} }: { content?: Record<string,
                 </>
               )}
             </h2>
-            <p className="mt-5 text-[clamp(1rem,2.2vw,1.25rem)] font-medium leading-snug text-[var(--hz-cobalt)]">
+            <p className="mt-5 text-[clamp(1rem,1.11vw,1.25rem)] font-medium leading-snug text-[var(--hz-cobalt)]">
               {tagline}
             </p>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[16px]">

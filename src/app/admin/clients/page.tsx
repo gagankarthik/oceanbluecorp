@@ -535,7 +535,7 @@ export default function ClientsPage() {
       {/* ── add / edit client ── */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl">
+          <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl">
             <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-6 py-4">
               <h2 className="text-[16px] font-bold text-[var(--adm-ink)]">
                 {editingClient ? "Edit client" : "Add new client"}

@@ -120,12 +120,20 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
   );
 }
 
+/* Column counts keyed off the STRIP's own width, not the viewport's.
+   `lg:grid-cols-4` fired at a 1024px viewport, but this strip lives inside the
+   admin content pane, which is the viewport minus the sidebar minus its own
+   padding — 760px at that point. Four tiles were laid out in 180px each, and a
+   figure like "3 months ago" ran out of its cell. A container query asks the
+   only question that matters: how wide is this row, actually.
+   The @ sizes are container widths: @xl 576, @2xl 672, @3xl 768, @4xl 896,
+   @5xl 1024. Each is the point where the next step still leaves ~170px a tile. */
 const STRIP_COLS: Record<number, string> = {
-  2: "grid-cols-2",
-  3: "grid-cols-2 sm:grid-cols-3",
-  4: "grid-cols-2 lg:grid-cols-4",
-  5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
-  6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+  2: "grid-cols-1 @md:grid-cols-2",
+  3: "grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3",
+  4: "grid-cols-1 @md:grid-cols-2 @3xl:grid-cols-4",
+  5: "grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @4xl:grid-cols-5",
+  6: "grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-6",
 };
 
 /**
@@ -156,25 +164,28 @@ export function KpiStrip({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        // Separated tiles, not one bordered frame with hairline-divided cells.
-        // The butted strip was the older look; the detail and utility screens
-        // that still use KpiStrip were the only places left rendering it, so
-        // they read as a different design from every list screen. Changing it
-        // here rather than at those four call sites keeps them in step for
-        // free, and StatCard already carries its own radius and shadow, so
-        // the cells no longer need them stripped off.
-        "grid gap-3",
-        STRIP_COLS[cols],
-        className,
-      )}
-    >
-      {React.Children.map(children, (child) =>
-        React.isValidElement<{ className?: string }>(child)
-          ? React.cloneElement(child, { className: cn("h-full", child.props.className) })
-          : child,
-      )}
+    // Two elements, because a container query never applies to the container
+    // itself: the outer div is measured, the inner one reads that measurement.
+    <div className={cn("@container", className)}>
+      <div
+        className={cn(
+          // Separated tiles, not one bordered frame with hairline-divided cells.
+          // The butted strip was the older look; the detail and utility screens
+          // that still use KpiStrip were the only places left rendering it, so
+          // they read as a different design from every list screen. Changing it
+          // here rather than at those four call sites keeps them in step for
+          // free, and StatCard already carries its own radius and shadow, so
+          // the cells no longer need them stripped off.
+          "grid gap-3",
+          STRIP_COLS[cols],
+        )}
+      >
+        {React.Children.map(children, (child) =>
+          React.isValidElement<{ className?: string }>(child)
+            ? React.cloneElement(child, { className: cn("h-full", child.props.className) })
+            : child,
+        )}
+      </div>
     </div>
   );
 }

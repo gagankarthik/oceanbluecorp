@@ -6,7 +6,7 @@ import {
   Check, ChevronLeft, MoreHorizontal, Plus, X,
 } from "lucide-react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
-import { useAuth, canEditJobs } from "@/lib/auth";
+import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
@@ -77,37 +77,53 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const router = useRouter();
   const { user } = useAuth();
   const canEdit = canEditJobs(user?.role);
+  // Editing the posting and seeing what it earns are separate permissions now
+  // that media authors postings. The API already strips these fields from what
+  // media receives; this stops the page rendering a row of "not recorded" for
+  // data that exists and was withheld, which reads as a fact and is not one.
+  const canPrice = canSeeJobCommercials(user?.role);
 
   const [job, setJob]                     = useState<Job | null>(null);
   const [applications, setApplications]   = useState<Application[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<Tab>("applicants");
+  const [storedTab, setActiveTab]         = useState<Tab>("applicants");
   const [search, setSearch]               = useState("");
   const [statusFilter, setStatusFilter]   = useState("all");
   const [copied, setCopied]               = useState(false);
   const [drawerOpen, setDrawerOpen]       = useState(false);
   const [editingApp, setEditingApp]       = useState<Application | null>(null);
 
+  /* Media is offered one tab, so it must land on that one. Derived rather than
+     held in state: `user` is null on the first render while the session
+     resolves, and an initial value read from it would leave a recruiter stuck
+     on the tab media gets. */
+  const activeTab: Tab = canPrice ? storedTab : "info";
+
   const debouncedSearch = useDebouncedValue(search, 250);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [jobRes, appsRes] = await Promise.all([
-        fetch(`/api/jobs/${jobId}`),
-        fetch(`/api/applications?jobId=${jobId}`),
-      ]);
-      const [jobData, appsData] = await Promise.all([jobRes.json(), appsRes.json()]);
+      // Applicants are recruiting data — /api/applications answers a media
+      // account 403 — so a caller without commercial sight does not ask for
+      // them, and the tabs that show them are not rendered below.
+      const jobRes = await fetch(`/api/jobs/${jobId}`);
+      const jobData = await jobRes.json();
       if (!jobRes.ok) throw new Error(jobData.error || "Failed to fetch job");
       setJob(jobData.job);
-      setApplications(appsData.applications || []);
+
+      if (canPrice) {
+        const appsRes = await fetch(`/api/applications?jobId=${jobId}`);
+        const appsData = await appsRes.json();
+        setApplications(appsData.applications || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
     }
-  }, [jobId]);
+  }, [jobId, canPrice]);
 
   useEffect(() => { void fetchData(); }, [fetchData]);
 
@@ -325,7 +341,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
                   {job.location}{job.state ? `, ${job.state}` : ""}
                 </span>
-                {job.clientName && (
+                {canPrice && job.clientName && (
                   <span className="inline-flex items-center gap-1.5">
                     <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{job.clientName}
                   </span>
@@ -371,7 +387,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               { id: "submissions" as Tab, label: "Submissions",     count: undefined,          icon: IconSend },
               { id: "candidates" as Tab,  label: "Best candidates", count: undefined,          icon: IconSource },
               { id: "info" as Tab,        label: "About job",       count: undefined,          icon: IconFile },
-            ] as const).map((tab) => {
+            ] as const).filter((tab) => canPrice || tab.id === "info").map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
@@ -519,14 +535,14 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           <AdminCard className="overflow-hidden">
             <AdminCardHeader icon={IconBuilding} title="Role details" />
             <dl className="divide-y divide-[var(--adm-line-soft)]">
-              <MetaRow label="Client" value={job.clientName} />
-              <MetaRow label="Vendor" value={job.vendorName ? (
+              {canPrice && <MetaRow label="Client" value={job.clientName} />}
+              {canPrice && <MetaRow label="Vendor" value={job.vendorName ? (
                 <span className="inline-flex items-center gap-1.5">
                   <IconTruck className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />{job.vendorName}
                 </span>
-              ) : undefined} />
-              <MetaRow label="Pay rate" value={job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined} />
-              <MetaRow label="Bill rate" value={job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined} />
+              ) : undefined} />}
+              {canPrice && <MetaRow label="Pay rate" value={job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined} />}
+              {canPrice && <MetaRow label="Bill rate" value={job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined} />}
               <MetaRow
                 label="Salary range"
                 value={job.salary ? (
@@ -545,7 +561,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           {/* Team. Always rendered now, even when empty: the + in its header
               is how a recruiter gets added, so hiding the card when nobody is
               assigned hid the only way to assign the first one. */}
-          <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />
+          {canPrice && <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />}
 
           {/* Client notes */}
           {job.clientNotes && (

@@ -16,6 +16,7 @@ import {
   IconClock,
 } from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { fmtDate, fmtRelative } from "@/lib/format";
 import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -23,12 +24,17 @@ import { StatCard, KpiStrip } from "@/components/admin/stat-card";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import {
+  API_ACCESS_LEVELS, DEFAULT_ACCESS_LEVEL, accessLevelMeta,
+  type ApiAccessLevel,
+} from "@/lib/api-scopes";
 
 interface ApiKeyRecord {
   id: string;
   name: string;
   description?: string;
   keyPreview: string;
+  accessLevel: ApiAccessLevel;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -40,6 +46,58 @@ interface NewKeyData {
   id: string;
   key: string;
   name: string;
+  accessLevel: ApiAccessLevel;
+}
+
+/**
+ * What the key may do, chosen at issue time.
+ *
+ * A select would fit the row, but at creation the two levels differ in a way a
+ * label alone does not carry — one of them can publish into the careers site —
+ * so the choice is spelled out rather than hidden behind a closed dropdown.
+ */
+function AccessLevelChoice({
+  value, onChange, disabled,
+}: {
+  value: ApiAccessLevel;
+  onChange: (level: ApiAccessLevel) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div role="radiogroup" aria-label="API key access" className="grid gap-2">
+      {API_ACCESS_LEVELS.map((level) => {
+        const selected = value === level.id;
+        return (
+          <label
+            key={level.id}
+            className={cn(
+              "flex cursor-pointer items-start gap-2.5 rounded-[8px] border p-3 transition-colors",
+              selected
+                ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
+                : "border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]",
+              disabled && "cursor-not-allowed opacity-60",
+            )}
+          >
+            <input
+              type="radio"
+              name="apikey-access"
+              value={level.id}
+              checked={selected}
+              disabled={disabled}
+              onChange={() => onChange(level.id)}
+              className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
+            />
+            <span className="min-w-0">
+              <span className="block text-[13px] font-semibold text-[var(--adm-ink)]">{level.label}</span>
+              <span className="mt-0.5 block text-xs leading-snug text-[var(--adm-ink-subtle)]">
+                {level.description}
+              </span>
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
@@ -58,6 +116,7 @@ export default function ApiKeysPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formName, setFormName] = useState("");
   const [formDesc, setFormDesc] = useState("");
+  const [formAccess, setFormAccess] = useState<ApiAccessLevel>(DEFAULT_ACCESS_LEVEL);
   const [creating, setCreating] = useState(false);
 
   // Newly created key (shown once)
@@ -68,6 +127,7 @@ export default function ApiKeysPage() {
   // Delete confirmation
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [scopingId, setScopingId] = useState<string | null>(null);
 
   async function fetchKeys() {
     setLoading(true);
@@ -97,17 +157,24 @@ export default function ApiKeysPage() {
         body: JSON.stringify({
           name: formName.trim(),
           description: formDesc.trim(),
+          accessLevel: formAccess,
           createdBy: user?.id || "admin",
           createdByName: user?.name || "Admin",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create key");
-      setNewKey({ id: data.apiKey.id, key: data.apiKey.key, name: data.apiKey.name });
+      setNewKey({
+        id: data.apiKey.id,
+        key: data.apiKey.key,
+        name: data.apiKey.name,
+        accessLevel: data.apiKey.accessLevel ?? formAccess,
+      });
       setShowKey(false);
       setCopied(false);
       setFormName("");
       setFormDesc("");
+      setFormAccess(DEFAULT_ACCESS_LEVEL);
       setShowCreateForm(false);
       await fetchKeys();
     } catch (e) {
@@ -128,6 +195,32 @@ export default function ApiKeysPage() {
       setKeys((prev) => prev.map((k) => k.id === id ? { ...k, isActive: !currentActive } : k));
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleAccessChange(id: string, level: ApiAccessLevel) {
+    const previous = keys.find((k) => k.id === id)?.accessLevel;
+    if (previous === level) return;
+    setScopingId(id);
+    // Optimistic, then reverted on failure: the select is the only feedback
+    // this control has, and leaving it showing the old value while the request
+    // is in flight reads as a click that did not register.
+    setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, accessLevel: level } : k)));
+    try {
+      const res = await fetch(`/api/admin/api-keys/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessLevel: level }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to change key access");
+      }
+    } catch (e) {
+      setKeys((prev) => prev.map((k) => (k.id === id && previous ? { ...k, accessLevel: previous } : k)));
+      setError(e instanceof Error ? e.message : "Failed to change key access");
+    } finally {
+      setScopingId(null);
     }
   }
 
@@ -187,6 +280,42 @@ export default function ApiKeysPage() {
         <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-[11px] text-[var(--adm-ink-subtle)]">
           {k.keyPreview}
         </span>
+      ),
+    },
+    {
+      key: "access",
+      header: "Access",
+      sortValue: (k) => k.accessLevel,
+      cell: (k) => (
+        // Editable in place. Access is the one property of a key an admin
+        // revisits — a partner asks for write, or a key turns out to have more
+        // than it needs — and a modal for a two-value choice is a round trip
+        // for nothing.
+        <label className="relative inline-flex items-center">
+          <span className="sr-only">Access for {k.name}</span>
+          <select
+            value={k.accessLevel}
+            disabled={scopingId === k.id}
+            onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
+            onClick={(e) => e.stopPropagation()}
+            className="h-8 cursor-pointer appearance-none rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-0 pl-2.5 pr-7 text-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+          >
+            {API_ACCESS_LEVELS.map((level) => (
+              <option key={level.id} value={level.id}>{level.label}</option>
+            ))}
+          </select>
+          {scopingId === k.id ? (
+            <Loader2 className="pointer-events-none absolute right-2 h-3.5 w-3.5 animate-spin text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+          ) : (
+            <svg
+              aria-hidden viewBox="0 0 24 24"
+              className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-[var(--adm-ink-subtle)]"
+              fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          )}
+        </label>
       ),
     },
     {
@@ -290,7 +419,10 @@ export default function ApiKeysPage() {
             <IconWarning className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--adm-warning)]" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--adm-warning)]">Copy your API key now, it won&apos;t be shown again</p>
-              <p className="mb-3 mt-0.5 text-xs text-[var(--adm-warning)]">Platform: <strong>{newKey.name}</strong></p>
+              <p className="mb-3 mt-0.5 text-xs text-[var(--adm-warning)]">
+                Platform: <strong>{newKey.name}</strong> · Access:{" "}
+                <strong>{accessLevelMeta(newKey.accessLevel).label}</strong>
+              </p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 select-all truncate rounded-[6px] border border-amber-200 bg-[var(--adm-surface)] px-3 py-2 font-mono text-sm text-[var(--adm-ink)]">
                   {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
@@ -367,15 +499,27 @@ export default function ApiKeysPage() {
             header.
           </p>
           <div className="flex flex-wrap gap-2">
-            {["GET /api/v1/jobs", "GET /api/v1/jobs/:id"].map((route) => (
+            {[
+              { route: "GET /api/v1/jobs", scope: "jobs:read" },
+              { route: "GET /api/v1/jobs/:id", scope: "jobs:read" },
+              { route: "POST /api/v1/jobs", scope: "jobs:write" },
+            ].map(({ route, scope }) => (
               <span
                 key={route}
-                className="rounded-[4px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1 font-mono text-[11px] text-[var(--adm-ink-mute)]"
+                className="inline-flex items-center gap-1.5 rounded-[4px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1 font-mono text-[11px] text-[var(--adm-ink-mute)]"
               >
                 {route}
+                <span className="rounded-[3px] bg-[var(--adm-surface-2)] px-1 py-px text-[10px] text-[var(--adm-ink-subtle)]">
+                  {scope}
+                </span>
               </span>
             ))}
           </div>
+          <p className="text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
+            A <strong>View jobs</strong> key holds <code className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[11px]">jobs:read</code> only;
+            calling the write endpoint with one returns 403. Postings filed over the API land as
+            drafts unless the request asks for <code className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[11px]">status</code>.
+          </p>
           <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
             Query params:{" "}
             {["status", "department", "type", "page", "limit"].map((p, i) => (
@@ -390,9 +534,12 @@ export default function ApiKeysPage() {
 
       {/* ── Create form modal ── */}
       {showCreateForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
-            <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm">
+          {/* max-h + internal scroll: the access picker made this form tall
+              enough to run off a 14" laptop, where the modal is centred and the
+              overlay does not scroll. */}
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
               <div className="flex items-center gap-2">
                 <IconKey className="h-[18px] w-[18px] text-[var(--adm-accent)]" strokeWidth={1.75} />
                 <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">New API Key</h2>
@@ -405,7 +552,7 @@ export default function ApiKeysPage() {
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <form onSubmit={handleCreate} className="space-y-4 p-5">
+            <form onSubmit={handleCreate} className="min-h-0 space-y-4 overflow-y-auto p-5">
               <div>
                 <label htmlFor="apikey-name" className="mb-1.5 block text-[13px] font-semibold text-[var(--adm-ink-mute)]">
                   Platform Name <span className="text-[var(--adm-danger)]">*</span>
@@ -436,7 +583,13 @@ export default function ApiKeysPage() {
                   className="w-full rounded-[8px] border border-[var(--adm-line)] px-3 py-2 text-sm transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-1">
+              <div>
+                <span className="mb-1.5 block text-[13px] font-semibold text-[var(--adm-ink-mute)]">
+                  Access
+                </span>
+                <AccessLevelChoice value={formAccess} onChange={setFormAccess} disabled={creating} />
+              </div>
+              <div className="flex flex-wrap justify-end gap-2 pt-1">
                 <PageHeaderButton type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
                   Cancel
                 </PageHeaderButton>

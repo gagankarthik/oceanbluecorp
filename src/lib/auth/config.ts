@@ -65,13 +65,49 @@ export const PUBLISHING_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.HR, UserRo
 /**
  * Who may create or change a job posting.
  *
- * Recruiters and media both READ postings and cannot edit them, for different
- * reasons: a recruiter works the req rather than owning it, media only promotes
- * it. Previously spelled `user?.role !== UserRole.RECRUITER` in four job pages,
- * which is the sort of thing that silently grants a new role edit rights the
- * day it is added.
+ * Media is here, and is the reason {@link JOB_COMMERCIAL_ROLES} exists below.
+ * Media writes the public face of this company, and a posting is public copy
+ * before it is anything else, so it authors the words. What it must not touch
+ * is the commercial half of the record — bill rate, pay rate, client, vendor,
+ * recruitment manager, assignees — which is the same data it is kept away from
+ * everywhere else on this site. "May edit a posting" and "may see what the
+ * posting earns" are two questions, and this is the first one.
+ *
+ * A recruiter still cannot edit: a recruiter works the req rather than owning
+ * it. That was previously spelled `user?.role !== UserRole.RECRUITER` in four
+ * job pages, which is the sort of thing that silently grants a new role edit
+ * rights the day it is added.
  */
-export const JOB_EDIT_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.HR, UserRole.SALES];
+export const JOB_EDIT_ROLES: UserRole[] = [
+  UserRole.ADMIN, UserRole.HR, UserRole.SALES, UserRole.MEDIA,
+];
+
+/**
+ * Who may read or write the commercial fields ON a job posting.
+ *
+ * The recruiting roles, and only them. Media edits a posting it cannot price:
+ * the API strips these fields from what it reads and drops them from what it
+ * writes, and the form does not render them. This is the set to name when
+ * asking "may this caller see a rate", never JOB_EDIT_ROLES.
+ */
+export const JOB_COMMERCIAL_ROLES: UserRole[] = RECRUITING_ROLES;
+
+/**
+ * Fields on a Job that are commercial, not editorial.
+ *
+ * Named once, here, because three places have to agree about it: the GET
+ * projection, the write allowlist, and the form. A field added to a job record
+ * that belongs on this list and is not added to it is a leak.
+ */
+export const JOB_COMMERCIAL_FIELDS = [
+  "clientId", "clientName", "clientNotes",
+  "vendorId", "vendorName",
+  "clientBillRate", "payRate",
+  "recruitmentManagerId", "recruitmentManagerName", "recruitmentManagerEmail",
+  "assignedToIds", "assignedToNames", "assignedToEmails",
+  "assignedToId", "assignedToName",
+  "excludedDepartments",
+] as const;
 
 const hasAny = (groups: ReadonlyArray<string> | null | undefined, allowed: UserRole[]): boolean =>
   staffRolesOf(groups).some((r) => allowed.includes(r));
@@ -87,6 +123,23 @@ export const hasPublishingAccess = (groups: ReadonlyArray<string> | null | undef
 /** May create or edit a job posting (as opposed to merely reading one). */
 export const canEditJobs = (role: UserRole | null | undefined): boolean =>
   !!role && JOB_EDIT_ROLES.includes(role);
+
+/** Server-side counterpart of `canEditJobs`, for a token's raw groups. */
+export const hasJobEditAccess = (groups: ReadonlyArray<string> | null | undefined): boolean =>
+  hasAny(groups, JOB_EDIT_ROLES);
+
+/**
+ * May see and set a posting's rates, client, vendor and assignments.
+ *
+ * Same set as `hasRecruitingAccess` today. It is spelled separately because it
+ * answers a different question, and the day a role is given commercial sight
+ * without the rest of the recruiting side, that difference is the whole point.
+ */
+export const canSeeJobCommercials = (role: UserRole | null | undefined): boolean =>
+  !!role && JOB_COMMERCIAL_ROLES.includes(role);
+
+export const hasJobCommercialAccess = (groups: ReadonlyArray<string> | null | undefined): boolean =>
+  hasAny(groups, JOB_COMMERCIAL_ROLES);
 
 /**
  * Cognito groups are namespaced per application.

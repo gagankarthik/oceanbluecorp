@@ -76,7 +76,7 @@ export default function PageHero({
             on the site. Measure in ch so the line count holds its shape as the
             clamp scales. */}
         <h1
-          className={`hz-display max-w-[19ch] text-[clamp(2.1rem,5vw,4.1rem)] leading-[1.02] tracking-[-0.03em] text-white ${
+          className={`hz-display max-w-[19ch] text-[clamp(1.95rem,3.64vw,4.1rem)] leading-[1.02] tracking-[-0.03em] text-white ${
             eyebrow ? "mt-5" : ""
           }`}
         >
