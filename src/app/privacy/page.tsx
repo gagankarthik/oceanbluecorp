@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Learn how Ocean Blue Corporation collects, uses, and protects your personal information.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Privacy Policy | Ocean Blue Corporation",
     description:
       "How Ocean Blue Corporation collects, uses, retains and deletes personal data, including your rights under CCPA.",

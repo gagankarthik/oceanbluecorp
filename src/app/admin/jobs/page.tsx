@@ -11,7 +11,6 @@ import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
-import { AdminCard } from "@/components/admin/admin-card";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, GridSelect, StatStrip,
 } from "@/components/admin/workspace";
@@ -19,11 +18,12 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { statusColor } from "@/components/admin/theme";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { EmptyState } from "@/components/admin/empty-state";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
   IconEdit, IconTrash, IconGroup, IconLocation, IconJob,
   IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
-  IconCalendar, IconWarning,
+  IconCalendar,
 } from "@/components/admin/icons";
 import JobsLoading from "./loading";
 import {
@@ -38,7 +38,7 @@ const JOB_STATUSES: Array<{ value: Job["status"]; label: string }> = [
   { value: "draft",   label: "Draft" },
   { value: "open",    label: "Open" },
   { value: "active",  label: "Active" },
-  { value: "on-hold", label: "On Hold" },
+  { value: "on-hold", label: "On hold" },
   { value: "closed",  label: "Closed" },
 ];
 
@@ -47,14 +47,22 @@ const STATUS_TABS = [
   { key: "active",  label: "Active" },
   { key: "open",    label: "Open" },
   { key: "draft",   label: "Draft" },
-  { key: "on-hold", label: "On Hold" },
+  { key: "on-hold", label: "On hold" },
   { key: "closed",  label: "Closed" },
 ];
 
-
-/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
+/** Empty-cell placeholder. A quiet dash, never a grey sentence. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]"></span>;
+  return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
+}
+
+/** Posting ID, set in mono so a column of them scans by character. */
+function PostingId({ id }: { id: string }) {
+  return (
+    <span className="inline-flex rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] font-medium text-[var(--adm-ink-mute)]">
+      {id}
+    </span>
+  );
 }
 
 export default function JobsPage() {
@@ -87,7 +95,7 @@ export default function JobsPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch("/api/jobs");
+      const res = await fetch("/api/jobs?fields=summary");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
 
@@ -111,7 +119,8 @@ export default function JobsPage() {
         setJobs(fetchedJobs);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch jobs");
+      console.error("Failed to load job postings:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -261,9 +270,7 @@ export default function JobsPage() {
     key: "postingId",
     header: "Job ID",
     sortValue: (j) => j.postingId || "",
-    cell: (j) => j.postingId
-      ? <span className="rounded-[4px] bg-[var(--adm-accent-soft)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">{j.postingId}</span>
-      : <Blank />,
+    cell: (j) => j.postingId ? <PostingId id={j.postingId} /> : <Blank />,
   };
 
   const titleCol: DataTableColumn<Job> = {
@@ -347,7 +354,7 @@ export default function JobsPage() {
     header: "Created",
     sortValue: (j) => new Date(j.createdAt).getTime(),
     hideBelow: "xl",
-    cell: (j) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(j.createdAt)}</span>,
+    cell: (j) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(j.createdAt)}</span>,
   };
 
   const actionsCol: DataTableColumn<Job> = {
@@ -357,10 +364,6 @@ export default function JobsPage() {
     cell: (j) => <div onClick={(e) => e.stopPropagation()}>{rowMenu(j)}</div>,
   };
 
-  // Two lenses over the same rows, both eight columns wide: "compact" answers
-  // where a role is and how it's doing, "detailed" answers what it pays.
-  // Neither stacks a second fact under a first, a value worth showing gets a
-  // column of its own, and everything else stays on the record page.
   const payCol: DataTableColumn<Job> = {
     key: "payRate", header: "Pay", label: "Pay rate", align: "right", width: "110px",
     sortValue: (j) => j.payRate ?? 0,
@@ -377,19 +380,7 @@ export default function JobsPage() {
       : <Blank />,
   };
 
-  /**
-   * ONE column list.
-   *
-   * There used to be two hard-coded sets, "Compact" and "Detailed", swapped by
-   * a ViewMenu that sat next to the density control, whose first option is
-   * also called "Compact". Two adjacent menus, both offering "Compact", doing
-   * completely different things: one changed which columns existed, the other
-   * changed row height.
-   *
-   * The columns menu already answers "which columns do I want", and more
-   * precisely than two fixed presets, so the ViewMenu is gone and the extra
-   * "detailed" columns simply start hidden.
-   */
+  // One column list; the "detailed" columns start hidden in the Display menu.
   const columns: DataTableColumn<Job>[] = canPrice
     ? [
         idCol, titleCol, departmentCol, clientCol, locationCol,
@@ -403,39 +394,39 @@ export default function JobsPage() {
 
   if (error) return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="space-y-3 text-center">
-        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
-        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
-        <button onClick={fetchJobs} className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]">
-          Retry
-        </button>
-      </div>
+      <EmptyState
+        variant="error"
+        title="Couldn't load job postings"
+        description={error}
+        action={<WorkspaceButton onClick={fetchJobs}>Try again</WorkspaceButton>}
+      />
     </div>
   );
 
+  const emptyAction = jobs.length === 0
+    ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}><Plus />Post a job</WorkspaceButton> : undefined)
+    : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton> : undefined);
+
   return (
-    <>
-      {/* One panel. The KPI strip is gone: "Open roles" and "Drafts" are values
-          of the Status filter, and their share bars measured against every job
-          record ever created, which is not a whole those counts are part of. */}
-      {/* No share bars. "Open roles 13, 6%" measured against every job record
-          ever created, which is not a whole those 13 are part of. */}
+    // Full-height column: the grid (or the row list below xl) scrolls inside the panel.
+    <div className="flex h-full min-h-0 flex-col">
       <WorkspaceTitle
         title="Job postings"
+        meta={`${stats.total.toLocaleString()} posting${stats.total === 1 ? "" : "s"} · ${stats.applicants.toLocaleString()} applicant${stats.applicants === 1 ? "" : "s"}`}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV}>
-              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
+              <IconDownload /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
             {canEdit && (
               <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
-                <Plus className="h-4 w-4" />Post a job
+                <Plus />Post a job
               </WorkspaceButton>
             )}
           </>
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
+
       <StatStrip
         items={[
           { label: "Open roles", value: stats.active, onClick: () => setStatusFilter("active") },
@@ -449,40 +440,39 @@ export default function JobsPage() {
         ]}
       />
 
-      {/* Toolbar sits on the canvas between the stat strip and the table, one slim line of search + filters + table controls. */}
       <WorkspaceToolbar
-          variant="canvas"
-          search={
-            <WorkspaceSearch
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Filter jobs by title, client, location or ID"
-            />
-          }
-          trailing={
-            <div className="hidden xl:contents">
-              <DisplayMenu
-                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                hidden={hiddenColumns}
-                onHiddenChange={setHiddenColumns}
-                rows={rows}
-                onRowsChange={setRows}
-                onReset={() => { setHiddenColumns(["department", "payRate", "billRate"]); setRows(25); }}
-              />
-            </div>
-          }
-        >
-          <FilterPill
-            label="Status"
-            icon={FilterIcon.status}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_TABS.map((t) => ({
-              value: t.key,
-              label: t.label,
-              count: statusCounts[t.key] || 0,
-            }))}
+        variant="canvas"
+        search={
+          <WorkspaceSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Filter jobs by title, client, location or ID"
           />
+        }
+        trailing={
+          <div className="hidden xl:contents">
+            <DisplayMenu
+              columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+              hidden={hiddenColumns}
+              onHiddenChange={setHiddenColumns}
+              rows={rows}
+              onRowsChange={setRows}
+              onReset={() => { setHiddenColumns(["department", "payRate", "billRate"]); setRows(25); }}
+            />
+          </div>
+        }
+      >
+        <FilterPill
+          label="Status"
+          icon={FilterIcon.status}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_TABS.map((t) => ({
+            value: t.key,
+            label: t.label,
+            count: statusCounts[t.key] || 0,
+          }))}
+        />
       </WorkspaceToolbar>
 
       <ActiveFilters
@@ -497,176 +487,126 @@ export default function JobsPage() {
       />
 
       <Workspace>
-      {/* ── mobile / tablet cards; the grid takes over at xl where it has room ── */}
-      <div className="grid gap-3 p-3 md:grid-cols-2 xl:hidden">
-        {filteredJobs.length > 0 ? filteredJobs.map((job) => {
-          const jv = job as JobWithVendor;
-          return (
-            <AdminCard key={job.id} hover className="flex h-full flex-col p-4">
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  {job.postingId && (
-                    <span className="rounded-[4px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[var(--adm-accent)]">
-                      {job.postingId}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                    className="mt-1.5 block text-left text-sm font-bold leading-snug text-[var(--adm-ink)] transition-colors line-clamp-2 hover:text-[var(--adm-accent)]"
-                  >
-                    {job.title}
-                  </button>
-                  <p className="mt-0.5 text-xs capitalize text-[var(--adm-ink-subtle)]">
-                    {[job.department, job.type].filter(Boolean).join(" · ") || "–"}
-                  </p>
-                </div>
-                <StatusBadge status={job.status} size="md" />
-              </div>
+        {/* Below xl: a row list, the grid takes over where it has room. */}
+        <div className="min-h-0 flex-1 overflow-auto xl:hidden">
+          {filteredJobs.length > 0 ? (
+            <ul className="divide-y divide-[var(--adm-line-soft)]">
+              {filteredJobs.map((job) => {
+                const jv = job as JobWithVendor;
+                const kind = [job.department, job.type].filter(Boolean).join(" · ");
+                return (
+                  <li key={job.id} className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[var(--adm-row-hover)] sm:px-5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                          className="min-w-0 max-w-full truncate text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                        >
+                          {job.title}
+                        </button>
+                        {job.postingId && <PostingId id={job.postingId} />}
+                      </div>
+                      {kind && <p className="mt-0.5 truncate text-[13px] capitalize text-[var(--adm-ink-mute)]">{kind}</p>}
 
-              <div className="mb-4 flex-1 space-y-1.5 text-xs text-[var(--adm-ink-subtle)]">
-                {canPrice && job.clientName && (
-                  <div className="flex items-center gap-1.5">
-                    <IconBuilding className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
-                    <span className="truncate">{job.clientName}</span>
-                  </div>
-                )}
-                {jv.vendorName && (
-                  <div className="flex items-center gap-1.5">
-                    <IconTruck className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
-                    <span className="truncate">{jv.vendorName}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <IconLocation className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
-                  <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
-                </div>
-                {job.payRate && (
-                  <div className="flex items-center gap-1.5">
-                    <IconMoney className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
-                    <span className="tabular-nums">
-                      ${job.payRate}/hr pay{job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}
-                    </span>
-                  </div>
-                )}
-                {job.submissionDueDate && (
-                  <div className="flex items-center gap-1.5">
-                    <IconCalendar className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-ink-subtle)]" />
-                    <span>Due {fmtDate(job.submissionDueDate)}</span>
-                  </div>
-                )}
-              </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                        {canPrice && job.clientName && (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <IconBuilding className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            <span className="truncate">{job.clientName}</span>
+                          </span>
+                        )}
+                        {jv.vendorName && (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <IconTruck className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            <span className="truncate">{jv.vendorName}</span>
+                          </span>
+                        )}
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <IconLocation className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                          <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
+                        </span>
+                        {job.payRate && (
+                          <span className="inline-flex items-center gap-1.5 tabular-nums">
+                            <IconMoney className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            ${job.payRate}/hr pay{job.clientBillRate ? ` · $${job.clientBillRate}/hr bill` : ""}
+                          </span>
+                        )}
+                        {job.submissionDueDate && (
+                          <span className="inline-flex items-center gap-1.5 tabular-nums">
+                            <IconCalendar className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            Due {fmtDate(job.submissionDueDate)}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1.5">
+                          <IconGroup className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                          <span className="font-medium tabular-nums text-[var(--adm-ink-mute)]">{job.applicationsCount || 0}</span>
+                          applicant{(job.applicationsCount || 0) === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    </div>
 
-              <div className="flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-3">
-                <span className="flex items-center gap-1 text-xs text-[var(--adm-ink-subtle)]">
-                  <IconGroup className="h-3 w-3" />
-                  <span className="tabular-nums">{job.applicationsCount || 0}</span> applicants
-                </span>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => router.push(`/admin/jobs/${job.id}`)} aria-label="View job"
-                    className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]">
-                    <IconEye className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  {canEdit && (
-                    <>
-                      <button onClick={() => router.push(`/admin/jobs/${job.id}/edit`)} aria-label="Edit job"
-                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
-                        <IconEdit className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                      <button onClick={() => handleDuplicate(job)} disabled={duplicating === job.id} aria-label="Duplicate job"
-                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)] disabled:opacity-50">
-                        {duplicating === job.id
-                          ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                          : <IconCopy className="h-4 w-4" aria-hidden="true" />}
-                      </button>
-                      <button onClick={() => setShowDeleteConfirm(job.id)} aria-label="Delete job"
-                        className="rounded-[6px] p-2.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
-                        <IconTrash className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </AdminCard>
-          );
-        }) : (
-          <div className="md:col-span-2">
-            <AdminCard className="py-6">
-              <EmptyJobs jobsEmpty={jobs.length === 0} canEdit={canEdit} hasFilters={hasActiveFilters}
-                onCreate={() => router.push("/admin/jobs/new")} onClear={clearFilters} />
-            </AdminCard>
-          </div>
-        )}
-      </div>
+                    <div className="flex flex-none items-center gap-1">
+                      <StatusBadge status={job.status} />
+                      {rowMenu(job)}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={IconJob}
+              variant={jobs.length === 0 ? "fresh" : "filtered"}
+              title={jobs.length === 0 ? "No jobs posted yet" : "No jobs match your filters"}
+              description={jobs.length === 0
+                ? "Post your first job to start tracking candidates."
+                : "Try a different search, or clear the status filter."}
+              action={emptyAction}
+            />
+          )}
+        </div>
 
-      {/* ── desktop record grid ── */}
-      <div className="hidden xl:contents">
-        <DataTable
-          noun="jobs"
-          storageKey="jobs"
-          columns={columns}
-          rows={filteredJobs}
-          rowKey={(j) => j.id}
-          onRowClick={(j) => router.push(`/admin/jobs/${j.id}`)}
-          initialSort={{ key: "created", dir: "desc" }}
-          pageSize={rows}
-          onPageSizeChange={setRows}
-          hiddenColumns={hiddenColumns}
-          empty={{
-            icon: IconJob,
-            title: jobs.length === 0 ? "No jobs posted yet" : "No jobs match your filters",
-            description: jobs.length === 0
-              ? "Post your first job to start tracking candidates."
-              : "Try adjusting your search or status filter.",
-            action: jobs.length === 0
-              ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}><Plus className="h-4 w-4" />Post a job</WorkspaceButton> : undefined)
-              : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton> : undefined),
-          }}
-        />
-      </div>
+        <div className="hidden xl:contents">
+          <DataTable
+            noun="jobs"
+            storageKey="jobs"
+            columns={columns}
+            rows={filteredJobs}
+            rowKey={(j) => j.id}
+            onRowClick={(j) => router.push(`/admin/jobs/${j.id}`)}
+            initialSort={{ key: "created", dir: "desc" }}
+            pageSize={rows}
+            onPageSizeChange={setRows}
+            hiddenColumns={hiddenColumns}
+            empty={{
+              icon: IconJob,
+              title: jobs.length === 0 ? "No jobs posted yet" : "No jobs match your filters",
+              description: jobs.length === 0
+                ? "Post your first job to start tracking candidates."
+                : "Try a different search, or clear the status filter.",
+              action: emptyAction,
+            }}
+          />
+        </div>
       </Workspace>
 
       <ConfirmDialog
         open={!!showDeleteConfirm}
         title="Delete this job?"
         body="This action is permanent and cannot be undone. All associated data will be removed."
-        confirmLabel="Yes, Delete"
+        confirmLabel="Delete job"
         busy={deleting}
         onCancel={() => setShowDeleteConfirm(null)}
         onConfirm={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
       />
-    </>
-  );
-}
-
-// ── empty state for the card view ────────────────────────────────────────────
-
-function EmptyJobs({ jobsEmpty, canEdit, hasFilters, onCreate, onClear }: {
-  jobsEmpty: boolean; canEdit: boolean; hasFilters: boolean;
-  onCreate: () => void; onClear: () => void;
-}) {
-  return (
-    <div className="py-10 text-center">
-      <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-surface-2)]">
-        <IconJob className="h-7 w-7 text-[var(--adm-ink-subtle)]" />
-      </div>
-      <h3 className="mb-1 text-base font-bold text-[var(--adm-ink)]">
-        {jobsEmpty ? "No jobs posted yet" : "No jobs match your filters"}
-      </h3>
-      <p className="mb-5 text-sm text-[var(--adm-ink-subtle)]">
-        {jobsEmpty ? "Post your first job to start tracking candidates" : "Try adjusting your search or filters"}
-      </p>
-      {jobsEmpty
-        ? canEdit && (
-            <WorkspaceButton variant="primary" onClick={onCreate} className="mx-auto"><Plus className="h-4 w-4" />Post a job</WorkspaceButton>
-          )
-        : hasFilters && (
-            <WorkspaceButton onClick={onClear} className="mx-auto"><X className="h-4 w-4" />Clear filters</WorkspaceButton>
-          )}
     </div>
   );
 }
 
 // ── row action menu ──────────────────────────────────────────────────────────
+
+const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-[13px]";
 
 function RowMenu({
   job, canEdit, duplicating, onView, onEdit, onDuplicate, onDelete,
@@ -683,27 +623,35 @@ function RowMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+          type="button"
           aria-label={`Actions for ${job.title}`}
+          className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
         >
-          <MoreHorizontal className="h-4 w-4" />
+          {duplicating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg">
-        <DropdownMenuItem onClick={onView} className="cursor-pointer rounded-[4px] text-sm">
-          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View Details
+      <DropdownMenuContent
+        align="end"
+        sideOffset={4}
+        className="w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+      >
+        <DropdownMenuItem onClick={onView} className={menuItemCls}>
+          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View details
         </DropdownMenuItem>
         {canEdit && <>
-          <DropdownMenuItem onClick={onEdit} className="cursor-pointer rounded-[4px] text-sm">
+          <DropdownMenuItem onClick={onEdit} className={menuItemCls}>
             <IconEdit className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate} disabled={duplicating} className="cursor-pointer rounded-[4px] text-sm">
+          <DropdownMenuItem onClick={onDuplicate} disabled={duplicating} className={menuItemCls}>
             {duplicating
               ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--adm-ink-subtle)]" />
               : <IconCopy className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />}Duplicate
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="cursor-pointer rounded-[4px] text-sm text-[var(--adm-danger)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger)]">
+          <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
+          <DropdownMenuItem
+            onClick={onDelete}
+            className={cn(menuItemCls, "text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]")}
+          >
             <IconTrash className="mr-2 h-4 w-4" />Delete
           </DropdownMenuItem>
         </>}

@@ -74,13 +74,8 @@ export function HeaderSearch() {
   const showDropdown = open && q.trim().length > 0;
 
   return (
-    /* Was `w-56 / lg:w-72`, 224px, which is narrower than most of the things
-       it searches for. A candidate name plus a job title truncates before the
-       result list even opens, and the top bar has the room: the centre of the
-       chrome was mostly empty either side of it. Scales with the viewport now
-       rather than sitting at one small fixed size. */
-    <div ref={ref} className="relative hidden w-72 md:block lg:w-[26rem] xl:w-[34rem] 2xl:w-[40rem]">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
+    <div ref={ref} className="relative hidden w-[min(22rem,34vw)] md:block lg:w-[26rem] xl:w-[32rem]">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
       <input
         type="search"
         autoComplete="off"
@@ -90,7 +85,7 @@ export function HeaderSearch() {
         onKeyDown={onKey}
         placeholder="Search jobs, candidates…"
         aria-label="Search"
-        className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-2 pl-9 pr-8 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] pl-9 pr-8 text-[13.5px] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {q && (
         <button
@@ -104,7 +99,7 @@ export function HeaderSearch() {
       )}
 
       {showDropdown && (
-        <div className="absolute inset-x-0 top-full z-[100] mt-1.5 overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg ring-1 ring-black/5">
+        <div className="absolute inset-x-0 top-full z-[100] mt-2 overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
           {loading && hits.length === 0 ? (
             <div className="px-4 py-6 text-center text-xs text-[var(--adm-ink-subtle)]">Searching…</div>
           ) : hits.length > 0 ? (
@@ -120,7 +115,7 @@ export function HeaderSearch() {
                     onClick={() => go(h)}
                     className={cn(
                       "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
-                      i === active ? "bg-[var(--adm-accent-soft)]" : "hover:bg-[var(--adm-row-hover)]",
+                      i === active ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-row-hover)]",
                     )}
                   >
                     {isPerson ? (

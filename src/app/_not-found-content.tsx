@@ -5,21 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Cta } from "@/components/landing/ui";
 
-/**
- * The 404 composition.
- *
- * Split out of not-found.tsx so that file can stay a server component and keep
- * its `metadata` export while the motion lives here.
- *
- * One orchestrated entrance rather than scattered effects: the glow opens, the
- * three digits drop in sequence, then the copy and the ways out follow. The
- * sequence reads as the page arriving once, which is the only motion a dead
- * end warrants.
- *
- * Everything animates transform and opacity only, so it stays on the
- * compositor. Under prefers-reduced-motion the whole thing renders in its
- * final state with no transition, including the ambient glow.
- */
+// One entrance sequence, transform/opacity only; reduced motion renders the final state.
 
 const DIGITS = ["4", "0", "4"];
 
@@ -149,6 +135,20 @@ export default function NotFoundContent() {
               </motion.li>
             ))}
           </ul>
+          <motion.p
+            {...rise(step(6.4))}
+            className="mt-8 text-[14px] leading-relaxed text-[var(--hz-text-mute)]"
+          >
+            Looking for a role?{" "}
+            <Link href="/careers/search" className="hz-focus font-semibold text-[var(--hz-text)] underline-offset-4 transition-colors hover:text-[var(--hz-cobalt)] hover:underline">
+              Search open positions
+            </Link>
+            . For everything else, the{" "}
+            <Link href="/sitemap" className="hz-focus font-semibold text-[var(--hz-text)] underline-offset-4 transition-colors hover:text-[var(--hz-cobalt)] hover:underline">
+              site map
+            </Link>{" "}
+            lists every page.
+          </motion.p>
         </motion.div>
       </div>
     </section>

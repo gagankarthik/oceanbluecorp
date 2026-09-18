@@ -8,13 +8,13 @@ import {
 } from "lucide-react";
 import type { IconComponent } from "@/components/admin/icons";
 import {
-  IconShield, IconTrash, IconUserCheck, IconWarning, IconGroup, IconRadar,
+  IconShield, IconTrash, IconUserCheck, IconGroup, IconRadar,
   IconUserPlus, IconSend,
 } from "@/components/admin/icons";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Avatar } from "@/components/admin/avatar";
@@ -25,6 +25,12 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { type Tone } from "@/components/admin/theme";
+import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { Field, FormInput } from "@/components/admin/forms/primitives";
+import { FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email, LIMITS, maxLen, required } from "@/lib/form-validation";
 
 type Role = "admin" | "hr" | "recruiter" | "sales" | "media";
 
@@ -41,21 +47,15 @@ interface User {
   enabled: boolean;
 }
 
-/**
- * The four assignable staff roles in access-hierarchy order. One table drives
- * the badge, the invite/change-role pickers, and the role filter, so a role
- * can never render as two different things on the same screen.
- */
-// Media sits last and apart: it is not a junior recruiter, it is a different
-// job, and it is the only role here that never sees a candidate.
+/** Staff roles in access order; one table drives the badge, the pickers and the filter. Media sits last: a different job, not a junior recruiter. */
 const ROLE_ORDER: Role[] = ["admin", "hr", "sales", "recruiter", "media"];
 
 const ROLE_META: Record<Role, { label: string; tone: Tone; icon: IconComponent; desc: string }> = {
-  admin:     { label: "Admin",     tone: "rose",   icon: IconShield,    desc: "Full access to all features, settings, and user management" },
-  hr:        { label: "HR",        tone: "violet", icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
-  sales:     { label: "Sales",     tone: "amber",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
-  recruiter: { label: "Recruiter", tone: "teal",   icon: IconUserCheck, desc: "View-only jobs, plus applications, candidates, and bench" },
-  media:     { label: "Media",     tone: "cyan",   icon: IconRadar,     desc: "Blog, case studies, news, customer stories, and writing job postings. No candidate, client, or rate data" },
+  admin:     { label: "Admin",     tone: "blue",   icon: IconShield,    desc: "Full access to all features, settings, and user management" },
+  hr:        { label: "HR",        tone: "slate",  icon: IconGroup,     desc: "Jobs, applications, candidates, bench, clients, vendors, and contacts" },
+  sales:     { label: "Sales",     tone: "slate",  icon: IconUserCheck, desc: "Can create/edit jobs, plus applications, candidates, and bench" },
+  recruiter: { label: "Recruiter", tone: "slate",  icon: IconUserCheck, desc: "View-only jobs, plus applications, candidates, and bench" },
+  media:     { label: "Media",     tone: "slate",  icon: IconRadar,     desc: "Blog, case studies, news, customer stories, and writing job postings. No candidate, client, or rate data" },
 };
 
 const NO_ROLE = { label: "No role", tone: "slate" as Tone };
@@ -64,10 +64,7 @@ const NO_ROLE = { label: "No role", tone: "slate" as Tone };
 const STATUS_META: Record<User["status"], { label: string; tone: Tone }> = {
   active:   { label: "Active",   tone: "emerald" },
   pending:  { label: "Invited",  tone: "amber"   },
-  // `rose`, not `slate`. Neutral made a revoked account read as "no status
-  // recorded" rather than "cannot sign in", an absence rather than a state.
-  // Inactive is a deliberate act with a real consequence and should look like
-  // one wherever it appears, including the filter pill and the counts.
+  // Rose, not slate: a revoked account is a state, not an absence of one.
   inactive: { label: "Inactive", tone: "rose"    },
 };
 
@@ -80,7 +77,7 @@ const ROLE_TABS: { key: string; label: string }[] = [
   { key: "media",     label: "Media" },
 ];
 
-/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
+/** Empty cell. */
 function Blank() {
   return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
@@ -104,6 +101,38 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("recruiter");
   const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const {
+    errors: inviteErrors, validateAll: validateInvite, revalidate: revalidateInvite,
+    reset: resetInviteErrors, invalidProps: inviteInvalidProps,
+  } = useFormErrors<"email">(() => {
+    const addr = inviteEmail.trim().toLowerCase();
+    return collectErrors({
+      email:
+        check(
+          inviteEmail,
+          required("Enter your teammate's work email, like name@company.com."),
+          email("Enter your teammate's work email, like name@company.com."),
+          maxLen(LIMITS.email),
+        ) ??
+        (users.some((u) => u.email.toLowerCase() === addr)
+          ? "Someone with this email already has an account. Change their role from the list instead."
+          : undefined),
+    });
+  }, { email: "inviteEmail" });
+
+  const openInvite = () => {
+    setInviteEmail("");
+    setInviteRole("recruiter");
+    setInviteError(null);
+    resetInviteErrors();
+    setShowInviteModal(true);
+  };
+
+  const closeInvite = () => {
+    setShowInviteModal(false);
+    setInviteEmail("");
+  };
 
   // ── data ──────────────────────────────────────────────────────────────────
 
@@ -116,7 +145,8 @@ export default function UsersPage() {
       if (!response.ok) throw new Error(data.error || "Failed to fetch users");
       setUsers(data.users || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch users");
+      console.error("Failed to load users:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -131,7 +161,9 @@ export default function UsersPage() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail) return;
+    if (inviting) return;
+    setInviteError(null);
+    if (!validateInvite()) return;
     setInviting(true);
     try {
       const response = await fetch("/api/users/invite", {
@@ -139,14 +171,14 @@ export default function UsersPage() {
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to send invite");
+      if (!response.ok) throw new Error(data.error || "The invite could not be sent. Check your connection and try again.");
       toast.success(`Invite sent to ${inviteEmail.trim()}`);
       setShowInviteModal(false);
       setInviteEmail("");
       setInviteRole("recruiter");
       fetchUsers();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send invite");
+      setInviteError(err instanceof Error ? err.message : "The invite could not be sent. Check your connection and try again.");
     } finally {
       setInviting(false);
     }
@@ -190,20 +222,7 @@ export default function UsersPage() {
     }
   };
 
-  /**
-   * Deactivating is undoable, not confirmed.
-   *
-   * This screen shipped a confirm dialog for deactivation earlier today, on the
-   * reasoning that revoking a colleague's access should not be one stray click.
-   * That reasoning was half right and the remedy was wrong: a confirm taxes
-   * every correct invocation to half-protect the rare mistake, and because it
-   * fires every time, it trains people to dismiss it, so the one that mattered
-   * gets clicked through too.
-   *
-   * Deactivation has an exact inverse, so it does not need to be prevented, it
-   * needs to be reversible. The action lands immediately and the toast carries
-   * Undo. Delete keeps its dialog, because a deleted account has no inverse.
-   */
+  // Deactivation has an exact inverse, so it's undoable from the toast rather than confirmed. Delete keeps its dialog.
   const setStatus = async (user: User, next: "active" | "inactive") => {
     const response = await fetch(`/api/users/${user.id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -327,10 +346,10 @@ export default function UsersPage() {
             type="button"
             onClick={() => { setUserToEdit(u); setNewRole(u.role || ""); setShowRoleModal(true); }}
             aria-label={`Change role for ${u.name || u.email}`}
-            className="inline-flex items-center gap-1 rounded-[4px] transition-opacity hover:opacity-75"
+            className="-ml-1 inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5 transition-colors duration-150 hover:bg-[var(--adm-surface-2)]"
           >
             <StatusBadge tone={meta.tone} label={meta.label} size="md" />
-            <ChevronDown className="h-3 w-3 text-[var(--adm-ink-subtle)]" />
+            <ChevronDown className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
           </button>
         );
       },
@@ -363,7 +382,7 @@ export default function UsersPage() {
       hideBelow: "xl",
       sortValue: u => new Date(u.createdAt).getTime(),
       cell: u => u.createdAt
-        ? <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(u.createdAt)}</span>
+        ? <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(u.createdAt)}</span>
         : <Blank />,
     },
     {
@@ -372,9 +391,11 @@ export default function UsersPage() {
       align: "right",
       cell: u => (
         <button
+          type="button"
           onClick={() => { setUserToDelete(u.id); setShowDeleteModal(true); }}
           aria-label={`Delete ${u.name || u.email}`}
-          className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+          title="Delete"
+          className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
         >
           <IconTrash className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -388,41 +409,34 @@ export default function UsersPage() {
 
   if (error) return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="space-y-3 text-center">
-        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
-        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
-        <button
-          onClick={fetchUsers}
-          className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]"
-        >
-          Retry
-        </button>
-      </div>
+      <AdminCard className="w-full max-w-md">
+        <EmptyState
+          variant="error"
+          title="Couldn't load users"
+          description={error}
+          action={<WorkspaceButton variant="primary" onClick={fetchUsers}>Try again</WorkspaceButton>}
+        />
+      </AdminCard>
     </div>
   );
 
   return (
     <>
-      {/* The KPI strip counted staff by role and state, the two filters in the
-          toolbar below. "Admins 4, 31%" was a share of headcount nothing
-          followed from. */}
       <WorkspaceTitle
         title="Users & access"
         actions={
           <>
-            <Link
-              href="/admin/roles"
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3.5 text-[14px] font-semibold text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
-            >
-              <IconShield className="h-4 w-4" />Roles
-            </Link>
-            <WorkspaceButton variant="primary" onClick={() => setShowInviteModal(true)}>
+            <WorkspaceButton asChild>
+              <Link href="/admin/roles">
+                <IconShield className="h-4 w-4" />Roles
+              </Link>
+            </WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={openInvite}>
               <IconUserPlus className="h-4 w-4" />Invite user
             </WorkspaceButton>
           </>
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Active staff", value: stats.active,
@@ -440,7 +454,6 @@ export default function UsersPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -519,7 +532,7 @@ export default function UsersPage() {
               ? "Invite a teammate to give them access to the console."
               : "Try adjusting your search, role, or status filter.",
             action: users.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={() => setShowInviteModal(true)}>
+              <WorkspaceButton variant="primary" onClick={openInvite}>
                 <IconUserPlus className="h-4 w-4" />Invite user
               </WorkspaceButton>
             ) : hasActiveFilters ? (
@@ -531,44 +544,46 @@ export default function UsersPage() {
         />
       </Workspace>
 
-      {/* ── invite modal ── */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          {/* Bounded and internally scrolling. This dialog is a header, an
-              email field and one card per role, and the role list grows every
-              time a role is added — on a 14" laptop (~700px of viewport) it
-              already ran off both ends of the screen, with `overflow-hidden`
-              and a centred flex parent leaving no way to reach the Send
-              button. Chrome stays put, the middle scrolls. */}
-          <form onSubmit={handleInvite} className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
-            <div className="flex flex-none items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
-              <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Invite a teammate</h2>
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="invite-title"
+        >
+          {/* Bounded, middle scrolls: the role list outgrows a laptop viewport. */}
+          <form onSubmit={handleInvite} onBlur={revalidateInvite} noValidate className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
+              <h2 id="invite-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Invite a teammate</h2>
               <button
                 type="button"
-                onClick={() => { setShowInviteModal(false); setInviteEmail(""); }}
+                onClick={closeInvite}
                 aria-label="Close"
-                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
-                <X className="h-4 w-4" aria-hidden="true" />
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-              <div className="space-y-1.5">
-                <label htmlFor="inviteEmail" className="block text-sm font-medium text-[var(--adm-ink-mute)]">Email address</label>
-                <input
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
+              <FormErrorBanner message={inviteError} onDismiss={() => setInviteError(null)} />
+              <Field
+                label="Email address"
+                htmlFor="inviteEmail"
+                required
+                error={inviteErrors.email}
+                helper="We'll email them an invite with a temporary password. They set their name, phone, and password on first sign-in."
+              >
+                <FormInput
                   id="inviteEmail" type="email" required autoFocus autoComplete="off" value={inviteEmail}
+                  {...inviteInvalidProps("email")}
                   onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
-                  className="w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2.5 text-sm text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 />
-                <p className="text-xs text-[var(--adm-ink-subtle)]">
-                  We&apos;ll email them an invite with a temporary password. They set their name, phone, and password on first sign-in.
-                </p>
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">Role</p>
-                <div className="space-y-1.5">
+              <fieldset>
+                <legend className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Role</legend>
+                <div className="space-y-2">
                   {ROLE_ORDER.map(role => {
                     const meta = ROLE_META[role];
                     const selected = inviteRole === role;
@@ -576,72 +591,69 @@ export default function UsersPage() {
                       <label
                         key={role}
                         className={cn(
-                          "flex cursor-pointer items-start gap-3 rounded-[6px] border p-3 transition-colors",
+                          "flex cursor-pointer items-start gap-3 rounded-[12px] border p-3 transition-colors duration-150",
                           selected
                             ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                            : "border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]",
+                            : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
                         )}
                       >
                         <input
                           type="radio" name="inviteRole" value={role} checked={selected}
                           onChange={() => setInviteRole(role)}
-                          className="mt-0.5 h-4 w-4 accent-[var(--adm-accent)]"
+                          className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
                         />
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-[var(--adm-ink)]">{meta.label}</span>
-                          <span className="mt-0.5 block text-xs leading-relaxed text-[var(--adm-ink-subtle)]">{meta.desc}</span>
+                          <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
                         </span>
                       </label>
                     );
                   })}
                 </div>
-              </div>
+              </fieldset>
             </div>
 
-            <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
-              <button
-                type="button"
-                onClick={() => { setShowInviteModal(false); setInviteEmail(""); }}
-                className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
-              >
+            <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
+              <WorkspaceButton onClick={closeInvite} className="w-full sm:w-auto">
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={inviting || !inviteEmail}
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-50"
-              >
-                {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSend className="h-4 w-4" />}Send Invite
-              </button>
+              </WorkspaceButton>
+              <WorkspaceButton type="submit" variant="primary" disabled={inviting} className="w-full sm:w-auto">
+                {inviting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconSend className="h-4 w-4" aria-hidden="true" />}
+                {inviting ? "Sending invite" : "Send invite"}
+              </WorkspaceButton>
             </div>
           </form>
         </div>
       )}
 
-      {/* ── change-role modal ── */}
       {showRoleModal && userToEdit && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-2xl">
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="role-title"
+        >
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar name={userToEdit.name} email={userToEdit.email} size="md" />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{userToEdit.name || "Unnamed"}</p>
-                  <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{userToEdit.email}</p>
+                  <h2 id="role-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Change role</h2>
+                  <p className="truncate text-[13px] text-[var(--adm-ink-mute)]">{userToEdit.name || "Unnamed"} · {userToEdit.email}</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
                 aria-label="Close"
-                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
-                <X className="h-4 w-4" aria-hidden="true" />
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">Select a role</p>
-              <div className="space-y-1.5">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+              <div role="radiogroup" aria-labelledby="role-title" className="space-y-2">
                 {ROLE_ORDER.map(role => {
                   const meta = ROLE_META[role];
                   const Icon = meta.icon;
@@ -650,32 +662,28 @@ export default function UsersPage() {
                   return (
                     <button
                       type="button"
+                      role="radio"
+                      aria-checked={selected}
                       key={role}
                       onClick={() => setNewRole(role)}
                       className={cn(
-                        "flex w-full items-start gap-3 rounded-[6px] border p-3 text-left transition-colors",
+                        "flex w-full items-start gap-3 rounded-[12px] border p-3 text-left transition-colors duration-150",
                         selected
                           ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                          : "border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]",
+                          : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
                       )}
                     >
-                      <span className="mt-0.5 grid h-8 w-8 flex-shrink-0 place-items-center rounded-[6px] bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]">
-                        <Icon className="h-4 w-4" />
-                      </span>
+                      <Icon className={cn("mt-0.5 h-4 w-4 flex-none", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-[var(--adm-ink)]">{meta.label}</span>
-                          {current && (
-                            <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">
-                              Current
-                            </span>
-                          )}
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                          {current && <StatusBadge tone="slate" label="Current" />}
                         </span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-[var(--adm-ink-subtle)]">{meta.desc}</span>
+                        <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
                       </span>
                       <span className={cn(
-                        "mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-colors",
-                        selected ? "border-[var(--adm-accent)] bg-[var(--adm-accent)]" : "border-[var(--adm-line)]",
+                        "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 transition-colors",
+                        selected ? "border-[var(--adm-accent)] bg-[var(--adm-accent)]" : "border-[var(--adm-line-strong)]",
                       )}>
                         {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                       </span>
@@ -685,20 +693,18 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3.5">
-              <button
-                onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
-                className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
-              >
+            <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
+              <WorkspaceButton onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="w-full sm:w-auto">
                 Cancel
-              </button>
-              <button
+              </WorkspaceButton>
+              <WorkspaceButton
+                variant="primary"
                 onClick={handleUpdateRole}
                 disabled={updating || newRole === userToEdit.role || !newRole}
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-50"
+                className="w-full sm:w-auto"
               >
                 {updating && <Loader2 className="h-4 w-4 animate-spin" />}Save role
-              </button>
+              </WorkspaceButton>
             </div>
           </div>
         </div>
@@ -708,7 +714,7 @@ export default function UsersPage() {
         open={showDeleteModal}
         title="Delete this user?"
         body="Their account and access are removed permanently. This cannot be undone."
-        confirmLabel="Delete User"
+        confirmLabel="Delete user"
         busy={updating}
         onCancel={() => { setShowDeleteModal(false); setUserToDelete(null); }}
         onConfirm={handleDeleteUser}

@@ -1,10 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { InfoTip } from "./info-tip";
 import { WorkspaceButton } from "./workspace";
 
 interface PageHeaderProps {
   title: string;
+  /** Visible line under the title, for data (an email, "Editing X"). */
   subtitle?: string;
+  /** What the screen is for, as an ⓘ tooltip beside the title. */
+  info?: React.ReactNode;
   /**
    * @deprecated Accepted but no longer rendered. The tinted icon tile was
    * removed with the header band; the prop stays so the ~20 existing call
@@ -35,17 +39,20 @@ interface PageHeaderProps {
  * workspace.tsx. It stays for detail, form and settings screens, where the
  * title is the record's own name and so is genuinely worth stating.
  */
-export function PageHeader({ title, subtitle, actions, meta, className }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, info, actions, meta, className }: PageHeaderProps) {
   return (
     <div
       className={cn(
-        "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "mb-5 flex flex-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
       <div className="min-w-0">
-        <h1 className="truncate text-[18px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h1>
-        {subtitle && <p className="mt-1 truncate text-[13.5px] leading-snug text-[var(--adm-ink-subtle)]">{subtitle}</p>}
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">{title}</h1>
+          {info && <InfoTip label={title}>{info}</InfoTip>}
+        </div>
+        {subtitle && <p className="mt-0.5 truncate text-[13px] leading-snug text-[var(--adm-ink-mute)]">{subtitle}</p>}
         {meta && <div className="mt-2">{meta}</div>}
       </div>
       {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}

@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Check, Loader2, Twitter, Linkedin } from "lucide-react";
 import {
   IconUser, IconBell, IconShield, IconGlobe, IconSave, IconEye, IconEyeOff,
-  IconMail, IconPhone, IconLocation, IconLink, IconCamera, IconLock, IconAlert,
-  IconBuilding, IconSettings, IconIdCard,
+  IconMail, IconPhone, IconLocation, IconLink, IconCamera, IconAlert,
+  IconBuilding, IconInfo,
 } from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,11 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Field, FormInput } from "@/components/admin/forms/primitives";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Tone } from "@/components/admin/theme";
+import { WorkspaceButton, NotePanel } from "@/components/admin/workspace";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, maxLen, phone, required, strongPassword, LIMITS } from "@/lib/form-validation";
 
 const tabs = [
   {
@@ -48,21 +53,15 @@ const tabs = [
   },
 ];
 
-/**
- * Role presentation for the header chip. Replaces the two parallel gradient
- * tables (`roleColors` + `roleHeaderConfig`) that had to be kept in sync by
- * hand; a role is a category chip, not a decorated banner.
- */
+/** Role chip in the header. Categorical, so neutral except admin. */
 const ROLE_CHIP: Record<string, { label: string; tone: Tone }> = {
-  admin:     { label: "Administrator", tone: "rose"   },
-  hr:        { label: "HR Manager",    tone: "violet" },
-  recruiter: { label: "Recruiter",     tone: "teal"   },
-  sales:     { label: "Sales",         tone: "amber"  },
+  admin:     { label: "Administrator", tone: "blue"  },
+  hr:        { label: "HR manager",    tone: "slate" },
+  recruiter: { label: "Recruiter",     tone: "slate" },
+  sales:     { label: "Sales",         tone: "slate" },
+  media:     { label: "Media",         tone: "slate" },
 };
 const DEFAULT_ROLE_CHIP = { label: "User", tone: "slate" as Tone };
-
-const CONFIRM_OFFLINE =
-  "Take the public site offline?\n\nVisitors will see the maintenance screen until you turn this off. The admin console stays available.";
 
 /** ui/Checkbox defaults to the navy --primary; nudge it to the cobalt accent. */
 const checkboxAccent =
@@ -115,12 +114,12 @@ function RecordRow({
   value: string;
 }) {
   return (
-    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-5 py-3 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
-      <span className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-subtle)]">
-        <Icon className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-2.5 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
+      <span className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-mute)]">
+        <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
       </span>
-      <span className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{value || "–"}</span>
+      <span className="truncate text-[13.5px] font-medium text-[var(--adm-ink)]">{value || "–"}</span>
     </div>
   );
 }
@@ -164,23 +163,52 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: "",
   });
+  // Field errors only the server can know (a wrong current password). Cleared
+  // when that field is edited, so a blur re-check doesn't wipe them first.
+  const [passwordServerErrors, setPasswordServerErrors] =
+    useState<Partial<Record<"currentPassword" | "newPassword", string>>>({});
 
-  /* Maintenance mode.
+  const profileCheck = useFormErrors(() =>
+    collectErrors({
+      firstName: check(profileForm.firstName, required("Enter your first name."), maxLen(LIMITS.name)),
+      lastName: check(profileForm.lastName, maxLen(LIMITS.name)),
+      phone: check(profileForm.phone, phone()),
+    }),
+  );
 
-     Stored in the shared content table under the "site" block and read by the
-     root layout. Saving calls revalidatePath("/", "layout") server-side, so
-     the switch takes effect on the next request rather than after the 60s ISR
-     window. */
+  const passwordCheck = useFormErrors(() =>
+    collectErrors({
+      currentPassword:
+        check(passwordForm.currentPassword, required("Enter your current password.")) ??
+        passwordServerErrors.currentPassword,
+      newPassword:
+        check(passwordForm.newPassword, required("Choose a new password."), strongPassword()) ??
+        (passwordForm.newPassword === passwordForm.currentPassword
+          ? "Choose a password different from your current one."
+          : passwordServerErrors.newPassword),
+      confirmPassword:
+        check(passwordForm.confirmPassword, required("Re-enter the new password to confirm it.")) ??
+        (passwordForm.confirmPassword !== passwordForm.newPassword
+          ? "This doesn’t match the new password you entered above."
+          : undefined),
+    }),
+  );
+
+  // Maintenance mode: the "site" content block, read by the root layout and revalidated on save.
   const [maint, setMaint] = useState({ enabled: false, message: "", eta: "" });
   const [maintLoaded, setMaintLoaded] = useState(false);
   const [maintSaving, setMaintSaving] = useState(false);
   const [maintSaved, setMaintSaved] = useState(false);
   const [maintError, setMaintError] = useState<string | null>(null);
+  const [confirmOffline, setConfirmOffline] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
     fetch("/api/content")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
         const blocks = d.blocks as { id: string; fields: Record<string, string> }[] | undefined;
         const site = blocks?.find((b) => b.id === "site");
@@ -192,7 +220,10 @@ export default function SettingsPage() {
           });
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("Failed to load maintenance setting:", err);
+        setMaintError("Couldn't load the current maintenance setting. Refresh before changing it.");
+      })
       .finally(() => setMaintLoaded(true));
   }, [isAdmin]);
 
@@ -250,6 +281,7 @@ export default function SettingsPage() {
   }, [user]);
 
   const handleSaveProfile = async () => {
+    if (!profileCheck.validateAll()) return;
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -261,12 +293,12 @@ export default function SettingsPage() {
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to update profile");
+        throw new Error(data.error || "Your profile could not be saved. Try again in a moment.");
       }
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2500);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Failed to save");
+      setSaveError(err instanceof Error ? err.message : "Your profile could not be saved. Try again in a moment.");
     } finally {
       setIsSaving(false);
     }
@@ -278,11 +310,11 @@ export default function SettingsPage() {
     if (!file || !user?.id) return;
 
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      setSaveError("Please choose a JPG, PNG, or WebP image.");
+      setSaveError("Choose a JPG, PNG or WebP image for your photo.");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setSaveError("Image too large. Maximum size is 2MB.");
+      setSaveError("That image is larger than 2 MB. Choose a smaller one.");
       return;
     }
 
@@ -329,19 +361,12 @@ export default function SettingsPage() {
   };
 
   const handleSavePassword = async () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setSaveError("New passwords do not match");
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      setSaveError("Password must be at least 8 characters");
-      return;
-    }
+    if (!passwordCheck.validateAll()) return;
     setIsSaving(true);
     setSaveError(null);
     try {
-      const response = await fetch("/api/users/me", {
-        method: "PATCH",
+      const response = await fetch("/api/users/me/password", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
@@ -349,20 +374,32 @@ export default function SettingsPage() {
         }),
       });
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to change password");
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || "Your password could not be changed. Try again in a moment.";
+        // Wrong current password, or a policy miss: say it next to the field.
+        if (data.field === "currentPassword" || data.field === "newPassword") {
+          const field: "currentPassword" | "newPassword" = data.field;
+          setPasswordServerErrors({ [field]: message });
+          passwordCheck.setErrors((prev) => ({ ...prev, [field]: message }));
+          document.getElementById(field)?.focus();
+          return;
+        }
+        throw new Error(message);
       }
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordServerErrors({});
+      passwordCheck.reset();
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2500);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Failed to change password");
+      setSaveError(err instanceof Error ? err.message : "Your password could not be changed. Try again in a moment.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleSave = () => {
+    if (isSaving) return;
     setSaveError(null);
     if (activeTab === "profile") handleSaveProfile();
     else if (activeTab === "security") handleSavePassword();
@@ -385,51 +422,41 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="space-y-5 pb-10">
-
+    <div className="space-y-4 pb-10 lg:space-y-5">
       <PageHeader
         title="Settings"
-        subtitle="Manage your account preferences"
-        icon={IconSettings}
+        info="Your profile, alerts, password and, for admins, site settings."
         meta={<StatusBadge tone={roleChip.tone} label={roleChip.label} size="md" />}
       />
 
-      {saveError && (
-        <div
-          role="alert"
-          className="flex items-start gap-2.5 rounded-[6px] border border-rose-200 bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] text-[var(--adm-danger)]"
-        >
-          <IconAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          {saveError}
-        </div>
-      )}
+      <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
 
-      <div className="grid max-w-5xl gap-4 lg:grid-cols-[212px_minmax(0,1fr)]">
+      <div className="grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-[208px_minmax(0,1fr)] lg:gap-5">
 
-        {/* ── section rail ── */}
-        <aside className="lg:sticky lg:top-20 lg:self-start">
+        <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
           <nav
             aria-label="Settings sections"
-            className="flex gap-1 overflow-x-auto rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1.5 lg:flex-col lg:overflow-visible"
+            className="flex gap-1 overflow-x-auto rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1.5 shadow-[var(--adm-shadow-sm)] lg:flex-col lg:overflow-visible"
           >
             {visibleTabs.map((tab) => {
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); setSaveError(null); }}
+                  type="button"
+                  onClick={() => { setActiveTab(tab.id); setSaveError(null); profileCheck.reset(); passwordCheck.reset(); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex flex-none items-center gap-2.5 rounded-[6px] px-3 py-2.5 text-left transition-colors lg:w-full",
+                    "flex flex-none items-center gap-2.5 rounded-[8px] px-3 py-2 text-left transition-colors duration-150 lg:w-full lg:items-start lg:py-2.5",
                     active
-                      ? "bg-[var(--adm-accent-tint)] text-[var(--adm-accent)] shadow-[inset_2px_0_0_var(--adm-accent)]"
+                      ? "bg-[var(--adm-accent-tint)] text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
-                  <tab.icon className={cn("h-4 w-4 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} strokeWidth={1.75} />
+                  <tab.icon className={cn("h-4 w-4 flex-none lg:mt-0.5", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} strokeWidth={1.75} />
                   <span className="min-w-0">
-                    <span className="block whitespace-nowrap text-[13.5px] font-semibold">{tab.name}</span>
-                    <span className="hidden text-[11.5px] leading-snug text-[var(--adm-ink-subtle)] lg:block">{tab.description}</span>
+                    <span className="block whitespace-nowrap text-[13.5px] font-medium">{tab.name}</span>
+                    <span className="hidden text-[12.5px] leading-snug text-[var(--adm-ink-subtle)] lg:block">{tab.description}</span>
                   </span>
                 </button>
               );
@@ -437,38 +464,29 @@ export default function SettingsPage() {
           </nav>
         </aside>
 
-        {/* ── section panels ── */}
-        <div className="space-y-4">
+        {/* Blur bubbles; each check only re-runs once its form was submitted. */}
+        <div className="min-w-0 space-y-4" onBlur={() => { profileCheck.revalidate(); passwordCheck.revalidate(); }}>
 
-          {/* ── Profile ── */}
           {activeTab === "profile" && (
             <>
               <AdminCard>
-                <AdminCardHeader icon={IconCamera} title="Profile photo" />
-                <div className="flex flex-wrap items-center gap-4 p-5">
-                  <div className="relative flex-shrink-0">
-                    {user?.id && !photoFailed ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/api/users/avatar/${user.id}?v=${photoVersion}`}
-                        alt={user?.name || "Profile photo"}
-                        width={96}
-                        height={96}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-16 w-16 rounded-full object-cover ring-2 ring-[var(--adm-surface)] shadow-sm"
-                        onLoad={() => setHasPhoto(true)}
-                        onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
-                      />
-                    ) : (
-                      <Avatar name={user?.name} email={user?.email} size="xl" />
-                    )}
+                <AdminCardHeader title="Profile photo" />
+                <div className="flex flex-wrap items-center gap-4 p-4">
+                  <div className="relative flex-none">
+                    <Avatar
+                      name={user?.name}
+                      email={user?.email}
+                      size="xl"
+                      src={user?.id && !photoFailed ? `/api/users/avatar/${user.id}?v=${photoVersion}` : null}
+                      onLoad={() => setHasPhoto(true)}
+                      onError={() => { setHasPhoto(false); setPhotoFailed(true); }}
+                    />
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
                       aria-label="Change profile photo"
-                      className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--adm-surface)] bg-[var(--adm-accent)] text-white transition-colors hover:bg-[var(--adm-accent-strong)] disabled:opacity-60"
+                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)] disabled:opacity-60"
                     >
                       {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconCamera className="h-3.5 w-3.5" />}
                     </button>
@@ -483,47 +501,45 @@ export default function SettingsPage() {
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "–"}</p>
-                    <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{user?.email || "–"}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
+                    <p className="truncate text-[13px] text-[var(--adm-ink-mute)]">{user?.email || "–"}</p>
+                    <p className="mt-1 text-[12.5px] text-[var(--adm-ink-subtle)]">JPG, PNG or WebP · max 2MB</p>
+                  </div>
+
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    <WorkspaceButton onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+                      <IconCamera />{hasPhoto ? "Change photo" : "Upload photo"}
+                    </WorkspaceButton>
+                    {hasPhoto && (
+                      <WorkspaceButton
+                        variant="ghost"
+                        onClick={handleRemovePhoto}
                         disabled={uploadingPhoto}
-                        className="text-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] disabled:opacity-50"
+                        className="hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
                       >
-                        {hasPhoto ? "Change photo" : "Upload photo"}
-                      </button>
-                      {hasPhoto && (
-                        <button
-                          type="button"
-                          onClick={handleRemovePhoto}
-                          disabled={uploadingPhoto}
-                          className="text-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-danger)] disabled:opacity-50"
-                        >
-                          Remove
-                        </button>
-                      )}
-                      <span className="text-[11px] text-[var(--adm-ink-subtle)]">JPG, PNG or WebP · max 2MB</span>
-                    </div>
+                        Remove
+                      </WorkspaceButton>
+                    )}
                   </div>
                 </div>
               </AdminCard>
 
               <AdminCard>
-                <AdminCardHeader icon={IconUser} title="Personal information" />
-                <div className="grid gap-4 p-5 sm:grid-cols-2">
-                  <Field label="First name" htmlFor="firstName">
+                <AdminCardHeader title="Personal information" />
+                <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+                  <Field label="First name" required htmlFor="firstName" error={profileCheck.errors.firstName}>
                     <FormInput
                       id="firstName"
+                      {...profileCheck.invalidProps("firstName")}
                       autoComplete="given-name"
                       value={profileForm.firstName}
                       onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
                       placeholder="John"
                     />
                   </Field>
-                  <Field label="Last name" htmlFor="lastName">
+                  <Field label="Last name" htmlFor="lastName" error={profileCheck.errors.lastName}>
                     <FormInput
                       id="lastName"
+                      {...profileCheck.invalidProps("lastName")}
                       autoComplete="family-name"
                       value={profileForm.lastName}
                       onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
@@ -537,9 +553,10 @@ export default function SettingsPage() {
                   >
                     <FormInput id="email" type="email" autoComplete="email" value={profileForm.email} readOnly disabled />
                   </Field>
-                  <Field label="Phone number" htmlFor="phone">
+                  <Field label="Phone number" htmlFor="phone" error={profileCheck.errors.phone}>
                     <FormInput
                       id="phone"
+                      {...profileCheck.invalidProps("phone")}
                       type="tel"
                       autoComplete="tel"
                       value={profileForm.phone}
@@ -551,8 +568,8 @@ export default function SettingsPage() {
               </AdminCard>
 
               <AdminCard>
-                <AdminCardHeader icon={IconIdCard} title="Account details" />
-                <div className="p-5 sm:max-w-sm">
+                <AdminCardHeader title="Account details" />
+                <div className="p-4 sm:max-w-sm">
                   <Field label="Role" htmlFor="role" helper="Your role is assigned by an administrator.">
                     <FormInput id="role" value={profileForm.role} readOnly disabled className="capitalize" />
                   </Field>
@@ -561,19 +578,21 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── Notifications ── */}
           {activeTab === "notifications" && (
-            <AdminCard>
-              <AdminCardHeader icon={IconBell} title="Notification preferences" />
+            <AdminCard className="overflow-hidden">
+              <AdminCardHeader title="Notification preferences" />
               <div>
                 {NOTIFICATION_ROWS.map((item) => {
                   const labelId = `notify-${item.key}-label`;
+                  const controlId = `notify-${item.key}`;
                   return (
-                    <div
+                    <label
                       key={item.key}
-                      className="flex items-start gap-3 border-b border-[var(--adm-line-soft)] px-5 py-3.5 last:border-0"
+                      htmlFor={controlId}
+                      className="flex cursor-pointer items-start gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 transition-colors duration-150 last:border-0 hover:bg-[var(--adm-row-hover)]"
                     >
                       <Checkbox
+                        id={controlId}
                         className={cn("mt-0.5", checkboxAccent)}
                         checked={notifications[item.key]}
                         onCheckedChange={(v) =>
@@ -581,44 +600,47 @@ export default function SettingsPage() {
                         }
                         aria-labelledby={labelId}
                       />
-                      <div className="min-w-0">
-                        <p id={labelId} className="text-[14px] font-medium text-[var(--adm-ink)]">{item.title}</p>
-                        <p className="mt-0.5 text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">{item.description}</p>
-                      </div>
-                    </div>
+                      <span className="min-w-0">
+                        <span id={labelId} className="block text-[14px] font-medium text-[var(--adm-ink)]">{item.title}</span>
+                        <span className="mt-0.5 block text-[13px] leading-snug text-[var(--adm-ink-mute)]">{item.description}</span>
+                      </span>
+                    </label>
                   );
                 })}
               </div>
             </AdminCard>
           )}
 
-          {/* ── Security ── */}
           {activeTab === "security" && (
             <AdminCard>
-              <AdminCardHeader icon={IconLock} title="Change password" />
-              <div className="space-y-4 p-5">
-                <div className="flex items-start gap-2.5 rounded-[6px] border border-amber-200 bg-[var(--adm-warning-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-warning)]">
-                  <IconAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <AdminCardHeader title="Change password" />
+              <div className="space-y-4 p-4">
+                <NotePanel className="flex items-start gap-2.5">
+                  <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
                   Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
-                </div>
+                </NotePanel>
 
                 <div className="space-y-4 sm:max-w-md">
                   {passwordFields.map((field) => (
-                    <Field key={field.key} label={field.label} htmlFor={field.id}>
+                    <Field key={field.key} label={field.label} required htmlFor={field.id} error={passwordCheck.errors[field.key]}>
                       <div className="relative">
                         <FormInput
                           id={field.id}
+                          {...passwordCheck.invalidProps(field.key)}
                           type={field.show ? "text" : "password"}
                           autoComplete={field.ac}
                           value={passwordForm[field.key]}
-                          onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
-                          className="pr-10"
+                          onChange={(e) => {
+                            setPasswordForm({ ...passwordForm, [field.key]: e.target.value });
+                            if (field.key in passwordServerErrors) setPasswordServerErrors({});
+                          }}
+                          className="pr-11"
                         />
                         <button
                           type="button"
                           onClick={field.toggle}
                           aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]"
+                          className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                         >
                           {field.show
                             ? <IconEyeOff className="h-4 w-4" aria-hidden="true" />
@@ -632,25 +654,22 @@ export default function SettingsPage() {
             </AdminCard>
           )}
 
-          {/* ── System (admin only) ── */}
           {activeTab === "site" && isAdmin && (
             <>
-              {/* The one destructive control on this page, styled as such and
-                  confirmed before it fires. */}
               <AdminCard>
                 <AdminCardHeader
-                  icon={IconAlert}
                   title="Maintenance mode"
+                  subtitle="Replace the public site with a maintenance screen"
                   action={
                     <StatusBadge
-                      tone={maint.enabled ? "rose" : "slate"}
+                      tone={maint.enabled ? "rose" : "emerald"}
                       label={maint.enabled ? "Site is offline" : "Site is live"}
+                      size="md"
                     />
                   }
                 />
-                <div className="space-y-5 p-5">
-                  <p className="max-w-[68ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-2)]">
-                    Replaces the public site with a branded maintenance screen.
+                <div className="space-y-4 p-4">
+                  <p className="max-w-[68ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">
                     The admin console and sign-in stay reachable, so you can
                     always turn it back off from here.
                   </p>
@@ -666,7 +685,7 @@ export default function SettingsPage() {
 
                   <Field
                     label="Expected back"
-                    hint="Fill this in for planned work. Left empty, the page reads as an unexpected outage instead."
+                    helper="Fill this in for planned work. Left empty, the page reads as an unexpected outage instead."
                   >
                     <FormInput
                       value={maint.eta}
@@ -677,76 +696,69 @@ export default function SettingsPage() {
                   </Field>
 
                   {maintError && (
-                    <p className="text-[13px] font-medium text-[var(--adm-danger)]">{maintError}</p>
+                    <p role="alert" className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)]">
+                      <IconAlert className="h-4 w-4 flex-none" />{maintError}
+                    </p>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-3 border-t border-[var(--adm-line)] pt-5">
-                    <button
-                      type="button"
-                      disabled={!maintLoaded || maintSaving}
-                      onClick={() => {
-                        if (maint.enabled) {
-                          void saveMaintenance({ ...maint, enabled: false });
-                          return;
-                        }
-                        // Taking the public site down is not an undo-able
-                        // click, so it is confirmed. Bringing it back is not.
-                        if (window.confirm(CONFIRM_OFFLINE)) {
-                          void saveMaintenance({ ...maint, enabled: true });
-                        }
-                      }}
-                      className={cn(
-                        "inline-flex h-10 items-center gap-2 rounded-[8px] px-4 text-[14px] font-semibold text-white transition-colors disabled:opacity-50",
-                        maint.enabled
-                          ? "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)]"
-                          : "bg-[var(--adm-danger)] hover:opacity-90"
-                      )}
-                    >
-                      {maintSaving ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
-                      ) : maint.enabled ? (
-                        <><Check className="h-4 w-4" />Bring the site back online</>
-                      ) : (
-                        <><IconAlert className="h-4 w-4" />Take the site offline</>
-                      )}
-                    </button>
-
-                    {maint.enabled && (
-                      <button
-                        type="button"
-                        disabled={maintSaving}
-                        onClick={() => void saveMaintenance(maint)}
-                        className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--adm-line)] px-4 text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-50"
+                  <div className="flex flex-wrap items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4">
+                    {maint.enabled ? (
+                      <WorkspaceButton
+                        variant="primary"
+                        disabled={!maintLoaded || maintSaving}
+                        onClick={() => void saveMaintenance({ ...maint, enabled: false })}
                       >
-                        <IconSave className="h-4 w-4" />Update message
-                      </button>
+                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><Check />Bring the site back online</>}
+                      </WorkspaceButton>
+                    ) : (
+                      // Taking the site down is confirmed; bringing it back is not.
+                      <WorkspaceButton
+                        disabled={!maintLoaded || maintSaving}
+                        onClick={() => setConfirmOffline(true)}
+                        className="border-transparent bg-[var(--adm-danger)] text-white hover:border-transparent hover:bg-[var(--adm-danger-ink)]"
+                      >
+                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><IconAlert />Take the site offline</>}
+                      </WorkspaceButton>
                     )}
 
-                    <a
-                      href="/maintenance"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
-                    >
-                      Preview what visitors will see
-                    </a>
+                    {maint.enabled && (
+                      <WorkspaceButton disabled={maintSaving} onClick={() => void saveMaintenance(maint)}>
+                        <IconSave />Update message
+                      </WorkspaceButton>
+                    )}
+
+                    <WorkspaceButton variant="ghost" asChild>
+                      <a href="/maintenance" target="_blank" rel="noopener noreferrer">
+                        Preview what visitors will see
+                      </a>
+                    </WorkspaceButton>
 
                     {maintSaved && (
-                      <span className="text-[12.5px] font-semibold text-[var(--adm-success)]">Saved</span>
+                      <span role="status" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-success-ink)]">
+                        <Check className="h-4 w-4" />Saved
+                      </span>
                     )}
                   </div>
                 </div>
               </AdminCard>
 
-              <AdminCard>
+              <ConfirmDialog
+                open={confirmOffline}
+                title="Take the public site offline?"
+                body="Visitors will see the maintenance screen until you turn this off. The admin console stays available."
+                confirmLabel="Take site offline"
+                busy={maintSaving}
+                onCancel={() => setConfirmOffline(false)}
+                onConfirm={() => {
+                  setConfirmOffline(false);
+                  void saveMaintenance({ ...maint, enabled: true });
+                }}
+              />
+
+              <AdminCard className="overflow-hidden">
                 <AdminCardHeader
-                  icon={IconGlobe}
                   title="Site details"
-                  action={
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
-                      Read-only
-                    </span>
-                  }
+                  subtitle="Read-only"
                 />
                 <div>
                   {SITE_DETAILS.map((item) => (
@@ -755,8 +767,8 @@ export default function SettingsPage() {
                 </div>
               </AdminCard>
 
-              <AdminCard>
-                <AdminCardHeader icon={IconLink} title="Social links" />
+              <AdminCard className="overflow-hidden">
+                <AdminCardHeader title="Social links" meta="Read-only" />
                 <div>
                   {SOCIAL_LINKS.map((item) => (
                     <RecordRow key={item.label} icon={item.icon} label={item.label} value={item.value} />
@@ -766,29 +778,21 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── command bar ── */}
           {activeTab !== "site" && (
-            <div className="flex items-center justify-end gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3.5">
-              {showSaved && <span className="text-[12.5px] font-semibold text-[var(--adm-success)]">All changes saved</span>}
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-[8px] px-4 text-[14px] font-semibold text-white transition-colors",
-                  showSaved
-                    ? "bg-emerald-600"
-                    : "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)] disabled:opacity-50",
-                )}
-              >
+            <AdminCard className="flex flex-wrap items-center justify-end gap-3 px-4 py-3">
+              {showSaved && (
+                <span role="status" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-success-ink)]">
+                  <Check className="h-4 w-4" />All changes saved
+                </span>
+              )}
+              <WorkspaceButton variant="primary" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
-                ) : showSaved ? (
-                  <><Check className="h-4 w-4" />Saved</>
+                  <><Loader2 className="animate-spin" aria-hidden="true" />Saving…</>
                 ) : (
-                  <><IconSave className="h-4 w-4" />Save changes</>
+                  <><IconSave />Save changes</>
                 )}
-              </button>
-            </div>
+              </WorkspaceButton>
+            </AdminCard>
           )}
         </div>
       </div>

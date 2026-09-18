@@ -12,7 +12,7 @@ export function Kbd({ children, className }: { children: React.ReactNode; classN
   return (
     <kbd
       className={cn(
-        "inline-flex items-center rounded-[4px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--adm-ink-subtle)] shadow-[0_1px_0_rgba(0,0,0,0.04)]",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-1 font-mono text-[11.5px] font-medium text-[var(--adm-ink-subtle)]",
         className,
       )}
     >

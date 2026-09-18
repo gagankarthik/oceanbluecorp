@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import ServiceDetail from "./ServiceDetail";
 import { SOLUTIONS, SOLUTION_SLUGS } from "./content";
@@ -24,6 +25,7 @@ export async function generateMetadata({
     description: data.meta.description,
     keywords: data.meta.keywords,
     openGraph: {
+      images: OG_IMAGES,
       title: `${data.meta.title} | Ocean Blue Corporation`,
       description: data.meta.description,
       url,

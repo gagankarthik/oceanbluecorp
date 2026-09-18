@@ -32,21 +32,21 @@ interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
 export function SearchInput({ value, onChange, className, ...props }: SearchInputProps) {
   return (
     <div className={cn("relative w-full sm:w-[240px]", className)}>
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         type="search"
         autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         {...props}
-        className="h-9 w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] pl-8 pr-8 text-[13px] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-8 text-[13.5px] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[4px] p-0.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)]"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[6px] p-0.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)]"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -144,7 +144,7 @@ export function FilterMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[8px] border px-2.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-2.5 text-[13px] font-medium transition-colors",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
@@ -157,7 +157,7 @@ export function FilterMenu<V extends string>({
           {current?.count !== undefined && (
             <span
               className={cn(
-                "rounded-[4px] px-1 text-[11px] font-bold tabular-nums",
+                "rounded-[6px] px-1 text-[11px] font-bold tabular-nums",
                 active ? "bg-[var(--adm-accent)]/12 text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
               )}
             >
@@ -173,7 +173,7 @@ export function FilterMenu<V extends string>({
       <DropdownMenuContent
         align="start"
         sideOffset={4}
-        className="min-w-[190px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-lg"
+        className="min-w-[190px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -182,7 +182,7 @@ export function FilterMenu<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px]",
+                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
                 selected && "font-semibold text-[var(--adm-accent)]",
               )}
             >
@@ -208,7 +208,7 @@ export function ClearFilters({ show, onClick }: { show: boolean; onClick: () => 
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center gap-1 rounded-[8px] px-2 text-[12.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+      className="inline-flex h-9 items-center gap-1 rounded-[10px] px-2 text-[12.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
     >
       <X className="h-3.5 w-3.5" />Clear
     </button>
@@ -244,7 +244,7 @@ export function FilterToggle({
       <SlidersHorizontal className="h-4 w-4" />
       Filters
       {activeCount > 0 && (
-        <span className="rounded-[4px] bg-[var(--adm-accent)] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+        <span className="rounded-[6px] bg-[var(--adm-accent)] px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
           {activeCount}
         </span>
       )}
@@ -274,7 +274,7 @@ export function ViewSwitcher<V extends string>({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]", className)}>
+    <div className={cn("flex items-center overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]", className)}>
       {options.map(({ value: v, label, icon: Icon }, i) => (
         <button
           key={v}
@@ -315,7 +315,7 @@ export function ViewMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 text-[13.5px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
             className,
           )}
         >
@@ -324,14 +324,14 @@ export function ViewMenu<V extends string>({
           <ChevronDown className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg">
+      <DropdownMenuContent align="end" className="w-40 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
         {options.map(({ value: v, label, icon: Icon }) => {
           const active = v === value;
           return (
             <DropdownMenuItem
               key={v}
               onClick={() => onChange(v)}
-              className={cn("cursor-pointer rounded-[4px] text-sm", active && "font-semibold text-[var(--adm-accent)]")}
+              className={cn("cursor-pointer rounded-[6px] text-sm", active && "font-semibold text-[var(--adm-accent)]")}
             >
               <Icon className={cn("mr-2 h-4 w-4", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
               {label}
@@ -361,7 +361,7 @@ export function BulkBar({
   if (count === 0) return null;
   return (
     <div className={cn("ml-auto flex items-center gap-2", className)}>
-      <span className="text-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">{count} selected</span>
+      <span className="text-[13px] font-medium tabular-nums text-[var(--adm-ink-mute)]">{count} selected</span>
       {children}
       <button
         type="button"

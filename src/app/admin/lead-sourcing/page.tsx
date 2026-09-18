@@ -6,13 +6,22 @@
 // upload; searching only embeds the job + re-ranks, so it's fast.
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { RecordHeader } from "@/components/admin/workspace";
-import { WorkspaceButton } from "@/components/admin/workspace";
-import { IconSource, IconWarning, IconRequisition, IconGroup } from "@/components/admin/icons";
+import { RecordHeader, WorkspaceButton } from "@/components/admin/workspace";
+import { PeriodSwitcher } from "@/components/admin/charts";
+import { EmptyState } from "@/components/admin/empty-state";
+import { Skel } from "@/components/admin/skeletons";
+import { Field, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
+import { IconGroup, IconWarning } from "@/components/admin/icons";
 import { VerdictBadge, SkillChips, OriginBadge, fitScoreColor, type Verdict, type MatchOrigin } from "@/components/admin/fit-ui";
 import { cn } from "@/lib/utils";
+
+const MODES = [
+  { value: "job", label: "From a job" },
+  { value: "paste", label: "Paste a description" },
+] as const;
 
 interface Candidate {
   resume_id: string;
@@ -63,8 +72,11 @@ export default function LeadSourcingPage() {
 
   // Load jobs for the picker.
   useEffect(() => {
-    fetch("/api/jobs")
-      .then((r) => (r.ok ? r.json() : null))
+    fetch("/api/jobs?fields=summary")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
         if (d && Array.isArray(d.jobs)) {
           setJobs(
@@ -72,7 +84,10 @@ export default function LeadSourcingPage() {
           );
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Failed to load jobs for lead sourcing:", err);
+        toast.error("Couldn't load your jobs. You can still paste a job description.");
+      });
   }, []);
 
   const find = useCallback(async () => {
@@ -101,7 +116,7 @@ export default function LeadSourcingPage() {
         setExpanded({});
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("Couldn't reach the matcher. Check your connection and try again.");
     } finally {
       setLoading(false);
       setRan(true);
@@ -122,122 +137,114 @@ export default function LeadSourcingPage() {
     }
   };
 
+  const findButton = (
+    <WorkspaceButton variant="primary" onClick={find} disabled={loading || !canRun}>
+      {loading ? "Finding…" : "Find candidates"}
+    </WorkspaceButton>
+  );
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Lead Sourcing left the sidebar, so this is the way back. It carries
-          the pool the button was pressed from (?from=), which means a round
-          trip returns you to the tab you left rather than to "All".
-          RecordHeader gives the same back link every detail screen uses. */}
+    <div className="flex flex-col gap-4 pb-6 lg:gap-5">
+      {/* Carries ?from= so the round trip lands on the pool tab you left. */}
       <RecordHeader
-        back={{ label: "Talent Bench", href: `/admin/bench?pool=${backPool}` }}
-        title="Lead Sourcing"
-        subtitle="Find the best-matching candidates across your resume bank and talent bench for a job, by fit score, with the skills they match and miss."
+        className="mb-0"
+        back={{ label: "Talent bench", href: `/admin/bench?pool=${backPool}` }}
+        title="Lead sourcing"
+        subtitle="Rank your resume bank and talent bench against a job, with the skills each candidate matches and misses."
       />
 
-
       <AdminCard>
-        <AdminCardHeader icon={IconSource} title="Find candidates" />
-        <div className="p-6">
-          {/* Mode toggle */}
-          <div className="mb-4 inline-flex rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5">
-            {(["job", "paste"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={cn(
-                  "rounded-[6px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
-                  mode === m
-                    ? "bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]"
-                    : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",
-                )}
-              >
-                {m === "job" ? "From a job" : "Paste a JD"}
-              </button>
-            ))}
-          </div>
-
+        <AdminCardHeader
+          title="Find candidates"
+          subtitle="Start from an open job, or paste the requirements you are sourcing for"
+          action={
+            <PeriodSwitcher
+              label="Search input"
+              options={MODES}
+              value={mode}
+              onChange={setMode}
+            />
+          }
+        />
+        <div className="p-4">
           {mode === "job" ? (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative flex-1">
-                <IconRequisition
-                  className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--adm-ink-subtle)]"
-                  strokeWidth={1.75}
-                />
-                <select
-                  value={jobId}
-                  onChange={(e) => setJobId(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-10 pr-3 text-[14px] text-[var(--adm-ink)] outline-none focus:border-[var(--adm-accent)]"
-                >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <Field label="Job" htmlFor="ls-job" className="min-w-0 flex-1">
+                <FormSelect id="ls-job" value={jobId} onChange={(e) => setJobId(e.target.value)}>
                   <option value="">Select a job…</option>
                   {jobs.map((j) => (
                     <option key={j.id} value={j.id}>
                       {j.title}
-                      {j.department ? ` , ${j.department}` : ""}
+                      {j.department ? ` · ${j.department}` : ""}
                       {j.status ? ` (${j.status})` : ""}
                     </option>
                   ))}
-                </select>
-              </div>
-              <WorkspaceButton variant="primary" onClick={find} disabled={loading || !canRun}>
-                {loading ? "Finding…" : "Find candidates"}
-              </WorkspaceButton>
+                </FormSelect>
+              </Field>
+              {findButton}
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              <textarea
-                value={jobText}
-                onChange={(e) => setJobText(e.target.value)}
-                rows={6}
-                placeholder="Paste a job description, or list the skills / requirements you're sourcing for…"
-                className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3.5 py-2.5 text-[14px] leading-relaxed text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)]"
-              />
-              <div className="flex justify-end">
-                <WorkspaceButton variant="primary" onClick={find} disabled={loading || !canRun}>
-                  {loading ? "Finding…" : "Find candidates"}
-                </WorkspaceButton>
-              </div>
+            <div className="flex flex-col gap-3">
+              <Field label="Job description" htmlFor="ls-jd">
+                <FormTextarea
+                  id="ls-jd"
+                  value={jobText}
+                  onChange={(e) => setJobText(e.target.value)}
+                  rows={6}
+                  placeholder="Paste a job description, or list the skills and requirements you're sourcing for…"
+                />
+              </Field>
+              <div className="flex justify-end">{findButton}</div>
             </div>
           )}
         </div>
       </AdminCard>
 
-      {/* Results */}
       {loading && (
         <AdminCard>
-          <div className="flex items-center gap-3 p-6 text-[14px] text-[var(--adm-ink-mute)]">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--adm-line)] border-t-[var(--adm-accent)]" />
-            Ranking your resume bank and talent bench…
+          <AdminCardHeader title="Matched candidates" meta="Ranking your resume bank and talent bench…" />
+          <div className="divide-y divide-[var(--adm-line-soft)]" aria-hidden="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 sm:gap-4">
+                <Skel className="h-3.5 w-5" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skel className="h-4 w-44 max-w-[60%]" />
+                  <Skel className="h-3 w-60 max-w-[80%]" />
+                </div>
+                <Skel className="hidden h-6 w-20 rounded-full sm:block" />
+                <Skel className="h-6 w-12" />
+              </div>
+            ))}
           </div>
         </AdminCard>
       )}
 
       {!loading && error && (
-        <AdminCard>
-          <div className="flex items-start gap-2.5 p-6 text-[14px] text-red-700">
-            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none" strokeWidth={1.75} />
-            <span>{error}</span>
-          </div>
-        </AdminCard>
+        <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+          <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
+          <p className="text-[13.5px] leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
+        </div>
       )}
 
       {!loading && !error && ran && candidates.length === 0 && (
         <AdminCard>
-          <div className="flex flex-col items-center gap-2 p-10 text-center">
-            <IconGroup className="h-8 w-8 text-[var(--adm-ink-subtle)]" strokeWidth={1.5} />
-            <p className="text-[14px] text-[var(--adm-ink-mute)]">
-              No candidates found. Resumes become searchable once indexed, open{" "}
-              <Link href="/admin/resumes" className="font-semibold text-[var(--adm-accent)] hover:underline">Resumes</Link>{" "}
-              and click &ldquo;Index all&rdquo; to make existing ones searchable.
-            </p>
-          </div>
+          <EmptyState
+            icon={IconGroup}
+            title="No matching candidates"
+            description="Resumes become searchable once they are indexed. Open the resume bank and choose Index all to include existing files."
+            action={
+              <WorkspaceButton asChild>
+                <Link href="/admin/resumes">Open resume bank</Link>
+              </WorkspaceButton>
+            }
+          />
         </AdminCard>
       )}
 
       {!loading && candidates.length > 0 && (
         <AdminCard>
-          <AdminCardHeader icon={IconGroup} title="Matched candidates" count={candidates.length} />
-          <ol className="flex flex-col divide-y divide-[var(--adm-line)]">
+          <AdminCardHeader title="Matched candidates" meta="Ranked by fit score" count={candidates.length} />
+          <ol className="divide-y divide-[var(--adm-line-soft)]">
             {candidates.map((c, i) => {
               const open = !!expanded[c.resume_id];
               return (
@@ -246,64 +253,66 @@ export default function LeadSourcingPage() {
                     type="button"
                     aria-expanded={open}
                     onClick={() => setExpanded((m) => ({ ...m, [c.resume_id]: !m[c.resume_id] }))}
-                    className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[var(--adm-row-hover)] sm:gap-4 sm:p-5"
+                    className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[var(--adm-row-hover)] sm:gap-4"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-[var(--adm-surface-2)] text-[13px] font-semibold tabular-nums text-[var(--adm-ink-mute)]">
+                      <span className="w-6 flex-none text-right text-[13px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
                         {i + 1}
                       </span>
                       <div className="min-w-0">
-                        <p className="flex items-center gap-2 truncate text-[15px] font-semibold text-[var(--adm-ink)]">
-                          <span className="truncate">{c.candidate_name || "Unnamed candidate"}</span>
+                        <p className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">
+                            {c.candidate_name || "Unnamed candidate"}
+                          </span>
                           <OriginBadge origin={c.origin} className="flex-none" />
                         </p>
-                        <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">
+                        <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
                           {[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-none items-center gap-2 sm:gap-3">
+                    <div className="flex flex-none items-center gap-3 sm:gap-4">
                       <VerdictBadge verdict={c.verdict} className="hidden sm:inline" />
-                      <div className="text-right">
-                        <span className={cn("text-[20px] font-bold tabular-nums leading-none sm:text-[22px]", fitScoreColor(c.fit_score))}>
+                      <span className="text-right">
+                        <span className={cn("text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
                           {c.fit_score}
                         </span>
-                        <span className="ml-0.5 text-[11px] font-medium text-[var(--adm-ink-subtle)]">/100</span>
-                      </div>
+                        <span className="ml-0.5 text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">/100</span>
+                      </span>
                       <ChevronDown
-                        className={cn("h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform", open && "rotate-180")}
+                        aria-hidden="true"
+                        className={cn("h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform duration-200", open && "rotate-180")}
                       />
                     </div>
                   </button>
 
                   {open && (
-                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 sm:pl-16">
-                      <VerdictBadge verdict={c.verdict} className="mb-3 inline-block sm:hidden" />
+                    <div className="space-y-3 px-4 pb-4 sm:pl-[3.25rem]">
+                      <VerdictBadge verdict={c.verdict} className="inline-block sm:hidden" />
                       {c.rationale && (
-                        <div className="mb-3">
-                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--adm-ink-subtle)]">
+                        <div>
+                          <p className="mb-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
                             Why {c.qualified ? "they fit" : "they may not fit"}
                           </p>
-                          <p className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>
+                          <p className="max-w-[72ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>
                         </div>
                       )}
                       <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
-                      {/* Bank hits are files, not candidate records, link each
-                          hit to the thing it actually is. */}
+                      {/* Bank hits are files, not candidate records: link each to what it is. */}
                       {c.profileId ? (
                         <Link
                           href={`/admin/candidates/${c.profileId}`}
-                          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                          className="inline-flex items-center gap-1 rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                         >
-                          View full profile →
+                          View full profile <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </Link>
                       ) : c.bankId ? (
                         <button
                           type="button"
                           onClick={() => void openBankResume(c.bankId!)}
-                          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                          className="inline-flex items-center gap-1 rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                         >
-                          Open resume →
+                          Open resume <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       ) : null}
                     </div>

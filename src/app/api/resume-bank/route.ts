@@ -10,6 +10,7 @@ import { requireStaff } from "@/lib/auth/verify";
 import { parseResumeBuffer } from "@/lib/aws/resume-parser";
 import { embedResume, resumesIndexed } from "@/lib/aws/match-candidates";
 import { putBankResumeContact } from "@/lib/aws/dynamodb";
+import { serverError } from "@/lib/api-errors";
 
 function deriveFileType(fileName: string): string {
   const ext = fileName.split(".").pop()?.toLowerCase();
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await listResumeBankObjects();
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return serverError("Listing resume bank", result.error, "Couldn't load the resume bank. Please try again.");
     }
 
     const resumes = (result.objects || [])
@@ -51,8 +52,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, resumes: withStatus });
   } catch (error) {
-    console.error("Resume bank list error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Resume bank list error", error, "Couldn't load the resume bank. Please try again.");
   }
 }
 
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const result = await uploadResume(buffer, fileKey, fileType);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return serverError("Resume bank upload", result.error, "Couldn't upload the resume. Please try again.");
     }
 
     // Best-effort: parse + index this resume so it's searchable by skills in the
@@ -123,7 +123,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, fileKey });
   } catch (error) {
-    console.error("Resume bank upload error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Resume bank upload error", error, "Couldn't upload the resume. Please try again.");
   }
 }

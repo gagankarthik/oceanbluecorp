@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllVendors, createVendor, Vendor } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/vendors - Get all vendors
 export async function GET(request: NextRequest) {
@@ -14,10 +15,7 @@ export async function GET(request: NextRequest) {
     const result = await getAllVendors(vendorLeadRole || undefined);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch vendors" },
-        { status: 500 }
-      );
+      return serverError("Fetching vendors", result.error, "Couldn't load the vendors. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
@@ -27,11 +25,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ vendors });
   } catch (error) {
-    console.error("Error fetching vendors:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching vendors", error, "Couldn't load the vendors. Please try again.");
   }
 }
 
@@ -88,10 +82,7 @@ export async function POST(request: NextRequest) {
     const result = await createVendor(vendor);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to create vendor" },
-        { status: 500 }
-      );
+      return serverError("Creating vendor", result.error, "Couldn't save the vendor. Please try again.");
     }
 
     return NextResponse.json(
@@ -99,10 +90,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating vendor:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error creating vendor", error, "Couldn't save the vendor. Please try again.");
   }
 }

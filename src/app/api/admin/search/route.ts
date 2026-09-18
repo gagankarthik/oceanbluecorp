@@ -8,6 +8,8 @@ import {
   Contact,
 } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { staffRolesOf, UserRole } from "@/lib/auth/config";
+import { serverError } from "@/lib/api-errors";
 
 interface SearchResult {
   type: "job" | "application" | "contact";
@@ -31,10 +33,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all data in parallel
+    const roles = staffRolesOf(auth.claims.groups);
+    const canSeeContacts = roles.includes(UserRole.ADMIN) || roles.includes(UserRole.HR);
     const [jobsResult, applicationsResult, contactsResult] = await Promise.all([
       getAllJobs(),
       getAllApplications(),
-      getAllContacts(),
+      // Enquiries are Admin/HR only, like /admin/contacts itself.
+      canSeeContacts ? getAllContacts() : Promise.resolve({ success: true, data: [] as Contact[] }),
     ]);
 
     const results: SearchResult[] = [];
@@ -99,7 +104,7 @@ export async function GET(request: NextRequest) {
           id: contact.id,
           title: `${contact.firstName} ${contact.lastName}`,
           subtitle: `${contact.company} - ${contact.inquiryType}`,
-          link: `/admin/contacts?search=${encodeURIComponent(contact.firstName + " " + contact.lastName)}`,
+          link: `/admin/contacts/${encodeURIComponent(contact.id)}`,
           status: contact.status,
         });
       });
@@ -114,10 +119,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ results: results.slice(0, 10) });
   } catch (error) {
-    console.error("Error searching:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error searching", error, "Couldn't run the search. Please try again.");
   }
 }

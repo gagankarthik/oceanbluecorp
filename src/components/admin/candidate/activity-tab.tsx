@@ -3,14 +3,13 @@
 import type { Application } from "@/lib/aws/dynamodb";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
-import { IconClock, IconHistory } from "@/components/admin/icons";
-import { statusMeta, tones } from "@/components/admin/theme";
-import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { IconHistory } from "@/components/admin/icons";
+import { statusColor } from "@/components/admin/theme";
 import { fmtDateTime } from "@/lib/format";
 
-/* Derived from the record rather than re-declared: `statusHistory` is an inline
-   type on `Application` with no exported name, so a hand-written interface here
-   would silently drift the first time a field is added to it. */
+/* Derived from the record: `statusHistory` is an inline type on `Application`
+   with no exported name, so a hand-written interface would drift. */
 type HistoryEntry = NonNullable<Application["statusHistory"]>[number];
 
 /** Stage-change history, newest first, on a connected rail. */
@@ -19,38 +18,37 @@ export function ActivityTab({ history }: { history: HistoryEntry[] }) {
     <AdminCard className="overflow-hidden">
       <AdminCardHeader icon={IconHistory} title="Status history" count={history.length} />
       {history.length > 0 ? (
-        <ol className="px-5 py-4">
+        <ol className="p-4">
           {[...history].reverse().map((entry, i, arr) => {
-            const meta = (statusMeta as Record<string, typeof statusMeta.pending>)[entry.status];
-            const t = tones[meta?.tone || "slate"];
-            const Icon = meta?.icon || IconClock;
             const isLast = i === arr.length - 1;
             return (
-              <li key={i} className="relative flex gap-4 pb-5 last:pb-0">
-                {!isLast && <div className="absolute bottom-0 left-[13px] top-7 w-px bg-[var(--adm-line-soft)]" />}
-                <span className={cn("grid h-7 w-7 flex-none place-items-center rounded-full", t.bg)}>
-                  <Icon className={cn("h-3.5 w-3.5", t.text)} />
-                </span>
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="text-[13.5px]">
-                      <span className="font-semibold text-[var(--adm-ink)]">
-                        Moved to {meta?.label || entry.status}
-                      </span>
+              <li key={i} className="relative flex gap-3.5 pb-5 last:pb-0">
+                {!isLast && (
+                  <span aria-hidden className="absolute bottom-0 left-[5px] top-4 w-px bg-[var(--adm-line)]" />
+                )}
+                <span
+                  aria-hidden
+                  className="relative mt-[5px] h-[11px] w-[11px] flex-none rounded-full ring-4 ring-[var(--adm-surface)]"
+                  style={{ background: statusColor(entry.status) }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[14px] text-[var(--adm-ink-mute)]">
+                      Moved to
+                      <StatusBadge status={entry.status} />
                       {entry.changedByName && (
-                        <span className="font-normal text-[var(--adm-ink-subtle)]">
-                          {" "}
-                          by <span className="font-medium text-[var(--adm-ink-mute)]">{entry.changedByName}</span>
+                        <span>
+                          by <span className="font-medium text-[var(--adm-ink)]">{entry.changedByName}</span>
                         </span>
                       )}
                     </p>
-                    <span className="flex-none text-[11.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                    <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
                       {fmtDateTime(entry.changedAt)}
                     </span>
                   </div>
                   {entry.notes && (
-                    <p className="mt-1.5 rounded-[4px] border border-[var(--adm-line-soft)] bg-[var(--adm-zebra)] px-3 py-2 text-[12.5px] italic text-[var(--adm-ink-mute)]">
-                      &ldquo;{entry.notes}&rdquo;
+                    <p className="mt-2 rounded-[12px] bg-[var(--adm-surface-sunken)] px-3 py-2 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                      {entry.notes}
                     </p>
                   )}
                 </div>
@@ -62,7 +60,7 @@ export function ActivityTab({ history }: { history: HistoryEntry[] }) {
         <EmptyState
           icon={IconHistory}
           title="No activity recorded yet"
-          description="Stage changes will appear here."
+          description="Stage changes will appear here as the candidate moves through the pipeline."
         />
       )}
     </AdminCard>

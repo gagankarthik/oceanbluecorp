@@ -67,8 +67,10 @@ export interface RateLimitResult {
 export async function checkRateLimit(
   request: Request,
   rule: RateLimitRule,
+  /** Bucket by this instead of the client address, e.g. an account id. */
+  subject?: string,
 ): Promise<RateLimitResult> {
-  const key = clientKey(request);
+  const key = subject ? subject.slice(0, 128) : clientKey(request);
   const window = Math.floor(Date.now() / 1000 / rule.windowSeconds);
   const counterId = `rl#${rule.action}#${key}#${window}`;
   // Long enough that a stale row cannot be reused, short enough to be cleaned up.
@@ -115,4 +117,21 @@ export const RATE_LIMITS = {
    * A real person sends one of these; three in five minutes is already generous.
    */
   contact: { action: "contact", limit: 3, windowSeconds: 300 } as RateLimitRule,
+  /**
+   * Password sign-in and invite completion. Cognito throttles per account, not
+   * per caller, so spraying one password across many staff emails, or probing
+   * invite temp passwords, went unmetered. A person mistyping gets ten tries.
+   */
+  signIn: { action: "signin", limit: 10, windowSeconds: 300 } as RateLimitRule,
+  /**
+   * Forgot + confirm-reset, one shared bucket. Each "forgot" makes Cognito send
+   * an email, so unthrottled it is a mail cannon aimed at staff inboxes.
+   */
+  passwordReset: { action: "password-reset", limit: 8, windowSeconds: 900 } as RateLimitRule,
+  /**
+   * In-app password change, bucketed per ACCOUNT: each try is a check of the
+   * current password, so a borrowed session must not become a guessing oracle,
+   * whatever address it comes from.
+   */
+  passwordChange: { action: "password-change", limit: 5, windowSeconds: 900 } as RateLimitRule,
 } as const;

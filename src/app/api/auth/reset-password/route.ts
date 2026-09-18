@@ -3,6 +3,7 @@ import {
   ConfirmForgotPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /* Step two: exchange the emailed code plus a new password for a reset.
  *
@@ -24,10 +25,16 @@ const messages: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
+  const limited = await checkRateLimit(request, RATE_LIMITS.passwordReset);
+  if (!limited.allowed) return limited.response!;
+
   try {
     const { email, code, password } = await request.json();
 
-    if (!email || !code || !password) {
+    if (
+      typeof email !== "string" || !email || email.length > 254 ||
+      (typeof code !== "string" && typeof code !== "number") || !String(code).trim() || String(code).length > 20
+    ) {
       return NextResponse.json(
         { error: "Enter the code from your email and a new password." },
         { status: 400 }

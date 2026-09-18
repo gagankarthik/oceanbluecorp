@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import {
   Building2, Layers, Briefcase, Newspaper, Code2, Scale,
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
   description:
     "Every page on the Ocean Blue Corporation website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Site map | Ocean Blue Corporation",
     description:
       "A directory of every page on oceanbluecorp.com, grouped by what you came to do.",

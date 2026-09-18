@@ -93,21 +93,16 @@ export function EmptyState({
         className,
       )}
     >
-      <span
+      <Icon
         aria-hidden="true"
-        className={cn(
-          "grid place-items-center rounded-[6px]",
-          t.bg,
-          sm ? "h-10 w-10" : "h-12 w-12",
-        )}
-      >
-        <Icon className={cn(t.text, sm ? "h-5 w-5" : "h-6 w-6")} strokeWidth={1.5} />
-      </span>
-      <p className={cn("mt-3 font-medium text-[var(--adm-ink-mute)]", sm ? "text-xs" : "text-sm")}>
+        className={cn(resolvedTone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text, sm ? "h-5 w-5" : "h-6 w-6")}
+        strokeWidth={1.5}
+      />
+      <p className={cn("mt-2.5 font-medium text-[var(--adm-ink)]", sm ? "text-[13px]" : "text-[14px]")}>
         {resolvedTitle}
       </p>
       {resolvedDescription && (
-        <p className="mt-1 max-w-xs text-xs text-[var(--adm-ink-subtle)]">{resolvedDescription}</p>
+        <p className="mt-1 max-w-sm text-balance text-[13px] text-[var(--adm-ink-mute)]">{resolvedDescription}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>

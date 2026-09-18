@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -6,17 +8,21 @@ interface AvatarProps {
   email?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
-  src?: string;
+  /** Photo URL. Initials show until it loads, and stay if it fails. */
+  src?: string | null;
+  onLoad?: () => void;
+  onError?: () => void;
 }
 
+// Flat fills, all >= 4.5:1 against white initials.
 const PALETTE = [
-  ["from-[var(--adm-accent)]", "to-indigo-600"],
-  ["from-violet-500", "to-purple-600"],
-  ["from-emerald-500", "to-teal-600"],
-  ["from-amber-500", "to-orange-600"],
-  ["from-rose-500", "to-pink-600"],
-  ["from-cyan-500", "to-[var(--adm-accent)]"],
-  ["from-sky-500", "to-indigo-600"],
+  "bg-[#1d4ed8]",
+  "bg-[#6d28d9]",
+  "bg-[#047857]",
+  "bg-[#b45309]",
+  "bg-[#be123c]",
+  "bg-[#0e7490]",
+  "bg-[#475569]",
 ];
 
 function hash(str: string): number {
@@ -25,7 +31,10 @@ function hash(str: string): number {
   return h;
 }
 
-export function Avatar({ name, email, size = "md", className, src }: AvatarProps) {
+export function Avatar({ name, email, size = "md", className, src, onLoad, onError }: AvatarProps) {
+  const [loaded, setLoaded] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+  React.useEffect(() => { setLoaded(false); setFailed(false); }, [src]);
   const display = name || email || "?";
   const initials = display
     .split(" ")
@@ -34,31 +43,38 @@ export function Avatar({ name, email, size = "md", className, src }: AvatarProps
     .join("")
     .slice(0, 2)
     .toUpperCase() || "?";
-  const palette = PALETTE[hash(display) % PALETTE.length];
+  const fill = PALETTE[hash(display) % PALETTE.length];
   const sz = {
-    xs: "w-6 h-6 text-[9px]",
-    sm: "w-7 h-7 text-[10px]",
-    md: "w-9 h-9 text-xs",
+    xs: "w-6 h-6 text-[10.5px]",
+    sm: "w-7 h-7 text-[11.5px]",
+    md: "w-8 h-8 text-[11.5px]",
     lg: "w-11 h-11 text-sm",
     xl: "w-16 h-16 text-lg",
   }[size];
-  if (src) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={display} className={cn("rounded-full object-cover ring-2 ring-[var(--adm-surface)] shadow-sm", sz, className)} />
-    );
-  }
   return (
     <div
       className={cn(
-        "rounded-full bg-gradient-to-br flex items-center justify-center font-bold text-white flex-shrink-0 ring-2 ring-[var(--adm-surface)] shadow-sm",
-        palette[0],
-        palette[1],
+        "relative flex flex-shrink-0 select-none items-center justify-center overflow-hidden rounded-full font-semibold tracking-[0.02em] text-white",
+        fill,
         sz,
         className,
       )}
     >
-      {initials}
+      <span aria-hidden={!!src && loaded}>{initials}</span>
+      {src && !failed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={display}
+          decoding="async"
+          onLoad={() => { setLoaded(true); onLoad?.(); }}
+          onError={() => { setFailed(true); onError?.(); }}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-200",
+            loaded ? "opacity-100" : "opacity-0",
+          )}
+        />
+      )}
     </div>
   );
 }

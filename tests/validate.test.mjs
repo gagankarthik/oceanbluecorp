@@ -21,6 +21,15 @@ describe("validate", () => {
     assert.equal("ownership" in r.value, false);
   });
 
+  test("format: email rejects a malformed address and keeps a good one", () => {
+    const schema = { email: { kind: "string", required: true, maxLength: 254, format: "email" } };
+    assert.equal(validate({ email: "not-an-email" }, schema).ok, false);
+    assert.equal(validate({ email: "a b@c.com" }, schema).ok, false);
+    const r = validate({ email: "  jane.doe+jobs@example.co.uk " }, schema);
+    assert.equal(r.ok, true);
+    assert.equal(r.value.email, "jane.doe+jobs@example.co.uk");
+  });
+
   test("reports a missing required field by name", () => {
     const r = validate({}, { applicationId: { kind: "string", required: true } });
     assert.equal(r.ok, false);
@@ -35,6 +44,12 @@ describe("validate", () => {
   test("trims accepted strings", () => {
     const r = validate({ name: "  Jane  " }, { name: { kind: "string" } });
     assert.equal(r.value.name, "Jane");
+  });
+
+  test("trim: false keeps a password exactly as typed, but blank is still blank", () => {
+    const rule = { pw: { kind: "string", required: true, trim: false } };
+    assert.equal(validate({ pw: " Secret1! " }, rule).value.pw, " Secret1! ");
+    assert.equal(validate({ pw: "   " }, rule).ok, false);
   });
 
   test("enforces a closed set of values", () => {

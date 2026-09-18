@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, X, GraduationCap, Tag, BadgeCheck, Plus } from "lucide-react";
-import { IconJob, IconSparkles, IconTrash, IconTrend, IconWarning } from "./icons";
+import { Loader2, X, Plus } from "lucide-react";
+import { IconTrash, IconWarning } from "./icons";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type {
   Application, ResumeAnalysis, ResumeWorkExperience, ResumeEducation, ResumeCertification,
 } from "@/lib/aws/dynamodb";
-import { cn } from "@/lib/utils";
-import { FormSection, Field, FormInput, FormTextarea } from "./forms/primitives";
+import { AdminCard, AdminCardHeader } from "./admin-card";
+import { WorkspaceButton } from "./workspace";
+import { Field, FormInput, FormSelect, FormTextarea } from "./forms/primitives";
 
 // ── array <-> text helpers ───────────────────────────────────────────────────
 
@@ -25,6 +26,64 @@ interface Props {
   application: Application;
   onSaved?: (app: Application) => void;
 }
+
+// ── layout atoms ─────────────────────────────────────────────────────────────
+
+function Section({
+  title,
+  subtitle,
+  onAdd,
+  addLabel,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  onAdd?: () => void;
+  addLabel?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={title}
+        subtitle={subtitle}
+        action={onAdd && (
+          <WorkspaceButton variant="ghost" onClick={onAdd} aria-label={addLabel}>
+            <Plus aria-hidden="true" />
+            Add
+          </WorkspaceButton>
+        )}
+      />
+      <div className="p-4">{children}</div>
+    </AdminCard>
+  );
+}
+
+/** One repeatable entry (a role, a degree, a certificate) inside a section. */
+function Entry({ label, onRemove, children }: { label: string; onRemove: () => void; children: React.ReactNode }) {
+  return (
+    <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3.5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">{label}</p>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${label.toLowerCase()}`}
+          className="-my-1 grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+        >
+          <IconTrash className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function NoEntries({ children }: { children: React.ReactNode }) {
+  return <p className="text-[13px] text-[var(--adm-ink-subtle)]">{children}</p>;
+}
+
+// ── drawer ───────────────────────────────────────────────────────────────────
 
 export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSaved }: Props) {
   const [draft, setDraft] = React.useState<ResumeAnalysis>({});
@@ -126,61 +185,63 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[640px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
-        {/* Header */}
-        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-b border-[var(--adm-line)] px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center">
-              <IconSparkles className="w-[18px] h-[18px] text-[var(--adm-accent)]" />
-            </div>
-            <div>
-              <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">Edit resume analysis</SheetTitle>
-              <SheetDescription className="text-xs text-[var(--adm-ink-subtle)] mt-0.5">
-                Correct anything the parser got wrong. Personal contact details are not changed here.
-              </SheetDescription>
-            </div>
+      <SheetContent
+        overlayClassName="bg-[var(--adm-scrim)]"
+        side="right"
+        showCloseButton={false}
+        className="flex w-full flex-col gap-0 bg-[var(--adm-canvas)] p-0 sm:max-w-[640px]"
+      >
+        <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5">
+          <div className="min-w-0">
+            <SheetTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
+              Edit resume analysis
+            </SheetTitle>
+            <SheetDescription className="mt-0.5 text-[13px] leading-snug text-[var(--adm-ink-mute)]">
+              Correct anything the parser got wrong. Contact details are not changed here.
+            </SheetDescription>
           </div>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label="Close" className="p-1.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] rounded-[6px] transition-colors">
-            <X className="w-4 h-4" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="Close"
+            className="-mr-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {error && (
-            <div className="flex items-start gap-2.5 p-3 bg-[var(--adm-danger-soft)] border border-[var(--adm-danger)] rounded-[6px]">
-              <IconWarning className="w-4 h-4 text-[var(--adm-danger)] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-[var(--adm-danger)] leading-relaxed">{error}</p>
+            <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+              <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
+              <p className="text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
             </div>
           )}
 
-          {/* Summary */}
-          <FormSection icon={IconSparkles} title="Professional summary">
-            <div className="space-y-3">
+          <Section title="Professional summary">
+            <div className="space-y-4">
               <Field label="Summary">
                 <FormTextarea rows={4} value={draft.professional_summary || ""} onChange={(e) => setDraft((d) => ({ ...d, professional_summary: e.target.value }))} placeholder="Headline summary of the candidate…" />
               </Field>
-              <Field label="Objective">
-                <FormTextarea rows={2} value={draft.objective || ""} onChange={(e) => setDraft((d) => ({ ...d, objective: e.target.value }))} placeholder="Career objective (optional)…" />
+              <Field label="Objective" hint="Optional">
+                <FormTextarea rows={2} value={draft.objective || ""} onChange={(e) => setDraft((d) => ({ ...d, objective: e.target.value }))} placeholder="Career objective…" />
               </Field>
             </div>
-          </FormSection>
+          </Section>
 
-          {/* Analytics */}
-          <FormSection icon={IconTrend} title="Profile metrics">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Section title="Profile metrics">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Career level">
-                <select
+                <FormSelect
                   value={draft.analytics?.career_level || ""}
-                  autoComplete="off"
                   onChange={(e) => setAnalytics("career_level", e.target.value || null)}
-                  className="w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink)] focus:outline-none focus:border-[var(--adm-accent)] focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                 >
-                  <option value=""></option>
+                  <option value="">Not set</option>
                   {CAREER_LEVELS.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </FormSelect>
               </Field>
               <Field label="Years of experience">
-                <FormInput type="number" step="0.1" min="0" value={draft.analytics?.total_years_of_experience ?? ""} onChange={(e) => setAnalytics("total_years_of_experience", e.target.value === "" ? null : Number(e.target.value))} />
+                <FormInput type="number" step="0.1" min="0" className="tabular-nums" value={draft.analytics?.total_years_of_experience ?? ""} onChange={(e) => setAnalytics("total_years_of_experience", e.target.value === "" ? null : Number(e.target.value))} />
               </Field>
               <Field label="Primary industry">
                 <FormInput value={draft.analytics?.primary_industry || ""} onChange={(e) => setAnalytics("primary_industry", e.target.value || null)} placeholder="Information Technology" />
@@ -189,135 +250,87 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
                 <FormInput value={draft.analytics?.highest_education_level || ""} onChange={(e) => setAnalytics("highest_education_level", e.target.value || null)} placeholder="Bachelor's Degree" />
               </Field>
             </div>
-          </FormSection>
+          </Section>
 
-          {/* Skills */}
-          <FormSection icon={Tag} title="Skills" description="Comma- or newline-separated.">
-            <div className="space-y-3">
-              <Field label="Technical skills">
+          <Section title="Skills" subtitle="Separate with commas or new lines">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Technical skills" fullWidth>
                 <FormTextarea rows={2} value={skillsText.technical} onChange={(e) => setSkillsText((s) => ({ ...s, technical: e.target.value }))} placeholder="React, Node.js, AWS…" />
               </Field>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Programming languages">
-                  <FormTextarea rows={2} value={skillsText.programming} onChange={(e) => setSkillsText((s) => ({ ...s, programming: e.target.value }))} placeholder="Python, Java…" />
-                </Field>
-                <Field label="Tools & platforms">
-                  <FormTextarea rows={2} value={skillsText.tools} onChange={(e) => setSkillsText((s) => ({ ...s, tools: e.target.value }))} placeholder="Docker, Jira…" />
-                </Field>
-              </div>
-              <Field label="Soft skills">
+              <Field label="Programming languages">
+                <FormTextarea rows={2} value={skillsText.programming} onChange={(e) => setSkillsText((s) => ({ ...s, programming: e.target.value }))} placeholder="Python, Java…" />
+              </Field>
+              <Field label="Tools & platforms">
+                <FormTextarea rows={2} value={skillsText.tools} onChange={(e) => setSkillsText((s) => ({ ...s, tools: e.target.value }))} placeholder="Docker, Jira…" />
+              </Field>
+              <Field label="Soft skills" fullWidth>
                 <FormTextarea rows={2} value={skillsText.soft} onChange={(e) => setSkillsText((s) => ({ ...s, soft: e.target.value }))} placeholder="Leadership, Communication…" />
               </Field>
             </div>
-          </FormSection>
+          </Section>
 
-          {/* Work experience */}
-          <FormSection
-            icon={IconJob}
-            title="Work experience"
-            action={
-              <button type="button" onClick={addWork} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
-                <Plus className="w-3 h-3" /> Add
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {work.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries. Click Add to create one.</p>}
+          <Section title="Work experience" onAdd={addWork} addLabel="Add a role">
+            <div className="space-y-3">
+              {work.length === 0 && <NoEntries>No roles recorded. Add one to start.</NoEntries>}
               {work.map((w, i) => (
-                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeWork(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <IconTrash className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
+                <Entry key={i} label={`Role ${i + 1}`} onRemove={() => removeWork(i)}>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="Company"><FormInput value={w.company_name || ""} onChange={(e) => setWork(i, "company_name", e.target.value)} /></Field>
                     <Field label="Title"><FormInput value={w.job_title || ""} onChange={(e) => setWork(i, "job_title", e.target.value)} /></Field>
                     <Field label="Start"><FormInput value={w.start_date || ""} onChange={(e) => setWork(i, "start_date", e.target.value)} placeholder="Jan 2020" /></Field>
                     <Field label="End"><FormInput value={w.end_date || ""} onChange={(e) => setWork(i, "end_date", e.target.value)} placeholder="Present" /></Field>
-                    <Field label="Location" className="col-span-2"><FormInput value={w.location || ""} onChange={(e) => setWork(i, "location", e.target.value)} /></Field>
+                    <Field label="Location" fullWidth><FormInput value={w.location || ""} onChange={(e) => setWork(i, "location", e.target.value)} /></Field>
+                    <Field label="Responsibilities" hint="One per line" fullWidth>
+                      <FormTextarea rows={3} value={arrToLines(w.responsibilities)} onChange={(e) => setWork(i, "responsibilities", linesToArr(e.target.value))} />
+                    </Field>
+                    <Field label="Technologies" hint="Comma-separated" fullWidth>
+                      <FormInput value={arrToCommas(w.technologies_used)} onChange={(e) => setWork(i, "technologies_used", commasToArr(e.target.value))} />
+                    </Field>
                   </div>
-                  <Field label="Responsibilities" hint="one per line">
-                    <FormTextarea rows={3} value={arrToLines(w.responsibilities)} onChange={(e) => setWork(i, "responsibilities", linesToArr(e.target.value))} />
-                  </Field>
-                  <Field label="Technologies" hint="comma-separated">
-                    <FormInput value={arrToCommas(w.technologies_used)} onChange={(e) => setWork(i, "technologies_used", commasToArr(e.target.value))} />
-                  </Field>
-                </div>
+                </Entry>
               ))}
             </div>
-          </FormSection>
+          </Section>
 
-          {/* Education */}
-          <FormSection
-            icon={GraduationCap}
-            title="Education"
-            action={
-              <button type="button" onClick={addEdu} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
-                <Plus className="w-3 h-3" /> Add
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {edu.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries.</p>}
+          <Section title="Education" onAdd={addEdu} addLabel="Add education">
+            <div className="space-y-3">
+              {edu.length === 0 && <NoEntries>No education recorded.</NoEntries>}
               {edu.map((e, i) => (
-                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeEdu(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <IconTrash className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
-                    <Field label="Institution" className="col-span-2"><FormInput value={e.institution_name || ""} onChange={(ev) => setEdu(i, "institution_name", ev.target.value)} /></Field>
+                <Entry key={i} label={`Education ${i + 1}`} onRemove={() => removeEdu(i)}>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Institution" fullWidth><FormInput value={e.institution_name || ""} onChange={(ev) => setEdu(i, "institution_name", ev.target.value)} /></Field>
                     <Field label="Degree"><FormInput value={e.degree_type || ""} onChange={(ev) => setEdu(i, "degree_type", ev.target.value)} placeholder="B.S." /></Field>
                     <Field label="Field of study"><FormInput value={e.field_of_study || ""} onChange={(ev) => setEdu(i, "field_of_study", ev.target.value)} placeholder="Computer Science" /></Field>
                     <Field label="Start"><FormInput value={e.start_date || ""} onChange={(ev) => setEdu(i, "start_date", ev.target.value)} /></Field>
                     <Field label="End"><FormInput value={e.end_date || ""} onChange={(ev) => setEdu(i, "end_date", ev.target.value)} placeholder="2020" /></Field>
                   </div>
-                </div>
+                </Entry>
               ))}
             </div>
-          </FormSection>
+          </Section>
 
-          {/* Certifications */}
-          <FormSection
-            icon={BadgeCheck}
-            title="Certifications"
-            tone="emerald"
-            action={
-              <button type="button" onClick={addCert} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[var(--adm-accent)] hover:bg-[var(--adm-accent-soft)] rounded-[4px] transition-colors">
-                <Plus className="w-3 h-3" /> Add
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {certs.length === 0 && <p className="text-xs text-[var(--adm-ink-subtle)] italic">No entries.</p>}
+          <Section title="Certifications" onAdd={addCert} addLabel="Add a certification">
+            <div className="space-y-3">
+              {certs.length === 0 && <NoEntries>No certifications recorded.</NoEntries>}
               {certs.map((c, i) => (
-                <div key={i} className="rounded-[6px] border border-[var(--adm-line)] p-3 space-y-2.5 relative">
-                  <button type="button" onClick={() => removeCert(i)} className="absolute top-2 right-2 p-1 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-danger)] transition-colors" aria-label="Remove">
-                    <IconTrash className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-6">
-                    <Field label="Name" className="col-span-2"><FormInput value={c.name || ""} onChange={(e) => setCert(i, "name", e.target.value)} /></Field>
+                <Entry key={i} label={`Certification ${i + 1}`} onRemove={() => removeCert(i)}>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Name" fullWidth><FormInput value={c.name || ""} onChange={(e) => setCert(i, "name", e.target.value)} /></Field>
                     <Field label="Issuer"><FormInput value={c.issuing_organization || ""} onChange={(e) => setCert(i, "issuing_organization", e.target.value)} /></Field>
                     <Field label="Issued"><FormInput value={c.issue_date || ""} onChange={(e) => setCert(i, "issue_date", e.target.value)} /></Field>
                   </div>
-                </div>
+                </Entry>
               ))}
             </div>
-          </FormSection>
+          </Section>
         </div>
 
-        {/* Sticky footer */}
-        <div className="flex-shrink-0 bg-[var(--adm-surface)] border-t border-[var(--adm-line)] px-5 py-3 flex items-center gap-3">
-          <button type="button" onClick={() => onOpenChange(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold border border-[var(--adm-line)] text-[var(--adm-ink-mute)] rounded-[8px] hover:bg-[var(--adm-row-hover)] transition-colors">
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={cn("flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-[var(--adm-accent)] text-white rounded-[8px] hover:bg-[var(--adm-accent-strong)] active:scale-[0.99] disabled:opacity-60 transition")}
-          >
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
+          <WorkspaceButton onClick={() => onOpenChange(false)}>Cancel</WorkspaceButton>
+          <WorkspaceButton variant="primary" onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
             Save changes
-          </button>
+          </WorkspaceButton>
         </div>
       </SheetContent>
     </Sheet>

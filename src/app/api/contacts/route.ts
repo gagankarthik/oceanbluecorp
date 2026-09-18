@@ -2,8 +2,9 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { sendContactNotificationEmail } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireUserAdmin } from "@/lib/auth/verify";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { serverError } from "@/lib/api-errors";
 
 // ── Spam heuristics (no external dependencies) ──────────────────────────────
 // A "token" is treated as random/bot-generated if it's long and either has no
@@ -73,7 +74,7 @@ function validateContact(b: Record<string, unknown>): string | null {
 
 // GET /api/contacts - Get all contacts (staff only)
 export async function GET(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
@@ -82,10 +83,7 @@ export async function GET(request: NextRequest) {
     const result = await getAllContacts(status || undefined);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch contacts" },
-        { status: 500 }
-      );
+      return serverError("Fetching contacts", result.error, "Couldn't load the messages. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
@@ -95,11 +93,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ contacts });
   } catch (error) {
-    console.error("Error fetching contacts:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching contacts", error, "Couldn't load the messages. Please try again.");
   }
 }
 
@@ -160,10 +154,7 @@ export async function POST(request: NextRequest) {
     const result = await createContact(contact);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to submit contact form" },
-        { status: 500 }
-      );
+      return serverError("Creating contact", result.error, "Couldn't send your message. Please try again.");
     }
 
     /* Both of these run AFTER the response, inside after().
@@ -187,7 +178,7 @@ export async function POST(request: NextRequest) {
           type: "contact_received",
           title: "New Contact Submission",
           message: `${body.firstName} ${body.lastName} from ${body.company} - ${body.inquiryType}`,
-          link: `/admin/contacts`,
+          link: `/admin/contacts/${contact.id}`,
           relatedId: contact.id,
           isRead: false,
           createdAt: new Date().toISOString(),
@@ -202,6 +193,7 @@ export async function POST(request: NextRequest) {
           jobTitle: contact.jobTitle,
           inquiryType: contact.inquiryType,
           message: contact.message,
+          contactId: contact.id,
         }).catch((err) => { console.error("Failed to send contact notification email:", err); throw err; }),
       ]);
     });
@@ -211,10 +203,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating contact:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error creating contact", error, "Couldn't send your message. Please try again.");
   }
 }

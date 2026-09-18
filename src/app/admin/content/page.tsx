@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Check, X, Loader2 } from "lucide-react";
 import {
   IconSave,
   IconEye,
-  IconFile,
   IconHome,
   IconInfo,
   IconJob,
@@ -16,8 +16,11 @@ import {
   IconClock,
 } from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { AdminCard } from "@/components/admin/admin-card";
+import { PageHeader } from "@/components/admin/page-header";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { WorkspaceButton } from "@/components/admin/workspace";
+import { FormInput, FormTextarea } from "@/components/admin/forms/primitives";
+import { Skel } from "@/components/admin/skeletons";
 import { cn } from "@/lib/utils";
 
 // ─── Schema ────────────────────────────────────────────────────────────────
@@ -48,10 +51,10 @@ const PAGES: PageDef[] = [
     name: "Homepage",
     icon: IconHome,
     sections: [
-      { id: "hero", label: "Hero Section" },
+      { id: "hero", label: "Hero section" },
       { id: "anniversary", label: "Anniversary" },
       { id: "stats", label: "Statistics" },
-      { id: "cta", label: "Call to Action" },
+      { id: "cta", label: "Call to action" },
     ],
     fields: {
       hero: [
@@ -60,8 +63,8 @@ const PAGES: PageDef[] = [
         { key: "announcementScroll", label: "Scroll the announcement (marquee)", type: "toggle" },
         { key: "heroTitle", label: "Headline, blank uses the default", type: "text", placeholder: "The people and platforms behind enterprises and government agencies." },
         { key: "heroSubtitle", label: "Subheadline", type: "textarea", placeholder: "IT staffing, enterprise solutions, and managed services, one accountable partner, one accountable standard." },
-        { key: "heroCtaText", label: "Primary CTA Button", type: "text", placeholder: "Start a conversation" },
-        { key: "heroCtaSecondary", label: "Secondary CTA Button", type: "text", placeholder: "Explore what we do" },
+        { key: "heroCtaText", label: "Primary CTA button", type: "text", placeholder: "Start a conversation" },
+        { key: "heroCtaSecondary", label: "Secondary CTA button", type: "text", placeholder: "Explore what we do" },
       ],
       // TEMPORARY, the 13-year celebration band. Delete this section with
       // src/components/landing/anniversary/. The toggle is the kill switch:
@@ -83,9 +86,9 @@ const PAGES: PageDef[] = [
         { key: "statOffices", label: "Stat 4, Global offices", type: "text", placeholder: "4" },
       ],
       cta: [
-        { key: "ctaHeading", label: "CTA Heading", type: "text", placeholder: "Ready to transform your business?" },
-        { key: "ctaBody", label: "CTA Body Text", type: "textarea", placeholder: "Contact us today…" },
-        { key: "ctaButton", label: "CTA Button Label", type: "text", placeholder: "Schedule a Consultation" },
+        { key: "ctaHeading", label: "CTA heading", type: "text", placeholder: "Ready to transform your business?" },
+        { key: "ctaBody", label: "CTA body text", type: "textarea", placeholder: "Contact us today…" },
+        { key: "ctaButton", label: "CTA button label", type: "text", placeholder: "Schedule a Consultation" },
       ],
     },
   },
@@ -122,7 +125,7 @@ const PAGES: PageDef[] = [
     name: "Contact",
     icon: IconPhone,
     sections: [
-      { id: "info", label: "Hero & Details" },
+      { id: "info", label: "Hero and details" },
     ],
     fields: {
       info: [
@@ -144,13 +147,49 @@ const PAGES: PageDef[] = [
 // helpful guidance text lives in each field's `placeholder`.
 const DEFAULT_FIELDS: Record<string, string> = {};
 
-/** Uppercase micro-label that titles a nav panel. */
+/** Titles a nav panel. */
 function NavLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-b border-[var(--adm-line)] px-4 py-2.5">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-head-ink)]">
-        {children}
-      </p>
+    <div className="border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+      <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">{children}</p>
+    </div>
+  );
+}
+
+// Horizontal scroll row below lg, vertical list beside the editor from lg.
+const NAV_LIST = "flex gap-1 overflow-x-auto p-1.5 lg:flex-col lg:gap-0.5 lg:overflow-visible";
+const NAV_ITEM =
+  "flex flex-none items-center gap-2.5 whitespace-nowrap rounded-[8px] px-2.5 py-2 text-left text-[13px] transition-colors duration-150 lg:w-full";
+
+function ContentSkeleton() {
+  return (
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[236px_minmax(0,1fr)]" aria-hidden="true">
+      <div className="space-y-4">
+        {[4, 3].map((n, k) => (
+          <AdminCard key={k} className="overflow-hidden">
+            <div className="border-b border-[var(--adm-line-soft)] px-4 py-3"><Skel className="h-3.5 w-16" /></div>
+            <div className="flex gap-1 p-1.5 lg:flex-col">
+              {Array.from({ length: n }).map((_, i) => (
+                <Skel key={i} className="h-8 w-28 flex-none rounded-[8px] lg:w-full" />
+              ))}
+            </div>
+          </AdminCard>
+        ))}
+      </div>
+      <AdminCard className="overflow-hidden">
+        <div className="border-b border-[var(--adm-line-soft)] px-4 py-3">
+          <Skel className="h-4 w-32" />
+          <Skel className="mt-2 h-3 w-24" />
+        </div>
+        <div className="divide-y divide-[var(--adm-line-soft)]">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="space-y-2.5 px-4 py-3">
+              <Skel className="h-3.5 w-40" />
+              <Skel className="h-4 w-3/4" />
+            </div>
+          ))}
+        </div>
+      </AdminCard>
     </div>
   );
 }
@@ -197,8 +236,10 @@ export default function ContentPage() {
         });
 
         setContent(merged);
-      } catch {
-        // Fall back to defaults on error
+      } catch (err) {
+        // Defaults keep the editor usable, but saving them would overwrite live copy, so say so.
+        console.error("Failed to load site content:", err);
+        toast.error("Couldn't load the saved site copy. You're seeing defaults; refresh before saving anything.", { duration: 10000 });
         const defaults: Record<string, Record<string, string>> = {};
         PAGES.forEach((page) => { defaults[page.id] = { ...DEFAULT_FIELDS }; });
         setContent(defaults);
@@ -273,27 +314,18 @@ export default function ContentPage() {
   const saveError = errorPages[activePage];
 
   return (
-    <div className="space-y-5 pb-10">
+    <div className="pb-10">
       <PageHeader
         title="Content"
-        subtitle="Edit and publish website copy, changes save straight to the database."
-        icon={IconFile}
+        info="Edit and publish website copy, changes save straight to the database."
         actions={
           <>
-            <PageHeaderButton variant="secondary" asChild>
+            <WorkspaceButton asChild>
               <a href="/" target="_blank" rel="noopener noreferrer">
                 <IconEye className="h-4 w-4" />Preview
               </a>
-            </PageHeaderButton>
-            <PageHeaderButton
-              variant="primary"
-              onClick={() => savePage(activePage)}
-              disabled={isSaving}
-              className={cn(
-                isSaved && "bg-emerald-600 hover:bg-emerald-700",
-                saveError && "bg-rose-600 hover:bg-rose-700",
-              )}
-            >
+            </WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={() => savePage(activePage)} disabled={isSaving}>
               {isSaving ? (
                 <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
               ) : isSaved ? (
@@ -303,23 +335,21 @@ export default function ContentPage() {
               ) : (
                 <><IconSave className="h-4 w-4" />Save changes</>
               )}
-            </PageHeaderButton>
+            </WorkspaceButton>
           </>
         }
       />
 
       {fetching ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--adm-accent)]" />
-        </div>
+        <ContentSkeleton />
       ) : (
-        <div className="grid items-start gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
 
-          {/* ── Section nav, sticks while the editor scrolls ── */}
-          <div className="space-y-4 lg:sticky lg:top-[76px]">
+          {/* Sticks beside the editor from lg; two scroll rows above it on smaller screens. */}
+          <div className="min-w-0 space-y-4 lg:sticky lg:top-6">
             <AdminCard className="overflow-hidden">
               <NavLabel>Pages</NavLabel>
-              <nav className="p-1.5">
+              <nav aria-label="Pages" className={NAV_LIST}>
                 {PAGES.map((page) => {
                   const Icon = page.icon;
                   const isActive = activePage === page.id;
@@ -328,10 +358,11 @@ export default function ContentPage() {
                   return (
                     <button
                       key={page.id}
+                      type="button"
                       onClick={() => setActivePage(page.id)}
                       aria-current={isActive ? "true" : undefined}
                       className={cn(
-                        "flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-left text-[13px] transition-colors",
+                        NAV_ITEM,
                         isActive
                           ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                           : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -339,8 +370,8 @@ export default function ContentPage() {
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1 truncate">{page.name}</span>
-                      {saved && <IconSuccess className="h-3.5 w-3.5 flex-none text-[var(--adm-success)]" />}
-                      {err && <IconAlert className="h-3.5 w-3.5 flex-none text-[var(--adm-danger)]" />}
+                      {saved && <IconSuccess className="h-3.5 w-3.5 flex-none text-[var(--adm-success-ink)]" aria-label="Saved" />}
+                      {err && <IconAlert className="h-3.5 w-3.5 flex-none text-[var(--adm-danger-ink)]" aria-label="Save failed" />}
                     </button>
                   );
                 })}
@@ -349,16 +380,17 @@ export default function ContentPage() {
 
             <AdminCard className="overflow-hidden">
               <NavLabel>Sections</NavLabel>
-              <nav className="p-1.5">
+              <nav aria-label="Sections" className={NAV_LIST}>
                 {currentPage.sections.map((section) => {
                   const isActive = currentSection.id === section.id;
                   return (
                     <button
                       key={section.id}
+                      type="button"
                       onClick={() => { setActiveSection(section.id); setEditingField(null); }}
                       aria-current={isActive ? "true" : undefined}
                       className={cn(
-                        "relative flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-left text-[13px] transition-colors",
+                        NAV_ITEM,
                         isActive
                           ? "bg-[var(--adm-surface-2)] font-semibold text-[var(--adm-ink)]"
                           : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -376,28 +408,25 @@ export default function ContentPage() {
             </AdminCard>
 
             {lastSaved[activePage] && (
-              <p className="flex items-center gap-1.5 px-1 text-[12px] text-[var(--adm-ink-subtle)]">
-                <IconClock className="h-3 w-3" />
+              <p className="hidden items-center gap-1.5 px-1 text-[12.5px] text-[var(--adm-ink-subtle)] lg:flex">
+                <IconClock className="h-3.5 w-3.5" />
                 Last saved at <span className="tabular-nums">{lastSaved[activePage]}</span>
               </p>
             )}
           </div>
 
-          {/* ── Editor ── */}
           <AdminCard className="overflow-hidden">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
-              <div className="min-w-0">
-                <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
-                  {currentPage.name}
-                </p>
-                <h2 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{currentSection.label}</h2>
-              </div>
-              {saveError && (
-                <span className="inline-flex flex-none items-center gap-1.5 rounded-[4px] bg-[var(--adm-danger-soft)] px-2.5 py-1 text-[12px] font-semibold text-[var(--adm-danger)]">
-                  <IconAlert className="h-3.5 w-3.5" />{saveError}
-                </span>
-              )}
-            </div>
+            <AdminCardHeader
+              title={currentSection.label}
+              subtitle={`${currentPage.name} page`}
+              action={
+                saveError ? (
+                  <span role="alert" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)]">
+                    <IconAlert className="h-4 w-4 flex-none" />{saveError}
+                  </span>
+                ) : undefined
+              }
+            />
 
             <div className="divide-y divide-[var(--adm-line-soft)]">
               {currentFields.map((fieldDef) => {
@@ -409,8 +438,8 @@ export default function ContentPage() {
                 if (fieldDef.type === "toggle") {
                   const on = value === "true";
                   return (
-                    <div key={fieldDef.key} className="flex items-center justify-between gap-4 px-5 py-4">
-                      <label className="text-[13px] font-semibold text-[var(--adm-ink-mute)]">{fieldDef.label}</label>
+                    <div key={fieldDef.key} className="flex items-center justify-between gap-4 px-4 py-3">
+                      <label className="text-[14px] font-medium text-[var(--adm-ink)]">{fieldDef.label}</label>
                       <button
                         type="button"
                         role="switch"
@@ -423,12 +452,12 @@ export default function ContentPage() {
                           }))
                         }
                         className={cn(
-                          "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors",
+                          "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors duration-150",
                           on ? "bg-[var(--adm-accent)]" : "bg-[var(--adm-line-strong)]",
                         )}
                       >
                         <span className={cn(
-                          "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+                          "inline-block h-5 w-5 transform rounded-full bg-white shadow-[var(--adm-shadow-sm)] transition-transform duration-150",
                           on ? "translate-x-5" : "translate-x-0.5",
                         )} />
                       </button>
@@ -437,57 +466,49 @@ export default function ContentPage() {
                 }
 
                 return (
-                  <div key={fieldDef.key} className="px-5 py-4">
-                    <div className="flex items-start justify-between gap-4">
+                  <div key={fieldDef.key} className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <label className="mb-1.5 block text-[13px] font-semibold text-[var(--adm-ink-mute)]">{fieldDef.label}</label>
+                        <label className="mb-2 block text-[13px] font-medium text-[var(--adm-ink-mute)]">{fieldDef.label}</label>
                         {isEditing ? (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {isLong ? (
-                              <textarea
+                              <FormTextarea
                                 value={tempValue}
                                 onChange={(e) => setTempValue(e.target.value)}
                                 rows={4}
                                 autoFocus
                                 placeholder={fieldDef.placeholder}
-                                className="w-full resize-y rounded-[8px] border border-[var(--adm-accent)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                               />
                             ) : (
-                              <input
+                              <FormInput
                                 type={fieldDef.type === "text" ? "text" : fieldDef.type}
                                 value={tempValue}
                                 onChange={(e) => setTempValue(e.target.value)}
                                 autoFocus
                                 placeholder={fieldDef.placeholder}
-                                className="w-full rounded-[8px] border border-[var(--adm-accent)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
                               />
                             )}
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => commitEdit(activePage, fieldDef.key)}
-                                className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-accent)] px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
-                              >
-                                <Check className="h-3.5 w-3.5" />Apply
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="inline-flex items-center gap-1 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-1.5 text-[13px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)]"
-                              >
-                                <X className="h-3.5 w-3.5" />Cancel
-                              </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <WorkspaceButton onClick={() => commitEdit(activePage, fieldDef.key)}>
+                                <Check className="h-4 w-4" />Apply
+                              </WorkspaceButton>
+                              <WorkspaceButton variant="ghost" onClick={cancelEdit}>
+                                <X className="h-4 w-4" />Cancel
+                              </WorkspaceButton>
                             </div>
                           </div>
                         ) : (
                           <div onClick={() => startEdit(activePage, fieldDef.key)} className="group cursor-text">
                             {value ? (
                               <p className={cn(
-                                "-mx-2 rounded-[4px] px-2 py-1 text-sm leading-relaxed text-[var(--adm-ink)] transition-colors group-hover:bg-[var(--adm-row-hover)]",
-                                isLong ? "whitespace-pre-wrap" : "truncate",
+                                "-mx-2 rounded-[8px] px-2 py-1 text-[14px] leading-relaxed text-[var(--adm-ink)] transition-colors duration-150 group-hover:bg-[var(--adm-row-hover)]",
+                                isLong ? "whitespace-pre-wrap break-words" : "truncate",
                               )}>
                                 {value}
                               </p>
                             ) : (
-                              <p className="-mx-2 rounded-[4px] px-2 py-1 text-sm italic text-[var(--adm-ink-subtle)] transition-colors group-hover:bg-[var(--adm-row-hover)]">
+                              <p className="-mx-2 rounded-[8px] px-2 py-1 text-[14px] text-[var(--adm-ink-subtle)] transition-colors duration-150 group-hover:bg-[var(--adm-row-hover)]">
                                 {fieldDef.placeholder || "Click to add…"}
                               </p>
                             )}
@@ -496,9 +517,10 @@ export default function ContentPage() {
                       </div>
                       {!isEditing && (
                         <button
+                          type="button"
                           onClick={() => startEdit(activePage, fieldDef.key)}
                           aria-label={`Edit ${fieldDef.label}`}
-                          className="flex-shrink-0 rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+                          className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                           title="Edit"
                         >
                           <IconEdit className="h-4 w-4" aria-hidden="true" />
@@ -510,17 +532,16 @@ export default function ContentPage() {
               })}
             </div>
 
-            {/* Save bar, the sheet's own footer, not a floating card. */}
-            <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-zebra)] px-5 py-3">
-              <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
+              <p className="min-w-0 text-[12.5px] text-[var(--adm-ink-subtle)]">
                 {lastSaved[activePage]
                   ? <>Changes last saved at <span className="tabular-nums">{lastSaved[activePage]}</span></>
                   : "Unsaved changes will be lost if you leave without saving."}
               </p>
-              <PageHeaderButton variant="primary" onClick={() => savePage(activePage)} disabled={isSaving}>
+              <WorkspaceButton onClick={() => savePage(activePage)} disabled={isSaving}>
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSave className="h-4 w-4" />}
-                {isSaving ? "Saving…" : "Save Page"}
-              </PageHeaderButton>
+                {isSaving ? "Saving…" : "Save page"}
+              </WorkspaceButton>
             </div>
           </AdminCard>
         </div>

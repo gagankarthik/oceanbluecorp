@@ -87,49 +87,38 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[120] flex items-end justify-center bg-[var(--adm-scrim)] p-4 sm:items-center"
       onClick={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
       aria-describedby={body ? "confirm-dialog-body" : undefined}
     >
-      <div className="w-full max-w-sm rounded-[6px] bg-[var(--adm-surface)] p-6 shadow-2xl">
-        <div
-          className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[6px] ${
-            danger ? "bg-[var(--adm-danger-soft)]" : "bg-[var(--adm-accent-soft)]"
-          }`}
-          aria-hidden="true"
-        >
+      <div className="w-full max-w-md rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+        <div className="flex gap-3.5 p-5 sm:p-6">
           {danger ? (
-            <IconTrash className="h-5 w-5 text-[var(--adm-danger)]" />
+            <IconTrash className="mt-0.5 h-5 w-5 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
           ) : (
-            <IconWarning className="h-5 w-5 text-[var(--adm-accent)]" />
+            <IconWarning className="mt-0.5 h-5 w-5 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
           )}
+          <div className="min-w-0">
+            <h3 id="confirm-dialog-title" className="text-[16px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
+              {title}
+            </h3>
+            {body && (
+              <p id="confirm-dialog-body" className="mt-1.5 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                {body}
+              </p>
+            )}
+          </div>
         </div>
 
-        <h3
-          id="confirm-dialog-title"
-          className="text-center text-base font-bold text-[var(--adm-ink)]"
-        >
-          {title}
-        </h3>
-
-        {body && (
-          <p
-            id="confirm-dialog-body"
-            className="mt-1.5 mb-6 text-center text-sm leading-relaxed text-[var(--adm-ink-subtle)]"
-          >
-            {body}
-          </p>
-        )}
-
-        <div className={`flex gap-3 ${body ? "" : "mt-6"}`}>
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-4 sm:flex-row sm:justify-end sm:px-6 rounded-b-[14px]">
           <button
             ref={cancelRef}
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 rounded-[8px] border border-[var(--adm-line)] px-4 py-2.5 text-sm font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-60"
+            className="inline-flex h-10 items-center justify-center rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 text-[14px] font-semibold text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] disabled:opacity-60"
           >
             {cancelLabel}
           </button>
@@ -137,10 +126,10 @@ export function ConfirmDialog({
             ref={confirmRef}
             onClick={onConfirm}
             disabled={busy}
-            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-[8px] px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-[10px] px-4 text-[14px] font-semibold text-white transition-colors disabled:opacity-60 ${
               danger
-                ? "bg-rose-600 hover:bg-rose-700 focus:ring-rose-400"
-                : "bg-[var(--adm-accent)] hover:bg-[var(--adm-accent-strong)] focus:ring-[var(--adm-focus-ring)]"
+                ? "bg-[var(--adm-danger)] hover:bg-[var(--adm-danger-ink)]"
+                : "bg-[var(--adm-accent)] shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]"
             }`}
           >
             {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}

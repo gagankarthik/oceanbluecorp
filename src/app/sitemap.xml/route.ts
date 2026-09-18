@@ -1,4 +1,5 @@
 import { getAllJobs } from "@/lib/aws/dynamodb";
+import { isPubliclyOpen } from "@/lib/job-status";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
 import { getLiveArticles } from "@/lib/articles-public";
 
@@ -54,7 +55,7 @@ export async function GET() {
     const result = await getAllJobs();
     if (result.success && result.data) {
       for (const job of result.data) {
-        if (job.status === "active" || job.status === "open") {
+        if (isPubliclyOpen(job.status)) {
           entries.push({
             url: `${BASE}/careers/search/${job.id}`,
             lastmod: new Date(job.updatedAt || job.createdAt).toISOString(),

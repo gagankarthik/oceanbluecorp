@@ -22,6 +22,7 @@ import {
   slugify,
   uniqueSlug,
 } from "@/lib/articles";
+import { serverError } from "@/lib/api-errors";
 
 /** GET /api/articles/[id]. Anonymous callers see it only once it is live. */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const result = await getArticle(id);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to fetch article" }, { status: 500 });
+      return serverError("Error fetching article", result.error, "Couldn't load the article. Please try again.");
     }
     if (!result.data) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
@@ -50,8 +51,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ article: result.data });
   } catch (error) {
-    console.error("Error fetching article:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error fetching article", error, "Couldn't load the article. Please try again.");
   }
 }
 
@@ -127,7 +127,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const result = await updateArticle(id, updates);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to update article" }, { status: 500 });
+      return serverError("Updating article", result.error, "Couldn't save the article. Please try again.");
     }
 
     // Revalidate the old path too: renaming a slug leaves the previous URL
@@ -137,8 +137,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ article: { ...current, ...updates, id } });
   } catch (error) {
-    console.error("Error updating article:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error updating article", error, "Couldn't save the article. Please try again.");
   }
 }
 
@@ -156,14 +155,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const result = await deleteArticle(id);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to delete article" }, { status: 500 });
+      return serverError("Deleting article", result.error, "Couldn't delete the article. Please try again.");
     }
 
     revalidateSection(existing.data.kind, existing.data.slug);
 
     return NextResponse.json({ message: "Article deleted" });
   } catch (error) {
-    console.error("Error deleting article:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error deleting article", error, "Couldn't delete the article. Please try again.");
   }
 }

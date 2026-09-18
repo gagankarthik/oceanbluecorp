@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft, Mail, Trash2, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   title: "Data Deletion Request",
   description: "Request deletion of your personal data held by Ocean Blue Corporation by emailing hr@oceanbluecorp.com.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Data Deletion | Ocean Blue Corporation",
     description:
       "How to request deletion of your personal data from Ocean Blue Corporation, what is removed, and what must be retained.",

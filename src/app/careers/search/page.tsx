@@ -21,6 +21,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
+import { isPubliclyOpen } from "@/lib/job-status";
 import { useAuth } from "@/lib/auth";
 
 const departments = ["All Departments", "ERP Solutions", "Cloud Services", "Data & AI", "Salesforce", "Engineering", "IT Staffing", "Training", "PMO"];
@@ -113,7 +114,8 @@ export default function CareersSearchPage() {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/jobs?status=active");
+        // Anonymous callers already get live postings only; staff get everything, so filter here too.
+        const response = await fetch("/api/jobs");
         const data = await response.json();
 
         if (!response.ok) {
@@ -121,7 +123,7 @@ export default function CareersSearchPage() {
         }
 
         // Add "posted ago" calculation
-        const jobsWithTime = (data.jobs || []).map((job: Job) => ({
+        const jobsWithTime = (data.jobs || []).filter((job: Job) => isPubliclyOpen(job.status)).map((job: Job) => ({
           ...job,
           postedAgo: getTimeAgo(new Date(job.createdAt)),
         }));

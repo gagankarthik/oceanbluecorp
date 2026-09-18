@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateApiKey, deleteApiKey } from "@/lib/aws/dynamodb";
 import { requireAdmin } from "@/lib/auth/verify";
 import { isApiAccessLevel, scopesForLevel } from "@/lib/api-scopes";
+import { serverError } from "@/lib/api-errors";
 
 // PUT /api/admin/api-keys/[id] - Update name, description, or toggle active
 export async function PUT(
@@ -29,12 +30,11 @@ export async function PUT(
 
     const result = await updateApiKey(id, updates);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to update API key" }, { status: 500 });
+      return serverError("Updating API key", result.error, "Couldn't update the API key. Please try again.");
     }
     return NextResponse.json({ message: "API key updated" });
   } catch (error) {
-    console.error("Error updating API key:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error updating API key", error, "Couldn't update the API key. Please try again.");
   }
 }
 
@@ -49,11 +49,10 @@ export async function DELETE(
     const { id } = await params;
     const result = await deleteApiKey(id);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to delete API key" }, { status: 500 });
+      return serverError("Deleting API key", result.error, "Couldn't delete the API key. Please try again.");
     }
     return NextResponse.json({ message: "API key deleted" });
   } catch (error) {
-    console.error("Error deleting API key:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error deleting API key", error, "Couldn't delete the API key. Please try again.");
   }
 }

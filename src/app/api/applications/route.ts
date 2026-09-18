@@ -16,16 +16,40 @@ import {
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff, getClaims, isAdminClaims } from "@/lib/auth/verify";
-import { hasStaffAccess } from "@/lib/auth/config";
+import { hasRecruitingAccess } from "@/lib/auth/config";
+import { validate, validationMessage, type Schema } from "@/lib/validate";
 import { canView } from "@/lib/bench";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
 import { candidateHaystack } from "@/lib/candidate-search";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { serverError } from "@/lib/api-errors";
+import { isPubliclyOpen } from "@/lib/job-status";
 
 // Resume analysis runs after the response via after(); give the invocation room
 // for the LLM pipeline (30–90s) without delaying the applicant's response.
 export const maxDuration = 120;
+
+/** What the public careers form may send. Everything else is dropped. */
+const PUBLIC_APPLICATION_SCHEMA: Schema = {
+  jobId: { kind: "string", required: true, maxLength: 64 },
+  userId: { kind: "string", maxLength: 254 },
+  name: { kind: "string", maxLength: 200 },
+  firstName: { kind: "string", maxLength: 100 },
+  lastName: { kind: "string", maxLength: 100 },
+  email: { kind: "string", required: true, maxLength: 254, format: "email" },
+  phone: { kind: "string", maxLength: 40 },
+  coverLetter: { kind: "string", maxLength: 10_000 },
+  resumeId: { kind: "string", maxLength: 64 },
+  resumeFileName: { kind: "string", maxLength: 255 },
+  address: { kind: "string", maxLength: 300 },
+  city: { kind: "string", maxLength: 100 },
+  state: { kind: "string", maxLength: 100 },
+  zipCode: { kind: "string", maxLength: 20 },
+  workAuthorization: { kind: "string", maxLength: 100 },
+  visaSponsorshipRequired: { kind: "boolean", coerce: true },
+  visaExpiry: { kind: "string", maxLength: 40 },
+};
 
 // GET /api/applications - Get applications (with optional filters)
 export async function GET(request: NextRequest) {
@@ -138,27 +162,25 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ applications: lean });
   } catch (error) {
-    console.error("Error fetching applications:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching applications", error, "Couldn't load applications. Please try again.");
   }
 }
 
 // POST /api/applications - Create a new application (supports both portal and HR-created)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-
     // This route is open, the public careers portal posts through it, so a
     // client-supplied analysis is only trusted from a verified staff session.
     // The new-applicant screen already ran the extraction to fill its form, and
     // sends it here so the same document isn't put through the pipeline twice.
     // An anonymous caller's resumeAnalysis is ignored, not rejected: their
     // application must still go through, and it gets analysed server-side below.
+    //
+    // "Staff" is the recruiting set. hasStaffAccess also passes Media, which
+    // would let a media account file stages, notes and ownership, and skip the
+    // rate limit, on a route it has no screen for.
     const claims = await getClaims(request);
-    const isStaff = !!claims && hasStaffAccess(claims.groups);
+    const isStaff = !!claims && hasRecruitingAccess(claims.groups);
 
     // Throttle anonymous callers only. A recruiter entering a batch of candidates
     // is a legitimate burst; an unauthenticated script hitting this in a loop
@@ -166,6 +188,27 @@ export async function POST(request: NextRequest) {
     if (!isStaff) {
       const limited = await checkRateLimit(request, RATE_LIMITS.application);
       if (!limited.allowed) return limited.response!;
+    }
+
+    const raw = await request.json().catch(() => null);
+    // Public callers get the declared shape only (§5.3): types, lengths, a real
+    // email, and nothing undeclared. That also drops createdBy/createdByName,
+    // which were still reaching statusHistory and, via `!body.createdBy`,
+    // skipping the closed-job check. Staff screens send far more and keep the
+    // staffOnly gating below.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let body: Record<string, any>;
+    if (isStaff) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+        return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
+      }
+      body = raw;
+    } else {
+      const checked = validate(raw, PUBLIC_APPLICATION_SCHEMA);
+      if (!checked.ok) {
+        return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
+      }
+      body = checked.value;
     }
 
     const suppliedAnalysis: ResumeAnalysis | undefined =
@@ -208,8 +251,8 @@ export async function POST(request: NextRequest) {
       const jobResult = await getJob(body.jobId);
       if (jobResult.success && jobResult.data) {
         job = jobResult.data;
-        // Only check active status for portal applications (not HR-created)
-        if (!body.createdBy && job.status !== "active") {
+        // Portal applications only reach a live posting; staff may file against any.
+        if (!body.createdBy && !isPubliclyOpen(job.status)) {
           return NextResponse.json(
             { error: "This job is no longer accepting applications" },
             { status: 400 }
@@ -217,6 +260,13 @@ export async function POST(request: NextRequest) {
         }
         isPortalApplication = !body.createdBy;
       }
+    }
+    // A public application is always to a posting; an unknown id is not one.
+    if (!isStaff && !job) {
+      return NextResponse.json(
+        { error: "This job is no longer accepting applications" },
+        { status: 400 }
+      );
     }
 
     // Generate application ID (APP-YEAR-XXXX format, e.g., APP-2026-0001)
@@ -295,10 +345,7 @@ export async function POST(request: NextRequest) {
     const result = await createApplication(application);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to create application" },
-        { status: 500 }
-      );
+      return serverError("Failed to create application", result.error, "Couldn't submit the application. Please try again.");
     }
 
     // Parse the resume automatically once the application is created. after()
@@ -409,10 +456,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ application }, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("Error creating application", error, "Couldn't submit the application. Please try again.");
   }
 }

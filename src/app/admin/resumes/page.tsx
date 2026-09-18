@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { X, Loader2, Check } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import {
   IconDownload, IconEye, IconFile, IconSuccess, IconTrash, IconUpload,
   IconWarning,
@@ -12,10 +12,12 @@ import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { AdminCard } from "@/components/admin/admin-card";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { FormInput } from "@/components/admin/forms/primitives";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -74,35 +76,47 @@ function fmtSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
+/** Placeholder for an empty cell, aligned with the other columns. */
 function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]"></span>;
+  return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
 }
 
-/**
- * Format marker. Flat square-cornered tile rather than a rounded chip: it is a
- * record-type mark in a grid, not a badge.
- */
-function FileTypeIcon({ type, size = "md" }: { type: string; size?: "sm" | "md" | "lg" }) {
-  const sz = { sm: "h-8 w-8 text-[10px]", md: "h-10 w-10 text-[11px]", lg: "h-12 w-12 text-[13px]" }[size];
-  if (isPdf(type)) {
-    return (
-      <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-danger-soft)] font-bold tracking-wide text-[var(--adm-danger)]", sz)}>
-        PDF
-      </span>
-    );
-  }
-  if (isWord(type)) {
-    return (
-      <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-accent-soft)] font-bold tracking-wide text-[var(--adm-accent)]", sz)}>
-        DOC
-      </span>
-    );
-  }
+/** Format mark: a small text chip, not a tinted tile. */
+function FileTypeTag({ type }: { type: string }) {
   return (
-    <span className={cn("flex flex-none items-center justify-center rounded-[4px] bg-[var(--adm-surface-2)] font-bold text-[var(--adm-ink-subtle)]", sz)}>
-      <IconFile className="h-4 w-4" />
+    <span className="inline-flex h-[22px] flex-none items-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">
+      {formatLabel(type)}
     </span>
+  );
+}
+
+/** Icon-only row action. Same hit area whether it previews, downloads or deletes. */
+function IconAction({
+  label,
+  danger = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors",
+        danger
+          ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+          : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -140,7 +154,8 @@ export default function ResumeBankPage() {
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setResumes(data.resumes || []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load resumes");
+      console.error("Failed to load the resume bank:", e);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -349,18 +364,15 @@ export default function ResumeBankPage() {
 
   const rowActions = (r: BankResume) => (
     <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
-      <button onClick={() => handlePreview(r)} title="Preview" aria-label={`Preview ${r.fileName}`}
-        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]">
+      <IconAction label={`Preview ${r.fileName}`} onClick={() => handlePreview(r)}>
         <IconEye className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <button onClick={() => handleDownload(r)} title="Download" aria-label={`Download ${r.fileName}`}
-        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
+      </IconAction>
+      <IconAction label={`Download ${r.fileName}`} onClick={() => handleDownload(r)}>
         <IconDownload className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <button onClick={() => setDeleteId(r.id)} title="Delete" aria-label={`Delete ${r.fileName}`}
-        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
+      </IconAction>
+      <IconAction label={`Delete ${r.fileName}`} danger onClick={() => setDeleteId(r.id)}>
         <IconTrash className="h-4 w-4" aria-hidden="true" />
-      </button>
+      </IconAction>
     </div>
   );
 
@@ -434,7 +446,7 @@ export default function ResumeBankPage() {
       }
       setCloudTotals({ bank: data.bank || 0, applications: data.applications || 0 });
       setCloudIndexing(true);
-      toast.success(`Indexing started in the cloud , ${(data.bank || 0) + (data.applications || 0)} resumes queued`);
+      toast.success(`Indexing started in the cloud: ${(data.bank || 0) + (data.applications || 0)} resumes queued`);
       if (data.duplicateCopies > 0) {
         toast.warning(`${data.duplicateCopies} duplicate ${data.duplicateCopies === 1 ? "copy was" : "copies were"} skipped, review and delete them below`);
       }
@@ -467,7 +479,7 @@ export default function ResumeBankPage() {
         <span className="inline-flex max-w-full items-center gap-2 align-middle">
           <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
           {isDuplicate(r) && (
-            <span className="flex-none rounded-[4px] bg-[var(--adm-warning-soft)] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-[var(--adm-warning)]">
+            <span className="inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
               Duplicate
             </span>
           )}
@@ -475,10 +487,8 @@ export default function ResumeBankPage() {
       ),
     },
     {
-      // The format mark is the cell, a coloured PDF/DOC tile says it without
-      // repeating the word next to a filename that already ends in ".pdf".
       key: "type", header: "Type", sortValue: (r) => formatLabel(r.fileType), hideBelow: "md",
-      cell: (r) => <FileTypeIcon type={r.fileType} size="sm" />,
+      cell: (r) => <FileTypeTag type={r.fileType} />,
     },
     {
       key: "candidate", header: "Candidate", sortValue: (r) => r.candidateName || "", hideBelow: "md",
@@ -489,10 +499,10 @@ export default function ResumeBankPage() {
     {
       key: "uploader", header: "Uploaded by", sortValue: (r) => r.uploaderEmail, hideBelow: "lg",
       cell: (r) => (
-        <div className="flex items-center gap-2">
+        <span className="inline-flex max-w-full items-center gap-2 align-middle">
           <Avatar email={r.uploaderEmail} size="xs" />
-          <span className="truncate text-xs text-[var(--adm-ink-mute)]">{r.uploaderEmail}</span>
-        </div>
+          <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink-mute)]">{r.uploaderEmail}</span>
+        </span>
       ),
     },
     {
@@ -501,30 +511,28 @@ export default function ResumeBankPage() {
     },
     {
       key: "uploadedAt", header: "Uploaded", sortValue: (r) => new Date(r.uploadedAt).getTime(), hideBelow: "sm",
-      cell: (r) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(r.uploadedAt)}</span>,
+      cell: (r) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(r.uploadedAt)}</span>,
     },
     {
       key: "indexed", header: "Indexed", sortValue: (r) => (r.indexed ? 2 : r.indexFailed ? 0 : 1), hideBelow: "sm",
       cell: (r) =>
         r.indexing ? (
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-[var(--adm-ink-mute)]">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Indexing…
+          <span className="inline-flex items-center gap-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Indexing…
           </span>
         ) : r.indexed ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[12px] font-semibold text-emerald-700">
-            <Check className="h-3 w-3" strokeWidth={2.5} /> Indexed
-          </span>
+          <StatusBadge tone="emerald" label="Indexed" />
         ) : r.indexFailed ? (
           <button
             type="button"
-            onClick={() => indexKeys([r])}
+            onClick={(e) => { e.stopPropagation(); void indexKeys([r]); }}
             disabled={bulkRunning}
-            className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-[12px] font-semibold text-red-700 transition-colors hover:bg-red-500/15 disabled:opacity-50"
+            className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-[12px] font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
           >
             Failed · Retry
           </button>
         ) : (
-          <span className="text-[12px] text-[var(--adm-ink-subtle)]">Not indexed</span>
+          <span className="text-[13px] text-[var(--adm-ink-subtle)]">Not indexed</span>
         ),
     },
     {
@@ -535,11 +543,24 @@ export default function ResumeBankPage() {
 
   // ── render ────────────────────────────────────────────────────────────────
 
+  const emptyFresh = resumes.length === 0;
+  const emptyProps = {
+    icon: IconFile,
+    title: emptyFresh ? "No resumes yet" : "No files match your filters",
+    description: emptyFresh
+      ? "Drop files anywhere on this page, or choose Upload above."
+      : "Try adjusting your search or filters.",
+    // The header already carries the one filled Upload action.
+    action: emptyFresh
+      ? <WorkspaceButton onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Choose files</WorkspaceButton>
+      : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
+  };
+
   return (
     <div
       className={cn(
-        "space-y-5 pb-10",
-        dragActive && "rounded-[6px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
+        "flex flex-col pb-6",
+        dragActive && "rounded-[14px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -548,101 +569,14 @@ export default function ResumeBankPage() {
       <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx"
         onChange={handleFileInput} className="hidden" />
 
-      {/* ── drop overlay ── */}
       {dragActive && (
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[rgba(29,78,216,0.08)] backdrop-blur-sm">
-          <div className="rounded-[6px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-14 py-10 text-center shadow-[var(--adm-shadow-lg)]">
-            <IconUpload className="mx-auto mb-3 h-10 w-10 text-[var(--adm-accent)]" strokeWidth={1.5} />
-            <p className="text-lg font-bold text-[var(--adm-ink)]">Drop resumes here</p>
-            <p className="mt-1 text-[13px] text-[var(--adm-ink-subtle)]">PDF or Word &middot; max 5MB each</p>
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[var(--adm-scrim)] p-4">
+          <div className="w-full max-w-sm rounded-[14px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
+            <IconUpload className="mx-auto mb-3 h-6 w-6 text-[var(--adm-accent)]" strokeWidth={1.75} />
+            <p className="text-[16px] font-semibold text-[var(--adm-ink)]">Drop resumes to upload</p>
+            <p className="mt-1 text-[13px] text-[var(--adm-ink-mute)]">PDF or Word &middot; up to 5MB each</p>
           </div>
         </div>
-      )}
-
-      {/* The KPI strip is gone. "Total files" is the footer count, "Named" was
-          a share bar over a denominator nothing acts on, and "Storage used"
-          is not a number anyone can do anything about from this screen. */}
-
-      {/* ── upload queue ── */}
-      {panelOpen && queue.length > 0 && (
-        <AdminCard className="overflow-hidden">
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
-            <div className="flex min-w-0 items-center gap-2">
-              <IconUpload className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
-              <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Upload queue</h3>
-              <span className="rounded-full bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-semibold tabular-nums text-[var(--adm-ink-mute)]">
-                {queue.length}
-              </span>
-            </div>
-            <div className="flex flex-none items-center gap-2">
-              {queue.some(q => q.status === "done") && (
-                <button onClick={clearDone} className="text-[11.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]">
-                  Clear done
-                </button>
-              )}
-              <button onClick={() => setPanelOpen(false)} aria-label="Close upload panel"
-                className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <div className="max-h-[420px] divide-y divide-[var(--adm-line-soft)] overflow-y-auto">
-            {queue.map(item => (
-              <div key={item.id} className="flex items-start gap-3 px-5 py-3.5">
-                <FileTypeIcon type={item.file.type} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{item.file.name}</p>
-                    <span className="flex-none text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtSize(item.file.size)}</span>
-                    {item.status === "done"      && <IconSuccess className="h-4 w-4 flex-none text-[var(--adm-success)]" />}
-                    {item.status === "uploading" && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />}
-                    {item.status === "error"     && <IconWarning className="h-4 w-4 flex-none text-[var(--adm-danger)]" />}
-                  </div>
-
-                  {item.status === "pending" && (
-                    <input
-                      type="text"
-                      autoComplete="off"
-                      placeholder="Candidate name (optional)"
-                      value={item.candidateName}
-                      onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
-                      className="w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-xs text-[var(--adm-ink-mute)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
-                    />
-                  )}
-
-                  {item.status === "uploading" && (
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-[2px] bg-[var(--adm-surface-2)]">
-                      <div className="h-full rounded-[2px] bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
-                    </div>
-                  )}
-
-                  {item.status === "error" && <p className="mt-1 text-xs text-[var(--adm-danger)]">{item.error}</p>}
-                  {item.status === "done"  && <p className="mt-1 text-xs font-medium text-[var(--adm-success)]">Uploaded successfully</p>}
-                </div>
-
-                {item.status !== "uploading" && item.status !== "done" && (
-                  <button onClick={() => removeFromQueue(item.id)} aria-label="Remove from queue"
-                    className="flex-none rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]">
-                    <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {(pendingCount > 0 || anyUploading) && (
-            <div className="flex items-center justify-between border-t border-[var(--adm-line)] bg-[var(--adm-zebra)] px-5 py-3">
-              <p className="text-[13px] text-[var(--adm-ink-subtle)]">
-                {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
-              </p>
-              <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
-                {anyUploading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
-              </WorkspaceButton>
-            </div>
-          )}
-        </AdminCard>
       )}
 
       <WorkspaceTitle
@@ -652,13 +586,13 @@ export default function ResumeBankPage() {
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+            {/* Yields the filled style to the queue's commit button while files wait. */}
+            <WorkspaceButton variant={pendingCount > 0 ? "secondary" : "primary"} onClick={() => fileInputRef.current?.click()}>
               <IconUpload className="h-4 w-4" />Upload
             </WorkspaceButton>
           </>
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Files", value: resumes.length },
@@ -673,7 +607,86 @@ export default function ResumeBankPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
+      {panelOpen && queue.length > 0 && (
+        <AdminCard className="mb-4">
+          <AdminCardHeader
+            title="Upload queue"
+            count={queue.length}
+            action={
+              <>
+                {queue.some(q => q.status === "done") && (
+                  <WorkspaceButton variant="ghost" onClick={clearDone}>
+                    Clear done
+                  </WorkspaceButton>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(false)}
+                  aria-label="Close upload queue"
+                  className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </>
+            }
+          />
+
+          <div className="max-h-[420px] divide-y divide-[var(--adm-line-soft)] overflow-y-auto">
+            {queue.map(item => (
+              <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                <FileTypeTag type={item.file.type} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="min-w-0 truncate text-[14px] font-medium text-[var(--adm-ink)]">{item.file.name}</p>
+                    <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtSize(item.file.size)}</span>
+                    {item.status === "done"      && <IconSuccess className="h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-label="Uploaded" />}
+                    {item.status === "uploading" && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-label="Uploading" />}
+                    {item.status === "error"     && <IconWarning className="h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-label="Failed" />}
+                  </div>
+
+                  {item.status === "pending" && (
+                    <FormInput
+                      aria-label={`Candidate name for ${item.file.name}`}
+                      placeholder="Candidate name (optional)"
+                      value={item.candidateName}
+                      onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
+                      className="mt-2 h-9 text-[13.5px]"
+                    />
+                  )}
+
+                  {item.status === "uploading" && (
+                    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
+                      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
+                    </div>
+                  )}
+
+                  {item.status === "error" && <p className="mt-1 text-[12.5px] text-[var(--adm-danger-ink)]">{item.error}</p>}
+                  {item.status === "done"  && <p className="mt-1 text-[12.5px] font-medium text-[var(--adm-success-ink)]">Uploaded</p>}
+                </div>
+
+                {item.status !== "uploading" && item.status !== "done" && (
+                  <IconAction label={`Remove ${item.file.name} from queue`} danger onClick={() => removeFromQueue(item.id)}>
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </IconAction>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {(pendingCount > 0 || anyUploading) && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-[16px] border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
+              <p className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+                {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
+              </p>
+              <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
+                {anyUploading && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
+              </WorkspaceButton>
+            </div>
+          )}
+        </AdminCard>
+      )}
+
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -736,78 +749,74 @@ export default function ResumeBankPage() {
         onClearAll={clearFilters}
       />
 
-      {/* ── indexing banners (on the canvas, above the table) ── */}
-      {/* Cloud job in flight: progress from the polled indexed flags. */}
+      {/* ── indexing notices ── */}
       {!loading && !error && cloudIndexing && (
-        <div className="mb-3 flex flex-col gap-2 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <Loader2 className="mt-0.5 h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
-            <div>
-              <p className="text-[14px] font-medium text-[var(--adm-ink)]">
-                Indexing in the cloud , {pendingIndex.length} of {resumes.length} bank resumes remaining
-                {cloudTotals && cloudTotals.applications > 0 ? `, plus ${cloudTotals.applications} bench and applicant resumes` : ""}.
-              </p>
-              <p className="mt-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
-                Runs on the server, you can close this page. If the count stops moving, a few files may have failed; retry them from the Indexed column.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setCloudIndexing(false)}
-            className="flex-none self-start rounded-[6px] px-2 py-1 text-[12px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] sm:self-center"
-          >
-            Hide
-          </button>
-        </div>
+        <Notice tone="accent" icon={<Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />}
+          action={<WorkspaceButton variant="ghost" onClick={() => setCloudIndexing(false)}>Hide</WorkspaceButton>}
+        >
+          <p className="font-medium text-[var(--adm-ink)]">
+            Indexing in the cloud: <span className="tabular-nums">{pendingIndex.length}</span> of{" "}
+            <span className="tabular-nums">{resumes.length}</span> bank resumes remaining
+            {cloudTotals && cloudTotals.applications > 0 ? `, plus ${cloudTotals.applications} bench and applicant resumes` : ""}.
+          </p>
+          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+            Runs on the server, so you can close this page. If the count stops moving, retry the failed files from the Indexed column.
+          </p>
+        </Notice>
       )}
-      {/* Single-row retry in flight. */}
       {!loading && !error && !cloudIndexing && bulkRunning && (
-        <div className="mb-3 flex items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
-          <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" />
-          <span className="text-[14px] text-[var(--adm-ink)]">
-            Indexing resumes… {bulkProgress.done}/{bulkProgress.total}. This can take a while, you can keep working.
-          </span>
-        </div>
+        <Notice icon={<Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />}>
+          <p className="text-[var(--adm-ink)]">
+            Indexing resumes… <span className="tabular-nums">{bulkProgress.done}/{bulkProgress.total}</span>. You can keep working.
+          </p>
+        </Notice>
       )}
       {!loading && !error && !cloudIndexing && !bulkRunning && pendingIndex.length > 0 && (
-        <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[14px] text-[var(--adm-ink)]">
-            <span className="font-semibold">{pendingIndex.length}</span>{" "}
-            {pendingIndex.length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet, index them so they appear in Lead Sourcing and Best candidates. Already-indexed resumes are skipped; runs in the cloud, you don&apos;t need to keep this page open.
+        <Notice tone="accent" action={<WorkspaceButton onClick={startCloudIndexing}>Index all</WorkspaceButton>}>
+          <p className="text-[var(--adm-ink)]">
+            <span className="font-semibold tabular-nums">{pendingIndex.length}</span>{" "}
+            {pendingIndex.length === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet.
           </p>
-          <WorkspaceButton variant="primary" onClick={startCloudIndexing} className="sm:flex-none">
-            Index all
-          </WorkspaceButton>
-        </div>
+          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+            Index them to include them in Lead Sourcing and Best candidates. Indexed files are skipped, and it runs in the cloud.
+          </p>
+        </Notice>
       )}
-      {/* Duplicate files: same name + size uploaded twice. Only one copy gets
-          indexed; the extras should be deleted so a candidate never shows twice. */}
+      {/* Same name + size uploaded twice. Only one copy is indexed; the extras should go. */}
       {!loading && !error && duplicateCount > 0 && (
-        <div className="mb-3 flex flex-col gap-3 rounded-[8px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[14px] text-[var(--adm-ink)]">
-            <span className="font-semibold">{duplicateCount}</span> files look like duplicates (same name and size).
-            Only one copy per file is indexed, delete the extras so a candidate never appears twice in matches.
+        <Notice
+          tone="warning"
+          icon={<IconWarning className="h-4 w-4 text-[var(--adm-warning-ink)]" aria-hidden="true" />}
+          action={
+            <WorkspaceButton onClick={() => setShowDupsOnly((v) => !v)}>
+              {showDupsOnly ? "Show all files" : "Review duplicates"}
+            </WorkspaceButton>
+          }
+        >
+          <p className="text-[var(--adm-ink)]">
+            <span className="font-semibold tabular-nums">{duplicateCount}</span> files look like duplicates (same name and size).
           </p>
-          <WorkspaceButton onClick={() => setShowDupsOnly((v) => !v)} className="sm:flex-none">
-            {showDupsOnly ? "Show all files" : "Review duplicates"}
-          </WorkspaceButton>
-        </div>
+          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+            Only one copy is indexed. Delete the extras so a candidate never appears twice in matches.
+          </p>
+        </Notice>
       )}
 
-      <Workspace>
-      {/* ── records ── */}
       {loading ? (
-        <AdminRowsSkeleton rows={6} />
+        <Workspace>
+          <AdminRowsSkeleton rows={6} />
+        </Workspace>
       ) : error ? (
-        <div>
+        <Workspace>
           <EmptyState
             variant="error"
-            title="Could not load the resume bank"
+            title="Couldn't load the resume bank"
             description={error}
-            action={<WorkspaceButton variant="primary" onClick={load}>Retry</WorkspaceButton>}
+            action={<WorkspaceButton onClick={load}>Try again</WorkspaceButton>}
           />
-        </div>
+        </Workspace>
       ) : view === "list" ? (
+        <Workspace>
           <DataTable
             noun="resumes"
             storageKey="resumes"
@@ -818,59 +827,52 @@ export default function ResumeBankPage() {
             pageSize={rows}
             onPageSizeChange={setRows}
             initialSort={{ key: "uploadedAt", dir: "desc" }}
-            empty={{
-              icon: IconFile,
-              title: resumes.length === 0 ? "No resumes yet" : "No files match your filters",
-              description: resumes.length === 0
-                ? "Drag & drop files anywhere on this page, or upload from the header."
-                : "Try adjusting your search or filters.",
-              action: resumes.length === 0
-                ? <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Upload resumes</WorkspaceButton>
-                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
-            }}
+            empty={emptyProps}
           />
+        </Workspace>
       ) : filtered.length === 0 ? (
-        <div>
-          <EmptyState
-            variant={resumes.length === 0 ? "fresh" : "filtered"}
-            icon={IconFile}
-            title={resumes.length === 0 ? "No resumes yet" : "No files match your filters"}
-            description={resumes.length === 0
-              ? "Drag & drop files anywhere on this page, or upload from the header."
-              : "Try adjusting your search or filters."}
-            action={resumes.length === 0
-              ? <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Upload resumes</WorkspaceButton>
-              : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>}
-          />
-        </div>
+        <AdminCard>
+          <EmptyState variant={emptyFresh ? "fresh" : "filtered"} {...emptyProps} />
+        </AdminCard>
       ) : (
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto p-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        // Grid view sits on the canvas: cards inside the table panel read as cards-in-a-card.
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filtered.map(r => (
-            <AdminCard key={r.id} hover className="group flex flex-col gap-3 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <FileTypeIcon type={r.fileType} size="lg" />
-                <div className="transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+            <AdminCard key={r.id} hover className="group flex min-w-0 flex-col p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <FileTypeTag type={r.fileType} />
+                  {isDuplicate(r) && (
+                    <span className="inline-flex h-[22px] items-center rounded-[6px] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
+                      Duplicate
+                    </span>
+                  )}
+                </span>
+                <div className="-my-1.5 -mr-1.5 transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
                   {rowActions(r)}
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1">
+              <div className="mt-3 min-w-0 flex-1">
                 <button
+                  type="button"
                   onClick={() => handlePreview(r)}
-                  className="block w-full truncate text-left text-sm font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                  className="block w-full truncate rounded-[6px] text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                   title={r.fileName}
                 >
                   {r.fileName}
                 </button>
-                <p className="mt-0.5 truncate text-xs text-[var(--adm-ink-subtle)]">{r.candidateName || "–"}</p>
+                <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
+                  {r.candidateName || <span className="text-[var(--adm-ink-subtle)]">No candidate name</span>}
+                </p>
               </div>
 
-              <div className="space-y-1.5 border-t border-[var(--adm-line-soft)] pt-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-[var(--adm-ink-subtle)]">
-                  <Avatar email={r.uploaderEmail} size="xs" className="h-4 w-4 text-[8px] ring-0 shadow-none" />
+              <div className="mt-4 space-y-2 border-t border-[var(--adm-line-soft)] pt-3">
+                <div className="flex min-w-0 items-center gap-2 text-[12.5px] text-[var(--adm-ink-mute)]">
+                  <Avatar email={r.uploaderEmail} size="xs" />
                   <span className="truncate">{r.uploaderEmail}</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">
+                <div className="flex items-center justify-between text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
                   <span>{fmtDate(r.uploadedAt)}</span>
                   <span>{fmtSize(r.fileSize || 0)}</span>
                 </div>
@@ -879,7 +881,6 @@ export default function ResumeBankPage() {
           ))}
         </div>
       )}
-      </Workspace>
 
       <ConfirmDialog
         open={!!deleteId}
@@ -891,31 +892,63 @@ export default function ResumeBankPage() {
         onCancel={() => setDeleteId(null)}
       />
 
-      {/* ── PDF preview ── */}
       {previewUrl && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/60 backdrop-blur-sm">
-          <div className="flex items-center justify-between border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <IconFile className="h-4 w-4 flex-none text-[var(--adm-danger)]" />
-              <span className="truncate text-sm font-semibold text-[var(--adm-ink)]">{previewName}</span>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={previewName || "Resume preview"}
+          className="fixed inset-0 z-50 flex flex-col bg-[var(--adm-scrim)] sm:p-6"
+        >
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)] sm:rounded-[14px]">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
+              <p className="min-w-0 truncate text-[15px] font-semibold text-[var(--adm-ink)]">{previewName}</p>
+              <div className="flex flex-none items-center gap-2">
+                <WorkspaceButton asChild>
+                  <a href={previewUrl} download={previewName || "resume"}>
+                    <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Download</span>
+                  </a>
+                </WorkspaceButton>
+                <IconAction label="Close preview" onClick={() => { setPreviewUrl(null); setPreviewName(null); }}>
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </IconAction>
+              </div>
             </div>
-            <div className="flex flex-none items-center gap-2">
-              <a href={previewUrl} download={previewName || "resume"}
-                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[var(--adm-accent)] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]">
-                <IconDownload className="h-3.5 w-3.5" />Download
-              </a>
-              <button onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
-                aria-label="Close preview"
-                className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]">
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <iframe src={previewUrl} className="h-full w-full border-0" title={previewName || "Resume preview"} />
             </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <iframe src={previewUrl} className="h-full w-full border-0" title={previewName || "Resume preview"} />
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Canvas notice above the table: one line of state, an optional action. */
+function Notice({
+  tone = "neutral",
+  icon,
+  action,
+  children,
+}: {
+  tone?: "neutral" | "accent" | "warning";
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-3 flex flex-col gap-3 rounded-[12px] border px-4 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between",
+        tone === "accent" && "border-[var(--adm-line)] bg-[var(--adm-accent-tint)]",
+        tone === "warning" && "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]",
+        tone === "neutral" && "border-[var(--adm-line)] bg-[var(--adm-surface)]",
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        {icon && <span className="mt-0.5 flex-none">{icon}</span>}
+        <div className="min-w-0">{children}</div>
+      </div>
+      {action && <div className="flex flex-none items-center gap-2 self-start sm:self-center">{action}</div>}
     </div>
   );
 }

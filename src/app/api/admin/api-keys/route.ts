@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import { requireAdmin } from "@/lib/auth/verify";
 import { scopesForLevel, scopesOf, accessLevelOf, DEFAULT_ACCESS_LEVEL } from "@/lib/api-scopes";
+import { serverError } from "@/lib/api-errors";
 
 function generateApiKey(): string {
   return "obk_live_" + crypto.randomBytes(32).toString("hex");
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await getAllApiKeys();
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to fetch API keys" }, { status: 500 });
+      return serverError("Listing API keys", result.error, "Couldn't load the API keys. Please try again.");
     }
     const keys = (result.data || []).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -32,8 +33,7 @@ export async function GET(request: NextRequest) {
     }));
     return NextResponse.json({ apiKeys: sanitized });
   } catch (error) {
-    console.error("Error listing API keys:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error listing API keys", error, "Couldn't load the API keys. Please try again.");
   }
 }
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     const result = await createApiKey(apiKey);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to create API key" }, { status: 500 });
+      return serverError("Creating API key", result.error, "Couldn't create the API key. Please try again.");
     }
 
     // Return the full key only on creation, never shown again
@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Error creating API key:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error creating API key", error, "Couldn't create the API key. Please try again.");
   }
 }

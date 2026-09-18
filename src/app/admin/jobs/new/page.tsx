@@ -18,6 +18,7 @@ export default function NewJobPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Recruiters cannot create requisitions, bounce them back to the list.
   const isRecruiter = !canEditJobs(user?.role);
@@ -46,12 +47,14 @@ export default function NewJobPage() {
       }),
     ]).catch((err) => {
       console.error(err);
-      toast.error("Some reference data failed to load, client, vendor and assignee lists may be incomplete.");
+      toast.error("Couldn't load every reference list, so the client, vendor and assignee pickers may be incomplete. Refresh to try again.");
     });
   }, [canPrice]);
 
   const handleSubmit = async (data: JobFormData) => {
+    if (submitting) return;
     setSubmitting(true);
+    setServerError(null);
     try {
       const payload = {
         ...formDataToPayload(data),
@@ -65,10 +68,10 @@ export default function NewJobPage() {
         body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to create job");
+      if (!res.ok) throw new Error(json.error || "The job could not be created. Try again in a moment.");
       router.push("/admin/jobs");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create job");
+      setServerError(err instanceof Error ? err.message : "The job could not be created. Try again in a moment.");
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +86,7 @@ export default function NewJobPage() {
       body: JSON.stringify({ ...clientData, status: "active" }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Failed to create client");
+    if (!res.ok) throw new Error(json.error || "The client could not be added. Try again in a moment.");
     setClients((prev) => [json.client, ...prev]);
     return json.client;
   };
@@ -101,6 +104,8 @@ export default function NewJobPage() {
         vendors={vendors}
         hrUsers={hrUsers}
         submitting={submitting}
+        serverError={serverError}
+        onDismissError={() => setServerError(null)}
         onSubmit={handleSubmit}
         onAddClient={handleAddClient}
       />

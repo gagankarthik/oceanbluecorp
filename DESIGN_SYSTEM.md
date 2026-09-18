@@ -47,12 +47,24 @@ one-file change). TypeScript-side constants live in `src/components/admin/theme.
 | Motion | `--adm-ease`, `--adm-duration-fast/base/slow` | One easing curve everywhere |
 | Radius | `--adm-radius-control/input/chip/card` (8/10/12/16px) | Size ↔ roundness scale |
 
-Type ramp (Geist Sans, compact density, tuned for 13–14" laptops): page title
-19px bold · KPI value 25px (sm 20px) · card title 14px bold · body 14px · secondary
-13px · labels/hints 11–12px · table headers 11px uppercase tracking-wider. Numbers
-always `tabular-nums`. Density lives in the shared atoms (StatCard, PageHeader,
-AdminCardHeader, FormSection padding, control `py-2`, layout `p-3 lg:p-4`, sidebar
-`w-56`) so tightening is a one-place change, not a per-page edit.
+Type ramp (Geist Sans, set on `.adm-scope`): page title 21px semibold · headline
+figures 22–26px semibold, tight tracking · card title 14.5px semibold · body 13.5–14px ·
+labels/hints 12–12.5px. **Sentence case everywhere, no uppercase tracked
+micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
+36px (`h-9`), radius 9–10px; cards 14px; badges are pills.
+
+Greys are one cool family (`#101828` ink, `#475467` mute, `#667085` subtle), all
+AA on white and on the `#f5f7fa` canvas; `tests/contrast.test.mjs` enforces it.
+
+Shell: white 240px sidebar (64px rail, collapsed by default under 1440px) and
+white 60px top bar frame a grey workspace. Navigation recedes: brand colour
+appears only in the full-colour logo (favicon in the rail) and the active item
+(cobalt on a cobalt tint with a 3px edge bar, 6.1:1). Search centred, account
+top-right, no breadcrumbs. Content sits flush on the canvas (`p-4 sm:p-5 lg:p-6`).
+
+**Not generic:** no tinted icon squares on KPI cards or list rows, no gradients or
+glows. Figures lead; hierarchy comes from type scale and hairlines. Density lives
+in the shared atoms so tightening is a one-place change, not a per-page edit.
 
 ---
 
@@ -72,7 +84,8 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 | Switch, Tooltip | _not yet in ui/_ | Add to `ui/` (shadcn style) when first needed, do **not** create an admin-only copy. |
 | `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
-| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. |
+| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted 6px chip. Tone text uses the `-ink` tokens. |
+| `PeriodSwitcher` | `admin/charts.tsx` | The segmented control (date ranges, small view toggles). |
 | `StarRating`, `OceanSpinner` | `admin/*`, `ui/ocean-spinner` | , |
 | Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
 
@@ -125,7 +138,7 @@ Strategy for dashboards (implemented in `/admin`):
    (donut). Row 3: process diagnostics (funnel, sources, leaderboards). Row 4: work queues
    ("Needs attention", recent items), every insight ends in a clickable action.
 2. **Chart choice.** Trend → area/line; composition at a point → donut (≤7 segments,
-   merge the tail into "Other"); stage conversion → funnel with explicit % between stages;
+   merge the tail into "Other"); stage conversion → funnel with explicit % between stages (hovered band zooms, siblings recede);
    ranking → horizontal bars; tiny trend in a card/cell → `Sparkline`. No 3D, no dual axes,
    no pie with >7 slices.
 3. **Color discipline.** Series 1 is always cobalt (`SERIES.primary`); emerald is reserved

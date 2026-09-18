@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -127,8 +128,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const jobType = formatJobType(job.type);
     const url = `https://oceanbluecorp.com/careers/search/${id}`;
 
-    // Richer copy for Open Graph…
-    const ogDescription = `${jobType} position in ${job.location}. ${job.description}`;
+    // Richer copy for Open Graph… (plain text: the description is stored as HTML,
+    // and raw tags were landing in share cards and the search snippet)
+    const fullDescription = `${jobType} position in ${job.location}. ${richTextToPlain(job.description)}`;
+    const ogDescription = fullDescription.length > 300
+      ? fullDescription.substring(0, 297).trimEnd() + "..."
+      : fullDescription;
     // …and a version capped at 160 chars for the SEO meta description.
     const metaDescription = ogDescription.length > 160
       ? ogDescription.substring(0, 157).trimEnd() + "..."
@@ -139,6 +144,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: job.title,
       description: metaDescription,
       openGraph: {
+        images: OG_IMAGES,
         title: `${job.title} - ${jobType} at Ocean Blue Corporation`,
         description: ogDescription,
         url,
@@ -150,6 +156,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: "summary_large_image",
         title: `${job.title} - ${jobType}`,
         description: ogDescription,
+        images: OG_IMAGES,
       },
       alternates: {
         canonical: url,

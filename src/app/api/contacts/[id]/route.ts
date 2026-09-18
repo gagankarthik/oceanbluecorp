@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContact, updateContactStatus, deleteContact, Contact } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireUserAdmin } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/contacts/[id] - Get a single contact
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
     const result = await getContact(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch contact" },
-        { status: 500 }
-      );
+      return serverError("Fetching contact", result.error, "Couldn't load the message. Please try again.");
     }
 
     if (!result.data) {
@@ -29,11 +27,7 @@ export async function GET(
 
     return NextResponse.json({ contact: result.data });
   } catch (error) {
-    console.error("Error fetching contact:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching contact", error, "Couldn't load the message. Please try again.");
   }
 }
 
@@ -42,7 +36,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
@@ -69,19 +63,12 @@ export async function PATCH(
     const result = await updateContactStatus(id, body.status, body.notes);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update contact" },
-        { status: 500 }
-      );
+      return serverError("Updating contact", result.error, "Couldn't update the message. Please try again.");
     }
 
     return NextResponse.json({ message: "Contact updated successfully" });
   } catch (error) {
-    console.error("Error updating contact:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating contact", error, "Couldn't update the message. Please try again.");
   }
 }
 
@@ -90,7 +77,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
@@ -107,18 +94,11 @@ export async function DELETE(
     const result = await deleteContact(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete contact" },
-        { status: 500 }
-      );
+      return serverError("Deleting contact", result.error, "Couldn't delete the message. Please try again.");
     }
 
     return NextResponse.json({ message: "Contact deleted successfully" });
   } catch (error) {
-    console.error("Error deleting contact:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting contact", error, "Couldn't delete the message. Please try again.");
   }
 }

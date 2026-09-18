@@ -1,20 +1,29 @@
 import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const cognitoErrorMessages: Record<string, string> = {
   NotAuthorizedException: "Incorrect email or password.",
-  UserNotFoundException: "No account found with this email.",
+  // Same words as a wrong password: a distinct answer lets anyone enumerate
+  // staff emails (forgot-password already refuses to, for the same reason).
+  UserNotFoundException: "Incorrect email or password.",
   UserNotConfirmedException: "Please verify your email before signing in.",
   PasswordResetRequiredException: "You must reset your password before signing in.",
   TooManyRequestsException: "Too many attempts. Please try again later.",
 };
 
 export async function POST(request: Request) {
+  const limited = await checkRateLimit(request, RATE_LIMITS.signIn);
+  if (!limited.allowed) return limited.response!;
+
   try {
     const { email, password } = await request.json();
 
-    if (!email || !password) {
+    if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    }
+    if (email.length > 254 || password.length > 256) {
+      return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
     }
 
     const client = new CognitoIdentityProviderClient({
@@ -79,6 +88,9 @@ export async function POST(request: Request) {
     const name = (err as { name?: string }).name ?? "";
     const message = cognitoErrorMessages[name] ?? "Sign in failed. Please try again.";
     const status = name === "NotAuthorizedException" || name === "UserNotFoundException" ? 401 : 400;
-    return NextResponse.json({ error: message, code: name }, { status });
+    if (!cognitoErrorMessages[name]) console.error("[oceanblue] sign-in failed:", err);
+    // No `code`: UserNotFoundException vs NotAuthorizedException would undo the
+    // shared message above. The client only reads `error`.
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -7,22 +7,21 @@ import {
   hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess, highestStaffRole,
 } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
+import { serverError } from "@/lib/api-errors";
+import { isPubliclyOpen } from "@/lib/job-status";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as Job["status"] | null;
+    // List screens only need the summary; the long-form copy is ~80% of the payload.
+    const summary = searchParams.get("fields") === "summary";
 
-    console.log("API /api/jobs GET - fetching jobs with status:", status || "all");
     const result = await getAllJobs(status || undefined);
 
     if (!result.success) {
-      console.error("API /api/jobs GET - failed:", result.error);
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch jobs" },
-        { status: 500 }
-      );
+      return serverError("API /api/jobs GET - failed", result.error, "Couldn't load jobs. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
@@ -53,18 +52,15 @@ export async function GET(request: NextRequest) {
       : isEditor
         ? jobs.map(toPublicJob)
         : jobs
-            .filter((j) => j.status === "active" || j.status === "open")
+            .filter((j) => isPubliclyOpen(j.status))
             .map(toPublicJob);
 
-    console.log("API /api/jobs GET - success, count:", jobs.length);
-    return NextResponse.json({ jobs: payload });
+    const body = summary
+      ? payload.map(({ description: _d, responsibilities: _r, requirements: _q, ...rest }) => rest)
+      : payload;
+    return NextResponse.json({ jobs: body });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("API /api/jobs GET - exception:", errorMessage, error);
-    return NextResponse.json(
-      { error: `Internal server error: ${errorMessage}` },
-      { status: 500 }
-    );
+    return serverError("API /api/jobs GET - exception", error, "Couldn't load jobs. Please try again.");
   }
 }
 
@@ -146,17 +142,14 @@ export async function POST(request: NextRequest) {
     const result = await createJob(job);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to create job" },
-        { status: 500 }
-      );
+      return serverError("Creating job", result.error, "Couldn't create the job. Please try again.");
     }
 
     /* In-app notification, after the response and awaited inside it.
        Fired unawaited this was a promise nobody held: on Lambda the invocation
        can freeze as soon as the response returns, so the notification appeared
        for some postings and not others with nothing to distinguish them. */
-    if (job.status === "active" || job.status === "open") {
+    if (isPubliclyOpen(job.status)) {
       after(async () => {
         try {
           await createNotification({
@@ -177,7 +170,7 @@ export async function POST(request: NextRequest) {
 
     // Send email notifications for new job posting (only for active/open jobs)
     // Notifications go to: Recruitment Manager + Assigned team members only
-    if (job.status === "active" || job.status === "open") {
+    if (isPubliclyOpen(job.status)) {
       const emailRecipients: Array<{ name: string; email: string }> = [];
       const notifiedEmails = new Set<string>();
 
@@ -270,10 +263,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ job }, { status: 201 });
   } catch (error) {
-    console.error("Error creating job:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error creating job", error, "Couldn't create the job. Please try again.");
   }
 }

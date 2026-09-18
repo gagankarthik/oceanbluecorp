@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Kbd } from "./kbd";
 import { cn } from "@/lib/utils";
+import { InfoTip } from "./info-tip";
 
 /* ============================================================================
    Workspace, the shell an operations screen is built from.
@@ -56,7 +57,7 @@ export function Workspace({ className, children }: { className?: string; childre
         // row and the right-hand toolbar controls. With it, the panel fits the
         // viewport and the GRID scrolls horizontally inside its own container,
         // which is where a wide table should scroll.
-        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
@@ -93,22 +94,28 @@ export function Workspace({ className, children }: { className?: string; childre
 export function WorkspaceTitle({
   title,
   meta,
+  info,
   actions,
   className,
 }: {
   title: string;
   /** One line of live context under the title. */
   meta?: React.ReactNode;
+  /** What the screen is for, as an ⓘ tooltip beside the title. */
+  info?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
+    <div className={cn("mb-4 flex flex-none flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
       <div className="min-w-0">
-        <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
-          {title}
-        </h1>
-        {meta && <p className="mt-1 text-[13.5px] text-[var(--adm-ink-mute)]">{meta}</p>}
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+            {title}
+          </h1>
+          {info && <InfoTip label={title}>{info}</InfoTip>}
+        </div>
+        {meta && <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{meta}</p>}
       </div>
       {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -127,12 +134,15 @@ export function WorkspaceTitle({
  */
 export function WorkspaceButton({
   variant = "secondary",
+  size = "md",
   asChild = false,
   className,
   children,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost";
+  /** "sm" (32px) fits card-header action slots. */
+  size?: "sm" | "md";
   asChild?: boolean;
 }) {
   const Comp = asChild ? Slot.Root : "button";
@@ -141,18 +151,15 @@ export function WorkspaceButton({
       {...(asChild ? {} : { type: "button" as const })}
       {...props}
       className={cn(
-        // h-9: page actions stay slim so the chrome never outweighs the data.
-        "inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-[13.5px] font-semibold",
-        // Transform as well as colour, and a press that actually depresses.
-        // The 1px lift on hover is the difference between a control that
-        // acknowledges the pointer and one that just recolours under it.
-        "transition-all duration-150 ease-[var(--adm-ease)] active:translate-y-px active:shadow-none",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
+        size === "sm" ? "h-8 rounded-[8px] px-3 text-[13px]" : "h-9 rounded-[9px] px-3.5 text-[13.5px]",
+        "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
+        "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
         variant === "primary" &&
-          "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:-translate-y-px hover:bg-[var(--adm-accent-strong)]",
+          "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]",
         variant === "secondary" &&
-          "border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:-translate-y-px hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] hover:shadow-[var(--adm-shadow-md)]",
-        variant === "ghost" && "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+          "border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+        variant === "ghost" && "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
         className,
       )}
     >
@@ -194,18 +201,18 @@ export function RecordHeader({
 }) {
   const backContent = back && (
     <>
-      <ArrowLeft className="h-4 w-4" />
+      <ArrowLeft className="h-3.5 w-3.5" />
       {back.label}
     </>
   );
   return (
-    <div className={cn("mb-6 flex-none", className)}>
+    <div className={cn("mb-5 flex-none", className)}>
       {back && (
-        <div className="mb-3">
+        <div className="mb-2">
           {back.href ? (
             <Link
               href={back.href}
-              className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+              className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
             >
               {backContent}
             </Link>
@@ -213,7 +220,7 @@ export function RecordHeader({
             <button
               type="button"
               onClick={back.onClick}
-              className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+              className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
             >
               {backContent}
             </button>
@@ -223,15 +230,15 @@ export function RecordHeader({
 
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
               {title}
             </h1>
             {status}
           </div>
-          {subtitle && <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-[13.5px] text-[var(--adm-ink-mute)]">{subtitle}</p>}
           {meta && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
               {meta}
             </div>
           )}
@@ -254,7 +261,7 @@ export function RecordFact({
 }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      {Icon && <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />}
+      {Icon && <Icon className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />}
       {label && <span className="text-[var(--adm-ink-subtle)]">{label}</span>}
       <span className="font-medium text-[var(--adm-ink-mute)]">{children}</span>
     </span>
@@ -281,11 +288,11 @@ export function FormActionBar({
   children: React.ReactNode;
 }) {
   return (
-    <div className="sticky bottom-0 z-20 -mx-5 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur lg:-mx-6 lg:px-6">
+    <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6">
       <p className="text-[13px] text-[var(--adm-ink-mute)]">
         {message ?? (dirty ? (
-          <span className="inline-flex items-center gap-2 font-medium text-amber-700">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
+            <span className="h-2 w-2 rounded-full bg-[var(--adm-warning)]" />
             Unsaved changes
           </span>
         ) : null)}
@@ -323,9 +330,9 @@ const KPI_COLS: Record<1 | 2 | 3 | 4 | 5, string> = {
 
 const KPI_TONE = {
   default: "text-[var(--adm-ink)]",
-  warning: "text-amber-700",
-  danger:  "text-rose-700",
-  success: "text-emerald-700",
+  warning: "text-[var(--adm-warning-ink)]",
+  danger:  "text-[var(--adm-danger-ink)]",
+  success: "text-[var(--adm-success-ink)]",
 } as const;
 
 /**
@@ -360,32 +367,27 @@ export function KpiRow({ items, className }: { items: KpiItem[]; className?: str
         const Icon = k.icon;
         const body = (
           <>
-            <span className="flex items-center gap-2">
-              {Icon && (
-                <span className="grid h-6 w-6 flex-none place-items-center rounded-[6px] bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)] transition-colors group-hover/kpi:bg-[var(--adm-accent-soft)] group-hover/kpi:text-[var(--adm-accent)]">
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </span>
-              )}
+            <span className="flex items-center justify-between gap-2">
               <span className="truncate text-[13px] font-medium text-[var(--adm-ink-mute)]">{k.label}</span>
+              {Icon && (
+                <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-colors group-hover/kpi:text-[var(--adm-accent)]" strokeWidth={1.75} />
+              )}
             </span>
             <span
               className={cn(
-                // -0.02em tracking: at 30px the default spacing makes a figure
-                // read as loose, and tightening it is most of what separates a
-                // considered metric from a number in a box.
-                "text-[30px] font-bold leading-none tracking-[-0.02em] tabular-nums",
+                "text-[24px] font-semibold leading-none tracking-[-0.025em] tabular-nums",
                 KPI_TONE[k.tone ?? "default"],
               )}
             >
               {k.value}
             </span>
-            {k.hint && <span className="text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">{k.hint}</span>}
+            {k.hint && <span className="truncate text-[12px] leading-snug text-[var(--adm-ink-subtle)]">{k.hint}</span>}
           </>
         );
         const cls = cn(
-          "group/kpi flex flex-col gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5 text-left shadow-[var(--adm-shadow-sm)]",
+          "group/kpi flex min-w-0 flex-col gap-2.5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-left shadow-[var(--adm-shadow-sm)]",
           k.onClick &&
-            "transition-all duration-150 ease-[var(--adm-ease)] hover:-translate-y-0.5 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] active:translate-y-0",
+            "transition-[border-color,box-shadow] duration-150 ease-[var(--adm-ease)] hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)]",
         );
         return k.onClick ? (
           <button key={k.label} type="button" onClick={k.onClick} className={cls}>{body}</button>
@@ -415,25 +417,32 @@ export interface StatItem {
 
 const STAT_TONE: Record<NonNullable<StatItem["tone"]>, string> = {
   default: "text-[var(--adm-ink)]",
-  success: "text-[var(--adm-success)]",
-  warning: "text-[var(--adm-warning)]",
-  danger:  "text-[var(--adm-danger)]",
+  success: "text-[var(--adm-success-ink)]",
+  warning: "text-[var(--adm-warning-ink)]",
+  danger:  "text-[var(--adm-danger-ink)]",
 };
 
 export function StatStrip({ items, className }: { items: StatItem[]; className?: string }) {
   if (items.length === 0) return null;
   return (
-    <div className={cn("mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1.5", className)}>
-      {items.map((s) => {
+    <div
+      className={cn(
+        "mb-4 flex max-w-full flex-none flex-wrap self-start overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        className,
+      )}
+    >
+      {items.map((s, i) => {
         const body = (
           <>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
-              {s.label}
-            </span>
-            <span className={cn("text-[15px] font-bold tabular-nums leading-none", STAT_TONE[s.tone ?? "default"])}>
+            <span className="text-[12.5px] text-[var(--adm-ink-mute)]">{s.label}</span>
+            <span className={cn("text-[13.5px] font-semibold tabular-nums", STAT_TONE[s.tone ?? "default"])}>
               {s.value}
             </span>
           </>
+        );
+        const cls = cn(
+          "inline-flex h-9 items-center gap-2 px-3.5",
+          i > 0 && "border-l border-[var(--adm-line-soft)]",
         );
         return s.onClick ? (
           <button
@@ -441,12 +450,12 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
             type="button"
             onClick={s.onClick}
             title={s.hint}
-            className="inline-flex items-baseline gap-1.5 rounded-[4px] transition-colors hover:bg-[var(--adm-row-hover)] px-1 -mx-1 py-0.5"
+            className={cn(cls, "transition-colors hover:bg-[var(--adm-row-hover)]")}
           >
             {body}
           </button>
         ) : (
-          <span key={s.label} title={s.hint} className="inline-flex items-baseline gap-1.5">
+          <span key={s.label} title={s.hint} className={cls}>
             {body}
           </span>
         );
@@ -488,8 +497,10 @@ export function Section({
     <section className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h2>
-          {description && <p className="mt-0.5 text-[13.5px] leading-snug text-[var(--adm-ink-mute)]">{description}</p>}
+          <div className="flex items-center gap-2">
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h2>
+            {description && <InfoTip label={title}>{description}</InfoTip>}
+          </div>
         </div>
         {action && <div className="flex flex-shrink-0 items-center gap-2">{action}</div>}
       </div>
@@ -509,7 +520,7 @@ export function NotePanel({ children, className }: { children: React.ReactNode; 
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-4 text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]",
+        "rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]",
         className,
       )}
     >
@@ -624,7 +635,7 @@ export function WorkspaceSearch({
 
   return (
     <div className={cn("relative w-full sm:w-[260px]", className)}>
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         ref={ref}
         type="search"
@@ -633,7 +644,7 @@ export function WorkspaceSearch({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") { onChange(""); ref.current?.blur(); } }}
-        className="h-8 w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-8 pr-12 text-[13px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
+        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-12 text-[13.5px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
@@ -739,11 +750,11 @@ export function FilterMenu({
         <button
           type="button"
           className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
-            "data-[state=open]:border-solid data-[state=open]:border-[var(--adm-accent)]",
+              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+            "data-[state=open]:border-[var(--adm-accent)]",
           )}
         >
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -765,9 +776,7 @@ export function FilterMenu({
         className="max-h-[min(32rem,70vh)] w-[22rem] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
         <div className="flex items-center justify-between border-b border-[var(--adm-line-soft)] px-4 py-2.5">
-          <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
-            Filters
-          </span>
+          <span className="text-[13px] font-semibold text-[var(--adm-ink)]">Filters</span>
           <button
             type="button"
             onClick={onClearAll}
@@ -832,7 +841,7 @@ export function FilterPill<V extends string>({
             // it fills solid with the accent tint and shows the chosen value.
             // h-8: the toolbar is one slim line, search, filters and table
             // controls together, so the grid starts as high as possible.
-            "inline-flex h-8 max-w-[240px] items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 max-w-[240px] items-center gap-1.5 rounded-[10px] border px-3 text-[13.5px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
@@ -862,7 +871,7 @@ export function FilterPill<V extends string>({
       <DropdownMenuContent
         align="start"
         sideOffset={4}
-        className="max-h-[320px] min-w-[200px] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[320px] min-w-[200px] overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -910,7 +919,7 @@ export function AdvancedFilterToggle({
       onClick={onClick}
       aria-expanded={open}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors",
+        "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors",
         engaged
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -924,6 +933,83 @@ export function AdvancedFilterToggle({
         </span>
       )}
     </button>
+  );
+}
+
+// ── Menu select ──────────────────────────────────────────────────────────────
+
+export interface MenuOption<V extends string> {
+  value: V;
+  label: string;
+  /** Right-aligned secondary text, e.g. a count or a short range. */
+  hint?: string;
+}
+
+/** Single-choice dropdown styled as a toolbar button (date ranges, sort, scope). */
+export function MenuSelect<V extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  icon: Icon,
+  align = "end",
+  className,
+}: {
+  /** Accessible name; also the menu heading. */
+  label: string;
+  value: V;
+  options: readonly MenuOption<V>[];
+  onChange: (v: V) => void;
+  icon?: React.ComponentType<{ className?: string }>;
+  align?: "start" | "end";
+  className?: string;
+}) {
+  const current = options.find((o) => o.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`${label}: ${current?.label ?? ""}`}
+          className={cn(
+            "group inline-flex h-9 flex-none items-center gap-2 rounded-[9px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-2.5 text-[13.5px] font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
+            "transition-[background-color,border-color,box-shadow] duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+            "data-[state=open]:border-[var(--adm-accent)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--adm-focus-ring)]",
+            className,
+          )}
+        >
+          {Icon && <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />}
+          <span className="whitespace-nowrap">{current?.label}</span>
+          <ChevronDown className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)] transition-transform duration-200 group-data-[state=open]:rotate-180" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align={align}
+        sideOffset={6}
+        className="min-w-[200px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+      >
+        <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+          {label}
+        </DropdownMenuLabel>
+        {options.map((o) => {
+          const selected = o.value === value;
+          return (
+            <DropdownMenuItem
+              key={o.value}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
+                selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
+              )}
+            >
+              <Check className={cn("h-3.5 w-3.5 flex-none text-[var(--adm-accent)]", selected ? "opacity-100" : "opacity-0")} />
+              <span className="flex-1 truncate">{o.label}</span>
+              {o.hint && <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">{o.hint}</span>}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -1024,7 +1110,7 @@ export function DensityMenu({ value, onChange }: { value: Density; onChange: (d:
           type="button"
           title="Row density"
           aria-label={`Row density: ${DENSITY_LABEL[value]}`}
-          className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-row-hover)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-row-hover)]"
         >
           <AlignJustify className="h-3.5 w-3.5" />
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -1033,7 +1119,7 @@ export function DensityMenu({ value, onChange }: { value: Density; onChange: (d:
       <DropdownMenuContent
         align="end"
         sideOffset={4}
-        className="min-w-[150px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="min-w-[150px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         <DropdownMenuLabel className="px-2 py-1 text-[11.5px] font-semibold text-[var(--adm-ink-subtle)]">
           Row density
@@ -1084,7 +1170,7 @@ export function ColumnsMenu({
           title="Edit columns"
           aria-label="Edit columns"
           className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
             hiddenCount > 0
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -1099,7 +1185,7 @@ export function ColumnsMenu({
       <DropdownMenuContent
         align="end"
         sideOffset={4}
-        className="min-w-[190px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="min-w-[190px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         <DropdownMenuLabel className="px-2 py-1 text-[11.5px] font-semibold text-[var(--adm-ink-subtle)]">
           Columns
@@ -1185,7 +1271,7 @@ export function DisplayMenu({
           title="Display settings"
           aria-label="Display settings"
           className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
             hidden.length > 0
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -1198,11 +1284,11 @@ export function DisplayMenu({
       <DropdownMenuContent
         align="end"
         sideOffset={4}
-        className="max-h-[440px] w-[230px] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[440px] w-[230px] overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {hasView && (
           <>
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
               View
             </DropdownMenuLabel>
             <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
@@ -1229,7 +1315,7 @@ export function DisplayMenu({
         {hasColumns && (
           <>
             {hasView && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
               Table columns
             </DropdownMenuLabel>
             {columns!.filter((c) => !c.locked).map((c) => {
@@ -1265,7 +1351,7 @@ export function DisplayMenu({
         {hasRows && (
           <>
             {(hasColumns || hasView) && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
               Table rows
             </DropdownMenuLabel>
             <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
@@ -1340,7 +1426,7 @@ export function ActiveFilters({
       {chips.map((c) => (
         <span
           key={c.label}
-          className="inline-flex items-center gap-1.5 rounded-[7px] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-1 pl-2.5 pr-1.5 text-[13px] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)]"
+          className="inline-flex h-7 items-center gap-1 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-1 text-[12.5px] text-[var(--adm-ink)]"
         >
           {c.label}
           <button
@@ -1356,7 +1442,7 @@ export function ActiveFilters({
       <button
         type="button"
         onClick={onClearAll}
-        className="ml-1 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-rose-600"
+        className="ml-1 rounded-[6px] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-danger-ink)]"
       >
         Clear all
       </button>
@@ -1379,10 +1465,10 @@ export function WorkspaceFooter({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mt-auto flex items-center justify-between gap-4 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3 lg:px-6">
-      <p className="text-[13.5px] tabular-nums text-[var(--adm-ink-mute)]">
-        <span className="font-semibold text-[var(--adm-ink-mute)]">{shown}</span>
-        {shown !== total && <> of <span className="font-semibold text-[var(--adm-ink-mute)]">{total}</span></>} {noun}
+    <div className="mt-auto flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
+      <p className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+        <span className="font-medium text-[var(--adm-ink)]">{shown}</span>
+        {shown !== total && <> of <span className="font-medium text-[var(--adm-ink)]">{total}</span></>} {noun}
       </p>
       {children}
     </div>
@@ -1411,17 +1497,17 @@ export function SelectionBar({
   if (count === 0) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-      <div className="pointer-events-auto flex items-center gap-2 rounded-[10px] border border-slate-700 bg-slate-900 py-1.5 pl-3 pr-1.5 text-white shadow-[var(--adm-shadow-lg)]">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-[12px] border border-[var(--adm-ink)] bg-[var(--adm-ink)] py-1.5 pl-3.5 pr-1.5 text-white shadow-[var(--adm-shadow-lg)]">
         <span className="text-[13px] font-medium tabular-nums">
           {count} selected
         </span>
-        <span aria-hidden className="h-4 w-px bg-slate-700" />
+        <span aria-hidden className="h-4 w-px bg-white/20" />
         {children}
         <button
           type="button"
           onClick={onClear}
           aria-label="Clear selection"
-          className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-slate-800 hover:text-white"
+          className="rounded-[6px] p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>

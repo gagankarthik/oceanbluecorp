@@ -3,6 +3,7 @@ import {
   ForgotPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /* Step one of the reset: ask Cognito to email a verification code.
  *
@@ -22,10 +23,13 @@ const messages: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
+  const limited = await checkRateLimit(request, RATE_LIMITS.passwordReset);
+  if (!limited.allowed) return limited.response!;
+
   try {
     const { email } = await request.json();
 
-    if (!email || typeof email !== "string") {
+    if (!email || typeof email !== "string" || email.length > 254) {
       return NextResponse.json({ error: "Enter your email address." }, { status: 400 });
     }
 

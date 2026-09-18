@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import EngineeringContent from "./_content";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
     "managed engineering SOW",
   ],
   openGraph: {
+    images: OG_IMAGES,
     title: "Engineering Talent & Services | Ocean Blue Corporation",
     description:
       "Engineers, embedded fast, across mechanical, electrical, structural, aerospace, controls and manufacturing disciplines for the industries that build things.",

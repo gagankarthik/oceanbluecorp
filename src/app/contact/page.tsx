@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import ContactPage from "./_content";
 import { getSiteContent } from "@/lib/content";
 
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   description:
     "Get in touch with Ocean Blue Corporation. Reach our team for enterprise IT consulting, staffing inquiries, partnership opportunities, or general support.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Contact Ocean Blue Corporation",
     description:
       "Reach our team for IT consulting, staffing inquiries, partnerships, or general support.",

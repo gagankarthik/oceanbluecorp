@@ -23,6 +23,7 @@ import {
   slugify,
   uniqueSlug,
 } from "@/lib/articles";
+import { serverError } from "@/lib/api-errors";
 
 /**
  * GET /api/articles?kind=blog
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     const result = await getAllArticles((kindParam as ArticleKind) || undefined);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to fetch articles" }, { status: 500 });
+      return serverError("Error fetching articles", result.error, "Couldn't load the articles. Please try again.");
     }
 
     const articles = (result.data || []).sort(byNewest);
@@ -55,8 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ articles: payload });
   } catch (error) {
-    console.error("Error fetching articles:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error fetching articles", error, "Couldn't load the articles. Please try again.");
   }
 }
 
@@ -122,14 +122,13 @@ export async function POST(request: NextRequest) {
 
     const result = await createArticle(article);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to create article" }, { status: 500 });
+      return serverError("Creating article", result.error, "Couldn't create the article. Please try again.");
     }
 
     revalidateSection(kind, slug);
 
     return NextResponse.json({ article }, { status: 201 });
   } catch (error) {
-    console.error("Error creating article:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error creating article", error, "Couldn't create the article. Please try again.");
   }
 }

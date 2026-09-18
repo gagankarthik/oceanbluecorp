@@ -8,6 +8,7 @@ import {
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/candidate-applications - Get all candidate applications
 export async function GET(request: NextRequest) {
@@ -20,10 +21,7 @@ export async function GET(request: NextRequest) {
     const result = await getAllCandidateApplications(status || undefined);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch candidate applications" },
-        { status: 500 }
-      );
+      return serverError("Fetching candidate applications", result.error, "Couldn't load the candidate applications. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
@@ -33,11 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ applications });
   } catch (error) {
-    console.error("Error fetching candidate applications:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching candidate applications", error, "Couldn't load the candidate applications. Please try again.");
   }
 }
 
@@ -64,11 +58,7 @@ export async function POST(request: NextRequest) {
     try {
       applicationId = await getNextApplicationId();
     } catch (err) {
-      console.error("Failed to generate application ID:", err);
-      return NextResponse.json(
-        { error: "Failed to generate application ID" },
-        { status: 500 }
-      );
+      return serverError("Failed to generate application ID", err, "Couldn't create the candidate application. Please try again.");
     }
 
     // Get job title if jobId is provided
@@ -114,18 +104,11 @@ export async function POST(request: NextRequest) {
     const result = await createCandidateApplication(application);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to create candidate application" },
-        { status: 500 }
-      );
+      return serverError("Creating candidate application", result.error, "Couldn't create the candidate application. Please try again.");
     }
 
     return NextResponse.json({ application }, { status: 201 });
   } catch (error) {
-    console.error("Error creating candidate application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error creating candidate application", error, "Couldn't create the candidate application. Please try again.");
   }
 }

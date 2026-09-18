@@ -26,7 +26,7 @@ const checkboxCobalt =
   // selecting records is the most repeated action in the grid (Fitts's Law,
   // see the .adm-hit note in globals.css). The component's own default is 24px.
   "before:size-10 " +
-  "size-4 rounded-[4px] border border-[var(--adm-line)] shadow-none transition-colors " +
+  "size-4 rounded-[6px] border border-[var(--adm-line)] shadow-none transition-colors " +
   "hover:border-[var(--adm-ink-subtle)] " +
   "focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] focus-visible:border-[var(--adm-accent)] " +
   "data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)] data-[state=checked]:text-white " +
@@ -353,7 +353,7 @@ export function DataTable<T>({
                 <tr key={i}>
                   <td colSpan={colSpan} className="px-4">
                     <div
-                      className="h-3.5 animate-pulse rounded-[4px] bg-[var(--adm-line)]/70"
+                      className="h-3.5 animate-pulse rounded-[6px] bg-[var(--adm-line)]/70"
                       style={{ width: `${85 - (i % 4) * 12}%` }}
                     />
                   </td>
@@ -435,7 +435,7 @@ export function DataTable<T>({
           how to move. This replaces the separate WorkspaceFooter, which stated
           the record count a second time directly underneath. It renders even
           on one page, the rows-per-page control is how you get OFF one page. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5 lg:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2.5">
         <p className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
           {sorted.length === 0 ? (
             <>No {noun}</>
@@ -460,7 +460,7 @@ export function DataTable<T>({
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 aria-label="Rows per page"
-                className="h-8 cursor-pointer appearance-none rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
               >
                 {pageSizeOptions.map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -484,7 +484,7 @@ export function DataTable<T>({
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={safePage === 0}
                 aria-label="Previous page"
-                className="grid h-8 w-8 place-items-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-9 w-9 place-items-center rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -496,7 +496,7 @@ export function DataTable<T>({
                 onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
                 disabled={safePage >= pageCount - 1}
                 aria-label="Next page"
-                className="grid h-8 w-8 place-items-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-9 w-9 place-items-center rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

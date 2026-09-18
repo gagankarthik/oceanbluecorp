@@ -1366,41 +1366,116 @@
   --adm-data:          #2563eb;                  /* blue, graphs, data series, sparklines */
   --adm-data-soft:     rgba(37, 99, 235, 0.10);
 
-  --adm-canvas:        #fafafa;                  /* page/content area (whiter) */
-  --adm-chrome:        #edeff2;                  /* sidebar + top bar, one shared, borderless surface, a touch greyer than the page */
-  --adm-line:          #ececf0;                  /* Conduktor hairline */
+  /* Chrome (sidebar + top bar) is a cool grey sheet; the content pane is an
+     inset white panel on it. Cards sit on a barely-tinted canvas so they keep
+     an edge without needing heavy shadows. */
+  --adm-canvas:        #f5f7fa;
+  --adm-chrome:        #f1f4f9;
+  --adm-chrome-hover:  rgba(16, 24, 40, 0.05);
+  --adm-line:          #e4e7ec;
+  --adm-line-soft:     #eef1f5;
+  --adm-line-strong:   #d0d5dd;
+  --adm-row-hover:     #f7f9fc;
+  --adm-head:          #f9fafb;
+  --adm-head-ink:      #667085;
 
-  --adm-surface-2:    #f1f5f9;   /* raised: active segmented pill, hovered well */
-  --adm-seg-track:    #eef1f6;   /* segmented-control container */
-  --adm-seg-active:   #ffffff;   /* segmented-control active pill (lifts on light) */
+  /* Ink ramp, one cool grey family, AA on both white and the canvas. */
+  --adm-ink:        #101828;
+  --adm-ink-mute:   #475467;
+  --adm-ink-subtle: #667085;
+  --adm-danger:     #d91a43;
+
+  /* Navigation recedes: white frame with the top bar, brand only on the
+     logo and the active item. Ratios on white: mute 7.7, subtle 5.0,
+     accent on active tint 6.1. */
+  --adm-scrim:           rgba(16, 24, 40, 0.45);
+  --adm-nav-bg:          #ffffff;
+  --adm-nav-line:        #e4e7ec;
+  --adm-nav-ink:         #101828;
+  --adm-nav-mute:        #475467;
+  --adm-nav-subtle:      #667085;
+  --adm-nav-hover:       #f2f4f7;
+  --adm-nav-active:      #eef4ff;
+  --adm-nav-active-ink:  #1d4ed8;
+  --adm-nav-active-icon: #1d4ed8;
+
+  --adm-surface-2:    #f2f4f7;
+  --adm-seg-track:    #f2f4f7;
+  --adm-seg-active:   #ffffff;
 
   --adm-success-soft: rgba(5, 150, 105, 0.10);
   --adm-warning-soft: rgba(217, 119, 6, 0.10);
   --adm-danger-soft:  rgba(225, 29, 72, 0.10);
-  --adm-glow:         rgba(22, 163, 74, 0.16);  /* green radial glow behind the state card */
+  --adm-glow:         rgba(22, 163, 74, 0.16);
+
+  --adm-shadow-sm:
+    0 1px 2px 0 rgba(16, 24, 40, 0.04),
+    0 1px 3px 0 rgba(16, 24, 40, 0.04);
+  --adm-shadow-md:
+    0 12px 24px -8px rgba(16, 24, 40, 0.12),
+    0 2px 6px -2px rgba(16, 24, 40, 0.06);
+  --adm-shadow-accent:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px 0 rgba(29, 78, 216, 0.24);
+
+  --adm-radius-control: 10px;
+  --adm-radius-card:    16px;
 
   background: var(--adm-canvas);
   color: var(--adm-ink);
   color-scheme: light;
+  font-family: var(--font-geist-sans), var(--font-inter), system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.003em;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Quiet scrollbars inside the console: thin thumb, no track, no arrows. */
+.adm-scope * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.28) transparent;
+}
+.adm-scope *::-webkit-scrollbar { width: 8px; height: 8px; }
+.adm-scope *::-webkit-scrollbar-button { display: none; }
+.adm-scope *::-webkit-scrollbar-track { background: transparent; }
+.adm-scope *::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.adm-scope *::-webkit-scrollbar-thumb:hover { background-color: rgba(100, 116, 139, 0.45); }
+.adm-scroll-hidden { scrollbar-width: none; }
+
+@keyframes adm-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.adm-stagger > * { animation: adm-rise 480ms var(--adm-ease) both; }
+.adm-stagger > :nth-child(2) { animation-delay: 50ms; }
+.adm-stagger > :nth-child(3) { animation-delay: 100ms; }
+.adm-stagger > :nth-child(4) { animation-delay: 150ms; }
+.adm-stagger > :nth-child(5) { animation-delay: 200ms; }
+.adm-stagger > :nth-child(n+6) { animation-delay: 250ms; }
+
+.adm-scroll-hidden::-webkit-scrollbar { display: none; }
 
 /* ── DARK token set. Declared once as a custom-property list and applied to
       both the media-query and the explicit-attribute selectors below. ── */
 @media (prefers-color-scheme: dark) {
   .adm-scope:not([data-theme="light"]) {
-    /* Accent, green (brand), brightened for a dark surface. Blue graphs live
-       on --adm-data so they stay distinct from the green success/healthy hue. */
-    --adm-accent:        #22c55e;
-    --adm-accent-strong: #16a34a;
-    --adm-accent-soft:   rgba(34, 197, 94, 0.16);
-    --adm-accent-tint:   rgba(34, 197, 94, 0.10);
-    --adm-focus-ring:    rgba(34, 197, 94, 0.40);
+    --adm-accent:        #3b82f6;
+    --adm-accent-strong: #2563eb;
+    --adm-accent-soft:   rgba(59, 130, 246, 0.16);
+    --adm-accent-tint:   rgba(59, 130, 246, 0.10);
+    --adm-focus-ring:    rgba(59, 130, 246, 0.40);
 
     --adm-data:          #3b82f6;
     --adm-data-soft:     rgba(59, 130, 246, 0.16);
 
     --adm-canvas:    #0a0a0a;
     --adm-chrome:    #121214;
+    --adm-chrome-hover: rgba(255, 255, 255, 0.06);
     --adm-surface:   #141414;
     --adm-surface-2: #1b1b1b;
     --adm-surface-sunken: #0f0f0f;
@@ -1462,17 +1537,18 @@
 
 /* Explicit dark, wins on a light OS too. Same values as above. */
 .adm-scope[data-theme="dark"] {
-  --adm-accent:        #22c55e;
-  --adm-accent-strong: #16a34a;
-  --adm-accent-soft:   rgba(34, 197, 94, 0.16);
-  --adm-accent-tint:   rgba(34, 197, 94, 0.10);
-  --adm-focus-ring:    rgba(34, 197, 94, 0.40);
+  --adm-accent:        #3b82f6;
+  --adm-accent-strong: #2563eb;
+  --adm-accent-soft:   rgba(59, 130, 246, 0.16);
+  --adm-accent-tint:   rgba(59, 130, 246, 0.10);
+  --adm-focus-ring:    rgba(59, 130, 246, 0.40);
 
   --adm-data:          #3b82f6;
   --adm-data-soft:     rgba(59, 130, 246, 0.16);
 
   --adm-canvas:    #0a0a0a;
   --adm-chrome:    #121214;
+  --adm-chrome-hover: rgba(255, 255, 255, 0.06);
   --adm-surface:   #141414;
   --adm-surface-2: #1b1b1b;
   --adm-surface-sunken: #0f0f0f;
@@ -1563,7 +1639,7 @@
   z-index: 2;
   background: var(--adm-head);
   color: var(--adm-head-ink);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;

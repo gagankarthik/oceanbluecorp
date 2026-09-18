@@ -17,7 +17,7 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
             <Skel className="h-2.5 w-1/4" />
           </div>
           <Skel className="hidden h-3 w-24 sm:block" />
-          <Skel className="h-6 w-20 rounded-[4px]" />
+          <Skel className="h-6 w-20 rounded-[6px]" />
           <Skel className="h-3 w-10" />
         </div>
       ))}
@@ -38,7 +38,7 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: n
         <Skel className="h-6 w-44" />
         <div className="flex gap-2">
           <Skel className="hidden h-9 w-24 sm:block" />
-          <Skel className="h-9 w-32" />
+          <Skel className="h-9 w-28" />
         </div>
       </div>
 
@@ -53,11 +53,11 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: n
 
       {/* stat strip */}
       {stats > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="mb-4 inline-flex overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
           {Array.from({ length: stats }).map((_, i) => (
-            <div key={i} className="flex items-baseline gap-1.5">
-              <Skel className="h-2.5 w-16" />
-              <Skel className="h-4 w-7" />
+            <div key={i} className={cn("flex h-9 items-center gap-2 px-3.5", i > 0 && "border-l border-[var(--adm-line-soft)]")}>
+              <Skel className="h-3 w-16" />
+              <Skel className="h-3.5 w-6" />
             </div>
           ))}
         </div>
@@ -65,16 +65,16 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: n
 
       {/* canvas toolbar: search left, filter pills + Display right */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Skel className="h-8 w-full sm:w-[260px]" />
+        <Skel className="h-9 w-full sm:w-[260px]" />
         <div className="ml-auto flex items-center gap-2">
-          <Skel className="hidden h-8 w-24 sm:block" />
-          <Skel className="hidden h-8 w-24 md:block" />
-          <Skel className="h-8 w-20" />
+          <Skel className="hidden h-9 w-24 sm:block" />
+          <Skel className="hidden h-9 w-24 md:block" />
+          <Skel className="h-9 w-20" />
         </div>
       </div>
 
       {/* table panel */}
-      <div className="overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] px-6 py-4">
           <Skel className="h-3 w-32 max-w-[40%] flex-1" />
           <Skel className="hidden h-3 w-24 sm:block" />
@@ -94,18 +94,15 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: n
 /** Detail view: header + 2-column content/aside. */
 export function AdminDetailSkeleton() {
   return (
-    <div className="space-y-5 pb-10" aria-hidden="true" aria-label="Loading…">
-      <div className="flex items-center gap-3">
-        <Skel className="h-9 w-9 flex-shrink-0 rounded-[6px]" />
-        <div className="space-y-2">
-          <Skel className="h-6 w-52" />
-          <Skel className="h-3 w-36" />
-        </div>
+    <div className="space-y-4 pb-10 lg:space-y-5" aria-hidden="true" aria-label="Loading…">
+      <div className="space-y-2">
+        <Skel className="h-6 w-52" />
+        <Skel className="h-3 w-36" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_288px] xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-4">
           {Array.from({ length: 2 }).map((_, s) => (
-            <div key={s} className="space-y-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5">
+            <div key={s} className="space-y-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
               <Skel className="h-4 w-40" />
               {["w-full", "w-11/12", "w-full", "w-10/12", "w-9/12"].map((w, i) => (
                 <Skel key={i} className={`h-3.5 ${w}`} />
@@ -114,12 +111,12 @@ export function AdminDetailSkeleton() {
           ))}
         </div>
         <div className="space-y-4">
-          <div className="flex flex-col items-center gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5">
+          <div className="flex flex-col items-center gap-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
             <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--adm-line-soft)]/70" />
             <Skel className="h-4 w-32" />
             <Skel className="h-3 w-24" />
           </div>
-          <div className="space-y-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5">
+          <div className="space-y-2.5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
             {Array.from({ length: 5 }).map((_, i) => <Skel key={i} className="h-3.5 w-full" />)}
           </div>
         </div>
@@ -131,30 +128,27 @@ export function AdminDetailSkeleton() {
 /** Form view: header + sectioned field grid. */
 export function AdminFormSkeleton() {
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12" aria-hidden="true" aria-label="Loading…">
-      <div className="flex items-center gap-3">
-        <Skel className="h-9 w-9 flex-shrink-0 rounded-[6px]" />
-        <div className="space-y-2">
-          <Skel className="h-6 w-52" />
-          <Skel className="h-3 w-36" />
-        </div>
+    <div className="mx-auto max-w-5xl space-y-4 pb-12 lg:space-y-5" aria-hidden="true" aria-label="Loading…">
+      <div className="space-y-2">
+        <Skel className="h-6 w-52" />
+        <Skel className="h-3 w-36" />
       </div>
       {Array.from({ length: 2 }).map((_, s) => (
-        <div key={s} className="space-y-5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
+        <div key={s} className="space-y-5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 sm:p-5">
           <Skel className="h-4 w-40" />
           <div className="grid gap-5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skel className="h-3 w-24" />
-                <Skel className="h-10 w-full" />
+                <Skel className="h-9 w-full" />
               </div>
             ))}
           </div>
         </div>
       ))}
       <div className="flex justify-end gap-2">
-        <Skel className="h-10 w-24" />
-        <Skel className="h-10 w-32" />
+        <Skel className="h-9 w-24" />
+        <Skel className="h-9 w-32" />
       </div>
     </div>
   );
@@ -177,19 +171,19 @@ export function KanbanSkeleton({
       {Array.from({ length: columns }).map((_, c) => (
         <div
           key={c}
-          className="flex w-64 flex-shrink-0 flex-col gap-2 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3"
+          className="flex w-64 flex-shrink-0 flex-col gap-2 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3"
         >
           {/* Column header */}
           <div className="flex items-center gap-2 px-1 pb-1">
             <Skel className="h-5 w-5 rounded-full" />
             <Skel className="h-3.5 w-24" />
-            <Skel className="ml-auto h-4 w-6 rounded-[4px]" />
+            <Skel className="ml-auto h-4 w-6 rounded-[6px]" />
           </div>
           {/* Cards */}
           {Array.from({ length: cardsPerColumn }).map((_, i) => (
             <div
               key={i}
-              className="space-y-2.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3"
+              className="space-y-2.5 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3"
             >
               <div className="flex items-start gap-2">
                 <Skel className="h-8 w-8 flex-shrink-0 rounded-full" />
@@ -200,8 +194,8 @@ export function KanbanSkeleton({
               </div>
               <Skel className="h-2.5 w-full" />
               <div className="flex items-center gap-1.5">
-                <Skel className="h-5 w-16 rounded-[4px]" />
-                <Skel className="h-5 w-12 rounded-[4px]" />
+                <Skel className="h-5 w-16 rounded-[6px]" />
+                <Skel className="h-5 w-12 rounded-[6px]" />
               </div>
             </div>
           ))}
@@ -224,68 +218,56 @@ export function KanbanSkeleton({
  * If you move a band on the dashboard, move it here. The two are a pair.
  */
 export function DashboardSkeleton() {
+  const card = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)]";
   return (
-    <div className="space-y-8 pb-12" aria-hidden="true">
-      {/* 1. Greeting + scope filter. Plain content on the canvas, NOT a card, the old skeleton drew a bordered card here and the real page has
-             none, so the whole page shifted up when it loaded. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Skel className="h-12 w-12 flex-none rounded-[12px]" />
+    <div className="mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5" aria-hidden="true">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
           <Skel className="h-6 w-56" />
+          <Skel className="mt-2 h-3.5 w-64" />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Skel className="h-9 w-32 rounded-[8px]" />
-          <Skel className="h-9 w-40 rounded-[8px]" />
+        <div className="flex gap-2">
+          <Skel className="h-9 w-52 rounded-[9px]" />
+          <Skel className="h-9 w-24 rounded-[9px]" />
         </div>
       </div>
 
-      {/* 2. Header block + the six-across stat row */}
-      <div className="overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-0">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className={i > 0 ? "lg:border-l lg:border-[var(--adm-line)] lg:px-5" : "lg:px-5"}>
-                <Skel className="h-3 w-20" />
-                <Skel className="mt-2 h-7 w-14" />
-                <Skel className="mt-2 h-3 w-16" />
-              </div>
-            ))}
+      <div className={cn(card, "@container overflow-hidden")}>
+        <div className="grid grid-cols-2 gap-px bg-[var(--adm-line-soft)] @2xl:grid-cols-3 @4xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-[var(--adm-surface)] px-5 py-5">
+              <Skel className="h-3.5 w-20" />
+              <Skel className="mt-3 h-8 w-14" />
+              <Skel className="mt-2.5 h-3 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Skel className="h-[260px] rounded-[14px]" />
+        <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+          <Skel className="h-[260px] rounded-[14px]" />
+          <Skel className="h-[260px] rounded-[14px]" />
+        </div>
+      </div>
+
+      {[0, 1].map((k) => (
+        <div key={k} className="space-y-3">
+          <div>
+            <Skel className="h-4 w-44" />
+            <Skel className="mt-1.5 h-3 w-72" />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Skel className="h-[320px] rounded-[14px]" />
+            <Skel className="h-[320px] rounded-[14px]" />
           </div>
         </div>
-      </div>
+      ))}
 
-      {/* 3. State card + volume charts (charts take two thirds) */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Skel className="h-[410px] rounded-[12px]" />
-        <div className="grid gap-4 lg:col-span-2">
-          <Skel className="h-[197px] rounded-[12px]" />
-          <Skel className="h-[197px] rounded-[12px]" />
-        </div>
-      </div>
-
-      {/* 4 and 5 are `space-y-3` wrappers, each a small section LABEL above its
-          grid, not bare grids. Leaving the label out shifted everything below
-          by ~24px twice over, which is precisely the jump a skeleton is for. */}
-      <div className="space-y-3">
-        <Skel className="h-3 w-44" />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Skel className="h-[524px] rounded-[12px]" />
-          <Skel className="h-[524px] rounded-[12px]" />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Skel className="h-3 w-40" />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Skel className="h-[372px] rounded-[12px]" />
-          <Skel className="h-[372px] rounded-[12px]" />
-        </div>
-      </div>
-
-      {/* 6. Recent activity + throughput, split three/two */}
       <div className="grid gap-4 lg:grid-cols-5">
-        <Skel className="h-[477px] rounded-[12px] lg:col-span-3" />
-        <Skel className="h-[477px] rounded-[12px] lg:col-span-2" />
+        <Skel className="h-[380px] rounded-[14px] lg:col-span-2" />
+        <Skel className="h-[380px] rounded-[14px] lg:col-span-3" />
       </div>
     </div>
   );
@@ -330,13 +312,13 @@ export function CardGridSkeleton({
   return (
     <div className={`grid gap-4 ${columns}`} aria-hidden="true" aria-label="Loading…">
       {Array.from({ length: cards }).map((_, i) => (
-        <div key={i} className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5 space-y-3">
+        <div key={i} className="rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1.5 flex-1">
               <Skel className="h-4 w-3/4" />
               <Skel className="h-3 w-1/2" />
             </div>
-            <Skel className="h-6 w-16 rounded-[4px] flex-shrink-0 ml-2" />
+            <Skel className="h-6 w-16 rounded-[6px] flex-shrink-0 ml-2" />
           </div>
           <Skel className="h-3 w-full" />
           <Skel className="h-3 w-4/5" />

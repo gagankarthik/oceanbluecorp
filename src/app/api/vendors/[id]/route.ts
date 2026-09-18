@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVendor, updateVendor, deleteVendor, Vendor } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/vendors/[id] - Get a single vendor
 export async function GET(
@@ -14,10 +15,7 @@ export async function GET(
     const result = await getVendor(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch vendor" },
-        { status: 500 }
-      );
+      return serverError("Fetching vendor", result.error, "Couldn't load the vendor. Please try again.");
     }
 
     if (!result.data) {
@@ -29,11 +27,7 @@ export async function GET(
 
     return NextResponse.json({ vendor: result.data });
   } catch (error) {
-    console.error("Error fetching vendor:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching vendor", error, "Couldn't load the vendor. Please try again.");
   }
 }
 
@@ -90,19 +84,12 @@ export async function PATCH(
     const result = await updateVendor(id, updates);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update vendor" },
-        { status: 500 }
-      );
+      return serverError("Updating vendor", result.error, "Couldn't save the vendor. Please try again.");
     }
 
     return NextResponse.json({ message: "Vendor updated successfully" });
   } catch (error) {
-    console.error("Error updating vendor:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating vendor", error, "Couldn't save the vendor. Please try again.");
   }
 }
 
@@ -128,18 +115,11 @@ export async function DELETE(
     const result = await deleteVendor(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete vendor" },
-        { status: 500 }
-      );
+      return serverError("Deleting vendor", result.error, "Couldn't delete the vendor. Please try again.");
     }
 
     return NextResponse.json({ message: "Vendor deleted successfully" });
   } catch (error) {
-    console.error("Error deleting vendor:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting vendor", error, "Couldn't delete the vendor. Please try again.");
   }
 }

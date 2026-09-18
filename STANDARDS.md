@@ -120,6 +120,11 @@ was duplicated first**.
 | Free-text chip input (tags, service lines) | `<TagInput>` (`forms/tag-input.tsx`) | a comma-separated `<input>` split on save |
 | Anything about a blog post / case study / news item / customer story | `lib/articles.ts`, `lib/editorial.ts` | a per-page copy of the publish or slug rules |
 | Throttle an open route | `lib/rate-limit.ts` | an in-memory counter (see §5.4) |
+| Return a server error to the client | `serverError()` in `lib/api-errors.ts` (logs the cause, sends a human message) | `NextResponse.json({ error: err.message })` |
+| "Is this job live for the public?" | `isPubliclyOpen` / `PUBLIC_JOB_STATUSES` (`lib/job-status.ts`) | a local `status === "active" \|\| status === "open"` |
+| Validate a form field on the client | `lib/form-validation.ts` + `hooks/use-form-errors.ts` | a per-page regex |
+| Who sees a notification | `lib/notifications.ts` | filtering by type in a page |
+| Explain a heading | `<InfoTip>` via `subtitle` / `info` props (card, section, page headers) | a grey sentence under every title |
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and
 `jobTitle` so cross-candidate lists need no second read. That is a considered
@@ -127,6 +132,22 @@ trade (a renamed candidate goes stale in old records), not an accident, write
 the comment when you do it.
 
 ---
+
+## 3a. Read performance
+
+- **Scans are cached per server instance** (`scanAll` in `lib/aws/dynamodb.ts`):
+  fresh for 15s, then served stale for up to 60s while one background refresh
+  runs. Any write through the shared client clears the cache, so a user always
+  sees their own change; another instance's write can take up to 60s to show.
+  The API-keys table is never cached (revocation must bite immediately).
+- **One AWS client per credential set** (DynamoDB and Cognito). Don't build a
+  client per call; the TLS handshake is most of a small request.
+- **List screens ask for summaries.** `/api/jobs?fields=summary` drops the
+  long-form copy (~80% of the payload). Only record pages need the full job.
+- **No N+1 against Cognito.** Group membership comes from one
+  `ListUsersInGroup` per group, not one call per user.
+- New screens that read a whole table should reuse these paths rather than add
+  their own scan.
 
 ## 4. The client/server boundary
 
@@ -170,7 +191,7 @@ if (!auth.ok) return auth.response;
 | `requireJobEditor` | admin, hr, sales, media | Job create/update. Passing it does **not** grant the commercial fields; handlers gate those on `hasJobCommercialAccess` separately. |
 | `requirePublisher` | admin, hr, media | `/api/articles`, the four public content sections |
 | `requireSignedIn` | any role, media included | The caller's OWN things: profile, avatar, notifications, staff directory |
-| `requireUserAdmin` | admin, hr | Account administration |
+| `requireUserAdmin` | admin, hr | Account administration; the contacts inbox (`/api/contacts` reads and updates) |
 | `requireAdmin` | admin | API keys, roles, site content |
 
 `requireStaff` used to mean "any staff group", which was the same thing until
@@ -191,6 +212,7 @@ Deliberately unguarded, and why:
 | `status` | health check, returns no data |
 | `resume/upload` | the public careers form uploads through it |
 | `applications` (POST only) | the public careers form posts through it |
+| `csp-report` | browsers post policy violations without credentials; it only logs, size- and rate-capped |
 
 ### 5.2 Public routes need a field allowlist
 
@@ -277,6 +299,19 @@ Recorded honestly rather than left implied:
    application; there is no general record of who edited what.
 3. **No optimistic concurrency.** Last write wins, so two people editing one
    candidate silently overwrite each other.
+4. **Session tokens live in `localStorage`** (oidc-client-ts), so a successful
+   script injection could read the refresh token. Mitigations in place: the
+   server session cookie is httpOnly + SameSite=Lax and every request re-verifies
+   the JWT; `object-src`, `base-uri`, `frame-ancestors` and `form-action` are
+   **enforced** by CSP; the full CSP runs report-only with violations logged by
+   `/api/csp-report` (`[csp]` in server logs).
+   **Planned migration:** (a) have `/api/auth/signin` and the refresh path set the
+   access/refresh tokens as httpOnly, Secure, SameSite=Strict cookies instead of
+   returning them to the browser; (b) replace oidc-client-ts storage with a
+   `/api/auth/session` read that returns only the profile; (c) route refresh
+   through a server endpoint; (d) once the CSP report log is quiet, flip the
+   full policy to enforcing and move `script-src` to per-request nonces from
+   `src/proxy.ts`. Test sign-in, invite completion, refresh and sign-out on each step.
 
 Closed since the audit: the public routes are now rate limited (§5.4), and the
 privileged-field hole in §5.2 is gated.

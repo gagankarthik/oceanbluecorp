@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   IconDownload, IconEdit, IconTrash,
-  IconUserRole, IconWarning,
+  IconUserRole,
 } from "@/components/admin/icons";
 import type { Vendor } from "@/lib/aws/dynamodb";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -21,7 +21,12 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { type Tone } from "@/components/admin/theme";
+import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
+import { FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email, LIMITS, maxLen, required } from "@/lib/form-validation";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -29,8 +34,8 @@ type LeadRole = "hr" | "admin";
 
 /** Who owns the vendor relationship. One table drives the badge and the filter. */
 const LEAD_META: Record<LeadRole, { label: string; tone: Tone }> = {
-  hr:    { label: "HR",    tone: "violet" },
-  admin: { label: "Admin", tone: "amber"  },
+  hr:    { label: "HR",    tone: "blue"  },
+  admin: { label: "Admin", tone: "slate" },
 };
 
 interface CognitoUser {
@@ -62,13 +67,29 @@ const initialFormData: FormData = {
   vendorLeadRole: "hr",
 };
 
-interface FormErrors {
-  name?: string;
-  vendorLead?: string;
-  email?: string;
+const FIELD_IDS = {
+  name: "vendor-name",
+  vendorLead: "vendor-lead",
+  contactPerson: "vendor-contact",
+  email: "vendor-email",
+  state: "vendor-state",
+  zipCode: "vendor-zip",
+} as const;
+
+type VendorField = keyof typeof FIELD_IDS;
+
+function validateVendor(f: FormData) {
+  return collectErrors<VendorField>({
+    name: check(f.name, required("Enter the vendor's name."), maxLen(LIMITS.name)),
+    vendorLead: check(f.vendorLeadId, required("Choose the HR or admin teammate who owns this vendor.")),
+    contactPerson: check(f.contactPerson, maxLen(LIMITS.name)),
+    email: check(f.email, email("Enter the vendor's email, like name@company.com."), maxLen(LIMITS.email)),
+    state: check(f.state, maxLen(LIMITS.name)),
+    zipCode: check(f.zipCode, maxLen(10, "Enter a ZIP code of 10 characters or fewer, like 43215.")),
+  });
 }
 
-/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
+/** Empty cell. */
 function Blank() {
   return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
@@ -85,8 +106,10 @@ export default function VendorsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { errors: formErrors, validateAll, revalidate, reset: resetErrors, invalidProps } =
+    useFormErrors<VendorField>(() => validateVendor(formData), FIELD_IDS);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -121,7 +144,8 @@ export default function VendorsPage() {
 
       setVendors(data.vendors || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch vendors");
+      console.error("Failed to load vendors:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -165,7 +189,8 @@ export default function VendorsPage() {
   const openCreate = () => {
     setEditingVendor(null);
     setFormData(initialFormData);
-    setFormErrors({});
+    resetErrors();
+    setSaveError(null);
     setShowForm(true);
   };
 
@@ -173,26 +198,8 @@ export default function VendorsPage() {
     setShowForm(false);
     setEditingVendor(null);
     setFormData(initialFormData);
-    setFormErrors({});
-  };
-
-  const validateForm = (): boolean => {
-    const errors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      errors.name = "Vendor name is required";
-    }
-
-    if (!formData.vendorLeadId) {
-      errors.vendorLead = "Vendor Lead is required";
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    resetErrors();
+    setSaveError(null);
   };
 
   const handleVendorLeadSelect = (userId: string) => {
@@ -209,8 +216,9 @@ export default function VendorsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) return;
+    if (submitting) return;
+    setSaveError(null);
+    if (!validateAll()) return;
 
     setSubmitting(true);
 
@@ -237,13 +245,13 @@ export default function VendorsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to save vendor");
+        throw new Error(data.error || "The vendor could not be saved. Check your connection and try again.");
       }
 
       await fetchVendors();
       closeForm();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save vendor");
+      setSaveError(err instanceof Error ? err.message : "The vendor could not be saved. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -261,7 +269,8 @@ export default function VendorsPage() {
       vendorLeadName: vendor.vendorLeadName || "",
       vendorLeadRole: vendor.vendorLeadRole || "hr",
     });
-    setFormErrors({});
+    resetErrors();
+    setSaveError(null);
     setShowForm(true);
   };
 
@@ -388,18 +397,20 @@ export default function VendorsPage() {
   const rowActions = (v: Vendor) => (
     <div className="flex items-center gap-0.5">
       <button
+        type="button"
         onClick={() => handleEdit(v)}
         aria-label={`Edit ${v.name}`}
         title="Edit"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         <IconEdit className="h-4 w-4" aria-hidden="true" />
       </button>
       <button
+        type="button"
         onClick={() => setPendingDelete(v.id)}
         aria-label={`Delete ${v.name}`}
         title="Delete"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -412,16 +423,14 @@ export default function VendorsPage() {
 
   if (error) return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="space-y-3 text-center">
-        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
-        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
-        <button
-          onClick={fetchVendors}
-          className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]"
-        >
-          Retry
-        </button>
-      </div>
+      <AdminCard className="w-full max-w-md">
+        <EmptyState
+          variant="error"
+          title="Couldn't load vendors"
+          description={error}
+          action={<WorkspaceButton variant="primary" onClick={fetchVendors}>Try again</WorkspaceButton>}
+        />
+      </AdminCard>
     </div>
   );
 
@@ -436,14 +445,11 @@ export default function VendorsPage() {
         onCancel={() => setPendingDelete(null)}
       />
 
-      {/* The KPI strip that counted these same buckets is gone, lead ownership
-          is a filter, and it now sits in the toolbar with the others rather
-          than being promoted to a tab row. */}
       <WorkspaceTitle
         title="Vendors"
         actions={
           <>
-            <WorkspaceButton onClick={handleExportCSV} disabled={filteredVendors.length === 0}>
+            <WorkspaceButton onClick={handleExportCSV} disabled={filteredVendors.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
@@ -453,7 +459,6 @@ export default function VendorsPage() {
           </>
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr") },
@@ -464,7 +469,6 @@ export default function VendorsPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -538,96 +542,105 @@ export default function VendorsPage() {
         />
       </Workspace>
 
-      {/* ── add / edit vendor ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-6 py-4">
-              <h2 className="text-[16px] font-bold text-[var(--adm-ink)]">
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vendor-form-title"
+        >
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
+              <h2 id="vendor-form-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
                 {editingVendor ? "Edit vendor" : "Add new vendor"}
               </h2>
               <button
+                type="button"
                 onClick={closeForm}
                 aria-label="Close"
-                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
-                <X className="h-5 w-5" aria-hidden="true" />
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="mb-4 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--adm-danger)]" />
-                    Required information
-                  </h3>
-                  <div className="space-y-4">
-                    <Field label="Vendor name" required error={formErrors.name}>
+            <form onSubmit={handleSubmit} onBlur={revalidate} noValidate className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
+                <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
+                <section>
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Vendor</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Vendor name" required htmlFor={FIELD_IDS.name} error={formErrors.name}>
                       <FormInput
+                        id={FIELD_IDS.name}
+                        {...invalidProps("name")}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Enter vendor name"
-                        invalid={!!formErrors.name}
                       />
                     </Field>
-                    <Field label="Vendor lead" required error={formErrors.vendorLead}>
+                    <Field label="Vendor lead" required htmlFor={FIELD_IDS.vendorLead} error={formErrors.vendorLead} helper="HR or admin staff who own the relationship.">
                       <FormSelect
+                        id={FIELD_IDS.vendorLead}
+                        {...invalidProps("vendorLead")}
                         value={formData.vendorLeadId}
                         onChange={(e) => handleVendorLeadSelect(e.target.value)}
                       >
                         <option value="">Select a vendor lead…</option>
                         {hrUsers.map((user) => (
                           <option key={user.id} value={user.id}>
-                            {user.name || user.email} ({(user.role || "").toUpperCase()})
+                            {user.name || user.email} ({LEAD_META[user.role as LeadRole]?.label ?? user.role})
                           </option>
                         ))}
                       </FormSelect>
                     </Field>
                   </div>
-                </div>
+                </section>
 
-                <div>
-                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Contact information</h3>
-                  <div className="space-y-4">
-                    <Field label="Contact person">
+                <section className="border-t border-[var(--adm-line-soft)] pt-5">
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Contact information</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Contact person" htmlFor={FIELD_IDS.contactPerson} error={formErrors.contactPerson}>
                       <FormInput
+                        id={FIELD_IDS.contactPerson}
+                        {...invalidProps("contactPerson")}
                         value={formData.contactPerson}
                         onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                         placeholder="Contact person name"
                       />
                     </Field>
-                    <Field label="Email" error={formErrors.email}>
+                    <Field label="Email" htmlFor={FIELD_IDS.email} error={formErrors.email}>
                       <FormInput
+                        id={FIELD_IDS.email}
+                        {...invalidProps("email")}
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="vendor@example.com"
-                        invalid={!!formErrors.email}
                       />
                     </Field>
                   </div>
-                </div>
+                </section>
 
-                <div>
-                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Location</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="State">
-                      <FormInput value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                <section className="border-t border-[var(--adm-line-soft)] pt-5">
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Location</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="State" htmlFor={FIELD_IDS.state} error={formErrors.state}>
+                      <FormInput id={FIELD_IDS.state} {...invalidProps("state")} value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
                     </Field>
-                    <Field label="ZIP code">
-                      <FormInput value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
+                    <Field label="ZIP code" htmlFor={FIELD_IDS.zipCode} error={formErrors.zipCode}>
+                      <FormInput id={FIELD_IDS.zipCode} {...invalidProps("zipCode")} value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
                     </Field>
                   </div>
-                </div>
+                </section>
               </div>
 
-              <div className="mt-8 flex items-center justify-end gap-2 border-t border-[var(--adm-line)] pt-6">
-                <WorkspaceButton type="button" onClick={closeForm}>
+              <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
+                <WorkspaceButton type="button" onClick={closeForm} className="w-full sm:w-auto">
                   Cancel
                 </WorkspaceButton>
-                <WorkspaceButton type="submit" variant="primary" disabled={submitting}>
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                <WorkspaceButton type="submit" variant="primary" disabled={submitting} className="w-full sm:w-auto">
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                   {editingVendor ? "Update vendor" : "Add vendor"}
                 </WorkspaceButton>
               </div>

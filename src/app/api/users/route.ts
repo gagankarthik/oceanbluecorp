@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listCognitoUsers } from "@/lib/aws/cognito";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/users - List all users
 export async function GET(request: NextRequest) {
@@ -19,10 +20,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch users" },
-        { status: 500 }
-      );
+      return serverError("Listing users", result.error, "Couldn't load the team. Please try again.");
     }
 
     let users = result.users || [];
@@ -45,10 +43,6 @@ export async function GET(request: NextRequest) {
       nextToken: result.nextToken,
     });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching users", error, "Couldn't load the team. Please try again.");
   }
 }

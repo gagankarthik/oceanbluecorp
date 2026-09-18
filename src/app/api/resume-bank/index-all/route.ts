@@ -13,6 +13,7 @@ import {
   resumesIndexedChunked,
 } from "@/lib/aws/index-resumes";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // Gathering the worklist means an S3 listing, a table scan and chunked
 // indexed-status checks, give it room beyond the default.
@@ -117,7 +118,6 @@ export async function POST(request: NextRequest) {
       { status: 202 },
     );
   } catch (e) {
-    console.error("[index-all]", e);
-    return NextResponse.json({ error: "Failed to start indexing" }, { status: 500 });
+    return serverError("[index-all]", e, "Couldn't start indexing. Please try again.");
   }
 }

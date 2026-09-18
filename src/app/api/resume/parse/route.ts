@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireStaff } from "@/lib/auth/verify";
 import { parseResumeBuffer } from "@/lib/aws/resume-parser";
 import { validateResumeFile } from "@/lib/aws";
+import { serverError } from "@/lib/api-errors";
 
 // The extraction Lambda's pipeline can take 30–90s.
 export const maxDuration = 120;
@@ -57,7 +58,6 @@ export async function POST(request: NextRequest) {
       analysis: parsed.analysis,
     });
   } catch (error) {
-    console.error("Resume parse error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Resume parse error", error, "Couldn't read the resume. Please try again.");
   }
 }

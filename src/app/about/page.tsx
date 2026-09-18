@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import AboutPage from "./_content";
 import { getSiteContent } from "@/lib/content";
 
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   description:
     "Learn about Ocean Blue Corporation: our mission, values, and leadership in IT staffing, enterprise solutions, and managed services.",
   openGraph: {
+    images: OG_IMAGES,
     title: "About Ocean Blue Corporation",
     description:
       "Learn about Ocean Blue Corporation, our mission, values, and commitment to enterprise IT excellence.",

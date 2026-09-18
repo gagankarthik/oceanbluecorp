@@ -35,14 +35,22 @@ const ARROW: Record<Side, string> = {
   right: "right-full top-1/2 -translate-y-1/2 -mr-1",
 };
 
+const START: Partial<Record<Side, { box: string; arrow: string }>> = {
+  top: { box: "bottom-full left-0 mb-2", arrow: "top-full left-2 -mt-1" },
+  bottom: { box: "top-full left-0 mt-2", arrow: "bottom-full left-2 -mb-1" },
+};
+
 export function Tooltip({
   content,
   side = "top",
+  align = "center",
   children,
   className,
 }: {
   content: React.ReactNode;
   side?: Side;
+  /** "start" pins the tip to the trigger's left edge (top/bottom only). */
+  align?: "center" | "start";
   /** The control the tooltip describes. Must accept a ref-less wrapper. */
   children: React.ReactNode;
   className?: string;
@@ -76,15 +84,15 @@ export function Tooltip({
           role="tooltip"
           id={id}
           className={cn(
-            "pointer-events-none absolute z-50 w-max max-w-[16rem] rounded-lg px-2.5 py-1.5",
+            "pointer-events-none absolute z-50 w-max max-w-[16rem] rounded-lg px-2.5 py-1.5 text-left leading-snug",
             "bg-[var(--hz-ink)] text-caption font-medium text-white shadow-[var(--hz-shadow-md)]",
-            SIDE[side]
+            align === "start" && START[side] ? START[side]!.box : SIDE[side]
           )}
         >
           {content}
           <span
             aria-hidden
-            className={cn("absolute h-2 w-2 rotate-45 bg-[var(--hz-ink)]", ARROW[side])}
+            className={cn("absolute h-2 w-2 rotate-45 bg-[var(--hz-ink)]", align === "start" && START[side] ? START[side]!.arrow : ARROW[side])}
           />
         </span>
       )}

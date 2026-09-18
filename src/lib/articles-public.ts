@@ -15,6 +15,7 @@ import type { Metadata } from "next";
 import { getAllArticles, type Article, type ArticleKind } from "@/lib/aws/dynamodb";
 import { ARTICLE_KIND_CONFIG, byNewest, isLive } from "@/lib/articles";
 import { richTextToPlain } from "@/lib/rich-text";
+import { OG_IMAGES } from "@/lib/seo";
 
 export const SITE = "https://oceanbluecorp.com";
 
@@ -88,6 +89,7 @@ export function sectionMetadata(
       description: base.description,
       url,
       type: "website",
+      images: OG_IMAGES,
     },
     alternates: { canonical: url },
     ...(liveCount === 0 ? { robots: { index: false, follow: true } } : {}),
@@ -118,13 +120,14 @@ export function articleMetadata(article: Article): Metadata {
       type: "article",
       publishedTime: article.publishedAt,
       modifiedTime: article.updatedAt,
-      ...(image ? { images: [{ url: image, alt: article.heroImageAlt || title }] } : {}),
+      // No hero: fall back to the site card rather than sharing with no picture.
+      images: image ? [{ url: image, alt: article.heroImageAlt || title }] : OG_IMAGES,
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: image ? [image] : OG_IMAGES,
     },
     // canonicalUrl is set when a piece was published elsewhere first; pointing
     // at the original is what stops the two competing in search.

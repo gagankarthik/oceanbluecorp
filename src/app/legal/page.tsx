@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
   description:
     "Ocean Blue Corporation's legal documents: privacy policy, terms of service, cookie policy, data deletion requests, accessibility statement and security practices.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Legal and privacy | Ocean Blue Corporation",
     description:
       "Privacy policy, terms of service, cookie policy, data deletion, accessibility and security at Ocean Blue Corporation.",

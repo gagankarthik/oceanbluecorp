@@ -3,54 +3,41 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
+import { LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import BenchLoading from "./loading";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
-import { FormSelect } from "@/components/admin/forms/primitives";
-import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterMenu, ActiveFilters, DisplayMenu, StatStrip,
+  RecordHeader, FormActionBar, GridSelect,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { AdminCard } from "@/components/admin/admin-card";
-import {
-  ViewMenu,
-} from "@/components/admin/toolbar";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { ViewMenu } from "@/components/admin/toolbar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StarRating } from "@/components/admin/star-rating";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { InlineSelect, Empty as BlankCell } from "@/components/admin/list-panel";
+import { Empty as BlankCell } from "@/components/admin/list-panel";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
-  statusMeta, tones, US_STATES, normalizeState,
+  statusMeta, statusColor, US_STATES, normalizeState,
   WORK_AUTH_OPTIONS, SOURCE_OPTIONS, HIRE_TYPE_OPTIONS, hireTypeLabel,
-  type AppStatus,
 } from "@/components/admin/theme";
 import { POOL_META, POOL_ORDER, poolOf, canView } from "@/lib/bench";
 import { CandidateTabs } from "@/components/admin/candidate-tabs";
 import {
   IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
-  IconFile, IconHistory, IconJob, IconLocation, IconMail, IconPhone,
-  IconRefresh, IconShield, IconSparkles, IconTrash, IconUpload, IconUser,
-  IconWarning,
+  IconFile, IconMail, IconPhone, IconShield, IconTrash, IconUpload,
 } from "@/components/admin/icons";
 
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { fmtDate } from "@/lib/format";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { LIMITS, check, collectErrors, email, maxLen, phone, required } from "@/lib/form-validation";
 import { downloadCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
@@ -75,15 +62,7 @@ type PageMode = "list" | "create" | "edit";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
-/**
- * The stages a bench record can sit in.
- *
- * There used to be three disagreeing copies of this list on the page, the row
- * select carried seven stages, the filter dropdown dropped "inactive", and the
- * create form dropped "hired", so a candidate could be set to a state the
- * filter could never find again. One list now feeds the tabs, the row select,
- * the detail select and the form.
- */
+/** One stage list feeds the filter, the row select and the form. */
 const BENCH_STATUSES = [
   "active", "pending", "reviewing", "submitted", "interview", "hired", "inactive",
 ] as const;
@@ -105,10 +84,6 @@ const STATUS_TABS = [
  */
 type PoolKey = "all" | BenchType;
 
-// These used to be narrower private lists, because the Application unions were
-// narrower than the theme lists and the write path cast around the mismatch.
-// Both unions have since been widened to match the pickers, so the shared lists
-// are now the correct source and a third copy is just drift waiting to happen.
 const WORK_AUTH_CHOICES = WORK_AUTH_OPTIONS as NonNullable<Application["workAuthorization"]>[];
 const SOURCE_CHOICES = SOURCE_OPTIONS as NonNullable<Application["source"]>[];
 
@@ -137,11 +112,11 @@ function locationLabelOf(value: string): string {
   return value === "__none" ? "No location" : STATE_NAME.get(value) || value;
 }
 
-const textareaCls =
-  "w-full rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 text-sm text-[var(--adm-ink-mute)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] resize-none";
-
 const skillChip =
-  "inline-flex items-center gap-1 rounded-[4px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--adm-accent)]";
+  "inline-flex h-[22px] items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-accent)]";
+
+const countChip =
+  "inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium tabular-nums text-[var(--adm-ink-mute)]";
 
 /** How long a record has been sitting on the bench, in whole days. */
 function daysOnBench(app: Application): number | null {
@@ -164,7 +139,7 @@ function PoolBadge({ pool }: { pool: BenchType }) {
     <span
       title={POOL_META[pool].hint}
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium",
+        "inline-flex h-[22px] items-center whitespace-nowrap rounded-[6px] px-1.5 text-[12px] font-medium",
         shared
           ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
@@ -172,16 +147,6 @@ function PoolBadge({ pool }: { pool: BenchType }) {
     >
       {POOL_META[pool].label}
     </span>
-  );
-}
-
-/** Section heading inside the create/edit form. */
-function SectionTitle({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
-  return (
-    <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-      <Icon className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)]" />
-      {children}
-    </h3>
   );
 }
 
@@ -265,6 +230,28 @@ export default function TalentBenchPage() {
     resumeFileKey: "",
   });
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const {
+    errors: fieldErrors, validateAll, revalidate, reset: resetFieldErrors, invalidProps,
+  } = useFormErrors(() =>
+    collectErrors({
+      firstName: check(formData.firstName, required("Enter the candidate's first name."), maxLen(LIMITS.name)),
+      lastName: check(formData.lastName, required("Enter the candidate's last name."), maxLen(LIMITS.name)),
+      email: check(
+        formData.email,
+        required("Enter the candidate's email, like name@company.com."),
+        email("That email doesn't look complete. Use the form name@company.com."),
+        maxLen(LIMITS.email),
+      ),
+      phone: check(formData.phone, phone()),
+      address: check(formData.address, maxLen(LIMITS.short)),
+      city: check(formData.city, maxLen(LIMITS.name)),
+      zipCode: check(formData.zipCode, maxLen(10, "Enter a 5-digit ZIP code, or ZIP+4 like 10001-1234.")),
+      experience: check(formData.experience, maxLen(LIMITS.notes)),
+      notes: check(formData.notes, maxLen(LIMITS.notes)),
+    }),
+  );
+
   // ── data ──────────────────────────────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
@@ -273,7 +260,7 @@ export default function TalentBenchPage() {
       setError(null);
       const [appsResponse, jobsResponse] = await Promise.all([
         fetch("/api/applications"),
-        fetch("/api/jobs"),
+        fetch("/api/jobs?fields=summary"),
       ]);
 
       const appsData = await appsResponse.json();
@@ -307,7 +294,8 @@ export default function TalentBenchPage() {
 
       setApplications(benchApps);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch data");
+      console.error("Failed to load the talent bench:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -505,6 +493,8 @@ export default function TalentBenchPage() {
     [pooledApplications],
   );
 
+  const activeFilterCount = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, ownerFilter]
+    .filter((f) => f !== "all").length;
   const hasActiveFilters = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, ownerFilter].some((f) => f !== "all")
     || debouncedSearch.trim() !== "";
 
@@ -636,6 +626,8 @@ export default function TalentBenchPage() {
     setResumeFile(null);
     setResumeError(null);
     setExistingResume(null);
+    setSaveError(null);
+    resetFieldErrors();
   };
 
   const handleCreateNew = () => {
@@ -685,25 +677,12 @@ export default function TalentBenchPage() {
     }
     setResumeFile(null);
     setResumeError(null);
+    setSaveError(null);
+    resetFieldErrors();
     setPageMode("edit");
   };
 
-  /**
-   * Open the candidate record, the same one Applications opens.
-   *
-   * This page used to render its own detail in place: ten stacked panels under
-   * a back link, ~300 lines living inside the list screen. The candidate record
-   * at /admin/candidates/[id] is the same underlying Application and had
-   * already been through exactly that problem, DESIGN_SYSTEM §8 records it
-   * ("10 stacked cards under one tab; it is now 5 labelled tabs" ,  Miller's
-   * Law). Keeping a second, flatter view of one record meant a bench candidate
-   * and an applicant candidate were the same person shown two different ways,
-   * and every panel added to one had to be remembered for the other.
-   *
-   * The prefetch that used to sit here is gone with it: the record page fetches
-   * by key on mount, so warming a copy the list was about to discard was work
-   * for nothing.
-   */
+  /** Opens the shared candidate record, the same one Applications uses. */
   const handleViewApplication = (app: ApplicationWithJob) => {
     router.push(`/admin/candidates/${app.id}`);
   };
@@ -739,13 +718,13 @@ export default function TalentBenchPage() {
     // .doc/.docx inconsistently, and a type allow-list rejected valid resumes.
     const name = file.name.toLowerCase();
     if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
-      setResumeError("Please upload a PDF or Word document (.pdf, .doc, .docx)");
+      setResumeError("Choose a PDF or Word document (.pdf, .doc or .docx).");
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      setResumeError("File size must be less than 5MB");
+      setResumeError("This file is larger than 5 MB. Choose a smaller copy of the resume.");
       return;
     }
 
@@ -778,14 +757,14 @@ export default function TalentBenchPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to upload resume");
+        throw new Error(data.error || "The resume didn't upload. Try again, or remove it and save without one.");
       }
 
       const { resumeId, fileKey } = await response.json();
       return { resumeId, fileName: resumeFile.name, fileKey };
     } catch (err) {
       console.error("Resume upload error:", err);
-      setResumeError(err instanceof Error ? err.message : "Failed to upload resume");
+      setResumeError(err instanceof Error ? err.message : "The resume didn't upload. Try again, or remove it and save without one.");
       return null;
     } finally {
       setResumeUploading(false);
@@ -831,13 +810,12 @@ export default function TalentBenchPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting || resumeUploading) return;
+    setSaveError(null);
+    if (!validateAll()) return;
     setSubmitting(true);
 
     try {
-      if (!formData.firstName || !formData.lastName || !formData.email) {
-        throw new Error("Please fill in all required fields (First Name, Last Name, Email)");
-      }
-
       // Use existing application ID for edit mode, or generate a temp user ID for new entries
       const userId = selectedApplication?.id || user?.id || `bench-${Date.now()}`;
 
@@ -851,8 +829,8 @@ export default function TalentBenchPage() {
             resumeFileName: uploadResult.fileName,
             resumeFileKey: uploadResult.fileKey,
           };
-        } else if (resumeError) {
-          throw new Error(resumeError);
+        } else {
+          throw new Error("The resume didn't upload, so the profile wasn't saved. Try again, or remove the file and save without it.");
         }
       } else if (existingResume) {
         // Keep existing resume data
@@ -910,14 +888,15 @@ export default function TalentBenchPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to save profile");
+        throw new Error(data.error || "The profile couldn't be saved. Try again in a moment.");
       }
 
       await fetchData();
       setPageMode("list");
       resetForm();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save profile");
+      setSaveError(err instanceof Error ? err.message : "The profile couldn't be saved. Try again in a moment.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -974,11 +953,7 @@ export default function TalentBenchPage() {
           {skills.slice(0, 2).map((skill) => (
             <span key={skill} className={cn(skillChip, "min-w-0 truncate")}>{skill}</span>
           ))}
-          {skills.length > 2 && (
-            <span className="flex-none rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
-              +{skills.length - 2}
-            </span>
-          )}
+          {skills.length > 2 && <span className={countChip}>+{skills.length - 2}</span>}
         </span>
       );
     },
@@ -994,7 +969,7 @@ export default function TalentBenchPage() {
       const d = daysOnBench(a);
       if (d === null) return <BlankCell />;
       return (
-        <span className={cn("tabular-nums", d > 90 ? "font-semibold text-[var(--adm-warning)]" : "text-[var(--adm-ink-mute)]")}>
+        <span className={cn("tabular-nums", d > 90 ? "font-semibold text-[var(--adm-warning-ink)]" : "text-[var(--adm-ink-mute)]")}>
           {d}d
         </span>
       );
@@ -1039,9 +1014,7 @@ export default function TalentBenchPage() {
     sortValue: (a) => a.hireType || "",
     cell: (a) => a.hireType
       ? (
-        <span className="inline-flex items-center rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--adm-ink-mute)]">
-          {a.hireType}
-        </span>
+        <span className={countChip}>{a.hireType}</span>
       )
       : <BlankCell />,
   };
@@ -1050,23 +1023,18 @@ export default function TalentBenchPage() {
     key: "status",
     header: "Stage",
     sortValue: (a) => a.status,
-    cell: (a) => {
-      const t = tones[statusMeta[a.status as AppStatus]?.tone ?? "slate"];
-      return (
-        <div onClick={(e) => e.stopPropagation()}>
-          <InlineSelect
-            value={a.status}
-            aria-label={`Stage for ${a.name || a.email}`}
-            onChange={(e) => handleStatusChange(a.id, e.target.value as Application["status"])}
-            className={cn(t.bg, t.text, "border-transparent")}
-          >
-            {BENCH_STATUSES.map((s) => (
-              <option key={s} value={s}>{statusMeta[s].label}</option>
-            ))}
-          </InlineSelect>
-        </div>
-      );
-    },
+    cell: (a) => (
+      <GridSelect
+        value={a.status}
+        ariaLabel={`Stage for ${a.name || a.email}`}
+        dot={statusColor(a.status)}
+        onChange={(e) => handleStatusChange(a.id, e.target.value as Application["status"])}
+      >
+        {BENCH_STATUSES.map((s) => (
+          <option key={s} value={s}>{statusMeta[s].label}</option>
+        ))}
+      </GridSelect>
+    ),
   };
 
   const actionsCol: DataTableColumn<ApplicationWithJob> = {
@@ -1074,7 +1042,7 @@ export default function TalentBenchPage() {
     header: "",
     align: "right",
     cell: (a) => (
-      <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-0.5">
+      <div onClick={(e) => e.stopPropagation()} className="-my-1 flex items-center justify-end gap-0.5">
         <RowAction label="Edit profile" onClick={() => handleEditApplication(a)}>
           <IconEdit className="h-4 w-4" />
         </RowAction>
@@ -1127,6 +1095,10 @@ export default function TalentBenchPage() {
       ? "Candidates move here automatically when they are marked as hired. You can also add a consultant directly."
       : "Add the external candidates you are sourcing. Only you see them.")
     : "Try adjusting your search or filters.";
+  // Secondary: the header already carries the one filled "Add profile".
+  const emptyAction = emptyFresh
+    ? <WorkspaceButton onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
+    : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>;
 
   // ── states ────────────────────────────────────────────────────────────────
 
@@ -1135,16 +1107,12 @@ export default function TalentBenchPage() {
   if (error) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="space-y-3 text-center">
-          <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
-          <p className="text-sm text-[var(--adm-danger)]">{error}</p>
-          <button
-            onClick={() => void fetchData()}
-            className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
-          >
-            Retry
-          </button>
-        </div>
+        <EmptyState
+          variant="error"
+          title="Couldn't load the talent bench"
+          description={error}
+          action={<WorkspaceButton onClick={() => void fetchData()}>Try again</WorkspaceButton>}
+        />
       </div>
     );
   }
@@ -1153,426 +1121,274 @@ export default function TalentBenchPage() {
 
   if (pageMode === "create" || pageMode === "edit") {
     const closeForm = () => { setPageMode("list"); resetForm(); };
+    const set = <K extends keyof typeof formData>(k: K, v: (typeof formData)[K]) => setFormData({ ...formData, [k]: v });
     return (
-      <div className="space-y-5 pb-10">
-        {/* Back leads the page, ahead of the title. */}
-        <button
-          type="button"
-          onClick={closeForm}
-          className="-mb-1 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-
-        <PageHeader
+      <div className="flex flex-col">
+        <RecordHeader
+          back={{ label: "Talent bench", onClick: closeForm }}
           title={pageMode === "create" ? "Add bench profile" : "Edit bench profile"}
-          subtitle={pageMode === "edit" ? selectedApplication?.name || undefined : undefined}
-          icon={IconBoxes}
+          subtitle={pageMode === "edit" ? selectedApplication?.name || undefined : "Only first name, last name and email are required."}
         />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Personal information */}
-          <AdminCard className="space-y-4 p-5">
-            <SectionTitle icon={IconUser}>Personal information</SectionTitle>
+        <form onSubmit={handleSubmit} onBlur={revalidate} noValidate>
+          <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} className="mb-4" />
+          <div className="grid grid-cols-1 items-start gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-4 lg:space-y-5">
+              <FormCard title="Personal information">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="First name" required htmlFor="firstName" error={fieldErrors.firstName}>
+                    <FormInput id="firstName" required value={formData.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="John" {...invalidProps("firstName")} />
+                  </Field>
+                  <Field label="Last name" required htmlFor="lastName" error={fieldErrors.lastName}>
+                    <FormInput id="lastName" required value={formData.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder="Doe" {...invalidProps("lastName")} />
+                  </Field>
+                  <Field label="Email" required htmlFor="email" error={fieldErrors.email}>
+                    <FormInput id="email" required type="email" value={formData.email} onChange={(e) => set("email", e.target.value)} placeholder="john.doe@example.com" {...invalidProps("email")} />
+                  </Field>
+                  <Field label="Phone" htmlFor="phone" error={fieldErrors.phone}>
+                    <FormInput id="phone" type="tel" className="tabular-nums" value={formData.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 123-4567" {...invalidProps("phone")} />
+                  </Field>
+                </div>
+              </FormCard>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  required
-                  autoComplete="off"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="John"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  required
-                  autoComplete="off"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
+              <FormCard title="Location" subtitle="State drives the bench's location filter">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+                  <Field label="Address" htmlFor="address" className="sm:col-span-6" error={fieldErrors.address}>
+                    <FormInput id="address" value={formData.address} onChange={(e) => set("address", e.target.value)} placeholder="123 Main Street" {...invalidProps("address")} />
+                  </Field>
+                  <Field label="City" htmlFor="city" className="sm:col-span-3" error={fieldErrors.city}>
+                    <FormInput id="city" value={formData.city} onChange={(e) => set("city", e.target.value)} placeholder="New York" {...invalidProps("city")} />
+                  </Field>
+                  <Field label="State" htmlFor="state" className="sm:col-span-2">
+                    <FormSelect id="state" value={formData.state} onChange={(e) => set("state", e.target.value)}>
+                      <option value="">Select state</option>
+                      {US_STATES.map((s) => (
+                        <option key={s.code} value={s.code}>{s.name}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <Field label="ZIP code" htmlFor="zipCode" className="sm:col-span-1" error={fieldErrors.zipCode}>
+                    <FormInput id="zipCode" className="tabular-nums" value={formData.zipCode} onChange={(e) => set("zipCode", e.target.value)} placeholder="10001" {...invalidProps("zipCode")} />
+                  </Field>
+                </div>
+              </FormCard>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <div className="relative">
-                  <IconPhone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    autoComplete="off"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="(555) 123-4567"
-                    className="pl-9"
+              <FormCard title="Skills and experience">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Field label="Skills" htmlFor="skillInput" helper="Press Enter to add each skill." className="sm:col-span-3">
+                    <div className="flex gap-2">
+                      <FormInput
+                        id="skillInput"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); }
+                        }}
+                        placeholder="React, Python, AWS…"
+                      />
+                      <WorkspaceButton onClick={handleAddSkill} aria-label="Add skill" className="px-3.5">
+                        <Plus aria-hidden="true" />
+                        <span className="hidden sm:inline">Add</span>
+                      </WorkspaceButton>
+                    </div>
+                    {formData.skills.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {formData.skills.map((skill) => (
+                          <span key={skill} className={cn(skillChip, "gap-0.5 pr-0.5")}>
+                            {skill}
+                            <button
+                              type="button"
+                              aria-label={`Remove ${skill}`}
+                              onClick={() => handleRemoveSkill(skill)}
+                              className="grid h-5 w-5 place-items-center rounded-[6px] transition-colors hover:bg-[var(--adm-accent)] hover:text-white"
+                            >
+                              <X className="h-3 w-3" aria-hidden="true" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Field>
+                  <Field label="Experience summary" htmlFor="experience" className="sm:col-span-3" error={fieldErrors.experience}>
+                    <FormTextarea
+                      id="experience"
+                      {...invalidProps("experience")}
+                      rows={3}
+                      value={formData.experience}
+                      onChange={(e) => set("experience", e.target.value)}
+                      placeholder="Brief summary of experience and background…"
+                    />
+                  </Field>
+                  <Field label="Work authorization" htmlFor="workAuthorization">
+                    <FormSelect
+                      id="workAuthorization"
+                      value={formData.workAuthorization}
+                      onChange={(e) => set("workAuthorization", e.target.value as Application["workAuthorization"])}
+                    >
+                      <option value="">Select authorization</option>
+                      {WORK_AUTH_CHOICES.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <Field label="Source" htmlFor="source">
+                    <FormSelect
+                      id="source"
+                      value={formData.source}
+                      onChange={(e) => set("source", e.target.value as Application["source"])}
+                    >
+                      <option value="">Select source</option>
+                      {SOURCE_CHOICES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <Field label="Type of hire" htmlFor="hireType">
+                    <FormSelect id="hireType" value={formData.hireType} onChange={(e) => set("hireType", e.target.value)}>
+                      <option value="">Select hire type</option>
+                      {HIRE_TYPE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                </div>
+              </FormCard>
+
+              <FormCard title="Notes">
+                <Field label="Notes" htmlFor="notes" error={fieldErrors.notes}>
+                  <FormTextarea
+                    id="notes"
+                    {...invalidProps("notes")}
+                    rows={4}
+                    value={formData.notes}
+                    onChange={(e) => set("notes", e.target.value)}
+                    placeholder="Anything the next recruiter should know about this candidate…"
                   />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <div className="relative">
-                  <IconMail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
-                  <Input
-                    id="email"
-                    required
-                    type="email"
-                    autoComplete="off"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="john.doe@example.com"
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-            </div>
-          </AdminCard>
-
-          {/* Location */}
-          <AdminCard className="space-y-4 p-5">
-            <SectionTitle icon={IconLocation}>Location</SectionTitle>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                autoComplete="off"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="123 Main Street"
-              />
+                </Field>
+              </FormCard>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  autoComplete="off"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="New York"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>State</Label>
-                <Select value={formData.state} onValueChange={(v) => setFormData({ ...formData, state: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                  <SelectContent>
-                    {US_STATES.map((s) => (
-                      <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code</Label>
-                <Input
-                  id="zipCode"
-                  autoComplete="off"
-                  value={formData.zipCode}
-                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                  placeholder="10001"
-                />
-              </div>
-            </div>
-          </AdminCard>
-
-          {/* Skills & experience */}
-          <AdminCard className="space-y-4 p-5">
-            <SectionTitle icon={IconJob}>Skills &amp; experience</SectionTitle>
-
-            <div className="space-y-2">
-              <Label>Skills</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={skillInput}
-                  autoComplete="off"
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); }
-                  }}
-                  placeholder="Add a skill (e.g., React, Python, AWS)"
-                />
-                <button
-                  type="button"
-                  aria-label="Add skill"
-                  onClick={handleAddSkill}
-                  className="inline-flex h-9 flex-none items-center justify-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-              {formData.skills.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {formData.skills.map((skill) => (
-                    <span key={skill} className={cn(skillChip, "text-[12px]")}>
-                      {skill}
-                      <button type="button" aria-label={`Remove ${skill}`} onClick={() => handleRemoveSkill(skill)}>
-                        <X className="h-3 w-3" aria-hidden="true" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="experience">Experience Summary</Label>
-              <textarea
-                id="experience"
-                autoComplete="off"
-                value={formData.experience}
-                onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                className={cn(textareaCls, "min-h-[80px]")}
-                placeholder="Brief summary of experience and background..."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Work Authorization</Label>
-                <Select
-                  value={formData.workAuthorization}
-                  onValueChange={(v) => setFormData({ ...formData, workAuthorization: v as Application["workAuthorization"] })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select authorization" /></SelectTrigger>
-                  <SelectContent>
-                    {WORK_AUTH_CHOICES.map((o) => (
-                      <SelectItem key={o} value={o}>{o}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Source</Label>
-                <Select
-                  value={formData.source}
-                  onValueChange={(v) => setFormData({ ...formData, source: v as Application["source"] })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
-                  <SelectContent>
-                    {SOURCE_CHOICES.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Type of hire</Label>
-                <Select
-                  value={formData.hireType}
-                  onValueChange={(v) => setFormData({ ...formData, hireType: v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select hire type" /></SelectTrigger>
-                  <SelectContent>
-                    {HIRE_TYPE_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Application["status"] })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {BENCH_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>{statusMeta[s].label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Assigned To</Label>
-                <Select value={formData.ownership} onValueChange={handleOwnershipSelect}>
-                  <SelectTrigger><SelectValue placeholder="Assign to team member" /></SelectTrigger>
-                  <SelectContent>
-                    {hrUsers.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.name || u.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Talent pool</Label>
-                <Select
-                  value={formData.benchType}
-                  onValueChange={(v) => setFormData({ ...formData, benchType: v as BenchType })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {POOL_ORDER.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {POOL_META[p].label} , {POOL_META[p].badge.toLowerCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-[var(--adm-ink-subtle)]">{POOL_META[formData.benchType].hint}</p>
-              </div>
-            </div>
-          </AdminCard>
-
-          {/* Resume */}
-          <AdminCard className="space-y-4 p-5">
-            <SectionTitle icon={IconUpload}>Resume</SectionTitle>
-
-            <div className="space-y-3">
-              {existingResume && !resumeFile && (
-                <div className="flex items-center justify-between rounded-[6px] border border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] p-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-success-soft)]">
-                      <IconFile className="h-4 w-4 text-[var(--adm-success)]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[var(--adm-success)]">{existingResume.fileName}</p>
-                      <p className="text-xs text-[var(--adm-success)]">Current resume on file</p>
+            {/* Right rail: where the record sits on the bench, then its document. */}
+            <div className="min-w-0 space-y-4 lg:space-y-5">
+              <FormCard title="Bench placement">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                  <Field label="Stage" htmlFor="status">
+                    <FormSelect id="status" value={formData.status} onChange={(e) => set("status", e.target.value as Application["status"])}>
+                      {BENCH_STATUSES.map((s) => (
+                        <option key={s} value={s}>{statusMeta[s].label}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <Field label="Assigned to" htmlFor="ownership">
+                    <FormSelect id="ownership" value={formData.ownership} onChange={(e) => handleOwnershipSelect(e.target.value)}>
+                      <option value="">Unassigned</option>
+                      {hrUsers.map((u) => (
+                        <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <Field label="Talent pool" htmlFor="benchType" helper={POOL_META[formData.benchType].hint} className="sm:col-span-2 xl:col-span-1">
+                    <FormSelect id="benchType" value={formData.benchType} onChange={(e) => set("benchType", e.target.value as BenchType)}>
+                      {POOL_ORDER.map((p) => (
+                        <option key={p} value={p}>
+                          {POOL_META[p].label} · {POOL_META[p].badge.toLowerCase()}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </Field>
+                  <div className="sm:col-span-2 xl:col-span-1">
+                    <p className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Rating</p>
+                    <div className="flex h-9 items-center gap-3">
+                      <StarRating size="lg" rating={formData.rating} onRate={(n) => set("rating", n)} />
+                      {formData.rating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => set("rating", 0)}
+                          className="rounded-[6px] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink)]"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-none items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => void handleDownloadResume(existingResume.id)}
-                      className="rounded-[6px] p-2 text-[var(--adm-success)] transition-colors hover:bg-[var(--adm-success-soft)]"
-                      title="Download resume"
-                    >
-                      <IconDownload className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemoveExistingResume}
-                      className="rounded-[6px] p-2 text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
-                      title="Remove resume"
-                    >
-                      <IconTrash className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
-              )}
+              </FormCard>
 
-              {resumeFile && (
-                <div className="flex items-center justify-between rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] p-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-                      <IconFile className="h-4 w-4 text-[var(--adm-accent)]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[var(--adm-ink)]">{resumeFile.name}</p>
-                      <p className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">
-                        {(resumeFile.size / 1024).toFixed(1)} KB &middot; ready to upload
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRemoveResume}
-                    className="rounded-[6px] p-2 text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
-                    title="Remove"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
+              <FormCard title="Resume" meta="PDF, DOC or DOCX, up to 5MB">
+                <div className="space-y-3">
+                  {existingResume && !resumeFile && (
+                    <FileRow
+                      name={existingResume.fileName}
+                      meta="Current resume on file"
+                      actions={
+                        <>
+                          <IconButton label="Download resume" onClick={() => void handleDownloadResume(existingResume.id)}>
+                            <IconDownload className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton label="Remove resume" danger onClick={handleRemoveExistingResume}>
+                            <IconTrash className="h-4 w-4" />
+                          </IconButton>
+                        </>
+                      }
+                    />
+                  )}
 
-              {!resumeFile && (
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="resume-upload"
-                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    onChange={handleResumeSelect}
-                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-                  />
-                  <div className="rounded-[6px] border border-dashed border-[var(--adm-line)] p-6 text-center transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]">
-                    <IconUpload className="mx-auto mb-2 h-7 w-7 text-[var(--adm-ink-subtle)]" />
-                    <p className="text-sm font-medium text-[var(--adm-ink-mute)]">
-                      {existingResume ? "Upload a new resume to replace" : "Click to upload resume"}
+                  {resumeFile && (
+                    <FileRow
+                      name={resumeFile.name}
+                      meta={`${(resumeFile.size / 1024).toFixed(1)} KB · ready to upload`}
+                      actions={
+                        <IconButton label="Remove selected file" danger onClick={handleRemoveResume}>
+                          <X className="h-4 w-4" />
+                        </IconButton>
+                      }
+                    />
+                  )}
+
+                  {!resumeFile && (
+                    <label className="group relative block cursor-pointer rounded-[12px] border border-dashed border-[var(--adm-line-strong)] px-4 py-5 text-center transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]">
+                      <input
+                        type="file"
+                        id="resume-upload"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={handleResumeSelect}
+                        className="sr-only"
+                      />
+                      <IconUpload className="mx-auto mb-2 h-5 w-5 text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" />
+                      <span className="block text-[14px] font-medium text-[var(--adm-ink)]">
+                        {existingResume ? "Upload a replacement" : "Choose a resume"}
+                      </span>
+                      <span className="mt-0.5 block text-[12.5px] text-[var(--adm-ink-subtle)]">Parsed automatically once saved</span>
+                    </label>
+                  )}
+
+                  {resumeError && (
+                    <p role="alert" className="flex items-start gap-2 rounded-[12px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
+                      <IconAlert className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+                      {resumeError}
                     </p>
-                    <p className="mt-1 text-xs text-[var(--adm-ink-subtle)]">PDF, DOC, or DOCX (max 5MB)</p>
-                  </div>
+                  )}
                 </div>
-              )}
-
-              {resumeError && (
-                <div className="flex items-center gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] p-3">
-                  <IconAlert className="h-4 w-4 flex-none text-[var(--adm-danger)]" />
-                  <p className="text-sm text-[var(--adm-danger)]">{resumeError}</p>
-                </div>
-              )}
+              </FormCard>
             </div>
-          </AdminCard>
-
-          {/* Rating & notes */}
-          <AdminCard className="space-y-4 p-5">
-            <SectionTitle icon={IconFile}>Rating &amp; notes</SectionTitle>
-
-            <div className="space-y-2">
-              <Label>Rating</Label>
-              <div className="flex items-center gap-3">
-                <StarRating
-                  size="lg"
-                  rating={formData.rating}
-                  onRate={(n) => setFormData({ ...formData, rating: n })}
-                />
-                {formData.rating > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, rating: 0 })}
-                    className="text-xs font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink-mute)]"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <textarea
-                id="notes"
-                autoComplete="off"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className={cn(textareaCls, "min-h-[100px]")}
-                placeholder="Additional notes about this candidate..."
-              />
-            </div>
-          </AdminCard>
-
-          <div className="flex items-center justify-end gap-2">
-            <PageHeaderButton type="button" variant="secondary" onClick={closeForm}>
-              Cancel
-            </PageHeaderButton>
-            <PageHeaderButton type="submit" variant="primary" disabled={submitting || resumeUploading}>
-              {(submitting || resumeUploading) && <Loader2 className="h-4 w-4 animate-spin" />}
-              {resumeUploading ? "Uploading Resume…" : pageMode === "create" ? "Add to Bench" : "Save Changes"}
-            </PageHeaderButton>
           </div>
+
+          <FormActionBar>
+            <WorkspaceButton onClick={closeForm}>Cancel</WorkspaceButton>
+            <WorkspaceButton type="submit" variant="primary" disabled={submitting || resumeUploading}>
+              {(submitting || resumeUploading) && <Loader2 className="animate-spin" aria-hidden="true" />}
+              {resumeUploading ? "Uploading resume…" : pageMode === "create" ? "Add to bench" : "Save changes"}
+            </WorkspaceButton>
+          </FormActionBar>
         </form>
       </div>
     );
   }
 
-  // ── record detail ─────────────────────────────────────────────────────────
-
-
   // ── list ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5 pb-10">
+    <div className="flex flex-col pb-6">
       <ConfirmDialog
         open={!!pendingRemove}
         title="Remove from talent bench?"
@@ -1584,9 +1400,6 @@ export default function TalentBenchPage() {
         onCancel={() => setPendingRemove(null)}
       />
 
-      {/* Every tile is either a state you can filter to or an ageing figure
-          the grid cannot show at a glance. The old strip drew proportion bars
-          of "On bench", which the footer already counts. */}
       <WorkspaceTitle
         title="Talent bench"
         actions={
@@ -1601,13 +1414,9 @@ export default function TalentBenchPage() {
         }
       />
 
-      {/* Pool tabs, everything below (KPIs, counts, grid) is scoped to the
-          selected pool, so they sit above the KPI strip, not among the filter
-          pills. Lead Sourcing rides at the end of the same row (it moved out
-          of the sidebar) and is a link, not a filter. */}
-      <CandidateTabs active={poolFilter} counts={poolCounts} onSelect={setPoolFilter} />
+      {/* Pools re-scope everything below them, so they lead. */}
+      <CandidateTabs className="mb-4" active={poolFilter} counts={poolCounts} onSelect={setPoolFilter} />
 
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Available now", value: kpis.available, hint: "Not currently in a process" },
@@ -1619,7 +1428,6 @@ export default function TalentBenchPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -1631,6 +1439,48 @@ export default function TalentBenchPage() {
           }
           trailing={
             <>
+              <FilterMenu activeCount={activeFilterCount} onClearAll={clearFilters}>
+                <Field label="Stage" htmlFor="bench-filter-stage">
+                  <FormSelect id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    {STATUS_TABS.map((t) => (
+                      <option key={t.key} value={t.key}>{t.label} ({statusCounts[t.key] || 0})</option>
+                    ))}
+                  </FormSelect>
+                </Field>
+                <Field label="Skill" htmlFor="bench-filter-skill">
+                  <FormSelect id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
+                    <option value="all">All skills</option>
+                    {allSkills.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="Work authorization" htmlFor="bench-filter-auth">
+                  <FormSelect id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+                    <option value="all">All</option>
+                    {workAuthorizations.map((auth) => <option key={auth} value={auth}>{auth}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="Hire type" htmlFor="bench-filter-hire">
+                  <FormSelect id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+                    <option value="all">All hire types</option>
+                    {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="Location" htmlFor="bench-filter-location">
+                  <FormSelect id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                    <option value="all">All locations ({pooledApplications.length})</option>
+                    {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
+                  </FormSelect>
+                </Field>
+                {/* Only admins see the whole team's bench, so only they slice it by adder. */}
+                {isAdmin && (
+                  <Field label="Added by" htmlFor="bench-filter-owner">
+                    <FormSelect id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
+                      <option value="all">Everyone</option>
+                      {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </FormSelect>
+                  </Field>
+                )}
+              </FilterMenu>
               <ViewMenu
                 options={[
                   { value: "table", label: "Table", icon: LayoutList },
@@ -1638,7 +1488,6 @@ export default function TalentBenchPage() {
                 ]}
                 value={viewMode}
                 onChange={setViewMode}
-                className="h-8 rounded-[6px] px-2.5 py-0 text-[13px]"
               />
               {viewMode === "table" && (
                 <DisplayMenu
@@ -1652,73 +1501,7 @@ export default function TalentBenchPage() {
               )}
             </>
           }
-        >
-          <FilterPill
-            label="Stage"
-            icon={FilterIcon.stage}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_TABS.map((t) => ({
-              value: t.key,
-              label: t.label,
-              count: statusCounts[t.key] || 0,
-            }))}
-          />
-          <FilterPill
-            label="Skill"
-            icon={FilterIcon.skill}
-            value={skillFilter}
-            onChange={setSkillFilter}
-            options={[
-              { value: "all", label: "All skills" },
-              ...allSkills.map((skill) => ({ value: skill, label: skill })),
-            ]}
-          />
-          <FilterPill
-            label="Work auth"
-            icon={FilterIcon.workAuth}
-            value={authFilter}
-            onChange={setAuthFilter}
-            options={[
-              { value: "all", label: "All" },
-              ...workAuthorizations.map((auth) => ({ value: auth, label: auth })),
-            ]}
-          />
-          <FilterPill
-            label="Hire type"
-            icon={FilterIcon.type}
-            value={hireFilter}
-            onChange={setHireFilter}
-            options={[
-              { value: "all", label: "All hire types" },
-              ...hireTypes.map((h) => ({ value: h, label: hireTypeLabel(h) })),
-            ]}
-          />
-          <FilterPill
-            label="Location"
-            icon={FilterIcon.location}
-            value={locationFilter}
-            onChange={setLocationFilter}
-            options={[
-              { value: "all", label: "All locations", count: pooledApplications.length },
-              ...locations.map((l) => ({ value: l.value, label: l.label, count: l.count })),
-            ]}
-          />
-          {/* Only admins see the whole team's bench, so only they get to slice
-              it by who added a record. */}
-          {isAdmin && (
-            <FilterPill
-              label="Added by"
-              icon={FilterIcon.person}
-              value={ownerFilter}
-              onChange={setOwnerFilter}
-              options={[
-                { value: "all", label: "Everyone" },
-                ...adderNames.map((n) => ({ value: n, label: n })),
-              ]}
-            />
-          )}
-      </WorkspaceToolbar>
+        />
 
       <ActiveFilters
         variant="canvas"
@@ -1733,9 +1516,8 @@ export default function TalentBenchPage() {
         onClearAll={clearFilters}
       />
 
-      <Workspace>
-      {/* ── record grid ── */}
-      {viewMode === "table" && (
+      {viewMode === "table" ? (
+        <Workspace>
           <DataTable
             noun="candidates"
             storageKey="bench"
@@ -1746,146 +1528,122 @@ export default function TalentBenchPage() {
             pageSize={rows}
             onPageSizeChange={setRows}
             hiddenColumns={hiddenColumns}
-            empty={{
-              icon: IconBoxes,
-              title: emptyTitle,
-              description: emptyDescription,
-              action: emptyFresh
-                ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
-                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
-            }}
+            empty={{ icon: IconBoxes, title: emptyTitle, description: emptyDescription, action: emptyAction }}
           />
-      )}
-
-      {viewMode === "cards" && (
-        filteredApplications.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 overflow-y-auto p-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredApplications.map((app) => {
-              const adder = isAdmin ? resolveAdder(app) : null;
-              const age = daysOnBench(app);
-              return (
-                <AdminCard key={app.id} hover className="flex h-full flex-col p-4">
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <Avatar name={app.name} email={app.email} size="md" />
-                      <div className="min-w-0">
-                        <button
-                          onClick={() => handleViewApplication(app)}
-                          className="block max-w-full truncate text-left text-sm font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
-                        >
-                          {app.name || "Unknown"}
-                        </button>
-                        <p className="truncate font-mono text-[11px] text-[var(--adm-ink-subtle)]">
-                          {app.applicationId || app.id.slice(0, 8)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-none flex-col items-end gap-1">
-                      <StatusBadge status={app.status} size="md" />
-                      <PoolBadge pool={poolOf(app)} />
+        </Workspace>
+      ) : filteredApplications.length === 0 ? (
+        <AdminCard>
+          <EmptyState
+            icon={IconBoxes}
+            variant={emptyFresh ? "fresh" : "filtered"}
+            title={emptyTitle}
+            description={emptyDescription}
+            action={emptyAction}
+          />
+        </AdminCard>
+      ) : (
+        // Cards sit on the canvas; inside the table panel they read as cards-in-a-card.
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          {filteredApplications.map((app) => {
+            const adder = isAdmin ? resolveAdder(app) : null;
+            const age = daysOnBench(app);
+            return (
+              <AdminCard key={app.id} hover className="flex h-full min-w-0 flex-col p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={app.name} email={app.email} size="md" />
+                    <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => handleViewApplication(app)}
+                        className="block max-w-full truncate rounded-[6px] text-left text-[15px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                      >
+                        {app.name || "Unknown"}
+                      </button>
+                      <p className="truncate font-mono text-[12px] text-[var(--adm-ink-subtle)]">
+                        {app.applicationId || app.id.slice(0, 8)}
+                      </p>
                     </div>
                   </div>
+                  <div className="flex flex-none flex-col items-end gap-1.5">
+                    <StatusBadge status={app.status} />
+                    <PoolBadge pool={poolOf(app)} />
+                  </div>
+                </div>
 
-                  <div className="space-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
-                    <div className="flex items-center gap-2">
-                      <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
-                      <span className="truncate">{app.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
-                      <span className="tabular-nums">{app.phone || <BlankCell />}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <IconShield className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
-                      <span className="truncate">{app.workAuthorization || <BlankCell />}</span>
-                    </div>
-                    {app.resumeId && (
+                <div className="flex-1">
+                <dl className="mt-4 space-y-2 text-[13px] text-[var(--adm-ink-mute)]">
+                  <CardFact icon={IconMail} label="Email"><span className="truncate">{app.email}</span></CardFact>
+                  <CardFact icon={IconPhone} label="Phone"><span className="tabular-nums">{app.phone || <BlankCell />}</span></CardFact>
+                  <CardFact icon={IconShield} label="Work authorization"><span className="truncate">{app.workAuthorization || <BlankCell />}</span></CardFact>
+                  {app.resumeId && (
+                    <CardFact icon={IconFile} label="Resume">
                       <button
+                        type="button"
                         onClick={() => void handleDownloadResume(app.resumeId!)}
-                        className="inline-flex items-center gap-2 text-[var(--adm-success)] transition-colors hover:text-[var(--adm-success)]"
+                        className="rounded-[6px] font-medium text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                       >
-                        <IconFile className="h-3.5 w-3.5 flex-none text-[var(--adm-success)]" />
-                        <span className="text-[12px] font-medium">Resume on file</span>
+                        Resume on file
                       </button>
+                    </CardFact>
+                  )}
+                </dl>
+
+                {app.skills && app.skills.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5 border-t border-[var(--adm-line-soft)] pt-4">
+                    {app.skills.slice(0, 4).map((skill) => (
+                      <span key={skill} className={skillChip}>{skill}</span>
+                    ))}
+                    {app.skills.length > 4 && <span className={countChip}>+{app.skills.length - 4}</span>}
+                  </div>
+                )}
+
+                {adder && (
+                  <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4 text-[13px]">
+                    <Avatar name={adder.name} size="xs" />
+                    <span className="flex-none text-[var(--adm-ink-subtle)]">Added by</span>
+                    <span className="truncate font-medium text-[var(--adm-ink-mute)]">{adder.name}</span>
+                    {adder.role && <span className={cn(countChip, "ml-auto capitalize")}>{adder.role}</span>}
+                  </div>
+                )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-[var(--adm-line-soft)] pt-3">
+                  <div className="flex items-center gap-2.5">
+                    <StarRating rating={app.rating || 0} onRate={(n) => void handleRatingChange(app.id, n)} />
+                    {age !== null && (
+                      <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]" title="Days on bench">{age}d</span>
                     )}
                   </div>
-
-                  {app.skills && app.skills.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1 border-t border-[var(--adm-line-soft)] pt-3">
-                      {app.skills.slice(0, 4).map((skill) => (
-                        <span key={skill} className={skillChip}>{skill}</span>
-                      ))}
-                      {app.skills.length > 4 && (
-                        <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
-                          +{app.skills.length - 4}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {adder && (
-                    <div className="mt-3 flex items-center gap-1.5 border-t border-[var(--adm-line-soft)] pt-3">
-                      <Avatar name={adder.name} size="xs" />
-                      <span className="truncate text-[12px] text-[var(--adm-ink-subtle)]">Added by</span>
-                      <span className="truncate text-[12px] font-medium text-[var(--adm-ink-mute)]">{adder.name}</span>
-                      {adder.role && (
-                        <span className="ml-auto rounded-[4px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-[var(--adm-ink-mute)]">
-                          {adder.role}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--adm-line-soft)] pt-3">
-                    <div className="flex items-center gap-2">
-                      <StarRating rating={app.rating || 0} onRate={(n) => void handleRatingChange(app.id, n)} />
-                      {age !== null && (
-                        <span className="text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">{age}d</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <RowAction label="View details" onClick={() => handleViewApplication(app)}>
-                        <IconEye className="h-4 w-4" />
-                      </RowAction>
-                      <RowAction label="Edit profile" onClick={() => handleEditApplication(app)}>
-                        <IconEdit className="h-4 w-4" />
-                      </RowAction>
-                      <RowAction label="Send email" href={`mailto:${app.email}`}>
-                        <IconMail className="h-4 w-4" />
-                      </RowAction>
-                      <RowAction
-                        label="Remove from bench"
-                        danger
-                        onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </RowAction>
-                    </div>
+                  <div className="-mr-1.5 flex items-center gap-0.5">
+                    <RowAction label="View details" onClick={() => handleViewApplication(app)}>
+                      <IconEye className="h-4 w-4" />
+                    </RowAction>
+                    <RowAction label="Edit profile" onClick={() => handleEditApplication(app)}>
+                      <IconEdit className="h-4 w-4" />
+                    </RowAction>
+                    <RowAction label="Send email" href={`mailto:${app.email}`}>
+                      <IconMail className="h-4 w-4" />
+                    </RowAction>
+                    <RowAction
+                      label="Remove from bench"
+                      danger
+                      onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </RowAction>
                   </div>
-                </AdminCard>
-              );
-            })}
-          </div>
-        ) : (
-          <div>
-            <EmptyState
-              icon={IconBoxes}
-              variant={emptyFresh ? "fresh" : "filtered"}
-              title={emptyTitle}
-              description={emptyDescription}
-              action={emptyFresh
-                ? <WorkspaceButton variant="primary" onClick={handleCreateNew}><Plus className="h-4 w-4" />Add profile</WorkspaceButton>
-                : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>}
-            />
-          </div>
-        )
+                </div>
+              </AdminCard>
+            );
+          })}
+        </div>
       )}
-      </Workspace>
     </div>
   );
 }
 
-// ── row action button ────────────────────────────────────────────────────────
+// ── presentational helpers ───────────────────────────────────────────────────
 
 /**
  * Icon action in a grid row or card footer. Same hit area and hover wash
@@ -1906,14 +1664,64 @@ function RowAction({
   children: React.ReactNode;
 }) {
   const cls = cn(
-    "rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors",
+    "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors",
     danger
-      ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
-      : "hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]",
+      ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+      : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
   );
   return href ? (
     <a href={href} title={label} aria-label={label} className={cls}>{children}</a>
   ) : (
     <button type="button" title={label} aria-label={label} onClick={onClick} className={cls}>{children}</button>
+  );
+}
+
+/** Same geometry as RowAction, for form controls that are not in a row. */
+const IconButton = RowAction;
+
+/** A titled form section. */
+function FormCard({ title, subtitle, meta, children }: { title: string; subtitle?: string; meta?: string; children: React.ReactNode }) {
+  return (
+    <AdminCard>
+      <AdminCardHeader title={title} subtitle={subtitle} meta={meta} />
+      <div className="p-4">{children}</div>
+    </AdminCard>
+  );
+}
+
+/** A resume already attached, or one picked and waiting to upload. */
+function FileRow({ name, meta, actions }: { name: string; meta: string; actions: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-2 pl-3.5 pr-1.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <IconFile className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{name}</p>
+          <p className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{meta}</p>
+        </div>
+      </div>
+      <div className="flex flex-none items-center gap-0.5">{actions}</div>
+    </div>
+  );
+}
+
+/** One labelled line on a bench card. The label is for screen readers; the glyph carries it visually. */
+function CardFact({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <dt className="flex-none">
+        <Icon className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
+        <span className="sr-only">{label}</span>
+      </dt>
+      <dd className="flex min-w-0">{children}</dd>
+    </div>
   );
 }

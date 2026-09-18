@@ -23,6 +23,8 @@ export interface FieldRule {
   required?: boolean;
   /** Reject a string that is only whitespace. Ignored for other kinds. */
   nonEmpty?: boolean;
+  /** Keep surrounding whitespace (passwords). Strings are trimmed by default. */
+  trim?: boolean;
   /** Longest accepted string; longer input is an error, never a silent truncation. */
   maxLength?: number;
   min?: number;
@@ -31,7 +33,11 @@ export interface FieldRule {
   oneOf?: readonly string[];
   /** Coerce a numeric string to a number, form posts arrive as strings. */
   coerce?: boolean;
+  /** Shape check for strings. `email` is deliberately loose: one @, a dot after it, no spaces. */
+  format?: "email";
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type Schema = Record<string, FieldRule>;
 
@@ -57,8 +63,8 @@ function checkField(name: string, raw: unknown, rule: FieldRule, errors: string[
         errors.push(`${name} must be text`);
         return undefined;
       }
-      const value = raw.trim();
-      if (rule.nonEmpty !== false && value === "") {
+      const value = rule.trim === false ? raw : raw.trim();
+      if (rule.nonEmpty !== false && value.trim() === "") {
         if (rule.required) errors.push(`${name} cannot be blank`);
         return undefined;
       }
@@ -68,6 +74,10 @@ function checkField(name: string, raw: unknown, rule: FieldRule, errors: string[
       }
       if (rule.oneOf && !rule.oneOf.includes(value)) {
         errors.push(`${name} must be one of: ${rule.oneOf.join(", ")}`);
+        return undefined;
+      }
+      if (rule.format === "email" && !EMAIL_RE.test(value)) {
+        errors.push(`${name} must be a valid email address`);
         return undefined;
       }
       return value;
