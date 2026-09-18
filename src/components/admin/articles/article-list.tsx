@@ -26,6 +26,8 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { EmptyState } from "@/components/admin/empty-state";
+import { AdminCard } from "@/components/admin/admin-card";
+import { cn } from "@/lib/utils";
 import {
   IconBook, IconEdit, IconEye, IconStar, IconTrash, IconWarning,
 } from "@/components/admin/icons";
@@ -42,6 +44,9 @@ import {
  * differ only in which three columns sit in the middle and which second filter
  * is useful. The columns are chosen by kind below; everything else is common.
  */
+const ICON_BTN =
+  "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+
 export function ArticleList({ kind }: { kind: ArticleKind }) {
   const config = ARTICLE_KIND_CONFIG[kind];
   const router = useRouter();
@@ -66,7 +71,8 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
       if (!response.ok) throw new Error(data.error || `Failed to load ${config.plural}`);
       setArticles((data.articles || []).sort(byNewest));
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to load ${config.plural}`);
+      console.error(`Failed to load ${config.plural}:`, err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -183,7 +189,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
         <div className="flex min-w-0 items-center gap-2">
           {a.featured && (
             <IconStar
-              className="h-3.5 w-3.5 flex-none text-[var(--adm-warning)]"
+              className="h-3.5 w-3.5 flex-none text-[var(--adm-warning-ink)]"
               aria-label="Featured"
             />
           )}
@@ -328,7 +334,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
         const upcoming = isPending(a);
         return (
           <span
-            className={`tabular-nums ${upcoming ? "text-[var(--adm-info)]" : "text-[var(--adm-ink-mute)]"}`}
+            className={cn("tabular-nums", upcoming ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")}
             title={upcoming ? "Scheduled, not live yet" : undefined}
           >
             {fmtDate(a.publishedAt)}
@@ -359,7 +365,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
           onClick={(e) => e.stopPropagation()}
           aria-label={`View “${a.title}” on the site`}
           title="View on the site"
-          className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+          className={ICON_BTN}
         >
           <IconEye className="h-4 w-4" aria-hidden="true" />
         </a>
@@ -369,15 +375,16 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
         onClick={(e) => e.stopPropagation()}
         aria-label={`Edit “${a.title}”`}
         title="Edit"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+        className={ICON_BTN}
       >
         <IconEdit className="h-4 w-4" aria-hidden="true" />
       </Link>
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); setPendingDelete(a); }}
         aria-label={`Delete “${a.title}”`}
         title="Delete"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+        className={cn(ICON_BTN, "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]")}
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -391,15 +398,15 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
   if (error) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="max-w-md rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+        <AdminCard className="w-full max-w-md">
           <EmptyState
             variant="error"
             icon={IconWarning}
-            title={`Could not load ${config.plural}`}
+            title={`Couldn't load ${config.plural}`}
             description={error}
-            action={<WorkspaceButton variant="primary" onClick={fetchArticles}>Retry</WorkspaceButton>}
+            action={<WorkspaceButton variant="primary" onClick={fetchArticles}>Try again</WorkspaceButton>}
           />
-        </div>
+        </AdminCard>
       </div>
     );
   }
@@ -408,7 +415,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
     <>
       <WorkspaceTitle
         title={config.label}
-        meta={config.purpose}
+        info={config.purpose}
         actions={
           <WorkspaceButton variant="primary" onClick={() => router.push(`${config.adminPath}/new`)}>
             <Plus className="h-4 w-4" />
@@ -530,7 +537,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
               articles.length === 0 ? config.purpose : "Try a different search, or clear a filter.",
             action:
               articles.length === 0 ? (
-                <WorkspaceButton variant="primary" onClick={() => router.push(`${config.adminPath}/new`)}>
+                <WorkspaceButton onClick={() => router.push(`${config.adminPath}/new`)}>
                   <Plus className="h-4 w-4" />
                   Write the first one
                 </WorkspaceButton>

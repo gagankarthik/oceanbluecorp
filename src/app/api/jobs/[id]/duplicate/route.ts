@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJob, createJob, getNextPostingId, Job } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // POST /api/jobs/[id]/duplicate - Duplicate a job posting
 export async function POST(
@@ -46,18 +47,11 @@ export async function POST(
     const result = await createJob(duplicatedJob);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to duplicate job" },
-        { status: 500 }
-      );
+      return serverError("Duplicating job", result.error, "Couldn't duplicate the job. Please try again.");
     }
 
     return NextResponse.json({ job: duplicatedJob }, { status: 201 });
   } catch (error) {
-    console.error("Error duplicating job:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error duplicating job", error, "Couldn't duplicate the job. Please try again.");
   }
 }

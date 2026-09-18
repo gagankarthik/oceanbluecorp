@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import TeamPage from "./_content";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   description:
     "Meet the leadership behind Ocean Blue Corporation, senior practitioners in IT staffing, enterprise solutions, and managed services.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Our Team | Ocean Blue Corporation",
     description: "Meet the leadership behind Ocean Blue Corporation.",
     url: "https://oceanbluecorp.com/team",

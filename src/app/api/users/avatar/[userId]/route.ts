@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAvatarKey, getAvatarObject, deleteAvatar } from "@/lib/aws/s3";
-import { requireSignedIn } from "@/lib/auth/verify";
+import { requireSignedIn, isAdminClaims } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 export const runtime = "nodejs";
 
@@ -26,11 +27,11 @@ export async function GET(
     return new NextResponse(null, {
       status: 204,
       // Cache the "nothing here" answer too, or every navigation re-asks.
-      headers: { "Cache-Control": "public, max-age=300" },
+      headers: { "Cache-Control": "private, max-age=300" },
     });
   }
   if (!result.success) {
-    return NextResponse.json({ error: result.error || "Failed to load photo" }, { status: 500 });
+    return serverError("Avatar load failed", result.error, "Couldn't load the photo. Please try again.");
   }
 
   return new NextResponse(result.body as BodyInit, {
@@ -39,7 +40,8 @@ export async function GET(
       "Content-Type": result.contentType || "image/jpeg",
       // Short cache: a re-upload uses a stable key, so headers elsewhere bust it
       // with a ?v= query; 5 min keeps the navbar avatar reasonably fresh.
-      "Cache-Control": "public, max-age=300",
+      // private: this sits behind sign-in, so no shared/CDN cache may keep it.
+      "Cache-Control": "private, max-age=300",
     },
   });
 }
@@ -52,9 +54,12 @@ export async function DELETE(
   const auth = await requireSignedIn(_request);
   if (!auth.ok) return auth.response;
   const { userId } = await params;
+  if (userId !== auth.claims.sub && !isAdminClaims(auth.claims)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const result = await deleteAvatar(generateAvatarKey(userId));
   if (!result.success) {
-    return NextResponse.json({ error: result.error || "Failed to remove photo" }, { status: 500 });
+    return serverError("Avatar delete failed", result.error, "Couldn't remove the photo. Please try again.");
   }
   return NextResponse.json({ success: true });
 }

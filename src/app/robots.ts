@@ -19,11 +19,13 @@ export default function robots(): MetadataRoute.Robots {
           "/contact",
           "/privacy",
         ],
+        // No trailing slash on /admin and /auth, so the bare paths are covered
+        // too. /_next/ is deliberately NOT blocked: Google renders pages with
+        // the JS/CSS under it and indexes images through /_next/image.
         disallow: [
-          "/admin/",      // Private HR/admin panel
+          "/admin",       // Private HR/admin panel
           "/api/",        // API routes, never index
-          "/auth/",       // Auth flows
-          "/_next/",      // Next.js internals
+          "/auth",        // Auth flows
         ],
       },
 

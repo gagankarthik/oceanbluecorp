@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendJobUpdatedNotifications } from "@/lib/aws/ses";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);
@@ -36,10 +37,6 @@ export async function POST(request: NextRequest) {
       failed: result.failed,
     });
   } catch (error) {
-    console.error("[NOTIFY-UPDATE] Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to send notifications" },
-      { status: 500 }
-    );
+    return serverError("[NOTIFY-UPDATE] Error", error, "Couldn't send the update notifications. Please try again.");
   }
 }

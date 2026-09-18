@@ -945,7 +945,10 @@ export async function sendContactNotificationEmail(data: {
   jobTitle?: string;
   inquiryType: string;
   message: string;
+  /** Deep-links the email to the enquiry instead of the inbox. */
+  contactId?: string;
 }): Promise<{ success: boolean; error?: string }> {
+  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts${data.contactId ? `/${encodeURIComponent(data.contactId)}` : ""}`;
   const htmlBody = `
     ${getEmailHeader()}
     <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
@@ -970,7 +973,7 @@ export async function sendContactNotificationEmail(data: {
       <p style="color: #1e293b; margin: 0; line-height: 1.6; font-size: 14px;">${data.message.replace(/\n/g, "<br>")}</p>
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts"
+      <a href="${adminUrl}"
          style="background-color: #0ea5e9; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
         View in Admin Panel
       </a>
@@ -988,7 +991,7 @@ ${data.jobTitle ? `Job Title: ${data.jobTitle}\n` : ""}Inquiry Type: ${data.inqu
 Message:
 ${data.message}
 
-View in Admin: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts`;
+View in Admin: ${adminUrl}`;
 
   return sendEmail(data.adminEmail, `New Contact: ${data.firstName} ${data.lastName} - ${data.inquiryType}`, htmlBody, textBody);
 }

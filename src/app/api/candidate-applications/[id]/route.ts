@@ -7,6 +7,7 @@ import {
   getJob,
 } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/candidate-applications/[id] - Get a specific candidate application
 export async function GET(
@@ -21,10 +22,7 @@ export async function GET(
     const result = await getCandidateApplication(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch candidate application" },
-        { status: 500 }
-      );
+      return serverError("Fetching candidate application", result.error, "Couldn't load the candidate application. Please try again.");
     }
 
     if (!result.data) {
@@ -36,11 +34,7 @@ export async function GET(
 
     return NextResponse.json({ application: result.data });
   } catch (error) {
-    console.error("Error fetching candidate application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching candidate application", error, "Couldn't load the candidate application. Please try again.");
   }
 }
 
@@ -113,10 +107,7 @@ export async function PUT(
     const result = await updateCandidateApplication(id, updates);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update candidate application" },
-        { status: 500 }
-      );
+      return serverError("Updating candidate application", result.error, "Couldn't save the candidate application. Please try again.");
     }
 
     // Fetch updated application
@@ -124,11 +115,7 @@ export async function PUT(
 
     return NextResponse.json({ application: updatedApp.data });
   } catch (error) {
-    console.error("Error updating candidate application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating candidate application", error, "Couldn't save the candidate application. Please try again.");
   }
 }
 
@@ -154,18 +141,11 @@ export async function DELETE(
     const result = await deleteCandidateApplication(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete candidate application" },
-        { status: 500 }
-      );
+      return serverError("Deleting candidate application", result.error, "Couldn't delete the candidate application. Please try again.");
     }
 
     return NextResponse.json({ message: "Candidate application deleted successfully" });
   } catch (error) {
-    console.error("Error deleting candidate application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting candidate application", error, "Couldn't delete the candidate application. Please try again.");
   }
 }

@@ -3,7 +3,8 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconWarning } from "@/components/admin/icons";
+import { SearchX } from "lucide-react";
+import { EmptyState } from "@/components/admin/empty-state";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
@@ -25,6 +26,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Recruiters may view a requisition but not edit it, bounce them to the record.
   const isRecruiter = !canEditJobs(user?.role);
@@ -41,8 +44,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     const fetchAll = async () => {
       try {
         const jobRes = await fetch(`/api/jobs/${id}`);
+        // No initialData renders the not-found state below.
+        if (jobRes.status === 404) return;
         const jobData = await jobRes.json();
-        if (!jobRes.ok) throw new Error(jobData.error || "Failed to fetch job");
+        if (!jobRes.ok) throw new Error(jobData.error || `HTTP ${jobRes.status}`);
         setJob(jobData.job);
         setInitialData(jobToFormData(jobData.job));
 
@@ -64,8 +69,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           );
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to load job");
-        router.push("/admin/jobs");
+        console.error("Failed to load job for editing:", err);
+        setLoadFailed(true);
       } finally {
         setLoading(false);
       }
@@ -74,7 +79,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [id, router, canPrice]);
 
   const handleSubmit = async (data: JobFormData) => {
+    if (submitting) return;
     setSubmitting(true);
+    setServerError(null);
     try {
       const payload = formDataToPayload(data);
       const res = await fetch(`/api/jobs/${id}`, {
@@ -83,10 +90,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to update job");
+      if (!res.ok) throw new Error(json.error || "Your changes could not be saved. Try again in a moment.");
       router.push(`/admin/jobs/${id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update job");
+      setServerError(err instanceof Error ? err.message : "Your changes could not be saved. Try again in a moment.");
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +108,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       body: JSON.stringify({ ...clientData, status: "active" }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Failed to create client");
+    if (!res.ok) throw new Error(json.error || "The client could not be added. Try again in a moment.");
     setClients((prev) => [json.client, ...prev]);
     return json.client;
   };
@@ -121,19 +128,33 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           vendors={vendors}
           hrUsers={hrUsers}
           submitting={submitting}
+          serverError={serverError}
+          onDismissError={() => setServerError(null)}
           onSubmit={handleSubmit}
           onAddClient={handleAddClient}
         />
       ) : (
-        <AdminCard className="px-6 py-12 text-center">
-          <IconWarning className="mx-auto h-8 w-8 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-          <h2 className="mt-3 text-[15px] font-semibold text-[var(--adm-ink)]">Requisition unavailable</h2>
-          <p className="mt-1 text-sm text-[var(--adm-ink-subtle)]">This job could not be loaded for editing.</p>
-          <div className="mt-5">
-            <WorkspaceButton onClick={() => router.push("/admin/jobs")}>
-              Back to job postings
-            </WorkspaceButton>
-          </div>
+        <AdminCard>
+          <EmptyState
+            variant={loadFailed ? "error" : "fresh"}
+            icon={loadFailed ? undefined : SearchX}
+            title={loadFailed ? "Couldn't load this job posting" : "This job posting doesn't exist"}
+            description={
+              loadFailed
+                ? "Check your connection and try again."
+                : "It may have been deleted, or the link is out of date."
+            }
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                {loadFailed && (
+                  <WorkspaceButton variant="primary" onClick={() => window.location.reload()}>Try again</WorkspaceButton>
+                )}
+                <WorkspaceButton onClick={() => router.push("/admin/jobs")}>
+                  Back to job postings
+                </WorkspaceButton>
+              </div>
+            }
+          />
         </AdminCard>
       )}
     </div>

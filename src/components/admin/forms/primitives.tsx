@@ -35,11 +35,11 @@ export function FormSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
-      <header className="flex items-start justify-between gap-4 border-b border-[var(--adm-line)] px-6 py-4">
+      <header className="flex items-start justify-between gap-4 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5">
           {/* A plain muted glyph, not a tinted tile. The chip was decoration, it coloured every section header the same accent regardless of
               what the section was, so it identified nothing. */}
@@ -53,7 +53,7 @@ export function FormSection({
         </div>
         {action}
       </header>
-      <div className="p-6">{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -87,7 +87,7 @@ export function Field({ label, required, hint, error, helper, htmlFor, children,
         <span className="text-[14px] font-medium text-[var(--adm-ink-mute)]">
           {label}
           {required && (
-            <span className="ml-1 text-[var(--adm-danger)]" aria-label="required">
+            <span className="ml-1 text-[var(--adm-danger-ink)]" aria-label="required">
               *
             </span>
           )}
@@ -99,7 +99,7 @@ export function Field({ label, required, hint, error, helper, htmlFor, children,
         <p
           id={errorId}
           role="alert"
-          className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--adm-danger)]"
+          className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--adm-danger-ink)]"
         >
           <IconAlert className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
           {error}
@@ -114,7 +114,7 @@ export function Field({ label, required, hint, error, helper, htmlFor, children,
 // ── Shared control classes ──────────────────────────────────────────────────────
 
 const controlBase =
-  "w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[14px] text-[var(--adm-ink)] transition-colors " +
+  "w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[14px] text-[var(--adm-ink)] transition-colors " +
   "shadow-[inset_0_1px_2px_rgba(16,24,40,0.03)] placeholder:text-[var(--adm-ink-subtle)] " +
   "focus:outline-none focus:border-[var(--adm-accent)] focus:ring-2 focus:ring-[var(--adm-focus-ring)] " +
   "hover:border-[var(--adm-line)] disabled:cursor-not-allowed disabled:bg-[var(--adm-surface-sunken)] disabled:text-[var(--adm-ink-subtle)] " +
@@ -138,7 +138,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         autoComplete="off"
         aria-invalid={invalid || undefined}
         {...props}
-        className={cn(controlBase, "h-10 px-3", className)}
+        className={cn(controlBase, "h-9 px-3", className)}
       />
     );
   },
@@ -176,7 +176,7 @@ export function FormSelect({
       <select
         autoComplete="off"
         {...props}
-        className={cn(controlBase, "h-10 cursor-pointer appearance-none px-3 pr-9", className)}
+        className={cn(controlBase, "h-9 cursor-pointer appearance-none px-3 pr-9", className)}
       >
         {children}
       </select>
@@ -206,7 +206,7 @@ export function FormTextarea({
     <textarea
       autoComplete="off"
       {...props}
-      className={cn(controlBase, "resize-y px-3 py-2.5 leading-relaxed", className)}
+      className={cn(controlBase, "resize-y px-3 py-2 leading-relaxed", className)}
     />
   );
 }
@@ -258,10 +258,10 @@ export function AssigneePicker({
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Search team members…"
-          className={cn(controlBase, "h-10 pl-9 pr-3")}
+          className={cn(controlBase, "h-9 pl-9 pr-3")}
         />
         {open && filtered.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-52 overflow-y-auto rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-52 overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
             {filtered.map((u) => (
               <button
                 key={u.id}
@@ -275,7 +275,7 @@ export function AssigneePicker({
                   <p className="truncate text-sm font-medium text-[var(--adm-ink)]">{u.name || u.email}</p>
                   <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{u.email}</p>
                 </div>
-                <span className="rounded-[4px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[10px] font-semibold capitalize text-[var(--adm-ink-mute)]">{u.role}</span>
+                <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium capitalize text-[var(--adm-ink-mute)]">{u.role}</span>
               </button>
             ))}
           </div>
@@ -290,13 +290,13 @@ export function AssigneePicker({
             return (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 rounded-[4px] border border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] py-1 pl-2.5 pr-1.5 text-xs font-medium text-[var(--adm-accent)]"
+                className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--adm-accent-soft)] pl-2.5 pr-1 text-[12.5px] font-medium text-[var(--adm-accent)]"
               >
                 {name}
                 <button
                   type="button"
                   onClick={() => u && onToggle(u)}
-                  className="rounded-[4px] p-0.5 transition-colors hover:bg-white/60"
+                  className="rounded-full p-0.5 transition-colors hover:bg-[var(--adm-accent)] hover:text-white"
                   aria-label={`Remove ${name}`}
                 >
                   <X className="h-3 w-3" />

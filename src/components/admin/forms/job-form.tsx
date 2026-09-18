@@ -15,6 +15,12 @@ import { Field, FormInput, MoneyInput, FormSelect, AssigneePicker, AssigneeUser 
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { renderRichText, renderListField } from "@/lib/rich-text";
 import { useAuth, canSeeJobCommercials } from "@/lib/auth";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import {
+  LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
+  payOverBillWarning, phone, rangeInverted, required, url,
+} from "@/lib/form-validation";
+import { FieldError, FieldWarning, FormErrorBanner } from "./form-alert";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -27,9 +33,9 @@ export const JOB_TYPES: { value: Job["type"]; label: string }[] = [
   { value: "full-time",       label: "Full-time" },
   { value: "part-time",       label: "Part-time" },
   { value: "contract",        label: "Contract" },
-  { value: "contract-to-hire",label: "Contract-to-Hire" },
-  { value: "direct-hire",     label: "Direct Hire" },
-  { value: "managed-teams",   label: "Managed Teams" },
+  { value: "contract-to-hire",label: "Contract-to-hire" },
+  { value: "direct-hire",     label: "Direct hire" },
+  { value: "managed-teams",   label: "Managed teams" },
   { value: "remote",          label: "Remote" },
 ];
 
@@ -37,7 +43,7 @@ export const JOB_STATUSES: { value: Job["status"]; label: string }[] = [
   { value: "draft",    label: "Draft" },
   { value: "open",     label: "Open" },
   { value: "active",   label: "Active" },
-  { value: "on-hold",  label: "On Hold" },
+  { value: "on-hold",  label: "On hold" },
   { value: "paused",   label: "Paused" },
   { value: "closed",   label: "Closed" },
 ];
@@ -169,20 +175,23 @@ interface JobFormProps {
   vendors: Vendor[];
   hrUsers: AssigneeUser[];
   submitting: boolean;
+  /** Save failure from the page, shown above the form. */
+  serverError?: string | null;
+  onDismissError?: () => void;
   onSubmit: (data: JobFormData) => void;
   onAddClient: (clientData: { name: string; websiteUrl: string; email: string; phone: string }) => Promise<Client>;
   formId?: string;
 }
 
-/** Lead-in line for a panel, replaces FormSection's header `description`. */
+/** Lead-in line for a panel. */
 function PanelNote({ children }: { children: React.ReactNode }) {
-  return <p className="mb-4 text-[13px] leading-relaxed text-[var(--adm-ink-subtle)]">{children}</p>;
+  return <p className="mb-4 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{children}</p>;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function JobForm({
-  mode, initialData, job, clients, vendors, hrUsers, submitting, onSubmit, onAddClient, formId = "job-form",
+  mode, initialData, job, clients, vendors, hrUsers, submitting, serverError, onDismissError, onSubmit, onAddClient, formId = "job-form",
 }: JobFormProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -249,90 +258,109 @@ export function JobForm({
     }
   };
 
+  const { errors, validateAll, revalidate, invalidProps } = useFormErrors(
+    () => {
+      const descText = htmlText(data.description);
+      // The payload only sends a salary when both ends are set, so half a range would be dropped silently.
+      const salaryHalf = !isBlank(data.salaryMin) !== !isBlank(data.salaryMax);
+      return collectErrors({
+        title: check(data.title, required("Enter a job title, like Senior Software Engineer."), maxLen(LIMITS.title)),
+        location: check(data.location, required("Enter the city or location, like Columbus."), maxLen(LIMITS.title)),
+        clientNotes: check(data.clientNotes, maxLen(LIMITS.notes)),
+        clientBillRate: canPrice ? check(data.clientBillRate, nonNegative("Enter the bill rate as a number, like 75.")) : undefined,
+        payRate: canPrice ? check(data.payRate, nonNegative("Enter the pay rate as a number, like 55.")) : undefined,
+        salaryMin:
+          check(data.salaryMin, nonNegative("Enter the minimum salary as a number, like 80000.")) ??
+          (salaryHalf && isBlank(data.salaryMin) ? "Add a minimum salary too, or clear the maximum." : undefined),
+        salaryMax:
+          check(data.salaryMax, nonNegative("Enter the maximum salary as a number, like 120000.")) ??
+          (salaryHalf && isBlank(data.salaryMax) ? "Add a maximum salary too, or clear the minimum." : undefined) ??
+          (rangeInverted(data.salaryMin, data.salaryMax) ? "The maximum salary is lower than the minimum." : undefined),
+        description: !descText
+          ? "Describe the role so candidates know what they are applying for."
+          : check(descText, maxLen(LIMITS.description)),
+      });
+    },
+    {
+      title: "job-title", location: "job-location", clientNotes: "job-client-notes",
+      clientBillRate: "job-bill-rate", payRate: "job-pay-rate", salaryMin: "job-salary-min",
+      salaryMax: "job-salary-max", description: "job-description",
+    },
+  );
+
+  const payWarning = canPrice ? payOverBillWarning(data.payRate, data.clientBillRate) : undefined;
+  const deadlineWarning = pastDateWarning(
+    data.submissionDueDate,
+    "This deadline has already passed. Pick a later date if the role is still taking candidates.",
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    if (!validateAll()) return;
     onSubmit(data);
   };
 
   const statusColor: Record<string, string> = {
-    draft: "text-[var(--adm-ink-mute)]", open: "text-[var(--adm-success)]", active: "text-[var(--adm-accent)]",
-    "on-hold": "text-[var(--adm-warning)]", paused: "text-[var(--adm-warning)]", closed: "text-[var(--adm-danger)]",
+    draft: "text-[var(--adm-ink-mute)]", open: "text-[var(--adm-success-ink)]", active: "text-[var(--adm-accent)]",
+    "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-danger-ink)]",
   };
 
   const typeLabel = JOB_TYPES.find((t) => t.value === data.type)?.label || data.type;
 
   return (
     <>
-      {/* Back leads the page, ahead of the title, the same position it holds
-          on every record screen, rather than sitting in the action cluster on
-          the far right where it competed with Save for the eye. */}
+      {/* Back leads the page, as on every record screen, instead of competing with Save. */}
       <button
         type="button"
         onClick={() => router.back()}
-        className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+        className="-ml-1 mb-2 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
       </button>
 
-      {/* ── Header band ──
-          Owned here rather than by /admin/jobs/new and /admin/jobs/[id]/edit:
-          the form is the thing that knows the mode, the posting id and the
-          submit state, and two pages rendering their own PageHeader on top of
-          this one would duplicate the title and the toolbar. */}
+      {/* Owned by the form, which knows the mode, posting id and submit state. */}
       <PageHeader
-        title={mode === "create" ? "Create Job Posting" : "Edit Job Posting"}
-        subtitle={
-          mode === "create"
-            ? "Fill in the details to create a new job listing"
-            : `Editing ${job?.title || "–"}`
-        }
-        icon={IconJob}
+        className="mb-5"
+        title={mode === "create" ? "New job posting" : "Edit job posting"}
+        info={mode === "create" ? "Fill in the details to create a new job listing." : undefined}
+        subtitle={mode === "create" ? undefined : `Editing ${job?.title || "–"}`}
         meta={mode === "edit" && job?.postingId ? (
-          <span className="inline-flex items-center gap-1 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2 py-1 font-mono text-[12px] font-semibold text-[var(--adm-accent)]">
-            <IconHash className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-[12px] font-medium text-[var(--adm-ink-mute)]">
+            <IconHash className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             {job.postingId}
           </span>
         ) : undefined}
         actions={
           <>
-            {/* "Back" and "Cancel" both called router.back(), so the header
-                offered the same escape twice under two names. The single
-                remaining one is the Back link above the title. */}
             <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
-              <IconEye className="h-4 w-4" />Preview
+              <IconEye aria-hidden="true" />Preview
             </WorkspaceButton>
-            {/* House pattern: the primary action sits in the header band and
-                reaches the form below it through form=. */}
+            {/* The primary sits in the header and reaches the form below through form=. */}
             <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSave className="h-4 w-4" />}
-              {mode === "create" ? "Create Job" : "Save Changes"}
+              {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+              {mode === "create" ? "Create job" : "Save changes"}
             </WorkspaceButton>
           </>
         }
       />
 
-      {/* The measure is constrained here, not by the calling page. PageHeader
-          breaks out of the main region's padding with -mx-5/-mx-6 to draw a
-          full-bleed band, so a max-width wrapper around the whole component
-          would leave the band sticking out past the form column on wide
-          screens. Header spans, body is measured. */}
-      {/* @container: the field grids below size off the form column, which is
-          capped at max-w-5xl and sits inside a pane already narrowed by the
-          sidebar — `lg:grid-cols-4` was measuring the window instead and put
-          four money inputs in ~150px each on a 14" screen. */}
-      <form id={formId} onSubmit={handleSubmit} className="@container mx-auto max-w-5xl space-y-4">
-        {/* ── Job Details ── */}
+      {/* @container: field grids size off the form column, not the window, which
+          sits inside a pane already narrowed by the sidebar. */}
+      <form id={formId} noValidate onSubmit={handleSubmit} onBlur={revalidate} className="@container mx-auto max-w-5xl space-y-4 lg:space-y-5">
+        <FormErrorBanner message={serverError} onDismiss={onDismissError} />
         <AdminCard>
           <AdminCardHeader icon={IconJob} title="Job details" />
-          <div className="p-5">
+          <div className="p-4">
             <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
-                <div className="lg:col-span-2">
-                  <Field label="Job Title" required htmlFor="job-title">
+                <div className="@2xl:col-span-2">
+                  <Field label="Job title" required htmlFor="job-title" error={errors.title}>
                     <FormInput
                       id="job-title"
                       required
+                      {...invalidProps("title")}
                       value={data.title}
                       onChange={(e) => set("title", e.target.value)}
                       placeholder="e.g. Senior Software Engineer"
@@ -359,17 +387,16 @@ export function JobForm({
                     {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                   </FormSelect>
                 </Field>
-                <Field label="Job Type" required htmlFor="job-type">
+                <Field label="Job type" required htmlFor="job-type">
                   <FormSelect id="job-type" required value={data.type} onChange={(e) => set("type", e.target.value as Job["type"])}>
                     {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </FormSelect>
                 </Field>
-                <Field label="City / Location" required htmlFor="job-location">
-                  <FormInput id="job-location" required value={data.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Columbus" />
+                <Field label="City or location" required htmlFor="job-location" error={errors.location}>
+                  <FormInput id="job-location" required {...invalidProps("location")} value={data.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Columbus" />
                 </Field>
                 <Field label="State" htmlFor="job-state">
-                  {/* Stores the 2-letter code; the shared list is the single
-                      source of truth shared with Applications and the bench. */}
+                  {/* Stores the 2-letter code, shared with Applications and the bench. */}
                   <FormSelect id="job-state" value={data.state} onChange={(e) => set("state", e.target.value)}>
                     <option value="">Select state…</option>
                     {US_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
@@ -380,27 +407,30 @@ export function JobForm({
           </div>
         </AdminCard>
 
-        {/* ── Client / Vendor / Deadline ──
-            Three cards for a recruiter, one for media: the deadline is public
-            and stays, the other two are commercial and go. */}
+        {/* Three cards for a recruiter, one for media: the deadline is public and
+            stays, client and vendor are commercial and go. */}
         <div className={cn("grid grid-cols-1 gap-4", canPrice && "@2xl:grid-cols-3")}>
           {canPrice && (
           <AdminCard>
             <AdminCardHeader icon={IconBuilding} title="Client" />
-            <div className="p-5">
+            <div className="space-y-2 p-4">
               <FormSelect aria-label="Client" value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
                 <option value="">Select client</option>
-                <option value="add-new">+ Add New Client</option>
+                <option value="add-new">+ Add new client</option>
                 {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </FormSelect>
               {data.clientId && data.clientId !== "add-new" && (
-                <FormInput
-                  aria-label="Client notes"
-                  className="mt-2"
-                  value={data.clientNotes}
-                  onChange={(e) => set("clientNotes", e.target.value)}
-                  placeholder="Client notes…"
-                />
+                <>
+                  <FormInput
+                    id="job-client-notes"
+                    aria-label="Client notes"
+                    {...invalidProps("clientNotes")}
+                    value={data.clientNotes}
+                    onChange={(e) => set("clientNotes", e.target.value)}
+                    placeholder="Client notes…"
+                  />
+                  <FieldError id="job-client-notes-error">{errors.clientNotes}</FieldError>
+                </>
               )}
             </div>
           </AdminCard>
@@ -409,7 +439,7 @@ export function JobForm({
           {canPrice && (
           <AdminCard>
             <AdminCardHeader icon={IconTruck} title="Vendor" />
-            <div className="p-5">
+            <div className="p-4">
               <FormSelect aria-label="Vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
                 <option value="none">No vendor</option>
                 {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -420,58 +450,58 @@ export function JobForm({
 
           <AdminCard>
             <AdminCardHeader icon={IconCalendar} title="Submission deadline" />
-            <div className="p-5">
+            <div className="p-4">
               <FormInput
+                id="job-deadline"
                 aria-label="Submission deadline"
                 type="date"
                 value={data.submissionDueDate}
                 onChange={(e) => set("submissionDueDate", e.target.value)}
               />
+              <FieldWarning>{deadlineWarning}</FieldWarning>
             </div>
           </AdminCard>
         </div>
 
-        {/* ── Compensation ── */}
         <AdminCard>
           <AdminCardHeader icon={IconMoney} title="Compensation" />
-          <div className="p-5">
+          <div className="p-4">
             <PanelNote>
               {canPrice
-                ? "Optional rate and salary details, leave blank if not applicable."
+                ? "Optional rate and salary details. Leave blank if not applicable."
                 : "The salary range candidates see on the posting. Leave blank if not disclosed."}
             </PanelNote>
-            {/* Bill and pay rate are the margin on the placement; the salary
-                range is published on the careers site. Different audiences, so
-                only the first pair is gated. */}
+            {/* Bill and pay rate are the placement margin; the salary range is
+                public. Different audiences, so only the first pair is gated. */}
             <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-2", canPrice && "@3xl:grid-cols-4")}>
               {canPrice && (
-              <Field label="Bill Rate ($/hr)" htmlFor="job-bill-rate">
-                <MoneyInput id="job-bill-rate" value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
+              <Field label="Bill rate ($/hr)" htmlFor="job-bill-rate" error={errors.clientBillRate}>
+                <MoneyInput id="job-bill-rate" {...invalidProps("clientBillRate")} value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
               </Field>
               )}
               {canPrice && (
-              <Field label="Pay Rate ($/hr)" htmlFor="job-pay-rate">
-                <MoneyInput id="job-pay-rate" value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
+              <Field label="Pay rate ($/hr)" htmlFor="job-pay-rate" error={errors.payRate}>
+                <MoneyInput id="job-pay-rate" {...invalidProps("payRate")} value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
+                {!errors.payRate && <FieldWarning>{payWarning}</FieldWarning>}
               </Field>
               )}
-              <Field label="Min Salary (Annual)" htmlFor="job-salary-min">
-                <MoneyInput id="job-salary-min" value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
+              <Field label="Min salary (annual)" htmlFor="job-salary-min" error={errors.salaryMin}>
+                <MoneyInput id="job-salary-min" {...invalidProps("salaryMin")} value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
               </Field>
-              <Field label="Max Salary (Annual)" htmlFor="job-salary-max">
-                <MoneyInput id="job-salary-max" value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder="120,000" />
+              <Field label="Max salary (annual)" htmlFor="job-salary-max" error={errors.salaryMax}>
+                <MoneyInput id="job-salary-max" {...invalidProps("salaryMax")} value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder="120,000" />
               </Field>
             </div>
           </div>
         </AdminCard>
 
-        {/* ── Team Assignments ── */}
         {canPrice && (
         <AdminCard>
           <AdminCardHeader icon={IconUserCheck} title="Team assignments" count={data.assignedToIds.length} />
-          <div className="p-5">
+          <div className="p-4">
             <PanelNote>Assign team members to receive notifications for this job posting.</PanelNote>
             <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
-              <Field label="Recruitment Manager" htmlFor="job-manager">
+              <Field label="Recruitment manager" htmlFor="job-manager">
                 <FormSelect id="job-manager" value={data.recruitmentManagerId} onChange={(e) => handleManagerSelect(e.target.value)}>
                   <option value="">Select manager</option>
                   {hrUsers.map((u) => (
@@ -479,7 +509,7 @@ export function JobForm({
                   ))}
                 </FormSelect>
               </Field>
-              <Field label="Additional Assignees">
+              <Field label="Additional assignees">
                 <AssigneePicker
                   users={hrUsers}
                   selectedIds={data.assignedToIds}
@@ -493,18 +523,18 @@ export function JobForm({
         </AdminCard>
         )}
 
-        {/* ── Job Description ── */}
         <AdminCard>
           <AdminCardHeader icon={IconFile} title="Job description" />
-          <div className="p-5">
+          <div className="p-4">
             <PanelNote>
-              What candidates see, describe the role, then list requirements and responsibilities.
+              What candidates see. Describe the role, then list requirements and responsibilities.
             </PanelNote>
             <div className="space-y-4">
-              <Field label="Description" required htmlFor="job-description">
+              <Field label="Description" required htmlFor="job-description" error={errors.description}>
                 <RichTextEditor
                   id="job-description"
                   required
+                  className={errors.description ? "border-[var(--adm-danger)]" : undefined}
                   value={data.description}
                   onChange={(html) => set("description", html)}
                   placeholder="Describe the role, team, and what makes this opportunity exciting…"
@@ -530,26 +560,24 @@ export function JobForm({
           </div>
         </AdminCard>
 
-        {/* ── Record footer ── */}
         {mode === "edit" && job && (
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-xs text-[var(--adm-ink-mute)]">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Created</span>
-              {fmtDate(job.createdAt)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Updated</span>
-              {fmtDate(job.updatedAt)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">Posted by</span>
-              {job.postedByName || "–"}
-            </span>
-          </div>
+          <dl className="flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px]">
+            <div className="inline-flex items-center gap-1.5">
+              <dt className="text-[var(--adm-ink-subtle)]">Created</dt>
+              <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.createdAt)}</dd>
+            </div>
+            <div className="inline-flex items-center gap-1.5">
+              <dt className="text-[var(--adm-ink-subtle)]">Updated</dt>
+              <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.updatedAt)}</dd>
+            </div>
+            <div className="inline-flex items-center gap-1.5">
+              <dt className="text-[var(--adm-ink-subtle)]">Posted by</dt>
+              <dd className="text-[var(--adm-ink-mute)]">{job.postedByName || "–"}</dd>
+            </div>
+          </dl>
         )}
       </form>
 
-      {/* ── Add Client Modal ── */}
       {showAddClient && (
         <AddClientModal
           onClose={() => setShowAddClient(false)}
@@ -561,7 +589,6 @@ export function JobForm({
         />
       )}
 
-      {/* ── Preview Modal ── */}
       {showPreview && (
         <PreviewModal data={data} typeLabel={typeLabel} onClose={() => setShowPreview(false)} />
       )}
@@ -569,19 +596,20 @@ export function JobForm({
   );
 }
 
-// ── Shared modal button classes ────────────────────────────────────────────────
+// ── Modal chrome ───────────────────────────────────────────────────────────────
 
-const modalPrimaryBtn =
-  "inline-flex items-center gap-2 rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white " +
-  "transition-colors hover:bg-[var(--adm-accent-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50";
-
-const modalGhostBtn =
-  "rounded-[8px] px-4 py-2 text-sm font-semibold text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] " +
-  "focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
-
-const modalCloseBtn =
-  "rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)] " +
-  "focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
+function ModalClose({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+    >
+      <X className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
 
 // ── Add Client Modal ───────────────────────────────────────────────────────────
 
@@ -595,55 +623,70 @@ function AddClientModal({
   const [form, setForm] = React.useState({ name: "", websiteUrl: "", email: "", phone: "" });
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { errors, validateAll, revalidate, invalidProps } = useFormErrors(
+    () => collectErrors({
+      name: check(form.name, required("Enter the client's company name."), maxLen(LIMITS.name)),
+      websiteUrl: check(form.websiteUrl, required("Enter the client's website, like https://acme.com."), url(), maxLen(LIMITS.url)),
+      email: check(form.email, email("Enter the client's email, like contact@acme.com."), maxLen(LIMITS.email)),
+      phone: check(form.phone, phone()),
+    }),
+    { name: "client-name", websiteUrl: "client-website", email: "client-email", phone: "client-phone" },
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    if (!validateAll()) return;
     setSubmitting(true);
     setError(null);
     try {
       await onAdd(form);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create client");
+      setError(err instanceof Error ? err.message : "The client could not be added. Try again in a moment.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line)] px-5 py-3.5">
-          <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[var(--adm-ink)]">
-            <IconBuilding className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
-            Add New Client
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-client-title"
+    >
+      <div
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
+          <h2 id="add-client-title" className="min-w-0 truncate text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
+            Add new client
           </h2>
-          <button type="button" onClick={onClose} className={modalCloseBtn} aria-label="Close">
-            <X className="h-4 w-4" />
-          </button>
+          <ModalClose onClose={onClose} />
         </div>
-        <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
-          {error && (
-            <p role="alert" className="rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2 text-xs text-[var(--adm-danger)]">{error}</p>
-          )}
-          <Field label="Client Name" required htmlFor="client-name">
-            <FormInput id="client-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corporation" />
+        <form noValidate onSubmit={handleSubmit} onBlur={revalidate} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+          <FormErrorBanner message={error} onDismiss={() => setError(null)} />
+          <Field label="Client name" required htmlFor="client-name" error={errors.name}>
+            <FormInput id="client-name" required {...invalidProps("name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corporation" />
           </Field>
-          <Field label="Website URL" required htmlFor="client-website">
-            <FormInput id="client-website" required type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
+          <Field label="Website URL" required htmlFor="client-website" error={errors.websiteUrl}>
+            <FormInput id="client-website" required type="url" {...invalidProps("websiteUrl")} value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
           </Field>
-          <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
-            <Field label="Email" htmlFor="client-email">
-              <FormInput id="client-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Email" htmlFor="client-email" error={errors.email}>
+              <FormInput id="client-email" type="email" {...invalidProps("email")} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
             </Field>
-            <Field label="Phone" htmlFor="client-phone">
-              <FormInput id="client-phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
+            <Field label="Phone" htmlFor="client-phone" error={errors.phone}>
+              <FormInput id="client-phone" type="tel" {...invalidProps("phone")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
             </Field>
           </div>
           <div className="flex flex-wrap justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className={modalGhostBtn}>Cancel</button>
-            <button type="submit" disabled={submitting} className={modalPrimaryBtn}>
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}Add Client
-            </button>
+            <WorkspaceButton variant="ghost" onClick={onClose}>Cancel</WorkspaceButton>
+            <WorkspaceButton type="submit" variant="primary" disabled={submitting}>
+              {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add client
+            </WorkspaceButton>
           </div>
         </form>
       </div>
@@ -653,82 +696,81 @@ function AddClientModal({
 
 // ── Preview Modal ──────────────────────────────────────────────────────────────
 
+const PREVIEW_PROSE =
+  "text-[14px] leading-relaxed text-[var(--adm-ink-mute)] [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5";
+
 function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLabel: string; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-slate-900/50 py-8" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="my-auto w-full max-w-4xl overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <IconEye className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" strokeWidth={1.75} aria-hidden="true" />
-            <div className="min-w-0">
-              <h2 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">Public Preview</h2>
-              <p className="truncate text-xs text-[var(--adm-ink-subtle)]">How this job appears to candidates</p>
-            </div>
+    <div
+      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-[var(--adm-scrim)] px-4 py-8"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="job-preview-title"
+    >
+      <div
+        className="my-auto w-full max-w-4xl overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-[var(--adm-shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
+          <div className="min-w-0">
+            <h2 id="job-preview-title" className="truncate text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Public preview</h2>
+            <p className="truncate text-[13px] text-[var(--adm-ink-mute)]">How this job appears to candidates</p>
           </div>
-          <button type="button" onClick={onClose} className={modalCloseBtn} aria-label="Close">
-            <X className="h-4 w-4" />
-          </button>
+          <ModalClose onClose={onClose} />
         </div>
 
-        <div className="space-y-4 p-5">
-          <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
-            <h1 className="mb-4 text-2xl font-bold text-[var(--adm-ink)]">{data.title || "–"}</h1>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-soft)] px-2.5 py-1 text-[13px] font-semibold text-[var(--adm-accent)]">
-                <IconJob className="h-3.5 w-3.5 flex-none" aria-hidden="true" />{typeLabel}
+        <div className="space-y-4 p-4">
+          <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+            <h1 className="mb-3 text-[24px] font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
+            <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+              <span className="inline-flex items-center gap-1.5">
+                <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{typeLabel}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
-                <IconLocation className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5">
+                <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 {data.location || "–"}{data.state ? `, ${data.state}` : ""}
               </span>
               {data.submissionDueDate && (
-                <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--adm-warning)]">
-                  <IconClock className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Due {fmtDate(data.submissionDueDate)}
+                <span className="inline-flex items-center gap-1.5">
+                  <IconClock className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                  <span className="tabular-nums">Due {fmtDate(data.submissionDueDate)}</span>
                 </span>
               )}
             </div>
             {data.salaryMin && data.salaryMax && (
-              <p className="text-lg font-semibold tabular-nums text-[var(--adm-success)]">
+              <p className="text-[18px] font-semibold tabular-nums text-[var(--adm-ink)]">
                 ${parseInt(data.salaryMin).toLocaleString()} – ${parseInt(data.salaryMax).toLocaleString()}
               </p>
             )}
           </div>
 
           {data.description && (
-            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
-              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">About This Role</h2>
-              <div
-                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
-                dangerouslySetInnerHTML={renderRichText(data.description)}
-              />
+            <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+              <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">About this role</h2>
+              <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.description)} />
             </div>
           )}
           {data.responsibilities && (
-            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
-              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Responsibilities</h2>
-              <div
-                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
-                dangerouslySetInnerHTML={renderRichText(data.responsibilities)}
-              />
+            <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+              <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Responsibilities</h2>
+              <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.responsibilities)} />
             </div>
           )}
           {data.requirements && (
-            <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6">
-              <h2 className="mb-3 text-[17px] font-bold text-[var(--adm-ink)]">Requirements</h2>
-              <div
-                className="text-sm leading-relaxed text-[var(--adm-ink-mute)] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5"
-                dangerouslySetInnerHTML={renderRichText(data.requirements)}
-              />
+            <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+              <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Requirements</h2>
+              <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.requirements)} />
             </div>
           )}
 
-          {/* Flat re-cut of the old cobalt→cyan gradient banner. */}
-          <div className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-6 text-center">
-            <h3 className="text-[17px] font-bold text-[var(--adm-ink)]">Ready to apply?</h3>
-            <p className="mt-1 text-sm text-[var(--adm-ink-subtle)]">Join our team and help shape the future of enterprise IT.</p>
+          <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-center">
+            <h3 className="text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Ready to apply?</h3>
+            <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">Join our team and help shape the future of enterprise IT.</p>
+            {/* Inert stand-in for the public page's apply button. */}
             <span
               aria-hidden="true"
-              className="mt-4 inline-flex cursor-default items-center rounded-[8px] bg-[var(--adm-accent)] px-5 py-2.5 text-sm font-semibold text-white"
+              className="mt-4 inline-flex h-9 cursor-default items-center rounded-[10px] bg-[var(--adm-accent)] px-5 text-[13.5px] font-semibold text-white"
             >
               Apply for this position
             </span>

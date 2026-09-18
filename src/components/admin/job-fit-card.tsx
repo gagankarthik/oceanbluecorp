@@ -3,9 +3,10 @@
 // "Job fit" card for an application detail screen. Reads the cached verdict from
 // /api/applications/[id]/job-fit (GET) and lets staff (re)score on demand (POST).
 import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
-import { IconConversion, IconWarning } from "@/components/admin/icons";
+import { IconConversion, IconRefresh, IconWarning } from "@/components/admin/icons";
 import { VerdictBadge, SkillChips, fitScoreColor, type Verdict } from "@/components/admin/fit-ui";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -70,20 +71,21 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       <AdminCardHeader
         icon={IconConversion}
         title="Job fit"
+        subtitle={at && fit ? `Scored ${fmtDate(at)}` : undefined}
         action={
-          <WorkspaceButton variant={fit ? "secondary" : "primary"} onClick={score} disabled={loading}>
+          // Secondary: the record's one filled action is "Edit profile" in the pinned header.
+          <WorkspaceButton onClick={score} disabled={loading}>
+            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
             {loading ? "Scoring…" : fit ? "Re-score" : "Score fit"}
           </WorkspaceButton>
         }
       />
 
-      <div className="p-6">
-        {/* Says why there is no score, rather than looking never-scored. The
-            previous verdict still exists in the record; it is withheld because
-            it belongs to a different requisition. */}
+      <div className="p-4">
+        {/* The previous verdict belongs to a different requisition, so it is withheld. */}
         {staleForJobChange && !fit && !error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--adm-warning-soft)] px-4 py-3 text-[14px] text-[var(--adm-warning)]">
-            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none" strokeWidth={1.75} />
+          <div className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-warning-ink)]">
+            <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>
               This candidate moved to a different job, so the previous fit score no longer
               applies. Score again to rate them against the job they are on now.
@@ -92,8 +94,8 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         )}
 
         {error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-red-500/8 px-4 py-3 text-[14px] text-red-700">
-            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none" strokeWidth={1.75} />
+          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+            <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
@@ -106,25 +108,23 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
 
         {fit && (
           <div>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <VerdictBadge verdict={fit.verdict} />
-              <div className="text-right">
-                <span className={cn("text-[28px] font-bold tabular-nums leading-none", fitScoreColor(fit.fitScore))}>
+              <p className="tabular-nums">
+                <span className={cn("text-[24px] font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
                   {fit.fitScore}
                 </span>
                 <span className="ml-0.5 text-[13px] font-medium text-[var(--adm-ink-subtle)]">/100</span>
-              </div>
+              </p>
             </div>
 
             {fit.rationale && (
-              <p className="mt-3 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{fit.rationale}</p>
+              <p className="mt-3 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{fit.rationale}</p>
             )}
 
             <div className="mt-4">
               <SkillChips matched={fit.matchedSkills} missing={fit.missingSkills} />
             </div>
-
-            {at && <p className="mt-4 text-[12px] text-[var(--adm-ink-subtle)]">Scored {fmtDate(at)}</p>}
           </div>
         )}
       </div>

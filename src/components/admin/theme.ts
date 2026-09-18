@@ -10,13 +10,13 @@ export const tones: Record<Tone, {
 }> = {
   blue:    { bg: "bg-[var(--adm-accent-soft)]", soft: "bg-[var(--adm-accent-soft)]", ring: "ring-[var(--adm-accent-soft)]", text: "text-[var(--adm-accent)]", dot: "bg-[var(--adm-accent)]", solid: "bg-[var(--adm-accent)]", gradFrom: "from-[var(--adm-accent)]", gradTo: "to-[var(--adm-accent-strong)]" },
   indigo:  { bg: "bg-indigo-50",  soft: "bg-indigo-100",  ring: "ring-indigo-200",  text: "text-[var(--adm-info)]",  dot: "bg-indigo-500",  solid: "bg-indigo-600",  gradFrom: "from-indigo-500",  gradTo: "to-indigo-600"  },
-  violet:  { bg: "bg-violet-50",  soft: "bg-violet-100",  ring: "ring-violet-200",  text: "text-[var(--adm-info)]",  dot: "bg-violet-500",  solid: "bg-violet-600",  gradFrom: "from-violet-500",  gradTo: "to-violet-600"  },
-  emerald: { bg: "bg-[var(--adm-success-soft)]", soft: "bg-emerald-100", ring: "ring-emerald-200", text: "text-[var(--adm-success)]", dot: "bg-emerald-500", solid: "bg-emerald-600", gradFrom: "from-emerald-500", gradTo: "to-emerald-600" },
-  amber:   { bg: "bg-[var(--adm-warning-soft)]",   soft: "bg-amber-100",   ring: "ring-amber-200",   text: "text-[var(--adm-warning)]",   dot: "bg-amber-500",   solid: "bg-amber-600",   gradFrom: "from-amber-500",   gradTo: "to-amber-600"   },
-  rose:    { bg: "bg-[var(--adm-danger-soft)]",    soft: "bg-rose-100",    ring: "ring-rose-200",    text: "text-[var(--adm-danger)]",    dot: "bg-rose-500",    solid: "bg-rose-600",    gradFrom: "from-rose-500",    gradTo: "to-rose-600"    },
+  violet:  { bg: "bg-violet-50",  soft: "bg-violet-100",  ring: "ring-violet-200",  text: "text-violet-700",  dot: "bg-violet-500",  solid: "bg-violet-600",  gradFrom: "from-violet-500",  gradTo: "to-violet-600"  },
+  emerald: { bg: "bg-[var(--adm-success-soft)]", soft: "bg-emerald-100", ring: "ring-emerald-200", text: "text-[var(--adm-success-ink)]", dot: "bg-emerald-500", solid: "bg-emerald-600", gradFrom: "from-emerald-500", gradTo: "to-emerald-600" },
+  amber:   { bg: "bg-[var(--adm-warning-soft)]",   soft: "bg-amber-100",   ring: "ring-amber-200",   text: "text-[var(--adm-warning-ink)]",   dot: "bg-amber-500",   solid: "bg-amber-600",   gradFrom: "from-amber-500",   gradTo: "to-amber-600"   },
+  rose:    { bg: "bg-[var(--adm-danger-soft)]",    soft: "bg-rose-100",    ring: "ring-rose-200",    text: "text-[var(--adm-danger-ink)]",    dot: "bg-rose-500",    solid: "bg-rose-600",    gradFrom: "from-rose-500",    gradTo: "to-rose-600"    },
   sky:     { bg: "bg-[var(--adm-accent-soft)]",     soft: "bg-sky-100",     ring: "ring-sky-200",     text: "text-[var(--adm-accent)]",     dot: "bg-sky-500",     solid: "bg-sky-600",     gradFrom: "from-sky-500",     gradTo: "to-sky-600"     },
-  slate:   { bg: "bg-[var(--adm-surface-sunken)]",   soft: "bg-slate-100",   ring: "ring-slate-200",   text: "text-[var(--adm-ink-mute)]",   dot: "bg-slate-400",   solid: "bg-slate-600",   gradFrom: "from-slate-500",   gradTo: "to-slate-600"   },
-  teal:    { bg: "bg-[var(--adm-success-soft)]",    soft: "bg-teal-100",    ring: "ring-teal-200",    text: "text-[var(--adm-success)]",    dot: "bg-teal-500",    solid: "bg-teal-600",    gradFrom: "from-teal-500",    gradTo: "to-teal-600"    },
+  slate:   { bg: "bg-[var(--adm-surface-2)]",   soft: "bg-slate-100",   ring: "ring-slate-200",   text: "text-[var(--adm-ink-mute)]",   dot: "bg-slate-400",   solid: "bg-slate-600",   gradFrom: "from-slate-500",   gradTo: "to-slate-600"   },
+  teal:    { bg: "bg-[var(--adm-success-soft)]",    soft: "bg-teal-100",    ring: "ring-teal-200",    text: "text-[var(--adm-success-ink)]",    dot: "bg-teal-500",    solid: "bg-teal-600",    gradFrom: "from-teal-500",    gradTo: "to-teal-600"    },
   cyan:    { bg: "bg-cyan-50",    soft: "bg-cyan-100",    ring: "ring-cyan-200",    text: "text-cyan-700",    dot: "bg-cyan-500",    solid: "bg-cyan-600",    gradFrom: "from-cyan-500",    gradTo: "to-cyan-600"    },
   purple:  { bg: "bg-purple-50",  soft: "bg-purple-100",  ring: "ring-purple-200",  text: "text-purple-700",  dot: "bg-purple-500",  solid: "bg-purple-600",  gradFrom: "from-purple-500",  gradTo: "to-purple-600"  },
 };
@@ -83,7 +83,7 @@ export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: Th
   draft:     { label: "Draft",     tone: "slate",   icon: FileText     },
   closed:    { label: "Closed",    tone: "rose",    icon: XCircle      },
   open:      { label: "Open",      tone: "emerald", icon: CheckCircle2 },
-  "on-hold": { label: "On Hold",   tone: "amber",   icon: Clock        },
+  "on-hold": { label: "On hold",   tone: "amber",   icon: Clock        },
 };
 
 /**

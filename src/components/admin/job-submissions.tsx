@@ -11,11 +11,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { IconSend, IconWarning, IconInterview } from "@/components/admin/icons";
 import type { Interview, Submission } from "@/lib/aws/dynamodb";
 import { fmtDate } from "@/lib/format";
 import { EmptyState } from "./empty-state";
+import { AdminRowsSkeleton } from "./skeletons";
 import { StatusBadge } from "./status-badge";
 import {
   SUBMISSION_STATUS_LABELS, submissionTone, formatRate,
@@ -83,18 +83,20 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center px-5 py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-[var(--adm-accent)]" />
+      <div aria-busy="true" aria-label="Loading submissions">
+        <AdminRowsSkeleton rows={4} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <p role="alert" className="mx-5 my-4 flex items-start gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger)]">
-        <IconWarning className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
-        {error}
-      </p>
+      <div className="p-4">
+        <p role="alert" className="flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+          <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          {error}
+        </p>
+      </div>
     );
   }
 
@@ -102,9 +104,8 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
     return (
       <EmptyState
         icon={IconSend}
-        tone="blue"
         title="Nothing submitted for this role yet"
-        description="Submissions are recorded from a candidate's page, open an applicant and record where you sent them."
+        description="Submissions are recorded from a candidate's page. Open an applicant and record where you sent them."
       />
     );
   }
@@ -114,12 +115,12 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
       <table className="adm-grid w-full text-[14px]">
         <thead>
           <tr>
-            <th className="px-5 py-2.5 text-left">Candidate</th>
+            <th className="px-4 py-2.5 text-left">Candidate</th>
             <th className="px-3 py-2.5 text-left">Submitted to</th>
-            <th className="px-3 py-2.5 text-right">Rate</th>
-            <th className="px-3 py-2.5 text-left">Sent</th>
+            <th className="hidden px-3 py-2.5 text-right sm:table-cell">Rate</th>
+            <th className="hidden px-3 py-2.5 text-left md:table-cell">Sent</th>
             <th className="px-3 py-2.5 text-left">Status</th>
-            <th className="px-5 py-2.5 text-left">Interviews</th>
+            <th className="hidden px-4 py-2.5 text-left lg:table-cell">Interviews</th>
           </tr>
         </thead>
         <tbody>
@@ -127,11 +128,11 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
             const nextIv = nextInterviewBySubmission.get(s.id);
             const ivCount = countBySubmission.get(s.id) || 0;
             return (
-              <tr key={s.id} className="hover:bg-[var(--adm-row-hover)]">
-                <td className="px-5 py-3">
+              <tr key={s.id} className="transition-colors hover:bg-[var(--adm-row-hover)]">
+                <td className="px-4 py-3">
                   <Link
                     href={`/admin/candidates/${s.applicationId}`}
-                    className="font-semibold text-[var(--adm-ink)] hover:text-[var(--adm-accent)] hover:underline"
+                    className="font-medium text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)] hover:underline"
                   >
                     {s.candidateName || "Unnamed candidate"}
                   </Link>
@@ -142,25 +143,25 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                     <span className="text-[var(--adm-ink-subtle)]"> via {s.vendorName}</span>
                   )}
                   {s.submittedTo && (
-                    <span className="block text-[12px] text-[var(--adm-ink-subtle)]">{s.submittedTo}</span>
+                    <span className="block text-[12.5px] text-[var(--adm-ink-subtle)]">{s.submittedTo}</span>
                   )}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-[var(--adm-ink-mute)]">
+                <td className="hidden px-3 py-3 text-right tabular-nums text-[var(--adm-ink-mute)] sm:table-cell">
                   {formatRate(s.rate, s.rateUnit, s.currency)}
                 </td>
-                <td className="px-3 py-3 tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(s.occurredAt)}</td>
+                <td className="hidden px-3 py-3 tabular-nums text-[var(--adm-ink-mute)] md:table-cell">{fmtDate(s.occurredAt)}</td>
                 <td className="px-3 py-3">
                   <StatusBadge tone={submissionTone(s.status)} label={SUBMISSION_STATUS_LABELS[s.status]} />
                 </td>
-                <td className="px-5 py-3 text-[13px] text-[var(--adm-ink-mute)]">
+                <td className="hidden px-4 py-3 text-[13px] text-[var(--adm-ink-mute)] lg:table-cell">
                   {ivCount === 0 ? (
-                    <span className="text-[var(--adm-ink-subtle)]"></span>
+                    <span className="text-[var(--adm-ink-subtle)]">–</span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 tabular-nums">
                       <IconInterview className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                       {ivCount}
                       {nextIv && (
-                        <span className="text-[12px] text-[var(--adm-ink-subtle)]">
+                        <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">
                           · R{nextIv.round} {INTERVIEW_STATUS_LABELS[nextIv.status].toLowerCase()} {fmtDate(nextIv.scheduledAt)}
                         </span>
                       )}

@@ -13,6 +13,7 @@ import {
 } from "@/lib/aws/dynamodb";
 import { impliedApplicationStatus, isForwardStatusMove } from "@/lib/pipeline-records";
 import { validate, validationMessage, type Schema } from "@/lib/validate";
+import { serverError } from "@/lib/api-errors";
 
 const KINDS: PipelineKind[] = ["submission", "interview", "placement"];
 
@@ -99,13 +100,13 @@ export async function GET(request: NextRequest) {
 
   if (applicationId) {
     const result = await listPipelineByApplication(applicationId);
-    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+    if (!result.success) return serverError("Listing pipeline by application", result.error, "Couldn't load the pipeline. Please try again.");
     return NextResponse.json({ success: true, records: result.data || [] });
   }
 
   if (kindParam && jobId && kindParam === "submission") {
     const result = await listSubmissionsByJob(jobId);
-    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+    if (!result.success) return serverError("Listing submissions by job", result.error, "Couldn't load the submissions. Please try again.");
     return NextResponse.json({ success: true, records: result.data || [] });
   }
 
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
       from: params.get("from") || undefined,
       to: params.get("to") || undefined,
     });
-    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+    if (!result.success) return serverError("Listing pipeline by kind", result.error, "Couldn't load the pipeline. Please try again.");
     return NextResponse.json({ success: true, records: result.data || [] });
   }
 
@@ -237,7 +238,7 @@ export async function POST(request: NextRequest) {
 
     const created = await createPipelineRecord(record);
     if (!created.success) {
-      return NextResponse.json({ error: created.error }, { status: 500 });
+      return serverError("Creating pipeline record", created.error, "Couldn't record this step. Please try again.");
     }
 
     // Advance the candidate's stage, forward only.
@@ -267,7 +268,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, record, statusChanged, status: statusChanged ? nextStatus : app.status });
   } catch (error) {
-    console.error("Pipeline create error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Pipeline create error", error, "Couldn't record this step. Please try again.");
   }
 }

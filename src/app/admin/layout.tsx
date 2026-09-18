@@ -3,10 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Menu, X, ChevronRight, Search,
-  PanelLeftClose, PanelLeft, Loader2, ExternalLink,
-} from "lucide-react";
+import { Menu, X, ChevronRight, Search, PanelLeft, ExternalLink } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useAuth, UserRole, routeAccess, PUBLISHING_ROLES, RECRUITING_ROLES, landingRouteFor,
@@ -20,7 +17,7 @@ import {
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs,
   IconHome, IconHrPortal, IconLogout, IconShield,
-  IconBook, IconChart, IconMessage, IconRadar,
+  IconBook, IconChart, IconQuote, IconNews,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -32,23 +29,17 @@ type NavItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   roles: UserRole[];
-  section: string;
+  section: Section;
 };
 
-// The four RECRUITING roles. Media is deliberately absent, so every nav item
-// written against ALL_ROLES stays hidden from it; Media's two sections name the
-// role explicitly below.
+// Recruiting roles. Media is absent on purpose; its items name the role explicitly.
 const ALL_ROLES = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES];
 
-// Grouped under uppercase section headers, the way a data console organises its
-// nav (Conduktor: CONSOLE / INSIGHTS / SELF-SERVICE). Order here is the render
-// order; SECTION_ORDER drives the grouping.
 const SECTION_ORDER = ["Recruiting", "Relationships", "Publishing", "Workspace"] as const;
+type Section = (typeof SECTION_ORDER)[number];
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
-  // Media reads postings to promote them, so it gets this one Recruiting item
-  // and nothing else from the section.
   { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
@@ -56,58 +47,42 @@ const NAV_ITEMS: NavItem[] = [
   { name: "Contacts",     href: "/admin/contacts",     icon: IconContact,      roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Clients",      href: "/admin/clients",      icon: IconClient,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Vendors",      href: "/admin/vendors",      icon: IconVendor,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
-  // Publishing is Admin + HR + Media: the roles that speak for the company in
-  // public. Recruiters and sales read the site, they do not write it.
   // PUBLISHING_ROLES is the same constant routeAccess and requirePublisher use.
   { name: "Blog",             href: "/admin/blog",             icon: IconBook,    roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "Case Studies",     href: "/admin/case-studies",     icon: IconChart,   roles: PUBLISHING_ROLES, section: "Publishing" },
-  { name: "Customer Stories", href: "/admin/customer-stories", icon: IconMessage, roles: PUBLISHING_ROLES, section: "Publishing" },
-  { name: "News",             href: "/admin/news",             icon: IconRadar,   roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "Customer Stories", href: "/admin/customer-stories", icon: IconQuote, roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "News",             href: "/admin/news",             icon: IconNews,  roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "Content",      href: "/admin/content",      icon: IconContent,      roles: [UserRole.ADMIN], section: "Workspace" },
   { name: "Users",        href: "/admin/users",        icon: IconStaff,        roles: [UserRole.ADMIN], section: "Workspace" },
+  { name: "Developer",    href: "/admin/docs",         icon: IconDocs,         roles: [UserRole.ADMIN], section: "Workspace" },
 ];
 
-const notificationIcons = {
+const NOTIFICATION_ICONS = {
   job_posted: IconRequisition,
   application_received: IconApplication,
   contact_received: IconContact,
 };
 
-const notificationColors = {
-  job_posted: "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]",
-  application_received: "bg-emerald-500/15 text-emerald-600",
-  contact_received: "bg-violet-500/15 text-violet-500",
+const ROLE_LABEL: Record<string, string> = {
+  [UserRole.ADMIN]: "Administrator",
+  [UserRole.HR]: "HR",
+  [UserRole.RECRUITER]: "Recruiter",
+  [UserRole.SALES]: "Sales",
+  [UserRole.MEDIA]: "Media",
 };
 
-// Translucent category tints (not -50 fills) so each role hue survives on the
-// dark chrome as well as the light one.
-const roleBadgeColor: Record<string, string> = {
-  [UserRole.ADMIN]:     "bg-rose-500/15 text-rose-600",
-  [UserRole.HR]:        "bg-violet-500/15 text-violet-500",
-  [UserRole.RECRUITER]: "bg-teal-500/15 text-teal-600",
-  [UserRole.SALES]:     "bg-amber-500/15 text-amber-600",
-  [UserRole.MEDIA]:     "bg-cyan-500/15 text-cyan-600",
-};
-
-// ── Section aliases, maps path prefixes with no nav entry to their parent ────
-const SECTION_ALIASES: Record<string, { name: string; href: string }> = {
-  "/admin/candidates":    { name: "Applications",  href: "/admin/applications" },
-  // Lead Sourcing lost its sidebar entry and now rides at the end of the Talent
-  // Bench tab row. Without this alias the breadcrumb fell through to
-  // "Dashboard" and told you the wrong place.
-  "/admin/lead-sourcing": { name: "Talent Bench",  href: "/admin/bench" },
-  "/admin/roles":         { name: "Roles",         href: "/admin/roles" },
+// Path prefixes with no nav entry, mapped to what the breadcrumb should say.
+const SECTION_ALIASES: Record<string, { name: string; href: string; section?: Section }> = {
+  "/admin/candidates":    { name: "Applications",  href: "/admin/applications", section: "Recruiting" },
+  "/admin/lead-sourcing": { name: "Talent Bench",  href: "/admin/bench", section: "Recruiting" },
+  "/admin/roles":         { name: "Roles",         href: "/admin/roles", section: "Workspace" },
   "/admin/settings":      { name: "Settings",      href: "/admin/settings" },
-  "/admin/api-keys":      { name: "API Keys",      href: "/admin/api-keys" },
-  // These three have no sidebar entry either, so without an alias they fell
-  // through to the "Dashboard" fallback and the breadcrumb lied about where
-  // you were , /admin/help read "Dashboard" while showing the directory.
+  "/admin/api-keys":      { name: "API Keys",      href: "/admin/api-keys", section: "Workspace" },
   "/admin/help":          { name: "Help",          href: "/admin/help" },
   "/admin/notifications": { name: "Notifications", href: "/admin/notifications" },
-  "/admin/docs":          { name: "Developer",     href: "/admin/docs" },
 };
 
-function useCurrentSection(pathname: string) {
+function currentSection(pathname: string): { name: string; href: string; section?: Section } {
   for (const [prefix, info] of Object.entries(SECTION_ALIASES)) {
     if (pathname === prefix || pathname.startsWith(prefix + "/")) return info;
   }
@@ -115,203 +90,235 @@ function useCurrentSection(pathname: string) {
     .filter((item) => item.href !== "/admin" && (pathname === item.href || pathname.startsWith(item.href + "/")))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return match
-    ? { name: match.name, href: match.href }
-    : { name: "Dashboard", href: "/admin" };
+    ? { name: match.name, href: match.href, section: match.section }
+    : { name: "Dashboard", href: "/admin", section: "Recruiting" };
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"));
+}
+
+/** Close a popover on outside click and Escape. */
+function useDismiss(open: boolean, ref: React.RefObject<HTMLElement | null>, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, ref, close]);
+}
+
+const iconButton =
+  "inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
 
 function Sidebar({
   open,
   collapsed,
   onClose,
-  onToggleCollapse,
   pathname,
   hasAnyRole,
 }: {
   open: boolean;
   collapsed: boolean;
   onClose: () => void;
-  onToggleCollapse: () => void;
   pathname: string;
   hasAnyRole: (roles: UserRole[]) => boolean;
 }) {
+  // The mobile drawer always renders expanded.
+  const rail = collapsed;
+
   return (
     <aside
       className={cn(
-        "fixed top-0 left-0 z-50 h-full bg-[var(--adm-chrome)] transform transition-all duration-300 ease-in-out lg:translate-x-0",
-        open ? "translate-x-0" : "-translate-x-full",
-        collapsed ? "lg:w-[64px]" : "lg:w-56",
-        "w-56",
+        "adm-nav fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[var(--adm-nav-line)] bg-[var(--adm-nav-bg)] transition-[transform,width] duration-200 ease-[var(--adm-ease)] lg:translate-x-0",
+        open ? "translate-x-0 shadow-[var(--adm-shadow-lg)] lg:shadow-none" : "-translate-x-full",
+        rail ? "lg:w-[64px]" : "lg:w-[240px]",
       )}
+      aria-label="Sidebar"
     >
-      <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div
-          className={cn(
-            "flex items-center h-16",
-            collapsed ? "justify-center px-2" : "justify-between px-4",
-          )}
+      <div className={cn("flex h-[60px] flex-none items-center gap-2 border-b border-[var(--adm-nav-line)] px-4", rail && "lg:justify-center lg:px-0")}>
+        <Link
+          href="/admin"
+          aria-label="Ocean Blue, dashboard"
+          title="Ocean Blue"
+          className="flex min-w-0 items-center rounded-[8px] p-1 transition-opacity hover:opacity-80"
         >
-          {/* In the rail the brand mark doubles as a second way to expand. On
-              hover it swaps to the panel icon: a logo that silently acts as a
-              button is a trap, so the affordance has to appear the moment the
-              cursor reaches it. The toggle at the foot of the rail is the
-              always-visible control. */}
-          {collapsed ? (
-            <button
-              onClick={onToggleCollapse}
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
-              className="group relative flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--adm-row-hover)]"
-            >
-              <Image
-                src="/favicon.png"
-                alt="Ocean Blue Corporation"
-                width={32}
-                height={32}
-                className="h-8 w-8 transition-opacity group-hover:opacity-0"
-              />
-              <PanelLeft
-                className="absolute h-[18px] w-[18px] text-[var(--adm-accent)] opacity-0 transition-opacity group-hover:opacity-100"
-                aria-hidden="true"
-              />
-            </button>
-          ) : (
-            <Link href="/admin" className="flex items-center gap-2">
-              <Image
-                src="/logo.png"
-                alt="Ocean Blue Corporation"
-                width={130}
-                height={36}
-                className="h-8 w-auto px-6"
-                priority
-              />
-            </Link>
-          )}
-          <button
-            onClick={onClose}
-            aria-label="Close navigation"
-            className="lg:hidden p-1.5 text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-md transition-colors"
-          >
-            <X className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </div>
+          {/* Full wordmark when expanded (and in the mobile drawer); the mark alone in the rail. */}
+          <Image
+            src="/logo.webp"
+            alt="Ocean Blue"
+            width={256}
+            height={70}
+            priority
+            className={cn("h-9 w-auto max-w-full object-contain", rail && "lg:hidden")}
+          />
+          <Image
+            src="/favicon.png"
+            alt="Ocean Blue"
+            width={80}
+            height={76}
+            className={cn("hidden h-8 w-auto object-contain", rail && "lg:block")}
+          />
+        </Link>
+        <button onClick={onClose} aria-label="Close navigation" className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--adm-nav-mute)] transition-colors hover:bg-[var(--adm-nav-hover)] hover:text-white lg:hidden">
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
 
-        {/* Navigation, grouped under uppercase section headers. */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
-          {SECTION_ORDER.map((section, groupIdx) => {
-            const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
-            if (items.length === 0) return null;
-            return (
-              <div key={section} className={cn("space-y-0.5", groupIdx > 0 && "mt-6")}>
-                {collapsed ? (
-                  // In the rail, the label collapses to a hairline between groups
-                  // (the first group needs none).
-                  groupIdx > 0 && <div className="mx-1 mb-2 border-t border-[var(--adm-line)]" />
-                ) : (
-                  <p className="px-3 pb-1.5 pt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--adm-ink-subtle)]">
-                    {section}
-                  </p>
-                )}
+      <nav className="adm-scroll-hidden flex-1 overflow-y-auto px-2.5 py-3" aria-label="Main navigation">
+        {SECTION_ORDER.map((section, groupIdx) => {
+          const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
+          if (items.length === 0) return null;
+          return (
+            <div key={section} className={cn(groupIdx > 0 && "mt-4")}>
+              <p className={cn("px-2.5 pb-1.5 text-[12px] font-medium text-[var(--adm-nav-subtle)]", rail && "lg:hidden")}>
+                {section}
+              </p>
+              {rail && groupIdx > 0 && <div className="mx-3 mb-3 hidden border-t border-[var(--adm-nav-line)] lg:block" />}
+              <ul className="space-y-0.5">
                 {items.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== "/admin" && pathname.startsWith(item.href));
+                  const active = isActivePath(pathname, item.href);
                   return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      title={collapsed ? item.name : undefined}
-                      onClick={onClose}
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "group relative flex items-center gap-3 rounded-[8px] text-[14px] transition-colors duration-150",
-                        collapsed ? "justify-center p-2.5" : "px-3 py-[9px]",
-                        // Items sit flat on the chrome; label ink is full black
-                        // so the nav reads at a glance, not washed-out slate.
-                        isActive
-                          ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
-                          : "font-medium text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
-                      )}
-                    >
-                      <item.icon
-                        aria-hidden="true"
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        title={rail ? item.name : undefined}
+                        aria-label={rail ? item.name : undefined}
+                        onClick={onClose}
+                        aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex-shrink-0 transition-colors",
-                          collapsed ? "h-[21px] w-[21px]" : "h-[18px] w-[18px]",
-                          isActive ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)] group-hover:text-[var(--adm-ink)]",
+                          "group relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] transition-colors",
+                          rail && "lg:justify-center lg:px-0",
+                          active
+                            ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
+                            : "font-medium text-[var(--adm-nav-mute)] hover:bg-[var(--adm-nav-hover)] hover:text-[var(--adm-nav-ink)]",
                         )}
-                      />
-                      {!collapsed && <span>{item.name}</span>}
-                    </Link>
+                      >
+                        <item.icon
+                          aria-hidden="true"
+                          className={cn(
+                            "h-5 w-5 flex-none transition-colors",
+                            active ? "text-[var(--adm-nav-active-icon)]" : "text-[var(--adm-nav-mute)] group-hover:text-[var(--adm-nav-ink)]",
+                          )}
+                        />
+                        <span className={cn("truncate", rail && "lg:hidden")}>{item.name}</span>
+                      </Link>
+                    </li>
                   );
                 })}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* HR Portal link, visible to Admin and HR only */}
-        {hasAnyRole([UserRole.ADMIN, UserRole.HR]) && (
-          <div className="px-2 py-2">
-            <a
-              href="https://hr.oceanbluecorp.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={collapsed ? "HR Portal" : undefined}
-              className={cn(
-                "group flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
-                "text-violet-500 hover:bg-[var(--adm-row-hover)] hover:text-violet-400 active:scale-[0.98]",
-                collapsed ? "justify-center p-2.5" : "px-3 py-[7px]",
-              )}
-            >
-              <IconHrPortal
-                aria-hidden="true"
-                className={cn(
-                  "flex-shrink-0",
-                  collapsed ? "h-[21px] w-[21px]" : "h-[18px] w-[18px]",
-                )}
-              />
-              {!collapsed && (
-                <>
-                  <span>HR Portal</span>
-                  <ExternalLink className="ml-auto h-3 w-3 opacity-50" aria-hidden="true" />
-                </>
-              )}
-            </a>
-          </div>
-        )}
-
-        {/* Collapse / expand toggle (desktop only).
-            Rendered in BOTH states, and always in this same spot. An earlier
-            version dropped it when collapsed and left only the brand mark as the
-            way back, a logo gives no hint that it is a control, so the rail read
-            as having no way out of itself. */}
-        <div className="hidden lg:block px-2 py-2">
-          <button
-            onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : undefined}
-            className={cn(
-              "flex items-center rounded-lg text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
-              collapsed ? "mx-auto h-9 w-9 justify-center" : "w-full gap-2.5 px-3 py-2",
-            )}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-[18px] w-[18px]" aria-hidden="true" />
-            ) : (
-              <>
-                <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+              </ul>
+            </div>
+          );
+        })}
+      </nav>
     </aside>
   );
 }
+
+// ── Account menu ───────────────────────────────────────────────────────────────
+
+function UserMenu({
+  user,
+  signOut,
+}: {
+  user: ReturnType<typeof useAuth>["user"];
+  signOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, ref, close);
+
+  const photoSrc = user?.id && !avatarFailed ? `/api/users/avatar/${user.id}` : null;
+  const role = user?.role ? ROLE_LABEL[user.role] ?? user.role : "No role";
+  const canHr = user?.role === UserRole.ADMIN || user?.role === UserRole.HR;
+
+  const avatar = (size: "sm" | "md") => (
+    <Avatar name={user?.name} email={user?.email} size={size} src={photoSrc} onError={() => setAvatarFailed(true)} />
+  );
+
+  const item =
+    "flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Account menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={cn(
+          "ml-1 flex items-center rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-[var(--adm-line)]",
+          open && "ring-2 ring-[var(--adm-focus-ring)]",
+        )}
+      >
+        {avatar("sm")}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          aria-label="Account"
+          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]"
+        >
+          <div className="flex items-center gap-2.5 border-b border-[var(--adm-line)] px-3 py-3">
+            {avatar("md")}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{user?.name}</p>
+              <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">{user?.email}</p>
+            </div>
+            <span className="flex-none rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-accent)]">
+              {role}
+            </span>
+          </div>
+          <div className="p-1" role="none">
+            <Link href="/admin/settings" role="menuitem" onClick={close} className={item}>
+              <IconSettings className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Settings
+            </Link>
+            {canHr && (
+              <a href="https://hr.oceanbluecorp.com" target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close} className={item}>
+                <IconHrPortal className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                HR Portal
+                <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+              </a>
+            )}
+            {user?.role === UserRole.ADMIN && (
+              <Link href="/admin/docs" role="menuitem" onClick={close} className={item}>
+                <IconDocs className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Developer
+              </Link>
+            )}
+            <a href="/" target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close} className={item}>
+              <IconHome className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+              View website
+              <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+            </a>
+          </div>
+          <div className="border-t border-[var(--adm-line)] p-1" role="none">
+            <button
+              role="menuitem"
+              onClick={() => signOut()}
+              className="flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-danger-ink)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+            >
+              <IconLogout className="h-4 w-4" aria-hidden="true" /> Sign out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Notifications ──────────────────────────────────────────────────────────────
 
 function NotificationsPanel() {
   const {
@@ -326,13 +333,13 @@ function NotificationsPanel() {
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="relative p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
+        className={cn(iconButton, "relative", open && "bg-[var(--adm-chrome-hover)] text-[var(--adm-ink)]")}
       >
-        <IconBell className="w-5 h-5" aria-hidden="true" />
+        <IconBell className="h-[18px] w-[18px]" aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center bg-rose-500 text-white text-[10px] font-bold rounded-full px-1"
+            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--adm-danger)] px-1 text-[10.5px] font-semibold tabular-nums text-white ring-2 ring-[var(--adm-surface)]"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
@@ -343,86 +350,95 @@ function NotificationsPanel() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute top-full right-0 mt-1.5 w-80 sm:w-96 bg-[var(--adm-surface)] rounded-[6px] border border-[var(--adm-line)] shadow-xl ring-1 ring-black/5 overflow-hidden z-50"
+          className={cn(
+            "z-50 flex flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]",
+            // Phones: a sheet under the top bar. From sm: a popover anchored to the bell.
+            "fixed inset-x-3 top-[64px] max-h-[calc(100dvh-80px)]",
+            "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[min(30rem,calc(100dvh-6rem))] sm:w-[22rem]",
+          )}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[var(--adm-surface-sunken)] border-b border-[var(--adm-line)]">
-            <div>
-              <h3 className="font-semibold text-[var(--adm-ink)] text-sm">Notifications</h3>
+          <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-3.5 py-2.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13.5px] font-semibold text-[var(--adm-ink)]">Notifications</h3>
               {unreadCount > 0 && (
-                <p className="text-xs text-[var(--adm-ink-mute)] mt-0.5">{unreadCount} unread</p>
+                <span className="rounded-full bg-[var(--adm-accent-soft)] px-1.5 py-px text-[11.5px] font-semibold tabular-nums text-[var(--adm-accent)]">
+                  {unreadCount}
+                </span>
               )}
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-[var(--adm-accent)] font-medium px-2 py-1 rounded-md hover:bg-[var(--adm-accent-soft)] transition-colors"
+                className="rounded-[6px] px-1.5 py-1 text-[12px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
               >
                 Mark all read
               </button>
             )}
           </div>
 
-          {/* List */}
-          <div className="max-h-96 overflow-y-auto bg-[var(--adm-surface)]">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {loading && notifications.length === 0 ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 text-[var(--adm-accent)] animate-spin" aria-label="Loading notifications" />
+              <div className="space-y-3 p-3.5" aria-label="Loading notifications">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex gap-2.5">
+                    <div className="mt-0.5 h-4 w-4 animate-pulse rounded bg-[var(--adm-surface-2)]" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 w-2/3 animate-pulse rounded bg-[var(--adm-surface-2)]" />
+                      <div className="h-3 w-full animate-pulse rounded bg-[var(--adm-surface-2)]" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-[var(--adm-surface-2)] flex items-center justify-center mx-auto mb-3">
-                  <IconBell className="w-6 h-6 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-                </div>
-                <p className="text-sm font-medium text-[var(--adm-ink-mute)]">No notifications</p>
-                <p className="text-xs text-[var(--adm-ink-subtle)] mt-1">You&apos;re all caught up!</p>
+              <div className="px-4 py-8 text-center">
+                <IconBell className="mx-auto h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                <p className="mt-2 text-[13px] font-medium text-[var(--adm-ink)]">You&apos;re up to date</p>
+                <p className="mt-0.5 text-[12px] text-[var(--adm-ink-subtle)]">New jobs, applications and enquiries appear here.</p>
               </div>
             ) : (
-              notifications.map((notification) => {
-                const Icon = notificationIcons[notification.type];
-                const colorClass = notificationColors[notification.type];
-                return (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleClick(notification)}
-                    className={cn(
-                      "w-full flex items-start gap-3 px-4 py-3 hover:bg-[var(--adm-row-hover)] transition-colors text-left border-b border-[var(--adm-line)] last:border-0",
-                      !notification.isRead ? "bg-[var(--adm-accent-soft)]" : "bg-[var(--adm-surface)]",
-                    )}
-                  >
-                    <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm", colorClass)}>
-                      <Icon className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={cn("text-sm leading-tight", !notification.isRead ? "font-semibold text-[var(--adm-ink)]" : "font-medium text-[var(--adm-ink-mute)]")}>
-                          {notification.title}
-                        </p>
-                        {!notification.isRead && (
-                          <span aria-label="Unread" className="w-2 h-2 rounded-full bg-[var(--adm-accent)] flex-shrink-0 mt-1 ring-2 ring-[rgba(29,78,216,0.2)]" />
+              <ul>
+                {notifications.slice(0, 6).map((n) => {
+                  const Icon = NOTIFICATION_ICONS[n.type];
+                  return (
+                    <li key={n.id} className="border-b border-[var(--adm-line-soft)] last:border-0">
+                      <button
+                        onClick={() => handleClick(n)}
+                        className={cn(
+                          "flex w-full items-start gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--adm-row-hover)]",
+                          !n.isRead && "bg-[var(--adm-accent-tint)]",
                         )}
-                      </div>
-                      <p className="text-xs text-[var(--adm-ink-mute)] mt-1 line-clamp-2">{notification.message}</p>
-                      <p className="text-[10px] text-[var(--adm-ink-subtle)] mt-1.5 font-medium">{formatTimeAgo(notification.createdAt)}</p>
-                    </div>
-                  </button>
-                );
-              })
+                      >
+                        <Icon
+                          aria-hidden="true"
+                          className={cn("mt-0.5 h-4 w-4 flex-none", n.isRead ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-accent)]")}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-baseline justify-between gap-2">
+                            <span className={cn("truncate text-[13px]", n.isRead ? "text-[var(--adm-ink-mute)]" : "font-semibold text-[var(--adm-ink)]")}>
+                              {n.title}
+                            </span>
+                            <span className="flex-none text-[11.5px] tabular-nums text-[var(--adm-ink-subtle)]">{formatTimeAgo(n.createdAt)}</span>
+                          </span>
+                          <span className="mt-0.5 block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{n.message}</span>
+                        </span>
+                        {!n.isRead && <span className="sr-only">Unread</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 
-          {/* Footer */}
           {allNotifications.length > 0 && (
-            <div className="px-4 py-2.5 bg-[var(--adm-surface-sunken)] border-t border-[var(--adm-line)]">
-              <Link
-                href="/admin/notifications"
-                onClick={() => setOpen(false)}
-                className="text-xs text-[var(--adm-accent)] font-medium flex items-center justify-center gap-1"
-              >
-                View all notifications
-                <ChevronRight className="w-3 h-3" aria-hidden="true" />
-              </Link>
-            </div>
+            <Link
+              href="/admin/notifications"
+              onClick={() => setOpen(false)}
+              className="flex flex-none items-center justify-center gap-1 border-t border-[var(--adm-line-soft)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
+            >
+              View all notifications
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
           )}
         </div>
       )}
@@ -430,173 +446,20 @@ function NotificationsPanel() {
   );
 }
 
-function UserMenu({ user, signOut }: { user: ReturnType<typeof useAuth>["user"]; signOut: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [avatarFailed, setAvatarFailed] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
-
-  const badgeColor = roleBadgeColor[user?.role ?? ""] ?? "bg-sky-500/15 text-sky-600";
-
-  // Uploaded photo if there is one, otherwise the initials Avatar used
-  // everywhere else in admin. This used to fall back to a generated cartoon
-  // face from api.dicebear.com, a third-party request on every admin page
-  // load that leaked the user's email as a seed in the URL, and produced an
-  // avatar that matched nothing else in the console.
-  const photoSrc = user?.id && !avatarFailed ? `/api/users/avatar/${user.id}` : null;
-
-  return (
-    <div ref={menuRef} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-label="User menu"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="flex items-center rounded-full border border-transparent p-0.5 transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-row-hover)]"
-      >
-        {photoSrc ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={photoSrc}
-            alt={user?.name ?? "User"}
-            width={28}
-            height={28}
-            loading="lazy"
-            decoding="async"
-            onError={() => setAvatarFailed(true)}
-            className="w-7 h-7 rounded-full object-cover bg-[var(--adm-accent-soft)] ring-2 ring-[var(--adm-surface)] shadow-sm"
-          />
-        ) : (
-          <Avatar name={user?.name} email={user?.email} size="sm" />
-        )}
-      </button>
-
-      {open && (
-        <div
-          role="menu"
-          aria-label="User options"
-          className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl ring-1 ring-black/5 z-50"
-        >
-          <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
-            {photoSrc ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={photoSrc}
-                alt={user?.name ?? "User"}
-                width={36}
-                height={36}
-                loading="lazy"
-                decoding="async"
-                onError={() => setAvatarFailed(true)}
-                className="h-9 w-9 flex-shrink-0 rounded-full object-cover bg-[var(--adm-surface-2)] ring-1 ring-[var(--adm-line)]"
-              />
-            ) : (
-              <Avatar name={user?.name} email={user?.email} size="md" />
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[var(--adm-ink)]">{user?.name}</p>
-              <p className="truncate text-[11px] text-[var(--adm-ink-mute)]">{user?.email}</p>
-            </div>
-          </div>
-          <div className="px-3 pt-2.5 pb-1.5">
-            <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize", badgeColor)}>
-              {user?.role}
-            </span>
-          </div>
-          <div className="py-1" role="none">
-            <Link
-              href="/admin/settings"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
-            >
-              <IconSettings className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Settings
-            </Link>
-            {(user?.role === UserRole.ADMIN || user?.role === UserRole.HR) && (
-              <a
-                href="https://hr.oceanbluecorp.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
-              >
-                <IconHrPortal className="w-4 h-4 text-violet-400" aria-hidden="true" />
-                <span>HR Portal</span>
-                <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-              </a>
-            )}
-            {user?.role === UserRole.ADMIN && (
-              <Link
-                href="/admin/docs"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
-              >
-                <IconDocs className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Developer
-              </Link>
-            )}
-            <Link
-              href="/"
-              target="_blank"
-              role="menuitem"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] transition-colors"
-            >
-              <IconHome className="w-4 h-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> View website
-            </Link>
-          </div>
-          <div className="border-t border-[var(--adm-line)] py-1" role="none">
-            <button
-              role="menuitem"
-              onClick={() => signOut()}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] transition-colors"
-            >
-              <IconLogout className="w-4 h-4" aria-hidden="true" /> Sign Out
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
-  // "Back to dashboard" pointed at /admin, which Media cannot reach either, so
-  // the escape hatch from an access error led straight to another one.
+  // Media cannot reach /admin, so send each role to its own landing page.
   const home = landingRouteFor(userRole as UserRole | null);
   return (
-    <div className="flex min-h-[70vh] items-center justify-center">
+    <div className="flex min-h-[60vh] items-center justify-center">
       <div className="max-w-sm text-center">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-danger-soft)]">
-          <IconShield className="h-7 w-7 text-[var(--adm-danger)]" aria-hidden="true" />
-        </div>
-        <p className="text-base font-bold text-[var(--adm-ink)]">Access restricted</p>
-        <p className="mt-1 text-sm text-[var(--adm-ink-mute)]">
-          Your role ({userRole}) doesn&apos;t have access to this page. Contact an
-          administrator if you think this is a mistake.
+        <IconShield className="mx-auto h-6 w-6 text-[var(--adm-danger-ink)]" aria-hidden="true" />
+        <p className="mt-3 text-[15px] font-semibold text-[var(--adm-ink)]">Access restricted</p>
+        <p className="mt-1 text-[13.5px] text-[var(--adm-ink-mute)]">
+          Your role ({userRole ?? "none"}) can&apos;t open this page. Ask an administrator if you need access.
         </p>
         <Link
           href={home}
-          className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
+          className="mt-5 inline-flex h-8 items-center rounded-[8px] bg-[var(--adm-accent)] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
           {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
         </Link>
@@ -605,44 +468,32 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
   );
 }
 
-// ── Main layout content ────────────────────────────────────────────────────────
+// ── Shell ──────────────────────────────────────────────────────────────────────
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  /* Sidebar width is the single biggest thing standing between this app and a
-     14" laptop: 224px of a 1280px viewport, on every screen, always. Below
-     1440 it collapses to the 64px rail by default, which hands the content
-     pane back 160px, roughly the gap between what the `lg:`/`xl:` rules assume
-     is available and what actually is.
-
-     Stored as `boolean | null`, not a boolean: null means "never chosen", and
-     only that state follows the viewport. Someone who has explicitly expanded
-     or collapsed the rail keeps their choice at every width — an automatic
-     default that overrides a stated preference is a bug, not a convenience. */
+  // null = never chosen, so it follows the viewport; an explicit toggle sticks.
   const [storedCollapsed, setStoredCollapsed] = useLocalStorage<boolean | null>("adminSidebarCollapsed", null);
   const narrowViewport = useMediaQuery("(max-width: 1439.98px)");
   const sidebarCollapsed = storedCollapsed ?? narrowViewport;
   const { user, signOut, hasAnyRole } = useAuth();
   const { openCommandPalette, pageCrumb } = useAdmin();
-  const section = useCurrentSection(pathname);
-  const router = useRouter();
+  const section = currentSection(pathname);
 
-  // Every sign-in lands on /admin, which is a recruiting report Media has no
-  // access to, so without this the first thing a new media account ever saw was
-  // "Access restricted". Only the dashboard is redirected: a deliberate deep
-  // link to a page the role cannot see should still say so rather than bounce.
+  // Media has no dashboard; bounce only the bare /admin landing.
   const home = landingRouteFor(user?.role);
   useEffect(() => {
     if (pathname === "/admin" && home !== "/admin") router.replace(home);
   }, [pathname, home, router]);
 
-  /** Global search reads recruiting data, so it is for recruiting roles only. */
+  // Close the mobile drawer on navigation.
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
+
   const canSearch = hasAnyRole(RECRUITING_ROLES);
 
-  // Toggling is the explicit choice, so it always writes a boolean and the
-  // viewport stops deciding from here on.
   const toggleSidebarCollapse = useCallback(() => {
     setStoredCollapsed(!sidebarCollapsed);
   }, [sidebarCollapsed, setStoredCollapsed]);
@@ -655,23 +506,20 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return match ? routeAccess[match].includes(user.role) : true;
   })();
 
+  const title = pageCrumb ?? section.name;
+
   return (
-    <div
-      className="adm-scope min-h-screen bg-[var(--adm-canvas)]"
-      data-theme="light"
-    >
-      {/* Skip link */}
+    <div className="adm-scope min-h-screen bg-[var(--adm-canvas)]" data-theme="light">
       <a
         href="#adm-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-[var(--adm-accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-[8px] focus:bg-[var(--adm-accent)] focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-white"
       >
         Skip to content
       </a>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -681,89 +529,56 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         open={sidebarOpen}
         collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
-        onToggleCollapse={toggleSidebarCollapse}
         pathname={pathname}
         hasAnyRole={hasAnyRole}
       />
 
-      {/* Main content */}
-      <div className={cn("transition-all duration-300 bg-[var(--adm-chrome)]", sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-56")}>
-        {/* Top header */}
-        {/* Command bar. Solid rather than translucent-blurred: a business
-            system's top bar is a fixed piece of chrome, and blur over a dense
-            scrolling grid smears the rows underneath it. */}
-        <header className="sticky top-0 z-30 h-16 bg-[var(--adm-chrome)] flex items-center justify-between gap-3 px-5 lg:px-6 relative">
-          <div className="flex min-w-0 items-center gap-3">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open navigation"
-              className="lg:hidden p-1.5 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-md transition-colors"
-            >
-              <Menu className="w-5 h-5" aria-hidden="true" />
+      <div
+        className={cn(
+          "transition-[padding] duration-200 ease-[var(--adm-ease)]",
+          sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]",
+        )}
+      >
+        {/* Three columns so the search sits on the true centre of the pane. */}
+        <header className="sticky top-0 z-30 grid h-[60px] grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
+          <div className="flex min-w-0 items-center gap-1">
+            <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className={cn(iconButton, "lg:hidden")}>
+              <Menu className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
-
-            {/* Mobile title */}
-            <h1 className="sm:hidden truncate font-semibold text-[var(--adm-ink)]">
-              {pathname === "/admin" ? "Dashboard" : (pageCrumb ?? section.name)}
-            </h1>
+            <button
+              onClick={toggleSidebarCollapse}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={cn(iconButton, "hidden lg:inline-flex")}
+            >
+              <PanelLeft className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
+            <h1 className="ml-1 truncate text-[14px] font-semibold text-[var(--adm-ink)] md:hidden">{title}</h1>
           </div>
 
-          {/* Centered search, Conduktor-style.
+          <div className="flex justify-center">
+            {canSearch && <HeaderSearch />}
+          </div>
 
-              Hidden for Media. It searches jobs, applications and contacts
-              through /api/admin/search, which is recruiting-only and rightly
-              answers 403 to a media account, so leaving the box on screen would
-              be a control that looks broken rather than one that is restricted.
-              Removing beats disabling here (DESIGN_SYSTEM §5): a media account
-              will never gain this. */}
-          {canSearch && (
-            <div className="absolute left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 px-14 sm:px-0">
-              <HeaderSearch />
-            </div>
-          )}
-
-          <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5">
-            {/* Mobile search */}
+          <div className="flex items-center justify-end gap-1">
             {canSearch && (
-              <button
-                type="button"
-                onClick={openCommandPalette}
-                aria-label="Open search"
-                className="md:hidden p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
-              >
-                <Search className="w-5 h-5" aria-hidden="true" />
+              <button type="button" onClick={openCommandPalette} aria-label="Open search" className={cn(iconButton, "md:hidden")}>
+                <Search className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             )}
-
             <NotificationsPanel />
-
-            <Link
-              href="/admin/help"
-              title="Help & team"
-              aria-label="Help and team directory"
-              className="p-2 text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)] rounded-lg transition-colors"
-            >
-              <IconHelp className="w-5 h-5" aria-hidden="true" />
+            <Link href="/admin/help" title="Help and team" aria-label="Help and team directory" className={iconButton}>
+              <IconHelp className="h-[18px] w-[18px]" aria-hidden="true" />
             </Link>
-
-            <div className="hidden md:block w-px h-6 bg-[var(--adm-line)] mx-1" aria-hidden="true" />
-
             <UserMenu user={user} signOut={signOut} />
           </div>
         </header>
 
-        {/* Page content */}
-        {/* Fixed height, not min-height, and the scroll container itself.
-            `min-h` let the content grow past the viewport, so a Workspace
-            panel's `flex-1` had nothing to bound it: the whole document
-            scrolled and the grid's own footer, pager and rows-per-page, sat
-            below the fold. With a real height the panel claims exactly what is
-            left after any overview strip and scrolls its rows internally,
-            while taller pages (dashboard, settings, docs) still scroll here. */}
+        {/* Fixed height so list screens scroll their grid, not the page. Padding
+            matches the -mx/-mb bleed of the sticky form bars. */}
         <main
           id="adm-main"
-          className="flex h-[calc(100dvh-4rem)] min-w-0 flex-col overflow-y-auto overflow-x-hidden rounded-tl-2xl bg-[var(--adm-canvas)] p-4 sm:p-5 xl:p-6"
+          className="flex h-[calc(100dvh-60px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
         >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>

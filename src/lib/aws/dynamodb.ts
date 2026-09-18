@@ -55,7 +55,12 @@ const isAwsConfigured = (): boolean => {
   return configured;
 };
 
-// Create a fresh DynamoDB client (no caching to avoid stale credentials)
+// One client per credential set. A client per call meant a fresh TLS handshake
+// on every request; keying on the config still picks up rotated credentials.
+let cachedClient: { key: string; client: DynamoDBDocumentClient } | null = null;
+
+const WRITE_COMMAND = /^(Put|Update|Delete|BatchWrite|TransactWrite)/;
+
 const createDocClient = (): DynamoDBDocumentClient | null => {
   const config = getEnvConfig();
 
@@ -63,6 +68,9 @@ const createDocClient = (): DynamoDBDocumentClient | null => {
     console.error("Cannot create DynamoDB client - missing credentials");
     return null;
   }
+
+  const key = [config.region, config.accessKeyId, config.secretAccessKey, config.endpoint ?? ""].join("|");
+  if (cachedClient?.key === key) return cachedClient.client;
 
   const dynamoClient = new DynamoDBClient({
     region: config.region,
@@ -73,11 +81,23 @@ const createDocClient = (): DynamoDBDocumentClient | null => {
     ...(config.endpoint && { endpoint: config.endpoint }),
   });
 
-  return DynamoDBDocumentClient.from(dynamoClient, {
+  const client = DynamoDBDocumentClient.from(dynamoClient, {
     marshallOptions: {
       removeUndefinedValues: true,
     },
   });
+
+  // Any write drops cached scans, so a change is visible on the next read.
+  client.middlewareStack.add(
+    (next, context) => async (args) => {
+      if (WRITE_COMMAND.test(context.commandName ?? "")) scanCache.clear();
+      return next(args);
+    },
+    { step: "initialize", name: "invalidateScanCache" },
+  );
+
+  cachedClient = { key, client };
+  return client;
 };
 
 // Helper to check if DB is available and get client
@@ -121,10 +141,23 @@ const getTables = () => getEnvConfig().tables;
  * The page cap is a runaway guard, not a product limit, 40MB of records is far
  * past the point where these screens should be paginating server-side.
  */
-async function scanAll<T>(
+/**
+ * Full-table scans are memoised per server instance. Fresh for SCAN_TTL_MS;
+ * after that, up to SCAN_STALE_MS, the last result is served while a refresh
+ * runs in the background. Concurrent requests share one scan, and any write
+ * through this client clears the cache (middleware in createDocClient), so a
+ * user always sees their own change. Another instance's write can take up to
+ * SCAN_STALE_MS to show here.
+ */
+const SCAN_TTL_MS = 15_000;
+const SCAN_STALE_MS = 60_000;
+const SCAN_SEGMENTS = 4;
+const scanCache = new Map<string, { at: number; items: Promise<unknown[]>; refreshing?: boolean }>();
+
+async function scanSegment<T>(
   client: DynamoDBDocumentClient,
   params: ConstructorParameters<typeof ScanCommand>[0],
-  maxPages = 40,
+  maxPages: number,
 ): Promise<T[]> {
   const items: T[] = [];
   let cursor: Record<string, unknown> | undefined;
@@ -144,6 +177,53 @@ async function scanAll<T>(
   } while (cursor);
 
   return items;
+}
+
+async function scanAll<T>(
+  client: DynamoDBDocumentClient,
+  params: ConstructorParameters<typeof ScanCommand>[0],
+  maxPages = 40,
+): Promise<T[]> {
+  // API keys authorise partners; a revocation must not be served from cache.
+  const cacheable = params?.TableName !== getTables().apiKeys;
+  const key = JSON.stringify(params);
+  const hit = cacheable ? scanCache.get(key) : undefined;
+  const age = hit ? Date.now() - hit.at : Infinity;
+
+  // Segments are read in parallel; order is irrelevant because callers sort.
+  const scan = () =>
+    Promise.all(
+      Array.from({ length: SCAN_SEGMENTS }, (_, segment) =>
+        scanSegment<T>(client, { ...params, Segment: segment, TotalSegments: SCAN_SEGMENTS }, Math.ceil(maxPages / SCAN_SEGMENTS)),
+      ),
+    ).then((parts) => parts.flat());
+
+  // Callers sort and mutate what they get back, so each gets its own copy.
+  if (hit && age < SCAN_TTL_MS) return structuredClone(await hit.items) as T[];
+
+  if (hit && age < SCAN_STALE_MS) {
+    // Keep serving the old result until the refresh lands; one refresh at a time.
+    if (!hit.refreshing) {
+      hit.refreshing = true;
+      scan().then(
+        (fresh) => {
+          if (scanCache.get(key) === hit) scanCache.set(key, { at: Date.now(), items: Promise.resolve(fresh) });
+        },
+        (error) => {
+          hit.refreshing = false;
+          console.error(`[dynamodb] background refresh of ${params?.TableName} failed`, error);
+        },
+      );
+    }
+    return structuredClone(await hit.items) as T[];
+  }
+
+  const items = scan();
+  if (cacheable) {
+    scanCache.set(key, { at: Date.now(), items });
+    items.catch(() => { if (scanCache.get(key)?.items === items) scanCache.delete(key); });
+  }
+  return structuredClone(await items) as T[];
 }
 
 /** Same pagination contract as scanAll, for GSI queries. */
@@ -693,7 +773,10 @@ export interface Notification {
   message: string;
   link?: string; // URL to navigate to when clicked
   relatedId?: string; // ID of related entity (jobId, applicationId, contactId)
-  isRead: boolean;
+  isRead: boolean; // legacy global flag; true still reads as read for everyone
+  // Per-user state: string sets of Cognito subs (the DocumentClient returns a Set).
+  readBy?: Set<string> | string[];
+  dismissedBy?: Set<string> | string[];
   createdAt: string;
   // TTL field - DynamoDB will auto-delete items when this timestamp passes
   // Set to 7 days from creation
@@ -1542,6 +1625,7 @@ export async function getAllNotifications(limit?: number): Promise<{ success: bo
   }
 }
 
+/** @deprecated Global read flag; use the per-user functions below. */
 export async function getUnreadNotifications(): Promise<{ success: boolean; data?: Notification[]; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
@@ -1567,6 +1651,7 @@ export async function getUnreadNotifications(): Promise<{ success: boolean; data
   }
 }
 
+/** @deprecated Global read flag; use the per-user functions below. */
 export async function markNotificationAsRead(id: string): Promise<{ success: boolean; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
@@ -1594,6 +1679,7 @@ export async function markNotificationAsRead(id: string): Promise<{ success: boo
   }
 }
 
+/** @deprecated Global read flag; use the per-user functions below. */
 export async function markAllNotificationsAsRead(): Promise<{ success: boolean; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
@@ -1643,6 +1729,97 @@ export async function deleteNotification(id: string): Promise<{ success: boolean
       error: error instanceof Error ? error.message : "Failed to delete notification",
     };
   }
+}
+
+// Per-user notification state. Visibility rules live in lib/notifications.ts.
+
+export async function getNotification(id: string): Promise<{ success: boolean; data?: Notification; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+
+  try {
+    const result = await dbCheck.client!.send(
+      new GetCommand({ TableName: getTables().notifications, Key: { id } }),
+    );
+    return { success: true, data: result.Item as Notification | undefined };
+  } catch (error) {
+    console.error("Error getting notification:", error);
+    return { success: false, error: "Failed to load notification" };
+  }
+}
+
+const isConditionFailure = (error: unknown): boolean =>
+  error instanceof Error && error.name === "ConditionalCheckFailedException";
+
+// ADD on a string set is atomic and idempotent, so concurrent or repeated calls
+// never duplicate a sub. The condition stops an Update from creating a stub item
+// for an id that does not exist (or already expired via TTL).
+async function addUserToNotificationSet(
+  client: DynamoDBDocumentClient,
+  id: string,
+  attr: "readBy" | "dismissedBy",
+  userId: string,
+): Promise<{ success: boolean; notFound?: boolean }> {
+  try {
+    await client.send(
+      new UpdateCommand({
+        TableName: getTables().notifications,
+        Key: { id },
+        UpdateExpression: "ADD #attr :user",
+        ConditionExpression: "attribute_exists(id)",
+        ExpressionAttributeNames: { "#attr": attr },
+        ExpressionAttributeValues: { ":user": new Set([userId]) },
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    if (isConditionFailure(error)) return { success: false, notFound: true };
+    console.error(`Error updating notification ${attr}:`, error);
+    return { success: false };
+  }
+}
+
+export async function markNotificationReadForUser(id: string, userId: string): Promise<{ success: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  if (!id || !userId) return { success: false, error: "Missing notification or user" };
+
+  const result = await addUserToNotificationSet(dbCheck.client!, id, "readBy", userId);
+  if (result.success) return { success: true };
+  return { success: false, error: result.notFound ? "Notification not found" : "Failed to update notification" };
+}
+
+/** Marks each id read for one user. Ids that vanished meanwhile are skipped, not failures. */
+export async function markNotificationsReadForUser(ids: string[], userId: string): Promise<{ success: boolean; data?: { updated: number }; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  if (!userId) return { success: false, error: "Missing user" };
+
+  const BATCH = 10;
+  let updated = 0;
+  let failed = 0;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const results = await Promise.all(
+      ids.slice(i, i + BATCH).map((id) => addUserToNotificationSet(dbCheck.client!, id, "readBy", userId)),
+    );
+    for (const r of results) {
+      if (r.success) updated += 1;
+      else if (!r.notFound) failed += 1;
+    }
+  }
+
+  if (failed > 0) return { success: false, data: { updated }, error: "Failed to update some notifications" };
+  return { success: true, data: { updated } };
+}
+
+export async function dismissNotificationForUser(id: string, userId: string): Promise<{ success: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  if (!id || !userId) return { success: false, error: "Missing notification or user" };
+
+  const result = await addUserToNotificationSet(dbCheck.client!, id, "dismissedBy", userId);
+  if (result.success) return { success: true };
+  return { success: false, error: result.notFound ? "Notification not found" : "Failed to dismiss notification" };
 }
 
 // ===========================================

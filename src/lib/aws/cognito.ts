@@ -11,10 +11,15 @@ import {
   AdminDeleteUserCommand,
   AdminUpdateUserAttributesCommand,
   ListGroupsCommand,
+  ListUsersInGroupCommand,
   CreateGroupCommand,
+  InitiateAuthCommand,
+  ChangePasswordCommand,
+  RevokeTokenCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import { groupNameForRole, highestStaffRole, normalizeStaffRole } from "@/lib/auth/config";
+import { classifyPasswordChangeError, type PasswordChangeFailure } from "@/lib/password-change";
 
 // Assignable staff roles. There is no public "user" role, every account is
 // created by an admin and belongs to exactly one of these groups.
@@ -32,13 +37,54 @@ const getConfig = () => ({
 });
 
 // Create Cognito client
+// One client per credential set, reused across calls.
+let cachedClient: { key: string; client: CognitoIdentityProviderClient } | null = null;
+
 const createCognitoClient = () => {
   const config = getConfig();
-  return new CognitoIdentityProviderClient({
+  const key = [config.region, config.credentials.accessKeyId, config.credentials.secretAccessKey].join("|");
+  if (cachedClient?.key === key) return cachedClient.client;
+  const client = new CognitoIdentityProviderClient({
     region: config.region,
     credentials: config.credentials,
   });
+  cachedClient = { key, client };
+  return client;
 };
+
+/**
+ * Username → group names for the whole pool, one ListUsersInGroup per group.
+ * Replaces an AdminListGroupsForUser call per user, which was an N+1 and runs
+ * into that API's low rate limit as the team grows.
+ */
+async function groupsByUsername(): Promise<Map<string, string[]>> {
+  const config = getConfig();
+  const client = createCognitoClient();
+
+  const groupNames: string[] = [];
+  let groupToken: string | undefined;
+  do {
+    const res = await client.send(new ListGroupsCommand({ UserPoolId: config.userPoolId, Limit: 60, NextToken: groupToken }));
+    for (const g of res.Groups ?? []) if (g.GroupName) groupNames.push(g.GroupName);
+    groupToken = res.NextToken;
+  } while (groupToken);
+
+  const map = new Map<string, string[]>();
+  await Promise.all(groupNames.map(async (GroupName) => {
+    let token: string | undefined;
+    do {
+      const res = await client.send(new ListUsersInGroupCommand({ UserPoolId: config.userPoolId, GroupName, Limit: 60, NextToken: token }));
+      for (const u of res.Users ?? []) {
+        if (!u.Username) continue;
+        const list = map.get(u.Username) ?? [];
+        list.push(GroupName);
+        map.set(u.Username, list);
+      }
+      token = res.NextToken;
+    } while (token);
+  }));
+  return map;
+}
 
 export interface CognitoUser {
   id: string;
@@ -90,13 +136,18 @@ export async function listCognitoUsers(options?: {
       Filter: options?.filter,
     });
 
-    const response = await client.send(command);
+    const [response, membership] = await Promise.all([
+      client.send(command),
+      groupsByUsername().catch((error) => {
+        console.error("Error listing group membership, falling back per user:", error);
+        return null;
+      }),
+    ]);
 
-    // Get groups for each user
     const usersWithGroups = await Promise.all(
       (response.Users || []).map(async (user) => {
         const username = user.Username || "";
-        const groups = await getUserGroups(username);
+        const groups = membership ? membership.get(username) ?? [] : await getUserGroups(username);
 
         // Extract attributes
         const attrs = user.Attributes || [];
@@ -132,7 +183,7 @@ export async function listCognitoUsers(options?: {
     console.error("Error listing Cognito users:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to list users",
+      error: "Couldn't load the team list. Please try again.",
     };
   }
 }
@@ -197,6 +248,83 @@ export async function getCognitoUser(username: string): Promise<{ success: boole
       success: false,
       error: error instanceof Error ? error.message : "Failed to get user",
     };
+  }
+}
+
+const errorName = (error: unknown): string => (error as { name?: string })?.name ?? "";
+
+const jwtSub = (token: string): string | undefined => {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+    return typeof payload?.sub === "string" ? payload.sub : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Change a signed-in user's password.
+ *
+ * The session cookie holds an ID token, and ChangePassword wants an access
+ * token, so the current password is verified by signing in again (the same
+ * USER_PASSWORD_AUTH flow as /api/auth/signin) and the access token that
+ * returns is used once and discarded. No token from the browser is involved.
+ * `expectedSub` guards against the identifier resolving to another account.
+ */
+export async function changeOwnPassword(input: {
+  username: string;
+  expectedSub: string;
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ success: boolean; error?: string; reason?: PasswordChangeFailure }> {
+  const client = createCognitoClient();
+  const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
+
+  let accessToken: string;
+  let refreshToken: string | undefined;
+  try {
+    const auth = await client.send(
+      new InitiateAuthCommand({
+        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: clientId,
+        AuthParameters: { USERNAME: input.username, PASSWORD: input.currentPassword },
+      }),
+    );
+    if (auth.ChallengeName) {
+      const reason = auth.ChallengeName === "NEW_PASSWORD_REQUIRED" ? "new-password-required" : "mfa-required";
+      return { success: false, error: `Challenge ${auth.ChallengeName}`, reason };
+    }
+    const result = auth.AuthenticationResult;
+    if (!result?.AccessToken) return { success: false, error: "No access token issued", reason: "unavailable" };
+    if (jwtSub(result.AccessToken) !== input.expectedSub) {
+      return { success: false, error: "Signed-in account does not match the session", reason: "unavailable" };
+    }
+    accessToken = result.AccessToken;
+    refreshToken = result.RefreshToken;
+  } catch (error) {
+    const reason = classifyPasswordChangeError("verify", errorName(error), (error as Error)?.message);
+    if (reason === "unavailable") console.error("Password change: verify failed:", error);
+    return { success: false, error: errorName(error) || "Verify failed", reason };
+  }
+
+  try {
+    await client.send(
+      new ChangePasswordCommand({
+        AccessToken: accessToken,
+        PreviousPassword: input.currentPassword,
+        ProposedPassword: input.newPassword,
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    const reason = classifyPasswordChangeError("change", errorName(error), (error as Error)?.message);
+    if (reason === "unavailable") console.error("Password change: change failed:", error);
+    return { success: false, error: errorName(error) || "Change failed", reason };
+  } finally {
+    // Nobody holds the refresh token this minted; don't leave it live.
+    if (refreshToken && clientId) {
+      await client.send(new RevokeTokenCommand({ Token: refreshToken, ClientId: clientId })).catch(() => {});
+    }
   }
 }
 
@@ -314,7 +442,7 @@ export async function updateUserRole(username: string, newRole: StaffRole): Prom
 export async function inviteUser(
   email: string,
   role: StaffRole
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; code?: string }> {
   try {
     const config = getConfig();
     const client = createCognitoClient();
@@ -348,6 +476,8 @@ export async function inviteUser(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to invite user",
+      // The SDK error name, so the route can map it; the message is not stable.
+      code: errorName(error),
     };
   }
 }

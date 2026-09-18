@@ -2,17 +2,9 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { isNotificationType, type NotificationType, type NotificationView } from "@/lib/notifications";
 
-export interface Notification {
-  id: string;
-  type: "job_posted" | "application_received" | "contact_received";
-  title: string;
-  message: string;
-  link?: string;
-  relatedId?: string;
-  isRead: boolean;
-  createdAt: string;
-}
+export type Notification = NotificationView & { type: NotificationType };
 
 const POLL_INTERVAL_MS = 30_000;
 const MAX_DISPLAY = 10;
@@ -36,7 +28,9 @@ export function useNotifications() {
       const res = await fetch("/api/notifications?limit=20");
       const data = await res.json();
       if (res.ok) {
-        setNotifications(data.notifications ?? []);
+        // The bell renders a per-type icon; a type this build doesn't know is left to the full page.
+        const list: NotificationView[] = data.notifications ?? [];
+        setNotifications(list.filter((n): n is Notification => isNotificationType(n.type)));
         setUnreadCount(data.unreadCount ?? 0);
       }
     } catch {
@@ -67,7 +61,12 @@ export function useNotifications() {
 
   const markAsRead = useCallback(async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}`, { method: "PUT" });
+      const res = await fetch(`/api/notifications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "read" }),
+      });
+      if (!res.ok) return;
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       );
@@ -79,7 +78,12 @@ export function useNotifications() {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await fetch("/api/notifications", { method: "PUT" });
+      const res = await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "read_all" }),
+      });
+      if (!res.ok) return;
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch {

@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 import { requireStaff, isAdminClaims } from "@/lib/auth/verify";
 import { canView } from "@/lib/bench";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
+import { serverError } from "@/lib/api-errors";
 
 // Attaching a resume on update kicks off the extraction Lambda via after();
 // its multi-agent pipeline runs 30–90s, so the invocation needs the headroom.
@@ -29,10 +30,7 @@ export async function GET(
     const result = await getApplication(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch application" },
-        { status: 500 }
-      );
+      return serverError("Fetching application", result.error, "Couldn't load the application. Please try again.");
     }
 
     if (!result.data) {
@@ -69,11 +67,7 @@ export async function GET(
 
     return NextResponse.json({ application: app });
   } catch (error) {
-    console.error("Error fetching application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching application", error, "Couldn't load the application. Please try again.");
   }
 }
 
@@ -158,10 +152,7 @@ export async function PUT(
       });
 
       if (!result.success) {
-        return NextResponse.json(
-          { error: result.error || "Failed to add note" },
-          { status: 500 }
-        );
+        return serverError("Adding application note", result.error, "Couldn't add the note. Please try again.");
       }
 
       // Fetch updated application
@@ -349,10 +340,7 @@ export async function PUT(
       );
 
       if (!result.success) {
-        return NextResponse.json(
-          { error: result.error || "Failed to update application" },
-          { status: 500 }
-        );
+        return serverError("Updating application", result.error, "Couldn't save the application. Please try again.");
       }
 
       if (resumeChanged) {
@@ -376,10 +364,7 @@ export async function PUT(
       );
 
       if (!result.success) {
-        return NextResponse.json(
-          { error: result.error || "Failed to update application" },
-          { status: 500 }
-        );
+        return serverError("Updating application", result.error, "Couldn't save the application. Please try again.");
       }
     }
 
@@ -388,11 +373,7 @@ export async function PUT(
 
     return NextResponse.json({ application: updatedApp.data });
   } catch (error) {
-    console.error("Error updating application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating application", error, "Couldn't save the application. Please try again.");
   }
 }
 
@@ -418,18 +399,11 @@ export async function DELETE(
     const result = await deleteApplication(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete application" },
-        { status: 500 }
-      );
+      return serverError("Deleting application", result.error, "Couldn't delete the application. Please try again.");
     }
 
     return NextResponse.json({ message: "Application deleted successfully" });
   } catch (error) {
-    console.error("Error deleting application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting application", error, "Couldn't delete the application. Please try again.");
   }
 }

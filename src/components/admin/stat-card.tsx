@@ -57,27 +57,27 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
   const body = (
     <div
       className={cn(
-        "group relative flex flex-col rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150",
-        sm ? "gap-3 p-5" : "gap-3.5 p-6",
-        href && "cursor-pointer hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]",
+        "group relative flex min-w-0 flex-col rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)] transition-[border-color,box-shadow] duration-150",
+        sm ? "gap-2.5 p-4" : "gap-3 p-4",
+        href && "cursor-pointer hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)]",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <Icon className={cn("h-[18px] w-[18px] flex-none", t.text)} strokeWidth={1.75} />
-          <span className="truncate text-[13.5px] font-medium text-[var(--adm-ink-mute)]">
+        <span className="flex min-w-0 items-center gap-2">
+          <Icon className={cn("h-4 w-4 flex-none", tone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text)} strokeWidth={1.75} />
+          <span className="truncate text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
             {label}
           </span>
         </span>
         {delta && (
           <span
             className={cn(
-              "inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums",
+              "inline-flex flex-none items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[11.5px] font-medium tabular-nums",
               delta.direction === "up"
-                ? "bg-emerald-50 text-emerald-700"
+                ? "bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
                 : delta.direction === "down"
-                ? "bg-rose-50 text-rose-700"
+                ? "bg-[var(--adm-danger-soft)] text-[var(--adm-danger-ink)]"
                 : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
             )}
           >
@@ -88,7 +88,7 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
         )}
       </div>
       <div>
-        <div className={cn("font-bold leading-none tracking-tight tabular-nums text-[var(--adm-ink)]", sm ? "text-[24px]" : "text-[32px]")}>
+        <div className={cn("font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]", sm ? "text-[20px]" : "text-[24px]")}>
           {value}
         </div>
         {pct !== null && (
@@ -107,7 +107,7 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
             </span>
           </div>
         )}
-        {hint && <div className="mt-2 text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">{hint}</div>}
+        {hint && <div className="mt-1.5 truncate text-[12px] leading-snug text-[var(--adm-ink-subtle)]">{hint}</div>}
       </div>
     </div>
   );

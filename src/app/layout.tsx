@@ -91,15 +91,13 @@ export const metadata: Metadata = {
     // 1200×630 card via the file convention. Declaring images here would
     // override it and drop us back to the small square logo.
   },
+  // No title/description: every page inherits this object, so fixed copy put the
+  // homepage headline on every card. Unset, Next fills both from the page's own
+  // openGraph. No root canonical either: inherited, it pointed any page without
+  // its own at the homepage.
   twitter: {
     card: "summary_large_image",
-    title: "Ocean Blue Corporation | Enterprise IT Solutions",
-    description:
-      "IT staffing, enterprise solutions, and managed services for enterprises and government agencies, covering ERP, cloud, cybersecurity, AI, and Salesforce.",
     creator: "@oceanbluecorp",
-  },
-  alternates: {
-    canonical: "https://oceanbluecorp.com",
   },
   category: "technology",
   classification: "Business",

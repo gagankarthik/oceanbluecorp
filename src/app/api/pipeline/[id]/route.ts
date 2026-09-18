@@ -5,6 +5,7 @@ import {
   updatePipelineRecord,
   deletePipelineRecord,
 } from "@/lib/aws/dynamodb";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/pipeline/[id]
 export async function GET(
@@ -16,7 +17,7 @@ export async function GET(
 
   const { id } = await params;
   const result = await getPipelineRecord(id);
-  if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+  if (!result.success) return serverError("Fetching pipeline record", result.error, "Couldn't load the record. Please try again.");
   if (!result.data) return NextResponse.json({ error: "Record not found" }, { status: 404 });
   return NextResponse.json({ success: true, record: result.data });
 }
@@ -40,7 +41,7 @@ export async function PUT(
     const body = await request.json();
 
     const existing = await getPipelineRecord(id);
-    if (!existing.success) return NextResponse.json({ error: existing.error }, { status: 500 });
+    if (!existing.success) return serverError("Fetching pipeline record for update", existing.error, "Couldn't save the record. Please try again.");
     if (!existing.data) return NextResponse.json({ error: "Record not found" }, { status: 404 });
 
     const { id: _id, kind: _kind, applicationId: _appId, createdAt: _createdAt, ...updates } =
@@ -62,11 +63,10 @@ export async function PUT(
     }
 
     const result = await updatePipelineRecord(id, updates);
-    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+    if (!result.success) return serverError("Updating pipeline record", result.error, "Couldn't save the record. Please try again.");
     return NextResponse.json({ success: true, record: result.data });
   } catch (error) {
-    console.error("Pipeline update error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Pipeline update error", error, "Couldn't save the record. Please try again.");
   }
 }
 
@@ -88,6 +88,6 @@ export async function DELETE(
 
   const { id } = await params;
   const result = await deletePipelineRecord(id);
-  if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+  if (!result.success) return serverError("Deleting pipeline record", result.error, "Couldn't delete the record. Please try again.");
   return NextResponse.json({ success: true });
 }

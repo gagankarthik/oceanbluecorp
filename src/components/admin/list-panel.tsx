@@ -3,24 +3,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-/* ============================================================
-   ListPanel, the single surface every admin list page sits on.
-
-   Replaces the old four-stack (KPI card row → search card → loose
-   count paragraph → table card). Those pushed the first record
-   ~400px down the page, and the KPI row mostly restated what the
-   segment counts already say.
-
-   Structure is now one bordered panel:
-     [ toolbar: search + segment counts + extra controls ]
-     [ optional expanded filter drawer                   ]
-     [ table                                             ]
-     [ footer: record count / pagination                 ]
-   ============================================================ */
+// One bordered panel: toolbar, optional filter drawer, table, footer.
 
 export function ListPanel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn("overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}>
+    <div className={cn("min-w-0 overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]", className)}>
       {children}
     </div>
   );
@@ -56,7 +43,7 @@ export function ListToolbar({
 }) {
   return (
     <div className="border-b border-[var(--adm-line)]">
-      <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:gap-4">
+      <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:gap-4">
         {search && <div className="min-w-0 flex-1">{search}</div>}
 
         {segments && segments.length > 0 && (
@@ -71,17 +58,17 @@ export function ListToolbar({
                   type="button"
                   onClick={() => onSegmentChange?.(s.key)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-medium transition-colors duration-150",
                     active
-                      ? "bg-[var(--adm-accent)] text-white"
-                      : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-line-soft)] hover:text-[var(--adm-ink)]",
+                      ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
+                      : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
                   {s.label}
                   <span
                     className={cn(
-                      "rounded-[4px] px-1.5 text-[11.5px] font-semibold tabular-nums",
-                      active ? "bg-[var(--adm-surface)]/20 text-white" : "bg-[var(--adm-line-soft)] text-[var(--adm-ink-subtle)]",
+                      "rounded-full px-1.5 text-[11.5px] font-medium tabular-nums",
+                      active ? "bg-[var(--adm-surface)] text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
                     )}
                   >
                     {s.count}
@@ -92,10 +79,10 @@ export function ListToolbar({
           </div>
         )}
 
-        {trailing && <div className="flex flex-shrink-0 items-center gap-2">{trailing}</div>}
+        {trailing && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{trailing}</div>}
       </div>
 
-      {children && <div className="border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]/60 p-4">{children}</div>}
+      {children && <div className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-4">{children}</div>}
     </div>
   );
 }
@@ -114,7 +101,7 @@ export function ListFooter({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-[var(--adm-line)] px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
       <p className="text-[13px] text-[var(--adm-ink-subtle)]">
         Showing <span className="font-semibold tabular-nums text-[var(--adm-ink-mute)]">{shown}</span>
         {shown !== total && (
@@ -142,7 +129,7 @@ export function ListTable({ className, children }: { className?: string; childre
 
 export function ListHead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="bg-[var(--adm-surface-sunken)]/80">
+    <thead className="bg-[var(--adm-surface-sunken)]">
       <tr className="border-b border-[var(--adm-line)]">{children}</tr>
     </thead>
   );
@@ -164,7 +151,7 @@ export function Th({
     <th
       style={width ? { width } : undefined}
       className={cn(
-        "px-4 py-3 text-[11.5px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]",
+        "whitespace-nowrap px-4 py-2.5 text-[12.5px] font-medium text-[var(--adm-ink-mute)]",
         align === "right" && "text-right",
         align === "center" && "text-center",
         align === "left" && "text-left",
@@ -192,7 +179,7 @@ export function Tr({
   return (
     <tr
       onClick={onClick}
-      className={cn("transition-colors hover:bg-[var(--adm-accent-tint)]", onClick && "cursor-pointer", className)}
+      className={cn("transition-colors duration-150 hover:bg-[var(--adm-row-hover)]", onClick && "cursor-pointer", className)}
     >
       {children}
     </tr>
@@ -211,7 +198,7 @@ export function Td({
   return (
     <td
       className={cn(
-        "px-4 py-3.5 align-middle",
+        "px-4 py-3 align-middle",
         align === "right" && "text-right",
         align === "center" && "text-center",
         className,
@@ -262,8 +249,8 @@ export function InlineSelect({
         autoComplete="off"
         aria-label={ariaLabel}
         className={cn(
-          "cursor-pointer appearance-none rounded-[6px] border py-1 pl-2.5 pr-7 text-[12.5px] font-medium",
-          "transition-colors focus:outline-none",
+          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-[12.5px] font-medium",
+          "transition-colors duration-150",
           className,
         )}
       >

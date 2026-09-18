@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResumeDownloadUrl, deleteResumeFromS3 } from "@/lib/aws";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 function decodeKey(id: string): string {
   return Buffer.from(id, "base64url").toString("utf8");
@@ -19,13 +20,12 @@ export async function GET(
 
     const urlResult = await getResumeDownloadUrl(fileKey);
     if (!urlResult.success) {
-      return NextResponse.json({ error: urlResult.error }, { status: 500 });
+      return serverError("Resume bank download URL", urlResult.error, "Couldn't open the resume. Please try again.");
     }
 
     return NextResponse.json({ success: true, downloadUrl: urlResult.url });
   } catch (error) {
-    console.error("Resume bank get error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Resume bank get error", error, "Couldn't open the resume. Please try again.");
   }
 }
 
@@ -42,12 +42,11 @@ export async function DELETE(
 
     const result = await deleteResumeFromS3(fileKey);
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return serverError("Resume bank delete", result.error, "Couldn't delete the resume. Please try again.");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Resume bank delete error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Resume bank delete error", error, "Couldn't delete the resume. Please try again.");
   }
 }

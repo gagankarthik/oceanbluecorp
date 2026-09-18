@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import ProductsPage from "./_content";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   description:
     "Enterprise software and products from Ocean Blue Corporation: purpose-built tools for workforce management, ERP integration, and digital operations.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Products | Ocean Blue Corporation",
     description:
       "Purpose-built enterprise products for workforce management, ERP integration, and digital operations.",

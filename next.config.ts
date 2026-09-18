@@ -1,5 +1,44 @@
 import type { NextConfig } from "next";
 
+// Full policy, report-only: violations go to /api/csp-report (server logs,
+// "[csp]"). Flip to enforcing once the logs are quiet. 'unsafe-inline' on
+// script-src covers Next's inline bootstrap and the JSON-LD blocks; removing it
+// needs per-request nonces from the proxy.
+const CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  [
+    "img-src 'self' data: blob:",
+    "https://oceanbluecorp.com https://www.oceanbluecorp.com",
+    "https://images.unsplash.com https://www.satyawholesalers.com https://upload.wikimedia.org",
+    "https://cdn-icons-png.flaticon.com https://cdn.inytes.com https://www.gstatic.com",
+    "https://api.dicebear.com https://i.ytimg.com https://tile.openstreetmap.org",
+    "https://*.amazonaws.com",
+  ].join(" "),
+  "connect-src 'self' https://cognito-idp.us-east-2.amazonaws.com https://*.amazoncognito.com",
+  // YouTube film embed; S3 presigned URLs for the admin resume preview.
+  "frame-src 'self' https://www.youtube-nocookie.com https://*.amazonaws.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "report-uri /api/csp-report",
+  "report-to csp-endpoint",
+].join("; ");
+
+// Enforced now: directives no legitimate page relies on breaking, which shut
+// plugin embeds, <base> hijacking, framing by other sites and off-site form posts.
+const CSP_ENFORCED = [
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  "report-uri /api/csp-report",
+  "report-to csp-endpoint",
+].join("; ");
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -122,7 +161,23 @@ const nextConfig: NextConfig = {
           { key: "X-DNS-Prefetch-Control",    value: "on" },
           // Force HTTPS (2 years)
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          // Sign-in is a redirect flow, no popups, so nothing needs a cross-origin opener.
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Content-Security-Policy", value: CSP_ENFORCED },
+          { key: "Content-Security-Policy-Report-Only", value: CSP_REPORT_ONLY },
+          { key: "Reporting-Endpoints", value: 'csp-endpoint="/api/csp-report"' },
         ],
+      },
+      // The admin layout is a client component and cannot export metadata, so
+      // noindex travels as a header. /auth has metadata too; the header also
+      // covers the callback/signout pages and any non-HTML response.
+      {
+        source: "/admin/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/auth/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       // Additional headers for API routes
       {
@@ -130,6 +185,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Cache-Control",          value: "no-store, max-age=0" },
+          { key: "X-Robots-Tag",           value: "noindex" },
         ],
       },
       // /public assets reach the browser with a 5s TTL otherwise, so every

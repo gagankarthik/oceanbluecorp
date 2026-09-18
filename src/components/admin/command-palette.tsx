@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Avatar } from "./avatar";
 import { Kbd } from "./kbd";
 import { StatusBadge } from "./status-badge";
+import { EmptyState } from "./empty-state";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 
 interface SearchHit {
@@ -45,9 +46,9 @@ type NavItem = {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",     href: "/admin",                icon: IconOverview },
-  { name: "Job Postings",  href: "/admin/jobs",           icon: IconJob,       keywords: "jobs positions roles" },
+  { name: "Job postings",  href: "/admin/jobs",           icon: IconJob,       keywords: "jobs positions roles" },
   { name: "Applications",  href: "/admin/applications",   icon: IconApplication,           keywords: "applicants candidates talent" },
-  { name: "Talent Bench",  href: "/admin/bench",          icon: IconBench,           keywords: "bench future" },
+  { name: "Talent bench",  href: "/admin/bench",          icon: IconBench,           keywords: "bench future" },
   { name: "Contacts",      href: "/admin/contacts",       icon: IconContact, roles: ["admin", "hr"] },
   { name: "Clients",       href: "/admin/clients",        icon: IconClient,        roles: ["admin", "hr"] },
   { name: "Vendors",       href: "/admin/vendors",        icon: IconVendor,        roles: ["admin", "hr"] },
@@ -166,17 +167,17 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
     <>
       {/* transparent click-away, keeps the rest of the screen visible */}
       <div className="fixed inset-0 z-[90]" onClick={() => onOpenChange(false)} />
-      {/* Anchored under the top bar (h-14) on the search side, not a centered modal */}
+      {/* Anchored under the top bar on the search side, not a centred modal. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
         onClick={(e) => e.stopPropagation()}
-        className="fixed right-3 top-[3.75rem] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--reg-shadow-xl)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-5"
+        className="fixed right-3 top-[68px] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-6"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--adm-line-soft)]">
-          <Search className="w-5 h-5 text-[var(--adm-ink-subtle)] flex-shrink-0" aria-hidden="true" />
+        <div className="flex items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3">
+          <Search className="h-[18px] w-[18px] flex-shrink-0 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
           <input
             ref={inputRef}
             autoComplete="off"
@@ -185,16 +186,14 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search jobs, applications, candidates, or jump to a page…"
-            className="flex-1 bg-transparent text-[15px] text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] outline-none"
+            className="min-w-0 flex-1 bg-transparent text-[14px] text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
           />
-          {loading && <div className="w-3 h-3 rounded-full border-2 border-[var(--adm-line)] border-t-[var(--adm-accent)] animate-spin" />}
-          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[var(--adm-ink-subtle)] bg-[var(--adm-surface-2)] border border-[var(--adm-line)] rounded-[4px]">
-            ESC
-          </kbd>
+          {loading && <div className="h-3.5 w-3.5 flex-none animate-spin rounded-full border-2 border-[var(--adm-line)] border-t-[var(--adm-accent)]" aria-hidden="true" />}
+          <Kbd className="hidden sm:inline-flex">Esc</Kbd>
         </div>
 
         {/* Results */}
-        <div className="max-h-[60vh] overflow-y-auto py-2">
+        <div className="max-h-[60vh] overflow-y-auto py-1.5">
           {/* Quick actions */}
           {quickActions.length > 0 && (
             <Group title="Actions">
@@ -206,7 +205,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
-                    icon={<div className="w-8 h-8 rounded-[6px] bg-[var(--adm-accent-soft)] flex items-center justify-center"><a.icon className="w-4 h-4 text-[var(--adm-accent)]" /></div>}
+                    icon={<a.icon className="h-4 w-4 text-[var(--adm-accent)]" />}
                     title={a.label}
                     subtitle={a.hint}
                     badge={idx === 0 ? <Kbd>⌘⇧C</Kbd> : null}
@@ -227,7 +226,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
-                    icon={<div className="w-8 h-8 rounded-[6px] bg-[var(--adm-surface-2)] flex items-center justify-center"><n.icon className="w-4 h-4 text-[var(--adm-ink-mute)]" /></div>}
+                    icon={<n.icon className="h-4 w-4 text-[var(--adm-ink-subtle)]" />}
                     title={n.name}
                     subtitle={n.href}
                   />
@@ -250,8 +249,8 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                     onClick={() => select(flatItems[flatIdx])}
                     icon={
                       h.type === "application" || h.type === "candidate"
-                        ? <Avatar name={h.title} size="md" />
-                        : <div className="w-9 h-9 rounded-[6px] bg-[var(--adm-surface-2)] flex items-center justify-center"><Icon className="w-4 h-4 text-[var(--adm-ink-mute)]" /></div>
+                        ? <Avatar name={h.title} size="sm" />
+                        : <Icon className="h-4 w-4 text-[var(--adm-ink-subtle)]" />
                     }
                     title={h.title}
                     subtitle={h.subtitle}
@@ -263,22 +262,24 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
           )}
 
           {!loading && flatItems.length === 0 && (
-            <div className="py-12 text-center">
-              <Search className="w-7 h-7 text-[var(--adm-ink-subtle)] mx-auto mb-2" />
-              <p className="text-sm font-medium text-[var(--adm-ink-mute)]">No matches</p>
-              <p className="text-xs text-[var(--adm-ink-subtle)] mt-1">Try a different search term</p>
-            </div>
+            <EmptyState
+              variant="filtered"
+              size="sm"
+              icon={Search}
+              title="No matches"
+              description={`Nothing matches “${query.trim()}”. Try a name, an email or a page.`}
+            />
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)]/50">
-          <div className="flex items-center gap-3 text-[11px] text-[var(--adm-ink-subtle)]">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
+          <div className="flex items-center gap-3 text-[12px] text-[var(--adm-ink-subtle)]">
             <span className="flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> navigate</span>
-            <span className="flex items-center gap-1"><Kbd><CornerDownLeft className="w-2.5 h-2.5" /></Kbd> select</span>
+            <span className="flex items-center gap-1"><Kbd><CornerDownLeft className="h-2.5 w-2.5" /></Kbd> select</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-[var(--adm-ink-subtle)]">
-            <CommandIcon className="w-3 h-3" /> Command palette
+          <div className="hidden items-center gap-1.5 text-[12px] text-[var(--adm-ink-subtle)] sm:flex">
+            <CommandIcon className="h-3 w-3" /> Command palette
           </div>
         </div>
       </div>
@@ -288,8 +289,8 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="px-2 py-1">
-      <p className="px-2 pt-2 pb-1 text-[10px] font-bold text-[var(--adm-ink-subtle)] uppercase tracking-wider">{title}</p>
+    <div className="px-1.5 py-1">
+      <p className="px-2.5 pb-1 pt-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)]">{title}</p>
       <div>{children}</div>
     </div>
   );
@@ -312,17 +313,18 @@ function Item({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       className={cn(
-        "w-full flex items-center gap-3 px-2 py-2 rounded-[6px] text-left transition-colors",
+        "flex w-full items-center gap-3 rounded-[8px] px-2.5 py-2 text-left transition-colors duration-150",
         active ? "bg-[var(--adm-accent-soft)]" : "hover:bg-[var(--adm-row-hover)]",
       )}
     >
-      {icon}
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[var(--adm-ink)] truncate">{title}</p>
-        {subtitle && <p className="text-xs text-[var(--adm-ink-subtle)] truncate">{subtitle}</p>}
+      {/* Fixed slot so icons and avatars share one text edge. */}
+      {icon && <span className="grid w-7 flex-none place-items-center">{icon}</span>}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13.5px] font-medium text-[var(--adm-ink)]">{title}</p>
+        {subtitle && <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{subtitle}</p>}
       </div>
-      {badge}
-      {active && <ArrowRight className="w-3.5 h-3.5 text-[var(--adm-accent)] flex-shrink-0" />}
+      {badge && <span className="hidden flex-none sm:inline-flex">{badge}</span>}
+      {active && <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-accent)]" />}
     </button>
   );
 }

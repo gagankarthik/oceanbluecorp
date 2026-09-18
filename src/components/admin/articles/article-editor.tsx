@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, SearchX, X } from "lucide-react";
 import type { Article, ArticleKind, ArticleMetric } from "@/lib/aws/dynamodb";
 import {
   ARTICLE_KIND_CONFIG,
+  ARTICLE_SCHEMA,
   ARTICLE_STATUSES,
   SEO_LIMITS,
   articleStatusLabel,
@@ -41,6 +42,18 @@ import {
   IconMessage, IconRadar, IconTrash, IconWarning,
 } from "@/components/admin/icons";
 import { cn } from "@/lib/utils";
+import { FieldWarning, FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email, maxLen, phone, required, url, type Rule } from "@/lib/form-validation";
+
+/** Plain-text fields with an input on this screen; lengths come from the route schema. */
+type TextField =
+  | "title" | "slug" | "subtitle" | "excerpt"
+  | "clientName" | "industry" | "engagement" | "clientLogoUrl"
+  | "quote" | "quoteAuthor" | "quoteAuthorRole"
+  | "datelineCity" | "externalUrl" | "pressContactName" | "pressContactEmail" | "pressContactPhone"
+  | "heroImageUrl" | "heroImageAlt" | "authorName" | "authorRole"
+  | "seoTitle" | "seoDescription" | "canonicalUrl";
 
 /**
  * The editor for one piece, in any of the four sections.
@@ -71,6 +84,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   const [loading, setLoading] = useState(!isNew);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   /** Locked once the author edits the slug, so a headline fix cannot move a live URL. */
@@ -106,8 +120,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       try {
         setLoading(true);
         const response = await fetch(`/api/articles/${id}`);
+        if (response.status === 404) {
+          if (!cancelled) setLoadError("missing");
+          return;
+        }
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to load");
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
         if (cancelled) return;
         const loaded: Partial<Article> = {
           tags: [],
@@ -119,7 +137,8 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         setBaseline(JSON.stringify(loaded));
         slugTouched.current = true; // an existing slug is a published promise
       } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load");
+        console.error(`Failed to load ${kind}:`, err);
+        if (!cancelled) setLoadError("failed");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -147,13 +166,51 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   const publishIntent = isPublishIntent(form.status);
   const blockedFromPublishing = publishIntent && blockers.length > 0;
 
+  // Field-level format and length only; completeness is the blockers' job.
+  const { errors, validateAll, revalidate, invalidProps } = useFormErrors(() => {
+    const field = (f: TextField, ...rules: Rule[]) =>
+      check(form[f] as string | undefined, ...rules, maxLen(ARTICLE_SCHEMA[f].maxLength!));
+    const engagement = kindHas(kind, "engagement");
+    const quote = kindHas(kind, "quote");
+    const press = kindHas(kind, "press");
+    return collectErrors<TextField>({
+      title: field("title", required("Write a headline before saving. You can change it later.")),
+      slug: field("slug"),
+      subtitle: field("subtitle"),
+      excerpt: field("excerpt"),
+      clientName: engagement ? field("clientName") : undefined,
+      industry: engagement ? field("industry") : undefined,
+      engagement: engagement ? field("engagement") : undefined,
+      clientLogoUrl: engagement ? field("clientLogoUrl", url()) : undefined,
+      quote: quote ? field("quote") : undefined,
+      quoteAuthor: quote ? field("quoteAuthor") : undefined,
+      quoteAuthorRole: quote ? field("quoteAuthorRole") : undefined,
+      datelineCity: press ? field("datelineCity") : undefined,
+      externalUrl: press ? field("externalUrl", url()) : undefined,
+      pressContactName: press ? field("pressContactName") : undefined,
+      pressContactEmail: press
+        ? field("pressContactEmail", email("Enter an email a journalist can reach, like press@oceanbluecorp.com."))
+        : undefined,
+      pressContactPhone: press ? field("pressContactPhone", phone()) : undefined,
+      heroImageUrl: field("heroImageUrl", url()),
+      heroImageAlt: field("heroImageAlt"),
+      authorName: field("authorName"),
+      authorRole: field("authorRole"),
+      seoTitle: field("seoTitle"),
+      seoDescription: field("seoDescription"),
+      canonicalUrl: field("canonicalUrl", url()),
+    });
+  });
+
+  const scheduledInPast =
+    form.status === "scheduled" && !!form.publishedAt && new Date(form.publishedAt).getTime() < Date.now();
+
   // ── save ──────────────────────────────────────────────────────────────────
 
   const save = async () => {
-    if (!form.title?.trim()) {
-      toast.error("It needs a headline before it can be saved.");
-      return;
-    }
+    if (saving) return;
+    setSaveError(null);
+    if (!validateAll()) return;
     if (blockedFromPublishing) {
       toast.error("Not ready to publish. See the checklist on the right.");
       return;
@@ -164,7 +221,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       const payload = {
         ...form,
         kind,
-        slug: form.slug || slugify(form.title),
+        slug: form.slug || slugify(form.title ?? ""),
         excerpt: form.excerpt || deriveExcerpt(form.body),
       };
       const response = await fetch(isNew ? "/api/articles" : `/api/articles/${id}`, {
@@ -173,7 +230,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         body: JSON.stringify(payload),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to save");
+      if (!response.ok) throw new Error(data.error || "This could not be saved. Your changes are still here; try again in a moment.");
 
       const saved: Partial<Article> = { tags: [], services: [], metrics: [], ...data.article };
       setForm(saved);
@@ -183,7 +240,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         router.replace(`${config.adminPath}/${data.article.id}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      setSaveError(err instanceof Error ? err.message : "This could not be saved. Your changes are still here; try again in a moment.");
     } finally {
       setSaving(false);
     }
@@ -209,19 +266,33 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   if (loadError) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="max-w-md rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-          <EmptyState
-            variant="error"
-            icon={IconWarning}
-            title={`Could not open this ${config.noun}`}
-            description={loadError}
-            action={
-              <WorkspaceButton variant="primary" onClick={() => router.push(config.adminPath)}>
-                Back to {config.label}
-              </WorkspaceButton>
-            }
-          />
-        </div>
+        <AdminCard className="w-full max-w-md">
+          {loadError === "missing" ? (
+            <EmptyState
+              icon={SearchX}
+              title={`This ${config.noun} doesn't exist`}
+              description="It may have been deleted, or the link is out of date."
+              action={
+                <WorkspaceButton variant="primary" onClick={() => router.push(config.adminPath)}>
+                  Back to {config.label}
+                </WorkspaceButton>
+              }
+            />
+          ) : (
+            <EmptyState
+              variant="error"
+              icon={IconWarning}
+              title={`Couldn't open this ${config.noun}`}
+              description="Check your connection and try again."
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <WorkspaceButton variant="primary" onClick={() => window.location.reload()}>Try again</WorkspaceButton>
+                  <WorkspaceButton onClick={() => router.push(config.adminPath)}>Back to {config.label}</WorkspaceButton>
+                </div>
+              }
+            />
+          )}
+        </AdminCard>
       </div>
     );
   }
@@ -244,7 +315,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         meta={
           !isNew ? (
             <>
-              <span className="font-mono text-[12.5px]">{publicUrl}</span>
+              <span className="min-w-0 break-all font-mono text-[12.5px]">{publicUrl}</span>
               {form.updatedAt && <span>Updated {fmtDateTime(form.updatedAt)}</span>}
               {form.updatedByName && <span>by {form.updatedByName}</span>}
             </>
@@ -270,7 +341,13 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         }
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} className="mb-4" />
+
+      {/* Blur bubbles; revalidate is a no-op until the first save attempt. */}
+      <div
+        onBlur={revalidate}
+        className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]"
+      >
         {/* ── the piece ──────────────────────────────────────────────────── */}
         <div className="min-w-0 space-y-4">
           <FormSection
@@ -282,11 +359,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               <Field
                 label="Headline"
                 required
-                htmlFor="title"
+                htmlFor="title" error={errors.title}
                 helper={`Aim: ${guide.headline.good}`}
               >
                 <FormInput
                   id="title"
+                  {...invalidProps("title")}
                   value={form.title || ""}
                   placeholder="What this piece is, specifically"
                   onChange={(e) => {
@@ -305,7 +383,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
               <Field
                 label="URL slug"
-                htmlFor="slug"
+                htmlFor="slug" error={errors.slug}
                 hint={`${config.publicPath}/`}
                 helper={
                   isNew
@@ -315,6 +393,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               >
                 <FormInput
                   id="slug"
+                  {...invalidProps("slug")}
                   value={form.slug || ""}
                   placeholder="url-slug"
                   onChange={(e) => {
@@ -326,11 +405,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
               <Field
                 label="Deck"
-                htmlFor="subtitle"
+                htmlFor="subtitle" error={errors.subtitle}
                 helper="One line under the headline. Who this is for and what they leave with."
               >
                 <FormInput
                   id="subtitle"
+                  {...invalidProps("subtitle")}
                   value={form.subtitle || ""}
                   onChange={(e) => set("subtitle", e.target.value)}
                 />
@@ -339,12 +419,13 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               <Field
                 label="Summary"
                 required
-                htmlFor="excerpt"
+                htmlFor="excerpt" error={errors.excerpt}
                 hint={`${(form.excerpt || "").length}/${SEO_LIMITS.description}`}
                 helper="The card text on the index AND the description in a search result. Write it, do not settle for the generated one."
               >
                 <FormTextarea
                   id="excerpt"
+                  {...invalidProps("excerpt")}
                   rows={3}
                   value={form.excerpt || ""}
                   onChange={(e) => set("excerpt", e.target.value)}
@@ -355,7 +436,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <button
                   type="button"
                   onClick={() => set("excerpt", deriveExcerpt(form.body))}
-                  className="text-[13px] font-semibold text-[var(--adm-accent)] hover:underline"
+                  className="rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                 >
                   Start from the first lines of the body
                 </button>
@@ -373,35 +454,39 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
                   label="Client"
-                  htmlFor="clientName"
+                  htmlFor="clientName" error={errors.clientName}
                   helper="Only with written approval. Otherwise leave blank and describe them in the body."
                 >
                   <FormInput
                     id="clientName"
+                    {...invalidProps("clientName")}
                     value={form.clientName || ""}
                     placeholder="Named, or blank for “a Fortune 500 payer”"
                     onChange={(e) => set("clientName", e.target.value)}
                   />
                 </Field>
-                <Field label="Industry" htmlFor="industry">
+                <Field label="Industry" htmlFor="industry" error={errors.industry}>
                   <FormInput
                     id="industry"
+                    {...invalidProps("industry")}
                     value={form.industry || ""}
                     placeholder="Healthcare payer, Manufacturing, Public sector…"
                     onChange={(e) => set("industry", e.target.value)}
                   />
                 </Field>
-                <Field label="Engagement" htmlFor="engagement" helper="Shape and length, in a phrase.">
+                <Field label="Engagement" htmlFor="engagement" error={errors.engagement} helper="Shape and length, in a phrase.">
                   <FormInput
                     id="engagement"
+                    {...invalidProps("engagement")}
                     value={form.engagement || ""}
                     placeholder="18-month managed team"
                     onChange={(e) => set("engagement", e.target.value)}
                   />
                 </Field>
-                <Field label="Client logo URL" htmlFor="clientLogoUrl">
+                <Field label="Client logo URL" htmlFor="clientLogoUrl" error={errors.clientLogoUrl}>
                   <FormInput
                     id="clientLogoUrl"
+                    {...invalidProps("clientLogoUrl")}
                     type="url"
                     value={form.clientLogoUrl || ""}
                     placeholder="https://…"
@@ -493,9 +578,10 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               }
             >
               <div className="space-y-4">
-                <Field label="Quote" required={kind === "customer-story"} htmlFor="quote">
+                <Field label="Quote" required={kind === "customer-story"} htmlFor="quote" error={errors.quote}>
                   <FormTextarea
                     id="quote"
+                    {...invalidProps("quote")}
                     rows={3}
                     value={form.quote || ""}
                     onChange={(e) => set("quote", e.target.value)}
@@ -503,16 +589,18 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   />
                 </Field>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Said by" htmlFor="quoteAuthor" helper="A named person. Anonymous quotes persuade nobody.">
+                  <Field label="Said by" htmlFor="quoteAuthor" error={errors.quoteAuthor} helper="A named person. Anonymous quotes persuade nobody.">
                     <FormInput
                       id="quoteAuthor"
+                      {...invalidProps("quoteAuthor")}
                       value={form.quoteAuthor || ""}
                       onChange={(e) => set("quoteAuthor", e.target.value)}
                     />
                   </Field>
-                  <Field label="Their title" htmlFor="quoteAuthorRole">
+                  <Field label="Their title" htmlFor="quoteAuthorRole" error={errors.quoteAuthorRole}>
                     <FormInput
                       id="quoteAuthorRole"
+                      {...invalidProps("quoteAuthorRole")}
                       value={form.quoteAuthorRole || ""}
                       placeholder="VP Engineering, Acme Health"
                       onChange={(e) => set("quoteAuthorRole", e.target.value)}
@@ -525,7 +613,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                     not a checkbox someone ticks on the way past. */}
                 <div
                   className={cn(
-                    "rounded-[10px] border p-4",
+                    "rounded-[12px] border p-4",
                     form.approvalOnFile
                       ? "border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)]"
                       : "border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)]",
@@ -581,11 +669,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <Field
                   label="Dateline city"
                   required
-                  htmlFor="datelineCity"
+                  htmlFor="datelineCity" error={errors.datelineCity}
                   helper="The date half comes from the publish date, so the two can never disagree."
                 >
                   <FormInput
                     id="datelineCity"
+                    {...invalidProps("datelineCity")}
                     value={form.datelineCity || ""}
                     placeholder="COLUMBUS, Ohio"
                     onChange={(e) => set("datelineCity", e.target.value)}
@@ -594,20 +683,22 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <Field
                   label="Coverage link"
                   fullWidth
-                  htmlFor="externalUrl"
+                  htmlFor="externalUrl" error={errors.externalUrl}
                   helper="For “In the press”: link out to whoever wrote it rather than restating their story here."
                 >
                   <FormInput
                     id="externalUrl"
+                    {...invalidProps("externalUrl")}
                     type="url"
                     value={form.externalUrl || ""}
                     placeholder="https://…"
                     onChange={(e) => set("externalUrl", e.target.value)}
                   />
                 </Field>
-                <Field label="Media contact" htmlFor="pressContactName">
+                <Field label="Media contact" htmlFor="pressContactName" error={errors.pressContactName}>
                   <FormInput
                     id="pressContactName"
+                    {...invalidProps("pressContactName")}
                     value={form.pressContactName || ""}
                     onChange={(e) => set("pressContactName", e.target.value)}
                   />
@@ -615,19 +706,21 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <Field
                   label="Contact email"
                   required
-                  htmlFor="pressContactEmail"
+                  htmlFor="pressContactEmail" error={errors.pressContactEmail}
                   helper="A journalist on deadline who cannot reach anyone writes the story without us."
                 >
                   <FormInput
                     id="pressContactEmail"
+                    {...invalidProps("pressContactEmail")}
                     type="email"
                     value={form.pressContactEmail || ""}
                     onChange={(e) => set("pressContactEmail", e.target.value)}
                   />
                 </Field>
-                <Field label="Contact phone" htmlFor="pressContactPhone">
+                <Field label="Contact phone" htmlFor="pressContactPhone" error={errors.pressContactPhone}>
                   <FormInput
                     id="pressContactPhone"
+                    {...invalidProps("pressContactPhone")}
                     type="tel"
                     value={form.pressContactPhone || ""}
                     onChange={(e) => set("pressContactPhone", e.target.value)}
@@ -664,11 +757,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         </div>
 
         {/* ── rail ───────────────────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* Publishing */}
           <AdminCard>
             <AdminCardHeader title="Publishing" />
-            <div className="space-y-4 px-6 py-5">
+            <div className="space-y-4 p-4">
               <Field label="Status" htmlFor="status" helper={statusHint(form.status)}>
                 <FormSelect
                   id="status"
@@ -696,6 +789,9 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   value={toLocalInput(form.publishedAt)}
                   onChange={(e) => set("publishedAt", fromLocalInput(e.target.value))}
                 />
+                <FieldWarning>
+                  {scheduledInPast ? "This time has already passed, so it goes live as soon as you save." : null}
+                </FieldWarning>
               </Field>
 
               <label className="flex items-center gap-2.5">
@@ -705,7 +801,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   onChange={(e) => set("featured", e.target.checked)}
                   className="adm-hit h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
                 />
-                <span className="text-[13.5px] font-medium text-[var(--adm-ink-mute)]">
+                <span className="text-[13.5px] font-medium text-[var(--adm-ink)]">
                   Feature at the top of {config.label}
                 </span>
               </label>
@@ -716,9 +812,9 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               {blockers.length > 0 && (
                 <div
                   role={publishIntent ? "alert" : undefined}
-                  className="rounded-[8px] border border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)] p-3"
+                  className="rounded-[12px] border border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)] p-3"
                 >
-                  <p className="text-[12.5px] font-bold uppercase tracking-[0.06em] text-[var(--adm-warning)]">
+                  <p className="text-[12.5px] font-medium text-[var(--adm-warning-ink)]">
                     Before it can go out
                   </p>
                   <ul className="mt-2 space-y-1.5">
@@ -733,8 +829,8 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               )}
 
               {warnings.length > 0 && (
-                <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
-                  <p className="text-[12.5px] font-bold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
+                <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
+                  <p className="text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
                     Worth fixing
                   </p>
                   <ul className="mt-2 space-y-1.5">
@@ -749,7 +845,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               )}
 
               {blockers.length === 0 && warnings.length === 0 && (
-                <p className="rounded-[8px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-[12.5px] font-medium text-[var(--adm-success)]">
+                <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-[12.5px] font-medium text-[var(--adm-success-ink)]">
                   Nothing outstanding. Ready to publish.
                 </p>
               )}
@@ -759,10 +855,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
           {/* Presentation */}
           <AdminCard>
             <AdminCardHeader title="Presentation" />
-            <div className="space-y-4 px-6 py-5">
-              <Field label="Hero image URL" htmlFor="heroImageUrl">
+            <div className="space-y-4 p-4">
+              <Field label="Hero image URL" htmlFor="heroImageUrl" error={errors.heroImageUrl}>
                 <FormInput
                   id="heroImageUrl"
+                  {...invalidProps("heroImageUrl")}
                   type="url"
                   value={form.heroImageUrl || ""}
                   placeholder="https://…"
@@ -771,11 +868,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               </Field>
               <Field
                 label="Image description"
-                htmlFor="heroImageAlt"
+                htmlFor="heroImageAlt" error={errors.heroImageAlt}
                 helper="What the image shows, for a reader who cannot see it."
               >
                 <FormInput
                   id="heroImageAlt"
+                  {...invalidProps("heroImageAlt")}
                   value={form.heroImageAlt || ""}
                   onChange={(e) => set("heroImageAlt", e.target.value)}
                 />
@@ -806,16 +904,18 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 />
               </Field>
 
-              <Field label="Author" htmlFor="authorName" helper="A real colleague. “The team” is not a byline.">
+              <Field label="Author" htmlFor="authorName" error={errors.authorName} helper="A real colleague. “The team” is not a byline.">
                 <FormInput
                   id="authorName"
+                  {...invalidProps("authorName")}
                   value={form.authorName || ""}
                   onChange={(e) => set("authorName", e.target.value)}
                 />
               </Field>
-              <Field label="Their role" htmlFor="authorRole">
+              <Field label="Their role" htmlFor="authorRole" error={errors.authorRole}>
                 <FormInput
                   id="authorRole"
+                  {...invalidProps("authorRole")}
                   value={form.authorRole || ""}
                   placeholder="Principal Recruiter"
                   onChange={(e) => set("authorRole", e.target.value)}
@@ -827,15 +927,16 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
           {/* SEO */}
           <AdminCard>
             <AdminCardHeader title="Search and sharing" />
-            <div className="space-y-4 px-6 py-5">
+            <div className="space-y-4 p-4">
               <Field
                 label="Search title"
-                htmlFor="seoTitle"
+                htmlFor="seoTitle" error={errors.seoTitle}
                 hint={`${(form.seoTitle || form.title || "").length}/${SEO_LIMITS.title}`}
                 helper="Leave blank to use the headline."
               >
                 <FormInput
                   id="seoTitle"
+                  {...invalidProps("seoTitle")}
                   value={form.seoTitle || ""}
                   placeholder={form.title || ""}
                   onChange={(e) => set("seoTitle", e.target.value)}
@@ -843,12 +944,13 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               </Field>
               <Field
                 label="Search description"
-                htmlFor="seoDescription"
+                htmlFor="seoDescription" error={errors.seoDescription}
                 hint={`${(form.seoDescription || form.excerpt || "").length}/${SEO_LIMITS.description}`}
                 helper="Leave blank to use the summary."
               >
                 <FormTextarea
                   id="seoDescription"
+                  {...invalidProps("seoDescription")}
                   rows={3}
                   value={form.seoDescription || ""}
                   placeholder={form.excerpt || ""}
@@ -857,11 +959,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               </Field>
               <Field
                 label="Canonical URL"
-                htmlFor="canonicalUrl"
+                htmlFor="canonicalUrl" error={errors.canonicalUrl}
                 helper="Only if this was published somewhere else first."
               >
                 <FormInput
                   id="canonicalUrl"
+                  {...invalidProps("canonicalUrl")}
                   type="url"
                   value={form.canonicalUrl || ""}
                   onChange={(e) => set("canonicalUrl", e.target.value)}
@@ -894,7 +997,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         message={
           blockedFromPublishing
             ? (
-              <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning)]">
+              <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--adm-warning)]" />
                 {blockers.length} thing{blockers.length === 1 ? "" : "s"} to settle before publishing
               </span>
@@ -906,7 +1009,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         <WorkspaceButton
           variant="primary"
           onClick={save}
-          disabled={saving || blockedFromPublishing || !form.title?.trim()}
+          disabled={saving || blockedFromPublishing}
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           {isNew ? `Create ${config.noun}` : publishIntent ? "Save and publish" : "Save"}
@@ -952,13 +1055,16 @@ function MetricRows({
   return (
     <div className="space-y-3">
       {metrics.length === 0 && (
-        <p className="rounded-[8px] border border-dashed border-[var(--adm-line-strong)] p-4 text-center text-[13px] text-[var(--adm-ink-subtle)]">
+        <p className="rounded-[12px] border border-dashed border-[var(--adm-line-strong)] p-4 text-center text-[13px] text-[var(--adm-ink-subtle)]">
           No figures yet. A case study without them is a brochure.
         </p>
       )}
 
       {metrics.map((metric, i) => (
-        <div key={i} className="grid gap-2 sm:grid-cols-[1fr_9rem_1fr_auto]">
+        <div
+          key={i}
+          className="grid gap-2 rounded-[12px] border border-[var(--adm-line-soft)] p-3 sm:grid-cols-[1fr_9rem_1fr_auto] sm:rounded-none sm:border-0 sm:p-0"
+        >
           <FormInput
             aria-label={`Metric ${i + 1} label`}
             value={metric.label}
@@ -982,7 +1088,7 @@ function MetricRows({
             type="button"
             onClick={() => onChange(metrics.filter((_, index) => index !== i))}
             aria-label={`Remove metric ${i + 1}`}
-            className="grid h-10 w-10 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+            className="grid h-9 w-9 place-items-center self-center justify-self-end rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] sm:justify-self-auto"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

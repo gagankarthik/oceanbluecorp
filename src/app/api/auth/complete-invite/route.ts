@@ -6,6 +6,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { NextResponse } from "next/server";
 import { updateCognitoUserAttributes } from "@/lib/aws/cognito";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const cognitoErrorMessages: Record<string, string> = {
   InvalidPasswordException:
@@ -65,16 +66,28 @@ async function reissueChallenge(
 // user's first sign-in: sets the permanent password, then stores their full
 // name and phone number on the account.
 export async function POST(request: Request) {
+  // Shares the sign-in bucket: with a temp password this route runs
+  // InitiateAuth itself, so unthrottled it is a second password oracle.
+  const limited = await checkRateLimit(request, RATE_LIMITS.signIn);
+  if (!limited.allowed) return limited.response!;
+
   try {
     const {
       email, session, name, phone, password, username, requiredAttributes, tempPassword,
     } = await request.json();
 
+    const tooLong = (v: unknown, max: number) => v !== undefined && v !== null && (typeof v !== "string" || v.length > max);
     if (!email || !name || !phone || !password) {
       return NextResponse.json(
         { error: "Name, phone, and a new password are required." },
         { status: 400 }
       );
+    }
+    if (
+      tooLong(email, 254) || tooLong(name, 200) || tooLong(phone, 20) || tooLong(password, 256) ||
+      tooLong(tempPassword, 256) || tooLong(username, 128) || tooLong(session, 4096)
+    ) {
+      return NextResponse.json({ error: "Please check your details and try again." }, { status: 400 });
     }
 
     if (!session && !tempPassword) {

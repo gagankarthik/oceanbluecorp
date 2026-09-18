@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft, Accessibility, Check, Mail, Phone } from "lucide-react";
 
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   description:
     "Ocean Blue Corporation is committed to digital accessibility for people with disabilities. Read our WCAG conformance and how to get help.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Accessibility Statement | Ocean Blue Corporation",
     description: "Our commitment to an accessible, inclusive experience for everyone.",
     url: "https://oceanbluecorp.com/accessibility",

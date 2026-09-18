@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAvatarKey, uploadAvatar, validateAvatarFile } from "@/lib/aws/s3";
-import { requireSignedIn } from "@/lib/auth/verify";
+import { requireSignedIn, isAdminClaims } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,11 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
+    // Own photo only (admins may fix anyone's); otherwise any signed-in account
+    // could overwrite a colleague's avatar.
+    if (userId !== auth.claims.sub && !isAdminClaims(auth.claims)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const buffer = Buffer.from(await request.arrayBuffer());
 
@@ -29,12 +35,11 @@ export async function POST(request: NextRequest) {
     const key = generateAvatarKey(userId);
     const result = await uploadAvatar(buffer, key, contentType);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to upload photo" }, { status: 500 });
+      return serverError("Avatar upload failed", result.error, "Couldn't upload your photo. Please try again.");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Avatar upload error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Avatar upload error", error, "Couldn't upload your photo. Please try again.");
   }
 }

@@ -54,7 +54,7 @@ export function StarRating({
           aria-label="Rate this candidate"
           className={cn(
             "inline-flex items-center text-[var(--adm-ink-subtle)] transition-colors relative before:absolute before:left-1/2 before:top-1/2 before:h-10 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']",
-            onRate ? "cursor-pointer hover:text-amber-400" : "cursor-default",
+            onRate ? "cursor-pointer hover:text-[var(--adm-warning)]" : "cursor-default",
           )}
         >
           <IconStar className={sz} />
@@ -78,7 +78,7 @@ export function StarRating({
               )}
               aria-label={`Rate ${n} star${n === 1 ? "" : "s"}`}
             >
-              <IconStar className={cn(sz, filled ? "fill-amber-400 text-amber-400" : "text-[var(--adm-ink-subtle)]")} />
+              <IconStar className={cn(sz, filled ? "fill-[var(--adm-warning)] text-[var(--adm-warning)]" : "text-[var(--adm-ink-subtle)]")} />
             </button>
           );
         })

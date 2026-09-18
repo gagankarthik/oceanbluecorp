@@ -211,7 +211,7 @@ export async function GET() {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[/api/status]", message);
     return NextResponse.json(
-      { ok: false, error: message, checkedAt: new Date().toISOString() },
+      { ok: false, error: "Status feed unavailable", checkedAt: new Date().toISOString() },
       { status: 502 }
     );
   }

@@ -9,6 +9,7 @@ import {
   type StaffRole,
 } from "@/lib/aws/cognito";
 import { requireStaff, requireUserAdmin, denyElevatedAction } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/users/[id] - Get a single user
 export async function GET(
@@ -23,19 +24,12 @@ export async function GET(
     const result = await getCognitoUser(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "User not found" },
-        { status: 404 }
-      );
+      return serverError("Fetching user", result.error, "That user could not be found.", 404);
     }
 
     return NextResponse.json({ user: result.user });
   } catch (error) {
-    console.error("Error fetching user:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching user", error, "Couldn't load the user. Please try again.");
   }
 }
 
@@ -73,10 +67,7 @@ export async function PATCH(
 
       const roleResult = await updateUserRole(id, role as StaffRole);
       if (!roleResult.success) {
-        return NextResponse.json(
-          { error: roleResult.error || "Failed to update role" },
-          { status: 500 }
-        );
+        return serverError("Updating user role", roleResult.error, "Couldn't change the role. Please try again.");
       }
     }
 
@@ -85,18 +76,12 @@ export async function PATCH(
       if (status === "active") {
         const enableResult = await enableUser(id);
         if (!enableResult.success) {
-          return NextResponse.json(
-            { error: enableResult.error || "Failed to enable user" },
-            { status: 500 }
-          );
+          return serverError("Enabling user", enableResult.error, "Couldn't enable the account. Please try again.");
         }
       } else if (status === "inactive") {
         const disableResult = await disableUser(id);
         if (!disableResult.success) {
-          return NextResponse.json(
-            { error: disableResult.error || "Failed to disable user" },
-            { status: 500 }
-          );
+          return serverError("Disabling user", disableResult.error, "Couldn't disable the account. Please try again.");
         }
       }
     }
@@ -109,11 +94,7 @@ export async function PATCH(
       user: userResult.user,
     });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating user", error, "Couldn't update the user. Please try again.");
   }
 }
 
@@ -135,18 +116,11 @@ export async function DELETE(
     const result = await deleteUser(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete user" },
-        { status: 500 }
-      );
+      return serverError("Deleting user", result.error, "Couldn't delete the user. Please try again.");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting user", error, "Couldn't delete the user. Please try again.");
   }
 }

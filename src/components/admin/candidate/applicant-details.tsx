@@ -3,39 +3,24 @@
 import { useState } from "react";
 import type { Application } from "@/lib/aws/dynamodb";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconEdit, IconFile } from "@/components/admin/icons";
 import { hireTypeLabel } from "@/components/admin/theme";
 import { fmtDate } from "@/lib/format";
 
-/* ============================================================
-   ApplicantDetails, the application's own fields.
-
-   ── Empty fields stop being rendered as data ────────────────
-   This grid used to print every field whether or not it held
-   anything, so a typical record showed four em-dashes among
-   nine cells: nearly half a card saying nothing, which the eye
-   still has to read to discover is nothing. Blanks are now
-   collapsed behind one line that says how many there are and
-   offers the action that fixes them.
-
-   That is also the design system's own rule (principle 5: empty
-   sections say why they are empty and what to do), which the
-   old grid quietly broke.
-
-   The blanks stay reachable, a recruiter checking whether work
-   authorisation is on file needs to see that it is missing, not
-   just fail to find it. One click, and the difference between
-   "absent" and "unrecorded" is explicit.
-   ============================================================ */
+/* The application's own fields. Blanks are not rendered as data: they collapse
+   behind one line that says how many are missing (DESIGN_SYSTEM §8, Selective
+   Attention / Zeigarnik), and one click shows them so "unrecorded" stays
+   distinguishable from "absent". */
 
 type Field = { label: string; value?: React.ReactNode };
 
 function Cell({ label, value }: Field) {
   return (
     <div className="min-w-0">
-      <dt className="text-[13px] font-medium text-[var(--adm-ink-subtle)]">{label}</dt>
+      <dt className="text-[12.5px] text-[var(--adm-ink-subtle)]">{label}</dt>
       <dd className="mt-1 break-words text-[14px] text-[var(--adm-ink)]">
-        {value ?? <span className="text-[var(--adm-ink-subtle)]"></span>}
+        {value ?? <span className="text-[var(--adm-ink-subtle)]">Not recorded</span>}
       </dd>
     </div>
   );
@@ -74,32 +59,31 @@ export function ApplicantDetails({
         title="Applicant details"
         count={filled.length}
         action={
-          <button
-            onClick={onEdit}
-            className="inline-flex flex-none items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
-          >
-            <IconEdit className="h-3.5 w-3.5" /> Edit
-          </button>
+          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-[13px]">
+            <IconEdit aria-hidden="true" /> Edit
+          </WorkspaceButton>
         }
       />
 
       {shown.length > 0 && (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 p-4 sm:grid-cols-3">
           {shown.map((f) => (
-            <Cell key={f.label} {...f} />
+            <Cell key={f.label} {...f} value={isEmpty(f) ? undefined : f.value} />
           ))}
         </dl>
       )}
 
       {blanks.length > 0 && (
-        <div className="border-t border-[var(--adm-line-soft)] px-5 py-2.5">
+        <div className="border-t border-[var(--adm-line-soft)] px-4 py-2.5">
           <button
+            type="button"
             onClick={() => setShowEmpty((v) => !v)}
-            className="text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
+            aria-expanded={showEmpty}
+            className="rounded-[6px] text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
           >
             {showEmpty
               ? "Hide empty fields"
-              : `${blanks.length} ${blanks.length === 1 ? "field is" : "fields are"} not recorded, show`}
+              : `${blanks.length} ${blanks.length === 1 ? "field is" : "fields are"} not recorded. Show`}
           </button>
         </div>
       )}

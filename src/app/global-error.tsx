@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 /**
  * Root error boundary. This replaces the entire document, including the root
  * layout, so it cannot rely on the layout's fonts, providers or globals.css.
@@ -27,8 +29,16 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("[oceanblue] root layout error:", error);
+  }, [error]);
+
   return (
     <html lang="en">
+      <head>
+        <title>Something went wrong | Ocean Blue Corporation</title>
+        <meta name="robots" content="noindex" />
+      </head>
       <body
         style={{
           margin: 0,
@@ -112,6 +122,14 @@ export default function GlobalError({
           >
             Reload the page
           </button>
+          {/* Plain <a>: a full navigation, since the client router may be what broke. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/"
+            style={{ marginLeft: 20, fontSize: 14, fontWeight: 600, color: MUTE, textDecoration: "none" }}
+          >
+            Back to home
+          </a>
 
           {error.digest && (
             <p

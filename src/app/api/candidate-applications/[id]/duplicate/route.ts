@@ -7,6 +7,7 @@ import {
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // POST /api/candidate-applications/[id]/duplicate - Duplicate a candidate application
 export async function POST(
@@ -32,11 +33,7 @@ export async function POST(
     try {
       applicationId = await getNextApplicationId();
     } catch (err) {
-      console.error("Failed to generate application ID:", err);
-      return NextResponse.json(
-        { error: "Failed to generate application ID" },
-        { status: 500 }
-      );
+      return serverError("Failed to generate application ID", err, "Couldn't duplicate the candidate application. Please try again.");
     }
 
     const body = await request.json().catch(() => ({}));
@@ -55,18 +52,11 @@ export async function POST(
     const result = await createCandidateApplication(duplicateApp);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to duplicate candidate application" },
-        { status: 500 }
-      );
+      return serverError("Duplicating candidate application", result.error, "Couldn't duplicate the candidate application. Please try again.");
     }
 
     return NextResponse.json({ application: duplicateApp }, { status: 201 });
   } catch (error) {
-    console.error("Error duplicating candidate application:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error duplicating candidate application", error, "Couldn't duplicate the candidate application. Please try again.");
   }
 }

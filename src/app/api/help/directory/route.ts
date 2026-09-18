@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getContentBlock, upsertContentBlock } from "@/lib/aws/dynamodb";
-import { requireSignedIn } from "@/lib/auth/verify";
+import { requireSignedIn, requireUserAdmin } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 /**
  * Help directory CMS. The team/contacts list on /admin/help is stored as a
@@ -25,22 +26,20 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ members, updatedAt: result.data?.updatedAt ?? null });
   } catch (error) {
-    console.error("Error fetching help directory:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error fetching help directory", error, "Couldn't load the help directory. Please try again.");
   }
 }
 
 // PUT, replace the directory. ADMIN or HR only.
 export async function PUT(request: NextRequest) {
-  const auth = await requireSignedIn(request);
+  // requireUserAdmin resolves namespaced groups; the literal "admin"/"hr" test
+  // it replaces never matched `web:admin`, so current accounts got a 403.
+  const auth = await requireUserAdmin(request);
   if (!auth.ok) return auth.response;
-  if (!auth.claims.groups.some((g) => g === "admin" || g === "hr")) {
-    return NextResponse.json({ error: "Only Admin or HR can edit the help directory." }, { status: 403 });
-  }
   try {
     const body = await request.json();
-    if (!Array.isArray(body.members)) {
-      return NextResponse.json({ error: "members must be an array" }, { status: 400 });
+    if (!Array.isArray(body.members) || body.members.length > 500) {
+      return NextResponse.json({ error: "members must be a list of at most 500" }, { status: 400 });
     }
     // Persist only the known fields, never trust arbitrary keys off the wire.
     const members = body.members.map((m: Record<string, unknown>) => ({
@@ -57,12 +56,13 @@ export async function PUT(request: NextRequest) {
       auth.claims.sub,
       typeof body.updatedByName === "string" ? body.updatedByName : undefined,
     );
-    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+    if (!result.success) {
+      return serverError("Error saving help directory", result.error, "Couldn't save the help directory. Please try again.");
+    }
 
     try { revalidatePath("/admin/help"); } catch { /* best-effort */ }
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving help directory:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("Error saving help directory", error, "Couldn't save the help directory. Please try again.");
   }
 }

@@ -3,54 +3,27 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Plus } from "lucide-react";
+import { WorkspaceButton, Section, MenuSelect } from "@/components/admin/workspace";
+import { IconCalendar } from "@/components/admin/icons";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { DashboardSkeleton } from "@/components/admin/skeletons";
 import type { Application, Job } from "@/lib/aws/dynamodb";
-import {
-  IconOverview, IconRequisition, IconPipeline, IconUser,
-  IconCoverage, IconInterview, IconTrend, IconWarning,
-} from "@/components/admin/icons";
 import { Avatar } from "@/components/admin/avatar";
-import { FunnelChart, DonutChart } from "@/components/admin/charts";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { FunnelChart, DonutChart, PeriodSwitcher } from "@/components/admin/charts";
 import { useAdmin } from "@/components/admin/admin-provider";
 import { SERIES, statusMeta, type AppStatus } from "@/components/admin/theme";
-// Timing helpers are shared with the Applications workspace, so the two screens
-// cannot disagree about which candidates count as stale.
+// Shared with the Applications workspace so both agree on what counts as stale.
 import {
   DAY, STALE_DAYS, OFFER_STALE_DAYS, TERMINAL,
   median, enteredStageAt, everReached, daysSince,
 } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
-/* ============================================================================
-   Recruitment operations console. Conduktor-style dark data console.
-
-   The DATA model is unchanged: every application carries a statusHistory, so we
-   can measure not just "how much is there" but where the pipeline is stalling,
-   which roles are starved, and what the desk earns. What changed is the
-   PRESENTATION, the screen is now a dark, dense operations console modelled on
-   Conduktor's cluster dashboard:
-
-     · a header block (mark + title) followed by a hairline-divided STAT ROW
-     · a green-glow "pipeline state" card with a solid green check badge, whose
-       PARTITIONS-style sub-grid surfaces the exception counts
-     · blue line-chart cards (application + placement volume over time)
-     · a 2×2 "data freshness" grid, per-domain icon, sync time, green check
-     · a segmented "recent activity" list
-     · dark analytical cards (pipeline stages, channels, coverage, clients)
-     · the recruiter throughput ledger
-
-   All fetching, auth and the derivations below are preserved verbatim; only the
-   returned markup is new.
-   ========================================================================== */
-
-/**
- * Hours in a billable year, used to annualise an hourly spread. 2,080 is the
- * standard full-time year (40h × 52w). Every figure derived from it is labelled
- * an estimate in the UI, do not present these as booked revenue.
- */
+/** Billable hours in a year (40h x 52w). Figures derived from it are estimates. */
 const FTE_HOURS = 2080;
 
 /** Relative "time since" for recent activity. */
@@ -65,33 +38,32 @@ function ago(ms: number): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
+function greeting(d = new Date()) {
+  const h = d.getHours();
+  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+}
+
 /** Days above which a stage's median age is called out as a bottleneck. */
 const STAGE_AGE_WARN = 7;
 
 /** Dashboard scope. `days: null` means everything. */
 const RANGES = [
-  { value: "7d",  label: "7 days",   days: 7 },
-  { value: "30d", label: "30 days",  days: 30 },
-  { value: "90d", label: "90 days",  days: 90 },
-  { value: "1y",  label: "12 months", days: 365 },
-  { value: "all", label: "All time", days: null },
+  { value: "7d",  label: "7D",  long: "Last 7 days",   days: 7 },
+  { value: "30d", label: "30D", long: "Last 30 days",  days: 30 },
+  { value: "90d", label: "90D", long: "Last 90 days",  days: 90 },
+  { value: "1y",  label: "12M", long: "Last 12 months", days: 365 },
+  { value: "all", label: "All", long: "All time",      days: null },
 ] as const;
 type RangeKey = (typeof RANGES)[number]["value"];
 
-const PERIODS = [
-  { value: "30d", label: "30D" },
-  { value: "90d", label: "90D" },
-  { value: "1y",  label: "1Y"  },
-] as const;
-type Period = (typeof PERIODS)[number]["value"];
+type Period = "30d" | "90d" | "1y";
 
 /** In-flight stages, in order. Terminal states are handled separately. */
 const FLOW: AppStatus[] = ["pending", "reviewing", "submitted", "interview", "offered"];
 
-/** Sequential blue ramp, ordered stages of one process, not five categories. */
+/** Sequential blue ramp, ordered stages of one process. */
 const STAGE_RAMP = ["#60a5fa", "#4b91f7", "#3b82f6", "#2f6fed", "#2563eb"];
 
-/** Shared shape for the dark ranked-bar lists. */
 type BarItem = {
   label: string;
   value: number;
@@ -100,32 +72,11 @@ type BarItem = {
   onClick?: () => void;
 };
 
-// ── count-up ─────────────────────────────────────────────────────────────────
-
-function useCountUp(target: number, ms = 800) {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!target) { setN(0); return; }
-    let raf: number, t0: number | null = null;
-    const tick = (ts: number) => {
-      if (!t0) t0 = ts;
-      const p = Math.min((ts - t0) / ms, 1);
-      setN(Math.round((1 - Math.pow(1 - p, 3)) * target));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
-  return n;
-}
-
-// ── pipeline health band ─────────────────────────────────────────────────────
-
 interface StageStat {
   key: AppStatus;
   label: string;
   count: number;
-  /** Ever reached this stage or a later one. Drives the funnel. */
+  /** Ever reached this stage or a later one. */
   cohort: number;
   medianAge: number | null;
   /** Conversion from the previous stage, as a percentage. */
@@ -134,135 +85,66 @@ interface StageStat {
   isBottleneck: boolean;
 }
 
-// ── presentational primitives (dark) ─────────────────────────────────────────
+// ── presentational pieces ────────────────────────────────────────────────────
 
-/** Solid confirmation tick, sits on a filled state badge. */
-function Check({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}
-      strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <path d="M5 12.5l4.5 4.5L19 7" />
-    </svg>
-  );
-}
+const linkCls =
+  "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-1 text-[12.5px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]";
 
-/** Dark thin-bordered card, the base surface for every panel on the screen. */
-function Card({ className, children }: { className?: string; children: React.ReactNode }) {
+function PanelLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <div className={cn("rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}>
+    <Link href={href} className={linkCls}>
       {children}
-    </div>
+      <ArrowRight className="h-3 w-3" aria-hidden="true" />
+    </Link>
   );
 }
 
-/** Titled card band with an optional leading icon and right-hand action. */
-function CardHead({
-  icon: Icon, title, subtitle, action,
-}: {
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-3 border-b border-[var(--adm-line)] px-5 py-3.5">
-      <div className="flex min-w-0 items-center gap-2">
-        {Icon && <Icon className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />}
-        <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{title}</h3>
-          {subtitle && <p className="mt-0.5 truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{subtitle}</p>}
-        </div>
-      </div>
-      {action && <div className="flex flex-none items-center gap-1">{action}</div>}
-    </div>
-  );
-}
-
-/** Named group of panels with generous space around it. */
-function SectionHead({ title, description, action }: {
-  title: string; description?: string; action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-      <div className="min-w-0">
-        <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--adm-ink-mute)]">{title}</h2>
-        {description && <p className="mt-1 text-[13.5px] leading-snug text-[var(--adm-ink-subtle)]">{description}</p>}
-      </div>
-      {action && <div className="flex flex-shrink-0 items-center gap-2">{action}</div>}
-    </div>
-  );
-}
-
-/** Ranked horizontal bars, dark. Value-labelled, so it reads without colour. */
-function DarkBars({ items, emptyMessage = "Nothing to break down yet" }: {
-  items: BarItem[]; emptyMessage?: string;
-}) {
-  if (items.length === 0) {
-    return <div className="px-5 py-10 text-center text-[13px] text-[var(--adm-ink-subtle)]">{emptyMessage}</div>;
-  }
+/** Ranked horizontal bars, value-labelled so they read without colour. */
+function RankedBars({ items, emptyMessage }: { items: BarItem[]; emptyMessage: string }) {
+  if (items.length === 0) return <EmptyState size="sm" title={emptyMessage} description="" />;
   const max = Math.max(...items.map((it) => it.value), 1);
   return (
-    <div className="space-y-3 px-5 py-4">
+    <ul className="space-y-0.5 px-2 py-2">
       {items.map((it, i) => {
         const color = it.color ?? STAGE_RAMP[i % STAGE_RAMP.length];
-        const width = max > 0 ? Math.max((it.value / max) * 100, it.value > 0 ? 3 : 0) : 0;
-        const Row = (
+        const width = Math.max((it.value / max) * 100, it.value > 0 ? 2 : 0);
+        const row = (
           <>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span aria-hidden className="h-2.5 w-2.5 flex-none rounded-[2px]" style={{ background: color }} />
-                <span className="truncate text-[13px] font-medium text-[var(--adm-ink-mute)]">{it.label}</span>
+            <span className="flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink)]">{it.label}</span>
+              <span className="flex flex-none items-baseline gap-2">
+                {it.meta && <span className="hidden max-w-[10rem] truncate text-[12px] text-[var(--adm-ink-subtle)] sm:inline">{it.meta}</span>}
+                <span className="w-8 text-right text-[13px] font-semibold tabular-nums text-[var(--adm-ink)]">{it.value.toLocaleString()}</span>
               </span>
-              <span className="flex flex-none items-baseline gap-1.5">
-                {it.meta && <span className="text-[11.5px] text-[var(--adm-ink-subtle)]">{it.meta}</span>}
-                <span className="text-[13px] font-bold tabular-nums text-[var(--adm-ink)]">{it.value.toLocaleString()}</span>
-              </span>
-            </div>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-[3px] bg-[var(--adm-line-soft)]">
-              <div className="h-full rounded-[3px]" style={{ width: `${width}%`, background: color }} />
-            </div>
+            </span>
+            <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
+              <span className="block h-full rounded-full" style={{ width: `${width}%`, background: color }} />
+            </span>
           </>
         );
-        return it.onClick ? (
-          <button key={it.label} type="button" onClick={it.onClick}
-            className="block w-full rounded-[6px] text-left transition-colors hover:bg-[var(--adm-row-hover)]">
-            {Row}
-          </button>
-        ) : (
-          <div key={it.label}>{Row}</div>
+        return (
+          <li key={it.label}>
+            {it.onClick ? (
+              <button type="button" onClick={it.onClick}
+                className="block w-full rounded-[8px] px-2 py-2 text-left transition-colors hover:bg-[var(--adm-row-hover)]">
+                {row}
+              </button>
+            ) : (
+              <div className="px-2 py-2">{row}</div>
+            )}
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
 
 /**
- * Blue line chart, a hand-drawn SVG so it themes cleanly to the dark console
- * without dragging the light recharts chrome onto the screen. Dotted gridlines,
- * a soft area fill and a crisp 2px line, with tiny axis ticks. `non-scaling-
- * stroke` keeps line + dashes even while the SVG stretches to the panel width.
+ * Line chart with a hover readout. The SVG stretches on x, so markers and the
+ * tooltip are positioned HTML on top where circles stay circular.
  */
-/* ============================================================
-   LineChart, with a hover readout.
-
-   The chart was a static picture: it showed a shape and no
-   numbers, so "how many applications on June 15?" could only be
-   answered by squinting at a gridline. A trend without values is
-   decoration.
-
-   ── Why the readout is HTML, not SVG ────────────────────────
-   This chart is drawn with `preserveAspectRatio="none"`, which
-   stretches a 600x100 viewBox to whatever width it is given.
-   That is fine for the line, and fine for a VERTICAL guide (a
-   vertical line stays vertical however you stretch x). It is
-   fatal for a marker dot: a circle in that coordinate space
-   renders as an ellipse, wider the narrower the container gets.
-   So the guide is drawn in the SVG and the dots and the tooltip
-   are absolutely-positioned HTML on top, where a circle is a
-   circle.
-   ============================================================ */
 function LineChart({
-  data, dataKey, xKey, xFmt, color = "var(--adm-data)", height = 132, dataKey2, color2 = "var(--adm-danger)",
+  data, dataKey, xKey, xFmt, color = "var(--adm-data)", height = 130, dataKey2, color2 = "var(--adm-danger)",
   label, label2,
 }: {
   data: Record<string, unknown>[];
@@ -271,10 +153,8 @@ function LineChart({
   xFmt: (v: string) => string;
   color?: string;
   height?: number;
-  /** Optional comparison series, drawn as a second line with no area fill. */
   dataKey2?: string;
   color2?: string;
-  /** Series names for the readout. Default to the data keys. */
   label?: string;
   label2?: string;
 }): React.ReactElement {
@@ -293,7 +173,7 @@ function LineChart({
     );
   }
 
-  const W = 600, H = 100, padT = 8, padB = 8;
+  const W = 600, H = 100, padT = 8, padB = 4;
   const innerH = H - padT - padB;
   const max = Math.max(...vals, ...vals2, 1);
   const n = vals.length;
@@ -306,9 +186,6 @@ function LineChart({
   const ticks = [0, Math.floor((n - 1) / 2), n - 1];
   const gid = `ln-${dataKey}`;
 
-  /* Nearest point to the pointer, from its position as a FRACTION of the
-     container. The viewBox is stretched on x, so container-relative maths is
-     the only thing that survives the stretch. */
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = plotRef.current;
     if (!el) return;
@@ -324,93 +201,241 @@ function LineChart({
 
   return (
     <div>
-      <div
-        ref={plotRef}
-        className="relative"
-        onPointerMove={onMove}
-        onPointerLeave={() => setActive(null)}
-      >
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height }}>
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
-            <stop offset="100%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        {gy.map((y, i) => (
-          <line key={i} x1="0" y1={y} x2={W} y2={y} stroke="var(--adm-line)"
-            strokeWidth={1} strokeDasharray="2 5" vectorEffect="non-scaling-stroke" />
-        ))}
-        <path d={area} fill={`url(#${gid})`} />
-        {dataKey2 && line2 && (
-          <path d={line2} fill="none" stroke={color2} strokeWidth={2} strokeDasharray="5 4"
-            vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
-        )}
-        <path d={line} fill="none" stroke={color} strokeWidth={2}
-          vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
-
-        {/* Guide. Safe inside the stretched viewBox because it is vertical. */}
-        {active !== null && (
-          <line
-            x1={X(active)} y1={padT} x2={X(active)} y2={H - padB}
-            stroke="var(--adm-ink-subtle)" strokeWidth={1}
-            strokeDasharray="3 3" vectorEffect="non-scaling-stroke"
-          />
-        )}
-      </svg>
-
-      {/* Markers and readout: HTML, so circles stay circular. */}
-      {active !== null && point && (
-        <>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--adm-surface)]"
-            style={{ left: `${pctX(active)}%`, top: topPx(vals[active]), background: color }}
-          />
-          {dataKey2 && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--adm-surface)]"
-              style={{ left: `${pctX(active)}%`, top: topPx(vals2[active]), background: color2 }}
-            />
+      <div ref={plotRef} className="relative" onPointerMove={onMove} onPointerLeave={() => setActive(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height }} aria-hidden="true">
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.14} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {gy.map((y, i) => (
+            <line key={i} x1="0" y1={y} x2={W} y2={y} stroke="var(--adm-line-soft)"
+              strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          ))}
+          <path d={area} fill={`url(#${gid})`} />
+          {dataKey2 && line2 && (
+            <path d={line2} fill="none" stroke={color2} strokeWidth={1.5} strokeDasharray="4 4"
+              vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
           )}
-          <div
-            role="status"
-            aria-live="polite"
-            /* Flips to the left of the guide past the midpoint so it never
-               runs off the panel on the last few points. */
-            className={cn(
-              "pointer-events-none absolute top-0 z-10 min-w-[7rem] rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 shadow-[var(--adm-shadow-md)]",
-              pctX(active) > 55 ? "-translate-x-[calc(100%+10px)]" : "translate-x-[10px]",
-            )}
-            style={{ left: `${pctX(active)}%` }}
-          >
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[var(--adm-ink-subtle)]">
-              {xFmt(String(point[xKey] ?? ""))}
-            </p>
-            <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink)]">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-              <span className="text-[var(--adm-ink-subtle)]">{label ?? dataKey}</span>
-              <span className="ml-auto font-bold tabular-nums">{vals[active]}</span>
-            </p>
+          <path d={line} fill="none" stroke={color} strokeWidth={1.75}
+            vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+          {active !== null && (
+            <line x1={X(active)} y1={padT} x2={X(active)} y2={H - padB}
+              stroke="var(--adm-line-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          )}
+        </svg>
+
+        {active !== null && point && (
+          <>
+            <span aria-hidden
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-[var(--adm-surface)]"
+              style={{ left: `${pctX(active)}%`, top: topPx(vals[active]), background: color }} />
             {dataKey2 && (
-              <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink)]">
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color2 }} />
-                <span className="text-[var(--adm-ink-subtle)]">{label2 ?? dataKey2}</span>
-                <span className="ml-auto font-bold tabular-nums">{vals2[active]}</span>
-              </p>
+              <span aria-hidden
+                className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-[var(--adm-surface)]"
+                style={{ left: `${pctX(active)}%`, top: topPx(vals2[active]), background: color2 }} />
             )}
-          </div>
-        </>
-      )}
+            <div
+              role="status"
+              aria-live="polite"
+              className={cn(
+                "pointer-events-none absolute top-0 z-10 min-w-[8rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-2 shadow-[var(--adm-shadow-md)]",
+                pctX(active) > 55 ? "-translate-x-[calc(100%+10px)]" : "translate-x-[10px]",
+              )}
+              style={{ left: `${pctX(active)}%` }}
+            >
+              <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+                {label ?? dataKey}
+                <span className="ml-auto pl-3 font-semibold tabular-nums text-[var(--adm-ink)]">{vals[active]}</span>
+              </p>
+              {dataKey2 && (
+                <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color2 }} />
+                  {label2 ?? dataKey2}
+                  <span className="ml-auto pl-3 font-semibold tabular-nums text-[var(--adm-ink)]">{vals2[active]}</span>
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </div>
-      <div className="mt-2 flex justify-between px-0.5 text-[10px] tabular-nums text-[var(--adm-ink-subtle)]">
+      <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">
         {ticks.map((ti, i) => <span key={i}>{xFmt(String(data[ti]?.[xKey] ?? ""))}</span>)}
       </div>
     </div>
   );
 }
 
+/** One figure + trend panel. */
+/** Change against the previous window of the same length. */
+type Delta = { pct: number; against: string } | null;
+
+function DeltaChip({ delta }: { delta: Delta }) {
+  if (!delta) return null;
+  const up = delta.pct > 0;
+  const flat = delta.pct === 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      title={`Compared with the ${delta.against}`}
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums",
+        flat
+          ? "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]"
+          : up
+            ? "bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
+            : "bg-[var(--adm-danger-soft)] text-[var(--adm-danger-ink)]",
+      )}
+    >
+      {!flat && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
+      {flat ? "No change" : `${Math.abs(delta.pct)}%`}
+      <span className="sr-only"> {up ? "up" : "down"} against the {delta.against}</span>
+    </span>
+  );
+}
+
+function TrendPanel({
+  title, value, caption, legend, delta = null, children,
+}: {
+  title: string;
+  value: number;
+  caption: React.ReactNode;
+  legend?: React.ReactNode;
+  delta?: Delta;
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminCard className="flex flex-col p-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h3 className="text-[13px] font-medium text-[var(--adm-ink-mute)]">{title}</h3>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+              {value.toLocaleString()}
+            </span>
+            <DeltaChip delta={delta} />
+          </div>
+          <p className="mt-1.5 text-[12.5px] text-[var(--adm-ink-subtle)]">{caption}</p>
+        </div>
+        {legend}
+      </div>
+      <div className="mt-3 flex-1">{children}</div>
+    </AdminCard>
+  );
+}
+
+function LegendKey({ color, label, value, dashed }: { color: string; label: string; value: number; dashed?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+      <span aria-hidden className={cn("h-0 w-3.5 border-t-2", dashed && "border-dashed")} style={{ borderColor: color }} />
+      {label}
+      <span className="font-semibold tabular-nums text-[var(--adm-ink)]">{value.toLocaleString()}</span>
+    </span>
+  );
+}
+
+type Severity = "danger" | "warning";
+
+interface AttentionItem {
+  label: string;
+  hint: string;
+  value: number;
+  href: string;
+  severity: Severity;
+}
+
+const SEVERITY: Record<Severity | "clear", { ink: string; bar: string; edge: string }> = {
+  danger:  { ink: "text-[var(--adm-danger-ink)]",  bar: "bg-[var(--adm-danger)]",  edge: "before:bg-[var(--adm-danger)]" },
+  warning: { ink: "text-[var(--adm-warning-ink)]", bar: "bg-[var(--adm-warning)]", edge: "before:bg-[var(--adm-warning)]" },
+  clear:   { ink: "text-[var(--adm-success-ink)]", bar: "bg-[var(--adm-success)]", edge: "before:bg-transparent" },
+};
+
+/** Exception checks as a ledger: the count leads each row, severity marks its edge. */
+function AttentionPanel({
+  items, inPlay, healthy, openItems,
+}: {
+  items: AttentionItem[];
+  inPlay: number;
+  healthy: boolean;
+  openItems: number;
+}) {
+  const total = items.reduce((n, it) => n + it.value, 0);
+
+  return (
+    <AdminCard className="flex flex-col overflow-hidden">
+      <div className="px-4 pb-3.5 pt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Needs attention</h3>
+            <p className="mt-0.5 text-[13px] text-[var(--adm-ink-subtle)]">
+              {healthy ? "Every check is clear for this range." : `${openItems} of ${items.length} checks flagged in this range.`}
+            </p>
+          </div>
+          <span className={cn(
+            "text-[26px] font-semibold leading-none tracking-[-0.025em] tabular-nums",
+            healthy ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-ink)]",
+          )}>
+            {total.toLocaleString()}
+          </span>
+        </div>
+        <div className="mt-4 flex h-1.5 gap-[3px] overflow-hidden rounded-full bg-[var(--adm-surface-2)]" aria-hidden="true">
+          {total === 0 ? (
+            <span className={cn("h-full w-full", SEVERITY.clear.bar)} />
+          ) : (
+            items.filter((it) => it.value > 0).map((it) => (
+              <span
+                key={it.label}
+                title={`${it.label}: ${it.value}`}
+                className={cn("h-full", SEVERITY[it.severity].bar)}
+                style={{ flexGrow: it.value, flexBasis: 6 }}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      <ul className="flex flex-1 flex-col border-t border-[var(--adm-line-soft)]">
+        {items.map((it) => {
+          const tone = it.value > 0 ? SEVERITY[it.severity] : SEVERITY.clear;
+          return (
+            <li key={it.label} className="flex flex-1 border-b border-[var(--adm-line-soft)] last:border-0">
+              <Link
+                href={it.href}
+                className={cn(
+                  "group relative grid w-full grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--adm-row-hover)]",
+                  "before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-r-full",
+                  tone.edge,
+                )}
+              >
+                <span className={cn("text-[19px] font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
+                  {it.value.toLocaleString()}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-medium text-[var(--adm-ink)]">{it.label}</span>
+                  <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{it.hint}</span>
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-4 w-4 text-[var(--adm-ink-subtle)] transition-[transform,color] group-hover:translate-x-0.5 group-hover:text-[var(--adm-accent)]"
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
+        <span className="text-[13px] text-[var(--adm-ink-mute)]">
+          <span className="font-semibold tabular-nums text-[var(--adm-ink)]">{inPlay}</span> candidates in play
+        </span>
+        <PanelLink href="/admin/applications">Open pipeline</PanelLink>
+      </div>
+    </AdminCard>
+  );
+}
 
 // ── dashboard ────────────────────────────────────────────────────────────────
 
@@ -435,7 +460,7 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const [ar, jr] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs")]);
+      const [ar, jr] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs?fields=summary")]);
       const [ad, jd] = await Promise.all([ar.json(), jr.json()]);
       if (!ar.ok || !jr.ok) throw new Error(ad.error || jd.error || "Failed to load");
       const jobsList: Job[] = jd.jobs || [];
@@ -479,7 +504,24 @@ export default function AdminDashboard() {
   );
 
   const jobs = rawJobs;
-  const rangeLabel = RANGES.find((r) => r.value === range)?.label ?? "";
+
+  /** Same-length window immediately before the current one, for the delta chips. */
+  const previous = useMemo(() => {
+    const r = RANGES.find((x) => x.value === range);
+    if (!r || r.days === null) return null;
+    const end = Date.now() - r.days * DAY;
+    const start = end - r.days * DAY;
+    const prev = rawApplications.filter((a) => {
+      const t = new Date(a.appliedAt).getTime();
+      return t >= start && t < end;
+    });
+    return {
+      applied: prev.length,
+      hired: prev.filter((a) => a.status === "hired").length,
+      against: `previous ${r.long.replace(/^Last /, "").toLowerCase()}`,
+    };
+  }, [rawApplications, range]);
+  const rangeLabel = RANGES.find((r) => r.value === range)?.long ?? "";
 
   // ── core derivations ──────────────────────────────────────────────────────
 
@@ -773,9 +815,6 @@ export default function AdminDashboard() {
 
   // ── header state ──────────────────────────────────────────────────────────
 
-  /** Cognito gives us a full `name`, falling back to the email when unset. */
-  const firstName = (user?.name ?? "").split("@")[0].trim().split(/\s+/)[0];
-
   const openItems =
     (staleCandidates.length > 0 ? 1 : 0) +
     (offersAtRisk.length > 0 ? 1 : 0) +
@@ -783,305 +822,163 @@ export default function AdminDashboard() {
     (starvedReqs > 0 ? 1 : 0);
   const healthy = openItems === 0;
 
-  const openReqCount   = useCountUp(openJobs.length);
-  const activeCount    = useCountUp(activePipeline.length);
-  const interviewCount = useCountUp(counts.interview || 0);
-  const placementCount = useCountUp(commercial.placements);
+  const firstName = (user?.name ?? "").split("@")[0].trim().split(/\s+/)[0];
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   if (loading) return <DashboardSkeleton />;
 
   if (error) return (
-    <div className="mx-auto mt-20 max-w-md text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[10px] bg-[var(--adm-danger-soft)]">
-        <IconWarning className="h-7 w-7 text-[var(--adm-danger)]" />
-      </div>
-      <p className="font-semibold text-[var(--adm-ink)]">{error}</p>
-      <button onClick={() => fetchAll()}
-        className="mt-4 rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]">
-        Retry
-      </button>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <EmptyState
+        variant="error"
+        title="Couldn't load the dashboard"
+        description={error}
+        action={<WorkspaceButton onClick={() => fetchAll()}>Try again</WorkspaceButton>}
+      />
     </div>
   );
 
-  // ── header stat row ─────────────────────────────────────────────────────────
-  /* Each figure that COUNTS something links to the records behind it. A number
-     you cannot act on is a poster; this row is the top of the funnel into the
-     rest of the app, and previously every one of these was a dead <div>.
-
-     Coverage and time-to-hire carry no href on purpose, they are ratios over
-     the whole set, not a filterable subset, so there is no list to land on.
-     Giving them a hover state would promise a destination that does not
-     exist. */
+  // Figures that count something link to the records behind them. Ratios have
+  // no list to land on, so they carry no href.
   const headStats: { label: string; value: React.ReactNode; sub: string; href?: string }[] = [
-    { label: "Open roles",   value: openReqCount,   sub: "current",
-      href: "/admin/jobs" },
-    { label: "In play",      value: activeCount,    sub: `${applications.length} apps`,
-      href: "/admin/applications" },
-    { label: "Interviews",   value: interviewCount, sub: "active",
-      href: "/admin/applications?status=interview" },
-    { label: "Placements",   value: placementCount, sub: rangeStart !== null ? rangeLabel.toLowerCase() : "all time",
-      href: "/admin/applications?status=hired" },
-    { label: "Coverage",     value: coverage !== null ? coverage : "–", sub: "per role" },
-    { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "–", sub: "median" },
+    { label: "Open roles",   value: openJobs.length,       sub: "Current", href: "/admin/jobs" },
+    { label: "In play",      value: activePipeline.length, sub: `of ${applications.length} applications`, href: "/admin/applications" },
+    { label: "Interviews",   value: counts.interview || 0, sub: "Active now", href: "/admin/applications?status=interview" },
+    { label: "Placements",   value: commercial.placements, sub: rangeStart !== null ? rangeLabel : "All time", href: "/admin/applications?status=hired" },
+    { label: "Coverage",     value: coverage !== null ? coverage : "–", sub: "Candidates per role" },
+    { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "–", sub: "Median" },
+  ];
+
+  const attention: AttentionItem[] = [
+    { label: "Roles with no candidates", hint: "Open requisitions with an empty pipeline", value: starvedReqs,
+      href: "/admin/jobs", severity: "danger" },
+    { label: "Offers going cold", hint: `Pending an answer for ${OFFER_STALE_DAYS}+ days`, value: offersAtRisk.length,
+      href: "/admin/applications?status=offered", severity: "danger" },
+    { label: "Stale in screening", hint: `No movement for ${STALE_DAYS}+ days`, value: staleCandidates.length,
+      href: "/admin/applications?status=pending", severity: "warning" },
+    { label: "Candidates without an owner", hint: "Active, but nobody assigned", value: unassignedActive,
+      href: "/admin/applications", severity: "warning" },
   ];
 
   return (
-    <div className="space-y-8 pb-12">
-
-      {/* ── greeting + scope filter, one row ── */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="grid h-12 w-12 flex-none place-items-center rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] text-[var(--adm-accent)]">
-            <IconUser className="h-6 w-6" strokeWidth={1.6} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
-              Welcome back{firstName ? `, ${firstName}` : ""}!
-            </h1>
-          </div>
+    <div className="adm-stagger mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5">
+      {/* Greeting + scope */}
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)] sm:text-[21px]">
+            {greeting()}{firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{today}</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <WorkspaceButton variant="primary" onClick={() => router.push("/admin/jobs/new")}>
-            <IconRequisition className="h-4 w-4" strokeWidth={1.75} />
-            Add job
-          </WorkspaceButton>
-          <div className="relative">
-            <label htmlFor="dash-range" className="sr-only">Date range</label>
-            <select
-              id="dash-range"
-              value={range}
-              onChange={(e) => setRange(e.target.value as RangeKey)}
-              className="h-10 cursor-pointer appearance-none rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3.5 pr-9 text-[14px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-accent)]"
-            >
-              {RANGES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-            <ChevronDown
-              aria-hidden
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── header block + stat row ── */}
-      <Card className="overflow-hidden">
-        <div className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:gap-8">
-          <div className="flex min-w-0 items-center gap-4 lg:w-[240px] lg:flex-none">
-            <span className="grid h-12 w-12 flex-none place-items-center rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] text-[var(--adm-accent)]">
-              <IconOverview className="h-6 w-6" strokeWidth={1.6} />
-            </span>
-            <div className="min-w-0">
-              <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
-                Operations
-              </h1>
-              <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-subtle)]">Recruitment desk</p>
-            </div>
-          </div>
-
-          {/* Hairline-divided stat columns, the Conduktor signature.
-              Six across is measured off this strip, not the window: the title
-              block to its left takes 240px and the pane has already lost the
-              sidebar, so `lg:grid-cols-6` was laying six figures out in ~100px
-              each on a 14" screen. @xl 576 · @4xl 896. */}
-          <div className="@container flex-1">
-          <div className="grid grid-cols-2 gap-y-5 @xl:grid-cols-3 @4xl:grid-cols-6 @4xl:gap-y-0">
-            {headStats.map((s, i) => {
-              const body = (
-                <>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
-                    {s.label}
-                  </div>
-                  <div className={cn(
-                    "mt-1.5 text-[26px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]",
-                    s.href && "transition-colors group-hover:text-[var(--adm-accent)]",
-                  )}>
-                    {s.value}
-                  </div>
-                  <div className="mt-1 text-[11.5px] text-[var(--adm-ink-subtle)]">{s.sub}</div>
-                </>
-              );
-              const divider = i > 0 && "lg:border-l lg:border-[var(--adm-line)]";
-              return s.href ? (
-                <Link
-                  key={s.label}
-                  href={s.href}
-                  // A real anchor, not an onClick div: middle-click, open-in-
-                  // new-tab and the browser's own link affordances all matter
-                  // on a figure someone reaches for a dozen times a day.
-                  className={cn(
-                    "group -mx-2 rounded-[8px] px-2 py-1 transition-colors hover:bg-[var(--adm-accent-tint)] lg:mx-0 lg:px-5",
-                    divider,
-                  )}
-                >
-                  {body}
-                </Link>
-              ) : (
-                <div key={s.label} className={cn("px-0 lg:px-5", divider)}>{body}</div>
-              );
-            })}
-          </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ── state card + volume charts ── */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Pipeline state, the card wears its state: a light green wash when
-            everything is healthy, an amber wash + amber border when something
-            needs attention, so the difference is visible from across the room. */}
-        <div
-          className={cn(
-            "relative overflow-hidden rounded-[12px] border bg-[var(--adm-surface)] p-5",
-            healthy ? "border-[var(--adm-line)]" : "border-[var(--adm-warning)]",
-          )}
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-12 -top-12 h-64 w-64 rounded-full"
-            style={{
-              background: healthy
-                ? "radial-gradient(circle, var(--adm-glow), transparent 70%)"
-                : "radial-gradient(circle, var(--adm-warning-soft), transparent 70%)",
-            }}
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <MenuSelect
+            label="Date range"
+            icon={IconCalendar}
+            value={range}
+            onChange={setRange}
+            options={RANGES.map((r) => ({ value: r.value, label: r.long }))}
           />
-          <div className="relative flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Pipeline state</h3>
-            <Link href="/admin/applications"
-              className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)]">
-              View pipeline <ArrowRight className="h-3 w-3" />
+          <WorkspaceButton variant="primary" asChild>
+            <Link href="/admin/jobs/new">
+              <Plus aria-hidden="true" />
+              New job
             </Link>
-          </div>
-
-          <div className="relative mt-5 flex items-center gap-3">
-            <span
-              className="grid h-9 w-9 flex-none place-items-center rounded-full"
-              style={{ background: healthy ? "var(--adm-success)" : "var(--adm-warning)", color: "#ffffff" }}
-            >
-              {healthy ? <Check className="h-5 w-5" /> : <IconWarning className="h-5 w-5" />}
-            </span>
-            <span className="text-[26px] font-bold tracking-[-0.01em] text-[var(--adm-ink)]">
-              {healthy ? "Healthy" : "Needs attention"}
-            </span>
-          </div>
-
-          <div className="relative mt-6 text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--adm-ink-subtle)]">
-            Exceptions
-          </div>
-          <div className="relative mt-3 grid grid-cols-3 gap-3">
-            {[
-              { label: "Starved roles", value: starvedReqs },
-              { label: "Stale", value: staleCandidates.length },
-              { label: "Offers at risk", value: offersAtRisk.length },
-            ].map((e) => (
-              <div key={e.label}>
-                <div className="text-[11.5px] leading-tight text-[var(--adm-ink-subtle)]">{e.label}</div>
-                <div className={cn(
-                  "mt-1 text-[20px] font-bold tabular-nums",
-                  e.value === 0 ? "text-[var(--adm-success)]" : "text-[var(--adm-warning)]",
-                )}>
-                  {e.value}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative mt-5 flex items-center justify-between rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-canvas)] px-3 py-2">
-            <code className="truncate font-mono text-[12px] text-[var(--adm-ink-mute)]">
-              oceanblue-pipeline · {activePipeline.length} active
-            </code>
-            {unassignedActive > 0 && (
-              <span className="ml-2 flex-none rounded-full bg-[var(--adm-warning-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--adm-warning)]">
-                {unassignedActive} unassigned
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Volume line charts. */}
-        <div className="grid gap-4 lg:col-span-2">
-          <Card className="p-5">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="sm:w-40 sm:flex-none">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Applications</h3>
-                </div>
-                <div className="mt-4 text-[30px] font-bold leading-none tabular-nums text-[var(--adm-ink)]">
-                  {appliedTotal.toLocaleString()}
-                </div>
-                <div className="mt-1.5 text-[12px] text-[var(--adm-ink-subtle)]">received, {period}</div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <LineChart data={trend} dataKey="applied" label="Applications" xKey="date" xFmt={xFmt} color="var(--adm-data)" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="sm:w-40 sm:flex-none">
-                <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Placements</h3>
-                <div className="mt-4 text-[30px] font-bold leading-none tabular-nums text-[var(--adm-ink)]">
-                  {hiredTotal.toLocaleString()}
-                </div>
-                <div className="mt-1.5 text-[12px] text-[var(--adm-ink-subtle)]">
-                  hired, {period}
-                  {offerAcceptance !== null && <> · {offerAcceptance}% offer accept</>}
-                </div>
-                {/* Hired vs rejected: same axis, so the two outcomes read against each other. */}
-                <div className="mt-4 space-y-1.5 text-[12px]">
-                  <div className="flex items-center gap-1.5">
-                    <span aria-hidden className="h-[3px] w-4 flex-none rounded-full" style={{ background: "var(--adm-success)" }} />
-                    <span className="text-[var(--adm-ink-mute)]">Hired</span>
-                    <span className="ml-auto font-bold tabular-nums text-[var(--adm-ink)]">{hiredTotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span aria-hidden className="h-[3px] w-4 flex-none rounded-full border-b border-dashed" style={{ background: "var(--adm-danger)" }} />
-                    <span className="text-[var(--adm-ink-mute)]">Rejected</span>
-                    <span className="ml-auto font-bold tabular-nums text-[var(--adm-ink)]">{rejectedTotal.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <LineChart
-                  data={trend}
-                  dataKey="hired"
-                  label="Hired"
-                  dataKey2="rejected"
-                  label2="Rejected"
-                  xKey="date"
-                  xFmt={xFmt}
-                  color="var(--adm-success)"
-                  color2="var(--adm-danger)"
-                />
-              </div>
-            </div>
-          </Card>
+          </WorkspaceButton>
         </div>
       </div>
 
-      {/* ── pipeline & channels ── */}
-      <section className="space-y-3">
-        <SectionHead
-          title="Pipeline and channels"
-          action={
-            <span className="flex items-center gap-3 text-[12.5px] text-[var(--adm-ink-subtle)]">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: "var(--adm-success)" }} />
-                {counts.hired || 0} hired
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: "var(--adm-danger)" }} />
-                {counts.rejected || 0} rejected
-              </span>
-            </span>
-          }
-        />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="overflow-hidden">
-            <CardHead icon={IconPipeline} title="Hiring funnel" subtitle="Conversion through each stage · click to drill in" />
+      {/* KPI band. Linked cells draw a cobalt rule on hover and open their records. */}
+      <AdminCard className="@container overflow-hidden">
+        <div className="grid grid-cols-2 gap-px bg-[var(--adm-line-soft)] @2xl:grid-cols-3 @4xl:grid-cols-6">
+          {headStats.map((s) => {
+            const body = (
+              <>
+                <span className="block text-[12.5px] text-[var(--adm-ink-mute)]">{s.label}</span>
+                <span className="mt-2 block text-[22px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)] sm:mt-2.5 sm:text-[26px]">
+                  {s.value}
+                </span>
+                <span className="mt-2 flex items-center justify-between gap-2 text-[12.5px] text-[var(--adm-ink-subtle)] sm:mt-2.5">
+                  <span className="truncate">{s.sub}</span>
+                  {s.href && (
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 flex-none -translate-x-1 text-[var(--adm-accent)] opacity-0 transition-[opacity,transform] group-hover:translate-x-0 group-hover:opacity-100"
+                    />
+                  )}
+                </span>
+              </>
+            );
+            const cell = "relative min-w-0 bg-[var(--adm-surface)] px-4 py-3.5 sm:py-4";
+            return s.href ? (
+              <Link
+                key={s.label}
+                href={s.href}
+                className={cn(
+                  cell,
+                  "group transition-colors hover:bg-[var(--adm-row-hover)]",
+                  "before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:origin-left before:scale-x-0 before:bg-[var(--adm-accent)] before:transition-transform before:duration-300 hover:before:scale-x-100",
+                )}
+              >
+                {body}
+              </Link>
+            ) : (
+              <div key={s.label} className={cell}>{body}</div>
+            );
+          })}
+        </div>
+      </AdminCard>
+
+      {/* Exceptions + volume */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <AttentionPanel items={attention} inPlay={activePipeline.length} healthy={healthy} openItems={openItems} />
+
+        <div className="grid gap-4 xl:col-span-2">
+          <TrendPanel
+            title="Applications"
+            value={appliedTotal}
+            caption={`Received · ${period}`}
+            delta={previous && previous.applied > 0
+              ? { pct: Math.round(((applications.length - previous.applied) / previous.applied) * 100), against: previous.against }
+              : null}
+          >
+            <LineChart data={trend} dataKey="applied" label="Applications" xKey="date" xFmt={xFmt} color="var(--adm-accent)" />
+          </TrendPanel>
+          <TrendPanel
+            title="Placements"
+            value={hiredTotal}
+            caption={offerAcceptance !== null ? `Hired · ${offerAcceptance}% offer acceptance` : `Hired · ${period}`}
+            delta={previous && previous.hired > 0
+              ? { pct: Math.round(((commercial.placements - previous.hired) / previous.hired) * 100), against: previous.against }
+              : null}
+            legend={
+              <div className="flex flex-col items-end gap-1">
+                <LegendKey color="var(--adm-success)" label="Hired" value={hiredTotal} />
+                <LegendKey color="var(--adm-danger)" label="Rejected" value={rejectedTotal} dashed />
+              </div>
+            }
+          >
+            <LineChart
+              data={trend}
+              dataKey="hired"
+              label="Hired"
+              dataKey2="rejected"
+              label2="Rejected"
+              xKey="date"
+              xFmt={xFmt}
+              color="var(--adm-success)"
+              color2="var(--adm-danger)"
+            />
+          </TrendPanel>
+        </div>
+      </div>
+
+      <Section
+        title="Pipeline and channels"
+        description="How candidates move through stages, and where they come from."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <AdminCard className="flex flex-col overflow-hidden">
+            <AdminCardHeader title="Hiring funnel" subtitle="Cohort reaching each stage · select a stage to open it" />
             <FunnelChart
               stages={funnel.map((f) => ({
                 label: f.label,
@@ -1090,139 +987,106 @@ export default function AdminDashboard() {
               }))}
             />
             {bottleneck && (
-              <div className="border-t border-[var(--adm-line)] px-5 py-3 text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
-                <span className="font-semibold text-[var(--adm-ink-mute)]">{bottleneck.label}</span> is the slowest
-                stage, at a median of {bottleneck.medianAge}d.
-              </div>
+              <p className="border-t border-[var(--adm-line)] px-4 py-2.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+                <span className="font-medium text-[var(--adm-ink)]">{bottleneck.label}</span> is the slowest stage, at a median of {bottleneck.medianAge}d.
+              </p>
             )}
-          </Card>
+          </AdminCard>
 
-          <Card className="overflow-hidden">
-            <CardHead icon={IconTrend} title="Channel mix" subtitle="Share of applications by source" />
+          <AdminCard className="flex flex-col overflow-hidden">
+            <AdminCardHeader title="Channel mix" subtitle="Share of applications by source" />
             {channelMix.length > 0 ? (
-              <div className="px-5 py-5">
+              <div className="grid flex-1 place-items-center px-4 py-5">
                 <DonutChart segments={channelMix} centerCaption="applications" />
               </div>
             ) : (
-              <div className="px-5 py-10 text-center text-[13px] text-[var(--adm-ink-subtle)]">No source data yet</div>
+              <EmptyState size="sm" title="No source data yet" description="Sources appear once applications record where they came from." />
             )}
-          </Card>
+          </AdminCard>
         </div>
-      </section>
+      </Section>
 
-      {/* ── where the work is ── */}
-      <section className="space-y-3">
-        <SectionHead
-          title="Where the work is"
-          action={
-            <Link href="/admin/jobs"
-              className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)]">
-              All roles <ArrowRight className="h-3 w-3" />
-            </Link>
-          }
-        />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="overflow-hidden">
-            <CardHead icon={IconCoverage} title="Requisition coverage" subtitle="Thinnest first, the top is where to source" />
-            <DarkBars items={reqCoverage} emptyMessage="No open requisitions" />
-          </Card>
+      <Section
+        title="Where the work is"
+        description="Roles that need sourcing, and how the pipeline splits by client."
+        action={<PanelLink href="/admin/jobs">All roles</PanelLink>}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader title="Requisition coverage" subtitle="Active candidates per open role, thinnest first" />
+            <RankedBars items={reqCoverage} emptyMessage="No open requisitions" />
+          </AdminCard>
 
-          <Card className="overflow-hidden">
-            <CardHead icon={IconRequisition} title="Client concentration" subtitle="Share of pipeline by client" />
-            <DarkBars items={clientMix} emptyMessage="No client data yet" />
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader title="Client concentration" subtitle="Share of pipeline by client" />
+            <RankedBars items={clientMix} emptyMessage="No client data yet" />
             {topClientShare !== null && topClientShare >= 40 && clientMix.length > 0 && (
-              <div className="border-t border-[var(--adm-line)] px-5 py-3 text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
-                <span className="font-semibold text-[var(--adm-ink-mute)]">{clientMix[0].label}</span> is{" "}
-                <span className="font-semibold text-[var(--adm-warning)]">{topClientShare}%</span> of the pipeline, a concentration risk worth naming.
-              </div>
+              <p className="border-t border-[var(--adm-line)] px-4 py-2.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+                <span className="font-medium text-[var(--adm-ink)]">{clientMix[0].label}</span> holds{" "}
+                <span className="font-semibold text-[var(--adm-warning-ink)]">{topClientShare}%</span> of the pipeline.
+              </p>
             )}
-          </Card>
+          </AdminCard>
         </div>
-      </section>
+      </Section>
 
-      {/* ── recent activity + throughput ── */}
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* Recently viewed, segmented tabs. */}
-        <Card className="overflow-hidden lg:col-span-2">
-          <div className="border-b border-[var(--adm-line)] px-5 py-3.5">
-            <h3 className="text-[15px] font-semibold text-[var(--adm-ink)]">Recent activity</h3>
-            <div className="mt-3 inline-flex rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-seg-track)] p-0.5">
-              {([
-                { key: "all", label: "Latest" },
-                { key: "interview", label: "Interviews" },
-                { key: "offered", label: "Offers" },
-              ] as const).map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setRecentTab(t.key)}
-                  aria-pressed={recentTab === t.key}
-                  className={cn(
-                    "rounded-[6px] px-3 py-1 text-[12.5px] font-semibold transition-colors",
-                    recentTab === t.key
-                      ? "bg-[var(--adm-seg-active)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]"
-                      : "text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {recentShown.length > 0 ? (
-            <div>
-              {recentShown.map((a) => {
-                const meta = statusMeta[a.status as AppStatus];
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => router.push(`/admin/candidates/${a.id}`)}
-                    className="flex w-full items-center gap-3 border-b border-[var(--adm-line-soft)] px-5 py-3 text-left transition-colors last:border-0 hover:bg-[var(--adm-row-hover)]"
-                  >
-                    <Avatar name={a.name || a.email} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{a.name || "Unnamed"}</p>
-                      <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">{a.jobTitle || "No role"}</p>
-                    </div>
-                    <div className="flex flex-none flex-col items-end gap-1">
-                      <span className="text-[11px] font-medium text-[var(--adm-ink-mute)]">{meta?.label ?? a.status}</span>
-                      <span className="text-[10.5px] text-[var(--adm-ink-subtle)]">{ago(new Date(a.appliedAt).getTime())}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="px-5 py-12 text-center text-[13px] text-[var(--adm-ink-subtle)]">
-              Nothing here yet
-            </div>
-          )}
-        </Card>
-
-        {/* Recruiter throughput ledger. */}
-        <Card className="overflow-hidden lg:col-span-3">
-          <CardHead
-            icon={IconInterview}
-            title="Recruiter throughput"
-            subtitle="Submissions against hires, ranked by hires"
+        <AdminCard className="overflow-hidden lg:col-span-2">
+          <AdminCardHeader
+            title="Recent activity"
             action={
-              <Link href="/admin/applications"
-                className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)]">
-                All <ArrowRight className="h-3 w-3" />
-              </Link>
+              <PeriodSwitcher
+                label="Activity filter"
+                value={recentTab}
+                onChange={setRecentTab}
+                options={[
+                  { value: "all", label: "Latest" },
+                  { value: "interview", label: "Interviews" },
+                  { value: "offered", label: "Offers" },
+                ]}
+              />
             }
+          />
+          {recentShown.length > 0 ? (
+            <ul className="divide-y divide-[var(--adm-line-soft)]">
+              {recentShown.map((a) => (
+                <li key={a.id}>
+                  <Link href={`/admin/candidates/${a.id}`}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--adm-row-hover)]">
+                    <Avatar name={a.name || a.email} size="sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-medium text-[var(--adm-ink)]">{a.name || "Unnamed"}</span>
+                      <span className="block truncate text-[12px] text-[var(--adm-ink-subtle)]">{a.jobTitle || "No role"}</span>
+                    </span>
+                    <span className="flex flex-none flex-col items-end gap-1">
+                      <StatusBadge status={a.status} />
+                      <span className="text-[11.5px] text-[var(--adm-ink-subtle)]">{ago(new Date(a.appliedAt).getTime())}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState size="sm" title="Nothing here yet" description="Candidates at this stage will appear here." />
+          )}
+        </AdminCard>
+
+        <AdminCard className="overflow-hidden lg:col-span-3">
+          <AdminCardHeader
+            title="Recruiter throughput"
+            subtitle="Submissions against hires"
+            action={<PanelLink href="/admin/applications">All</PanelLink>}
           />
           {byOwner.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-[14px]" style={{ fontVariantNumeric: "tabular-nums" }}>
+              <table className="adm-grid w-full text-[13px]">
                 <thead>
-                  <tr className="border-b border-[var(--adm-line)] text-[12.5px] text-[var(--adm-ink-subtle)]">
-                    <th className="px-5 py-2.5 text-left font-medium">Recruiter</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Active</th>
-                    <th className="px-3 py-2.5 text-left font-medium">Submitted</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Hired</th>
-                    <th className="px-5 py-2.5 text-right font-medium">Rate</th>
+                  <tr>
+                    <th className="h-9 px-4 text-left">Recruiter</th>
+                    <th className="hidden h-9 px-3 text-right sm:table-cell">Active</th>
+                    <th className="h-9 px-3 text-left">Submitted</th>
+                    <th className="h-9 px-3 text-right">Hired</th>
+                    <th className="hidden h-9 px-4 text-right sm:table-cell">Rate</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1230,28 +1094,28 @@ export default function AdminDashboard() {
                     const maxSub = byOwner[0].submitted || 1;
                     const conv = r.submitted > 0 ? Math.round((r.hired / r.submitted) * 100) : 0;
                     return (
-                      <tr key={r.name} className="border-b border-[var(--adm-line-soft)] transition-colors last:border-0 hover:bg-[var(--adm-row-hover)]">
-                        <td className="px-5 py-2.5">
+                      <tr key={r.name} className="transition-colors hover:bg-[var(--adm-row-hover)]" style={{ ["--adm-row-h" as string]: "44px" }}>
+                        <td className="px-4">
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <Avatar name={r.name} size="sm" />
-                            <span className={cn("truncate font-semibold", r.name === "Unassigned" ? "italic text-[var(--adm-ink-subtle)]" : "text-[var(--adm-ink-mute)]")}>
+                            <Avatar name={r.name} size="xs" />
+                            <span className={cn("truncate", r.name === "Unassigned" ? "text-[var(--adm-ink-subtle)]" : "font-medium text-[var(--adm-ink)]")}>
                               {r.name}
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-right text-[var(--adm-ink-mute)]">{r.active}</td>
-                        <td className="px-3 py-2.5">
+                        <td className="hidden px-3 text-right text-[var(--adm-ink-mute)] sm:table-cell">{r.active}</td>
+                        <td className="px-3">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 text-right font-bold text-[var(--adm-ink)]">{r.submitted}</span>
-                            <div className="h-2 min-w-[36px] max-w-[140px] flex-1 overflow-hidden rounded-[3px] bg-[var(--adm-line-soft)]">
-                              <div className="h-full rounded-[3px]" style={{ width: `${(r.submitted / maxSub) * 100}%`, background: "var(--adm-data)" }} />
-                            </div>
+                            <span className="w-6 text-right font-semibold text-[var(--adm-ink)]">{r.submitted}</span>
+                            <span className="h-1.5 min-w-[36px] max-w-[140px] flex-1 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
+                              <span className="block h-full rounded-full bg-[var(--adm-accent)]" style={{ width: `${(r.submitted / maxSub) * 100}%` }} />
+                            </span>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <span className={cn("font-bold", r.hired > 0 ? "text-[var(--adm-success)]" : "text-[var(--adm-ink-subtle)]")}>{r.hired}</span>
+                        <td className="px-3 text-right">
+                          <span className={cn("font-semibold", r.hired > 0 ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-ink-subtle)]")}>{r.hired}</span>
                         </td>
-                        <td className="px-5 py-2.5 text-right text-[var(--adm-ink-subtle)]">{conv}%</td>
+                        <td className="hidden px-4 text-right text-[var(--adm-ink-mute)] sm:table-cell">{conv}%</td>
                       </tr>
                     );
                   })}
@@ -1259,12 +1123,9 @@ export default function AdminDashboard() {
               </table>
             </div>
           ) : (
-            <div className="px-6 py-12 text-center">
-              <p className="text-[14px] font-medium text-[var(--adm-ink-mute)]">No candidates assigned yet</p>
-              <p className="mt-1 text-[13px] text-[var(--adm-ink-subtle)]">Assign ownership to track throughput</p>
-            </div>
+            <EmptyState size="sm" title="No candidates assigned yet" description="Assign an owner to candidates to track throughput." />
           )}
-        </Card>
+        </AdminCard>
       </div>
     </div>
   );

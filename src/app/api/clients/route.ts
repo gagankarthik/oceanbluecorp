@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllClients, createClient, Client } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/clients - Get all clients
 export async function GET(request: NextRequest) {
@@ -14,10 +15,7 @@ export async function GET(request: NextRequest) {
     const result = await getAllClients(status || undefined);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch clients" },
-        { status: 500 }
-      );
+      return serverError("Fetching clients", result.error, "Couldn't load the clients. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
@@ -27,11 +25,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ clients });
   } catch (error) {
-    console.error("Error fetching clients:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching clients", error, "Couldn't load the clients. Please try again.");
   }
 }
 
@@ -99,10 +93,7 @@ export async function POST(request: NextRequest) {
     const result = await createClient(client);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to create client" },
-        { status: 500 }
-      );
+      return serverError("Creating client", result.error, "Couldn't save the client. Please try again.");
     }
 
     return NextResponse.json(
@@ -110,10 +101,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating client:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error creating client", error, "Couldn't save the client. Please try again.");
   }
 }

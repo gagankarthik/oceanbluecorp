@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClient, updateClient, deleteClient, Client } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/clients/[id] - Get a single client
 export async function GET(
@@ -14,10 +15,7 @@ export async function GET(
     const result = await getClient(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch client" },
-        { status: 500 }
-      );
+      return serverError("Fetching client", result.error, "Couldn't load the client. Please try again.");
     }
 
     if (!result.data) {
@@ -29,11 +27,7 @@ export async function GET(
 
     return NextResponse.json({ client: result.data });
   } catch (error) {
-    console.error("Error fetching client:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching client", error, "Couldn't load the client. Please try again.");
   }
 }
 
@@ -103,19 +97,12 @@ export async function PATCH(
     const result = await updateClient(id, updates);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update client" },
-        { status: 500 }
-      );
+      return serverError("Updating client", result.error, "Couldn't save the client. Please try again.");
     }
 
     return NextResponse.json({ message: "Client updated successfully" });
   } catch (error) {
-    console.error("Error updating client:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating client", error, "Couldn't save the client. Please try again.");
   }
 }
 
@@ -141,18 +128,11 @@ export async function DELETE(
     const result = await deleteClient(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete client" },
-        { status: 500 }
-      );
+      return serverError("Deleting client", result.error, "Couldn't delete the client. Please try again.");
     }
 
     return NextResponse.json({ message: "Client deleted successfully" });
   } catch (error) {
-    console.error("Error deleting client:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting client", error, "Couldn't delete the client. Please try again.");
   }
 }

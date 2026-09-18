@@ -7,9 +7,9 @@ import {
   IconSettings, IconOverview, IconBoxes, IconUserStar, IconInfo, IconRadar,
 } from "@/components/admin/icons";
 import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { StatCard, KpiStrip } from "@/components/admin/stat-card";
+import { WorkspaceButton, NotePanel } from "@/components/admin/workspace";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 
 interface RoleConfig {
@@ -66,14 +66,13 @@ interface RouteRow {
   icon: typeof IconShield;
 }
 
-// One row per route, paths are unique (the duplicate "/admin" entry was the
-// source of a React key collision).
+// Paths double as React keys, keep them unique.
 const routes: RouteRow[] = [
   { path: "/admin",              name: "Dashboard",    icon: IconOverview },
-  { path: "/admin/jobs",         name: "Job Postings", icon: IconJob },
+  { path: "/admin/jobs",         name: "Job postings", icon: IconJob },
   { path: "/admin/applications", name: "Applications", icon: IconFile },
   { path: "/admin/candidates",   name: "Candidates",   icon: IconUserStar },
-  { path: "/admin/bench",        name: "Talent Bench", icon: IconBoxes },
+  { path: "/admin/bench",        name: "Talent bench", icon: IconBoxes },
   { path: "/admin/contacts",     name: "Contacts",     icon: IconMessage },
   { path: "/admin/clients",      name: "Clients",      icon: IconBuilding },
   { path: "/admin/vendors",      name: "Vendors",      icon: IconGroup },
@@ -90,7 +89,7 @@ function hasAccess(route: string, role: UserRole): boolean {
 /** Allow / deny mark. Never colour alone, each carries its own glyph. */
 function Allow() {
   return (
-    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--adm-success)]">
+    <span className="inline-flex items-center text-[var(--adm-success-ink)]">
       <Check className="h-4 w-4" strokeWidth={2.5} />
       <span className="sr-only">Allowed</span>
     </span>
@@ -118,11 +117,11 @@ export default function RolesPage() {
       cell: (r) => {
         const Icon = r.icon;
         return (
-          <div className="flex items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
             <div className="min-w-0">
               <p className="font-semibold text-[var(--adm-ink)]">{r.name}</p>
-              <p className="font-mono text-[11px] text-[var(--adm-ink-subtle)]">{r.path}</p>
+              <p className="truncate font-mono text-[12px] text-[var(--adm-ink-subtle)]">{r.path}</p>
             </div>
           </div>
         );
@@ -138,41 +137,46 @@ export default function RolesPage() {
   ];
 
   return (
-    <div className="space-y-5 pb-10">
+    <div className="space-y-4 pb-10 lg:space-y-5">
       <PageHeader
-        title="Roles & Permissions"
-        subtitle="Who can access what. Read-only, assignments are managed in Cognito."
-        icon={IconShield}
+        title="Roles & permissions"
+        info="Who can access what. Read-only, assignments are managed in Cognito."
         actions={
-          <PageHeaderButton variant="secondary" asChild>
+          <WorkspaceButton asChild>
             <Link href="/admin/users">
               <IconGroup className="h-4 w-4" />Users
             </Link>
-          </PageHeaderButton>
+          </WorkspaceButton>
         }
       />
 
-      {/* Access granted per role, counted straight off the routeAccess table. */}
-      <KpiStrip cols={4}>
+      {/* Routes granted per role, counted off the same routeAccess table as the matrix. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {roles.map((role) => {
           const c = roleConfigs[role];
+          const Icon = c.icon;
           return (
-            <StatCard
-              key={role}
-              size="sm"
-              tone="slate"
-              icon={c.icon}
-              label={c.name}
-              value={`${grantedCount(role)} / ${routes.length}`}
-              hint={`Level ${c.level} · ${c.description}`}
-            />
+            <AdminCard key={role} className="flex flex-col gap-2.5 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-[13px] font-medium text-[var(--adm-ink-mute)]">{c.name}</span>
+                <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[24px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
+                  {grantedCount(role)}
+                </span>
+                <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} routes</span>
+              </div>
+              <p className="text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">
+                <span className="tabular-nums">Level {c.level}</span> · {c.description}
+              </p>
+            </AdminCard>
           );
         })}
-      </KpiStrip>
+      </div>
 
-      {/* Permission matrix, routes down, roles across. */}
       <AdminCard className="overflow-hidden">
-        <AdminCardHeader icon={IconShield} tone="blue" title="Route access" count={routes.length} />
+        <AdminCardHeader title="Route access" subtitle="Routes down, roles across" count={routes.length} />
         <DataTable
           columns={columns}
           rows={routes}
@@ -182,15 +186,15 @@ export default function RolesPage() {
         />
       </AdminCard>
 
-      <div className="flex items-start gap-3 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] p-4">
-        <IconInfo className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--adm-accent)]" />
-        <p className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+      <NotePanel className="flex items-start gap-3">
+        <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
+        <p>
           Permissions are defined in{" "}
-          <code className="rounded-[4px] bg-[var(--adm-surface)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--adm-ink-mute)]">src/lib/auth/config.ts</code>.
+          <code className="rounded-[6px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]">src/lib/auth/config.ts</code>.
           Role assignments live in AWS Cognito groups, change a teammate&apos;s role from the{" "}
-          <Link href="/admin/users" className="font-semibold text-[var(--adm-accent)] hover:underline">Users</Link> page.
+          <Link href="/admin/users" className="font-medium text-[var(--adm-accent)] hover:underline">Users</Link> page.
         </p>
-      </div>
+      </NotePanel>
     </div>
   );
 }

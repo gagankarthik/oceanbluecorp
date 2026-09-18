@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, toFeedJob } from "@/lib/aws/dynamodb";
 import { requireApiKey } from "@/lib/auth/api-key";
+import { serverError } from "@/lib/api-errors";
 
 // GET /api/v1/jobs/[id]
 export async function GET(
@@ -15,7 +16,7 @@ export async function GET(
     const result = await getJob(id);
 
     if (!result.success) {
-      return NextResponse.json({ error: "Failed to fetch job" }, { status: 500 });
+      return serverError("v1/jobs/[id] GET failed", result.error, "Couldn't load the job. Please try again.");
     }
     if (!result.data) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -23,7 +24,6 @@ export async function GET(
 
     return NextResponse.json({ data: toFeedJob(result.data) });
   } catch (error) {
-    console.error("v1/jobs/[id] GET error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("v1/jobs/[id] GET error", error, "Couldn't load the job. Please try again.");
   }
 }

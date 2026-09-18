@@ -18,6 +18,7 @@ import {
   IconPipeline, IconSend, IconInterview, IconPlacement, IconMoney,
   IconCalendar, IconTrash, IconWarning, IconBuilding, IconPercent, IconUser,
 } from "@/components/admin/icons";
+import { Skel } from "./skeletons";
 import type {
   Client, Interview, PipelineKind, PipelineRecord, Placement, RateUnit, Submission, Vendor,
 } from "@/lib/aws/dynamodb";
@@ -171,10 +172,9 @@ export function PipelinePanel({
         <AdminCardHeader
           icon={IconPipeline}
           title="Pipeline"
-          tone="blue"
           count={records.length || undefined}
           action={
-            <div className="flex flex-none items-center gap-2">
+            <div className="flex flex-none flex-wrap items-center gap-1.5">
               <PanelAction icon={IconSend} label="Submission" onClick={() => openCreate("submission")} />
               <PanelAction icon={IconInterview} label="Interview" onClick={() => openCreate("interview")} />
             </div>
@@ -182,23 +182,32 @@ export function PipelinePanel({
         />
 
         {loading ? (
-          <div className="flex items-center justify-center px-5 py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--adm-accent)]" />
+          <div className="divide-y divide-[var(--adm-line-soft)]" aria-busy="true" aria-label="Loading pipeline">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-2.5 px-4 py-3">
+                <Skel className="mt-0.5 h-4 w-4 flex-none rounded-[4px]" />
+                <div className="flex-1 space-y-2">
+                  <Skel className="h-3.5 w-40" />
+                  <Skel className="h-3 w-64 max-w-full" />
+                </div>
+                <Skel className="h-8 w-16 rounded-[8px]" />
+              </div>
+            ))}
           </div>
         ) : error ? (
-          <p role="alert" className="mx-5 my-4 flex items-start gap-2 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger)]">
+          <p role="alert" className="m-4 flex items-start gap-2 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             {error}
           </p>
         ) : records.length === 0 ? (
           <EmptyState
+            size="sm"
             icon={IconSend}
-            tone="blue"
             title="Nothing submitted yet"
             description="Record a submission to track where this candidate has been sent, what rate went out, and what came back."
             action={
-              <WorkspaceButton variant="primary" onClick={() => openCreate("submission")}>
-                <Plus className="h-4 w-4" /> Record submission
+              <WorkspaceButton onClick={() => openCreate("submission")}>
+                <Plus /> Record submission
               </WorkspaceButton>
             }
           />
@@ -221,13 +230,13 @@ export function PipelinePanel({
             })}
 
             {unattached.length > 0 && (
-              <div className="px-5 py-4">
-                <p className="mb-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-[var(--adm-ink-subtle)]">
+              <div className="px-4 py-3">
+                <p className="mb-2 text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
                   Not tied to a submission
                 </p>
                 <div className="space-y-2">
                   {unattached.map((record) => (
-                    <div key={record.id} className="rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
+                    <div key={record.id} className="rounded-[10px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] py-2 pl-3 pr-1.5">
                       {record.kind === "interview"
                         ? <InterviewLine interview={record as Interview} onEdit={openEdit} onDelete={setPendingDelete} />
                         : <PlacementLine placement={record as Placement} onEdit={openEdit} onDelete={setPendingDelete} />}
@@ -283,19 +292,19 @@ export function PipelinePanel({
   );
 }
 
+const addLinkCls =
+  "inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
+
 /* ── Rows ────────────────────────────────────────────────────────────────── */
 
 function PanelAction({
   icon: Icon, label, onClick,
 }: { icon: typeof IconSend; label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" /> {label}
-    </button>
+    <WorkspaceButton onClick={onClick} className="h-8 gap-1.5 px-2.5 text-[13px] font-medium [&_svg]:h-3.5 [&_svg]:w-3.5">
+      <Icon aria-hidden="true" />
+      {label}
+    </WorkspaceButton>
   );
 }
 
@@ -307,21 +316,22 @@ function RowActions({
   onDelete: (r: PipelineRecord) => void;
 }) {
   return (
-    <div className="flex flex-none items-center gap-1">
+    <div className="-my-1 flex flex-none items-center gap-0.5">
       <button
         type="button"
         onClick={() => onEdit(record)}
-        className="rounded-[6px] px-2 py-1 text-[12px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-accent)]"
+        className="h-8 rounded-[8px] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         Edit
       </button>
       <button
         type="button"
         onClick={() => onDelete(record)}
-        aria-label="Delete"
-        className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+        aria-label={`Delete ${KIND_META[record.kind].label.toLowerCase()}`}
+        title="Delete"
+        className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       >
-        <IconTrash className="h-3.5 w-3.5" aria-hidden="true" />
+        <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -342,15 +352,13 @@ function SubmissionRow({
   const viaVendor = !!submission.vendorName && !!submission.clientName;
 
   return (
-    <div className="px-5 py-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <span className="grid h-9 w-9 flex-none place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-          <IconBuilding className="h-4 w-4 text-[var(--adm-accent)]" aria-hidden="true" />
-        </span>
+    <div className="px-4 py-3">
+      <div className="flex items-start gap-2.5">
+        <IconBuilding className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{target}</p>
+            <p className="min-w-0 truncate text-[14px] font-semibold text-[var(--adm-ink)]">{target}</p>
             <StatusBadge tone={submissionTone(submission.status)} label={SUBMISSION_STATUS_LABELS[submission.status]} />
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-[var(--adm-ink-subtle)]">
@@ -372,7 +380,7 @@ function SubmissionRow({
             {submission.jobTitle && <span>for {submission.jobTitle}</span>}
           </p>
           {submission.rejectionReason && (
-            <p className="mt-1.5 text-[12.5px] text-[var(--adm-danger)]">
+            <p className="mt-1.5 text-[12.5px] text-[var(--adm-danger-ink)]">
               Rejected: {submission.rejectionReason}
             </p>
           )}
@@ -386,27 +394,19 @@ function SubmissionRow({
         <RowActions record={submission} onEdit={onEdit} onDelete={onDelete} />
       </div>
 
-      {/* Children, indented under the submission that produced them. */}
-      <div className="mt-3 space-y-2 border-l border-[var(--adm-line)] pl-4 sm:ml-12">
+      {/* Children hang off a rule running down from the submission glyph. */}
+      <div className="ml-[7px] mt-2.5 space-y-2.5 border-l border-[var(--adm-line)] pl-[18px]">
         {interviews.map((interview) => (
           <InterviewLine key={interview.id} interview={interview} onEdit={onEdit} onDelete={onDelete} />
         ))}
         {placement && <PlacementLine placement={placement} onEdit={onEdit} onDelete={onDelete} />}
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onAddInterview}
-            className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
-          >
+        <div className="-ml-1.5 flex flex-wrap items-center gap-1">
+          <button type="button" onClick={onAddInterview} className={addLinkCls}>
             <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Interview
           </button>
           {!placement && (
-            <button
-              type="button"
-              onClick={onAddPlacement}
-              className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-success)]"
-            >
+            <button type="button" onClick={onAddPlacement} className={addLinkCls}>
               <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Placement
             </button>
           )}
@@ -440,8 +440,8 @@ function InterviewLine({
             }
           />
         </div>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12px] text-[var(--adm-ink-subtle)]">
-          <span>{fmtDateTime(interview.scheduledAt)}</span>
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12.5px] text-[var(--adm-ink-subtle)]">
+          <span className="tabular-nums">{fmtDateTime(interview.scheduledAt)}</span>
           {interview.durationMinutes ? <span>{interview.durationMinutes} min</span> : null}
           {interview.location && <span className="truncate">{interview.location}</span>}
           {interview.panel?.length ? <span>with {interview.panel.join(", ")}</span> : null}
@@ -469,13 +469,13 @@ function PlacementLine({
 
   return (
     <div className="flex flex-wrap items-start gap-2.5">
-      <IconPlacement className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-success)]" aria-hidden="true" />
+      <IconPlacement className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[13px] font-semibold text-[var(--adm-ink)]">Placement</p>
           <StatusBadge tone={placementTone(placement.status)} label={PLACEMENT_STATUS_LABELS[placement.status]} />
         </div>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
           <span>{fmtDate(placement.startAt)} → {placement.endAt ? fmtDate(placement.endAt) : "open ended"}</span>
           {typeof placement.billRate === "number" && (
             <span>Bill {formatRate(placement.billRate, placement.rateUnit, placement.currency)}</span>
@@ -486,7 +486,7 @@ function PlacementLine({
           {marginPct !== null && marginAmt !== null && (
             <span className={cn(
               "inline-flex items-center gap-1 font-semibold",
-              marginPct >= 0 ? "text-[var(--adm-success)]" : "text-[var(--adm-danger)]",
+              marginPct >= 0 ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-danger-ink)]",
             )}>
               <IconPercent className="h-3.5 w-3.5" aria-hidden="true" />
               {marginPct.toFixed(1)}% margin
@@ -683,32 +683,30 @@ function PipelineRecordDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[520px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
-        <div className="flex flex-shrink-0 items-center justify-between border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-              <meta.icon className="h-[18px] w-[18px] text-[var(--adm-accent)]" aria-hidden="true" />
-            </span>
-            <div>
-              <SheetTitle className="text-[15px] font-bold text-[var(--adm-ink)]">
+      <SheetContent side="right" showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="w-full sm:max-w-[520px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
+        <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 sm:px-5">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <meta.icon className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+            <div className="min-w-0">
+              <SheetTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
                 {isEdit ? `Edit ${meta.label.toLowerCase()}` : `Record ${meta.label.toLowerCase()}`}
               </SheetTitle>
-              <SheetDescription className="mt-0.5 text-xs text-[var(--adm-ink-subtle)]">
+              <SheetDescription className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-subtle)]">
                 {parentSubmission
                   ? `Under ${parentSubmission.clientName || parentSubmission.vendorName || "the submission"}`
                   : meta.blurb}
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]">
+          <button type="button" onClick={onClose} aria-label="Close" className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
             {error && (
-              <p role="alert" className="flex items-start gap-2 rounded-[6px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] p-3 text-xs leading-relaxed text-[var(--adm-danger)]">
+              <p role="alert" className="flex items-start gap-2 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
                 <IconWarning className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 {error}
               </p>
@@ -781,7 +779,7 @@ function PipelineRecordDrawer({
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="When" htmlFor="pl-when">
                     <FormInput id="pl-when" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="tabular-nums" />
                   </Field>
@@ -832,14 +830,14 @@ function PipelineRecordDrawer({
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <Field label="Bill rate" htmlFor="pl-bill">
                     <FormInput id="pl-bill" type="number" step="0.01" min="0" value={billRate} onChange={(e) => setBillRate(e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Pay rate" htmlFor="pl-pay">
                     <FormInput id="pl-pay" type="number" step="0.01" min="0" value={payRate} onChange={(e) => setPayRate(e.target.value)} className="tabular-nums" />
                   </Field>
-                  <Field label="Per" htmlFor="pl-plunit">
+                  <Field label="Per" htmlFor="pl-plunit" className="col-span-2 sm:col-span-1">
                     <FormSelect id="pl-plunit" value={rateUnit} onChange={(e) => setRateUnit(e.target.value as RateUnit)}>
                       {RATE_UNITS.map((u) => <option key={u} value={u}>{RATE_UNIT_LABELS[u]}</option>)}
                     </FormSelect>
@@ -850,10 +848,10 @@ function PipelineRecordDrawer({
                     is worth doing should not wait until after saving. */}
                 {livePreview && (
                   <p className={cn(
-                    "rounded-[6px] border p-3 text-[12.5px] font-semibold tabular-nums",
+                    "rounded-[10px] px-3 py-2.5 text-[13px] font-medium tabular-nums",
                     livePreview.pct >= 0
-                      ? "border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] text-[var(--adm-success)]"
-                      : "border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] text-[var(--adm-danger)]",
+                      ? "bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
+                      : "bg-[var(--adm-danger-soft)] text-[var(--adm-danger-ink)]",
                   )}>
                     Gross margin {livePreview.pct.toFixed(1)}% ·{" "}
                     {formatRate(livePreview.amount, rateUnit)} per unit
@@ -880,10 +878,10 @@ function PipelineRecordDrawer({
             </Field>
           </div>
 
-          <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
-            <WorkspaceButton type="button" onClick={onClose}>Cancel</WorkspaceButton>
+          <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:px-5">
+            <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
             <WorkspaceButton type="submit" variant="primary" disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {saving ? <Loader2 className="animate-spin" /> : null}
               {isEdit ? "Save changes" : `Record ${meta.label.toLowerCase()}`}
             </WorkspaceButton>
           </div>

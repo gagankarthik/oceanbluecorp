@@ -17,13 +17,11 @@ export function StatusBadge({ status, tone, label, withIcon = false, size = "sm"
   const t = tones[resolvedTone];
   const Icon = withIcon && meta?.icon ? meta.icon : null;
   const text = label || meta?.label || status || "–";
-  // Square-cornered status chips read as record state in a business system;
-  // fully-rounded pills read as consumer tags.
-  const sizing = size === "md" ? "text-[11.5px] px-2 py-0.5" : "text-[10.5px] px-1.5 py-px";
+  const sizing = size === "md" ? "h-6 px-2.5 text-[12.5px]" : "h-[22px] px-2 text-[12px]";
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[4px] font-semibold uppercase tracking-[0.03em]",
+        "inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full font-medium leading-none",
         t.bg,
         t.text,
         sizing,

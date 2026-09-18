@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import SecurityPage from "./_content";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   description:
     "How Ocean Blue Corporation protects client and candidate data: encryption, access controls, where data is stored and who can reach it, and how to report a vulnerability.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Security | Ocean Blue Corporation",
     description:
       "Encryption, access controls, data residency, and vulnerability reporting at Ocean Blue Corporation.",

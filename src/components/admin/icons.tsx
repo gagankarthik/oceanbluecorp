@@ -80,13 +80,14 @@ export function IconPipeline(props: IconProps) {
   );
 }
 
-/** Conversion: a funnel narrowing to a single confirmed outcome. */
+/** Conversion: progress that lands, an arrow into a check. */
 export function IconConversion(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M4 4h16l-6 7v4" />
-      <circle cx="16.5" cy="17.5" r="4.5" />
-      <path d="M14.6 17.5l1.4 1.4 2.6-2.8" />
+      <path d="M3 12h8.5" />
+      <path d="m8.5 8.5 3.5 3.5-3.5 3.5" />
+      <circle cx="17.5" cy="12" r="3.5" />
+      <path d="m16 12 1 1 2-2" />
     </svg>
   );
 }
@@ -139,12 +140,14 @@ export function IconTeam(props: IconProps) {
   );
 }
 
-/** Source attribution, for the channel breakdown. */
+/** Sourcing: finding people, a person under a magnifier. */
 export function IconSource(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <circle cx="12" cy="12" r="2.5" />
-      <path d="M12 9.5V4M12 14.5V20M9.8 10.8 5.5 6.5M14.2 13.2l4.3 4.3M9.8 13.2 5.5 17.5M14.2 10.8l4.3-4.3" />
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 8.2-4.8" />
+      <circle cx="17" cy="15.5" r="3" />
+      <path d="m19.2 17.7 2.3 2.3" />
     </svg>
   );
 }
@@ -193,13 +196,14 @@ export function IconLive(props: IconProps) {
      · optical weight balanced: 2–4 strokes per icon, never more
    ============================================================ */
 
-/** Overview: a panel of readings with a live pulse across it. */
+/** Dashboard: a tiled layout of panels. */
 export function IconOverview(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M3 9h18" />
-      <path d="M6.5 15.5l2.5-3 2 2.5 2-4 2.5 4.5" />
+      <rect x="3.5" y="3.5" width="7" height="8" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="5" rx="1.5" />
+      <rect x="13.5" y="11.5" width="7" height="9" rx="1.5" />
+      <rect x="3.5" y="14.5" width="7" height="6" rx="1.5" />
     </svg>
   );
 }
@@ -240,26 +244,26 @@ export function IconContact(props: IconProps) {
   );
 }
 
-/** Client: an account building marked with an agreement tick. */
+/** Client: an office building. */
 export function IconClient(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M3 21h11V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z" />
-      <path d="M6.5 9h3M6.5 13h3M6.5 17h3" />
-      <path d="M14 21h7v-9h-4" />
-      <path d="M16.5 17.5l1.2 1.2 2.3-2.4" />
+      <path d="M4.5 20.5V5a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 15.5 5v15.5" />
+      <path d="M15.5 9.5H18a1.5 1.5 0 0 1 1.5 1.5v9.5" />
+      <path d="M3 20.5h18" />
+      <path d="M8 7.5h1M11 7.5h1M8 11h1M11 11h1M8 14.5h1M11 14.5h1" />
+      <path d="M9 20.5v-2.5h2v2.5" />
     </svg>
   );
 }
 
-/** Vendor: a supply network, one hub feeding several partners. */
+/** Vendor: a supplier storefront. */
 export function IconVendor(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <circle cx="12" cy="5" r="2.5" />
-      <circle cx="5" cy="18.5" r="2.5" />
-      <circle cx="19" cy="18.5" r="2.5" />
-      <path d="M10.3 7.1 6.4 16.2M13.7 7.1l3.9 9.1M7.5 18.5h9" />
+      <path d="M4.5 4h15l1.5 5a2.75 2.75 0 0 1-5.5 0 2.75 2.75 0 0 1-5.5 0 2.75 2.75 0 0 1-5.5 0z" />
+      <path d="M5 11.5v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+      <path d="M10 20.5v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4" />
     </svg>
   );
 }
@@ -276,14 +280,14 @@ export function IconContent(props: IconProps) {
   );
 }
 
-/** Staff: a figure carrying an access mark, an account, not a candidate. */
+/** Staff: a portrait ID badge on a lanyard clip. */
 export function IconStaff(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <circle cx="10" cy="8" r="3.5" />
-      <path d="M4 20a6 6 0 0 1 11.2-3" />
-      <circle cx="17.5" cy="17.5" r="2" />
-      <path d="M17.5 19.5v2M16 21h3" />
+      <rect x="5" y="4.5" width="14" height="16" rx="2" />
+      <path d="M10 2.5h4v4h-4z" />
+      <circle cx="12" cy="11.5" r="2.25" />
+      <path d="M8.5 17a3.5 3.5 0 0 1 7 0" />
     </svg>
   );
 }
@@ -737,14 +741,13 @@ export function IconInterview(props: IconProps) {
   );
 }
 
-/** Placement, a candidate seated at a client, flag planted. */
+/** Placement: a filled role, a briefcase with a check. */
 export function IconPlacement(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <circle cx="8.5" cy="8" r="3.2" />
-      <path d="M3 19.5a5.5 5.5 0 0 1 11 0" />
-      <path d="M17.5 4v16" />
-      <path d="M17.5 4.5h4l-1.3 2.3 1.3 2.3h-4" />
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7" />
+      <path d="m9 13.5 2 2 4-4" />
     </svg>
   );
 }
@@ -1097,6 +1100,29 @@ export function IconFile(props: IconProps) {
     <svg {...base} {...props}>
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
       <path d="M14 3v5h5" />
+    </svg>
+  );
+}
+
+/** News: a folded newspaper. */
+export function IconNews(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 5a1.5 1.5 0 0 1 1.5-1.5h10A1.5 1.5 0 0 1 17 5v14a1.5 1.5 0 0 0 1.5 1.5H6A2 2 0 0 1 4 18.5z" />
+      <path d="M17 8.5h2a1 1 0 0 1 1 1v9.5a1.5 1.5 0 0 1-3 0" />
+      <rect x="7.5" y="7" width="6" height="4" rx="0.75" />
+      <path d="M7.5 14.5h6M7.5 17.5h4" />
+    </svg>
+  );
+}
+
+/** Customer story: a speech bubble carrying a quote. */
+export function IconQuote(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v10a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17h0A1.5 1.5 0 0 1 4 15.5z" />
+      <path d="M9 12.5c1.2-.3 1.8-1.2 1.8-2.6V8.5H8.5v2.2h2.3" />
+      <path d="M14 12.5c1.2-.3 1.8-1.2 1.8-2.6V8.5h-2.3v2.2h2.3" />
     </svg>
   );
 }

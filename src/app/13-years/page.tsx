@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ThirteenYearsPage from "./_content";
+import { OG_IMAGES } from "@/lib/seo";
 import { BRAND_NAME, FOUNDED_YEAR, MILESTONES } from "@/lib/company";
 import {
   ANNIVERSARY_COPY,
@@ -23,8 +24,8 @@ const DESCRIPTION = `${BRAND_NAME} turns ${ANNIVERSARY_YEARS} in ${ANNIVERSARY_Y
 export const metadata: Metadata = {
   title: `Celebrating ${ANNIVERSARY_YEARS} Years`,
   description: DESCRIPTION,
-  openGraph: { title: TITLE, description: DESCRIPTION, url: URL },
-  twitter: { title: TITLE, description: DESCRIPTION },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: URL, images: OG_IMAGES },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: OG_IMAGES },
   alternates: { canonical: URL },
 };
 

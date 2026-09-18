@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   IconBuilding, IconDownload, IconEdit,
-  IconGlobe, IconTrash, IconWarning,
+  IconGlobe, IconTrash,
 } from "@/components/admin/icons";
 import type { Client } from "@/lib/aws/dynamodb";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -21,7 +21,11 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
-import { PageHeaderButton } from "@/components/admin/page-header";
+import { FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email, LIMITS, maxLen, phone, required, url } from "@/lib/form-validation";
+import { AdminCard } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -55,14 +59,38 @@ const initialFormData: FormData = {
   zipCode: "",
 };
 
-interface FormErrors {
-  name?: string;
-  websiteUrl?: string;
-  status?: string;
-  email?: string;
+const FIELD_IDS = {
+  name: "client-name",
+  websiteUrl: "client-website",
+  email: "client-email",
+  phone: "client-phone",
+  address: "client-address",
+  city: "client-city",
+  state: "client-state",
+  zipCode: "client-zip",
+} as const;
+
+type ClientField = keyof typeof FIELD_IDS;
+
+function validateClient(f: FormData) {
+  return collectErrors<ClientField>({
+    name: check(f.name, required("Enter the client's name."), maxLen(LIMITS.name)),
+    websiteUrl: check(
+      f.websiteUrl,
+      required("Enter the client's website, like https://example.com."),
+      url(),
+      maxLen(LIMITS.url),
+    ),
+    email: check(f.email, email("Enter the client's email, like name@company.com."), maxLen(LIMITS.email)),
+    phone: check(f.phone, phone()),
+    address: check(f.address, maxLen(LIMITS.short)),
+    city: check(f.city, maxLen(LIMITS.name)),
+    state: check(f.state, maxLen(LIMITS.name)),
+    zipCode: check(f.zipCode, maxLen(10, "Enter a ZIP code of 10 characters or fewer, like 43215.")),
+  });
 }
 
-/** Placeholder for an empty cell, an em-dash, aligned with the other columns. */
+/** Empty cell. */
 function Blank() {
   return <span className="text-[var(--adm-ink-subtle)]"></span>;
 }
@@ -78,8 +106,10 @@ export default function ClientsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { errors: formErrors, validateAll, revalidate, reset: resetErrors, invalidProps } =
+    useFormErrors<ClientField>(() => validateClient(formData), FIELD_IDS);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -100,7 +130,8 @@ export default function ClientsPage() {
 
       setClients(data.clients || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch clients");
+      console.error("Failed to load clients:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -122,8 +153,6 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus;
   }), [clients, debouncedSearch, statusFilter]);
 
-  // Counts feed the view tabs. The old `stats` object also computed a
-  // "reachable" figure that existed only to fill a fourth KPI tile.
   const statusCounts: Record<string, number> = useMemo(() => ({
     all:      clients.length,
     active:   clients.filter((c) => c.status === "active").length,
@@ -154,7 +183,8 @@ export default function ClientsPage() {
   const openCreate = () => {
     setEditingClient(null);
     setFormData(initialFormData);
-    setFormErrors({});
+    resetErrors();
+    setSaveError(null);
     setShowForm(true);
   };
 
@@ -162,42 +192,15 @@ export default function ClientsPage() {
     setShowForm(false);
     setEditingClient(null);
     setFormData(initialFormData);
-    setFormErrors({});
-  };
-
-  const validateForm = (): boolean => {
-    const errors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      errors.name = "Client name is required";
-    }
-
-    if (!formData.websiteUrl.trim()) {
-      errors.websiteUrl = "Website URL is required";
-    } else {
-      try {
-        new URL(formData.websiteUrl);
-      } catch {
-        errors.websiteUrl = "Please enter a valid URL (e.g., https://example.com)";
-      }
-    }
-
-    if (!formData.status) {
-      errors.status = "Status is required";
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    resetErrors();
+    setSaveError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) return;
+    if (submitting) return;
+    setSaveError(null);
+    if (!validateAll()) return;
 
     setSubmitting(true);
 
@@ -213,13 +216,13 @@ export default function ClientsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to save client");
+        throw new Error(data.error || "The client could not be saved. Check your connection and try again.");
       }
 
       await fetchClients();
       closeForm();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save client");
+      setSaveError(err instanceof Error ? err.message : "The client could not be saved. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -238,7 +241,8 @@ export default function ClientsPage() {
       state: client.state || "",
       zipCode: client.zipCode || "",
     });
-    setFormErrors({});
+    resetErrors();
+    setSaveError(null);
     setShowForm(true);
   };
 
@@ -368,27 +372,26 @@ export default function ClientsPage() {
       hideBelow: "xl",
       cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(c.createdAt)}</span>,
     },
-    // No trailing "actions" column. Edit and delete now ride in DataTable's
-    // rowActions slot, which reveals them on hover, a permanent column of
-    // pencil-and-bin icons drew a vertical stripe of chrome down the grid and
-    // competed with the records for attention.
   ];
 
+  // Hover-revealed, not a permanent column of icon buttons down the grid.
   const rowActions = (c: Client) => (
     <div className="flex items-center gap-0.5">
       <button
+        type="button"
         onClick={() => handleEdit(c)}
         aria-label={`Edit ${c.name}`}
         title="Edit"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         <IconEdit className="h-4 w-4" aria-hidden="true" />
       </button>
       <button
+        type="button"
         onClick={() => setPendingDelete(c.id)}
         aria-label={`Delete ${c.name}`}
         title="Delete"
-        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+        className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -401,33 +404,24 @@ export default function ClientsPage() {
 
   if (error) return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="space-y-3 text-center">
-        <IconWarning className="mx-auto h-10 w-10 text-[var(--adm-danger)]" />
-        <p className="text-sm text-[var(--adm-danger)]">{error}</p>
-        <button
-          onClick={fetchClients}
-          className="rounded-[8px] bg-[var(--adm-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--adm-accent-strong)]"
-        >
-          Retry
-        </button>
-      </div>
+      <AdminCard className="w-full max-w-md">
+        <EmptyState
+          variant="error"
+          title="Couldn't load clients"
+          description={error}
+          action={<WorkspaceButton variant="primary" onClick={fetchClients}>Try again</WorkspaceButton>}
+        />
+      </AdminCard>
     </div>
   );
 
   return (
     <>
-      {/* One panel. The KPI strip that used to sit above this is gone: it
-          restated the status counts that now ride on the view tabs, and three
-          of its four tiles drew a share bar ("7% reachable") against a total
-          that is not a whole those figures are part of. */}
-      {/* Overview. Deliberately NOT a count of rows the footer already shows:
-          each tile is either something the grid cannot tell you at a glance, or
-          a shortcut that filters to it. */}
       <WorkspaceTitle
         title="Clients"
         actions={
           <>
-            <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0}>
+            <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
@@ -437,7 +431,6 @@ export default function ClientsPage() {
           </>
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Active clients", value: statusCounts.active,
@@ -452,7 +445,6 @@ export default function ClientsPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
       <WorkspaceToolbar
           variant="canvas"
           search={
@@ -532,50 +524,56 @@ export default function ClientsPage() {
         onCancel={() => setPendingDelete(null)}
       />
 
-      {/* ── add / edit client ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-6 py-4">
-              <h2 className="text-[16px] font-bold text-[var(--adm-ink)]">
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="client-form-title"
+        >
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
+              <h2 id="client-form-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
                 {editingClient ? "Edit client" : "Add new client"}
               </h2>
               <button
+                type="button"
                 onClick={closeForm}
                 aria-label="Close"
-                className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
-                <X className="h-5 w-5" aria-hidden="true" />
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="mb-4 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--adm-danger)]" />
-                    Required information
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Client name" required error={formErrors.name}>
+            <form onSubmit={handleSubmit} onBlur={revalidate} noValidate className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
+                <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
+                <section>
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Account</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Client name" required htmlFor={FIELD_IDS.name} error={formErrors.name}>
                       <FormInput
+                        id={FIELD_IDS.name}
+                        {...invalidProps("name")}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Enter client name"
-                        invalid={!!formErrors.name}
                       />
                     </Field>
-                    <Field label="Website URL" required error={formErrors.websiteUrl}>
+                    <Field label="Website URL" required htmlFor={FIELD_IDS.websiteUrl} error={formErrors.websiteUrl}>
                       <FormInput
+                        id={FIELD_IDS.websiteUrl}
+                        {...invalidProps("websiteUrl")}
                         type="url"
                         value={formData.websiteUrl}
                         onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                         placeholder="https://example.com"
-                        invalid={!!formErrors.websiteUrl}
                       />
                     </Field>
-                    <Field label="Status" required fullWidth error={formErrors.status}>
+                    <Field label="Status" required fullWidth htmlFor="client-status">
                       <FormSelect
+                        id="client-status"
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as "active" | "inactive" })}
                       >
@@ -584,22 +582,25 @@ export default function ClientsPage() {
                       </FormSelect>
                     </Field>
                   </div>
-                </div>
+                </section>
 
-                <div>
-                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Contact information</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Email" error={formErrors.email}>
+                <section className="border-t border-[var(--adm-line-soft)] pt-5">
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Contact information</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Email" htmlFor={FIELD_IDS.email} error={formErrors.email}>
                       <FormInput
+                        id={FIELD_IDS.email}
+                        {...invalidProps("email")}
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="client@example.com"
-                        invalid={!!formErrors.email}
                       />
                     </Field>
-                    <Field label="Phone number">
+                    <Field label="Phone number" htmlFor={FIELD_IDS.phone} error={formErrors.phone}>
                       <FormInput
+                        id={FIELD_IDS.phone}
+                        {...invalidProps("phone")}
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -607,41 +608,41 @@ export default function ClientsPage() {
                       />
                     </Field>
                   </div>
-                </div>
+                </section>
 
-                <div>
-                  <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--adm-ink-subtle)]">Address</h3>
-                  <div className="space-y-4">
-                    <Field label="Street address">
+                <section className="border-t border-[var(--adm-line-soft)] pt-5">
+                  <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Address</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <Field label="Street address" fullWidth htmlFor={FIELD_IDS.address} error={formErrors.address}>
                       <FormInput
+                        id={FIELD_IDS.address}
+                        {...invalidProps("address")}
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         placeholder="123 Main Street"
                       />
                     </Field>
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <Field label="City">
-                        <FormInput value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
-                      </Field>
-                      <Field label="State">
-                        <FormInput value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
-                      </Field>
-                      <Field label="ZIP code">
-                        <FormInput value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
-                      </Field>
-                    </div>
+                    <Field label="City" htmlFor={FIELD_IDS.city} error={formErrors.city}>
+                      <FormInput id={FIELD_IDS.city} {...invalidProps("city")} value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
+                    </Field>
+                    <Field label="State" htmlFor={FIELD_IDS.state} error={formErrors.state}>
+                      <FormInput id={FIELD_IDS.state} {...invalidProps("state")} value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                    </Field>
+                    <Field label="ZIP code" htmlFor={FIELD_IDS.zipCode} error={formErrors.zipCode}>
+                      <FormInput id={FIELD_IDS.zipCode} {...invalidProps("zipCode")} value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} placeholder="12345" />
+                    </Field>
                   </div>
-                </div>
+                </section>
               </div>
 
-              <div className="mt-8 flex items-center justify-end gap-2 border-t border-[var(--adm-line)] pt-6">
-                <PageHeaderButton type="button" variant="secondary" onClick={closeForm}>
+              <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
+                <WorkspaceButton type="button" onClick={closeForm} className="w-full sm:w-auto">
                   Cancel
-                </PageHeaderButton>
-                <PageHeaderButton type="submit" variant="primary" disabled={submitting}>
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                </WorkspaceButton>
+                <WorkspaceButton type="submit" variant="primary" disabled={submitting} className="w-full sm:w-auto">
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                   {editingClient ? "Update client" : "Add client"}
-                </PageHeaderButton>
+                </WorkspaceButton>
               </div>
             </form>
           </div>

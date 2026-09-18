@@ -6,6 +6,7 @@ import {
   deleteResumeFromS3,
 } from "@/lib/aws";
 import { requireStaff } from "@/lib/auth/verify";
+import { serverError } from "@/lib/api-errors";
 
 // GET - Get resume download URL
 export async function GET(
@@ -29,10 +30,7 @@ export async function GET(
     // Get presigned download URL
     const downloadUrlResult = await getResumeDownloadUrl(resumeResult.data.fileKey);
     if (!downloadUrlResult.success) {
-      return NextResponse.json(
-        { error: downloadUrlResult.error },
-        { status: 500 }
-      );
+      return serverError("Creating resume download URL", downloadUrlResult.error, "Couldn't open the resume. Please try again.");
     }
 
     return NextResponse.json({
@@ -41,11 +39,7 @@ export async function GET(
       downloadUrl: downloadUrlResult.url,
     });
   } catch (error) {
-    console.error("Resume download error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Resume download error", error, "Couldn't open the resume. Please try again.");
   }
 }
 
@@ -78,18 +72,11 @@ export async function DELETE(
     // Delete from DynamoDB
     const dbDeleteResult = await deleteResume(id);
     if (!dbDeleteResult.success) {
-      return NextResponse.json(
-        { error: dbDeleteResult.error },
-        { status: 500 }
-      );
+      return serverError("Deleting resume record", dbDeleteResult.error, "Couldn't delete the resume. Please try again.");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Resume delete error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Resume delete error", error, "Couldn't delete the resume. Please try again.");
   }
 }

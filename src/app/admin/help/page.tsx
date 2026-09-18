@@ -2,31 +2,28 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, Search, Command, X, Plus, Loader2 } from "lucide-react";
+import { Check, ChevronRight, Command, X, Plus, Loader2 } from "lucide-react";
 import {
-  IconBook, IconCopy, IconHelp, IconMail, IconPhone, IconEdit, IconTrash,
+  IconBook, IconCopy, IconMail, IconPhone, IconEdit, IconTrash, IconSettings,
 } from "@/components/admin/icons";
-import { PageHeader, PageHeaderButton } from "@/components/admin/page-header";
+import { PageHeader } from "@/components/admin/page-header";
+import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { Avatar } from "@/components/admin/avatar";
 import { Kbd } from "@/components/admin/kbd";
+import { FormInput, FormSelect } from "@/components/admin/forms/primitives";
+import { FieldError, FormErrorBanner } from "@/components/admin/forms/form-alert";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email, isBlank, maxLen, phone, required } from "@/lib/form-validation";
+import { WorkspaceButton, WorkspaceSearch } from "@/components/admin/workspace";
+import { PeriodSwitcher } from "@/components/admin/charts";
 import { useAdmin } from "@/components/admin/admin-provider";
 import { useAuth, UserRole } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-/* ============================================================================
-   Help & contacts.
-
-   Was a single flat grid of nine identical cards under one "Company directory"
-   heading. Two problems with that:
-
-   1. The page is called Help but only ever offered a phone list. Someone
-      arriving stuck had nothing to act on.
-   2. Nine equal cells in one undifferentiated block means finding "who do I
-      ask about payroll" is a linear read of every card. Grouping by what each
-      person is FOR turns that into one glance at a heading (Law of Common
-      Region), and the group labels double as the answer to the question.
-   ========================================================================== */
+// Directory grouped by what each team handles, so "who do I ask about payroll"
+// is one glance at a heading rather than a read of every card.
 
 type Team = "Leadership" | "People & HR" | "Recruiting" | "Sales";
 
@@ -94,11 +91,12 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         }
       }}
       className={cn(
-        "grid h-8 w-8 flex-none place-items-center rounded-[6px] transition-colors",
-        "opacity-0 focus-visible:opacity-100 group-hover/row:opacity-100",
+        "grid h-7 w-7 flex-none place-items-center rounded-[7px] transition-[opacity,background-color,color] duration-150",
+        // Hover-revealed only where there is a hover; always visible on touch.
+        "pointer-fine:opacity-0 pointer-fine:focus-visible:opacity-100 pointer-fine:group-hover/row:opacity-100",
         copied
-          ? "text-[var(--adm-success)] opacity-100"
-          : "text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]",
+          ? "text-[var(--adm-success-ink)] pointer-fine:opacity-100"
+          : "text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
       )}
     >
       {copied ? <Check className="h-4 w-4" /> : <IconCopy className="h-3.5 w-3.5" />}
@@ -122,7 +120,7 @@ function ContactRow({
 }) {
   if (!value) {
     return (
-      <div className="flex items-center gap-2.5 text-[13.5px]">
+      <div className="flex h-9 items-center gap-2.5 text-[13px]">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="select-none text-[var(--adm-ink-subtle)]">Not on record</span>
       </div>
@@ -135,7 +133,7 @@ function ContactRow({
         href={href}
         title={value}
         className={cn(
-          "min-w-0 flex-1 truncate text-[13.5px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]",
+          "min-w-0 flex-1 truncate text-[13px] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:text-[var(--adm-accent)]",
           numeric && "tabular-nums",
         )}
       >
@@ -146,24 +144,21 @@ function ContactRow({
   );
 }
 
-function DirectoryCard({ member }: { member: TeamMember }) {
+/** One person: identity, then each way to reach them with copy beside it. */
+function DirectoryRow({ member }: { member: TeamMember }) {
   return (
-    <div className="flex flex-col gap-3.5 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-5 shadow-[var(--adm-shadow-sm)] transition-all duration-150 hover:border-[var(--adm-line)] hover:shadow-[var(--adm-shadow-md)]">
+    <li className="grid grid-cols-1 gap-x-4 gap-y-1.5 px-4 py-3 transition-colors duration-150 hover:bg-[var(--adm-row-hover)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] md:items-center">
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar name={member.name} size="lg" />
+        <Avatar name={member.name} size="md" />
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{member.name}</p>
-          <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{member.designation}</p>
+          <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{member.name}</p>
+          <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{member.designation || "No title on record"}</p>
         </div>
       </div>
-
-      <div className="space-y-1 border-t border-[var(--adm-line-soft)] pt-3">
-        <ContactRow
-          icon={IconMail}
-          href={`mailto:${member.email}`}
-          value={member.email}
-          label="email address"
-        />
+      <div className="min-w-0 pl-11 md:pl-0">
+        <ContactRow icon={IconMail} href={`mailto:${member.email}`} value={member.email} label="email address" />
+      </div>
+      <div className="min-w-0 pl-11 md:pl-0">
         <ContactRow
           icon={IconPhone}
           href={member.phone ? `tel:${member.phone.replace(/[^+\d]/g, "")}` : undefined}
@@ -172,7 +167,7 @@ function DirectoryCard({ member }: { member: TeamMember }) {
           numeric
         />
       </div>
-    </div>
+    </li>
   );
 }
 
@@ -190,6 +185,24 @@ function DirectoryEditor({
   const { user } = useAuth();
   const [rows, setRows] = React.useState<TeamMember[]>(initial.length ? initial : DEFAULT_TEAM);
   const [saving, setSaving] = React.useState(false);
+  const [serverError, setServerError] = React.useState<string | null>(null);
+
+  // Keys are the control ids (`dir-${row}-${field}`) so the hook can focus them. Fully blank
+  // rows are dropped on save, so they are never flagged. Limits match the API's truncation.
+  const { errors, validateAll, revalidate, invalidProps } = useFormErrors<string>(() => {
+    const out: Record<string, string | undefined> = {};
+    rows.forEach((m, i) => {
+      if (isBlank(m.name) && isBlank(m.email) && isBlank(m.designation) && isBlank(m.phone)) return;
+      out[`dir-${i}-name`] = check(m.name, required("Enter this person's name, or remove the row."), maxLen(120));
+      out[`dir-${i}-designation`] = check(m.designation, maxLen(120));
+      out[`dir-${i}-email`] = check(m.email, email("Enter an email like name@oceanbluecorp.com."), maxLen(160));
+      out[`dir-${i}-phone`] = check(m.phone, phone(), maxLen(40));
+    });
+    return collectErrors(out);
+  });
+
+  // Removing a row shifts every index after it, so re-run the checks.
+  React.useEffect(() => { revalidate(); }, [rows.length, revalidate]);
 
   const update = (i: number, patch: Partial<TeamMember>) =>
     setRows((r) => r.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
@@ -198,10 +211,13 @@ function DirectoryEditor({
     setRows((r) => [...r, { name: "", designation: "", email: "", phone: "", team: "Recruiting" }]);
 
   const save = async () => {
+    if (saving) return;
+    if (!validateAll()) return;
     const cleaned = rows
       .map((m) => ({ ...m, name: m.name.trim(), email: m.email.trim() }))
       .filter((m) => m.name || m.email);
     setSaving(true);
+    setServerError(null);
     try {
       const res = await fetch("/api/help/directory", {
         method: "PUT",
@@ -210,87 +226,101 @@ function DirectoryEditor({
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "Failed to save");
+        throw new Error(d.error || "The directory could not be saved. Try again in a moment.");
       }
       onSaved(cleaned);
       toast.success("Directory updated");
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to save directory");
+      setServerError(e instanceof Error ? e.message : "The directory could not be saved. Try again in a moment.");
     } finally {
       setSaving(false);
     }
   };
 
-  const inputCls =
-    "h-9 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 text-[13px] text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
-
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Edit directory"
     >
       <div
-        className="flex max-h-[86dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        className="flex max-h-[86dvh] w-full max-w-4xl flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[var(--adm-line)] px-5 py-3.5">
-          <div>
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
+          <div className="min-w-0">
             <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Edit directory</h2>
-            <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">Add, edit or remove the people shown on the Help page.</p>
+            <p className="mt-0.5 text-[13px] text-[var(--adm-ink-subtle)]">Add, edit or remove the people shown on the Help page.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="grid h-8 w-8 place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+            className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto p-5">
+        <div className="flex-1 space-y-3 overflow-y-auto p-4" onBlur={revalidate}>
+          <FormErrorBanner message={serverError} onDismiss={() => setServerError(null)} />
           {rows.map((m, i) => (
-            <div key={i} className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-3">
-              <input className={cn(inputCls, "w-full sm:w-40")} placeholder="Name" value={m.name} onChange={(e) => update(i, { name: e.target.value })} />
-              <input className={cn(inputCls, "w-full sm:w-40")} placeholder="Title" value={m.designation} onChange={(e) => update(i, { designation: e.target.value })} />
-              <input className={cn(inputCls, "min-w-[160px] flex-1")} placeholder="Email" value={m.email} onChange={(e) => update(i, { email: e.target.value })} />
-              <input className={cn(inputCls, "w-full sm:w-36")} placeholder="Phone" value={m.phone} onChange={(e) => update(i, { phone: e.target.value })} />
-              <select
-                className={cn(inputCls, "w-full appearance-none sm:w-36")}
+            <div
+              key={i}
+              className="grid grid-cols-1 items-center gap-2 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
+            >
+              {([
+                ["name", "Name", "text"],
+                ["designation", "Title", "text"],
+                ["email", "Email", "email"],
+                ["phone", "Phone", "tel"],
+              ] as const).map(([field, label, type]) => {
+                const key = `dir-${i}-${field}`;
+                return (
+                  <div key={field} className="min-w-0">
+                    <FormInput
+                      id={key}
+                      type={type}
+                      aria-label={label}
+                      placeholder={label}
+                      value={m[field]}
+                      onChange={(e) => update(i, { [field]: e.target.value })}
+                      {...invalidProps(key)}
+                    />
+                    <FieldError id={`${key}-error`}>{errors[key]}</FieldError>
+                  </div>
+                );
+              })}
+              <FormSelect
                 value={m.team}
                 onChange={(e) => update(i, { team: e.target.value as Team })}
                 aria-label="Team"
               >
                 {TEAMS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              </FormSelect>
               <button
                 type="button"
                 onClick={() => remove(i)}
                 aria-label={`Remove ${m.name || "person"}`}
-                className="grid h-9 w-9 flex-none place-items-center rounded-[6px] text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+                className="grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
               >
                 <IconTrash className="h-4 w-4" />
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={add}
-            className="inline-flex items-center gap-1.5 rounded-[8px] border border-dashed border-[var(--adm-line-strong)] px-3 py-2 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]"
-          >
+          <WorkspaceButton onClick={add}>
             <Plus className="h-4 w-4" /> Add person
-          </button>
+          </WorkspaceButton>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-5 py-3">
-          <PageHeaderButton variant="secondary" onClick={onClose}>Cancel</PageHeaderButton>
-          <PageHeaderButton variant="primary" onClick={save} disabled={saving}>
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
+          <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
+          <WorkspaceButton variant="primary" onClick={save} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
-          </PageHeaderButton>
+          </WorkspaceButton>
         </div>
       </div>
     </div>
@@ -299,17 +329,20 @@ function DirectoryEditor({
 
 // ── page ─────────────────────────────────────────────────────────────────────
 
+type TeamFilter = Team | "all";
+
 export default function HelpPage() {
   const { openCommandPalette } = useAdmin();
   const { user } = useAuth();
   const canEdit = user?.role === UserRole.ADMIN || user?.role === UserRole.HR;
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   const [members, setMembers] = React.useState<TeamMember[]>(DEFAULT_TEAM);
   const [editing, setEditing] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const [team, setTeam] = React.useState<TeamFilter>("all");
 
-  // Load the stored directory; fall back to the built-in defaults when none has
-  // been saved yet.
+  // Stored directory, falling back to the built-in list until one is saved.
   React.useEffect(() => {
     let alive = true;
     fetch("/api/help/directory")
@@ -322,7 +355,7 @@ export default function HelpPage() {
   }, []);
 
   const q = query.trim().toLowerCase();
-  const matches = React.useMemo(
+  const searched = React.useMemo(
     () =>
       !q
         ? members
@@ -332,139 +365,150 @@ export default function HelpPage() {
     [q, members],
   );
 
-  const groups = TEAM_ORDER.map((t) => ({
-    ...t,
-    people: matches.filter((m) => m.team === t.key),
-  })).filter((g) => g.people.length > 0);
+  const teamOptions = React.useMemo(
+    () => [
+      { value: "all" as TeamFilter, label: `All ${searched.length}` },
+      ...TEAM_ORDER.map((t) => ({
+        value: t.key as TeamFilter,
+        label: `${t.key} ${searched.filter((m) => m.team === t.key).length}`,
+      })),
+    ],
+    [searched],
+  );
+
+  const groups = TEAM_ORDER
+    .filter((t) => team === "all" || t.key === team)
+    .map((t) => ({ ...t, people: searched.filter((m) => m.team === t.key) }))
+    .filter((g) => g.people.length > 0);
+
+  const shortcuts: { keys: string[]; label: string }[] = [
+    { keys: ["Ctrl", "K"], label: "Search jobs, candidates and screens" },
+    { keys: ["/"], label: "Focus the search on a list page" },
+    { keys: ["Esc"], label: "Clear a search or close a menu" },
+  ];
 
   return (
     <div className="pb-10">
       <PageHeader
-        title="Help & contacts"
-        subtitle="Who to reach at Ocean Blue, and how to get unstuck."
+        title="Help"
+        info="Who to reach at Ocean Blue, and the quickest ways around the console."
         actions={canEdit ? (
-          <PageHeaderButton variant="secondary" onClick={() => setEditing(true)}>
+          <WorkspaceButton onClick={() => setEditing(true)}>
             <IconEdit className="h-4 w-4" /> Edit directory
-          </PageHeaderButton>
+          </WorkspaceButton>
         ) : undefined}
       />
 
-      {/* ── Ways to get help ──
-          The page is named Help, so it leads with things you can DO. Without
-          this it was a phone list wearing a help label. */}
-      <div className="mb-8 grid gap-3 sm:grid-cols-3">
-        <a
-          href="mailto:hr@oceanbluecorp.com"
-          className="group flex items-start gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 shadow-[var(--adm-shadow-sm)] transition-all duration-150 hover:-translate-y-px hover:border-[var(--adm-accent)] hover:shadow-[var(--adm-shadow-md)]"
-        >
-          <span className="grid h-9 w-9 flex-none place-items-center rounded-[8px] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]">
-            <IconHelp className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">Ask the team</span>
-            <span className="mt-0.5 block text-[13px] leading-snug text-[var(--adm-ink-subtle)]">
-              Email HR and it gets routed to the right person.
-            </span>
-          </span>
-        </a>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
+        {/* Directory */}
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <WorkspaceSearch
+              value={query}
+              onChange={setQuery}
+              placeholder="Find a person, role or team"
+              className="sm:w-[280px]"
+            />
+            <div className="adm-scroll-hidden -mx-1 max-w-full overflow-x-auto px-1">
+              <PeriodSwitcher label="Team" options={teamOptions} value={team} onChange={setTeam} />
+            </div>
+          </div>
 
-        <button
-          type="button"
-          onClick={openCommandPalette}
-          className="group flex items-start gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-left shadow-[var(--adm-shadow-sm)] transition-all duration-150 hover:-translate-y-px hover:border-[var(--adm-accent)] hover:shadow-[var(--adm-shadow-md)]"
-        >
-          <span className="grid h-9 w-9 flex-none place-items-center rounded-[8px] bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]">
-            <Command className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </span>
-          <span className="min-w-0">
-            <span className="flex items-center gap-2 text-[14px] font-semibold text-[var(--adm-ink)]">
-              Jump to anything <Kbd>Ctrl K</Kbd>
-            </span>
-            <span className="mt-0.5 block text-[13px] leading-snug text-[var(--adm-ink-subtle)]">
-              Search jobs, candidates and screens from anywhere.
-            </span>
-          </span>
-        </button>
-
-        <Link
-          href="/admin/docs"
-          className="group flex items-start gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 shadow-[var(--adm-shadow-sm)] transition-all duration-150 hover:-translate-y-px hover:border-[var(--adm-accent)] hover:shadow-[var(--adm-shadow-md)]"
-        >
-          <span className="grid h-9 w-9 flex-none place-items-center rounded-[8px] bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]">
-            <IconBook className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">Developer docs</span>
-            <span className="mt-0.5 block text-[13px] leading-snug text-[var(--adm-ink-subtle)]">
-              API keys, endpoints and integration notes.
-            </span>
-          </span>
-        </Link>
-      </div>
-
-      {/* ── Directory ── */}
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
-            Company directory
-          </h2>
-          <p className="mt-0.5 text-[13.5px] text-[var(--adm-ink-subtle)]">
-            Grouped by what each team handles, so you can skip to the right one.
-          </p>
-        </div>
-
-        <div className="relative w-full sm:w-[280px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Escape") setQuery(""); }}
-            placeholder="Find a person or team"
-            aria-label="Search the directory"
-            className="h-10 w-full rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-9 text-[14px] text-[var(--adm-ink)] shadow-[inset_0_1px_2px_rgba(16,24,40,0.03)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Clear search"
-              className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[5px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          {groups.length === 0 ? (
+            <AdminCard>
+              <EmptyState
+                variant="filtered"
+                title={q ? `No one matches “${query}”` : "No one in this team yet"}
+                description={q ? "Try a name, a role, or a team like “recruiting”." : "Pick another team, or add people with Edit directory."}
+                action={
+                  <WorkspaceButton onClick={() => { setQuery(""); setTeam("all"); }}>
+                    <X className="h-4 w-4" /> Show everyone
+                  </WorkspaceButton>
+                }
+              />
+            </AdminCard>
+          ) : (
+            <AdminCard className="overflow-hidden">
+              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line-soft)] bg-[var(--adm-head)] px-4 py-2 text-[12.5px] text-[var(--adm-head-ink)] md:grid">
+                <span>Person</span>
+                <span>Email</span>
+                <span>Phone</span>
+              </div>
+              {groups.map((group) => (
+                <section key={group.key} aria-label={group.key}>
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
+                    <h2 className="text-[13px] font-semibold text-[var(--adm-ink)]">{group.key}</h2>
+                    <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{group.people.length}</span>
+                    <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">· {group.blurb}</span>
+                  </div>
+                  <ul className="divide-y divide-[var(--adm-line-soft)] border-b border-[var(--adm-line-soft)] last:border-0">
+                    {group.people.map((member) => (
+                      <DirectoryRow key={member.email + member.name} member={member} />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </AdminCard>
           )}
         </div>
-      </div>
 
-      {groups.length === 0 ? (
-        <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-16 text-center shadow-[var(--adm-shadow-sm)]">
-          <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-[10px] bg-[var(--adm-surface-2)]">
-            <Search className="h-5 w-5 text-[var(--adm-ink-subtle)]" />
-          </div>
-          <p className="text-[15px] font-semibold text-[var(--adm-ink)]">No one matches &ldquo;{query}&rdquo;</p>
-          <p className="mt-1 text-[13.5px] text-[var(--adm-ink-subtle)]">
-            Try a name, a role, or a team like &ldquo;recruiting&rdquo;.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-7">
-          {groups.map((group) => (
-            <section key={group.key}>
-              <div className="mb-3 flex items-baseline gap-2.5">
-                <h3 className="text-[14px] font-semibold text-[var(--adm-ink)]">{group.key}</h3>
-                <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">{group.people.length}</span>
-                <span className="hidden text-[13px] text-[var(--adm-ink-subtle)] sm:inline">{group.blurb}</span>
+        {/* Rail: getting unstuck, shortcuts, your account */}
+        <aside className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:sticky lg:top-0 lg:grid-cols-1">
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader title="Get help" />
+            <ul className="divide-y divide-[var(--adm-line-soft)]">
+              <li>
+                <a href="mailto:hr@oceanbluecorp.com" className={RAIL_LINK}>
+                  <RailLinkBody icon={IconMail} title="Ask the team" description="Email HR; it gets routed to the right person." />
+                </a>
+              </li>
+              <li>
+                <button type="button" onClick={openCommandPalette} className={cn(RAIL_LINK, "w-full text-left")}>
+                  <RailLinkBody icon={Command} title="Search anything" description="Jobs, candidates and screens from anywhere." />
+                </button>
+              </li>
+              {isAdmin && (
+                <li>
+                  <Link href="/admin/docs" className={RAIL_LINK}>
+                    <RailLinkBody icon={IconBook} title="Developer docs" description="API keys, endpoints and integration notes." />
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </AdminCard>
+
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader title="Keyboard shortcuts" />
+            <ul className="divide-y divide-[var(--adm-line-soft)]">
+              {shortcuts.map((sc) => (
+                <li key={sc.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="min-w-0 text-[13px] text-[var(--adm-ink-mute)]">{sc.label}</span>
+                  <span className="flex flex-none items-center gap-1">
+                    {sc.keys.map((k) => <Kbd key={k}>{k}</Kbd>)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </AdminCard>
+
+          {user && (
+            <AdminCard className="md:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-3 p-4">
+                <Avatar name={user.name} email={user.email} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{user.name || user.email}</p>
+                  <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)] capitalize">{user.role ?? "No role"} · {user.email}</p>
+                </div>
+                <WorkspaceButton asChild size="sm" variant="ghost">
+                  <Link href="/admin/settings" aria-label="Open settings">
+                    <IconSettings className="h-4 w-4" /> Settings
+                  </Link>
+                </WorkspaceButton>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {group.people.map((member) => (
-                  <DirectoryCard key={member.email + member.name} member={member} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+            </AdminCard>
+          )}
+        </aside>
+      </div>
 
       {editing && canEdit && (
         <DirectoryEditor
@@ -474,5 +518,29 @@ export default function HelpPage() {
         />
       )}
     </div>
+  );
+}
+
+const RAIL_LINK =
+  "group flex items-start gap-3 px-4 py-3 transition-colors duration-150 hover:bg-[var(--adm-row-hover)]";
+
+function RailLinkBody({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  title: string;
+  description: string;
+}) {
+  return (
+    <>
+      <Icon className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" strokeWidth={1.75} />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-semibold text-[var(--adm-ink)]">{title}</span>
+        <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--adm-ink-mute)]">{description}</span>
+      </span>
+      <ChevronRight className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+    </>
   );
 }

@@ -3,6 +3,8 @@ import { getJob, updateJob, deleteJob, toPublicJob, Job } from "@/lib/aws/dynamo
 import { requireStaff, requireJobEditor, getClaims } from "@/lib/auth/verify";
 import { hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
+import { serverError } from "@/lib/api-errors";
+import { isPubliclyOpen } from "@/lib/job-status";
 
 /**
  * GET /api/jobs/[id]
@@ -28,10 +30,7 @@ export async function GET(
     const result = await getJob(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to fetch job" },
-        { status: 500 }
-      );
+      return serverError("Error fetching job", result.error, "Couldn't load the job. Please try again.");
     }
 
     if (!result.data) {
@@ -56,16 +55,12 @@ export async function GET(
     // Anonymous callers: public fields, and only for a posting that is
     // actually open. A draft or closed req is not theirs to read.
     const status = result.data.status;
-    if (status !== "active" && status !== "open") {
+    if (!isPubliclyOpen(status)) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
     return NextResponse.json({ job: toPublicJob(result.data) });
   } catch (error) {
-    console.error("Error fetching job:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error fetching job", error, "Couldn't load the job. Please try again.");
   }
 }
 
@@ -131,10 +126,7 @@ export async function PUT(
     const result = await updateJob(id, updates);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update job" },
-        { status: 500 }
-      );
+      return serverError("Updating job", result.error, "Couldn't save the job. Please try again.");
     }
 
     // Fetch updated job. Answered through the same projection the GET uses, so
@@ -145,11 +137,7 @@ export async function PUT(
       job: saved ? (canPrice ? saved : toPublicJob(saved)) : saved,
     });
   } catch (error) {
-    console.error("Error updating job:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error updating job", error, "Couldn't save the job. Please try again.");
   }
 }
 
@@ -182,18 +170,11 @@ export async function DELETE(
     const result = await deleteJob(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete job" },
-        { status: 500 }
-      );
+      return serverError("Deleting job", result.error, "Couldn't delete the job. Please try again.");
     }
 
     return NextResponse.json({ message: "Job deleted successfully" });
   } catch (error) {
-    console.error("Error deleting job:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError("Error deleting job", error, "Couldn't delete the job. Please try again.");
   }
 }

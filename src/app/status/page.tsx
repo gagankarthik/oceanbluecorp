@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import StatusContent from "./_content";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   description:
     "Real-time status of Ocean Blue Corporation's platform services, database, storage, authentication, email, and hosting.",
   openGraph: {
+    images: OG_IMAGES,
     title: "System Status | Ocean Blue Corporation",
     description: "Live service health for Ocean Blue Corporation's platform.",
     url: "https://oceanbluecorp.com/status",

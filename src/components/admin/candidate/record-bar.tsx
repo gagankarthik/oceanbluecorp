@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { Application, BenchType } from "@/lib/aws/dynamodb";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -18,37 +18,11 @@ import { PIPELINE_STAGES, statusColor, type AppStatus } from "@/components/admin
 import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 
-/* ============================================================
-   RecordBar, identity, status, stage control and the record's
-   primary actions, pinned to the top of the scroll container.
-
-   ── Why it is sticky ────────────────────────────────────────
-   This record scrolls ~4,100px. Previously the header was
-   ordinary content at the top of it, so from roughly the second
-   screen onward there was nothing on the page saying whose
-   record you were reading, what stage they were at, or offering
-   any way to act on them, you had to scroll back up to do
-   anything, then scroll down again to find your place. Pinning
-   identity, status and the stage control puts the most-used
-   controls a pointer-move away instead of a round trip (Fitts),
-   and keeps the answer to "who am I looking at" permanently on
-   screen rather than in short-term memory.
-
-   ── One density, not two ────────────────────────────────────
-   A first pass condensed this to a single line once scrolled,
-   reasoning that a full header pinned would cost too much of
-   every screen. It cost something worse: the contact details and
-   the rating, the two things a recruiter reaches for while
-   reading a resume, vanished at exactly the moment they were
-   being read. The header now stays whole and stays put, the tab
-   bar rides with it, and everything below scrolls beneath the
-   pair.
-
-   The layout is therefore built to be SHORT rather than to
-   collapse: identity and contact share one column, the actions
-   sit on one row beside it, and the rating sits with the actions
-   because it is one.
-   ============================================================ */
+/* RecordBar: identity, contact, stage and the record's actions, pinned by the
+   page for the whole ~4,000px record (Fitts). It stays whole rather than
+   condensing on scroll: contact and rating are what a recruiter reaches for
+   while reading the resume below. Built short instead: identity and contact in
+   one column, every action on one wrapping row. */
 
 export type RecordBarProps = {
   candidate: Application & { jobDepartment?: string };
@@ -62,8 +36,10 @@ export type RecordBarProps = {
   onEdit: () => void;
 };
 
-/** Compact stage control. The full stepper lives in the Pipeline tab; this is
- *  the same action reduced to what fits on one pinned line. */
+const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
+const MENU_LABEL = "px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]";
+
+/** Compact stage control; the full stepper lives in the Pipeline tab. */
 function StageSelect({
   candidate,
   saving,
@@ -80,65 +56,52 @@ function StageSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {/* Tinted by the stage it is showing, so the pipeline position is
-            legible without reading the word, the same colour the stage carries
-            in the rail, the badge and every list on the site. Inline, because
-            the value is resolved at runtime and Tailwind cannot compile a class
-            for it. `color-mix` gives the soft fill from the one colour rather
-            than needing a second token per stage. */}
+        {/* Tinted by the stage it shows (tinted = state, filled = action), in the
+            same colour the stage carries everywhere else. Inline because the
+            value is resolved at runtime. */}
         <WorkspaceButton
           disabled={saving}
+          aria-label={`Stage: ${isRejected ? "Rejected" : current?.label ?? "none"}. Change stage`}
           style={{
             color: c,
-            borderColor: c,
-            background: `color-mix(in srgb, ${c} 10%, transparent)`,
+            borderColor: `color-mix(in srgb, ${c} 45%, transparent)`,
+            background: `color-mix(in srgb, ${c} 8%, var(--adm-surface))`,
           }}
           className="hover:brightness-[0.97]"
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+          {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : (
             <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: c }} />
           )}
-          <span className="hidden sm:inline opacity-70">Stage:</span>
-          <span className="font-semibold">
-            {isRejected ? "Rejected" : current?.label ?? "–"}
-          </span>
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+          <span className="font-semibold">{isRejected ? "Rejected" : current?.label ?? "–"}</span>
+          <ChevronDown className="opacity-60" aria-hidden="true" />
         </WorkspaceButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="min-w-[220px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-lg"
-      >
-        {PIPELINE_STAGES.map((stage, i) => {
+      <DropdownMenuContent align="end" sideOffset={6} className={cn("min-w-[220px]", MENU)}>
+        <DropdownMenuLabel className={MENU_LABEL}>Move to stage</DropdownMenuLabel>
+        {PIPELINE_STAGES.map((stage) => {
           const selected = !isRejected && stage.key === candidate.status;
           return (
             <DropdownMenuItem
               key={stage.key}
               onClick={() => onStage(stage.key)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-medium",
-                selected && "text-[var(--adm-accent)]",
+                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
+                selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
               )}
             >
-              <Check className={cn("h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
-              <span
-                aria-hidden
-                className="h-2 w-2 flex-none rounded-full"
-                style={{ background: statusColor(stage.key) }}
-              />
-              <span className={cn(!selected && "text-[var(--adm-ink)]")}>{stage.label}</span>
+              <Check className={cn("h-3.5 w-3.5 flex-none text-[var(--adm-accent)]", selected ? "opacity-100" : "opacity-0")} aria-hidden="true" />
+              <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: statusColor(stage.key) }} />
+              {stage.label}
             </DropdownMenuItem>
           );
         })}
         <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-        {/* Rejection is terminal and off the ordered flow, so it is an action
-            here rather than a seventh stage pretending to be one. */}
+        {/* Rejection is terminal and off the ordered flow, so it is an action, not a seventh stage. */}
         <DropdownMenuItem
           onClick={() => onStage("rejected")}
-          className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-semibold text-[var(--adm-danger-ink)]"
+          className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]"
         >
-          <IconError className="h-3.5 w-3.5 flex-none" />
+          <IconError className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
           {isRejected ? "Rejected" : "Reject candidate"}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -146,9 +109,7 @@ function StageSelect({
   );
 }
 
-/* Talent-bench control. Extracted so the pinned and expanded bars share one
-   implementation, the pool list, its hints and the remove action were about to
-   be a second copy, and two copies of a menu is how the two drift. */
+/** Talent-bench control: pick a pool, or take the candidate off the bench. */
 function BenchMenu({
   candidate,
   saving,
@@ -160,46 +121,38 @@ function BenchMenu({
   onBench: (p: BenchType | null) => void;
   compact?: boolean;
 }) {
+  const label = candidate.addToTalentBench ? `In ${POOL_LABEL[poolOf(candidate)]}` : "Add to bench";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <WorkspaceButton disabled={saving}>
+        <WorkspaceButton disabled={saving} aria-label={label} title={label}>
           {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin" aria-hidden="true" />
           ) : candidate.addToTalentBench ? (
-            <IconBookmarkCheck className="h-4 w-4 text-[var(--adm-success-ink)]" />
+            <IconBookmarkCheck className="text-[var(--adm-success-ink)]" aria-hidden="true" />
           ) : (
-            <IconBookmarkPlus className="h-4 w-4" />
+            <IconBookmarkPlus aria-hidden="true" />
           )}
-          {/* Compact keeps the icon as the affordance and drops the words, the pinned bar has to hold five controls on one line. */}
-          <span className={cn(compact && "hidden xl:inline")}>
-            {candidate.addToTalentBench ? `In ${POOL_LABEL[poolOf(candidate)]}` : "Add to bench"}
-          </span>
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+          <span className={cn(compact && "hidden 2xl:inline")}>{label}</span>
+          <ChevronDown className="opacity-60" aria-hidden="true" />
         </WorkspaceButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="min-w-[240px] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-lg"
-      >
+      <DropdownMenuContent align="end" sideOffset={6} className={cn("min-w-[240px]", MENU)}>
+        <DropdownMenuLabel className={MENU_LABEL}>Talent bench</DropdownMenuLabel>
         {POOL_ORDER.map((pool) => {
           const selected = candidate.addToTalentBench && poolOf(candidate) === pool;
           return (
             <DropdownMenuItem
               key={pool}
               onClick={() => onBench(pool)}
-              className={cn(
-                "flex cursor-pointer items-start gap-2 rounded-[4px] px-2 py-2",
-                selected && "text-[var(--adm-accent)]",
-              )}
+              className="flex cursor-pointer items-start gap-2 rounded-[6px] px-2 py-2"
             >
-              <Check className={cn("mt-0.5 h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
+              <Check className={cn("mt-0.5 h-3.5 w-3.5 flex-none text-[var(--adm-accent)]", selected ? "opacity-100" : "opacity-0")} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className={cn("block text-[13px] font-semibold", !selected && "text-[var(--adm-ink)]")}>
+                <span className={cn("block text-[13px]", selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]")}>
                   {POOL_LABEL[pool]}
                 </span>
-                <span className="mt-0.5 block text-[11.5px] font-normal text-[var(--adm-ink-subtle)]">
+                <span className="mt-0.5 block text-[12px] text-[var(--adm-ink-subtle)]">
                   {POOL_META[pool].hint}
                 </span>
               </span>
@@ -211,7 +164,7 @@ function BenchMenu({
             <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
             <DropdownMenuItem
               onClick={() => onBench(null)}
-              className="flex cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)]"
+              className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]"
             >
               <span className="w-3.5 flex-none" />
               Remove from bench
@@ -222,7 +175,6 @@ function BenchMenu({
     </DropdownMenu>
   );
 }
-
 
 export function RecordBar({
   candidate,
@@ -237,61 +189,50 @@ export function RecordBar({
 }: RecordBarProps) {
   const router = useRouter();
   const location = [candidate.city, candidate.state].filter(Boolean).join(", ");
+  const pool = candidate.addToTalentBench ? poolOf(candidate) : null;
 
   return (
     <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
-      {/* ── Identity + contact ── */}
+      {/* Identity + contact, in RecordHeader's type scale */}
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar name={candidate.name} email={candidate.email} size="md" />
+        <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-[18px] font-bold leading-tight tracking-[-0.015em] text-[var(--adm-ink)]">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
               {candidate.name || "Unnamed candidate"}
             </h1>
-            <StatusBadge status={candidate.status} withIcon size="sm" />
-            {candidate.addToTalentBench && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.03em]",
-                  poolOf(candidate) === "internal"
-                    ? "border-[var(--adm-accent-soft)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-                    : "border-emerald-200 bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
-                )}
-              >
-                <IconBookmarkCheck className="h-3 w-3" /> {POOL_LABEL[poolOf(candidate)]}
-              </span>
+            <StatusBadge status={candidate.status} size="md" />
+            {pool && (
+              <StatusBadge tone={pool === "internal" ? "blue" : "emerald"} label={POOL_LABEL[pool]} size="md" />
             )}
           </div>
 
-          {/* Contact and position on one wrapping row directly under the name.
-              These were spread over three separate lines before, which is most
-              of why the old header was tall enough to be worth collapsing. */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px]">
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--adm-ink-mute)]">
             <a
               href={`mailto:${candidate.email}`}
-              className="inline-flex min-w-0 items-center gap-1.5 text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-[6px] transition-colors hover:text-[var(--adm-accent)]"
             >
-              <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+              <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
               <span className="truncate">{candidate.email}</span>
             </a>
             {candidate.phone && (
               <a
                 href={`tel:${candidate.phone}`}
-                className="inline-flex items-center gap-1.5 text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+                className="inline-flex items-center gap-1.5 rounded-[6px] tabular-nums transition-colors hover:text-[var(--adm-accent)]"
               >
-                <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
+                <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 {candidate.phone}
               </a>
             )}
             {location && (
-              <span className="inline-flex items-center gap-1.5 text-[var(--adm-ink-subtle)]">
-                <IconLocation className="h-3.5 w-3.5 flex-none" />
+              <span className="inline-flex items-center gap-1.5">
+                <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 {location}
               </span>
             )}
             {candidate.jobTitle && (
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--adm-ink-subtle)]">
-                <IconJob className="h-3.5 w-3.5 flex-none" />
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 <span className="truncate">
                   {candidate.jobTitle}
                   {candidate.jobDepartment && ` · ${candidate.jobDepartment}`}
@@ -302,44 +243,37 @@ export function RecordBar({
         </div>
       </div>
 
-      {/* ── Actions ──
-          One row. Rating leads it because it is a control like the rest, not a
-          figure, it used to sit on its own line below the buttons, which cost
-          a whole row of header height to display five stars. */}
+      {/* Actions. Labels collapse to icons below 2xl so the row fits one line on a laptop. */}
       <div className="flex flex-none flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5 pr-1">
-          <StarRating rating={candidate.rating || 0} onRate={onRate} size="sm" />
-          <span className="hidden text-[12px] tabular-nums text-[var(--adm-ink-subtle)] 2xl:inline">
+          <StarRating rating={candidate.rating || 0} onRate={onRate} size="md" />
+          <span className="hidden text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)] 2xl:inline">
             {candidate.rating ? `${candidate.rating}/5` : "Not rated"}
           </span>
         </div>
 
         {candidate.jobId && (
-          <WorkspaceButton onClick={() => router.push(`/admin/jobs/${candidate.jobId}`)}>
-            <IconJob className="h-4 w-4" />
+          <WorkspaceButton
+            onClick={() => router.push(`/admin/jobs/${candidate.jobId}`)}
+            aria-label="View job"
+            title="View job"
+          >
+            <IconJob aria-hidden="true" />
             <span className="hidden 2xl:inline">View job</span>
           </WorkspaceButton>
         )}
 
-        {/* ── Ownership ──
-            Unowned is a problem, so it looks like one: an outlined danger
-            button that reads as unfinished next to the neutral controls beside
-            it. An unclaimed candidate is nobody's job, which is how records go
-            stale, the state should be visible from the pinned bar without
-            anyone going looking for it.
-
-            Claimed is a green CHIP, not a green button. Once someone owns the
-            record the action is no longer "claim", and putting Release, which
-            takes a candidate off a colleague's desk, behind a green control
-            styled as success would invite exactly the click nobody means to
-            make. Release stays in the sidebar, where it is labelled. */}
+        {/* Claimed is a state chip, not a button: Release takes the record off a
+            colleague's desk, so it lives in the rail where it is labelled.
+            Unclaimed is a problem, so it reads as one (danger outline). */}
         {candidate.ownership ? (
           <span
-            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-emerald-200 bg-[var(--adm-success-soft)] px-2.5 text-[13.5px] font-semibold text-[var(--adm-success-ink)]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--adm-success-soft)] px-3 text-[13px] font-medium text-[var(--adm-success-ink)]"
             title={`Claimed by ${candidate.ownershipName || "a teammate"}`}
           >
-            <IconUserCheck className="h-4 w-4 flex-none" />
-            <span className="hidden max-w-[10rem] truncate 2xl:inline">
+            <IconUserCheck className="h-4 w-4 flex-none" aria-hidden="true" />
+            <span className="sr-only 2xl:hidden">Claimed by {candidate.ownershipName || "a teammate"}</span>
+            <span className="hidden max-w-[10rem] truncate 2xl:inline-block">
               {candidate.ownershipName || "Claimed"}
             </span>
           </span>
@@ -347,9 +281,11 @@ export function RecordBar({
           <WorkspaceButton
             onClick={onClaim}
             disabled={ownerSaving}
-            className="border-[var(--adm-danger)] bg-transparent text-[var(--adm-danger-ink)] shadow-none hover:border-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+            aria-label="Unclaimed, claim this candidate"
+            title="Unclaimed, claim this candidate"
+            className="border-[var(--adm-danger)] text-[var(--adm-danger-ink)] shadow-none hover:border-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           >
-            {ownerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconUserCheck className="h-4 w-4" />}
+            {ownerSaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconUserCheck aria-hidden="true" />}
             <span className="hidden 2xl:inline">Unclaimed</span>
           </WorkspaceButton>
         )}
@@ -358,8 +294,9 @@ export function RecordBar({
 
         <StageSelect candidate={candidate} saving={statusSaving} onStage={onStage} />
 
-        <WorkspaceButton variant="primary" onClick={onEdit}>
-          <IconEdit className="h-4 w-4" />
+        {/* The record's one filled action. */}
+        <WorkspaceButton variant="primary" onClick={onEdit} aria-label="Edit profile">
+          <IconEdit aria-hidden="true" />
           <span className="hidden sm:inline">Edit profile</span>
         </WorkspaceButton>
       </div>

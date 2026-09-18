@@ -7,6 +7,8 @@ import { requireApiKey } from "@/lib/auth/api-key";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { validate, validationMessage, type Schema } from "@/lib/validate";
 import { v4 as uuidv4 } from "uuid";
+import { serverError } from "@/lib/api-errors";
+import { isPubliclyOpen } from "@/lib/job-status";
 
 const JOB_TYPES = [
   "full-time", "part-time", "contract", "contract-to-hire",
@@ -82,11 +84,11 @@ export async function GET(request: NextRequest) {
 
     const result = await getAllJobs(filterStatus);
     if (!result.success) {
-      return NextResponse.json({ error: "Failed to fetch jobs" }, { status: 500 });
+      return serverError("v1/jobs GET list failed", result.error, "Couldn't load jobs. Please try again.");
     }
 
     let jobs = (result.data || [])
-      .filter((j) => !filterStatus ? (j.status === "active" || j.status === "open") : true)
+      .filter((j) => (filterStatus ? true : isPubliclyOpen(j.status)))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     if (department) jobs = jobs.filter((j) => j.department.toLowerCase() === department.toLowerCase());
@@ -109,8 +111,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("v1/jobs GET error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("v1/jobs GET error", error, "Couldn't load jobs. Please try again.");
   }
 }
 
@@ -161,13 +162,13 @@ export async function POST(request: NextRequest) {
 
     const result = await createJob(job);
     if (!result.success) {
-      return NextResponse.json({ error: result.error || "Failed to create job" }, { status: 500 });
+      return serverError("v1/jobs POST create failed", result.error, "Couldn't create the job. Please try again.");
     }
 
     // Tell the desk a posting arrived from outside. Deferred with `after` for
     // the reason the internal route documents: on Lambda an unawaited promise
     // can be frozen the moment the response returns.
-    if (job.status === "active" || job.status === "open") {
+    if (isPubliclyOpen(job.status)) {
       after(async () => {
         try {
           await createNotification({
@@ -188,7 +189,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: toFeedJob(job) }, { status: 201 });
   } catch (error) {
-    console.error("v1/jobs POST error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError("v1/jobs POST error", error, "Couldn't create the job. Please try again.");
   }
 }

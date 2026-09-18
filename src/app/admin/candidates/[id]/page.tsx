@@ -3,7 +3,8 @@
 import { useState, useEffect, use, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, SearchX } from "lucide-react";
+import type { IconComponent } from "@/components/admin/icons";
 import type { Application, BenchType, Job, NoteEntry } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { AdminDetailSkeleton } from "@/components/admin/skeletons";
@@ -21,7 +22,7 @@ import { RecordSidebar } from "@/components/admin/candidate/record-sidebar";
 import { NotesTab } from "@/components/admin/candidate/notes-tab";
 import { ActivityTab } from "@/components/admin/candidate/activity-tab";
 import {
-  IconPipeline, IconAlert, IconEdit, IconFile, IconHistory,
+  IconPipeline, IconEdit, IconFile, IconHistory,
   IconMessageText, IconRefresh, IconSparkles,
 } from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
@@ -33,6 +34,11 @@ import { cn } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/format";
 import { TERMINAL } from "@/lib/pipeline";
 import { undoable } from "@/lib/undo";
+
+/** Loader2 as an EmptyState icon, for the in-progress analysis state. */
+const SpinnerIcon: IconComponent = ({ className, strokeWidth }) => (
+  <Loader2 className={cn(className, "animate-spin")} strokeWidth={Number(strokeWidth) || 1.5} />
+);
 
 interface CandidateDetail extends Application {
   jobDepartment?: string;
@@ -51,6 +57,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
+  const [missing, setMissing]     = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [statusSaving, setStatusSaving] = useState(false);
   const [benchSaving, setBenchSaving]   = useState(false);
@@ -67,14 +74,17 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const fetchCandidate = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch(`/api/applications/${id}`);
+      if (res.status === 404) { setMissing(true); return; }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Candidate not found");
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       // Render the candidate immediately; the linked job's details are enriched
       // in a separate non-blocking effect below so the job fetch never blocks paint.
       setCandidate(data.application as CandidateDetail);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load");
+      console.error("Failed to load candidate:", err);
+      setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -347,21 +357,29 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   if (loading) return <AdminDetailSkeleton />;
 
-  if (error || !candidate) {
+  if (error || missing || !candidate) {
+    const failed = !!error && !missing;
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <div className="space-y-4 text-center">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-[6px] bg-[var(--adm-danger-soft)]">
-            <IconAlert className="h-6 w-6 text-[var(--adm-danger)]" />
-          </div>
-          <div>
-            <p className="font-semibold text-[var(--adm-ink)]">{error || "Candidate not found"}</p>
-            <p className="mt-1 text-sm text-[var(--adm-ink-subtle)]">This record may have been removed.</p>
-          </div>
-          <WorkspaceButton variant="primary" onClick={() => router.push("/admin/applications")}>
-            Back to candidates
-          </WorkspaceButton>
-        </div>
+      <div className="pb-10">
+        <BackLink onClick={() => router.back()} />
+        <AdminCard>
+          <EmptyState
+            variant={failed ? "error" : "fresh"}
+            icon={failed ? undefined : SearchX}
+            title={failed ? "Couldn't load this candidate" : "This candidate doesn't exist"}
+            description={failed ? (error ?? undefined) : "The record may have been removed, or the link is out of date."}
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                {failed && (
+                  <WorkspaceButton variant="primary" onClick={() => void fetchCandidate()}>Try again</WorkspaceButton>
+                )}
+                <WorkspaceButton onClick={() => router.push("/admin/applications")}>
+                  Back to candidates
+                </WorkspaceButton>
+              </div>
+            }
+          />
+        </AdminCard>
       </div>
     );
   }
@@ -397,28 +415,21 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     { key: "activity" as TabKey, label: "Activity", icon: IconHistory,     count: history.length },
   ];
 
-  /* The analyse call-to-action. Defined once and placed by state rather than
-     duplicated: it belongs on Overview when there is nothing to read yet (it is
-     an action), and stands in for the Resume tab's content when that tab is
-     opened before anything has been parsed. */
+  /* The analyse call-to-action, placed by state: on Overview when there is
+     nothing to read yet, and in place of the Resume tab's content. Buttons are
+     secondary; the record's one filled action is "Edit profile". */
   const analysisCta = candidate.resumeId ? (
     <AdminCard>
-      {/* `analyzing` is included so an automatic retry shows as work in progress
-          instead of leaving the previous failure on screen. */}
+      {/* `analyzing` included so an automatic retry shows as work in progress. */}
       {analyzing || candidate.resumeAnalysisStatus === "pending" || candidate.resumeAnalysisStatus === "processing" ? (
-        <div className="flex flex-col items-center px-5 py-12 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-[6px] bg-[var(--adm-accent-soft)]">
-            <Loader2 className="h-6 w-6 animate-spin text-[var(--adm-accent)]" />
-          </span>
-          <p className="mt-3 text-sm font-medium text-[var(--adm-ink-mute)]">Analyzing resume…</p>
-          <p className="mt-1 max-w-sm text-xs text-[var(--adm-ink-subtle)]">
-            Extracting experience, education, skills and more. This usually takes under a minute, the page will update automatically.
-          </p>
-        </div>
+        <EmptyState
+          icon={SpinnerIcon}
+          title="Analyzing resume…"
+          description="Extracting experience, education, skills and more. This usually takes under a minute; the page updates automatically."
+        />
       ) : (
         <EmptyState
           icon={IconSparkles}
-          tone="blue"
           title={candidate.resumeAnalysisStatus === "failed" ? "Last analysis didn't finish" : "Resume not analyzed yet"}
           description={
             candidate.resumeAnalysisStatus === "failed" && candidate.resumeAnalysisError
@@ -426,8 +437,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."
           }
           action={
-            <WorkspaceButton variant="primary" onClick={() => void handleAnalyze()} disabled={analyzing}>
-              {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSparkles className="h-4 w-4" />}
+            <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
+              {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
               {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
             </WorkspaceButton>
           }
@@ -441,8 +452,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         title="No resume details yet"
         description="No resume is attached. You can add skills, experience and other details manually."
         action={
-          <WorkspaceButton variant="primary" onClick={() => setAnalysisEditOpen(true)}>
-            <Plus className="h-4 w-4" /> Add details manually
+          <WorkspaceButton onClick={() => setAnalysisEditOpen(true)}>
+            <Plus aria-hidden="true" /> Add details manually
           </WorkspaceButton>
         }
       />
@@ -451,36 +462,18 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="pb-10">
-      <button
-        onClick={() => router.back()}
-        className="mb-2 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
-
-      {/* ── Pinned record bar ──
-          Identity, status, stage and the primary action stay on screen for the
-          whole record. Previously this was ordinary content at the top, so from
-          the second screen down there was nothing saying whose record this was
-          and no way to act on it without scrolling back up and losing your
-          place. Negative margins let the condensed state span the full content
-          width so its rule reads as chrome rather than as a floating card. */}
-      {/* ── Pinned record header ──
-          Identity, contact, rating, every action AND the tab bar, held at the
-          top while everything below scrolls under them. `-top-6` with a
-          matching `pt-6`, not `top-0`: the scroll container carries 24px of
-          padding and a sticky element offsets from the padding edge, so at
-          `top-0` the block parks 24px down and content scrolls visibly through
-          the strip above it.
-
-          Solid `--adm-canvas`, never `bg-[var(--adm-canvas)]/95`. Tailwind's
-          opacity modifier cannot dilute a CSS variable, the utility compiles to
-          nothing, and the bar renders fully transparent with the card beneath
-          reading straight through the pinned text. (Found exactly that way.) */}
+      {/* Pinned record header: back, identity, contact, actions and the tab bar
+          stay put while the record scrolls beneath. It bleeds to the main
+          padding (p-4 sm:p-5 lg:p-6): negative margins span the full width, the
+          matching negative `top` + `pt` park it flush against the scroll edge,
+          and `-mt` removes the doubled gap before it sticks. Solid canvas: an
+          opacity modifier on a CSS variable renders transparent. */}
       <div
         ref={headerRef}
-        className="sticky -top-6 z-20 -mx-4 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-4 pb-3 pt-6 sm:-mx-6 sm:px-6"
+        className="sticky -top-4 z-20 -mx-4 -mt-4 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-4 pt-4 sm:-top-5 sm:-mx-5 sm:-mt-5 sm:px-5 sm:pt-5 lg:-top-6 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6"
       >
+        <BackLink onClick={() => router.back()} />
+
         <RecordBar
           candidate={candidate}
           statusSaving={statusSaving}
@@ -493,36 +486,32 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           onEdit={() => openCandidateEditor({ candidate })}
         />
 
-        {/* Tabs ride with the header rather than sitting in the main column:
-            they navigate the whole record, and pinned alongside it they never
-            require scrolling back to the top of ~4,000px to switch view. */}
-        <div className="-mb-3 mt-3 flex overflow-x-auto">
+        {/* Tabs ride with the header: they navigate the whole record. */}
+        <div role="tablist" aria-label="Candidate record" className="-mb-px mt-3 flex gap-1 overflow-x-auto">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
                 onClick={() => setActiveTab(tab.key)}
-                aria-pressed={active}
                 className={cn(
-                  "inline-flex flex-none items-center gap-2 border-b-2 px-4 py-2.5 text-[13.5px] font-semibold transition-colors",
+                  "inline-flex h-10 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
                   active
-                    ? "border-[var(--adm-accent)] text-[var(--adm-accent)]"
-                    : "border-transparent text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
+                    ? "border-[var(--adm-accent)] text-[var(--adm-ink)]"
+                    : "border-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]",
                 )}
               >
-                <Icon className="h-4 w-4 flex-none" />
+                <Icon
+                  className={cn("h-4 w-4 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")}
+                  aria-hidden="true"
+                />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span
-                    className={cn(
-                      "rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums",
-                      active
-                        ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-                        : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
-                    )}
-                  >
+                  <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-px text-[12px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
                     {tab.count}
                   </span>
                 )}
@@ -532,22 +521,19 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      {/* ── Decision strip ──
-          The fit verdict takes the prime slot only while the decision is still
-          open. On a hired or rejected candidate it is history, and it moves
-          into Overview below the application's own details. */}
+      {/* The fit verdict leads only while the decision is open; on a hired or
+          rejected candidate it is history and moves into Overview. */}
       {!isTerminal && hasAnalysis && (
-        <div className="mb-4">
+        <div className="mt-4">
           <JobFitCard applicationId={id} />
         </div>
       )}
 
       <div
-        className="mt-4 grid items-start gap-4 lg:grid-cols-3"
+        className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_288px] xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5"
         style={{ "--rec-head": `${headerH}px` } as React.CSSProperties}
       >
-        <div className="space-y-4 lg:col-span-2">
-          {/* ── Overview: who is this, and should we proceed ── */}
+        <div className="min-w-0 space-y-4">
           {activeTab === "overview" && (
             <div className="space-y-4">
               <ApplicantDetails candidate={candidate} onEdit={() => openCandidateEditor({ candidate })} />
@@ -556,67 +542,50 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               {!hasAnalysis && candidate.experience && (
                 <AdminCard className="overflow-hidden">
                   <AdminCardHeader icon={IconFile} title="Experience" />
-                  <div className="px-5 py-4">
-                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">
-                      {candidate.experience}
-                    </p>
-                  </div>
+                  <p className="whitespace-pre-line p-4 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                    {candidate.experience}
+                  </p>
                 </AdminCard>
               )}
 
               {candidate.coverLetter && (
                 <AdminCard className="overflow-hidden">
                   <AdminCardHeader icon={IconFile} title="Cover letter" />
-                  <div className="px-5 py-4">
-                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">
-                      {candidate.coverLetter}
-                    </p>
-                  </div>
+                  <p className="whitespace-pre-line p-4 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                    {candidate.coverLetter}
+                  </p>
                 </AdminCard>
               )}
 
-              {/* The fit verdict, for candidates whose decision is already made. */}
               {isTerminal && hasAnalysis && <JobFitCard applicationId={id} />}
 
               {!hasAnalysis && analysisCta}
             </div>
           )}
 
-          {/* ── Resume: the parsed record, as reference ── */}
           {activeTab === "resume" && (
             <div className="space-y-4">
               {hasAnalysis ? (
                 <>
-                  <AdminCard className="overflow-hidden">
-                    <AdminCardHeader
-                      icon={IconSparkles}
-                      title="Resume analysis"
-                      tone="blue"
-                      action={
-                        <div className="flex flex-none items-center gap-2">
-                          <button
-                            onClick={() => setAnalysisEditOpen(true)}
-                            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
-                          >
-                            <IconEdit className="h-3.5 w-3.5" /> Edit
-                          </button>
-                          <button
-                            onClick={() => void handleAnalyze()}
-                            disabled={analyzing}
-                            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)] disabled:opacity-60"
-                          >
-                            {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconRefresh className="h-3.5 w-3.5" />}
-                            Re-analyze
-                          </button>
-                        </div>
-                      }
-                    />
-                    {candidate.resumeAnalyzedAt && (
-                      <p className="px-5 py-2.5 text-[12px] text-[var(--adm-ink-subtle)]">
-                        Last analyzed {fmtDateTime(candidate.resumeAnalyzedAt)}
-                      </p>
-                    )}
-                  </AdminCard>
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <div className="min-w-0">
+                      <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Resume analysis</h2>
+                      {candidate.resumeAnalyzedAt && (
+                        <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+                          Last analyzed <span className="tabular-nums">{fmtDateTime(candidate.resumeAnalyzedAt)}</span>
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <WorkspaceButton onClick={() => setAnalysisEditOpen(true)}>
+                        <IconEdit aria-hidden="true" /> Edit
+                      </WorkspaceButton>
+                      <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
+                        {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
+                        Re-analyze
+                      </WorkspaceButton>
+                    </div>
+                  </div>
                   <ResumeAnalysisPanel analysis={candidate.resumeAnalysis!} />
                 </>
               ) : (
@@ -625,7 +594,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
             </div>
           )}
 
-          {/* ── Pipeline: the stage rail, plus submissions and placements ── */}
           {activeTab === "pipeline" && (
             <div className="space-y-4">
               <StageRail
@@ -685,6 +653,22 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         application={candidate}
         onSaved={(app) => setCandidate((p) => (p ? { ...p, ...(app as CandidateDetail) } : p))}
       />
+    </div>
+  );
+}
+
+/** Same geometry as RecordHeader's back link. */
+function BackLink({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="mb-2">
+      <button
+        type="button"
+        onClick={onClick}
+        className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+        Back
+      </button>
     </div>
   );
 }

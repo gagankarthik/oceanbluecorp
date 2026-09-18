@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Loader2,
   ChevronRight,
   X,
 } from "lucide-react";
-import { IconBell, IconSuccess, IconTrash, IconAlert } from "@/components/admin/icons";
+import { IconBell, IconSuccess, IconTrash, IconAlert, IconEyeOff } from "@/components/admin/icons";
 import { fmtRelative } from "@/lib/format";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
@@ -16,21 +17,14 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import type { Tone } from "@/components/admin/theme";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { UserRole, staffRolesOf } from "@/lib/auth/config";
+import { canSeeNotificationType, type NotificationType, type NotificationView } from "@/lib/notifications";
 
-interface Notification {
-  id: string;
-  type: "job_posted" | "application_received" | "contact_received";
-  title: string;
-  message: string;
-  link?: string;
-  relatedId?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-type NotificationType = Notification["type"];
+type Notification = NotificationView;
 
 /** One table for the three notification kinds, label and chip tone. */
 const NOTIFICATION_TYPES: {
@@ -39,12 +33,24 @@ const NOTIFICATION_TYPES: {
   short: string;
   tone: Tone;
 }[] = [
-  { key: "job_posted",           label: "Job Posted",       short: "Jobs",         tone: "blue"    },
-  { key: "application_received", label: "New Application",  short: "Applications", tone: "emerald" },
-  { key: "contact_received",     label: "Contact Received", short: "Contacts",     tone: "violet"  },
+  { key: "job_posted",           label: "Job posted",       short: "Jobs",         tone: "blue"    },
+  { key: "application_received", label: "New application",  short: "Applications", tone: "emerald" },
+  { key: "contact_received",     label: "Contact received", short: "Contacts",     tone: "violet"  },
 ];
 
-const metaFor = (type: NotificationType) => NOTIFICATION_TYPES.find((t) => t.key === type)!;
+const ICON_BTN =
+  "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+
+const OTHER_TYPE: { label: string; short: string; tone: Tone } = { label: "Other", short: "Other", tone: "slate" };
+
+const metaFor = (type: string) => NOTIFICATION_TYPES.find((t) => t.key === type) ?? OTHER_TYPE;
+
+const patchAction = (url: string, action: string) =>
+  fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  });
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -53,6 +59,12 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [markingAllRead, setMarkingAllRead] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Notification | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const { user } = useAuth();
+  const viewerRoles = useMemo(() => staffRolesOf(user?.groups), [user?.groups]);
+  const isAdmin = viewerRoles.includes(UserRole.ADMIN);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -67,7 +79,8 @@ export default function NotificationsPage() {
 
       setNotifications(data.notifications || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch notifications");
+      console.error("Failed to load notifications:", err);
+      setError("Couldn't load notifications. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -79,50 +92,62 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const response = await fetch(`/api/notifications/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isRead: true }),
-      });
+      const response = await patchAction(`/api/notifications/${id}`, "read");
 
       if (response.ok) {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
         );
-      }
+      } else throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
+      toast.error("Couldn't mark that notification as read. Try again.");
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       setMarkingAllRead(true);
-      const response = await fetch("/api/notifications", {
-        method: "PUT",
-      });
+      const response = await patchAction("/api/notifications", "read_all");
 
       if (response.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      }
+      } else throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       console.error("Failed to mark all as read:", err);
+      toast.error("Couldn't mark notifications as read. Try again.");
     } finally {
       setMarkingAllRead(false);
     }
   };
 
-  const handleDeleteNotification = async (id: string) => {
+  const handleDismiss = async (id: string) => {
     try {
-      const response = await fetch(`/api/notifications/${id}`, {
-        method: "DELETE",
-      });
-
+      const response = await patchAction(`/api/notifications/${id}`, "dismiss");
       if (response.ok) {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }
+      } else throw new Error(`HTTP ${response.status}`);
+    } catch (err) {
+      console.error("Failed to dismiss notification:", err);
+      toast.error("Couldn't dismiss that notification. Try again.");
+    }
+  };
+
+  const handleDeleteForEveryone = async () => {
+    if (!pendingDelete) return;
+    const { id } = pendingDelete;
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+      if (response.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        setPendingDelete(null);
+      } else throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       console.error("Failed to delete notification:", err);
+      toast.error("Couldn't delete that notification. Try again.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -135,12 +160,15 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const typeCounts = useMemo(() => {
-    const counts: Record<NotificationType, number> = {
-      job_posted: 0, application_received: 0, contact_received: 0,
-    };
-    for (const n of notifications) counts[n.type] += 1;
+    const counts: Record<string, number> = {};
+    for (const n of notifications) counts[n.type] = (counts[n.type] ?? 0) + 1;
     return counts;
   }, [notifications]);
+
+  // Offer only the kinds this viewer can receive; the API already filters the rows.
+  const typeOptions = NOTIFICATION_TYPES.filter(
+    (t) => canSeeNotificationType(t.key, viewerRoles) || (typeCounts[t.key] ?? 0) > 0,
+  );
 
   const getNotificationLink = (notification: Notification) => {
     if (notification.link) return notification.link;
@@ -151,7 +179,7 @@ export default function NotificationsPage() {
       case "application_received":
         return notification.relatedId ? `/admin/applications` : "/admin/applications";
       case "contact_received":
-        return notification.relatedId ? `/admin/contacts` : "/admin/contacts";
+        return notification.relatedId ? `/admin/contacts/${notification.relatedId}` : "/admin/contacts";
       default:
         return "/admin";
     }
@@ -210,7 +238,7 @@ export default function NotificationsPage() {
       align: "right",
       hideBelow: "sm",
       sortValue: (n) => new Date(n.createdAt).getTime(),
-      cell: (n) => <span className="text-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(n.createdAt)}</span>,
+      cell: (n) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(n.createdAt)}</span>,
     },
     {
       key: "actions",
@@ -220,27 +248,40 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-end gap-0.5">
           {!n.isRead && (
             <button
+              type="button"
               onClick={() => handleMarkAsRead(n.id)}
               title="Mark as read"
               aria-label={`Mark "${n.title}" as read`}
-              className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-soft)] hover:text-[var(--adm-accent)]"
+              className={ICON_BTN}
             >
               <IconSuccess className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
           <button
-            onClick={() => handleDeleteNotification(n.id)}
-            title="Delete"
-            aria-label={`Delete "${n.title}"`}
-            className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger)]"
+            type="button"
+            onClick={() => handleDismiss(n.id)}
+            title="Dismiss"
+            aria-label={`Dismiss "${n.title}"`}
+            className={ICON_BTN}
           >
-            <IconTrash className="h-4 w-4" aria-hidden="true" />
+            <IconEyeOff className="h-4 w-4" aria-hidden="true" />
           </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setPendingDelete(n)}
+              title="Delete for everyone"
+              aria-label={`Delete "${n.title}" for everyone`}
+              className={cn(ICON_BTN, "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]")}
+            >
+              <IconTrash className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
           <Link
             href={getNotificationLink(n)}
             title="View details"
             aria-label={`View details for "${n.title}"`}
-            className="rounded-[6px] p-1.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+            className={ICON_BTN}
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Link>
@@ -253,11 +294,9 @@ export default function NotificationsPage() {
 
   return (
     <>
-      {/* The old strip drew share bars against the feed total ("Today 3, 4%"),
-          which is not a proportion anyone acts on. These are plain counts, and
-          Unread doubles as the filter shortcut. */}
       <WorkspaceTitle
         title="Notifications"
+        info="Activity for your role, newest first. Dismissing hides an item for you only."
         actions={
           unreadCount > 0 ? (
             <WorkspaceButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
@@ -267,7 +306,6 @@ export default function NotificationsPage() {
           ) : undefined
         }
       />
-      {/* Inline stat strip, the table gets the vertical space, not stat cards. */}
       <StatStrip
         items={[
           { label: "Unread", value: unreadCount,
@@ -279,7 +317,6 @@ export default function NotificationsPage() {
         ]}
       />
 
-      {/* Toolbar floats on the canvas between the stat strip and the table. */}
       <WorkspaceToolbar
           variant="canvas"
           trailing={<DisplayMenu rows={rows} onRowsChange={setRows} onReset={() => setRows(25)} />}
@@ -291,10 +328,10 @@ export default function NotificationsPage() {
             onChange={setTypeFilter}
             options={[
               { value: "all", label: "All types", count: notifications.length },
-              ...NOTIFICATION_TYPES.map((t) => ({
+              ...typeOptions.map((t) => ({
                 value: t.key as string,
                 label: t.short,
-                count: typeCounts[t.key],
+                count: typeCounts[t.key] ?? 0,
               })),
             ]}
           />
@@ -322,21 +359,14 @@ export default function NotificationsPage() {
       />
 
       <Workspace>
-      {/* ── Error ── */}
-      {error && (
-        <div className="flex items-center gap-3 rounded-[6px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] p-3 text-sm text-[var(--adm-danger)]">
-          <IconAlert className="h-4 w-4 flex-shrink-0" />
-          <p>{error}</p>
-          <button
-            onClick={fetchNotifications}
-            className="ml-auto rounded-[6px] bg-[var(--adm-danger-soft)] px-3 py-1 text-xs font-semibold text-[var(--adm-danger)] transition-colors hover:bg-[var(--adm-danger-soft)]"
-          >
-            Retry
-          </button>
-        </div>
-      )}
+        {error && (
+          <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] text-[var(--adm-danger-ink)]">
+            <IconAlert className="h-4 w-4 flex-shrink-0" />
+            <p className="min-w-0 flex-1">{error}</p>
+            <WorkspaceButton onClick={fetchNotifications}>Try again</WorkspaceButton>
+          </div>
+        )}
 
-      {/* ── Feed ── */}
         <DataTable
           noun="notifications"
           storageKey="notifications"
@@ -350,7 +380,7 @@ export default function NotificationsPage() {
             icon: IconBell,
             title: notifications.length === 0 ? "No notifications" : "Nothing matches these filters",
             description: notifications.length === 0
-              ? "Activity from jobs, applications, and contacts will appear here."
+              ? "New activity for your role will appear here."
               : filter === "unread"
               ? "You're all caught up, no unread notifications."
               : "Try clearing the type filter.",
@@ -362,6 +392,16 @@ export default function NotificationsPage() {
           }}
         />
       </Workspace>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete for everyone?"
+        body={pendingDelete ? `"${pendingDelete.title}" will be removed from every teammate's notifications. This can't be undone.` : undefined}
+        confirmLabel="Delete for everyone"
+        busy={deleting}
+        onConfirm={handleDeleteForEveryone}
+        onCancel={() => setPendingDelete(null)}
+      />
     </>
   );
 }

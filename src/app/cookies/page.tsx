@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGES } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft, Mail, Cookie, Shield, BarChart2, Settings2, ExternalLink } from "lucide-react";
 
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   title: "Cookie Policy",
   description: "Learn how Ocean Blue Corporation uses cookies and similar tracking technologies on our website.",
   openGraph: {
+    images: OG_IMAGES,
     title: "Cookie Policy | Ocean Blue Corporation",
     description:
       "Which cookies Ocean Blue Corporation sets, what each one does, and how to control them in your browser.",

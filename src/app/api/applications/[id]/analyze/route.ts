@@ -20,6 +20,15 @@ export async function POST(
 
   const result = await analyzeApplicationResume(id, auth.claims.sub);
   if (!result.success) {
+    // A 500 here is a failed DynamoDB save; its text is not for the screen. The
+    // 4xx/502 messages are the analysis outcome, also stored on the record.
+    if ((result.status || 500) === 500) {
+      console.error("[api] Saving resume analysis:", result.error);
+      return NextResponse.json(
+        { error: "Couldn't save the resume analysis. Please try again.", retryable: result.retryable ?? false },
+        { status: 500 },
+      );
+    }
     // `retryable` tells the caller whether this is worth another attempt later,
     // the candidate screen uses it to decide whether to retry on its own.
     return NextResponse.json(
