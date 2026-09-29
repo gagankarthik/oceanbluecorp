@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUserManager } from "@/lib/auth/AuthContext";
-import { UserRole, highestStaffRole } from "@/lib/auth/config";
-import { motion, AnimatePresence } from "motion/react";
-import { CheckCircle, XCircle, Loader2, Shield, ArrowRight, RefreshCw } from "lucide-react";
+import { UserRole, highestStaffRole, landingRouteFor } from "@/lib/auth/config";
 import Link from "next/link";
+import { IconArrowRight, IconCheck, IconX, IconRefresh } from "@/components/site/icons";
+import { AuthShell, IconShield, StatusMark } from "../auth-shell";
 
 type AuthStatus = "verifying" | "success" | "error" | "email_verified" | "no_access";
 
@@ -75,7 +75,8 @@ export default function CallbackPage() {
           setStatus("success");
 
           // Redirect after a brief delay to show success state
-          setTimeout(() => router.push("/admin"), 2000);
+          // Where this role lands: media has no dashboard, so it goes to its first section.
+          setTimeout(() => router.push(landingRouteFor(role)), 2000);
         } else {
           router.push("/");
         }
@@ -105,324 +106,119 @@ export default function CallbackPage() {
     { label: "Setting up session", completed: status === "success" },
   ];
 
+  const primaryCls =
+    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep";
+  const quietCls = "inline-flex h-11 items-center justify-center type-label font-medium text-ink-muted transition-colors duration-150 hover:text-ink";
+
+  const panel =
+    status === "no_access"
+      ? { kicker: "Signed in, no staff role", title: "Wrong door.", body: "This account is valid, but it has no role on the staff site. The HR portal is a separate sign-in." }
+      : status === "error"
+        ? { kicker: "Sign-in", title: "That did not complete.", body: "Nothing is lost. Start the sign-in again; if it keeps failing, your administrator can check the account." }
+        : { kicker: "", title: "The staff console.", body: "Checking your sign-in and preparing your session. This takes a moment." };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white relative overflow-hidden px-4 py-12">
-      {/* Animated background orbs */}
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [0, 20, 0],
-          y: [0, -20, 0],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-0 -right-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-40"
-      />
-      <motion.div
-        animate={{
-          scale: [1.2, 1, 1.2],
-          x: [0, -20, 0],
-          y: [0, 20, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-cyan-100 rounded-full blur-3xl opacity-40"
-      />
-      <motion.div
-        animate={{
-          scale: [1, 1.3, 1],
-          rotate: [0, 10, 0],
-        }}
-        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-100 rounded-full blur-3xl opacity-20"
-      />
-
-      {/* Subtle grid pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
-        }}
-      />
-
-      <div className="w-full max-w-md relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="rounded-3xl bg-white p-8 md:p-10 shadow-xl border border-[var(--hz-paper-line)]"
-        >
-          <AnimatePresence mode="wait">
-            {/* Verifying State */}
-            {status === "verifying" && (
-              <motion.div
-                key="verifying"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 shadow-lg"
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Shield className="h-10 w-10 text-white" />
-                  </motion.div>
-                </motion.div>
-
-                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
-                  Verifying{" "}
-                  <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    Identity
+    <AuthShell kicker={panel.kicker} title={panel.title} body={panel.body}>
+      <div key={status} className="rise text-center" role="status" aria-live="polite">
+        {status === "verifying" && (
+          <>
+            <StatusMark tone="neutral">
+              <IconShield size={28} />
+            </StatusMark>
+            <h1 className="mt-6 type-headline-sm text-ink">Verifying your sign-in</h1>
+            <p className="mt-2 type-body text-ink-muted">Please wait while we complete authentication.</p>
+            <ol className="mx-auto mt-8 max-w-[280px] space-y-3 text-left">
+              {steps.map((st) => (
+                <li key={st.label} className="flex items-center gap-3">
+                  <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${st.completed ? "bg-success text-white" : "border border-line-strong"}`}>
+                    {st.completed ? (
+                      <IconCheck size={14} strokeWidth={2.5} />
+                    ) : (
+                      <span className="size-3 animate-spin rounded-full border-2 border-cobalt-tint border-t-cobalt" />
+                    )}
                   </span>
-                </h1>
-                <p className="text-[var(--hz-text-subtle)] mb-8">Please wait while we complete authentication</p>
+                  <span className={`type-body-sm ${st.completed ? "text-ink" : "text-ink-subtle"}`}>{st.label}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
 
-                {/* Progress Steps */}
-                <div className="space-y-4">
-                  {steps.map((step, index) => (
-                    <motion.div
-                      key={step.label}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.3 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        step.completed
-                          ? "bg-emerald-100"
-                          : "bg-gray-100"
-                      }`}>
-                        {step.completed ? (
-                          <CheckCircle className="w-5 h-5 text-emerald-600" />
-                        ) : (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Loader2 className="w-5 h-5 text-[var(--hz-text-subtle)]" />
-                          </motion.div>
-                        )}
-                      </div>
-                      <span className={`text-sm ${step.completed ? "text-[var(--hz-text)]" : "text-[var(--hz-text-subtle)]"}`}>
-                        {step.label}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+        {status === "success" && (
+          <>
+            <StatusMark tone="success">
+              <IconCheck size={30} strokeWidth={2} />
+            </StatusMark>
+            <h1 className="mt-6 type-headline-sm text-ink">Welcome back</h1>
+            <p className="mt-2 type-body text-ink-muted">
+              Signed in
+              {userRole ? (
+                <>
+                  {" "}
+                  as <span className="font-semibold text-ink">{userRole}</span>
+                </>
+              ) : null}
+              .
+            </p>
+            <p className="mt-6 inline-flex items-center gap-2 type-label text-success">
+              Taking you to the console <IconArrowRight size={16} />
+            </p>
+          </>
+        )}
 
-            {/* Success State */}
-            {status === "success" && (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg"
-                >
-                  <CheckCircle className="h-10 w-10 text-white" />
-                </motion.div>
+        {status === "email_verified" && (
+          <>
+            <StatusMark tone="success">
+              <IconCheck size={30} strokeWidth={2} />
+            </StatusMark>
+            <h1 className="mt-6 type-headline-sm text-ink">Email verified</h1>
+            <p className="mt-2 type-body text-ink-muted">Your email has been verified. Please sign in to continue.</p>
+            <p className="mt-6 inline-flex items-center gap-2 type-label text-success">
+              Taking you to sign in <IconArrowRight size={16} />
+            </p>
+          </>
+        )}
 
-                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
-                  Welcome{" "}
-                  <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                    Back!
-                  </span>
-                </h1>
-                <p className="text-[var(--hz-text-subtle)] mb-2">Authentication successful</p>
-                {userRole && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-sm text-[var(--hz-text-subtle)] mb-6"
-                  >
-                    Signed in as <span className="font-medium text-[var(--hz-text-mute)]">{userRole}</span>
-                  </motion.p>
-                )}
+        {status === "no_access" && (
+          <>
+            <StatusMark tone="neutral">
+              <IconShield size={28} />
+            </StatusMark>
+            <h1 className="mt-6 type-headline-sm text-ink">No access to the staff site</h1>
+            <p className="mt-2 type-body text-ink-muted">
+              This account has no staff role here. If you were looking for your leave, attendance, documents or the handbook, those live in the HR portal, which is a
+              separate sign-in with the credentials HR issued you.
+            </p>
+            <div className="mt-8 grid gap-2">
+              <a href={HR_PORTAL_URL} className={primaryCls}>
+                Go to the HR portal <IconArrowRight size={16} />
+              </a>
+              <Link href="/" className={quietCls}>
+                Back to the website
+              </Link>
+            </div>
+          </>
+        )}
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex items-center justify-center gap-2 text-emerald-600"
-                >
-                  <span className="text-sm font-medium">Redirecting to dashboard</span>
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Email Verified State */}
-            {status === "email_verified" && (
-              <motion.div
-                key="email_verified"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg"
-                >
-                  <CheckCircle className="h-10 w-10 text-white" />
-                </motion.div>
-
-                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
-                  Email{" "}
-                  <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                    Verified!
-                  </span>
-                </h1>
-                <p className="text-[var(--hz-text-subtle)] mb-6">Your email has been verified successfully. Please sign in to continue.</p>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex items-center justify-center gap-2 text-emerald-600"
-                >
-                  <span className="text-sm font-medium">Redirecting to sign in</span>
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Signed in, but this account holds no staff role on this site. */}
-            {status === "no_access" && (
-              <motion.div
-                key="no_access"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
-                >
-                  <Shield className="h-10 w-10 text-white" />
-                </motion.div>
-
-                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">No access to the staff site</h1>
-                <p className="text-[var(--hz-text-subtle)] mb-6">
-                  This account has no staff role here. If you were looking for your leave,
-                  attendance, documents or the handbook, those live in the HR portal, which is a
-                  separate sign-in with the credentials HR issued you.
-                </p>
-
-                <div className="flex flex-col items-center gap-3">
-                  <a
-                    href={HR_PORTAL_URL}
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
-                  >
-                    Go to the HR portal
-                    <ArrowRight className="h-4 w-4" />
-                  </a>
-                  <Link href="/" className="text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]">
-                    Back to the website
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Error State */}
-            {status === "error" && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-rose-500 shadow-lg"
-                >
-                  <XCircle className="h-10 w-10 text-white" />
-                </motion.div>
-
-                <h1 className="heading-subsection text-[var(--hz-text)] mb-3">
-                  Authentication{" "}
-                  <span className="bg-gradient-to-r from-red-500 to-rose-500 bg-clip-text text-transparent">
-                    Failed
-                  </span>
-                </h1>
-                <p className="text-[var(--hz-text-subtle)] mb-2">We couldn&apos;t complete the sign in process</p>
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-sm text-red-500 bg-red-50 rounded-lg p-3 mb-6"
-                  >
-                    {error}
-                  </motion.p>
-                )}
-
-                <div className="space-y-3">
-                  <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => router.push("/auth/signin")}
-                    className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 text-white font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Try Again
-                  </motion.button>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Link
-                      href="/"
-                      className="inline-block text-sm text-[var(--hz-text-subtle)] hover:text-[var(--hz-text)] transition-colors"
-                    >
-                      Return to Home
-                    </Link>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {status === "error" && (
+          <>
+            <StatusMark tone="danger">
+              <IconX size={28} strokeWidth={2} />
+            </StatusMark>
+            <h1 className="mt-6 type-headline-sm text-ink">Sign-in didn&apos;t complete</h1>
+            <p className="mt-2 type-body text-ink-muted">We couldn&apos;t finish signing you in.</p>
+            {error && <p className="mt-5 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-left type-body-sm text-danger">{error}</p>}
+            <div className="mt-8 grid gap-2">
+              <button type="button" onClick={() => router.push("/auth/signin")} className={primaryCls}>
+                <IconRefresh size={16} /> Try again
+              </button>
+              <Link href="/" className={quietCls}>
+                Back to the website
+              </Link>
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

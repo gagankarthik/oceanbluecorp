@@ -1,75 +1,47 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { motion } from "motion/react";
 import { toast } from "sonner";
-import {
-  MapPin,
-  DollarSign,
-  Clock,
-  ArrowLeft,
-  ArrowRight,
-  Briefcase,
-  CalendarClock,
-  CheckCircle2,
-  Globe,
-  Building2,
-  Loader2,
-  Upload,
-  FileText,
-  X,
-  ExternalLink,
-  Share2,
-  Users,
-  Calendar,
-  Heart,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CONTAINER } from "@/components/site/sections";
+import { IconArrowRight, IconChevronRight, IconX } from "@/components/site/icons";
+import { IconBookmark, IconCheckCircle, IconFile, IconShare, IconSpinner, IconUpload } from "@/components/site/careers/careers-icons";
 import type { PublicJob } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth";
 import { renderRichText } from "@/lib/rich-text";
+import { SideSheet } from "@/components/site/side-sheet";
+import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
 
-// Format job type for display
-const formatJobType = (type: string) => {
-  const typeMap: Record<string, string> = {
-    "full-time": "Full-time",
-    "part-time": "Part-time",
-    "contract": "Contract",
-    "contract-to-hire": "Contract-to-Hire",
-    "direct-hire": "Direct Hire",
-    "managed-teams": "Managed Teams",
-    "remote": "Remote",
-  };
-  return typeMap[type] || type;
+const TYPE_LABEL: Record<string, string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  "contract-to-hire": "Contract-to-hire",
+  "direct-hire": "Direct hire",
+  "managed-teams": "Managed teams",
+  remote: "Remote",
 };
+const formatJobType = (type: string) => TYPE_LABEL[type] || type;
 
-// Format due date
-const formatDueDate = (dueDate: string | undefined): { text: string; isUrgent: boolean } | null => {
+const dueLabel = (dueDate?: string): { text: string; urgent: boolean } | null => {
   if (!dueDate) return null;
   const due = new Date(dueDate);
-  const now = new Date();
-  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return { text: "Closed", isUrgent: true };
-  if (diffDays === 0) return { text: "Due Today", isUrgent: true };
-  if (diffDays === 1) return { text: "Due Tomorrow", isUrgent: true };
-  if (diffDays <= 7) return { text: `${diffDays} days left`, isUrgent: true };
-  return { text: `Due ${due.toLocaleDateString()}`, isUrgent: false };
+  const days = Math.ceil((due.getTime() - Date.now()) / 86_400_000);
+  if (days < 0) return { text: "Closed", urgent: true };
+  if (days === 0) return { text: "Closes today", urgent: true };
+  if (days === 1) return { text: "Closes tomorrow", urgent: true };
+  if (days <= 7) return { text: `${days} days left`, urgent: true };
+  return { text: due.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), urgent: false };
 };
 
-// Calculate time ago
-const getTimeAgo = (date: Date): string => {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
+const timeAgo = (date: Date): string => {
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  return `${Math.floor(days / 30)} months ago`;
 };
 
 interface JobDetailsClientProps {
@@ -78,95 +50,77 @@ interface JobDetailsClientProps {
 }
 
 export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) {
-  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
-  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showApply, setShowApply] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", coverLetter: "" });
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    coverLetter: "",
-  });
-
-  // Check if user has already applied to this job
+  // Has the signed-in visitor already applied? Checked by id and by email, to
+  // catch applications submitted before they signed in.
   useEffect(() => {
-    const checkApplicationStatus = async () => {
-      if (!isAuthenticated || (!user?.id && !user?.email) || !jobId) return;
-
+    if (!isAuthenticated || (!user?.id && !user?.email) || !jobId) return;
+    (async () => {
       try {
-        const fetchPromises = [];
-
-        // Check by user ID
-        if (user?.id) {
-          fetchPromises.push(fetch(`/api/applications?userId=${user.id}`));
-        }
-
-        // Also check by email to catch applications submitted before login
+        const urls: string[] = [];
+        if (user?.id) urls.push(`/api/applications?userId=${user.id}`);
         if (user?.email) {
-          fetchPromises.push(fetch(`/api/applications?userId=${encodeURIComponent(user.email)}`));
-          fetchPromises.push(fetch(`/api/applications?email=${encodeURIComponent(user.email)}`));
+          urls.push(`/api/applications?userId=${encodeURIComponent(user.email)}`);
+          urls.push(`/api/applications?email=${encodeURIComponent(user.email)}`);
         }
-
-        const responses = await Promise.all(fetchPromises);
-        for (const response of responses) {
-          if (response.ok) {
-            const data = await response.json();
-            const application = (data.applications || []).find(
-              (app: { jobId: string; status: string }) => app.jobId === jobId
-            );
-            if (application) {
-              setHasApplied(true);
-              setApplicationStatus(application.status);
-              return; // Found application, no need to check further
-            }
+        for (const res of await Promise.all(urls.map((u) => fetch(u)))) {
+          if (!res.ok) continue;
+          const data = await res.json();
+          const app = (data.applications || []).find((a: { jobId: string; status: string }) => a.jobId === jobId);
+          if (app) {
+            setHasApplied(true);
+            setApplicationStatus(app.status);
+            return;
           }
         }
       } catch (err) {
         console.error("Failed to check application status:", err);
       }
-    };
-
-    checkApplicationStatus();
+    })();
   }, [isAuthenticated, user?.id, user?.email, jobId]);
+
+  // Prefill from the signed-in profile.
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const parts = user.name?.split(" ") || [];
+    setFormData((prev) => ({
+      ...prev,
+      firstName: parts[0] || prev.firstName,
+      lastName: parts.slice(1).join(" ") || prev.lastName,
+      email: user.email || prev.email,
+    }));
+  }, [isAuthenticated, user]);
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!job) return;
-
     setSubmitting(true);
-
+    setApplyError(null);
     try {
       let resumeId = null;
-
       if (resumeFile) {
         const fd = new FormData();
         fd.append("file", resumeFile);
         fd.append("userId", formData.email);
-
-        const uploadResponse = await fetch("/api/resume/upload", {
-          method: "POST",
-          body: fd,
-        });
-
-        if (!uploadResponse.ok) {
-          const data = await uploadResponse.json();
+        const up = await fetch("/api/resume/upload", { method: "POST", body: fd });
+        if (!up.ok) {
+          const data = await up.json();
           throw new Error(data.error || "Failed to upload resume");
         }
-
-        const { resumeId: newResumeId } = await uploadResponse.json();
-        resumeId = newResumeId;
+        resumeId = (await up.json()).resumeId;
       }
 
-      const response = await fetch("/api/applications", {
+      const res = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -176,50 +130,37 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           email: formData.email,
           phone: formData.phone,
           coverLetter: formData.coverLetter,
-          resumeId: resumeId,
+          resumeId,
           resumeFileName: resumeFile?.name,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
+      if (!res.ok) {
+        const data = await res.json();
         throw new Error(data.error || "Failed to submit application");
       }
-
       setApplicationSubmitted(true);
       setHasApplied(true);
       setApplicationStatus("pending");
       toast.success("Application submitted! Check your email for confirmation.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to submit application. Please try again.");
+      const message = err instanceof Error ? err.message : "Failed to submit application. Please try again.";
+      setApplyError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Pre-fill form with user data if authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const nameParts = user.name?.split(" ") || [];
-      setFormData((prev) => ({
-        ...prev,
-        firstName: nameParts[0] || prev.firstName,
-        lastName: nameParts.slice(1).join(" ") || prev.lastName,
-        email: user.email || prev.email,
-      }));
-    }
-  }, [isAuthenticated, user]);
-
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: job?.title,
-          text: `Check out this job opening: ${job?.title} at Ocean Blue Corporation`,
+          title: job.title,
+          text: `Check out this job opening: ${job.title} at Ocean Blue Corporation`,
           url: window.location.href,
         });
       } catch (err) {
-        // User cancelled the native share sheet, not an error worth surfacing.
+        // The visitor dismissed the native share sheet.
         console.error("Failed to share job link:", err);
       }
     } else {
@@ -228,571 +169,435 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
     }
   };
 
-  const dueInfo = formatDueDate(job.submissionDueDate);
-  const postedAgo = getTimeAgo(new Date(job.createdAt));
-  const isRemote = job.type === "remote" || job.location.toLowerCase().includes("remote");
-  const postedDate = new Date(job.createdAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const due = dueLabel(job.submissionDueDate);
+  const postedDate = new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const statusLabel = applicationStatus ? applicationStatus.replace("-", " ") : null;
+  const salary = job.salary
+    ? `${job.salary.currency}${job.salary.min.toLocaleString()} – ${job.salary.currency}${job.salary.max.toLocaleString()}`
+    : null;
 
-  // The breadcrumb band is gone. It carried a link to /careers/search and the
-  // job title; the back link below goes to the same place and the h1 states the
-  // title, so it was a band of chrome repeating the two things directly under
-  // it — on a page whose first job is to be readable on a laptop.
+  const mode = workMode(job);
+  const facts = [
+    { k: "Employment type", v: formatJobType(job.type) },
+    { k: "Location", v: job.location },
+    mode ? { k: "Work arrangement", v: mode } : null,
+    salary ? { k: "Compensation", v: salary } : null,
+    { k: "Posted", v: postedDate },
+    due ? { k: "Applications close", v: due.text, urgent: due.urgent } : null,
+  ].filter(Boolean) as { k: string; v: string; urgent?: boolean }[];
+
+  const hasContent = (v: string | string[] | undefined): v is string | string[] => Boolean(v && (typeof v === "string" ? v : v.length > 0));
+
+  const proseCls =
+    "type-body-lg break-words text-ink-muted [&_a]:font-medium [&_a]:text-cobalt [&_a]:underline [&_h2]:mt-8 [&_h2]:type-title-lg [&_h2]:text-ink [&_h3]:mt-6 [&_h3]:font-semibold [&_h3]:text-ink [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:mb-4 [&_strong]:text-ink [&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_li]:marker:text-cobalt";
+
+  const saveBtn = (
+    <button
+      type="button"
+      onClick={() => setSaved(!saved)}
+      aria-pressed={saved}
+      className={cn(
+        "inline-flex h-12 items-center justify-center gap-2 rounded-full border px-5 text-[15px] font-semibold transition-colors",
+        saved ? "border-cobalt bg-cobalt text-white" : "border-line-strong bg-white text-ink hover:border-ink",
+      )}
+    >
+      <IconBookmark size={16} />
+      {saved ? "Saved" : "Save"}
+    </button>
+  );
+  const shareBtn = (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line-strong bg-white px-5 text-[15px] font-semibold text-ink hover:border-cobalt"
+    >
+      <IconShare size={16} />
+      Share
+    </button>
+  );
+  const applyBtn = (cls?: string) => (
+    <button
+      type="button"
+      onClick={() => setShowApply(true)}
+      className={cn(
+        "group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-cobalt px-6 text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep",
+        cls,
+      )}
+    >
+      Apply now
+      <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+    </button>
+  );
+  const appliedBadge = (cls?: string) => (
+    <div className={cn("inline-flex h-12 items-center justify-center gap-2 rounded-full bg-success-container px-5 text-[15px] font-semibold text-success", cls)}>
+      <IconCheckCircle size={18} />
+      Applied{statusLabel ? <span className="font-normal capitalize">· {statusLabel}</span> : null}
+    </div>
+  );
+
+  const section = (title: string, value: string | string[]) => (
+    <section className="border-t border-line pt-10">
+      <h2 className="type-title-lg font-semibold text-ink">{title}</h2>
+      <div className="mt-5">
+        {typeof value === "string" ? (
+          <div className={proseCls} dangerouslySetInnerHTML={renderRichText(value)} />
+        ) : (
+          <ul className="space-y-3">
+            {value.map((item, i) => (
+              <li key={i} className="flex gap-4 type-body-lg break-words text-ink-muted">
+                <span aria-hidden className="mt-[11px] size-1.5 shrink-0 rounded-full bg-cobalt" />
+                <span className="min-w-0">{item}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+
+  const inputCls =
+    "h-12 w-full rounded-xl border border-line-strong bg-white px-4 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none";
+  const labelCls = "mb-1.5 block type-body-sm font-medium text-ink";
+
   return (
-    <div className="horizon min-h-screen bg-[var(--hz-surface)] pt-24 lg:pt-28">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-        <div className="grid gap-8 lg:grid-cols-3 lg:gap-10">
-          {/* Main Content */}
-          <div className="space-y-6 lg:col-span-2">
-             {/* Back Link */}
-              <Link
-                href="/careers/search"
-                className="group inline-flex items-center gap-2 text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors text-sm font-medium"
-              >
-                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-                View all open positions
-              </Link>
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <h1 className="text-[26px] font-bold leading-tight text-[var(--hz-text)] mb-4 sm:text-3xl lg:text-4xl 2xl:text-5xl">
-                {job.title}
-              </h1>
+    <>
+      {/* Header */}
+      <section className="border-b border-line bg-paper">
+        <div className={cn(CONTAINER, "pt-28 pb-10 sm:pt-32 sm:pb-12 lg:pt-36")}>
+          <nav aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-1.5 type-body-sm text-ink-subtle">
+              <li>
+                <Link href="/careers" className="hover:text-ink">
+                  Careers
+                </Link>
+              </li>
+              <IconChevronRight size={14} aria-hidden />
+              <li>
+                <Link href="/careers/search" className="hover:text-ink">
+                  Open positions
+                </Link>
+              </li>
+              <IconChevronRight size={14} aria-hidden />
+              <li>
+                <Link href={`/careers/search?department=${encodeURIComponent(job.department)}`} className="hover:text-ink">
+                  {job.department}
+                </Link>
+              </li>
+            </ol>
+          </nav>
 
-              {/* Meta Tags */}
-              <div className="mb-5 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--hz-cobalt-100)] px-3 py-1.5 text-[13px] font-medium text-[var(--hz-cobalt)]">
-                  <Briefcase className="w-4 h-4" />
-                  {formatJobType(job.type)}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-medium text-[var(--hz-text-mute)]">
-                  <MapPin className="w-4 h-4" />
-                  {job.location}
-                </span>
-                {isRemote && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[13px] font-medium text-emerald-700">
-                    <Globe className="w-4 h-4" />
-                    Remote Friendly
-                  </span>
-                )}
-                {dueInfo && (
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ${
-                    dueInfo.isUrgent ? "bg-orange-50 text-orange-700" : "bg-slate-100 text-[var(--hz-text-mute)]"
-                  }`}>
-                    <CalendarClock className="w-4 h-4" />
-                    {dueInfo.text}
-                  </span>
-                )}
-              </div>
-
-              {/* Posted Info */}
-              <div className="flex items-center gap-4 text-[var(--hz-text-subtle)] text-sm">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" />
-                  Posted {postedDate}
-                </span>
-                {job.applicationsCount !== undefined && job.applicationsCount > 0 && (
-                  <span className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4" />
-                    {job.applicationsCount} applicant{job.applicationsCount !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Apply Button (Mobile) */}
-            <div className="lg:hidden">
-              {hasApplied ? (
-                <div className="w-full rounded-xl border border-green-200 bg-green-50 px-5 py-3">
-                  <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
-                    <CheckCircle2 className="w-5 h-5" />
-                    Already Applied
-                  </div>
-                  {applicationStatus && (
-                    <p className="text-center text-sm text-green-600 mt-1 capitalize">
-                      Status: {applicationStatus.replace("-", " ")}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  className="group w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-5 py-3 font-semibold text-white transition-all hover:shadow-lg"
-                >
-                  Apply for this position
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-                </button>
+          <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <h1 className="rise max-w-[26ch] type-headline font-semibold break-words text-ink">{job.title}</h1>
+              {job.postingId && (
+                <p className="rise mt-4 type-body-sm text-ink-subtle" style={{ animationDelay: "80ms" }}>
+                  Job ID {job.postingId}
+                </p>
               )}
             </div>
+            {/* Actions in the header from tablet up; phones get the fixed bar at the bottom. */}
+            <div className="rise hidden shrink-0 flex-wrap items-center gap-2.5 sm:flex" style={{ animationDelay: "120ms" }}>
+              {hasApplied ? appliedBadge() : applyBtn()}
+              {saveBtn}
+              {shareBtn}
+            </div>
+          </div>
 
-            {/* Description */}
-            {/* Description */}
+          {/* Key facts: a hairline strip, read at a glance. */}
+          <dl className="rise mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none" style={{ animationDelay: "160ms" }}>
+            {facts.map((f) => (
+              <div key={f.k} className="bg-white px-5 py-4">
+                <dt className="type-caption text-ink-subtle">{f.k}</dt>
+                <dd className={cn("mt-1 text-[15.5px] font-semibold break-words tabular-nums", f.urgent ? "text-warning" : "text-ink")}>{f.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* Body */}
+      <div className="bg-white">
+        <div className={cn(CONTAINER, "grid gap-12 pt-12 pb-28 sm:pt-14 sm:pb-20 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16 lg:pb-24")}>
+          <article className="min-w-0 max-w-[760px] space-y-10">
             {job.description && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div
-                  className="text-[var(--hz-text-mute)] text-lg leading-relaxed break-words [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
-                  dangerouslySetInnerHTML={renderRichText(job.description)}
-                />
-              </motion.div>
+              <section>
+                <h2 className="type-title-lg font-semibold text-ink">About the role</h2>
+                <div className={cn(proseCls, "mt-5")} dangerouslySetInnerHTML={renderRichText(job.description)} />
+              </section>
             )}
+            {hasContent(job.responsibilities) && section("What you'll do", job.responsibilities)}
+            {hasContent(job.requirements) && section("What we're looking for", job.requirements)}
 
-            {/* Salary */}
-            {job.salary && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 p-5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-emerald-600 font-medium mb-1">Compensation</p>
-                    <p className="text-2xl font-bold text-[var(--hz-text)]">
-                      {job.salary.currency}{job.salary.min.toLocaleString()} - {job.salary.currency}{job.salary.max.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            <section className="border-t border-line pt-10">
+              <h2 className="type-title-lg font-semibold text-ink">What we offer</h2>
+              <ul className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+                {CAREER_BENEFITS.map((b) => (
+                  <li key={b.title} className="bg-white p-5">
+                    <p className="text-[15.5px] font-semibold text-ink">{b.title}</p>
+                    <p className="mt-1.5 type-body-sm text-ink-muted">{b.desc}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 type-body-sm text-ink-subtle">{EEO_STATEMENT}</p>
+            </section>
 
-            {/* Responsibilities */}
-            {job.responsibilities && (typeof job.responsibilities === 'string' ? job.responsibilities : job.responsibilities.length > 0) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h2 className="mb-4 text-xl font-bold text-[var(--hz-text)] lg:text-2xl">What you'll do</h2>
-                {typeof job.responsibilities === 'string' ? (
-                  <div
-                    className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
-                    dangerouslySetInnerHTML={renderRichText(job.responsibilities)}
-                  />
-                ) : (
-                  <ul className="space-y-4">
-                    {job.responsibilities.map((item, i) => (
-                      <li key={i} className="flex items-start gap-4">
-                        <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
-                        </div>
-                        <span className="min-w-0 text-[var(--hz-text-mute)] text-lg break-words">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </motion.div>
-            )}
-
-            {/* Requirements */}
-            {job.requirements && (typeof job.requirements === 'string' ? job.requirements : job.requirements.length > 0) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-              >
-                <h2 className="mb-4 text-xl font-bold text-[var(--hz-text)] lg:text-2xl">What we're looking for</h2>
-                {typeof job.requirements === 'string' ? (
-                  <div
-                    className="text-[var(--hz-text-mute)] text-base leading-relaxed break-words [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:pl-1 [&_li]:marker:text-[var(--hz-cobalt)] [&_p]:mb-3"
-                    dangerouslySetInnerHTML={renderRichText(job.requirements)}
-                  />
-                ) : (
-                  <ul className="space-y-4">
-                    {job.requirements.map((item, i) => (
-                      <li key={i} className="flex items-start gap-4">
-                        <div className="w-6 h-6 rounded-full bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <CheckCircle2 className="w-4 h-4 text-[var(--hz-cobalt)]" />
-                        </div>
-                        <span className="min-w-0 text-[var(--hz-text-mute)] text-lg break-words">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </motion.div>
-            )}
-
-            {/* Bottom Apply CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className={`rounded-2xl p-6 text-center lg:p-7 ${hasApplied ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)]"}`}
-            >
+            {/* The ask, once more, where the reader finishes. */}
+            <div className="rounded-2xl bg-ink p-8 text-white sm:p-10">
               {hasApplied ? (
                 <>
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <CheckCircle2 className="w-8 h-8 text-white" />
-                    <h3 className="text-xl font-bold text-white lg:text-2xl">Application Submitted</h3>
-                  </div>
-                  <p className="text-green-100 mb-4">You have already applied for this position.</p>
-                  {applicationStatus && (
-                    <span className="inline-block px-4 py-2 bg-white/20 text-white rounded-lg font-medium capitalize">
-                      Status: {applicationStatus.replace("-", " ")}
-                    </span>
-                  )}
-                  <div className="mt-6">
-                    <Link
-                      href="/careers/search"
-                      className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-green-600 transition-all hover:shadow-lg"
+                  <p className="flex items-center gap-2 type-title-lg font-semibold">
+                    <IconCheckCircle size={22} className="text-emerald-300" />
+                    Application submitted
+                  </p>
+                  <p className="mt-2 type-body text-white/80">
+                    You have already applied for this position{statusLabel ? `. Status: ${statusLabel}` : ""}.
+                  </p>
+                  <Link
+                    href="/careers/search"
+                    className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-ink hover:bg-cobalt-tint"
+                  >
+                    Browse more openings
+                    <IconArrowRight size={16} />
+                  </Link>
+                </>
+              ) : (
+                <div>
+                  <p className="type-title-lg font-semibold">Not quite the right role?</p>
+                  <p className="mt-1.5 max-w-[52ch] type-body text-white/80">
+                    Send us your resume and tell us the role you are looking for. We will keep it on file and reach out when something fits.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <a
+                      href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}&body=${encodeURIComponent(
+                        "Hello Ocean Blue team,\n\nThe role I'm looking for:\nPreferred location / work arrangement:\n\nMy resume is attached.\n\nThank you,\n",
+                      )}`}
+                      className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15.5px] font-semibold text-ink hover:bg-cobalt-tint"
                     >
-                      Browse more openings
+                      Email HR your resume
+                      <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                    </a>
+                    <Link
+                      href="/contact"
+                      className="inline-flex h-12 items-center justify-center rounded-full border border-white/45 px-6 text-[15.5px] font-semibold text-white hover:border-white hover:bg-white/10"
+                    >
+                      Contact us
                     </Link>
                   </div>
-                </>
-              ) : (
-                <>
-                  <h3 className="mb-2.5 text-xl font-bold text-white lg:text-2xl">Ready to apply?</h3>
-                  <p className="text-[var(--hz-cobalt-100)] mb-6">Join our team and help shape the future of enterprise IT.</p>
-                  <button
-                    onClick={() => setShowApplyModal(true)}
-                    className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-[var(--hz-cobalt)] transition-all hover:shadow-lg"
-                  >
-                    Apply for this position
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                </>
+                  <p className="mt-4 type-body-sm text-white/70">
+                    Or write to <a href={`mailto:${HR_EMAIL}`} className="font-medium text-white underline underline-offset-4">{HR_EMAIL}</a>
+                  </p>
+                </div>
               )}
-            </motion.div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            {/* The rail is taller than a 14" laptop's viewport once the apply
-                card, the recruiter card and the share card are stacked, and a
-                sticky element taller than the screen pins its top and hides
-                its bottom for good. Bounded and scrolled instead. */}
-            <div className="sticky top-24 max-h-[calc(100dvh-7rem)] space-y-5 overflow-y-auto pb-2">
-              {/* Apply Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="hidden lg:block bg-white rounded-2xl border border-[var(--hz-paper-line)] p-5 shadow-sm"
-              >
-                {hasApplied ? (
-                  <div className="w-full rounded-xl border border-green-200 bg-green-50 px-5 py-3 mb-4">
-                    <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
-                      <CheckCircle2 className="w-5 h-5" />
-                      Already Applied
-                    </div>
-                    {applicationStatus && (
-                      <p className="text-center text-sm text-green-600 mt-1 capitalize">
-                        Status: {applicationStatus.replace("-", " ")}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowApplyModal(true)}
-                    className="group w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] px-5 py-3 font-semibold text-white transition-all hover:shadow-lg mb-4"
-                  >
-                    Apply for this position
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                )}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSaved(!saved)}
-                    className={`flex-1 px-4 py-3 border rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                      saved
-                        ? "border-pink-200 bg-pink-50 text-pink-600"
-                        : "border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] hover:bg-[var(--hz-paper)]"
-                    }`}
-                  >
-                    <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
-                    {saved ? "Saved" : "Save"}
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    className="flex-1 px-4 py-3 border border-[var(--hz-paper-line)] text-[var(--hz-text-mute)] rounded-xl font-medium hover:bg-[var(--hz-paper)] transition-all flex items-center justify-center gap-2"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </button>
-                </div>
-              </motion.div>
-
-              {/* Company Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-[var(--hz-paper-line)] p-5 shadow-sm"
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-transparent">
-                    <Image src='/favicon.png' width={48} height={48} alt="Logo" className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[var(--hz-text)] text-lg">Ocean Blue Solution</h3>
-                    <p className="text-[var(--hz-text-subtle)] text-sm">Enterprise IT Solutions</p>
-                  </div>
-                </div>
-
-                <p className="text-[var(--hz-text-mute)] text-sm mb-6">
-                  Ocean Blue Corporation delivers innovative enterprise IT solutions,
-                  helping businesses transform and grow with cutting-edge technology.
-                </p>
-
-                <Link
-                  href="https://oceanbluecorp.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)] font-medium text-sm"
-                >
-                  Learn more about us
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" focusable="false" />
-                </Link>
-
-                <div className="border-t border-[var(--hz-paper-line)] mt-6 pt-6 space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--hz-text-subtle)]">Company size</span>
-                    <span className="font-medium text-[var(--hz-text)]">50+ employees</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--hz-text-subtle)]">Industry</span>
-                    <span className="font-medium text-[var(--hz-text)]">IT Services</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--hz-text-subtle)]">Headquarters</span>
-                    <span className="font-medium text-[var(--hz-text)]">United States</span>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Job Details Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-5"
-              >
-                <h4 className="font-semibold text-[var(--hz-text)] mb-4">Job Details</h4>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Briefcase className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-[var(--hz-text-subtle)]">Employment Type</p>
-                      <p className="font-medium text-[var(--hz-text)]">{formatJobType(job.type)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-[var(--hz-text-subtle)]">Location</p>
-                      <p className="font-medium text-[var(--hz-text)]">{job.location}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-[var(--hz-text-subtle)]">Department</p>
-                      <p className="font-medium text-[var(--hz-text)]">{job.department}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-[var(--hz-text-subtle)] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-[var(--hz-text-subtle)]">Posted</p>
-                      <p className="font-medium text-[var(--hz-text)]">{postedAgo}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-
             </div>
-          </div>
+          </article>
+
+          {/* Side column: the summary that follows the reader down the page. */}
+          <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
+            <div className="rounded-2xl border border-line bg-white p-6">
+              <p className="type-caption font-semibold text-cobalt">{job.department}</p>
+              <p className="mt-1.5 type-title-lg font-semibold break-words text-ink">{job.title}</p>
+              <p className="mt-2 type-body-sm text-ink-muted">
+                {[formatJobType(job.type), mode, job.location].filter(Boolean).join(" · ")}
+              </p>
+              {due && (
+                <p className={cn("mt-4 rounded-xl px-4 py-3 type-body-sm font-medium", due.urgent ? "bg-warning-container text-warning" : "bg-paper text-ink-muted")}>
+                  {due.text === "Closed" ? "Applications have closed" : `Applications close: ${due.text}`}
+                </p>
+              )}
+              <div className="mt-5 grid gap-2.5">
+                {hasApplied ? appliedBadge("w-full") : applyBtn("w-full")}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {saveBtn}
+                  {shareBtn}
+                </div>
+              </div>
+              <p className="mt-5 border-t border-line pt-4 type-caption text-ink-subtle">Posted {timeAgo(new Date(job.createdAt)).toLowerCase()}</p>
+            </div>
+
+            <div className="rounded-2xl bg-paper p-6">
+              <p className="text-[16px] font-semibold text-ink">Ocean Blue Solutions</p>
+              <p className="mt-2 type-body-sm text-ink-muted">
+                IT staffing, engineering, enterprise solutions, managed services and training for enterprises and government agencies.
+              </p>
+              <Link href="/careers" className="mt-4 inline-flex items-center gap-1.5 type-label font-semibold text-ink hover:text-cobalt">
+                Life at Ocean Blue <IconArrowRight size={14} />
+              </Link>
+            </div>
+          </aside>
         </div>
       </div>
 
-      {/* Apply Modal */}
-      {showApplyModal && (
-        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col"
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
-              <div>
-                <h2 className="text-lg font-bold text-[var(--hz-text)]">Apply Now</h2>
-                <p className="text-[var(--hz-text-subtle)] text-xs truncate max-w-[200px]">{job.title}</p>
-              </div>
-              <button
-                onClick={() => setShowApplyModal(false)}
-                className="p-2 text-[var(--hz-text-subtle)] hover:text-[var(--hz-text-mute)] rounded-lg hover:bg-[var(--hz-paper)] transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Phones: the action stays in reach at the bottom of the screen. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 py-3 backdrop-blur-md sm:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate type-label font-semibold text-ink">{job.title}</p>
+            <p className="truncate type-caption text-ink-subtle">{due ? due.text : formatJobType(job.type)}</p>
+          </div>
+          {hasApplied ? (
+            <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-success-container px-4 type-label font-semibold text-success">
+              <IconCheckCircle size={16} />
+              Applied
+            </span>
+          ) : (
+            <button type="button" onClick={() => setShowApply(true)} className="h-11 shrink-0 rounded-full bg-cobalt px-5 text-[15px] font-semibold text-white">
+              Apply now
+            </button>
+          )}
+        </div>
+      </div>
 
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-5">
+      {/* Apply: a side sheet from sm up, a bottom sheet on phones. */}
+      <SideSheet
+        open={showApply}
+        onOpenChange={(o) => {
+          setShowApply(o);
+          if (!o) setApplicationSubmitted(false);
+        }}
+        title={applicationSubmitted ? "Application sent" : "Apply for this role"}
+        description={`${job.title} · ${job.location}`}
+        footer={
+          applicationSubmitted ? undefined : (
+            <div className="space-y-3">
+              <button
+            type="submit"
+            form="apply-form"
+            disabled={submitting}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep disabled:opacity-60"
+          >
+            {submitting ? (
+              <>
+                <IconSpinner size={18} className="animate-spin" />
+                Submitting…
+              </>
+            ) : (
+              <>
+                Submit application
+                <IconArrowRight size={16} />
+              </>
+            )}
+          </button>
+              <p className="text-center type-caption text-ink-subtle">Fields marked * are required.</p>
+            </div>
+          )
+        }
+      >
               {applicationSubmitted ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-6"
-                >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[var(--hz-text)] mb-2">Application Submitted!</h3>
-                  <p className="text-[var(--hz-text-subtle)] text-sm mb-6">
-                    Thank you for applying. We'll get back to you soon.
-                  </p>
+                <div className="py-10 text-center" role="status">
+                  <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-success-container text-success">
+                    <IconCheckCircle size={30} />
+                  </span>
+                  <h3 className="mt-5 type-title-lg font-semibold text-ink">Application submitted</h3>
+                  <p className="mt-2 type-body text-ink-muted">Thank you for applying. We will get back to you soon.</p>
                   <button
+                    type="button"
                     onClick={() => {
-                      setShowApplyModal(false);
+                      setShowApply(false);
                       setApplicationSubmitted(false);
                     }}
-                    className="px-5 py-2.5 bg-slate-100 text-[var(--hz-text-mute)] font-medium rounded-lg hover:bg-slate-200 transition-colors"
+                    className="mt-7 inline-flex h-11 items-center rounded-full border border-line-strong px-5 type-label font-semibold text-ink hover:border-cobalt"
                   >
                     Close
                   </button>
-                </motion.div>
+                </div>
               ) : (
-                <form onSubmit={handleApply} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">First Name *</label>
-                      <input
-                        type="text"
-                        autoComplete="given-name"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
-                        placeholder="John"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Last Name *</label>
-                      <input
-                        type="text"
-                        autoComplete="family-name"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
-                        placeholder="Doe"
-                      />
-                    </div>
+                <form id="apply-form" onSubmit={handleApply} className="space-y-6">
+                  <div className="rounded-2xl bg-paper p-4">
+                    <p className="type-caption font-semibold text-cobalt">{job.department}</p>
+                    <p className="mt-1 text-[15.5px] leading-snug font-semibold text-ink">{job.title}</p>
+                    <p className="mt-1 type-body-sm text-ink-muted">{[formatJobType(job.type), mode, job.location].filter(Boolean).join(" · ")}</p>
                   </div>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Email *</label>
-                      <input
-                        type="email"
-                        autoComplete="email"
-                        inputMode="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
-                        placeholder="john@example.com"
-                      />
+                  <fieldset className="space-y-4">
+                    <legend className="mb-3 type-caption font-semibold text-ink-subtle">Your details</legend>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="apply-first" className={labelCls}>
+                          First name <span className="text-danger">*</span>
+                        </label>
+                        <input id="apply-first" type="text" autoComplete="given-name" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label htmlFor="apply-last" className={labelCls}>
+                          Last name <span className="text-danger">*</span>
+                        </label>
+                        <input id="apply-last" type="text" autoComplete="family-name" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className={inputCls} />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Phone</label>
-                      <input
-                        type="tel"
-                        autoComplete="tel"
-                        inputMode="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] bg-white"
-                        placeholder="+1 (555) 000-0000"
-                      />
+                      <label htmlFor="apply-email" className={labelCls}>
+                        Email <span className="text-danger">*</span>
+                      </label>
+                      <input id="apply-email" type="email" autoComplete="email" inputMode="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className={inputCls} />
                     </div>
-                  </div>
+                    <div>
+                      <label htmlFor="apply-phone" className={labelCls}>
+                        Phone
+                      </label>
+                      <input id="apply-phone" type="tel" autoComplete="tel" inputMode="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={inputCls} />
+                    </div>
+                  </fieldset>
 
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Resume</label>
-                    <div
-                      className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                        resumeFile ? "border-emerald-400 bg-emerald-50" : "border-[var(--hz-paper-line)] hover:border-slate-300 bg-[var(--hz-paper)]"
-                      }`}
-                    >
+                  <fieldset className="space-y-4 border-t border-line pt-5">
+                    <legend className="mb-3 type-caption font-semibold text-ink-subtle">Resume and note</legend>
+                    <div>
+                      <p id="apply-resume-label" className={labelCls}>
+                        Resume
+                      </p>
                       {resumeFile ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <FileText className="w-6 h-6 text-emerald-600" />
-                          <div className="text-left">
-                            <p className="text-sm font-medium text-[var(--hz-text)] truncate max-w-[150px]">{resumeFile.name}</p>
-                            <p className="text-xs text-[var(--hz-text-subtle)]">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+                        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success-container p-3.5">
+                          <IconFile size={22} className="shrink-0 text-success" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate type-body-sm font-medium text-ink">{resumeFile.name}</p>
+                            <p className="type-caption text-ink-subtle">{(resumeFile.size / 1024).toFixed(1)} KB</p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setResumeFile(null)}
-                            className="p-1 hover:bg-emerald-100 rounded"
+                            aria-label="Remove resume"
+                            className="flex size-9 items-center justify-center rounded-full text-ink-muted hover:bg-white hover:text-ink"
                           >
-                            <X className="w-4 h-4 text-[var(--hz-text-subtle)]" />
+                            <IconX size={16} />
                           </button>
                         </div>
                       ) : (
-                        <label className="cursor-pointer">
-                          <Upload className="w-8 h-8 text-[var(--hz-text-subtle)] mx-auto mb-2" />
-                          <p className="text-sm font-medium text-[var(--hz-text-mute)]">Upload resume</p>
-                          <p className="text-xs text-[var(--hz-text-subtle)]">PDF, DOC, DOCX (max 5MB)</p>
+                        <label className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-line-strong bg-paper px-4 py-7 text-center transition-colors focus-within:border-cobalt hover:border-ink-subtle">
+                          <IconUpload size={24} className="text-ink-subtle" />
+                          <span className="mt-2 type-label font-semibold text-ink">Upload resume</span>
+                          <span className="type-caption text-ink-subtle">PDF, DOC, DOCX (max 5MB)</span>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx"
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) setResumeFile(e.target.files[0]);
-                            }}
-                            className="hidden"
+                            aria-labelledby="apply-resume-label"
+                            onChange={(e) => e.target.files?.[0] && setResumeFile(e.target.files[0])}
+                            className="sr-only"
                           />
                         </label>
                       )}
                     </div>
-                  </div>
+                    <div>
+                      <label htmlFor="apply-cover" className={labelCls}>
+                        Cover letter <span className="font-normal text-ink-subtle">(optional)</span>
+                      </label>
+                      <textarea
+                        id="apply-cover"
+                        rows={5}
+                        autoComplete="off"
+                        value={formData.coverLetter}
+                        onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
+                        className={cn(inputCls, "h-auto resize-none py-3")}
+                        placeholder="Tell us why you're interested"
+                      />
+                    </div>
+                  </fieldset>
 
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--hz-text-mute)] mb-1.5">Cover Letter (Optional)</label>
-                    <textarea
-                      rows={3}
-                      autoComplete="off"
-                      value={formData.coverLetter}
-                      onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-                      className="w-full px-3 py-2.5 text-sm border border-[var(--hz-paper-line)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--hz-cobalt)] resize-none bg-white"
-                      placeholder="Tell us why you're interested..."
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full px-5 py-3 bg-gradient-to-r from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] text-white font-semibold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <ArrowRight className="w-4 h-4" />
-                        Submit Application
-                      </>
-                    )}
-                  </button>
+                  {applyError && (
+                    <p role="alert" className="rounded-xl border border-danger/25 bg-danger-container px-4 py-3 type-body-sm text-danger">
+                      {applyError}
+                    </p>
+                  )}
                 </form>
               )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
+      </SideSheet>
+    </>
   );
 }

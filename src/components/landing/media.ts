@@ -18,11 +18,13 @@ export const IMG = {
   serviceSolutions: u("1504384308090-c894fdcc538d"), // server racks
   serviceManaged: u("1451187580459-43490279c0fa"), // network / earth
   serviceEngineering: u("1581091226825-a6a2a5aee158"), // engineer at work
+  serviceTraining: u("1522202176988-66273c2fd55f"), // team learning on laptops
   insightHiring: u("1497366811353-6870744d04b2"), // meeting room
   insightCloud: u("1454165804606-c3d57bc86b40"), // analytics on screen
   insightSupport: u("1573164713988-8665fc963095"), // working at computer
   caseStudy: u("1486406146926-c627a92ad1ab"), // modern building
   cta: u("1600880292089-90a7e086ee0c"), // business meeting
+  ctaColumbus: u("1654115480554-e1a1b24cfd63", 2400), // Columbus skyline and Main Street Bridge over the Scioto, closing CTA
   servicesHero: u("1519389950473-47ba0277781c"), // team on laptops
   aboutHero: u("1556761175-5973dc0f32e7"), // office interior
   aboutTeam: u("1542744173-8e7e53415bb0"), // team meeting

@@ -28,7 +28,7 @@ export const FAQS: Faq[] = [
   {
     topic: "Working with us",
     q: "What does Ocean Blue actually do?",
-    a: "Four connected practices under one accountable team: IT staffing and talent, engineering talent and services, enterprise solutions such as cloud, ERP, Salesforce and AI, and managed services. We serve enterprises and state government agencies across North America.",
+    a: "Five connected practices under one accountable team: IT staffing and talent, engineering talent and services, enterprise solutions such as cloud, ERP, Salesforce and AI, managed services, and training and upskilling. We serve enterprises and state government agencies across North America.",
     href: "/solutions",
   },
   {

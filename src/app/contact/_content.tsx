@@ -2,13 +2,14 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Phone, Send, CheckCircle2 } from "lucide-react";
-import { Reveal } from "@/components/landing/motion/Primitives";
-import { Eyebrow } from "@/components/landing/ui";
 import PageHero from "@/components/landing/PageHero";
 import { SOCIAL_LINKS } from "@/components/layout/social";
 import Locations from "@/components/landing/Locations";
-import { IMG } from "@/components/landing/media";
+import { CONTAINER, SECTION_Y } from "@/components/site/sections";
+import { buttonClass } from "@/components/site/button";
+import { IconArrowRight, IconCheck, IconMail, IconClock } from "@/components/site/icons";
+import { IconPhone, IconPin } from "@/components/site/company/icons";
+import { Select } from "@/components/site/select";
 
 const inquiryTypes = [
   "General Inquiry", "IT Staffing", "Cloud Services", "Cybersecurity",
@@ -17,11 +18,19 @@ const inquiryTypes = [
 
 /* Rewritten off vague claims ("Round-the-clock assistance from certified
    experts", "Years of delivery across regulated industries") and one promise
-   we should not be making in writing , "We reply within 24 hours, guaranteed."
+   we should not be making in writing, "We reply within 24 hours, guaranteed."
    Each line now states something specific and checkable. */
 const inputClass =
-  "w-full rounded-lg border border-black/[0.12] bg-white px-4 py-3 text-[14px] text-[var(--hz-text)] transition-all placeholder:text-[var(--hz-text-subtle)] focus:border-[var(--hz-cobalt)] focus:outline-none focus:ring-4 focus:ring-[var(--hz-cobalt-100)]";
-const labelClass = "mb-2 block text-[13px] font-medium text-[var(--hz-text)]";
+  "w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-[15px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-subtle focus:border-cobalt focus:outline-none focus:ring-4 focus:ring-cobalt-tint";
+const labelClass = "mb-2 block text-[14px] font-medium text-ink";
+
+/** Direct routes, for anyone who would rather not fill in a form. */
+const DIRECT = [
+  { icon: IconPhone, k: "Call", v: "+1 (614) 844-6925", href: "tel:+16148446925" },
+  { icon: IconMail, k: "Email", v: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
+  { icon: IconClock, k: "Hours", v: "Monday to Friday, 8:00 AM to 5:00 PM EST", href: null },
+  { icon: IconPin, k: "Head office", v: "Powell, Ohio", href: "#locations" },
+];
 
 export default function ContactPage({ content = {} }: { content?: Record<string, string> }) {
   const [formData, setFormData] = useState({
@@ -64,10 +73,8 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // CMS overrides for the contact-method cards (blank → built-in default)
   return (
-    <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
+    <>
       <PageHero
         eyebrow="Contact us"
         title={content.contactTitle || "Let's start a conversation."}
@@ -75,40 +82,39 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
           content.contactSubtitle ||
           "A question about our services, a custom solution, or a partnership, our team is ready to help."
         }
-        image="/images/office.png"
       />
 
-      {/* Form + side */}
-      <section id="contact-form" className="scroll-mt-24 px-6 pb-24 pt-16 sm:px-8 sm:pb-28 sm:pt-20">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
+      <section id="contact-form" data-tone="white" className={`scroll-mt-28 bg-white ${SECTION_Y}`}>
+        <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16`}>
           {/* Form */}
-          <div className="rounded-3xl border border-black/[0.08] bg-white p-6 shadow-[var(--hz-shadow-lg)] sm:p-10">
+          <div className="rounded-2xl border border-line bg-white p-6 shadow-[var(--shadow-raised)] sm:p-10">
             {submitted ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <div className="grid h-20 w-20 place-items-center rounded-full bg-[var(--hz-cobalt)] text-white">
-                  <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
-                </div>
-                <h3 className="hz-display mt-6 text-[1.6rem] text-[var(--hz-text)]">Thank you.</h3>
-                <p className="mt-3 max-w-sm text-[15px] text-[var(--hz-text-mute)]">
-                  Your message has been received. A member of our team will contact you within 24 hours.
+              <div className="flex flex-col items-center py-12 text-center" role="status">
+                <span className="flex size-16 items-center justify-center rounded-full bg-cobalt text-white">
+                  <IconCheck size={30} />
+                </span>
+                <h2 className="mt-6 type-title-lg text-ink">Thank you.</h2>
+                <p className="mt-3 max-w-sm type-body text-ink-muted">
+                  Your message has been received. A member of our team will be in touch.
                 </p>
-                <button onClick={() => setSubmitted(false)} className="hz-btn-ghost mt-8">Send another message</button>
+                <button type="button" onClick={() => setSubmitted(false)} className={buttonClass("outline", "lg", "mt-8")}>
+                  Send another message
+                </button>
               </div>
             ) : (
               <>
-                <Eyebrow>Send a message</Eyebrow>
-                <h2 className="hz-display mt-5 text-[1.8rem] text-[var(--hz-text)] sm:text-[2.1rem]">Tell us about your project.</h2>
-                <p className="mt-3 text-[15px] text-[var(--hz-text-mute)]">Fill out the form and we&apos;ll get back to you as soon as possible.</p>
+                <h2 className="type-headline-sm text-ink">Tell us about your project.</h2>
+                <p className="mt-2 text-[16px] text-ink-muted">Fill out the form and we&apos;ll get back to you as soon as possible.</p>
 
                 {error && (
-                  <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                    <p className="text-[14px] text-red-600">{error}</p>
+                  <div role="alert" className="mt-6 rounded-xl border border-danger/25 bg-danger-container p-4">
+                    <p className="text-[14.5px] text-danger">{error}</p>
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                   {/* Honeypot, hidden from people, but bots fill it. Do not remove. */}
-                  <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden" tabIndex={-1}>
+                  <div aria-hidden="true" className="absolute top-0 left-[-9999px] h-0 w-0 overflow-hidden" tabIndex={-1}>
                     <label htmlFor="website">Website (leave this field empty)</label>
                     <input ref={honeypotRef} type="text" id="website" name="website" tabIndex={-1} autoComplete="off" />
                   </div>
@@ -142,80 +148,73 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                       <input type="text" id="jobTitle" name="jobTitle" autoComplete="organization-title" maxLength={120} value={formData.jobTitle} onChange={handleChange} className={inputClass} placeholder="Your role" />
                     </div>
                   </div>
-                  <div>
-                    <label htmlFor="inquiryType" className={labelClass}>Inquiry type *</label>
-                    <select id="inquiryType" name="inquiryType" required value={formData.inquiryType} onChange={handleChange} className={inputClass}>
-                      <option value="" className="bg-[var(--hz-canvas)] text-[var(--hz-text)]">Select an option</option>
-                      {inquiryTypes.map((type) => (<option key={type} value={type} className="bg-[var(--hz-canvas)] text-[var(--hz-text)]">{type}</option>))}
-                    </select>
-                  </div>
+                  <Select
+                    id="inquiryType"
+                    name="inquiryType"
+                    label="Inquiry type"
+                    required
+                    shape="field"
+                    value={formData.inquiryType}
+                    onValueChange={(v) => setFormData((prev) => ({ ...prev, inquiryType: v }))}
+                    options={inquiryTypes.map((t) => ({ value: t, label: t }))}
+                  />
                   <div>
                     <label htmlFor="message" className={labelClass}>Message *</label>
                     <textarea id="message" name="message" required minLength={10} maxLength={4000} rows={5} value={formData.message} onChange={handleChange} className={`${inputClass} resize-none`} placeholder="Tell us about your project or inquiry..." />
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--hz-cobalt)] px-6 py-3.5 text-[14px] font-semibold text-white transition-all duration-300 hover:bg-[var(--hz-cobalt-600)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={loading} className={buttonClass("primary", "lg", "w-full")}>
                     {loading ? (
                       <>
-                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                         Sending…
                       </>
                     ) : (
-                      <>Send message<Send className="h-4 w-4" strokeWidth={1.75} /></>
+                      <>
+                        Send message
+                        <IconArrowRight size={16} />
+                      </>
                     )}
                   </button>
 
-                  <p className="text-center text-[13px] text-[var(--hz-text-subtle)]">
+                  <p className="text-center text-[13.5px] text-ink-subtle">
                     By submitting this form, you agree to our{" "}
-                    <Link href="/privacy" className="font-medium text-[var(--hz-cobalt)] hover:underline">Privacy Policy</Link>.
+                    <Link href="/privacy" className="font-medium text-cobalt underline-offset-4 hover:underline">Privacy Policy</Link>.
                   </p>
                 </form>
               </>
             )}
           </div>
 
-          {/* Side. Was four "why partner with us" cards, each in a tinted
-              icon chip with a hover lift, plus a third repeat of the phone
-              number. That argument belongs on the landing page, the chip and
-              the lift are patterns this site removed everywhere else, and by
-              then the page had shown the phone three times. What a person
-              needs beside a form is the way to skip it. */}
-          <div className="lg:self-center">
-            <Eyebrow>Rather not fill in a form?</Eyebrow>
-            <h2 className="hz-display mt-5 text-[1.6rem] text-[var(--hz-text)] sm:text-[1.9rem]">
-              Reach a person directly.
-            </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-              No switchboard and no ticket number. Whoever picks up can put you
-              through to the people who would actually do the work.
+          {/* What a person needs beside a form: the way to skip it. */}
+          <aside className="lg:pt-4">
+            <h2 className="type-headline-sm text-ink">Reach a person directly.</h2>
+            <p className="mt-3 type-body text-ink-muted">
+              No switchboard and no ticket number. Whoever picks up can put you through to the people who would actually do the work.
             </p>
 
-            <dl className="mt-8 divide-y divide-[var(--hz-paper-line)] border-y border-[var(--hz-paper-line)]">
-              {[
-                { k: "Call", v: "+1 (614) 844-6925", href: "tel:+16148446925" },
-                { k: "Email", v: "hr@oceanbluecorp.com", href: "mailto:hr@oceanbluecorp.com" },
-                { k: "Hours", v: "Monday to Friday, 8:00 AM to 5:00 PM EST", href: null },
-                { k: "Head office", v: "Powell, Ohio", href: "#locations" },
-              ].map((row) => (
-                <div key={row.k} className="flex items-baseline justify-between gap-6 py-3.5">
-                  <dt className="text-[13px] uppercase tracking-[0.1em] text-[var(--hz-text-subtle)]">{row.k}</dt>
-                  <dd className="text-right text-[14.5px] font-medium text-[var(--hz-text)]">
+            <ul className="mt-8 divide-y divide-line border-y border-line">
+              {DIRECT.map((row) => (
+                <li key={row.k} className="flex items-start gap-4 py-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink">
+                    <row.icon size={18} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13.5px] text-ink-subtle">{row.k}</span>
                     {row.href ? (
-                      <a href={row.href} className="hz-focus text-[var(--hz-cobalt)] transition-opacity hover:opacity-80">{row.v}</a>
+                      <a href={row.href} className="block text-[16px] font-semibold text-ink underline-offset-4 hover:text-cobalt hover:underline">
+                        {row.v}
+                      </a>
                     ) : (
-                      row.v
+                      <span className="block text-[16px] font-semibold text-ink">{row.v}</span>
                     )}
-                  </dd>
-                </div>
+                  </span>
+                </li>
               ))}
-            </dl>
+            </ul>
 
-            <div className="mt-7 flex flex-wrap items-center gap-4">
-              <span className="text-[13.5px] text-[var(--hz-text-mute)]">Or message us on</span>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <span className="text-[14.5px] text-ink-muted">Or message us on</span>
               {SOCIAL_LINKS.map((sl) => (
                 <a
                   key={sl.name}
@@ -223,23 +222,18 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={sl.name}
-                  className="text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-cobalt)]"
+                  className="flex size-11 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-ink hover:text-ink"
                 >
-                  <sl.icon className="h-[18px] w-[18px]" />
+                  <sl.icon className="size-4" />
                 </a>
               ))}
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 
-      {/* Offices */}
-      {/* The office list, with a map. It replaces a four-card grid that said
-          the same thing without showing the shape of it: four pins across three
-          countries reads as coverage at a glance, which a list of addresses
-          does not. The addresses are still text underneath, so nothing depends
-          on the picture. */}
+      {/* Offices, with a map: four pins across three countries reads as coverage at a glance. */}
       <Locations />
-    </div>
+    </>
   );
 }

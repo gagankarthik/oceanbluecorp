@@ -3,6 +3,44 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Public site palette, drawn from the Ocean Blue mark (see the SITE block at
+     the end of this file). Navy for type and dark surfaces, cobalt for action,
+     the logo's blue and aqua for accents, and a cool blue-grey for grounds.
+     Measured: navy on white 17.4:1, ink-muted 8.9:1, ink-subtle 6.1:1 (5.2:1
+     on paper-deep), white on cobalt 6.7:1, brand on white 4.9:1. Aqua is 2.7:1
+     on white, so it is for fills and marks only, never text. */
+  --color-ink: #0b1a33;
+  --color-ink-muted: #3a4a66;
+  --color-ink-subtle: #56637b;
+  --color-paper: #f3f6fb;
+  --color-paper-deep: #e7edf6;
+  --color-line: #e2e8f1;
+  --color-line-strong: #cbd5e3;
+  --color-cobalt: #1d4ed8;
+  --color-cobalt-deep: #1740ad;
+  --color-cobalt-tint: #eef2ff;
+  --color-cobalt-light: #a9c1ff;
+  --color-brand: #0975c1;
+  --color-aqua: #0cacCF;
+  --color-night: #0b1a33;
+  /* Status roles. Text shades are 700/800 so they pass AA on white and on
+     their own container tint. Warm amber is the one complementary hue: it
+     means "time-sensitive" and nothing else. */
+  --color-success: #047857;
+  --color-success-container: #ecfdf5;
+  --color-warning: #92400e;
+  --color-warning-container: #fffbeb;
+  --color-danger: #b91c1c;
+  --color-danger-container: #fef2f2;
+  /* Elevation: navy-tinted, one light source from above. */
+  --shadow-raised: 0 1px 2px rgb(11 26 51 / 0.06), 0 8px 24px -16px rgb(11 26 51 / 0.28);
+  --shadow-overlay: 0 24px 48px -20px rgb(11 26 51 / 0.35);
+  --shadow-modal: 0 40px 100px -30px rgb(11 26 51 / 0.5);
+  /* Motion, after Material 3: one standard curve, emphasized curves for
+     things entering and leaving, and three durations. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized-in: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
@@ -920,7 +958,7 @@
 
 /* Landing base. Geist Sans everywhere (no Inter body on the landing) */
 .horizon {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
   color: var(--hz-text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -928,7 +966,7 @@
 
 /* Display. Geist Sans, tight modern grotesque */
 .hz-display {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
   letter-spacing: -0.035em;
   line-height: 1.03;
   font-weight: 600;
@@ -1814,4 +1852,216 @@ html.lenis body {
   transition-property: overflow;
   transition-duration: 1ms;
   transition-behavior: allow-discrete;
+}
+
+/* ============================================================
+   SITE, the public website design system.
+
+   IBM Plex Sans, ink on white and warm paper, one cobalt accent.
+   Components live in src/components/site/. Motion is CSS only so
+   it starts at first paint, and every class here is disabled
+   under prefers-reduced-motion at the bottom of this block.
+   ============================================================ */
+
+/* Motion and elevation as real variables, since @theme inline values are not
+   emitted (so shadow-[var(--shadow-raised)] and ease-[var(--ease-standard)]
+   resolve). Durations: short for state changes, medium for small movement,
+   long for things entering the page. */
+:root {
+  --shadow-raised: 0 1px 2px rgb(11 26 51 / 0.06), 0 8px 24px -16px rgb(11 26 51 / 0.28);
+  --shadow-overlay: 0 24px 48px -20px rgb(11 26 51 / 0.35);
+  --shadow-modal: 0 40px 100px -30px rgb(11 26 51 / 0.5);
+  --dur-short: 150ms;
+  --dur-medium: 250ms;
+  --dur-long: 400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized-in: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+/* Literal values: @theme inline tokens are not emitted as CSS variables. */
+.site {
+  font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  color: #0b1a33;
+  -webkit-font-smoothing: antialiased;
+}
+.site h1, .site h2, .site h3 { text-wrap: balance; }
+.site p { text-wrap: pretty; }
+
+/* Announcement strip dismissed on this browser: hidden before first paint
+   (the attribute is set by an inline script in the root layout), with the
+   header and page offsets it would have pushed. */
+html[data-ann-dismissed] .ann-bar { display: none; }
+html[data-ann-dismissed] .ann-offset { top: 0; }
+html[data-ann-dismissed] .ann-pad { padding-top: 0; }
+
+/* Two borderless sections of the same colour read as one band, so the second
+   drops its top padding instead of doubling the gap. Sections opt in with
+   data-tone (see SECTION_Y in components/site/sections.tsx). */
+.site [data-tone="white"] + [data-tone="white"],
+.site [data-tone="paper"] + [data-tone="paper"] { padding-top: 0; }
+
+/* The section after a page opener starts at one fixed distance, whatever its
+   own SECTION_Y says: the opener's hairline already separates them. */
+.site [data-opener] + [data-tone] { padding-top: 3.5rem; }
+
+/* One focus style for every interactive element (WCAG 2.4.7). */
+.site :focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.site .on-dark :focus-visible,
+.site .on-dark:focus-visible { outline-color: #fff; }
+
+/* Page-load sequence for heroes */
+@keyframes site-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: site-rise 600ms var(--ease-emphasized-in) both; }
+
+/* Hero headline: each word rises in sequence */
+@keyframes site-word {
+  from { opacity: 0; transform: translateY(0.45em); }
+  to { opacity: 1; transform: none; }
+}
+.word { display: inline-block; animation: site-word 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* Mega menu: wiped down from the bar, opaque at every frame, so the hero
+   never shows through a half-faded sheet. */
+@keyframes site-menu {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.menu-in { animation: site-menu 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+/* Side sheet (components/site/side-sheet): up from the bottom on phones, in
+   from the right from sm. Radix holds the element until the exit animation
+   ends, so closing animates too. */
+@keyframes site-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes site-sheet-down { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes site-sheet-in-right { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes site-sheet-out-right { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes site-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes site-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+.side-sheet[data-state="open"] { animation: site-sheet-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.side-sheet[data-state="closed"] { animation: site-sheet-down 240ms cubic-bezier(0.4, 0, 1, 1) both; }
+@media (min-width: 640px) {
+  .side-sheet[data-state="open"] { animation-name: site-sheet-in-right; }
+  .side-sheet[data-state="closed"] { animation-name: site-sheet-out-right; }
+}
+.sheet-overlay[data-state="open"] { animation: site-overlay-in 240ms ease-out both; }
+.sheet-overlay[data-state="closed"] { animation: site-overlay-out 200ms ease-in both; }
+
+/* Logo marquee */
+@keyframes site-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee { animation: site-marquee 38s linear infinite; }
+.marquee-wrap:hover .marquee,
+[data-motion="paused"] .marquee { animation-play-state: paused; }
+
+/* Wireframe art: flowing dashed edges, breathing accent plane, slow drift */
+@keyframes site-dash { to { stroke-dashoffset: -20; } }
+.geo-art line[stroke-dasharray] { animation: site-dash 1.6s linear infinite; }
+@keyframes site-plane { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.6; } }
+.geo-art .geo-plane { animation: site-plane 4.2s ease-in-out infinite; }
+@keyframes site-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.geo-art { animation: site-drift 7s ease-in-out infinite; }
+
+/* Scroll-linked reveals and the timeline fill. Pure CSS: where unsupported,
+   content is simply visible and the rail simply full. */
+@supports (animation-timeline: view()) {
+  @keyframes site-reveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  .reveal {
+    animation: site-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+  @keyframes site-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .timeline-fill {
+    transform-origin: left;
+    animation: site-fill linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 45%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .word, .menu-in, .side-sheet, .sheet-overlay, .marquee, .geo-art, .geo-art .geo-plane, .geo-art line[stroke-dasharray],
+  .reveal, .timeline-fill { animation: none !important; }
+}
+
+
+/* ============================================================
+   TYPE ROLES, the only text sizes public pages should use.
+
+   Modelled on Material 3's role scale: a page picks a role for its
+   job (display, headline, title, body, label), never a pixel size.
+   Sizes are fluid between a 375px phone and a 1280px desktop, so
+   no breakpoint variants are needed. Line heights tighten as size
+   grows; tracking tightens on large type and opens on labels.
+   ============================================================ */
+@utility type-display {
+  font-size: clamp(2.625rem, 1.9rem + 3.1vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility type-headline-lg {
+  font-size: clamp(2.25rem, 1.85rem + 1.75vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility type-headline {
+  font-size: clamp(1.875rem, 1.55rem + 1.4vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility type-headline-sm {
+  font-size: clamp(1.5rem, 1.35rem + 0.65vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility type-title-lg {
+  font-size: clamp(1.25rem, 1.18rem + 0.3vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+@utility type-title {
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+@utility type-body-lg {
+  font-size: clamp(1.0625rem, 1.02rem + 0.2vw, 1.1875rem);
+  line-height: 1.6;
+}
+@utility type-body {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+@utility type-body-sm {
+  font-size: 0.90625rem;
+  line-height: 1.55;
+}
+@utility type-label {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+@utility type-caption {
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }

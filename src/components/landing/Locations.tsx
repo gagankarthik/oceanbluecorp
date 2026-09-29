@@ -2,23 +2,22 @@
 
 import { useState } from "react";
 import OfficeMap from "./OfficeMap";
-import { Reveal } from "./motion/Primitives";
+import { SectionTitle, CONTAINER, SECTION_Y } from "@/components/site/sections";
+import { cn } from "@/lib/utils";
 
 /* ============================================================
    Where we are.
 
    The map is a picture, the card and the list are the content.
    Clicking a pin swaps the card; the card is real text in the DOM
-   at all times, and the full address list sits below the map, so
-   everything the map gestures at is readable without it.
+   at all times, and on phones the full address list sits below the
+   map, so everything the map gestures at is readable without it.
 
    The map itself is OfficeMap: OpenStreetMap tiles and Mercator
-   arithmetic, no map library. See the note in that file for why
-   maplibre came out.
+   arithmetic, no map library. See the note in that file.
    ============================================================ */
 
-
-type Office = {
+export type Office = {
   city: string;
   country: string;
   address: string;
@@ -28,7 +27,7 @@ type Office = {
   hq?: boolean;
 };
 
-const OFFICES: Office[] = [
+export const OFFICES: Office[] = [
   {
     city: "Powell",
     country: "United States",
@@ -64,30 +63,23 @@ const OFFICES: Office[] = [
 ];
 
 /** Digits only, so the tel: link dials correctly from a phone. */
-const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 
-export default function Locations() {
+export default function Locations({ tone = "paper" }: { tone?: "white" | "paper" }) {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="locations" className="w-full scroll-mt-24 bg-[var(--hz-ink)] py-20 sm:py-24 lg:py-28">
-      <div className="mx-auto w-full max-w-[2200px] px-6 sm:px-10 lg:px-16 2xl:px-28">
-        <Reveal className="max-w-2xl">
-          <span className="hz-eyebrow block text-[var(--hz-cobalt-300)]">Where we are</span>
-          <h2 className="hz-display hz-h2 mt-4 text-white">
-            Four offices, three countries, one team.
-          </h2>
-          <p className="mt-5 max-w-[54ch] text-[16px] leading-relaxed text-white/70 sm:text-[17px]">
-            Ohio, Hyderabad, Vizianagaram and London. Enough overlap to hand work
-            across the day, and someone awake when your systems are not.
-          </p>
-        </Reveal>
+    <section id="locations" data-tone={tone === "paper" ? "paper" : "white"} className={cn("w-full scroll-mt-28", tone === "paper" ? "bg-paper" : "bg-white", SECTION_Y)}>
+      <div className={CONTAINER}>
+        <SectionTitle
+          title="Four offices, three countries, one team"
+          sub="Ohio, Hyderabad, Vizianagaram and London. Enough overlap to hand work across the day, and someone awake when your systems are not."
+        />
 
-        <div className="relative mt-12 w-full overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] sm:mt-14">
+        <div className="reveal relative mt-10 w-full sm:mt-12 overflow-hidden rounded-2xl border border-line bg-white">
           {/* Hyderabad and Vizianagaram are about two percent apart on this
               crop, so their cards are staggered: one on a long stalk leaning
-              left, the other on a short one leaning right. Without that they
-              land on top of each other. */}
+              left, the other on a short one leaning right. */}
           <OfficeMap
             activeIndex={active}
             onSelect={setActive}
@@ -108,31 +100,21 @@ export default function Locations() {
                     : ("center" as const),
             }))}
           />
-
         </div>
 
-        {/* Phones only. The map's cards are hidden below `sm` because a
-            210px card cannot sit beside its neighbour on a 350px map, so the
-            same content appears here instead. On desktop this is absent: the
-            cards on the map already say it, and repeating it underneath was
-            the duplication asked to be removed. */}
-        <ul className="mt-8 grid gap-4 sm:hidden">
+        {/* Phones only: the map's cards are hidden below `sm`, so the same
+            content appears here instead. */}
+        <ul className="mt-8 grid gap-3 sm:hidden">
           {OFFICES.map((o) => (
-            <li key={o.city} className="rounded-xl border border-white/12 bg-white/[0.05] p-5">
-              <p className="flex items-center gap-2 text-[15px] font-semibold text-white">
+            <li key={o.city} className="rounded-2xl border border-line bg-white p-5">
+              <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
                 {o.city}
-                {o.hq && (
-                  <span className="rounded-full bg-[var(--hz-cobalt)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
-                    HQ
-                  </span>
-                )}
+                {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 text-[11px] font-semibold text-cobalt">HQ</span>}
               </p>
-              <p className="mt-0.5 text-[12.5px] text-white/55">{o.country}</p>
-              <address className="mt-2.5 not-italic text-[13px] leading-relaxed text-white/70">
-                {o.address}
-              </address>
+              <p className="mt-0.5 text-[13px] text-ink-subtle">{o.country}</p>
+              <address className="mt-2.5 text-[14px] leading-relaxed text-ink-muted not-italic">{o.address}</address>
               {o.phone && (
-                <a href={telHref(o.phone)} className="mt-2.5 inline-block text-[13px] font-medium text-[var(--hz-cobalt-300)]">
+                <a href={telHref(o.phone)} className="mt-2.5 inline-block text-[14px] font-medium text-cobalt">
                   {o.phone}
                 </a>
               )}
@@ -140,15 +122,12 @@ export default function Locations() {
           ))}
         </ul>
 
-        <p className="mt-10 text-[14.5px] text-white/70">
+        <p className="mt-10 text-center text-[15px] text-ink-muted">
           Or email{" "}
-          <a
-            href="mailto:hr@oceanbluecorp.com"
-            className="font-medium text-[var(--hz-cobalt-300)] transition-opacity hover:opacity-80"
-          >
+          <a href="mailto:hr@oceanbluecorp.com" className="font-semibold text-cobalt underline-offset-4 hover:underline">
             hr@oceanbluecorp.com
-          </a>
-          {" "}and it reaches all four.
+          </a>{" "}
+          and it reaches all four.
         </p>
       </div>
     </section>

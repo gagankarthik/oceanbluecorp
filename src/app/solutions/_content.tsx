@@ -1,16 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
-import { Cta } from "@/components/landing/ui";
 import PageHero from "@/components/landing/PageHero";
+import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
+import { LinkButton } from "@/components/site/button";
+import { Section, ClosingCta } from "@/components/site/sections";
+import { IconArrowRight } from "@/components/site/icons";
 
-/* This page is an INDEX, not an essay. Someone arriving here is looking for
-   the practice that matches their problem, so the page is built as a
-   directory: four large numbered entries, every sub-service on the surface as
-   a link, no photography between them to scroll past. */
+/* An INDEX, not an essay. Someone here is looking for the practice that
+   matches their problem, so the page is a directory: five practices, each
+   with every sub-service on the surface as a link, then the method. */
 
 const SERVICE_TITLES: Record<string, string> = {
   staffing: "IT Staffing & Talent",
@@ -21,42 +19,54 @@ const SERVICE_TITLES: Record<string, string> = {
   ai: "AI & Data Intelligence",
   managed: "Managed Services",
   transformation: "Digital Transformation",
+  training: "Training & Upskilling",
 };
 
 type Practice = {
   no: string;
   name: string;
   desc: string;
+  image: string;
   services: { title: string; href: string }[];
 };
+
+const link = (s: string) => ({ title: SERVICE_TITLES[s], href: `/solutions/${s}` });
 
 const practices: Practice[] = [
   {
     no: "01",
     name: "Talent",
     desc: "The specialists who join your team and own the work, on flexible or permanent terms, or as a fully managed team.",
-    services: ["staffing"].map((s) => ({ title: SERVICE_TITLES[s], href: `/solutions/${s}` })),
+    image: IMG.serviceTalent,
+    services: [link("staffing")],
   },
   {
     no: "02",
     name: "Engineering",
     desc: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers for the industries that build things.",
+    image: IMG.serviceEngineering,
     services: [{ title: "Engineering Talent & Services", href: "/solutions/engineering" }],
   },
   {
     no: "03",
     name: "Solutions",
     desc: "Platform and product work, delivered securely and without stopping the business.",
-    services: ["cloud", "cybersecurity", "erp", "salesforce", "ai", "transformation"].map((s) => ({
-      title: SERVICE_TITLES[s],
-      href: `/solutions/${s}`,
-    })),
+    image: IMG.serviceSolutions,
+    services: ["cloud", "cybersecurity", "erp", "salesforce", "ai", "transformation"].map(link),
   },
   {
     no: "04",
     name: "Managed",
     desc: "We operate and improve your systems around the clock, on one accountable SLA.",
-    services: ["managed"].map((s) => ({ title: SERVICE_TITLES[s], href: `/solutions/${s}` })),
+    image: IMG.serviceManaged,
+    services: [link("managed")],
+  },
+  {
+    no: "05",
+    name: "Training",
+    desc: "Instructor-led training on the platforms your teams run, taught by the practitioners who deliver them.",
+    image: IMG.serviceTraining,
+    services: [link("training")],
   },
 ];
 
@@ -67,104 +77,85 @@ const steps = [
   { no: "04", title: "Optimization", desc: "We monitor, review, and improve continuously against the SLA, in quarterly reviews." },
 ];
 
+function PracticeRow({ p, flip }: { p: Practice; flip: boolean }) {
+  return (
+    <li className="reveal grid overflow-hidden rounded-2xl border border-line bg-white lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+      <div className={`relative aspect-[16/10] w-full bg-paper-deep lg:aspect-auto lg:min-h-[300px] ${flip ? "lg:order-2" : ""}`}>
+        <Photo src={p.image} sizes="(min-width: 1024px) 500px, 100vw" />
+      </div>
+      <div className="flex flex-col p-7 sm:p-10">
+        <p className="text-[14px] font-semibold text-cobalt tabular-nums">{p.no}</p>
+        <h3 className="mt-2 type-headline-sm text-ink">{p.name}</h3>
+        <p className="mt-3 max-w-[52ch] type-body text-ink-muted">{p.desc}</p>
+        <ul className={`mt-7 border-t border-line ${p.services.length > 3 ? "grid gap-x-8 sm:grid-cols-2" : ""}`}>
+          {p.services.map((s) => (
+            <li key={s.href}>
+              <Link href={s.href} className="group flex items-center justify-between gap-4 border-b border-line py-3.5 text-[15.5px] font-semibold text-ink transition-colors hover:text-cobalt">
+                {s.title}
+                <IconArrowRight size={16} className="flex-none text-ink-subtle transition-all group-hover:translate-x-1 group-hover:text-cobalt" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </li>
+  );
+}
+
 export default function ServicesPage({ content = {} }: { content?: Record<string, string> }) {
   return (
-    <div className="horizon w-full bg-[var(--hz-canvas)]">
+    <>
       <PageHero
-        eyebrow="Our solutions"
-        title={content.servicesTitle || "Talent, engineering, technology, and managed services."}
+        eyebrow="Solutions"
+        title={content.servicesTitle || "Talent, engineering, technology, managed services and training."}
         subtitle={
           content.servicesSubtitle ||
-          "Four connected practices under one accountable team, serving enterprises and state government agencies across North America."
+          "Five connected practices under one accountable team, serving enterprises and state government agencies across North America."
         }
         image={IMG.servicesHero}
-        actions={<Cta href="/contact" variant="primary">Start a conversation</Cta>}
+        actions={
+          <>
+            <LinkButton href="/contact" variant="primary" size="lg">
+              Talk to us
+            </LinkButton>
+            <LinkButton href="#practices" variant="outline" size="lg">
+              Browse practices
+            </LinkButton>
+          </>
+        }
       />
 
-      {/* The directory. Each practice is one wide row: the number and name
-          hold the left rail, the services sit in the right as a live column of
-          links. The whole catalogue is visible without opening anything. */}
-      <section className="w-full px-6 pt-16 sm:px-10 sm:pt-20 lg:px-16 lg:pt-24 2xl:px-24">
-        <Stagger as="ol" className="border-t border-[var(--hz-line)]" gap={0.08}>
-          {practices.map((p) => (
-            <StaggerItem as="li" key={p.no} className="border-b border-[var(--hz-line)]">
-              <div className="grid gap-6 py-10 sm:py-12 lg:grid-cols-12 lg:gap-12">
-                <div className="lg:col-span-5">
-                  <div className="flex items-baseline gap-5">
-                    <span className="hz-display hz-tnum text-[1.1rem] leading-none text-[var(--hz-cobalt)]">
-                      {p.no}
-                    </span>
-                    <h2 className="hz-display text-[2rem] leading-none text-[var(--hz-text)] sm:text-[2.6rem]">
-                      {p.name}
-                    </h2>
-                  </div>
-                  <p className="mt-5 max-w-[42ch] pl-0 text-[15px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[16px] lg:pl-[3.1rem]">
-                    {p.desc}
-                  </p>
-                </div>
-
-                {/* Two columns once a practice carries more than three
-                    services, so the tall one does not stretch the row. */}
-                <ul
-                  className={`lg:col-span-6 lg:col-start-7 ${
-                    p.services.length > 3 ? "grid gap-x-10 gap-y-1 sm:grid-cols-2" : ""
-                  }`}
-                >
-                  {p.services.map((s) => (
-                    <li key={s.href}>
-                      <Link
-                        href={s.href}
-                        className="hz-focus group flex items-center justify-between gap-4 border-b border-[var(--hz-paper-line)] py-3 text-[15px] font-semibold text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                      >
-                        {s.title}
-                        <ArrowUpRight
-                          className="h-4 w-4 flex-none text-[var(--hz-line-2)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--hz-cobalt)]"
-                          strokeWidth={2}
-                        />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </StaggerItem>
+      <Section
+        id="practices"
+        tone="paper"
+        title="Five practices, one team"
+        sub="Pick the practice that matches the problem. Every service below has its own page with scope, approach and outcomes."
+      >
+        <ol className="space-y-5">
+          {practices.map((p, i) => (
+            <PracticeRow key={p.no} p={p} flip={i % 2 === 1} />
           ))}
-        </Stagger>
-      </section>
+        </ol>
+      </Section>
 
-      {/* Method, as a horizontal rail rather than another stack. */}
-      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
-        <Reveal className="max-w-2xl">
-          <h2 className="hz-display hz-h2 text-[var(--hz-text)]">A method you can hold us to.</h2>
-        </Reveal>
-        <Stagger className="mt-10 grid gap-10 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8" gap={0.08}>
+      <Section tone="white" title="A method you can hold us to" sub="The same four steps on every engagement, whichever practice leads it.">
+        <ol className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((st) => (
-            <StaggerItem key={st.no}>
-              <span className="hz-display hz-tnum block text-[1.6rem] leading-none text-[var(--hz-cobalt)]">
-                {st.no}
-              </span>
-              <span aria-hidden className="mt-4 block h-px w-full bg-[var(--hz-line)]" />
-              <h3 className="hz-display mt-5 text-[1.2rem] leading-tight text-[var(--hz-text)]">{st.title}</h3>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{st.desc}</p>
-            </StaggerItem>
+            <li key={st.no} className="bg-white p-7 sm:p-8">
+              <span className="flex size-10 items-center justify-center rounded-full bg-cobalt-tint text-[14px] font-semibold text-cobalt tabular-nums">{st.no}</span>
+              <h3 className="mt-6 type-title-lg text-ink">{st.title}</h3>
+              <p className="mt-2 type-body-sm text-ink-muted">{st.desc}</p>
+            </li>
           ))}
-        </Stagger>
-      </section>
+        </ol>
+      </Section>
 
-      {/* Close on type, not on another photograph. */}
-      <section className="w-full border-t border-[var(--hz-line)] px-6 py-20 sm:px-10 sm:py-24 lg:px-16 2xl:px-24">
-        <Reveal className="max-w-3xl">
-          <h2 className="hz-display max-w-[16ch] text-[clamp(2rem,3.2vw,3.6rem)] leading-[1.03] text-[var(--hz-text)]">
-            Tell us what you are building.
-          </h2>
-          <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[18px]">
-            We will put the right specialists on it and stand behind the result.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Cta href="/contact" variant="primary">Book a discovery call</Cta>
-            <Cta href="/about" variant="ghostLight">About Ocean Blue</Cta>
-          </div>
-        </Reveal>
-      </section>
-    </div>
+      <ClosingCta
+        title="Tell us what you are building"
+        sub="We will put the right specialists on it and stand behind the result."
+        primary={{ href: "/contact", label: "Talk to us" }}
+        secondary={{ href: "/about", label: "About Ocean Blue" }}
+      />
+    </>
   );
 }

@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { Loader2, LogOut, AlertCircle } from "lucide-react";
+import { IconAlert, IconLogout } from "@/components/site/icons";
+import { AuthShell, StatusMark } from "../auth-shell";
 
 export default function SignOutPage() {
   const router = useRouter();
@@ -48,69 +49,56 @@ export default function SignOutPage() {
     router.back();
   };
 
+  const busy = isLoading || authLoading;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--hz-paper)] px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-          {/* Logo/Icon */}
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-[var(--hz-cobalt)] to-[var(--hz-cobalt-600)] rounded-2xl flex items-center justify-center mx-auto">
-              <LogOut className="w-8 h-8 text-white" />
-            </div>
-          </div>
+    <AuthShell
+      title={autoSignOut ? "Session ended." : "Leaving the console."}
+      body="Signing out ends this session on this device. You can sign back in at any time with the same account."
+    >
+      <div className="rise text-center" role="status" aria-live="polite">
+        <StatusMark tone="neutral">
+          <IconLogout size={28} />
+        </StatusMark>
+        <h1 className="mt-6 type-headline-sm text-ink">{autoSignOut ? "Your session has ended" : "Sign out?"}</h1>
+        <p className="mt-2 type-body text-ink-muted">
+          {autoSignOut ? "Your session expired, so we are signing you out." : "You will need to sign in again to use the console."}
+        </p>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-[var(--hz-text)] mb-2">
-            {autoSignOut ? "Session Ended" : "Sign Out"}
-          </h1>
-
-          <p className="text-[var(--hz-text-subtle)] mb-8">
-            {autoSignOut
-              ? "Your session has expired. Signing you out..."
-              : "Are you sure you want to sign out of your account?"}
+        {error && (
+          <p className="mt-6 flex items-start gap-3 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-left type-body-sm text-danger">
+            <IconAlert size={18} className="mt-0.5 shrink-0" />
+            {error}
           </p>
+        )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-left">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
+        {busy ? (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <span className="size-8 animate-spin rounded-full border-[3px] border-cobalt-tint border-t-cobalt" />
+            <p className="type-body-sm text-ink-muted">{authLoading ? "Loading…" : "Signing you out…"}</p>
+          </div>
+        ) : (
+          !autoSignOut && (
+            <div className="mt-8 grid gap-2">
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep"
+              >
+                <IconLogout size={18} />
+                Sign out
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-line-strong bg-white px-6 type-label text-ink transition-colors duration-150 hover:border-cobalt hover:text-cobalt"
+              >
+                Stay signed in
+              </button>
             </div>
-          )}
-
-          {/* Loading State */}
-          {isLoading || authLoading ? (
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 text-[var(--hz-cobalt)] animate-spin" />
-              <p className="text-[var(--hz-text-subtle)]">
-                {authLoading ? "Loading..." : "Signing you out..."}
-              </p>
-            </div>
-          ) : (
-            /* Action Buttons - Only show if not auto-signing out */
-            !autoSignOut && (
-              <div className="space-y-3">
-                <button
-                  onClick={handleSignOut}
-                  disabled={isLoading || authLoading}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Sign Out
-                </button>
-
-                <button
-                  onClick={handleCancel}
-                  disabled={isLoading || authLoading}
-                  className="w-full px-6 py-3 bg-slate-100 text-[var(--hz-text-mute)] font-semibold rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
-            )
-          )}
-        </div>
+          )
+        )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

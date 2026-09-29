@@ -1,5 +1,8 @@
-import PageHero from "./PageHero";
-import { Cta } from "./ui";
+import ArticleBanner from "./ArticleBanner";
+import { LinkButton } from "@/components/site/button";
+import { IconArrowRight } from "@/components/site/icons";
+import { GeoBooks } from "@/components/site/geo-art";
+import { CONTAINER, SECTION_Y } from "@/components/site/sections";
 
 /**
  * A real page for a section that has no entries yet.
@@ -13,13 +16,13 @@ import { Cta } from "./ui";
  * Each of these pages sets `robots: index:false` and stays out of
  * sitemap.xml. Both come off with the first real entry.
  */
-
 export default function ComingSoon({
   eyebrow,
   title,
   subtitle,
   note,
 }: {
+  /** The section's name, shown as the banner title. */
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -27,18 +30,31 @@ export default function ComingSoon({
   note: string;
 }) {
   return (
-    <div className="horizon w-full bg-[var(--hz-canvas)]">
-      <PageHero eyebrow={eyebrow} title={title} subtitle={subtitle} />
+    <>
+      <ArticleBanner title={eyebrow} subtitle={subtitle} />
 
-      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
-        <div className="max-w-2xl border-t border-[var(--hz-paper-line)] pt-10">
-          <p className="text-[17px] leading-relaxed text-[var(--hz-text-mute)]">{note}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Cta href="/contact" variant="primary">Start a conversation</Cta>
-            <Cta href="/solutions" variant="ghostLight">See what we do</Cta>
+      <section data-tone="paper" className={`bg-paper ${SECTION_Y}`}>
+        <div className={CONTAINER}>
+          <div className="reveal grid overflow-hidden rounded-2xl border border-line bg-white lg:grid-cols-[1.4fr_1fr]">
+            <div className="p-8 sm:p-12">
+              <h2 className="type-headline-sm font-semibold text-ink">{title}</h2>
+              <p className="mt-4 max-w-[560px] type-body-lg text-ink-muted">{note}</p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <LinkButton href="/contact" variant="primary" size="lg">
+                  Talk to us
+                  <IconArrowRight size={16} />
+                </LinkButton>
+                <LinkButton href="/solutions" variant="outline" size="lg">
+                  See what we do
+                </LinkButton>
+              </div>
+            </div>
+            <div aria-hidden className="hidden items-center justify-center border-l border-line bg-paper p-10 lg:flex">
+              <GeoBooks className="h-auto w-full max-w-[240px]" />
+            </div>
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 }

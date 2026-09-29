@@ -8,17 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       // Main crawler rules, allow all public pages, block private areas
       {
         userAgent: "*",
-        allow: [
-          "/",
-          "/about",
-          "/solutions",
-          "/solutions/engineering",
-          "/products",
-          "/careers",
-          "/careers/search",
-          "/contact",
-          "/privacy",
-        ],
+        // Everything public is crawlable; only the private areas are listed.
+        allow: "/",
         // No trailing slash on /admin and /auth, so the bare paths are covered
         // too. /_next/ is deliberately NOT blocked: Google renders pages with
         // the JS/CSS under it and indexes images through /_next/image.
@@ -26,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
           "/admin",       // Private HR/admin panel
           "/api/",        // API routes, never index
           "/auth",        // Auth flows
+          "/maintenance", // Shown only while the site is down
         ],
       },
 

@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import AboutPage from "./_content";
 import { getSiteContent } from "@/lib/content";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "About Us",
-  description:
-    "Learn about Ocean Blue Corporation: our mission, values, and leadership in IT staffing, enterprise solutions, and managed services.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "About Ocean Blue Corporation",
-    description:
-      "Learn about Ocean Blue Corporation, our mission, values, and commitment to enterprise IT excellence.",
-    url: "https://oceanbluecorp.com/about",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/about" },
-};
+export const metadata: Metadata = pageMetadata({
+  path: "/about",
+  title: "About Ocean Blue",
+  description: "Since 2013, Ocean Blue Corporation has supplied IT talent, enterprise solutions and managed services to enterprises and state agencies from Powell, Ohio.",
+});
 
 export default async function About() {
   const content = await getSiteContent("about");
