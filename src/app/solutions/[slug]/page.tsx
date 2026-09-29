@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { breadcrumbJsonLd, jsonLdString, ORG_ID, pageMetadata, SITE_URL } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import ServiceDetail from "./ServiceDetail";
 import { SOLUTIONS, SOLUTION_SLUGS } from "./content";
@@ -19,19 +19,12 @@ export async function generateMetadata({
   const data = SOLUTIONS[slug];
   if (!data) return {};
 
-  const url = `https://oceanbluecorp.com/solutions/${slug}`;
-  return {
+  return pageMetadata({
+    path: `/solutions/${slug}`,
     title: data.meta.title,
     description: data.meta.description,
     keywords: data.meta.keywords,
-    openGraph: {
-      images: OG_IMAGES,
-      title: `${data.meta.title} | Ocean Blue Corporation`,
-      description: data.meta.description,
-      url,
-    },
-    alternates: { canonical: url },
-  };
+  });
 }
 
 export default async function SolutionPage({
@@ -43,5 +36,34 @@ export default async function SolutionPage({
   const data = SOLUTIONS[slug];
   if (!data) notFound();
 
-  return <ServiceDetail slug={slug} />;
+  const url = `${SITE_URL}/solutions/${slug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${url}#service`,
+      name: data.eyebrow,
+      serviceType: data.eyebrow,
+      description: data.meta.description,
+      url,
+      provider: { "@id": ORG_ID },
+      areaServed: { "@type": "Country", name: "United States" },
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: data.eyebrow,
+        itemListElement: data.capabilities.map((c) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: c } })),
+      },
+    },
+    breadcrumbJsonLd([
+      { name: "Solutions", path: "/solutions" },
+      { name: data.eyebrow, path: `/solutions/${slug}` },
+    ]),
+  ];
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
+      <ServiceDetail slug={slug} />
+    </>
+  );
 }

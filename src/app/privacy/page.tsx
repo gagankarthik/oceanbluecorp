@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
-import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
+import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks, HQ_ADDRESS } from "@/components/site/legal/doc";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/privacy",
   title: "Privacy Policy",
-  description: "Learn how Ocean Blue Corporation collects, uses, and protects your personal information.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Privacy Policy | Ocean Blue Corporation",
-    description:
-      "How Ocean Blue Corporation collects, uses, retains and deletes personal data, including your rights under CCPA.",
-    url: "https://oceanbluecorp.com/privacy",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/privacy" },
-};
+  description: "How Ocean Blue Corporation collects, uses, shares and protects personal information from clients, candidates and visitors, and the rights you have over it.",
+});
 
 const SECTIONS = [
   { id: "introduction",   label: "Introduction" },
@@ -33,144 +25,18 @@ const SECTIONS = [
   { id: "contact",        label: "Contact Us" },
 ];
 
-function Section({ id, number, title, children }: {
-  id: string; number: string; title: string; children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="scroll-mt-24 border-b border-[var(--hz-paper-line)] py-8 last:border-0">
-      <div className="mb-4 flex items-baseline gap-3">
-        <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-          {number}
-        </span>
-        <h2
-          className="text-xl font-bold text-[var(--hz-text)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {title}
-        </h2>
-      </div>
-      <div className="space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return <p>{children}</p>;
-}
-
-function UL({ items }: { items: (string | React.ReactNode)[] }) {
-  return (
-    <ul className="space-y-2 pl-1">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] p-5">
-      <p className="mb-2 text-sm font-semibold text-[var(--hz-cobalt)]" style={{ fontFamily: "var(--font-display)" }}>
-        {title}
-      </p>
-      <div className="text-sm text-[var(--hz-cobalt)] space-y-1">{children}</div>
-    </div>
-  );
-}
-
 export default function PrivacyPage() {
   const EFFECTIVE = "April 1, 2026";
 
   return (
-    <div className="horizon min-h-screen bg-white">
+    <DocPage
+      title="Privacy Policy"
+      lede={<>Ocean Blue Corporation is committed to protecting your privacy. This policy explains what personal information we collect, how we use it, and what rights you have over your data.</>}
+      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Controller", value: "Ocean Blue Corporation, Powell, OH" }]}
+      toc={SECTIONS}
+    >
 
-      {/* Hero */}
-      <div
-        className="border-b border-[var(--hz-paper-line)]"
-        style={{
-          background: [
-            "radial-gradient(ellipse 70% 55% at 90% 15%, rgba(29,78,216,0.07) 0%, transparent 60%)",
-            "radial-gradient(ellipse 55% 45% at 10% 80%, rgba(6,182,212,0.05) 0%, transparent 60%)",
-            "#FAFBFF",
-          ].join(", "),
-        }}
-      >
-        <div className="mx-auto max-w-5xl px-6 pt-24 pb-12 md:pt-28 lg:px-8">
-          <Link
-            href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Home
-          </Link>
-
-
-          <h1
-            className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-[var(--hz-text)] sm:text-[2.6rem] md:text-5xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            Privacy Policy
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--hz-text-subtle)]">
-            Ocean Blue Corporation is committed to protecting your privacy. This policy explains what
-            personal information we collect, how we use it, and what rights you have over your data.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-[var(--hz-text-subtle)]">
-            <span><strong className="text-[var(--hz-text-mute)]">Effective:</strong> {EFFECTIVE}</span>
-            <span><strong className="text-[var(--hz-text-mute)]">Controller:</strong> Ocean Blue Corporation, Powell, OH</span>
-          </div>
-
-          {/* Jump links */}
-          <div className="mt-8 flex flex-wrap gap-2">
-            {SECTIONS.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                className="rounded-full border border-[var(--hz-paper-line)] bg-white px-3 py-1 text-xs font-medium text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                {s.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="mx-auto max-w-5xl px-6 py-4 lg:px-8">
-        <div className="flex gap-12">
-
-          {/* Sticky TOC */}
-          <aside className="hidden w-56 flex-shrink-0 xl:block">
-            {/* Clears the 72px fixed header. At top-8 this list scrolled up and
-                then vanished behind the bar. */}
-            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]">
-                Contents
-              </p>
-              <nav className="space-y-1">
-                {SECTIONS.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-1.5 text-[13px] text-[var(--hz-text-subtle)] transition-colors hover:bg-[var(--hz-paper)] hover:text-[var(--hz-cobalt)]"
-                  >
-                    {s.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <div className="min-w-0 flex-1 pt-8">
-
-            <Section id="introduction" number="01" title="Introduction">
+            <DocSection id="introduction" number="01" title="Introduction">
               <P>
                 Ocean Blue Corporation (&quot;Ocean Blue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website
                 at oceanbluecorp.com and provides enterprise IT solutions and staffing services. This
@@ -182,17 +48,17 @@ export default function PrivacyPage() {
                 its terms, please discontinue use of our Site and services. By using our Site or services,
                 you acknowledge that you have read and understood this Privacy Policy.
               </P>
-              <InfoBox title="At a Glance">
+              <Callout title="At a Glance">
                 <p>We collect your information to match candidates with job opportunities, deliver enterprise services to clients, and improve our platform. We do not sell your personal data. You have rights to access, correct, and delete your information.</p>
-              </InfoBox>
-            </Section>
+              </Callout>
+            </DocSection>
 
-            <Section id="information" number="02" title="Information We Collect">
+            <DocSection id="information" number="02" title="Information We Collect">
               <P>
                 We collect information in several ways depending on how you interact with us:
               </P>
 
-              <p className="font-semibold text-[var(--hz-text)] mt-2">2.1 Information You Provide Directly</p>
+              <SubHead>2.1 Information You Provide Directly</SubHead>
               <UL items={[
                 "Account registration data: name, email address, password, phone number",
                 "Profile and resume information: work history, education, skills, certifications, portfolio links",
@@ -202,7 +68,7 @@ export default function PrivacyPage() {
                 "Communications: emails, chat transcripts, and notes from calls with our team",
               ]} />
 
-              <p className="font-semibold text-[var(--hz-text)] mt-4">2.2 Information Collected Automatically</p>
+              <SubHead>2.2 Information Collected Automatically</SubHead>
               <UL items={[
                 "Device information: IP address, browser type and version, operating system, device identifiers",
                 "Usage data: pages visited, links clicked, time spent, referring URLs, search queries",
@@ -211,7 +77,7 @@ export default function PrivacyPage() {
                 "Cookies and tracking technologies: as described in Section 8",
               ]} />
 
-              <p className="font-semibold text-[var(--hz-text)] mt-4">2.3 Information from Third Parties</p>
+              <SubHead>2.3 Information from Third Parties</SubHead>
               <UL items={[
                 "Professional networks (e.g., LinkedIn) if you connect such accounts or apply through them",
                 "Referrals from existing employees, contractors, or clients",
@@ -219,14 +85,14 @@ export default function PrivacyPage() {
                 "Skills assessment platforms used during our recruitment process",
                 "Publicly available professional information to verify credentials",
               ]} />
-            </Section>
+            </DocSection>
 
-            <Section id="usage" number="03" title="How We Use Your Information">
+            <DocSection id="usage" number="03" title="How We Use Your Information">
               <P>
                 Ocean Blue uses your personal information for the following purposes:
               </P>
 
-              <p className="font-semibold text-[var(--hz-text)] mt-2">For Candidates</p>
+              <SubHead>For Candidates</SubHead>
               <UL items={[
                 "Evaluate your qualifications and match you with suitable job opportunities",
                 "Present your profile to client companies with appropriate positions",
@@ -236,7 +102,7 @@ export default function PrivacyPage() {
                 "Comply with legal requirements including employment and tax law obligations",
               ]} />
 
-              <p className="font-semibold text-[var(--hz-text)] mt-4">For Clients</p>
+              <SubHead>For Clients</SubHead>
               <UL items={[
                 "Deliver contracted staffing, consulting, or managed services",
                 "Manage project communications, deliverables, and reporting",
@@ -244,7 +110,7 @@ export default function PrivacyPage() {
                 "Provide account management and customer support",
               ]} />
 
-              <p className="font-semibold text-[var(--hz-text)] mt-4">For All Users</p>
+              <SubHead>For All Users</SubHead>
               <UL items={[
                 "Operate, maintain, and improve our website and platform",
                 "Send administrative communications (account confirmations, security alerts)",
@@ -253,41 +119,41 @@ export default function PrivacyPage() {
                 "Detect, investigate, and prevent fraudulent activity and security incidents",
                 "Comply with legal obligations and enforce our Terms of Service",
               ]} />
-            </Section>
+            </DocSection>
 
-            <Section id="legal-basis" number="04" title="Legal Basis for Processing (GDPR)">
+            <DocSection id="legal-basis" number="04" title="Legal Basis for Processing (GDPR)">
               <P>
                 If you are located in the European Economic Area (EEA) or United Kingdom, Ocean Blue
                 processes your personal data under the following legal bases:
               </P>
               <UL items={[
-                <><strong className="text-[var(--hz-text)]">Contract Performance:</strong> Processing necessary to fulfill our staffing, consulting, or service agreements with you or your employer.</>,
-                <><strong className="text-[var(--hz-text)]">Legitimate Interests:</strong> Processing for our legitimate business interests, such as fraud prevention, improving our services, and direct marketing to business contacts, where these interests are not overridden by your rights.</>,
-                <><strong className="text-[var(--hz-text)]">Legal Obligation:</strong> Processing required to comply with applicable law, including employment, tax, and anti-money laundering regulations.</>,
-                <><strong className="text-[var(--hz-text)]">Consent:</strong> Processing based on your freely given, specific, informed, and unambiguous consent, including for marketing communications. You may withdraw consent at any time.</>,
+                <><strong>Contract Performance:</strong> Processing necessary to fulfill our staffing, consulting, or service agreements with you or your employer.</>,
+                <><strong>Legitimate Interests:</strong> Processing for our legitimate business interests, such as fraud prevention, improving our services, and direct marketing to business contacts, where these interests are not overridden by your rights.</>,
+                <><strong>Legal Obligation:</strong> Processing required to comply with applicable law, including employment, tax, and anti-money laundering regulations.</>,
+                <><strong>Consent:</strong> Processing based on your freely given, specific, informed, and unambiguous consent, including for marketing communications. You may withdraw consent at any time.</>,
               ]} />
-            </Section>
+            </DocSection>
 
-            <Section id="sharing" number="05" title="Sharing Your Information">
+            <DocSection id="sharing" number="05" title="Sharing Your Information">
               <P>
                 Ocean Blue does not sell, rent, or trade your personal information to third parties for
                 their own marketing purposes. We may share your information in the following circumstances:
               </P>
               <UL items={[
-                <><strong className="text-[var(--hz-text)]">Client Companies:</strong> We share candidate profiles (with candidate consent) with client employers in connection with specific job opportunities. Clients are contractually bound to use this information only for hiring purposes.</>,
-                <><strong className="text-[var(--hz-text)]">Service Providers:</strong> We engage third-party vendors to help operate our business (cloud hosting, payroll processing, background check services, email delivery, analytics). These vendors have access to personal data only as necessary to perform their functions and are contractually bound to protect it.</>,
-                <><strong className="text-[var(--hz-text)]">Legal Requirements:</strong> We may disclose information when required by law, regulation, court order, or governmental authority, or to protect the rights, property, or safety of Ocean Blue, our users, or others.</>,
-                <><strong className="text-[var(--hz-text)]">Business Transfers:</strong> In connection with a merger, acquisition, sale of assets, or bankruptcy, your information may be transferred. We will notify you before your information becomes subject to a different privacy policy.</>,
-                <><strong className="text-[var(--hz-text)]">With Your Consent:</strong> We may share information with other third parties when you explicitly authorize us to do so.</>,
+                <><strong>Client Companies:</strong> We share candidate profiles (with candidate consent) with client employers in connection with specific job opportunities. Clients are contractually bound to use this information only for hiring purposes.</>,
+                <><strong>Service Providers:</strong> We engage third-party vendors to help operate our business (cloud hosting, payroll processing, background check services, email delivery, analytics). These vendors have access to personal data only as necessary to perform their functions and are contractually bound to protect it.</>,
+                <><strong>Legal Requirements:</strong> We may disclose information when required by law, regulation, court order, or governmental authority, or to protect the rights, property, or safety of Ocean Blue, our users, or others.</>,
+                <><strong>Business Transfers:</strong> In connection with a merger, acquisition, sale of assets, or bankruptcy, your information may be transferred. We will notify you before your information becomes subject to a different privacy policy.</>,
+                <><strong>With Your Consent:</strong> We may share information with other third parties when you explicitly authorize us to do so.</>,
               ]} />
               <P>
                 All third-party service providers are required to maintain the confidentiality and security
                 of your personal information and are prohibited from using it for any purpose other than
                 providing services to Ocean Blue.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="retention" number="06" title="Data Retention">
+            <DocSection id="retention" number="06" title="Data Retention">
               <P>
                 We retain your personal information for as long as necessary to fulfill the purposes for
                 which it was collected, comply with legal obligations, resolve disputes, and enforce
@@ -306,20 +172,20 @@ export default function PrivacyPage() {
                 When personal information is no longer needed, we securely delete or anonymize it. You may
                 request early deletion of your data subject to applicable legal obligations (see Section 7).
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="rights" number="07" title="Your Rights">
+            <DocSection id="rights" number="07" title="Your Rights">
               <P>
                 Depending on your jurisdiction, you have the following rights regarding your personal data:
               </P>
               <UL items={[
-                <><strong className="text-[var(--hz-text)]">Right of Access:</strong> Request a copy of the personal information we hold about you.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Rectification:</strong> Request correction of inaccurate or incomplete personal information.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Erasure (&quot;Right to be Forgotten&quot;):</strong> Request deletion of your personal data, subject to legal retention requirements.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Restriction:</strong> Request that we restrict processing of your data in certain circumstances.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Data Portability:</strong> Receive a copy of your data in a machine-readable format for transfer to another controller.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Object:</strong> Object to processing based on legitimate interests or for direct marketing purposes.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Withdraw Consent:</strong> Where processing is based on consent, withdraw it at any time without affecting prior lawful processing.</>,
+                <><strong>Right of Access:</strong> Request a copy of the personal information we hold about you.</>,
+                <><strong>Right to Rectification:</strong> Request correction of inaccurate or incomplete personal information.</>,
+                <><strong>Right to Erasure (&quot;Right to be Forgotten&quot;):</strong> Request deletion of your personal data, subject to legal retention requirements.</>,
+                <><strong>Right to Restriction:</strong> Request that we restrict processing of your data in certain circumstances.</>,
+                <><strong>Right to Data Portability:</strong> Receive a copy of your data in a machine-readable format for transfer to another controller.</>,
+                <><strong>Right to Object:</strong> Object to processing based on legitimate interests or for direct marketing purposes.</>,
+                <><strong>Right to Withdraw Consent:</strong> Where processing is based on consent, withdraw it at any time without affecting prior lawful processing.</>,
               ]} />
               <P>
                 To exercise any of these rights, contact us at hr@oceanbluecorp.com with the subject line
@@ -330,18 +196,16 @@ export default function PrivacyPage() {
                 You also have the right to lodge a complaint with your local data protection supervisory
                 authority if you believe our processing of your personal data violates applicable law.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="cookies" number="08" title="Cookies & Tracking Technologies">
+            <DocSection id="cookies" number="08" title="Cookies & Tracking Technologies">
               <P>
-                Our Site uses cookies and similar tracking technologies to enhance your experience and
-                analyze usage. We use the following types:
+                Our Site uses cookies and browser storage to keep it working and to remember your
+                choices. We do not use analytics or advertising cookies. We use the following types:
               </P>
               <UL items={[
-                <><strong className="text-[var(--hz-text)]">Strictly Necessary Cookies:</strong> Essential for the Site to function (e.g., authentication tokens, session management). Cannot be disabled.</>,
-                <><strong className="text-[var(--hz-text)]">Functional Cookies:</strong> Remember your preferences (e.g., language, region settings) to provide a personalized experience.</>,
-                <><strong className="text-[var(--hz-text)]">Analytics Cookies:</strong> Collect anonymized data on how visitors interact with the Site (e.g., pages viewed, time spent) using tools like Google Analytics. We use this to improve our content and functionality.</>,
-                <><strong className="text-[var(--hz-text)]">Marketing Cookies:</strong> Track your browsing to deliver relevant advertisements. These are only set with your prior consent.</>,
+                <><strong>Strictly Necessary Cookies:</strong> Essential for the Site to function (e.g., authentication tokens, session management). Cannot be disabled.</>,
+                <><strong>Preference Storage:</strong> Remembers choices you make, such as a dismissed announcement. Kept across visits only with your consent.</>,
               ]} />
               <P>
                 You can manage cookie preferences through your browser settings or our cookie consent
@@ -353,9 +217,9 @@ export default function PrivacyPage() {
                 emails have been opened and links clicked. You can disable this by setting your email
                 client to not download images.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="security" number="09" title="Data Security">
+            <DocSection id="security" number="09" title="Data Security">
               <P>
                 Ocean Blue implements industry-standard technical and organizational measures to protect
                 your personal information from unauthorized access, disclosure, alteration, and destruction.
@@ -376,9 +240,9 @@ export default function PrivacyPage() {
                 result in a risk to your rights and freedoms, we will notify affected individuals and
                 relevant authorities as required by applicable law, typically within 72 hours of discovery.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="international" number="10" title="International Data Transfers">
+            <DocSection id="international" number="10" title="International Data Transfers">
               <P>
                 Ocean Blue is headquartered in the United States. If you are located outside the US,
                 your personal information will be transferred to, stored, and processed in the United
@@ -398,9 +262,9 @@ export default function PrivacyPage() {
                 where permitted by law. You may contact us for more information about the specific
                 safeguards we use.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="children" number="11" title="Children's Privacy">
+            <DocSection id="children" number="11" title="Children's Privacy">
               <P>
                 Our Site and services are not directed to individuals under the age of 18. We do not
                 knowingly collect personal information from children. If you are a parent or guardian
@@ -411,33 +275,33 @@ export default function PrivacyPage() {
                 If we discover that we have collected personal information from a child without
                 verification of parental consent, we will take steps to delete that information promptly.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="california" number="12" title="California Residents: CCPA Rights">
+            <DocSection id="california" number="12" title="California Residents: CCPA Rights">
               <P>
                 If you are a California resident, the California Consumer Privacy Act (CCPA) and the
                 California Privacy Rights Act (CPRA) grant you specific rights regarding your personal
                 information:
               </P>
               <UL items={[
-                <><strong className="text-[var(--hz-text)]">Right to Know:</strong> Request disclosure of the categories and specific pieces of personal information we have collected, the sources, the business purpose, and the third parties with whom we share it.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Delete:</strong> Request deletion of personal information we have collected, subject to certain exceptions.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Correct:</strong> Request correction of inaccurate personal information.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Opt-Out of Sale or Sharing:</strong> We do not sell personal information. We do not share personal information for cross-context behavioral advertising without your consent.</>,
-                <><strong className="text-[var(--hz-text)]">Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your CCPA rights.</>,
-                <><strong className="text-[var(--hz-text)]">Sensitive Personal Information:</strong> We collect limited sensitive information (Social Security numbers for payroll, where applicable). We use it only for the purpose for which it was collected.</>,
+                <><strong>Right to Know:</strong> Request disclosure of the categories and specific pieces of personal information we have collected, the sources, the business purpose, and the third parties with whom we share it.</>,
+                <><strong>Right to Delete:</strong> Request deletion of personal information we have collected, subject to certain exceptions.</>,
+                <><strong>Right to Correct:</strong> Request correction of inaccurate personal information.</>,
+                <><strong>Right to Opt-Out of Sale or Sharing:</strong> We do not sell personal information. We do not share personal information for cross-context behavioral advertising without your consent.</>,
+                <><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your CCPA rights.</>,
+                <><strong>Sensitive Personal Information:</strong> We collect limited sensitive information (Social Security numbers for payroll, where applicable). We use it only for the purpose for which it was collected.</>,
               ]} />
               <P>
                 To submit a California privacy rights request, email hr@oceanbluecorp.com with the
                 subject &quot;California Privacy Rights Request.&quot; We will verify your identity and respond
                 within 45 days. You may designate an authorized agent to submit requests on your behalf.
               </P>
-              <InfoBox title="Categories of Personal Information Collected (Past 12 Months)">
+              <Callout title="Categories of Personal Information Collected (Past 12 Months)">
                 <p>Identifiers (name, email, IP), professional/employment information (resume, work history), internet activity (browsing on our Site), and inferences drawn from the above to create a candidate profile. No personal information sold.</p>
-              </InfoBox>
-            </Section>
+              </Callout>
+            </DocSection>
 
-            <Section id="updates" number="13" title="Updates to This Policy">
+            <DocSection id="updates" number="13" title="Updates to This Policy">
               <P>
                 We may update this Privacy Policy periodically to reflect changes in our practices,
                 technology, legal requirements, or other factors. When we update this policy, we will
@@ -453,59 +317,26 @@ export default function PrivacyPage() {
                 constitutes your acceptance of the updated policy. If you do not agree with the changes,
                 you must stop using our Site and services and may request deletion of your account.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="contact" number="14" title="Contact Us">
+            <DocSection id="contact" number="14" title="Contact Us">
               <P>
                 If you have questions, concerns, or requests regarding this Privacy Policy or our
                 handling of your personal information, please contact our Privacy Team:
               </P>
-              <div className="mt-4 rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 p-6">
-                <p className="mb-4 text-sm font-semibold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
-                  Ocean Blue Corporation, Privacy Team
-                </p>
-                <div className="space-y-2.5 text-sm text-[var(--hz-text-mute)]">
-                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
-                    <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" />
-                    hr@oceanbluecorp.com
-                  </a>
-                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
-                    <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" />
-                    +1 (614) 844-6925
-                  </a>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--hz-cobalt)]" />
-                    <span>9775 Fairway Drive, Suite C<br />Powell, OH 43065</span>
-                  </div>
-                </div>
-              </div>
+              <ContactCard
+                title="Ocean Blue Corporation, Privacy Team"
+                email={{ href: "mailto:hr@oceanbluecorp.com", label: "hr@oceanbluecorp.com" }}
+                phone={{ href: "tel:+16148446925", label: "+1 (614) 844-6925" }}
+                address={HQ_ADDRESS}
+              />
               <P>
                 We will acknowledge receipt of your privacy inquiry within 5 business days and aim
                 to resolve it within 30 days. For urgent matters, please call us directly.
               </P>
-            </Section>
+            </DocSection>
 
-            {/* Related pages */}
-            <div className="mb-10 mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/terms"
-                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                <span>Terms of Service</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/contact"
-                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                <span>Contact Us</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
+      <RelatedLinks links={[{ href: "/terms", label: "Terms of Service" }, { href: "/contact", label: "Contact Us" }]} />
+    </DocPage>
   );
 }

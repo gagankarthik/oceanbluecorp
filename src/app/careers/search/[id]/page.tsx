@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { breadcrumbJsonLd, jsonLdString, OG_IMAGES } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -8,23 +8,6 @@ import { loadJob } from "./job";
 
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-/**
- * Serialize JSON-LD for embedding in a <script> tag.
- *
- * JSON.stringify escapes quotes but NOT `<`, so a job description containing
- * "</script>" would close the tag early and let the remainder be parsed as
- * markup, stored XSS via the admin job editor. Escaping `<` (and the JS line
- * terminators U+2028/U+2029, which are literal in JSON but illegal in JS
- * string literals) makes the payload inert while staying valid JSON-LD.
- */
-function safeJsonLd(value: unknown): string {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/[\u2028\u2029]/g, (c) =>
-      c === "\u2028" ? "\\u2028" : "\\u2029",
-    );
 }
 
 // Google maps its own employmentType vocabulary, not ours.
@@ -193,7 +176,16 @@ export default async function JobDetailsPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(jobPostingLd(job, id)) }}
+        dangerouslySetInnerHTML={{
+          __html: jsonLdString([
+            jobPostingLd(job, id),
+            breadcrumbJsonLd([
+              { name: "Careers", path: "/careers" },
+              { name: "Open jobs", path: "/careers/search" },
+              { name: job.title, path: `/careers/search/${id}` },
+            ]),
+          ]),
+        }}
       />
       <JobDetailsClient job={job} jobId={id} />
     </>

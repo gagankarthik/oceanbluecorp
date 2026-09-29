@@ -2,7 +2,7 @@ import {
   Users, Cloud, Shield, Database, Settings, Cpu, Headphones, Lightbulb,
   Clock, ShieldCheck, Layers, GitBranch, Gauge, LockKeyhole, Workflow,
   BarChart3, RefreshCw, LineChart, Boxes, Plug, Sparkles, HeartPulse,
-  Map, Rocket, type LucideIcon,
+  Map, Rocket, GraduationCap, Target, type LucideIcon,
 } from "lucide-react";
 import { IMG } from "@/components/landing/media";
 
@@ -63,7 +63,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Onboard & support", desc: "We stay accountable through onboarding and the length of the engagement." },
     ],
     meta: {
-      title: "IT Staffing & Talent",
+      title: "IT Staffing Services",
       description:
         "Pre-vetted cloud, data, security, ERP, Salesforce, and AI specialists embedded into your team on flexible or permanent terms. Shortlists in 48 hours.",
       keywords: ["IT staffing", "technical recruiting", "contract IT staffing", "direct placement", "managed teams", "cloud engineer staffing"],
@@ -101,7 +101,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Optimize", desc: "Continuous tuning for performance, reliability, and cost." },
     ],
     meta: {
-      title: "Cloud Engineering",
+      title: "Cloud Engineering & Migration",
       description:
         "Cloud migration, modernization, and DevOps across AWS, Azure, and GCP, landing zones, infrastructure-as-code, observability, and FinOps cost optimization.",
       keywords: ["cloud migration", "cloud engineering", "AWS Azure GCP", "DevOps", "infrastructure as code", "FinOps"],
@@ -139,7 +139,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Monitor", desc: "Continuous visibility and response readiness over time." },
     ],
     meta: {
-      title: "Cybersecurity",
+      title: "Cybersecurity Services",
       description:
         "Proactive, compliance-aligned cybersecurity, assessments, identity & access management, vulnerability management, cloud security posture, and HIPAA / SOC 2 / NIST readiness.",
       keywords: ["cybersecurity services", "IAM", "vulnerability management", "cloud security", "SOC 2", "HIPAA compliance", "NIST"],
@@ -177,7 +177,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Support", desc: "Optimize, extend, and support as the business evolves." },
     ],
     meta: {
-      title: "ERP Solutions",
+      title: "ERP Implementation & Support",
       description:
         "ERP implementations, upgrades, integrations, and optimization across SAP, Oracle, and Microsoft Dynamics, with clean data migration, reporting, and ongoing support.",
       keywords: ["ERP solutions", "SAP implementation", "Oracle ERP", "Microsoft Dynamics", "ERP integration", "ERP support"],
@@ -215,7 +215,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Support", desc: "Managed admin and continuous improvement over time." },
     ],
     meta: {
-      title: "Salesforce Services",
+      title: "Salesforce Consulting Services",
       description:
         "Salesforce implementation, Apex & LWC development, workflow automation, integrations, and managed admin services, for cleaner data, better adoption, and reporting you can act on.",
       keywords: ["Salesforce services", "Salesforce implementation", "Apex development", "Lightning Web Components", "Salesforce admin", "CRM automation"],
@@ -253,7 +253,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Govern", desc: "Monitor accuracy, security, and drift over time." },
     ],
     meta: {
-      title: "AI & Data Intelligence",
+      title: "AI & Data Services",
       description:
         "Business-first AI and data services, workflow and document automation, predictive analytics, LLM integrations, data engineering, BI, and MLOps with governance and security built in.",
       keywords: ["AI services", "data intelligence", "predictive analytics", "LLM integration", "data engineering", "MLOps", "workflow automation"],
@@ -291,10 +291,48 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Review", desc: "Optimize continuously and report in quarterly reviews." },
     ],
     meta: {
-      title: "Managed Services",
+      title: "Managed IT Services",
       description:
         "24/7 managed services, monitoring, helpdesk and application support, cloud and infrastructure management, security monitoring, and quarterly business reviews on one accountable SLA.",
       keywords: ["managed services", "24/7 monitoring", "IT helpdesk", "infrastructure management", "application support", "managed SLA"],
+    },
+  },
+
+  training: {
+    slug: "training",
+    icon: GraduationCap,
+    image: IMG.serviceTraining,
+    eyebrow: "Training & Upskilling",
+    title: "Teams trained on the stack they actually run.",
+    lede: "Instructor-led technology training for your people, built around your platforms and delivered by practitioners who do the work.",
+    tags: ["Instructor-led", "On-site or virtual", "Custom curricula"],
+    overviewHeading: "Skills that show up in the work, not just on a certificate.",
+    overviewBody:
+      "We design and deliver training on cloud, data, security, ERP, Salesforce, and AI, taught by the same practitioners who deliver those engagements. Curricula are mapped to your environment and your roles, so what people learn on Monday they can use on Tuesday.",
+    capabilities: [
+      "Cloud & DevOps training",
+      "Data, analytics & AI",
+      "Security awareness & engineering",
+      "ERP & Salesforce enablement",
+      "Certification preparation",
+      "Custom curricula & workshops",
+    ],
+    highlights: [
+      { icon: Users, title: "Taught by practitioners", desc: "Instructors who deliver this work for clients, not just teach it." },
+      { icon: Target, title: "Built for your stack", desc: "Labs and examples drawn from the platforms your teams run." },
+      { icon: BarChart3, title: "Measured", desc: "Skills assessed before and after, so progress is visible." },
+    ],
+    approach: [
+      { title: "Assess", desc: "Map current skills against the roles and platforms you need covered." },
+      { title: "Design", desc: "Build a curriculum, labs, and schedule around your environment." },
+      { title: "Deliver", desc: "Instructor-led sessions, on-site or virtual, with hands-on labs." },
+      { title: "Reinforce", desc: "Assessments, follow-up clinics, and a path to certification." },
+    ],
+    meta: {
+      title: "IT Training & Upskilling",
+      description:
+        "Instructor-led technology training in cloud, DevOps, data and AI, security, ERP, and Salesforce, with custom curricula, hands-on labs, and certification preparation.",
+      keywords: ["IT training", "corporate technology training", "cloud training", "upskilling", "certification preparation", "Salesforce training"],
     },
   },
 
@@ -329,7 +367,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
       { title: "Measure", desc: "Track KPIs and adjust the plan against real results." },
     ],
     meta: {
-      title: "Digital Transformation",
+      title: "Digital Transformation Consulting",
       description:
         "Digital transformation with a clear roadmap, technology strategy, architecture, process optimization, modernization, and change management with KPIs agreed up front.",
       keywords: ["digital transformation", "technology strategy", "IT roadmap", "application modernization", "process optimization", "change management"],
@@ -341,5 +379,5 @@ export const SOLUTION_SLUGS = Object.keys(SOLUTIONS);
 
 // Sibling order for the "related solutions" cross-links at the bottom of each page.
 export const SOLUTION_ORDER = [
-  "staffing", "cloud", "cybersecurity", "erp", "salesforce", "ai", "managed", "transformation",
+  "staffing", "cloud", "cybersecurity", "erp", "salesforce", "ai", "managed", "training", "transformation",
 ];

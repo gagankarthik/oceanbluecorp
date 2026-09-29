@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import ContactPage from "./_content";
 import { getSiteContent } from "@/lib/content";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/contact",
   title: "Contact Us",
-  description:
-    "Get in touch with Ocean Blue Corporation. Reach our team for enterprise IT consulting, staffing inquiries, partnership opportunities, or general support.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Contact Ocean Blue Corporation",
-    description:
-      "Reach our team for IT consulting, staffing inquiries, partnerships, or general support.",
-    url: "https://oceanbluecorp.com/contact",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/contact" },
-};
+  description: "Talk to Ocean Blue Corporation about IT staffing, enterprise solutions or managed services. Call +1 (614) 844-6925 or email hr@oceanbluecorp.com.",
+});
 
 export default async function Contact() {
   const content = await getSiteContent("contact");

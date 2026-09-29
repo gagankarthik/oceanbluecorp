@@ -1,141 +1,214 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { X, Cookie, Shield, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
 
-type ConsentLevel = "all" | "essential";
+/**
+ * Cookie consent. A card at the bottom-left on desktop, a bottom sheet on
+ * phones, never covering the page's main actions.
+ *
+ * Rejecting is as easy as accepting (same size, same row), and "Manage
+ * choices" offers real per-category switches. Anything shown as optional can
+ * actually be turned off, which is what regulators expect.
+ *
+ * The site runs no analytics or advertising tags, so Preferences is the only
+ * optional category. Add one here only when a tool that needs it is added.
+ *
+ * Storage: `cookieConsent` is "all" | "essential" | "custom" (kept compatible
+ * with the old values), `cookieConsentPrefs` holds the per-category choice as
+ * JSON, and `cookieConsentDate` when it was given. Read it via
+ * `hasPreferenceConsent()`.
+ *
+ * The footer's "Cookie settings" link reopens this by dispatching
+ * `open-cookie-settings` on window.
+ */
+
+type Prefs = { preferences: boolean };
+export const OPEN_COOKIE_SETTINGS = "open-cookie-settings";
+
+/** True once the visitor has allowed preference storage. */
+export function hasPreferenceConsent(): boolean {
+  try {
+    if (localStorage.getItem("cookieConsent") === "all") return true;
+    return JSON.parse(localStorage.getItem("cookieConsentPrefs") || "{}").preferences === true;
+  } catch {
+    return false;
+  }
+}
+
+const CATEGORIES: { key: keyof Prefs | "essential"; name: string; desc: string }[] = [
+  { key: "essential", name: "Essential", desc: "Sign-in, security and keeping the site working. Always on." },
+  { key: "preferences", name: "Preferences", desc: "Remembers choices across visits, such as a dismissed announcement." },
+];
+
+function Switch({ on, onChange, label, disabled }: { on: boolean; onChange?: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange?.(!on)}
+      className={cn(
+        "relative h-6 w-11 shrink-0 rounded-full transition-colors duration-150",
+        on ? "bg-cobalt" : "bg-line-strong",
+        disabled && "cursor-not-allowed opacity-60",
+      )}
+    >
+      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-150", on ? "translate-x-6" : "translate-x-1")} />
+    </button>
+  );
+}
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [manage, setManage] = useState(false);
+  const [prefs, setPrefs] = useState<Prefs>({ preferences: false });
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("cookieConsent");
-      if (!stored) setVisible(true);
+      if (!localStorage.getItem("cookieConsent")) setVisible(true);
+      const stored = localStorage.getItem("cookieConsentPrefs");
+      if (stored) setPrefs({ preferences: JSON.parse(stored).preferences === true });
     } catch {
-      // localStorage unavailable (SSR / private mode)
+      // Storage unavailable (private mode): show the banner each visit.
+      setVisible(true);
     }
+    const reopen = () => {
+      setManage(true);
+      setVisible(true);
+    };
+    window.addEventListener(OPEN_COOKIE_SETTINGS, reopen);
+    return () => window.removeEventListener(OPEN_COOKIE_SETTINGS, reopen);
   }, []);
 
-  const save = (level: ConsentLevel) => {
+  const save = useCallback((level: "all" | "essential" | "custom", chosen: Prefs) => {
     try {
       localStorage.setItem("cookieConsent", level);
+      localStorage.setItem("cookieConsentPrefs", JSON.stringify(chosen));
       localStorage.setItem("cookieConsentDate", new Date().toISOString());
     } catch {
       // ignore
     }
+    setPrefs(chosen);
     setVisible(false);
-  };
+    setManage(false);
+  }, []);
 
   if (!visible) return null;
+
+  const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-full px-5 type-label transition-colors duration-150";
 
   return (
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="Cookie consent"
-      className="horizon fixed bottom-0 left-0 right-0 z-[9999] p-3 sm:p-4"
+      aria-labelledby="cookie-title"
+      aria-describedby="cookie-desc"
+      className="site fixed inset-x-0 bottom-0 z-[10000] sm:inset-x-auto sm:bottom-5 sm:left-5 sm:w-[420px]"
     >
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-        {/* Main row */}
-        <div className="flex items-start gap-3 p-4 sm:p-5">
-          <div className="w-9 h-9 rounded-xl bg-[var(--hz-cobalt-100)] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Cookie className="h-[18px] w-[18px] text-[var(--hz-cobalt)]" aria-hidden="true" />
+      <div className="rise max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-t-3xl border border-line bg-white shadow-[var(--shadow-modal)] sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-2xl">
+        <div className="flex items-start justify-between gap-4 px-5 pt-5 sm:px-6 sm:pt-6">
+          <div className="flex items-center gap-2">
+            {manage && (
+              <button
+                type="button"
+                onClick={() => setManage(false)}
+                aria-label="Back"
+                className="-ml-2 flex size-9 items-center justify-center rounded-full text-ink-muted hover:bg-paper hover:text-ink"
+              >
+                <IconArrowLeft size={16} />
+              </button>
+            )}
+            <h2 id="cookie-title" className="type-title text-ink">
+              {manage ? "Cookie choices" : "Your privacy"}
+            </h2>
           </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900">We use cookies &amp; similar technologies</p>
-            <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-              We use essential cookies to make our site work, and optional analytics cookies to understand how you use it.
-              By clicking <strong>Accept All</strong> you consent to all cookies.{" "}
-              {/* Underlined, not just coloured. Colour alone is not a
-                  distinguishing cue inside a run of body text. */}
-              <Link href="/cookies" className="text-[var(--hz-cobalt)] underline underline-offset-2">Cookie Policy</Link>
-              {" · "}
-              <Link href="/privacy" className="text-[var(--hz-cobalt)] underline underline-offset-2">Privacy Policy</Link>
-            </p>
-
-            {/* Details toggle */}
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 mt-1.5 -my-1 py-1.5 transition-colors"
-              aria-expanded={showDetails}
-            >
-              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              {showDetails ? "Hide details" : "Show cookie details"}
-            </button>
-          </div>
-
           <button
-            onClick={() => save("essential")}
-            aria-label="Dismiss and accept essential cookies only"
-            className="grid h-10 w-10 flex-shrink-0 place-items-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            type="button"
+            onClick={() => save("essential", { preferences: false })}
+            aria-label="Close and keep essential cookies only"
+            className="-mt-1 -mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-paper hover:text-ink"
           >
-            <X className="w-4 h-4" />
+            <IconX size={16} />
           </button>
         </div>
 
-        {/* Details panel */}
-        {showDetails && (
-          <div className="px-5 pb-3 grid sm:grid-cols-3 gap-3 border-t border-gray-100 pt-3">
-            {[
-              {
-                name: "Essential",
-                always: true,
-                desc: "Authentication, security, and session management. Cannot be disabled.",
-                color: "bg-emerald-50 border-emerald-200 text-emerald-700",
-              },
-              {
-                name: "Analytics",
-                always: false,
-                desc: "Help us understand how visitors use our site so we can improve it.",
-                color: "bg-[var(--hz-cobalt-100)] border-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]",
-              },
-              {
-                name: "Preferences",
-                always: false,
-                desc: "Remember your settings like sidebar state and language preferences.",
-                color: "bg-slate-50 border-slate-200 text-slate-600",
-              },
-            ].map((cat) => (
-              <div key={cat.name} className={`rounded-xl border p-3 ${cat.color}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold">{cat.name}</span>
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cat.always ? "bg-emerald-200 text-emerald-800" : "bg-white/60"}`}>
-                    {cat.always ? "Always on" : "Optional"}
-                  </span>
-                </div>
-                <p className="text-[11px] opacity-80 leading-snug">{cat.desc}</p>
-              </div>
-            ))}
+        {!manage ? (
+          <div className="px-5 pt-2 pb-5 sm:px-6 sm:pb-6">
+            <p id="cookie-desc" className="type-body-sm text-ink-muted">
+              We use essential cookies to run this site, and no tracking or advertising. With your permission we also remember choices you make, such as a closed announcement. See our{" "}
+              <Link href="/cookies" className="font-semibold text-cobalt underline underline-offset-2">
+                Cookie policy
+              </Link>
+              .
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => save("essential", { preferences: false })}
+                className={cn(btn, "border border-line-strong bg-white text-ink hover:border-cobalt hover:text-cobalt")}
+              >
+                Reject optional
+              </button>
+              <button type="button" onClick={() => save("all", { preferences: true })} className={cn(btn, "bg-cobalt text-white hover:bg-cobalt-deep")}>
+                Accept all
+              </button>
+            </div>
+            <button type="button" onClick={() => setManage(true)} className="mt-3 w-full py-1.5 text-center type-label font-medium text-ink-muted hover:text-ink">
+              Manage choices
+            </button>
+          </div>
+        ) : (
+          <div className="px-5 pt-2 pb-5 sm:px-6 sm:pb-6">
+            <p id="cookie-desc" className="type-body-sm text-ink-muted">
+              Choose what we may remember. You can change this any time from the footer.
+            </p>
+            <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+              {CATEGORIES.map((c) => {
+                const locked = c.key === "essential";
+                const on = locked ? true : prefs[c.key as keyof Prefs];
+                return (
+                  <li key={c.key} className="flex items-start justify-between gap-4 px-4 py-3.5">
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 type-label text-ink">
+                        {c.name}
+                        {locked && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success-container px-2 py-0.5 type-caption font-semibold text-success">
+                            <IconCheck size={11} strokeWidth={2.5} /> Always on
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-0.5 block type-caption text-ink-subtle">{c.desc}</span>
+                    </span>
+                    <Switch
+                      on={on}
+                      disabled={locked}
+                      label={`${c.name} cookies`}
+                      onChange={locked ? undefined : (v) => setPrefs((p) => ({ ...p, [c.key]: v }))}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => save("all", { preferences: true })}
+                className={cn(btn, "border border-line-strong bg-white text-ink hover:border-cobalt hover:text-cobalt")}
+              >
+                Accept all
+              </button>
+              <button type="button" onClick={() => save("custom", prefs)} className={cn(btn, "bg-cobalt text-white hover:bg-cobalt-deep")}>
+                Save choices
+              </button>
+            </div>
           </div>
         )}
-
-        {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
-          {/* gray-600, not gray-400: 11px on bg-gray-50 needs the darker step
-              to clear 4.5:1. */}
-          <div className="flex items-center gap-1 text-[11px] text-gray-600 flex-1">
-            <Shield className="w-3 h-3" aria-hidden="true" />
-            <span>We never sell your personal data. SOC 2 Type II &middot; GDPR &amp; CCPA compliant.</span>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-            <button
-              onClick={() => save("essential")}
-              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Essential Only
-            </button>
-            <button
-              onClick={() => save("all")}
-              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-white bg-[var(--hz-cobalt)] rounded-lg hover:bg-[var(--hz-cobalt-600)] transition-colors"
-            >
-              Accept All
-            </button>
-          </div>
-        </div>
+        <div className="h-[env(safe-area-inset-bottom)] sm:hidden" />
       </div>
     </div>
   );

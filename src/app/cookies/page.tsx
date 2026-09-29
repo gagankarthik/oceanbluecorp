@@ -1,26 +1,21 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
-import { ArrowLeft, Mail, Cookie, Shield, BarChart2, Settings2, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DocPage, DocSection, P, UL, DocTable, RelatedLinks, IconPin } from "@/components/site/legal/doc";
+import { IconShieldLock, IconSettings, IconExternal, IconMail, type Icon } from "@/components/site/icons";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/cookies",
   title: "Cookie Policy",
-  description: "Learn how Ocean Blue Corporation uses cookies and similar tracking technologies on our website.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Cookie Policy | Ocean Blue Corporation",
-    description:
-      "Which cookies Ocean Blue Corporation sets, what each one does, and how to control them in your browser.",
-    url: "https://oceanbluecorp.com/cookies",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/cookies" },
-};
+  description: "The cookies and browser storage Ocean Blue Corporation uses: essential sign-in and consent storage only, no analytics or ads, and how to change your choice.",
+});
 
 const SECTIONS = [
   { id: "what-are-cookies",  label: "What Are Cookies" },
   { id: "how-we-use",        label: "How We Use Cookies" },
   { id: "types",             label: "Types of Cookies We Use" },
-  { id: "third-party",       label: "Third-Party Cookies" },
+  { id: "third-party",       label: "Cookies and Storage in Use" },
   { id: "duration",          label: "Cookie Duration" },
   { id: "managing",          label: "Managing Your Cookies" },
   { id: "browser-controls",  label: "Browser Controls" },
@@ -30,164 +25,64 @@ const SECTIONS = [
   { id: "contact",           label: "Contact Us" },
 ];
 
-function Section({ id, number, title, children }: {
-  id: string; number: string; title: string; children: React.ReactNode;
+/* Status colours sit on their own tint at the 700 step, so every label clears AA. */
+const TONES = {
+  cobalt: "bg-cobalt-tint text-cobalt",
+  emerald: "bg-success-container text-success",
+  neutral: "bg-paper text-ink-muted",
+} as const;
+
+function CookieCard({ icon: Glyph, title, status, tone, children }: {
+  icon: Icon; title: string; status: string; tone: keyof typeof TONES; children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-24 border-b border-[var(--hz-paper-line)] py-8 last:border-0">
-      <div className="mb-4 flex items-baseline gap-3">
-        <span className="rounded-md bg-[var(--hz-cobalt-100)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--hz-cobalt)]">
-          {number}
+    <div className="flex flex-col rounded-xl border border-line bg-white p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
+          <Glyph size={17} />
         </span>
-        <h2
-          className="text-xl font-bold text-[var(--hz-text)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {title}
-        </h2>
+        <p className="text-[15.5px] font-semibold text-ink">{title}</p>
       </div>
-      <div className="space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return <p>{children}</p>;
-}
-
-function UL({ items }: { items: (string | React.ReactNode)[] }) {
-  return (
-    <ul className="space-y-2 pl-1">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function CookieCard({ icon: Icon, title, color, children }: {
-  icon: React.ComponentType<{ className?: string }>; title: string; color: string; children: React.ReactNode;
-}) {
-  return (
-    <div className={`rounded-xl border p-5 ${color}`}>
-      <div className="mb-3 flex items-center gap-3">
-        <Icon className="h-5 w-5" />
-        <p className="font-semibold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
-          {title}
-        </p>
-      </div>
-      <div className="text-sm leading-relaxed text-[var(--hz-text-mute)]">{children}</div>
+      <div className="mt-3 type-body">{children}</div>
+      <p className={cn("mt-4 self-start rounded-full px-2.5 py-0.5 type-caption font-medium", TONES[tone])}>{status}</p>
     </div>
   );
 }
 
+const TYPE_TONE: Record<string, keyof typeof TONES> = { Security: "cobalt", Functional: "emerald", Preference: "emerald" };
+
+function TypeTag({ type }: { type: string }) {
+  return <span className={cn("inline-block rounded-full px-2 py-0.5 type-caption font-medium", TONES[TYPE_TONE[type] ?? "neutral"])}>{type}</span>;
+}
+
 const COOKIE_TABLE = [
-  { name: "_ga, _gid", provider: "Google Analytics", purpose: "Distinguishes users and sessions for analytics reporting", duration: "2 years / 24 hours", type: "Analytics" },
-  { name: "_gat", provider: "Google Analytics", purpose: "Throttles request rate to Google Analytics", duration: "1 minute", type: "Analytics" },
-  { name: "csrftoken", provider: "Ocean Blue", purpose: "Prevents cross-site request forgery attacks", duration: "Session", type: "Security" },
-  { name: "sessionid", provider: "Ocean Blue", purpose: "Maintains authenticated user session state", duration: "2 weeks", type: "Functional" },
-  { name: "cookie_consent", provider: "Ocean Blue", purpose: "Stores your cookie preference decision", duration: "1 year", type: "Preference" },
-  { name: "__cf_bm", provider: "Cloudflare", purpose: "Bot management and security protection", duration: "30 minutes", type: "Security" },
-  { name: "ln_or", provider: "LinkedIn", purpose: "Tracks LinkedIn ad conversions and insights", duration: "1 day", type: "Marketing" },
+  { name: "oidc.user:*", provider: "Ocean Blue", purpose: "Keeps staff signed in to the admin console (staff only)", duration: "Until sign out", type: "Security" },
+  { name: "cookieConsent, cookieConsentPrefs", provider: "Ocean Blue", purpose: "Stores your cookie choice so we do not ask again", duration: "Until cleared", type: "Functional" },
+  { name: "ob.announcement.dismissed:*", provider: "Ocean Blue", purpose: "Remembers that you closed an announcement", duration: "Until cleared (session only without consent)", type: "Preference" },
 ];
 
 export default function CookiesPage() {
   const EFFECTIVE = "April 1, 2026";
 
   return (
-    <div
-      className="horizon min-h-screen"
-      style={{
-        background: [
-          "radial-gradient(ellipse 70% 50% at 15% 5%, rgba(29,78,216,0.06) 0%, transparent 55%)",
-          "radial-gradient(ellipse 60% 45% at 88% 15%, rgba(29,78,216,0.05) 0%, transparent 55%)",
-          "#FAFBFF",
-        ].join(", "),
-      }}
-    >
-      {/* Hero */}
-      <div className="border-b border-[var(--hz-paper-line)] bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-6 pt-24 pb-14 md:pt-28 lg:px-8 lg:pb-20">
-          <Link
-            href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Home
-          </Link>
-          <div className="flex items-start gap-5">
-            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--hz-cobalt-100)] ring-1 ring-[var(--hz-cobalt-100)]">
-              <Cookie className="h-7 w-7 text-[var(--hz-cobalt)]" />
-            </div>
-            <div>
-              <h1
-                className="text-3xl font-extrabold tracking-tight text-[var(--hz-text)] sm:text-4xl lg:text-5xl"
-                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.025em" }}
-              >
-                Cookie Policy
-              </h1>
-              <p className="mt-2 text-base text-[var(--hz-text-subtle)]">
-                Effective date: <span className="font-medium text-[var(--hz-text-mute)]">{EFFECTIVE}</span>
-                &nbsp;·&nbsp;
-                Last updated: <span className="font-medium text-[var(--hz-text-mute)]">{EFFECTIVE}</span>
-              </p>
-              <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--hz-text-subtle)]">
-                This Cookie Policy explains how Ocean Blue Corporation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "}
-                <span className="font-medium text-[var(--hz-text-mute)]">oceanbluecorp.com</span>.
-              </p>
-            </div>
-          </div>
+    <DocPage
+      title="Cookie Policy"
+      lede={<>This Cookie Policy explains how Ocean Blue Corporation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold text-ink">oceanbluecorp.com</strong>.</>}
+      meta={[{ label: "Effective date", value: EFFECTIVE }, { label: "Last updated", value: "September 30, 2026" }]}
+      toc={SECTIONS}
+      aside={
+        <div className="rounded-xl border border-line bg-paper p-4">
+          <p className="type-label font-semibold text-ink">Questions?</p>
+          <p className="mt-1 type-body-sm text-ink-muted">
+            Contact us at{" "}
+            <a href="mailto:hr@oceanbluecorp.com" className="font-medium text-cobalt underline underline-offset-2">
+              hr@oceanbluecorp.com
+            </a>
+          </p>
         </div>
-      </div>
-
-      {/* Body */}
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
-        <div className="flex gap-12 xl:gap-16">
-
-          {/* Sticky TOC */}
-          <aside className="hidden xl:block w-64 flex-shrink-0">
-            {/* Clears the 72px fixed header. At top-8 this list scrolled up and
-                then vanished behind the bar. */}
-            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-              <p
-                className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Contents
-              </p>
-              <nav className="space-y-1">
-                {SECTIONS.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-                  >
-                    {s.label}
-                  </a>
-                ))}
-              </nav>
-              <div className="mt-8 rounded-xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)] p-4">
-                <p className="mb-1 text-xs font-semibold text-[var(--hz-cobalt)]">Questions?</p>
-                <p className="text-xs text-[var(--hz-cobalt)] leading-relaxed">
-                  Contact our privacy team at{" "}
-                  <a href="mailto:privacy@oceanbluecorp.com" className="underline underline-offset-2">
-                    privacy@oceanbluecorp.com
-                  </a>
-                </p>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <main className="min-w-0 flex-1">
-            <div className="divide-y divide-gray-100 rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 px-8 py-2 lg:px-12">
-
-              <Section id="what-are-cookies" number="01" title="What Are Cookies">
+      }
+    >
+              <DocSection id="what-are-cookies" number="01" title="What Are Cookies">
                 <P>
                   Cookies are small text files placed on your device (computer, tablet, or smartphone) when you visit a website. They are widely used to make websites work, improve user experience, and provide reporting information to website owners.
                 </P>
@@ -195,108 +90,73 @@ export default function CookiesPage() {
                   Cookies set by the website owner (in this case, Ocean Blue Corporation) are called &ldquo;first-party cookies.&rdquo; Cookies set by parties other than the website owner are called &ldquo;third-party cookies.&rdquo; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics).
                 </P>
                 <P>
-                  In addition to cookies, we may also use similar tracking technologies such as web beacons (also known as pixel tags or clear GIFs), local storage, and session storage to collect information about your browsing activities.
+                  In addition to cookies, websites can use similar technologies such as local storage and session storage. Our website uses these for the purposes described below. We do not use analytics, advertising, or tracking technologies of any kind.
                 </P>
-              </Section>
+              </DocSection>
 
-              <Section id="how-we-use" number="02" title="How We Use Cookies">
+              <DocSection id="how-we-use" number="02" title="How We Use Cookies">
                 <P>We use cookies and similar technologies for the following purposes:</P>
                 <UL items={[
                   "To ensure our website functions correctly and securely, including maintaining your login session",
                   "To remember your preferences and settings so you do not have to re-enter them on each visit",
-                  "To analyze how visitors use our website, which pages are most popular, and where users encounter difficulties",
-                  "To measure the effectiveness of our marketing campaigns and understand how visitors reach our website",
                   "To comply with legal and regulatory obligations relating to record-keeping and security",
                   "To protect against fraudulent, unauthorized, or unlawful activity",
                   "To improve our website, services, and the overall user experience over time",
                 ]} />
-              </Section>
+              </DocSection>
 
-              <Section id="types" number="03" title="Types of Cookies We Use">
-                <P>We categorize the cookies on our website into four types:</P>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <CookieCard icon={Shield} title="Strictly Necessary" color="border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]">
+              <DocSection id="types" number="03" title="Types of Cookies We Use">
+                <P>We categorize the cookies and storage on our website into two types:</P>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <CookieCard icon={IconShieldLock} title="Strictly Necessary" status="Always active" tone="cobalt">
                     <p>
-                      Essential for the website to function. They enable core features such as security, account login, and network management. You cannot opt out of these without significantly affecting how our website works.
+                      Essential for the website to function. They keep staff signed in and remember your cookie choice. You cannot opt out of these without affecting how our website works.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-[var(--hz-cobalt)]">Always active</p>
                   </CookieCard>
-                  <CookieCard icon={Settings2} title="Functional / Preference" color="border-green-100 bg-green-50/50">
+                  <CookieCard icon={IconSettings} title="Preferences" status="Optional, requires consent" tone="emerald">
                     <p>
-                      Allow our website to remember choices you make (such as language, region, or cookie consent) and provide enhanced, more personal features. Disabling these may affect your experience.
+                      Remember choices you make across visits, such as closing an announcement. Without consent, these choices last only until you close the tab.
                     </p>
-                    <p className="mt-2 text-xs font-medium text-green-700">Optional, enabled by default</p>
-                  </CookieCard>
-                  <CookieCard icon={BarChart2} title="Analytics / Performance" color="border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
-                    <p>
-                      Help us understand how visitors interact with our website by collecting and reporting information anonymously. We use Google Analytics 4 for this purpose. No personally identifiable information is transmitted.
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-[var(--hz-text-mute)]">Optional, requires consent</p>
-                  </CookieCard>
-                  <CookieCard icon={ExternalLink} title="Marketing / Targeting" color="border-rose-100 bg-rose-50/50">
-                    <p>
-                      Used to deliver advertisements and track campaign performance across websites. These cookies are placed by our advertising partners to build a profile of your interests and show relevant ads.
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-rose-700">Optional, requires consent</p>
                   </CookieCard>
                 </div>
-              </Section>
+              </DocSection>
 
-              <Section id="third-party" number="04" title="Third-Party Cookies">
+              <DocSection id="third-party" number="04" title="Third-Party Cookies">
                 <P>
-                  Some cookies on our website are placed by third-party service providers. We do not control these cookies, and they are governed by each provider&apos;s own privacy policy.
+                  We do not place third-party cookies. The following table lists everything our website stores on your device:
                 </P>
-                <P>The following table lists the specific cookies currently in use:</P>
-                <div className="mt-4 overflow-hidden rounded-xl border border-[var(--hz-paper-line)]">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[var(--hz-paper-line)] bg-[var(--hz-paper)]">
-                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Cookie Name</th>
-                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Provider</th>
-                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)] hidden lg:table-cell">Purpose</th>
-                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Duration</th>
-                          <th className="px-4 py-3 text-left font-semibold text-[var(--hz-text-mute)]">Type</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                        {COOKIE_TABLE.map((row, i) => (
-                          <tr key={i} className="hover:bg-[var(--hz-paper)]/50 transition-colors">
-                            <td className="px-4 py-3 font-mono text-xs text-[var(--hz-text-mute)]">{row.name}</td>
-                            <td className="px-4 py-3 text-[var(--hz-text-mute)]">{row.provider}</td>
-                            <td className="px-4 py-3 text-[var(--hz-text-subtle)] hidden lg:table-cell">{row.purpose}</td>
-                            <td className="px-4 py-3 text-[var(--hz-text-subtle)] whitespace-nowrap">{row.duration}</td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                                row.type === "Security"    ? "bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]" :
-                                row.type === "Analytics"  ? "bg-slate-100 text-[var(--hz-text-mute)]" :
-                                row.type === "Marketing"  ? "bg-rose-50 text-rose-700" :
-                                row.type === "Functional" ? "bg-green-50 text-green-700" :
-                                "bg-gray-100 text-[var(--hz-text-mute)]"
-                              }`}>{row.type}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <P>
-                  For more information about these third-party cookies, please visit the respective privacy policies of Google Analytics, Cloudflare, and LinkedIn.
-                </P>
-              </Section>
+                <DocTable
+                  head={[
+                    { label: "Cookie Name" },
+                    { label: "Provider" },
+                    { label: "Purpose", className: "hidden lg:table-cell" },
+                    { label: "Duration" },
+                    { label: "Type" },
+                  ]}
+                  rows={COOKIE_TABLE.map((row) => ({
+                    key: row.name,
+                    cells: [
+                      { node: row.name, className: "font-mono text-[12.5px] text-ink" },
+                      { node: row.provider },
+                      { node: row.purpose, className: "hidden lg:table-cell" },
+                      { node: row.duration, className: "whitespace-nowrap" },
+                      { node: <TypeTag type={row.type} /> },
+                    ],
+                  }))}
+                />
+              </DocSection>
 
-              <Section id="duration" number="05" title="Cookie Duration">
+              <DocSection id="duration" number="05" title="Cookie Duration">
                 <P>Cookies can remain on your device for different periods of time. We use two types based on duration:</P>
                 <UL items={[
-                  <><strong className="text-[var(--hz-text)]">Session cookies</strong>, These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
-                  <><strong className="text-[var(--hz-text)]">Persistent cookies</strong>, These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
+                  <><strong>Session cookies</strong>, These are temporary cookies that expire and are automatically deleted when you close your browser. They are used to carry information from one page to the next during a browsing session, such as maintaining your logged-in state.</>,
+                  <><strong>Persistent cookies</strong>, These remain on your device for a specified period or until you delete them manually. They are used to remember your preferences and settings across multiple visits. The specific duration varies by cookie and is listed in the table in Section 04.</>,
                 ]} />
-              </Section>
+              </DocSection>
 
-              <Section id="managing" number="06" title="Managing Your Cookies">
+              <DocSection id="managing" number="06" title="Managing Your Cookies">
                 <P>
-                  You have the right to decide whether to accept or reject non-essential cookies. When you first visit our website, you will be presented with a cookie consent banner that allows you to accept all cookies, reject optional cookies, or customize your preferences by category.
+                  You have the right to decide whether to accept or reject non-essential cookies. When you first visit our website, you will be presented with a cookie consent banner that allows you to accept all, reject optional cookies, or choose by category.
                 </P>
                 <P>
                   You can update your cookie preferences at any time by clicking the &ldquo;Cookie Settings&rdquo; link in the footer of our website. Please note that withdrawing your consent will not affect the lawfulness of processing carried out before you withdrew consent.
@@ -304,9 +164,9 @@ export default function CookiesPage() {
                 <P>
                   Blocking strictly necessary cookies may impair the functionality of our website, including preventing you from logging in or accessing certain features.
                 </P>
-              </Section>
+              </DocSection>
 
-              <Section id="browser-controls" number="07" title="Browser Controls">
+              <DocSection id="browser-controls" number="07" title="Browser Controls">
                 <P>
                   Most web browsers allow you to control cookies through their settings. You can typically find these settings in the &ldquo;Options,&rdquo; &ldquo;Tools,&rdquo; or &ldquo;Preferences&rdquo; menus of your browser. You can configure your browser to:
                 </P>
@@ -320,7 +180,7 @@ export default function CookiesPage() {
                 <P>
                   The following links provide instructions for managing cookies in common browsers:
                 </P>
-                <div className="mt-2 flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {[
                     { name: "Google Chrome", href: "https://support.google.com/chrome/answer/95647" },
                     { name: "Mozilla Firefox", href: "https://support.mozilla.org/kb/cookies-information-websites-store-on-your-computer" },
@@ -332,37 +192,31 @@ export default function CookiesPage() {
                       href={b.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--hz-paper-line)] bg-white px-3 py-2 text-sm text-[var(--hz-text-mute)] transition-colors hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)]"
+                      className="plain inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 py-2 type-body-sm font-medium text-ink transition-colors hover:border-cobalt"
                     >
                       {b.name}
-                      <ExternalLink className="h-3 w-3" />
+                      <IconExternal size={13} className="text-ink-subtle" />
                     </a>
                   ))}
                 </div>
-                <P>
-                  To opt out of being tracked by Google Analytics across all websites, you can install the{" "}
-                  <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
-                    Google Analytics Opt-out Browser Add-on
-                  </a>.
-                </P>
-              </Section>
+              </DocSection>
 
-              <Section id="do-not-track" number="08" title="Do Not Track">
+              <DocSection id="do-not-track" number="08" title="Do Not Track">
                 <P>
                   Some browsers offer a &ldquo;Do Not Track&rdquo; (DNT) feature that signals to websites that you prefer not to be tracked. Because there is no industry-standard interpretation of DNT signals, our website does not currently respond to DNT browser settings.
                 </P>
                 <P>
-                  However, you can use the cookie consent options and browser controls described in Sections 06 and 07 to limit tracking on our website.
+                  Our website does not track you, so there is nothing for a DNT signal to switch off.
                 </P>
-              </Section>
+              </DocSection>
 
-              <Section id="consent" number="09" title="Your Consent">
+              <DocSection id="consent" number="09" title="Your Consent">
                 <P>
                   Where required by applicable law (including the EU ePrivacy Directive and GDPR), we will obtain your consent before placing non-essential cookies on your device. Your consent is indicated by your affirmative action in our cookie consent banner.
                 </P>
                 <P>
-                  For users in the United States, some states (including California under the CPRA) provide rights relating to the use of cookies for targeted advertising purposes. Please see our{" "}
-                  <Link href="/privacy#california" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
+                  For users in the United States, some states (including California under the CPRA) provide rights relating to the use of cookies for targeted advertising purposes. We do not use cookies for targeted advertising. Please see our{" "}
+                  <Link href="/privacy#california">
                     Privacy Policy
                   </Link>{" "}
                   for details about your rights as a California resident.
@@ -370,78 +224,56 @@ export default function CookiesPage() {
                 <P>
                   By continuing to use our website after being presented with our cookie notice, you consent to our use of cookies as described in this policy.
                 </P>
-              </Section>
+              </DocSection>
 
-              <Section id="updates" number="10" title="Updates to This Policy">
+              <DocSection id="updates" number="10" title="Updates to This Policy">
                 <P>
                   We may update this Cookie Policy from time to time to reflect changes in technology, law, or our business practices. We will post the revised policy on this page with an updated effective date. For significant changes, we may provide a more prominent notice, including by displaying a new cookie consent banner.
                 </P>
                 <P>
                   We encourage you to review this page periodically to stay informed about our use of cookies. Your continued use of our website after any changes to this policy constitutes your acceptance of the updated policy.
                 </P>
-              </Section>
+              </DocSection>
 
-              <Section id="contact" number="11" title="Contact Us">
+              <DocSection id="contact" number="11" title="Contact Us">
                 <P>
                   If you have any questions or concerns about our use of cookies or this Cookie Policy, please contact us:
                 </P>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <a
-                    href="mailto:privacy@oceanbluecorp.com"
-                    className="group flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-4 transition-colors hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)]"
+                    href="mailto:hr@oceanbluecorp.com"
+                    className="plain group flex items-center gap-3 rounded-xl border border-line bg-white p-4 transition-colors hover:border-ink"
                   >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100 group-hover:bg-[var(--hz-cobalt-100)] group-hover:ring-[var(--hz-cobalt-100)] transition-colors">
-                      <Mail className="h-4 w-4 text-[var(--hz-text-subtle)] group-hover:text-[var(--hz-cobalt)] transition-colors" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-[var(--hz-text-subtle)]">Privacy Team</p>
-                      <p className="text-sm font-medium text-[var(--hz-text-mute)]">privacy@oceanbluecorp.com</p>
-                    </div>
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-cobalt">
+                      <IconMail size={18} />
+                    </span>
+                    <span>
+                      <span className="block type-caption text-ink-subtle">Email</span>
+                      <span className="block type-body font-medium text-ink">hr@oceanbluecorp.com</span>
+                    </span>
                   </a>
-                  <div className="flex items-center gap-3 rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)] p-4">
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
-                      <Cookie className="h-4 w-4 text-[var(--hz-text-subtle)]" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-[var(--hz-text-subtle)]">Mailing Address</p>
-                      <p className="text-sm font-medium text-[var(--hz-text-mute)]">
-                        9775 Fairway Drive, Suite #C<br />
+                  <div className="flex items-center gap-3 rounded-xl border border-line bg-white p-4">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-cobalt">
+                      <IconPin size={18} />
+                    </span>
+                    <span>
+                      <span className="block type-caption text-ink-subtle">Mailing Address</span>
+                      <span className="block type-body font-medium text-ink">
+                        9775 Fairway Drive, Suite C<br />
                         Powell, OH 43065
-                      </p>
-                    </div>
+                      </span>
+                    </span>
                   </div>
                 </div>
                 <P>
                   For general inquiries unrelated to privacy, please visit our{" "}
-                  <Link href="/contact" className="text-[var(--hz-cobalt)] underline underline-offset-2 hover:text-[var(--hz-cobalt)]">
+                  <Link href="/contact">
                     Contact page
                   </Link>.
                 </P>
-              </Section>
+              </DocSection>
 
-            </div>
-
-            {/* Footer nav */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white px-8 py-5 shadow-sm ring-1 ring-gray-100">
-              <div className="flex items-center gap-6 text-sm">
-                <Link href="/privacy" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link href="/terms" className="text-[var(--hz-text-subtle)] hover:text-[var(--hz-cobalt)] transition-colors">
-                  Terms of Service
-                </Link>
-              </div>
-              <Link
-                href="/"
-                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--hz-cobalt)] transition-colors hover:text-[var(--hz-cobalt)]"
-              >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                Back to Home
-              </Link>
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
+      <RelatedLinks links={[{ href: "/privacy", label: "Privacy Policy" }, { href: "/terms", label: "Terms of Service" }]} />
+    </DocPage>
   );
 }

@@ -1,65 +1,58 @@
-"use client";
-
 import Link from "next/link";
-import {
-  ArrowRight, ArrowUpRight, Users, Cloud, Cog, Database, Brain, CloudCog,
-  ClipboardList, GraduationCap, HeartPulse, PiggyBank, Palmtree, Rocket,
-  Scale, UsersRound, type LucideIcon,
-} from "lucide-react";
-import { Reveal, Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
-import { Cta } from "@/components/landing/ui";
-import Photo from "@/components/landing/Photo";
 import PageHero from "@/components/landing/PageHero";
+import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
+import { CAREER_BENEFITS } from "@/lib/careers";
+import { LinkButton } from "@/components/site/button";
+import { Section, ClosingCta, CONTAINER } from "@/components/site/sections";
+import {
+  IconArrowRight, IconTalent, IconCloudUp, IconHardHat, IconLayers, IconChip, IconCrm, IconGraduation, type Icon,
+} from "@/components/site/icons";
+import {
+  IconChecklist, IconGrowth, IconBalance, IconInclusive, IconHealth, IconSavings, IconTimeOff, IconScale, IconPin,
+} from "@/components/site/careers/careers-icons";
 
-/* Careers leads with the JOB and with pictures of the place, because this is
-   the one page on the site whose reader is deciding whether they want to be
-   here rather than whether to buy something. Everything on it is a tile, a
-   figure or a photograph; nothing is a paragraph the reader has to wade into.
+/* Careers: why work here, what we offer, and a clear route to the board.
 
    Everything traces to a real source:
      facts + offices    the contact page and company record
      departments        the filter list on /careers/search
      culture + benefits copy supplied and confirmed by the business
      EEO statement      pre-existing legal copy
+   Anything stated here should be something a new hire can hold us to. */
 
-   An earlier draft invented benefits detail (a 401(k) match "from your first
-   month", paid certifications with scheduled study time). Anything stated
-   here should be something a new hire can hold us to on day one. */
-
-const facts = [
+const FACTS = [
   { v: "50+", k: "Team members" },
   { v: "4", k: "Global offices" },
-  { v: "8", k: "Practices hiring" },
+  { v: "8", k: "Practice areas" },
   { v: "2013", k: "Building since" },
 ];
 
-/* Mirrors the `departments` filter on /careers/search, so every tile resolves
-   to a real, populated search rather than an empty result. */
-const departments: { name: string; icon: LucideIcon; blurb: string }[] = [
-  { name: "IT Staffing", icon: Users, blurb: "Recruiters and delivery leads placing specialists" },
-  { name: "Cloud Services", icon: Cloud, blurb: "AWS, Azure and GCP migration and platform work" },
-  { name: "Engineering", icon: Cog, blurb: "Mechanical, electrical, controls and manufacturing" },
-  { name: "ERP Solutions", icon: Database, blurb: "SAP, Oracle and Microsoft Dynamics" },
-  { name: "Data & AI", icon: Brain, blurb: "Data engineering, analytics and production ML" },
-  { name: "Salesforce", icon: CloudCog, blurb: "Apex, LWC and managed administration" },
-  { name: "PMO", icon: ClipboardList, blurb: "Programme and project delivery across accounts" },
-  { name: "Training", icon: GraduationCap, blurb: "Enablement for client and internal teams" },
+/* Each tile opens the board as a keyword search. Departments on postings are
+   free text set by recruiters ("Information and Computers"), so filtering on
+   these names returned nothing; a keyword matches titles and descriptions.
+   `q` empty opens the whole board. */
+const DEPARTMENTS: { name: string; icon: Icon; blurb: string; q: string }[] = [
+  { name: "IT Staffing", icon: IconTalent, blurb: "Recruiters and delivery leads placing specialists", q: "" },
+  { name: "Cloud Services", icon: IconCloudUp, blurb: "AWS, Azure and GCP migration and platform work", q: "cloud" },
+  { name: "Engineering", icon: IconHardHat, blurb: "Mechanical, electrical, controls and manufacturing", q: "engineer" },
+  { name: "ERP Solutions", icon: IconLayers, blurb: "SAP, Oracle and Microsoft Dynamics", q: "erp" },
+  { name: "Data & AI", icon: IconChip, blurb: "Data engineering, analytics and production ML", q: "data" },
+  { name: "Salesforce", icon: IconCrm, blurb: "Apex, LWC and managed administration", q: "salesforce" },
+  { name: "PMO", icon: IconChecklist, blurb: "Programme and project delivery across accounts", q: "project" },
+  { name: "Training", icon: IconGraduation, blurb: "Enablement for client and internal teams", q: "training" },
 ];
 
-const culture: { title: string; desc: string; icon: LucideIcon }[] = [
-  { title: "Professional growth", icon: Rocket, desc: "Training, mentorship, and work on projects that are current rather than legacy maintenance." },
-  { title: "Work-life balance", icon: Palmtree, desc: "Flexible working arrangements and a culture that respects your time outside work." },
-  { title: "Inclusive environment", icon: UsersRound, desc: "A supportive workplace where every voice is heard and diversity is celebrated." },
+const CULTURE: { title: string; desc: string; icon: Icon }[] = [
+  { title: "Professional growth", icon: IconGrowth, desc: "Training, mentorship, and work on projects that are current rather than legacy maintenance." },
+  { title: "Work-life balance", icon: IconBalance, desc: "Flexible working arrangements and a culture that respects your time outside work." },
+  { title: "Inclusive environment", icon: IconInclusive, desc: "A supportive workplace where every voice is heard and diversity is celebrated." },
 ];
 
-const benefits: { title: string; desc: string; icon: LucideIcon }[] = [
-  { title: "Health insurance", icon: HeartPulse, desc: "Comprehensive medical, dental, and vision coverage for you and your family." },
-  { title: "Retirement plans", icon: PiggyBank, desc: "Robust 401(k) and savings options to help you build a secure financial future." },
-  { title: "Paid time off", icon: Palmtree, desc: "Generous vacation and sick leave so you have time to rest and recharge." },
-];
+const BENEFIT_ICONS: Icon[] = [IconHealth, IconSavings, IconTimeOff];
+const BENEFITS = CAREER_BENEFITS.map((b, i) => ({ ...b, icon: BENEFIT_ICONS[i] }));
 
-const offices = [
+const OFFICES = [
   { city: "Powell, Ohio", country: "United States" },
   { city: "Hyderabad", country: "India" },
   { city: "Vizianagaram", country: "India" },
@@ -68,7 +61,7 @@ const offices = [
 
 export default function CareersPage() {
   return (
-    <div className="horizon w-full bg-[var(--hz-canvas)]">
+    <>
       <PageHero
         eyebrow="Careers"
         title="Own the work, not a ticket queue."
@@ -76,217 +69,136 @@ export default function CareersPage() {
         image={IMG.heroSlides[1]}
         actions={
           <>
-            <Cta href="/careers/search" variant="primary">View open positions</Cta>
-            <Cta href="#life" variant="ghostDark">What it is like here</Cta>
+            <LinkButton href="/careers/search" variant="primary" size="lg">
+              View open positions
+              <IconArrowRight size={16} />
+            </LinkButton>
+            <LinkButton href="#life" variant="outline" size="lg">
+              What it is like here
+            </LinkButton>
           </>
         }
       />
 
-      {/* Numbers band. Four figures beat four sentences at the top of a
-          recruitment page. */}
-      <section className="w-full border-b border-[var(--hz-line)] bg-[var(--hz-paper)]">
-        <div className="mx-auto grid w-full max-w-[2200px] grid-cols-2 divide-x divide-y divide-[var(--hz-line)] sm:grid-cols-4 sm:divide-y-0">
-          {facts.map((f) => (
-            <div key={f.k} className="px-6 py-8 sm:px-10 sm:py-10">
-              <p className="hz-display hz-tnum text-[clamp(1.9rem,2.44vw,2.75rem)] leading-none text-[var(--hz-cobalt)]">
-                {f.v}
-              </p>
-              <p className="hz-eyebrow mt-3 text-[var(--hz-text-subtle)]">{f.k}</p>
+      {/* Four facts as a quiet strip, not a headline. */}
+      <div className="border-b border-line bg-white">
+        <dl className={`${CONTAINER} grid grid-cols-2 gap-px bg-line sm:grid-cols-4`}>
+          {FACTS.map((f) => (
+            <div key={f.k} className="flex flex-col-reverse bg-white px-2 py-8 sm:px-6">
+              <dt className="mt-1.5 type-body-sm text-ink-subtle">{f.k}</dt>
+              <dd className="type-headline font-semibold text-ink tabular-nums">{f.v}</dd>
             </div>
           ))}
-        </div>
-      </section>
+        </dl>
+      </div>
 
-      {/* The job board, up front, as tiles carrying an icon, a name and a line
-          of what the team actually does. */}
-      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
-        <Reveal className="flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <h2 className="hz-display hz-h2 text-[var(--hz-text)]">
-              Find the team you belong on.
-            </h2>
-            <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[17px]">
-              Eight practices, all hiring. Pick the one that matches what you do
-              and see what is open right now.
-            </p>
-          </div>
-          <Link
-            href="/careers/search"
-            className="hz-focus group inline-flex items-center gap-2 text-[14.5px] font-semibold text-[var(--hz-cobalt)]"
-          >
-            Browse every role
-            <ArrowRight
-              className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1"
-              strokeWidth={2}
-            />
-          </Link>
-        </Reveal>
-
-        <Stagger className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4" gap={0.05}>
-          {departments.map((d) => (
-            <StaggerItem key={d.name} className="h-full">
+      <Section
+        tone="paper"
+        title="Find the team you belong on"
+        sub="Eight practices, all hiring. Pick the one that matches what you do and see what is open right now."
+        link={{ href: "/careers/search", label: "Browse every role" }}
+      >
+        <ul className="grid gap-[3px] sm:grid-cols-2 lg:grid-cols-4">
+          {DEPARTMENTS.map((d) => (
+            <li key={d.name}>
               <Link
-                href={`/careers/search?department=${encodeURIComponent(d.name)}`}
-                className="hz-focus group flex h-full flex-col rounded-2xl border border-[var(--hz-line)] bg-white p-6 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-[var(--hz-cobalt)]/40 hover:shadow-[var(--hz-shadow-md)]"
+                href={d.q ? `/careers/search?q=${encodeURIComponent(d.q)}` : "/careers/search"}
+                className="group flex h-full min-h-[210px] flex-col bg-white p-7 transition-colors hover:bg-paper-deep/40"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)] transition-colors duration-300 group-hover:bg-[var(--hz-cobalt)] group-hover:text-white">
-                  <d.icon className="h-5 w-5" strokeWidth={1.75} />
+                <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+                  <d.icon size={18} />
                 </span>
-                <h3 className="hz-display mt-5 text-[1.1rem] leading-tight text-[var(--hz-text)]">
-                  {d.name}
-                </h3>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--hz-text-mute)]">
-                  {d.blurb}
-                </p>
-                <span className="mt-auto inline-flex items-center gap-1.5 pt-6 text-[13px] font-semibold text-[var(--hz-cobalt)]">
+                <h3 className="mt-5 type-title-lg font-semibold text-ink">{d.name}</h3>
+                <p className="mt-1.5 type-body-sm text-ink-muted">{d.blurb}</p>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-6 type-label font-semibold text-ink transition-colors group-hover:text-cobalt">
                   See open roles
-                  <ArrowUpRight
-                    className="h-3.5 w-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                    strokeWidth={2}
-                  />
+                  <IconArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                 </span>
               </Link>
-            </StaggerItem>
+            </li>
           ))}
-        </Stagger>
-      </section>
+        </ul>
+      </Section>
 
-      {/* Life here. Photography carries this, not paragraphs. */}
-      <section
+      <Section
         id="life"
-        className="w-full scroll-mt-24 border-t border-[var(--hz-line)] bg-[var(--hz-paper)] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24"
+        tone="white"
+        title="What it is like here"
+        sub="Our engineers are embedded with the client and accountable for the outcome, which means you carry real scope from the first week and you see what your work changed."
       >
-        <Reveal className="max-w-2xl">
-          <h2 className="hz-display hz-h2 text-[var(--hz-text)]">What it is like here.</h2>
-          <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[var(--hz-text-mute)] sm:text-[17px]">
-            Our engineers are embedded with the client and accountable for the
-            outcome, which means you carry real scope from the first week and you
-            see what your work changed.
-          </p>
-        </Reveal>
-
-        {/* A mosaic at three sizes, so the block reads as a place rather than a
-            row of identical stock frames. */}
-        <div className="mt-10 grid gap-4 sm:mt-12 lg:grid-cols-12">
-          <Reveal className="lg:col-span-7 lg:row-span-2">
-            <div className="relative aspect-[16/11] w-full overflow-hidden rounded-2xl lg:h-full">
-              <Photo src={IMG.serviceTalent} alt="An Ocean Blue team working together" sizes="(min-width: 1024px) 58vw, 92vw" />
-            </div>
-          </Reveal>
-          <Reveal delay={0.06} className="lg:col-span-5">
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl">
-              <Photo src={IMG.serviceEngineering} alt="An engineer at work on a test rig" sizes="(min-width: 1024px) 40vw, 92vw" />
-            </div>
-          </Reveal>
-          <Reveal delay={0.12} className="lg:col-span-5">
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl">
-              <Photo src={IMG.aboutTeam} alt="An Ocean Blue team meeting" sizes="(min-width: 1024px) 40vw, 92vw" />
-            </div>
-          </Reveal>
+        {/* A mosaic at three sizes, so the block reads as a place rather than a row of identical frames. */}
+        <div className="grid gap-4 lg:grid-cols-12">
+          <div className="relative aspect-[16/11] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-7 lg:row-span-2 lg:aspect-auto">
+            <Photo src={IMG.serviceTalent} alt="An Ocean Blue team working together" sizes="(min-width: 1024px) 700px, 100vw" />
+          </div>
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-5">
+            <Photo src={IMG.serviceEngineering} alt="An engineer at work on a test rig" sizes="(min-width: 1024px) 500px, 100vw" />
+          </div>
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-5">
+            <Photo src={IMG.aboutTeam} alt="An Ocean Blue team meeting" sizes="(min-width: 1024px) 500px, 100vw" />
+          </div>
         </div>
 
-        <Stagger className="mt-12 grid gap-8 sm:grid-cols-3 lg:gap-10" gap={0.08}>
-          {culture.map((c) => (
-            <StaggerItem key={c.title}>
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-white text-[var(--hz-cobalt)] ring-1 ring-[var(--hz-paper-line)]">
-                <c.icon className="h-5 w-5" strokeWidth={1.75} />
-              </span>
-              <h3 className="hz-display mt-5 text-[1.15rem] leading-tight text-[var(--hz-text)]">{c.title}</h3>
-              <p className="mt-2.5 max-w-[40ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{c.desc}</p>
-            </StaggerItem>
+        <ul className="mt-10 grid gap-10 sm:mt-12 sm:grid-cols-3">
+          {CULTURE.map((c) => (
+            <li key={c.title}>
+              <c.icon size={24} className="text-cobalt" />
+              <h3 className="mt-4 type-title-lg font-semibold text-ink">{c.title}</h3>
+              <p className="mt-2 max-w-[40ch] type-body text-ink-muted">{c.desc}</p>
+            </li>
           ))}
-        </Stagger>
-      </section>
+        </ul>
+      </Section>
 
-      {/* Benefits and locations, side by side. */}
-      <section className="w-full px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24 2xl:px-24">
-        <div className="grid gap-14 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-7">
-            <Reveal>
-              <h2 className="hz-display hz-h2 text-[var(--hz-text)]">What we offer.</h2>
-            </Reveal>
-            <Stagger as="ul" className="mt-9 grid gap-5" gap={0.07}>
-              {benefits.map((b) => (
-                <StaggerItem as="li" key={b.title}>
-                  <div className="flex gap-5 rounded-2xl border border-[var(--hz-line)] bg-white p-6">
-                    <span className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-                      <b.icon className="h-5 w-5" strokeWidth={1.75} />
+      <Section tone="paper" title="What we offer" sub="The benefits and the places you could be doing the work.">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <ul className="grid gap-[3px]">
+            {BENEFITS.map((b) => (
+              <li key={b.title} className="flex gap-5 bg-white p-7">
+                <b.icon size={24} className="mt-0.5 shrink-0 text-cobalt" />
+                <div>
+                  <h3 className="type-title-lg font-semibold text-ink">{b.title}</h3>
+                  <p className="mt-1.5 max-w-[52ch] type-body text-ink-muted">{b.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-col gap-5">
+            <div className="rounded-2xl border border-line bg-white p-7">
+              <h3 className="type-title-lg font-semibold text-ink">Where we work</h3>
+              <p className="mt-1.5 type-body text-ink-muted">Four offices across three countries, and roles in all of them.</p>
+              <ul className="mt-5 divide-y divide-line border-y border-line">
+                {OFFICES.map((o) => (
+                  <li key={o.city} className="flex items-center justify-between gap-4 py-3">
+                    <span className="flex items-center gap-2.5 text-[15px] font-semibold text-ink">
+                      <IconPin size={16} className="text-ink-subtle" />
+                      {o.city}
                     </span>
-                    <div>
-                      <h3 className="hz-display text-[1.1rem] leading-tight text-[var(--hz-text)]">{b.title}</h3>
-                      <p className="mt-2 max-w-[52ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">{b.desc}</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-              ))}
-            </Stagger>
-          </div>
+                    <span className="type-body-sm text-ink-subtle">{o.country}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div className="lg:col-span-4 lg:col-start-9">
-            <Reveal>
-              <h2 className="hz-display text-[1.5rem] leading-tight text-[var(--hz-text)]">Where we work.</h2>
-              <p className="mt-4 max-w-[36ch] text-[14.5px] leading-relaxed text-[var(--hz-text-mute)]">
-                Four offices across three countries, and roles in all of them.
+            <div className="rounded-2xl border border-line bg-white p-7">
+              <IconScale size={22} className="text-cobalt" />
+              <h3 className="mt-3 type-title font-semibold text-ink">An equal opportunity employer</h3>
+              <p className="mt-2 type-body-sm text-ink-muted">
+                We do not discriminate on the basis of race, color, religion, sex, sexual orientation, gender identity, national origin,
+                disability, or veteran status. Need an accommodation during hiring? Tell your recruiter and we will arrange it.
               </p>
-            </Reveal>
-            <Stagger as="ul" className="mt-7 divide-y divide-[var(--hz-line)] border-y border-[var(--hz-line)]" gap={0.05}>
-              {offices.map((o) => (
-                <StaggerItem as="li" key={o.city} className="flex items-baseline justify-between gap-4 py-3.5">
-                  <span className="text-[14.5px] font-semibold text-[var(--hz-text)]">{o.city}</span>
-                  <span className="text-[12.5px] text-[var(--hz-text-subtle)]">{o.country}</span>
-                </StaggerItem>
-              ))}
-            </Stagger>
-
-            <Reveal className="mt-8">
-              <div className="rounded-2xl border border-[var(--hz-line)] bg-[var(--hz-paper)] p-6">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-[var(--hz-cobalt)] ring-1 ring-[var(--hz-paper-line)]">
-                  <Scale className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </span>
-                <h3 className="hz-display mt-4 text-[1rem] leading-tight text-[var(--hz-text)]">
-                  An equal opportunity employer
-                </h3>
-                <p className="mt-2.5 text-[13.5px] leading-relaxed text-[var(--hz-text-mute)]">
-                  We do not discriminate on the basis of race, color, religion,
-                  sex, sexual orientation, gender identity, national origin,
-                  disability, or veteran status. Need an accommodation during
-                  hiring? Tell your recruiter and we will arrange it.
-                </p>
-              </div>
-            </Reveal>
+            </div>
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* Close on a photograph with the ask over it. */}
-      <section className="relative isolate w-full overflow-hidden">
-        <div className="relative min-h-[420px] w-full sm:min-h-[480px]">
-          <Photo src={IMG.cta} alt="An Ocean Blue interview conversation" sizes="100vw" priority={false} />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(10,23,48,0.62) 0%, rgba(10,23,48,0.80) 60%, rgba(10,23,48,0.94) 100%)",
-            }}
-          />
-          <div className="relative z-10 flex min-h-[420px] items-center px-6 py-16 sm:min-h-[480px] sm:px-10 lg:px-16 2xl:px-24">
-            <Reveal className="max-w-2xl">
-              <h2 className="hz-display max-w-[16ch] text-[clamp(1.9rem,2.67vw,3rem)] leading-[1.05] text-white">
-                Ready to join our team?
-              </h2>
-              <p className="mt-6 max-w-[46ch] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">
-                See what is open right now, or send us your resume and we will keep
-                it on file for roles that match.
-              </p>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <Cta href="/careers/search" variant="primary">View open positions</Cta>
-                <Cta href="/contact" variant="ghostDark">Get in touch</Cta>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-    </div>
+      <ClosingCta
+        title="Ready to join our team?"
+        sub="See what is open right now, or send us your resume and we will keep it on file for roles that match."
+        primary={{ href: "/careers/search", label: "View open positions" }}
+        secondary={{ href: "/contact", label: "Get in touch" }}
+      />
+    </>
   );
 }

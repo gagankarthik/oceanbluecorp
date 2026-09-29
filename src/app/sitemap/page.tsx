@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
-import {
-  Building2, Layers, Briefcase, Newspaper, Code2, Scale,
-  type LucideIcon,
-} from "lucide-react";
-import { Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
+import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
+import { IconBuilding, IconLayers, IconBriefcase, IconNewspaper, IconDocsCode, IconArrowRight, type Icon, type IconProps } from "@/components/site/icons";
+
+/** Legal and help: a balance scale, same grid and stroke as site/icons. */
+const IconScale = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
+    <path d="M12 4v16M7.5 20h9M5 7h14M5 7l-2.5 6a3 3 0 0 0 5 0L5 7ZM19 7l-2.5 6a3 3 0 0 0 5 0L19 7Z" />
+  </svg>
+);
 
 /**
  * Human sitemap.
@@ -20,24 +24,16 @@ import { Stagger, StaggerItem } from "@/components/landing/motion/Primitives";
  * organised by product, not by what they came to do.
  */
 
-export const metadata: Metadata = {
-  title: "Site map",
-  description:
-    "Every page on the Ocean Blue Corporation website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Site map | Ocean Blue Corporation",
-    description:
-      "A directory of every page on oceanbluecorp.com, grouped by what you came to do.",
-    url: "https://oceanbluecorp.com/sitemap",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/sitemap" },
-};
+export const metadata: Metadata = pageMetadata({
+  path: "/sitemap",
+  title: "Site Map",
+  description: "Every page on the Ocean Blue Corporation website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
+});
 
 type Group = {
   group: string;
   note: string;
-  icon: LucideIcon;
+  icon: Icon;
   links: { name: string; href: string }[];
 };
 
@@ -45,20 +41,20 @@ const SECTIONS: Group[] = [
   {
     group: "Company",
     note: "Who we are and how to reach us.",
-    icon: Building2,
+    icon: IconBuilding,
     links: [
       { name: "Home", href: "/" },
       { name: "About us", href: "/about" },
       { name: "Our team", href: "/team" },
       { name: "Products", href: "/products" },
       { name: "Thirteen years", href: "/13-years" },
-      { name: "Connect with us", href: "/contact" },
+      { name: "Contact us", href: "/contact" },
     ],
   },
   {
     group: "Solutions",
     note: "What we are engaged to do.",
-    icon: Layers,
+    icon: IconLayers,
     links: [
       { name: "All solutions", href: "/solutions" },
       { name: "IT staffing & talent", href: "/solutions/staffing" },
@@ -69,13 +65,14 @@ const SECTIONS: Group[] = [
       { name: "Salesforce services", href: "/solutions/salesforce" },
       { name: "AI & data intelligence", href: "/solutions/ai" },
       { name: "Managed services", href: "/solutions/managed" },
+      { name: "Training & upskilling", href: "/solutions/training" },
       { name: "Digital transformation", href: "/solutions/transformation" },
     ],
   },
   {
     group: "Careers",
     note: "Working here, and what is open.",
-    icon: Briefcase,
+    icon: IconBriefcase,
     links: [
       { name: "Careers", href: "/careers" },
       { name: "Open positions", href: "/careers/search" },
@@ -84,7 +81,7 @@ const SECTIONS: Group[] = [
   {
     group: "Insights",
     note: "What we have written and shipped.",
-    icon: Newspaper,
+    icon: IconNewspaper,
     links: [
       { name: "Blog", href: "/blog" },
       { name: "News", href: "/news" },
@@ -95,7 +92,7 @@ const SECTIONS: Group[] = [
   {
     group: "Developers",
     note: "Build against us, or use our marks.",
-    icon: Code2,
+    icon: IconDocsCode,
     links: [
       { name: "Developer documentation", href: "/developers" },
       { name: "Brand kit", href: "/brand-kit" },
@@ -105,7 +102,7 @@ const SECTIONS: Group[] = [
   {
     group: "Legal and help",
     note: "The documents, and answers to the usual questions.",
-    icon: Scale,
+    icon: IconScale,
     links: [
       { name: "FAQ", href: "/faq" },
       { name: "Legal and privacy", href: "/legal" },
@@ -123,85 +120,74 @@ const TOTAL = SECTIONS.reduce((n, s) => n + s.links.length, 0);
 
 export default function SitemapPage() {
   return (
-    <div className="horizon min-h-screen w-full bg-[var(--hz-canvas)]">
-      {/* Utility header, not a marketing one. This page is an index, so it
-          opens with the two things an index is asked for — how many pages and
-          where the machine-readable copy is — and gets out of the way. The
-          legal index next door is deliberately set differently: that one is
-          read, this one is scanned. */}
-      <header className="w-full border-b border-[var(--hz-line)] px-6 pb-10 pt-28 sm:px-10 sm:pt-32 lg:px-16 2xl:px-24">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+    <>
+      {/* Utility header, not a marketing one. An index is asked two things:
+          how many pages, and where the machine-readable copy is. */}
+      <header data-opener className="border-b border-line bg-white">
+        <div className={`${CONTAINER} ${OPENER_Y} grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-16`}>
           <div>
-            <p className="hz-eyebrow text-[var(--hz-text-subtle)]">Site map</p>
-            <h1 className="hz-display mt-4 max-w-[18ch] text-[clamp(2rem,2.67vw,3rem)] leading-[1.05] text-[var(--hz-text)]">
+            <p className="rise type-label font-semibold text-cobalt">Site map</p>
+            <h1 className="rise mt-3 max-w-[18ch] type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
               Every page, in one directory.
             </h1>
+            <p className="rise mt-5 max-w-[62ch] type-body text-ink-muted" style={{ animationDelay: "160ms" }}>
+              Grouped by what you came here to do rather than by how the URLs nest.
+            </p>
           </div>
-          <dl className="flex flex-wrap items-end gap-x-10 gap-y-4">
-            <div>
-              <dt className="text-caption text-[var(--hz-text-subtle)]">Pages</dt>
-              <dd className="hz-display mt-1 text-[1.6rem] tabular-nums text-[var(--hz-text)]">{TOTAL}</dd>
+          <dl className="rise grid grid-cols-3 divide-x divide-line overflow-hidden rounded-2xl border border-line" style={{ animationDelay: "220ms" }}>
+            <div className="p-5">
+              <dt className="type-caption text-ink-subtle">Pages</dt>
+              <dd className="mt-1 type-headline-sm font-semibold tabular-nums text-ink">{TOTAL}</dd>
             </div>
-            <div>
-              <dt className="text-caption text-[var(--hz-text-subtle)]">Sections</dt>
-              <dd className="hz-display mt-1 text-[1.6rem] tabular-nums text-[var(--hz-text)]">{SECTIONS.length}</dd>
+            <div className="p-5">
+              <dt className="type-caption text-ink-subtle">Sections</dt>
+              <dd className="mt-1 type-headline-sm font-semibold tabular-nums text-ink">{SECTIONS.length}</dd>
             </div>
-            <div>
-              <dt className="text-caption text-[var(--hz-text-subtle)]">For crawlers</dt>
-              <dd className="mt-1">
-                <a
-                  href="/sitemap.xml"
-                  className="hz-focus font-mono text-small font-semibold text-[var(--hz-cobalt)] underline underline-offset-4"
-                >
+            <div className="min-w-0 p-5">
+              <dt className="type-caption text-ink-subtle">For crawlers</dt>
+              <dd className="mt-2">
+                <a href="/sitemap.xml" className="font-mono text-[14px] font-semibold break-all text-cobalt underline underline-offset-4">
                   /sitemap.xml
                 </a>
               </dd>
             </div>
           </dl>
         </div>
-        <p className="mt-8 max-w-[62ch] text-small leading-relaxed text-[var(--hz-text-mute)]">
-          Grouped by what you came here to do rather than by how the URLs nest.
-        </p>
       </header>
 
-      <section className="w-full px-6 py-14 sm:px-10 sm:py-16 lg:px-16 2xl:px-24">
-        <Stagger as="div" className="grid gap-x-12 gap-y-14 lg:grid-cols-2 2xl:grid-cols-3" gap={0.06}>
-          {SECTIONS.map((s) => (
-            <StaggerItem as="section" key={s.group}>
-              <div className="flex items-start gap-4 border-b border-[var(--hz-line)] pb-5">
-                <span className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-[var(--hz-cobalt-100)] text-[var(--hz-cobalt)]">
-                  <s.icon className="h-5 w-5" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <h2 className="hz-display text-[1.15rem] leading-tight text-[var(--hz-text)]">
-                    {s.group}
-                  </h2>
-                  <p className="mt-1 text-caption text-[var(--hz-text-subtle)]">{s.note}</p>
+      <section data-tone="paper" className={`bg-paper ${SECTION_Y}`}>
+        <div className={CONTAINER}>
+          <div className="reveal grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2 xl:grid-cols-3">
+            {SECTIONS.map((s) => (
+              <section key={s.group} className="bg-white p-6 sm:p-8">
+                <div className="flex items-start gap-4">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-line text-cobalt">
+                    <s.icon size={20} />
+                  </span>
+                  <div>
+                    <h2 className="type-title-lg font-semibold text-ink">{s.group}</h2>
+                    <p className="mt-1 type-body-sm text-ink-subtle">{s.note}</p>
+                  </div>
                 </div>
-              </div>
-
-              <ul className="mt-1 divide-y divide-[var(--hz-line)]">
-                {s.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="hz-focus group flex items-baseline justify-between gap-4 py-2.5 text-small text-[var(--hz-text-mute)] transition-colors hover:text-[var(--hz-cobalt)]"
-                    >
-                      <span>{l.name}</span>
-                      {/* The path is the reason someone is on this page rather
-                          than in the nav, so it is shown, not hidden. */}
-                      <span className="hidden font-mono text-fine text-[var(--hz-text-subtle)] transition-colors group-hover:text-[var(--hz-cobalt)] sm:block">
-                        {l.href}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </StaggerItem>
-          ))}
-        </Stagger>
-
+                <ul className="mt-5 divide-y divide-line border-t border-line">
+                  {s.links.map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className="group flex min-h-11 items-center justify-between gap-4 py-2 type-body text-ink transition-colors hover:text-cobalt">
+                        <span>{l.name}</span>
+                        {/* The path is why someone is here rather than in the nav, so it shows. */}
+                        <span className="flex items-center gap-2 font-mono text-[12.5px] text-ink-subtle group-hover:text-cobalt">
+                          <span className="hidden sm:inline">{l.href}</span>
+                          <IconArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
       </section>
-    </div>
+    </>
   );
 }

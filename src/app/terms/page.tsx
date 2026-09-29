@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
-import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
+import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks, HQ_ADDRESS } from "@/components/site/legal/doc";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/terms",
   title: "Terms of Service",
-  description: "Read the Terms of Service governing your use of Ocean Blue Corporation's website and services.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Terms of Service | Ocean Blue Corporation",
-    description:
-      "The agreement governing use of the Ocean Blue Corporation website and services, including acceptable use and limitation of liability.",
-    url: "https://oceanbluecorp.com/terms",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/terms" },
-};
+  description: "The Terms of Service governing your use of the Ocean Blue Corporation website, job applications and services, including acceptable use and limits of liability.",
+});
 
 const SECTIONS = [
   { id: "acceptance",      label: "Acceptance of Terms" },
@@ -34,132 +26,18 @@ const SECTIONS = [
   { id: "contact",         label: "Contact Information" },
 ];
 
-function Section({ id, number, title, children }: {
-  id: string; number: string; title: string; children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="scroll-mt-24 py-8 border-b border-[var(--hz-paper-line)] last:border-0">
-      <div className="flex items-baseline gap-3 mb-4">
-        <span className="font-mono text-[11px] font-semibold text-[var(--hz-cobalt)] bg-[var(--hz-cobalt-100)] px-2 py-0.5 rounded-md">
-          {number}
-        </span>
-        <h2
-          className="text-xl font-bold text-[var(--hz-text)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {title}
-        </h2>
-      </div>
-      <div className="space-y-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return <p>{children}</p>;
-}
-
-function UL({ items }: { items: string[] }) {
-  return (
-    <ul className="space-y-2 pl-1">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-3">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--hz-cobalt)]" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function TermsPage() {
   const EFFECTIVE = "April 1, 2026";
 
   return (
-    <div className="horizon min-h-screen bg-white">
+    <DocPage
+      title="Terms of Service"
+      lede={<>These Terms of Service govern your access to and use of Ocean Blue Corporation&apos;s website, platform, and services. Please read them carefully before using our services.</>}
+      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Jurisdiction", value: "State of Ohio, USA" }]}
+      toc={SECTIONS}
+    >
 
-      {/* Hero */}
-      <div
-        className="border-b border-[var(--hz-paper-line)]"
-        style={{
-          background: [
-            "radial-gradient(ellipse 70% 55% at 10% 20%, rgba(29,78,216,0.07) 0%, transparent 60%)",
-            "radial-gradient(ellipse 55% 45% at 90% 80%, rgba(6,182,212,0.05) 0%, transparent 60%)",
-            "#FAFBFF",
-          ].join(", "),
-        }}
-      >
-        <div className="mx-auto max-w-5xl px-6 pt-24 pb-12 md:pt-28 lg:px-8">
-          <Link
-            href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Home
-          </Link>
-
-          <h1
-            className="mt-3 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-[var(--hz-text)] sm:text-[2.6rem] md:text-5xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            Terms of Service
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--hz-text-subtle)]">
-            These Terms of Service govern your access to and use of Ocean Blue Corporation&apos;s
-            website, platform, and services. Please read them carefully before using our services.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-[var(--hz-text-subtle)]">
-            <span><strong className="text-[var(--hz-text-mute)]">Effective:</strong> {EFFECTIVE}</span>
-            <span><strong className="text-[var(--hz-text-mute)]">Jurisdiction:</strong> State of Ohio, USA</span>
-          </div>
-
-          {/* Jump links */}
-          <div className="mt-8 flex flex-wrap gap-2">
-            {SECTIONS.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                className="rounded-full border border-[var(--hz-paper-line)] bg-white px-3 py-1 text-xs font-medium text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                {s.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="mx-auto max-w-5xl px-6 py-4 lg:px-8">
-        <div className="flex gap-12">
-
-          {/* Sticky sidebar TOC */}
-          <aside className="hidden w-56 flex-shrink-0 xl:block">
-            {/* Clears the 72px fixed header. At top-8 this list scrolled up and
-                then vanished behind the bar. */}
-            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--hz-text-subtle)]">
-                Contents
-              </p>
-              <nav className="space-y-1">
-                {SECTIONS.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    className="block rounded-lg px-3 py-1.5 text-[13px] text-[var(--hz-text-subtle)] transition-colors hover:bg-[var(--hz-paper)] hover:text-[var(--hz-cobalt)]"
-                  >
-                    {s.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <div className="min-w-0 flex-1 pt-8">
-
-            <Section id="acceptance" number="01" title="Acceptance of Terms">
+            <DocSection id="acceptance" number="01" title="Acceptance of Terms">
               <P>
                 By accessing or using the website located at oceanbluecorp.com (the &quot;Site&quot;) or any services
                 provided by Ocean Blue Corporation (&quot;Ocean Blue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you
@@ -176,9 +54,9 @@ export default function TermsPage() {
                 that you have the authority to bind that entity to these Terms. In that case, &quot;you&quot; also
                 refers to that entity.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="services" number="02" title="Description of Services">
+            <DocSection id="services" number="02" title="Description of Services">
               <P>
                 Ocean Blue Corporation provides a range of enterprise information technology solutions and
                 services, including but not limited to:
@@ -199,9 +77,9 @@ export default function TermsPage() {
                 with or without notice. We shall not be liable to you or any third party for any such
                 modification, suspension, or discontinuation.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="accounts" number="03" title="User Accounts and Registration">
+            <DocSection id="accounts" number="03" title="User Accounts and Registration">
               <P>
                 To access certain features of our platform, including submitting job applications, uploading
                 resumes, and tracking application status, you must register for an account. You agree to:
@@ -223,14 +101,14 @@ export default function TermsPage() {
                 You must be at least 18 years of age to create an account or use our services. By
                 registering, you represent and warrant that you meet this age requirement.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="staffing" number="04" title="Staffing and Recruitment Services">
+            <DocSection id="staffing" number="04" title="Staffing and Recruitment Services">
               <P>
                 Ocean Blue provides recruitment and staffing services to connect qualified candidates with
                 client companies. The following terms apply specifically to these services:
               </P>
-              <P><strong className="text-[var(--hz-text)]">For Candidates:</strong></P>
+              <P><strong>For Candidates:</strong></P>
               <UL items={[
                 "You warrant that all information in your profile and resume is accurate, truthful, and not misleading",
                 "Submitting a profile does not guarantee placement in any position",
@@ -239,16 +117,16 @@ export default function TermsPage() {
                 "You must promptly inform Ocean Blue of any changes to your availability, employment status, or contact details",
                 "Contract placements are governed by a separate Staffing Agreement which will be provided before assignment commencement",
               ]} />
-              <P><strong className="text-[var(--hz-text)]">For Client Companies:</strong></P>
+              <P><strong>For Client Companies:</strong></P>
               <UL items={[
                 "You may not directly hire any candidate introduced by Ocean Blue without Ocean Blue's written consent and applicable placement fees",
                 "You agree to accurately describe position requirements and working conditions",
                 "You are responsible for background checks, drug screening, and other pre-employment requirements unless contracted otherwise",
                 "Fees for placement services are governed by your executed Master Services Agreement or Statement of Work",
               ]} />
-            </Section>
+            </DocSection>
 
-            <Section id="client" number="05" title="Client Obligations">
+            <DocSection id="client" number="05" title="Client Obligations">
               <P>
                 Clients engaging Ocean Blue for consulting, managed services, or staffing acknowledge and
                 agree to the following obligations:
@@ -266,9 +144,9 @@ export default function TermsPage() {
                 Failure to meet these obligations may result in delays in service delivery for which
                 Ocean Blue shall not be held responsible.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="ip" number="06" title="Intellectual Property">
+            <DocSection id="ip" number="06" title="Intellectual Property">
               <P>
                 All content on this Site, including but not limited to text, graphics, logos, images,
                 data compilations, and software, is the property of Ocean Blue Corporation or its content
@@ -296,9 +174,9 @@ export default function TermsPage() {
                 trademarks or trademarks of Ocean Blue Corporation. Nothing in these Terms grants you
                 any right to use our trademarks without prior written permission.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="confidentiality" number="07" title="Confidentiality">
+            <DocSection id="confidentiality" number="07" title="Confidentiality">
               <P>
                 In the course of providing or receiving services, parties may have access to confidential
                 information belonging to the other party. &quot;Confidential Information&quot; means any non-public
@@ -321,9 +199,9 @@ export default function TermsPage() {
                 developed, lawfully obtained from a third party, or required to be disclosed by law.
                 Confidentiality obligations survive termination of these Terms for a period of three (3) years.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="payment" number="08" title="Payment Terms">
+            <DocSection id="payment" number="08" title="Payment Terms">
               <P>
                 Payment terms for Ocean Blue&apos;s services are set forth in executed Statements of Work,
                 Master Services Agreements, or staffing contracts. Unless otherwise agreed in writing:
@@ -341,9 +219,9 @@ export default function TermsPage() {
                 Agreement and may include bill rates for contractors, direct hire placement fees, or
                 retainer arrangements as mutually agreed.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="liability" number="09" title="Limitation of Liability">
+            <DocSection id="liability" number="09" title="Limitation of Liability">
               <P>
                 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, OCEAN BLUE CORPORATION, ITS OFFICERS,
                 DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
@@ -369,9 +247,9 @@ export default function TermsPage() {
                 liabilities. In such jurisdictions, our liability is limited to the maximum extent
                 permitted by law.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="indemnification" number="10" title="Indemnification">
+            <DocSection id="indemnification" number="10" title="Indemnification">
               <P>
                 You agree to defend, indemnify, and hold harmless Ocean Blue Corporation and its
                 affiliates, officers, directors, employees, and agents from and against any claims,
@@ -391,9 +269,9 @@ export default function TermsPage() {
                 subject to indemnification by you, in which case you agree to cooperate with our defense
                 of such claims.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="termination" number="11" title="Termination">
+            <DocSection id="termination" number="11" title="Termination">
               <P>
                 Ocean Blue may terminate or suspend your access to the Site and services immediately,
                 without prior notice or liability, for any reason, including if you breach these Terms.
@@ -412,9 +290,9 @@ export default function TermsPage() {
                 termination fees applicable to the engagement will be governed by the relevant
                 Statement of Work.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="governing" number="12" title="Governing Law">
+            <DocSection id="governing" number="12" title="Governing Law">
               <P>
                 These Terms and any disputes arising out of or related to them or our services shall be
                 governed by and construed in accordance with the laws of the State of Ohio, United States
@@ -425,9 +303,9 @@ export default function TermsPage() {
                 brought exclusively in the state or federal courts located in Delaware County, Ohio,
                 and you hereby consent to personal jurisdiction in such courts.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="disputes" number="13" title="Dispute Resolution">
+            <DocSection id="disputes" number="13" title="Dispute Resolution">
               <P>
                 Before initiating any formal legal proceeding, the parties agree to attempt to resolve
                 disputes informally. Either party may initiate informal dispute resolution by providing
@@ -451,9 +329,9 @@ export default function TermsPage() {
                 OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED
                 CLASS OR REPRESENTATIVE ACTION.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="changes" number="14" title="Changes to Terms">
+            <DocSection id="changes" number="14" title="Changes to Terms">
               <P>
                 Ocean Blue reserves the right to update or modify these Terms at any time. When we do,
                 we will revise the &quot;Effective&quot; date at the top of this page. For material changes,
@@ -465,54 +343,21 @@ export default function TermsPage() {
                 revised Terms. If you do not agree to the updated Terms, you must stop using the Site and
                 services and may request account deletion.
               </P>
-            </Section>
+            </DocSection>
 
-            <Section id="contact" number="15" title="Contact Information">
+            <DocSection id="contact" number="15" title="Contact Information">
               <P>
                 If you have any questions about these Terms of Service, please contact our legal team:
               </P>
-              <div className="mt-4 rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 p-6">
-                <p className="mb-4 text-sm font-semibold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
-                  Ocean Blue Corporation, Legal Department
-                </p>
-                <div className="space-y-2.5 text-sm text-[var(--hz-text-mute)]">
-                  <a href="mailto:hr@oceanbluecorp.com" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
-                    <Mail className="h-4 w-4 text-[var(--hz-cobalt)]" />
-                    hr@oceanbluecorp.com
-                  </a>
-                  <a href="tel:+16148446925" className="flex items-center gap-3 transition-colors hover:text-[var(--hz-cobalt)]">
-                    <Phone className="h-4 w-4 text-[var(--hz-cobalt)]" />
-                    +1 (614) 844-6925
-                  </a>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--hz-cobalt)]" />
-                    <span>9775 Fairway Drive, Suite C<br />Powell, OH 43065</span>
-                  </div>
-                </div>
-              </div>
-            </Section>
+              <ContactCard
+                title="Ocean Blue Corporation, Legal Department"
+                email={{ href: "mailto:hr@oceanbluecorp.com", label: "hr@oceanbluecorp.com" }}
+                phone={{ href: "tel:+16148446925", label: "+1 (614) 844-6925" }}
+                address={HQ_ADDRESS}
+              />
+            </DocSection>
 
-            {/* Related pages */}
-            <div className="mt-8 mb-10 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/privacy"
-                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                <span>Privacy Policy</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/contact"
-                className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-              >
-                <span>Contact Us</span>
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
+      <RelatedLinks links={[{ href: "/privacy", label: "Privacy Policy" }, { href: "/contact", label: "Contact Us" }]} />
+    </DocPage>
   );
 }

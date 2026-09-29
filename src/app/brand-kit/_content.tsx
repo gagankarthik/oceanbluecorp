@@ -1,103 +1,145 @@
 "use client";
 
 import { useState, useRef, type ComponentType } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Check, Copy } from "lucide-react";
-import * as AdminIcons from "@/components/admin/icons";
+import * as SiteIcons from "@/components/site/icons";
+import { GeoTeam, GeoPart, GeoStack, GeoRack, GeoBooks, GeoLattice, GeoCivic, GeoCross, GeoColumns, GeoPlant } from "@/components/site/geo-art";
+import { LinkButton, buttonClass } from "@/components/site/button";
+import { IconCheck, IconArrowRight } from "@/components/site/icons";
+import { IconCopy, IconDownload } from "@/components/site/resources/icons";
 import { cn } from "@/lib/utils";
+import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 
-type Swatch = { name: string; hex: string; varName: string; note?: string; dark?: boolean };
+/* The brand kit describes the system the public site actually runs on: the
+   palette tokens in globals.css (@theme), IBM Plex, the site icon set and the
+   wireframe drawings. Icons and drawings are enumerated, not hand-listed, so
+   the kit cannot drift from the code. */
 
-const COLOR_GROUPS: { group: string; colors: Swatch[] }[] = [
+type Swatch = { name: string; hex: string; token: string; note: string; dark?: boolean };
+
+const COLOR_GROUPS: { group: string; body: string; colors: Swatch[] }[] = [
   {
-    group: "Brand, Ocean Blue",
+    group: "Action",
+    body: "Cobalt is the one action colour: primary buttons, links, selection and focus. About 10% of any page, so it always reads as clickable.",
     colors: [
-      { name: "Cobalt", hex: "#1d4ed8", varName: "--hz-cobalt", note: "Primary accent, buttons, links, active states", dark: true },
-      { name: "Cobalt 600", hex: "#1740ad", varName: "--hz-cobalt-600", note: "Hover / gradient depth", dark: true },
-      { name: "Cobalt 100", hex: "#dbe6fe", varName: "--hz-cobalt-100", note: "Tints, chips, soft fills" },
+      { name: "Cobalt", hex: "#1d4ed8", token: "cobalt", note: "Primary buttons, links, focus", dark: true },
+      { name: "Cobalt deep", hex: "#1740ad", token: "cobalt-deep", note: "Hover and pressed", dark: true },
+      { name: "Cobalt tint", hex: "#eef2ff", token: "cobalt-tint", note: "Selected chips, soft highlights" },
+      { name: "Cobalt light", hex: "#a9c1ff", token: "cobalt-light", note: "Links and accents on navy" },
     ],
   },
   {
-    group: "Accent",
+    group: "Brand",
+    body: "The two blues of the Ocean Blue mark. The logo blue can carry text; aqua is for fills and marks only (2.7:1 on white).",
     colors: [
-      { name: "Cyan", hex: "#2ad8ef", varName: "--hz-cyan", note: "Secondary accent" },
-      { name: "Cyan 400", hex: "#5ce0f7", varName: "--hz-cyan-400", note: "Accents on dark surfaces" },
-      { name: "Indigo", hex: "#6366f1", varName: "--hz-indigo", note: "Tertiary / data viz", dark: true },
+      { name: "Brand blue", hex: "#0975c1", token: "brand", note: "Brand moments, illustration", dark: true },
+      { name: "Aqua", hex: "#0cacCF", token: "aqua", note: "Fills and marks, never text", dark: true },
     ],
   },
   {
-    group: "Dark surfaces",
+    group: "Ink",
+    body: "Navy text in three steps, about 30% of a page including one dark band. Every step is AA on white and on paper.",
     colors: [
-      { name: "Ink", hex: "#050912", varName: "--hz-ink", note: "Deepest, hero / CTA", dark: true },
-      { name: "Navy", hex: "#0a1730", varName: "--hz-navy", note: "Feature bands", dark: true },
-      { name: "Navy 2", hex: "#0e2147", varName: "--hz-navy-2", note: "Raised dark surface", dark: true },
+      { name: "Ink (navy)", hex: "#0b1a33", token: "ink", note: "Headings, dark panels", dark: true },
+      { name: "Ink muted", hex: "#3a4a66", token: "ink-muted", note: "Body copy", dark: true },
+      { name: "Ink subtle", hex: "#56637b", token: "ink-subtle", note: "Captions, metadata", dark: true },
     ],
   },
   {
-    group: "Neutrals",
+    group: "Surfaces",
+    body: "White and a cool blue-grey alternate down a page, about 60% of it; hairlines separate, shadows only lift what you can interact with.",
     colors: [
-      { name: "Text", hex: "#0f172a", varName: "--hz-text", note: "Headings / body", dark: true },
-      { name: "Text muted", hex: "#475569", varName: "--hz-text-mute", note: "Secondary text", dark: true },
-      { name: "Line", hex: "#e2e8f0", varName: "--hz-line", note: "Hairlines / borders" },
-      { name: "Surface", hex: "#f8fafc", varName: "--hz-surface", note: "Section backgrounds" },
-      { name: "Canvas", hex: "#ffffff", varName: "--hz-canvas", note: "Base / cards" },
+      { name: "White", hex: "#ffffff", token: "white", note: "Base, cards" },
+      { name: "Paper", hex: "#f3f6fb", token: "paper", note: "Alternating sections, footer" },
+      { name: "Paper deep", hex: "#e7edf6", token: "paper-deep", note: "Image wells, pressed wells" },
+      { name: "Line", hex: "#e2e8f1", token: "line", note: "Hairlines, card borders" },
+      { name: "Line strong", hex: "#cbd5e3", token: "line-strong", note: "Inputs, outline buttons" },
+    ],
+  },
+  {
+    group: "Status",
+    body: "Meaning only, never decoration. Amber is the single warm hue and means time-sensitive.",
+    colors: [
+      { name: "Success", hex: "#047857", token: "success", note: "Applied, operational", dark: true },
+      { name: "Warning", hex: "#92400e", token: "warning", note: "Deadlines, degraded", dark: true },
+      { name: "Danger", hex: "#b91c1c", token: "danger", note: "Errors, outages", dark: true },
     ],
   },
 ];
 
-/* The specimen renders the REAL utility classes, not restated pixel values.
-   Restating them is how this drifted: it claimed H2 was a flat 1.75rem and the
-   hero 3.5rem, while the site had moved to fluid clamps and grown a second
-   heading role the kit never showed. A brand kit that has to be hand-synced
-   with the stylesheet stops being the source of truth the first time someone
-   edits one and not the other, the icon grid below is auto-enumerated for the
-   same reason. `note` is the only thing written by hand, and it describes
-   where the role is used rather than what size it is. */
 const TYPE_SCALE = [
-  { label: "Display / Hero", cls: "text-[clamp(2rem,3.73vw,4.2rem)]", note: "Hero headline only", sample: "Enterprises & agencies." },
-  { label: "Section / H2", cls: "hz-h2", note: ".hz-h2, opens a section", sample: "Section headline" },
-  { label: "Statement", cls: "hz-statement", note: ".hz-statement, supports one", sample: "Relied on by enterprises." },
-  { label: "Card title / H3", cls: "text-[1.35rem] sm:text-[1.5rem]", note: "Service and content cards", sample: "Card title" },
-  { label: "Body", cls: "text-[16px] font-normal leading-relaxed", note: "Paragraphs", sample: "Body copy sets the reading rhythm at a relaxed line height for clarity." },
-  { label: "Small / caption", cls: "text-[13px] font-normal text-[var(--hz-text-mute)]", note: "Captions, metadata", sample: "Captions, metadata, and labels." },
+  { label: "Display", cls: "type-display", note: "Home hero only · 42–80px", sample: "The people and platforms." },
+  { label: "Headline large", cls: "type-headline-lg", note: "Page title · 36–56px", sample: "Page title" },
+  { label: "Headline", cls: "type-headline", note: "Section title · 30–48px", sample: "Section headline" },
+  { label: "Headline small", cls: "type-headline-sm", note: "Sub-section · 24–32px", sample: "Sub-section headline" },
+  { label: "Title large", cls: "type-title-lg", note: "Card title · 20–24px", sample: "Card title" },
+  { label: "Title", cls: "type-title", note: "List item · 17px", sample: "List item title" },
+  { label: "Body large", cls: "type-body-lg text-ink-muted", note: "Lead paragraph · 17–19px", sample: "A lead paragraph introduces the section in a sentence or two." },
+  { label: "Body", cls: "type-body text-ink-muted", note: "Running text · 16px", sample: "Body copy sets the reading rhythm at a comfortable line height." },
+  { label: "Body small", cls: "type-body-sm text-ink-muted", note: "Card body · 14.5px", sample: "Secondary text inside cards and lists." },
+  { label: "Label", cls: "type-label", note: "Buttons, kickers · 14px", sample: "Label text" },
+  { label: "Caption", cls: "type-caption text-ink-subtle", note: "Meta, timestamps · 13px", sample: "Posted 3 days ago" },
+];
+
+const DRAWINGS: [string, ComponentType<{ className?: string }>][] = [
+  ["GeoTeam", GeoTeam],
+  ["GeoPart", GeoPart],
+  ["GeoStack", GeoStack],
+  ["GeoRack", GeoRack],
+  ["GeoBooks", GeoBooks],
+  ["GeoLattice", GeoLattice],
+  ["GeoCivic", GeoCivic],
+  ["GeoCross", GeoCross],
+  ["GeoColumns", GeoColumns],
+  ["GeoPlant", GeoPlant],
+];
+
+// Every glyph exported from the site icon set. Type exports are erased at
+// runtime, so filtering to Icon-named function values yields the components.
+const ICON_ENTRIES = (Object.entries(SiteIcons) as [string, unknown][])
+  .filter(([name, v]) => name.startsWith("Icon") && typeof v === "function")
+  .sort(([a], [b]) => a.localeCompare(b)) as [string, ComponentType<{ size?: number }>][];
+
+const SECTIONS = [
+  { id: "logo", label: "Logo" },
+  { id: "color", label: "Color" },
+  { id: "type", label: "Typography" },
+  { id: "components", label: "Components" },
+  { id: "icons", label: "Icons" },
+  { id: "drawings", label: "Drawings" },
 ];
 
 function CopyChip({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
+      type="button"
       onClick={() => {
-        navigator.clipboard?.writeText(value).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        }).catch(() => {});
+        navigator.clipboard
+          ?.writeText(value)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          })
+          .catch(() => {});
       }}
-      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[11px] text-[var(--hz-text-mute)] transition-colors hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
+      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono text-[12px] text-ink-muted transition-colors hover:border-ink hover:text-ink"
       title="Copy"
     >
       {value}
-      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 opacity-50" />}
+      {copied ? <IconCheck size={12} className="text-success" /> : <IconCopy size={12} />}
     </button>
   );
 }
 
-// Every custom glyph exported from the admin icon set. Type exports are erased
-// at runtime, so filtering to Icon-named function values yields exactly the
-// components, no manual list to keep in sync.
-const ICON_ENTRIES = (Object.entries(AdminIcons) as [string, unknown][])
-  .filter(([name, v]) => name.startsWith("Icon") && typeof v === "function")
-  .sort(([a], [b]) => a.localeCompare(b)) as [string, ComponentType<{ className?: string }>][];
-
-/** One icon tile, click copies the rendered <svg> markup to the clipboard. */
-function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ className?: string }> }) {
+/** One icon tile; click copies the rendered <svg> markup. */
+function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ size?: number }> }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
     const svg = ref.current?.querySelector("svg");
     if (!svg) return;
-    // Copy a clean, self-contained SVG: drop the React className, pin a size.
     const clone = svg.cloneNode(true) as SVGElement;
     clone.removeAttribute("class");
     clone.setAttribute("width", "24");
@@ -117,153 +159,191 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ classNam
       onClick={copy}
       title={`Copy ${name} SVG`}
       aria-label={copied ? `${name} SVG copied` : `Copy ${name} SVG`}
-      className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-[var(--hz-paper-line)]/80 bg-white p-4 shadow-sm transition-all hover:-translate-y-px hover:border-[var(--hz-cobalt)] hover:shadow-md bg-[var(--hz-ink)]">
-      <span ref={ref} className="text-[var(--hz-cobalt)]">
-        <Icon className="h-7 w-7" />
+      className="group relative flex flex-col items-center gap-3 bg-white px-3 py-5 transition-colors hover:bg-paper"
+    >
+      <span ref={ref} className="text-ink">
+        <Icon size={24} />
       </span>
-      <span className="w-full truncate text-center font-mono text-[10.5px] text-[var(--hz-text-mute)]">{name}</span>
-      <span
-        aria-hidden
-        className={cn(
-          "absolute right-1.5 top-1.5 transition-colors",
-          copied ? "text-emerald-500" : "text-slate-300 group-hover:text-[var(--hz-text-subtle)]",
-        )}
-      >
-        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      <span className="w-full truncate text-center font-mono text-[11px] text-ink-subtle">{name.replace(/^Icon/, "")}</span>
+      <span aria-hidden className={cn("absolute top-2 right-2", copied ? "text-success" : "text-line-strong group-hover:text-ink-subtle")}>
+        {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
       </span>
     </button>
   );
 }
 
-export default function BrandKitContent() {
+/** Every section of the kit: a sticky label column, content on the right. */
+function KitSection({ id, n, title, sub, children }: { id: string; n: string; title: string; sub: string; children: React.ReactNode }) {
   return (
-    <div className="horizon w-full bg-[var(--hz-canvas)]">
-      {/* Hero */}
-      <section className="relative isolate w-full overflow-hidden bg-[var(--hz-ink)]">
-        <div aria-hidden className="absolute inset-0" style={{ background: "radial-gradient(60% 85% at 82% 0%, rgba(29,78,216,0.32), transparent 62%)" }} />
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:px-8">
-          <Link href="/" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white">
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Home
-          </Link>
-          <h1 className="hz-display max-w-[18ch] text-[clamp(2rem,3.56vw,4rem)] text-white">Brand kit & design system</h1>
-          <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75 sm:text-[18px]">
-            The colors, type, logo, and components behind Ocean Blue Corporation, the single source of truth for a consistent brand.
-          </p>
+    <section id={id} className="scroll-mt-28 border-t border-line py-14 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
+        <div className="lg:col-span-4">
+          <div className="lg:sticky lg:top-28">
+            <p className="font-mono text-[13px] font-medium text-cobalt">{n}</p>
+            <h2 className="mt-2 type-headline font-semibold text-ink">{title}</h2>
+            <p className="mt-3 max-w-[40ch] type-body text-ink-muted">{sub}</p>
+          </div>
         </div>
-      </section>
-
-      <div className="mx-auto max-w-6xl space-y-20 px-6 py-20 sm:px-8">
-        {/* Logo */}
-        <section>
-          <SectionHeading n="01" title="Logo" sub="Primary wordmark. Keep clear space around it and don't recolor or distort." />
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            <div className="flex items-center justify-center rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-12 shadow-sm">
-              <Image src="/logo.png" alt="Ocean Blue Corporation logo on light" width={220} height={60} className="h-12 w-auto" />
-            </div>
-            <div className="flex items-center justify-center rounded-2xl p-12 shadow-sm bg-[var(--hz-ink)]">
-              <Image src="/logo.png" alt="Ocean Blue Corporation logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
-            </div>
-          </div>
-          <a href="/logo.png" download className="mt-4 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--hz-cobalt)] hover:underline">
-            Download logo (PNG)
-          </a>
-        </section>
-
-        {/* Colors */}
-        <section>
-          <SectionHeading n="02" title="Color" sub="One decisive Ocean-Blue accent, a cyan secondary, deep navy darks, and a single cool slate neutral family. Click any value to copy." />
-          <div className="mt-8 space-y-8">
-            {COLOR_GROUPS.map((g) => (
-              <div key={g.group}>
-                <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">{g.group}</p>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {g.colors.map((c) => (
-                    <div key={c.varName} className="overflow-hidden rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white shadow-sm">
-                      <div className="flex h-24 items-end justify-end p-3" style={{ background: c.hex }}>
-                        {c.dark && <span className="text-[10px] font-medium text-white/60">Aa</span>}
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[14px] font-semibold text-[var(--hz-text)]">{c.name}</p>
-                        {c.note && <p className="mt-0.5 text-[12px] leading-snug text-[var(--hz-text-mute)]">{c.note}</p>}
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <CopyChip value={c.hex} />
-                          <CopyChip value={`var(${c.varName})`} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Typography */}
-        <section>
-          <SectionHeading n="03" title="Typography" sub="Geist Sans across display and body; Geist Mono for code and labels. Tight tracking on large display, relaxed line height on body." />
-          <div className="mt-8 divide-y divide-slate-100 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-2 shadow-sm">
-            {TYPE_SCALE.map((t) => (
-              <div key={t.label} className="flex flex-col gap-2 px-5 py-5 sm:flex-row sm:items-baseline sm:gap-8">
-                <span className="w-32 flex-none">
-                  <span className="block text-[12px] font-medium uppercase tracking-wide text-[var(--hz-text-mute)]">{t.label}</span>
-                  <span className="mt-0.5 block font-mono text-[10.5px] leading-snug text-[var(--hz-text-subtle)]">{t.note}</span>
-                </span>
-                <p className={`hz-display min-w-0 truncate text-[var(--hz-text)] ${t.cls}`}>{t.sample}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Components */}
-        <section>
-          <SectionHeading n="04" title="Components" sub="Core interactive elements, buttons, chips, and cards use the rounded, cobalt-accented language sitewide." />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="space-y-4 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">Buttons</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <button className="inline-flex items-center rounded-full bg-[var(--hz-cobalt)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--hz-cobalt-600)]">Primary</button>
-                <button className="inline-flex items-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-[var(--hz-text)] transition-colors hover:border-[var(--hz-cobalt)] hover:text-[var(--hz-cobalt)]">Secondary</button>
-                <button className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-[var(--hz-cobalt)] hover:underline">Text link</button>
-              </div>
-            </div>
-            <div className="space-y-4 rounded-2xl border border-[var(--hz-paper-line)]/80 bg-white p-6 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--hz-text-mute)]">Chips & radius</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[var(--hz-cobalt-100)] px-2.5 py-1 text-xs font-semibold text-[var(--hz-cobalt)]">Badge</span>
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-[var(--hz-text-mute)]">rounded-lg</span>
-                <span className="rounded-2xl bg-slate-100 px-2.5 py-1 text-xs font-medium text-[var(--hz-text-mute)]">rounded-2xl (cards)</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Icons */}
-        <section>
-          <SectionHeading
-            n="05"
-            title="Icons"
-            sub="The custom Ocean Blue icon set, drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
-          />
-          <div className="mt-8 grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-            {ICON_ENTRIES.map(([name, Icon]) => (
-              <IconCell key={name} name={name} Icon={Icon} />
-            ))}
-          </div>
-        </section>
+        <div className="min-w-0 lg:col-span-8">{children}</div>
       </div>
-    </div>
+    </section>
   );
 }
 
-function SectionHeading({ n, title, sub }: { n: string; title: string; sub: string }) {
+export default function BrandKitContent() {
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[12px] font-semibold text-[var(--hz-cobalt)]">{n}</span>
-        <span className="h-px flex-1 bg-slate-200" />
+    <>
+      <section data-opener className="border-b border-line bg-white">
+        <div className={`${CONTAINER} ${OPENER_Y} grid gap-10 lg:grid-cols-12 lg:items-end`}>
+          <div className="lg:col-span-8">
+            <p className="rise type-label font-semibold text-cobalt">Media kit</p>
+            <h1 className="rise mt-3 type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
+              Brand kit and design system
+            </h1>
+            <p className="rise mt-6 max-w-[58ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
+              The logo, colour, type, icons and drawings behind Ocean Blue Corporation, the single source of truth for a consistent brand.
+            </p>
+            <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "240ms" }}>
+              <a href="/logo.png" download className={buttonClass("primary", "lg")}>
+                <IconDownload size={16} />
+                Download logo
+              </a>
+              <LinkButton href="/contact" variant="outline" size="lg">
+                Press and partnership requests
+              </LinkButton>
+            </div>
+          </div>
+          <nav aria-label="Brand kit sections" className="rise lg:col-span-4" style={{ animationDelay: "300ms" }}>
+            <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-2">
+              {SECTIONS.map((s, i) => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`} className="group flex min-h-14 items-center justify-between gap-2 bg-white px-4 py-3 type-body-sm font-medium text-ink hover:bg-paper">
+                    <span>
+                      <span className="mr-2 font-mono text-[12px] text-ink-subtle">0{i + 1}</span>
+                      {s.label}
+                    </span>
+                    <IconArrowRight size={14} className="text-ink-subtle transition-transform group-hover:translate-x-0.5" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </section>
+
+      <div data-tone="white" className={`bg-white ${SECTION_Y}`}>
+        <div className={CONTAINER}>
+          <KitSection id="logo" n="01" title="Logo" sub="Primary wordmark. Keep clear space around it and don't recolor or distort.">
+            <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+              <div className="flex min-h-[220px] items-center justify-center bg-white p-10">
+                <Image src="/logo.png" alt="Ocean Blue Corporation logo on light" width={220} height={60} className="h-12 w-auto" />
+              </div>
+              <div className="flex min-h-[220px] items-center justify-center bg-ink p-10">
+                <Image src="/logo.png" alt="Ocean Blue Corporation logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
+              </div>
+            </div>
+            <a href="/logo.png" download className="mt-4 inline-flex min-h-10 items-center gap-2 type-label font-semibold text-cobalt hover:text-cobalt-deep">
+              <IconDownload size={16} />
+              Download logo (PNG)
+            </a>
+          </KitSection>
+
+          <KitSection id="color" n="02" title="Color" sub="One cobalt accent, a warm ink ramp, and white and paper surfaces. Click any value to copy it.">
+            <div className="space-y-10">
+              {COLOR_GROUPS.map((g) => (
+                <div key={g.group}>
+                  <p className="text-[16px] font-semibold text-ink">{g.group}</p>
+                  <p className="mt-1 max-w-[60ch] type-body-sm text-ink-muted">{g.body}</p>
+                  <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
+                    {g.colors.map((c) => (
+                      <div key={c.token} className="bg-white">
+                        <div className="flex h-24 items-end justify-end border-b border-line p-3" style={{ background: c.hex }}>
+                          <span className={cn("type-caption font-medium", c.dark ? "text-white" : "text-ink")}>Aa</span>
+                        </div>
+                        <div className="p-4">
+                          <p className="text-[15px] font-semibold text-ink">{c.name}</p>
+                          <p className="mt-0.5 type-body-sm text-ink-muted">{c.note}</p>
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <CopyChip value={c.hex} />
+                            <CopyChip value={c.token} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </KitSection>
+
+          <KitSection id="type" n="03" title="Typography" sub="IBM Plex Sans in eleven roles, fluid from phone to desktop, and IBM Plex Mono for code. Pages pick a role, never a pixel size.">
+            <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
+              {TYPE_SCALE.map((t) => (
+                <div key={t.label} className="grid gap-2 bg-white px-5 py-6 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-baseline sm:gap-6">
+                  <span>
+                    <span className="block type-label font-semibold text-ink">{t.label}</span>
+                    <span className="mt-0.5 block type-caption text-ink-subtle">{t.note}</span>
+                  </span>
+                  <p className={cn("min-w-0 break-words text-ink", t.cls)}>{t.sample}</p>
+                </div>
+              ))}
+            </div>
+          </KitSection>
+
+          <KitSection id="components" n="04" title="Components" sub="Pill buttons in one height scale, hairline cards, and the one lit plane. No drop shadows at rest.">
+            <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+              <div className="bg-white p-6">
+                <p className="type-label font-semibold text-ink">Buttons</p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <span className={buttonClass("primary", "md")}>Primary</span>
+                  <span className={buttonClass("outline", "md")}>Outline</span>
+                  <span className={buttonClass("dark", "md")}>Dark</span>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-ink p-4">
+                  <span className={buttonClass("inverse", "md")}>Inverse</span>
+                  <span className={buttonClass("outline-dark", "md")}>Outline on dark</span>
+                </div>
+              </div>
+              <div className="bg-white p-6">
+                <p className="type-label font-semibold text-ink">Chips and cards</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-line bg-white px-3 py-1 type-caption text-ink-muted">Chip</span>
+                  <span className="rounded-full bg-cobalt-tint px-3 py-1 type-caption font-medium text-cobalt">Tinted</span>
+                  <span className="rounded-full bg-paper px-3 py-1 type-caption text-ink-muted">Paper</span>
+                </div>
+                <div className="mt-4 rounded-2xl border border-line p-5">
+                  <p className="text-[16px] font-semibold text-ink">Card title</p>
+                  <p className="mt-1 type-body-sm text-ink-muted">rounded-2xl, 1px line border, no shadow at rest.</p>
+                </div>
+              </div>
+            </div>
+          </KitSection>
+
+          <KitSection
+            id="icons"
+            n="05"
+            title="Icons"
+            sub="The site icon set, drawn on one grid: 24×24 box, 1.5 stroke, round caps, currentColor. Click any icon to copy its SVG."
+          >
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
+              {ICON_ENTRIES.map(([name, Icon]) => (
+                <IconCell key={name} name={name} Icon={Icon} />
+              ))}
+            </div>
+          </KitSection>
+
+          <KitSection id="drawings" n="06" title="Drawings" sub="Isometric wireframes: thin ink lines, square vertex nodes, one cobalt plane per drawing. Each stands for a service or an industry.">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3 xl:grid-cols-4">
+              {DRAWINGS.map(([name, Art]) => (
+                <figure key={name} className="flex flex-col items-center gap-3 bg-paper px-4 pt-6 pb-4">
+                  <Art className="h-28 w-auto" />
+                  <figcaption className="font-mono text-[11.5px] text-ink-subtle">{name}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </KitSection>
+        </div>
       </div>
-      <h2 className="hz-display mt-4 text-[2rem] text-[var(--hz-text)] sm:text-[2.5rem]">{title}</h2>
-      <p className="mt-3 text-[15px] leading-relaxed text-[var(--hz-text-mute)]">{sub}</p>
-    </div>
+    </>
   );
 }

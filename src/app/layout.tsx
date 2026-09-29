@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import { Inter, Bricolage_Grotesque, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
@@ -8,10 +8,24 @@ import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { getAnnouncement, getMaintenance } from "@/lib/content";
 import { Suspense } from "react";
+import { jsonLdString } from "@/lib/seo";
 
 // ISR: re-render the layout (which reads the CMS announcement) at most once a
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
 export const revalidate = 60;
+
+/**
+ * A string made safe to embed in an inline <script>. JSON.stringify escapes
+ * quotes but not `<`, so CMS text containing "</script>" would close the tag
+ * and run what follows as markup (stored XSS via /admin/content). Escaping `<`
+ * and the JS line terminators U+2028/U+2029 keeps it an inert string literal.
+ */
+function inlineJsonString(value: string): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,6 +38,18 @@ const bricolage = Bricolage_Grotesque({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+// The public site's typeface (.site scope in globals.css). Admin stays on Geist.
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  variable: "--font-plex-sans",
+  weight: ["400", "500", "600", "700"],
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-plex-mono",
+  weight: ["400", "500"],
+});
+
 // Instrument Serif was loaded here and referenced nowhere: a webfont downloaded
 // on every page for no rendered glyph. Removed rather than left as a tax.
 
@@ -31,7 +57,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0066cc",
+  themeColor: "#0b1a33",
 };
 
 export const metadata: Metadata = {
@@ -51,6 +77,10 @@ export const metadata: Metadata = {
     "data analytics",
     "Salesforce consulting",
     "IT staffing",
+    "IT staffing agency Ohio",
+    "engineering staffing",
+    "IT training",
+    "MBE WBE certified IT company",
     "managed services",
     "cybersecurity services",
     "government IT services",
@@ -116,6 +146,20 @@ const jsonLd = {
   description:
     "Provider of IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce, serving enterprises and state government agencies across North America.",
   foundingDate: "2013",
+  email: "hr@oceanbluecorp.com",
+  areaServed: { "@type": "Country", name: "United States" },
+  knowsAbout: [
+    "IT staffing",
+    "Engineering staffing",
+    "Cloud engineering",
+    "Cybersecurity",
+    "ERP implementation",
+    "Salesforce",
+    "Artificial intelligence",
+    "Data engineering",
+    "Managed IT services",
+    "Technology training",
+  ],
   address: {
     "@type": "PostalAddress",
     streetAddress: "9775 Fairway Drive, Suite C",
@@ -174,8 +218,16 @@ const jsonLd = {
         description: "Business-first AI, automation, predictive analytics, and data engineering",
       },
       {
+        name: "Engineering Talent & Services",
+        description: "Mechanical, electrical, civil and controls engineers on contract, direct hire, or as project teams",
+      },
+      {
         name: "Managed Services",
         description: "24/7 monitoring, helpdesk, and infrastructure management to one standard",
+      },
+      {
+        name: "Training & Upskilling",
+        description: "Instructor-led training in cloud, DevOps, data and AI, security, ERP, and Salesforce, with certification preparation",
       },
       {
         name: "Digital Transformation",
@@ -207,8 +259,17 @@ export default async function RootLayout({
   // Lenis is not, and the attribute is what tells Next to suspend it during
   // route transitions.
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
+        {/* Runs before first paint: a dismissed announcement never flashes. Keyed like
+            LayoutWrapper (by the text), so a new announcement shows again. */}
+        {announcement.text && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `try{var k=${inlineJsonString(`ob.announcement.dismissed:${announcement.text}`)};if(localStorage.getItem(k)==="1"||sessionStorage.getItem(k)==="1")document.documentElement.setAttribute("data-ann-dismissed","")}catch(e){}`,
+            }}
+          />
+        )}
         {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
             are injected automatically by Next.js from the App Router file conventions. */}
         <link rel="manifest" href="/manifest.json" />
@@ -219,11 +280,11 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
         />
       </head>
       <body
-        className={`${inter.variable} ${bricolage.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${bricolage.variable} ${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} ${plexMono.variable} font-sans antialiased`}
       >
         {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
             and the admin layout (→ #adm-main), so none is needed here. */}

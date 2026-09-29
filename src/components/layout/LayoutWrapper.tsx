@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import Maintenance from "@/components/layout/Maintenance";
+import { hasPreferenceConsent } from "@/components/layout/CookieConsent";
+import { RouteBreadcrumbs } from "@/components/site/route-breadcrumbs";
 
 export default function LayoutWrapper({
   children,
@@ -65,7 +67,7 @@ export default function LayoutWrapper({
   useEffect(() => {
     if (!announcement) return;
     try {
-      if (window.localStorage.getItem(dismissKey) === "1") setDismissed(true);
+      if (window.localStorage.getItem(dismissKey) === "1" || window.sessionStorage.getItem(dismissKey) === "1") setDismissed(true);
     } catch {
       // Private mode or storage disabled: the strip simply stays dismissible
       // per page load rather than per browser.
@@ -75,7 +77,8 @@ export default function LayoutWrapper({
   const dismissBar = useCallback(() => {
     setDismissed(true);
     try {
-      window.localStorage.setItem(dismissKey, "1");
+      // Across visits only with preference consent; otherwise for this tab session.
+      (hasPreferenceConsent() ? window.localStorage : window.sessionStorage).setItem(dismissKey, "1");
     } catch {
       // Non-fatal, see above.
     }
@@ -84,43 +87,10 @@ export default function LayoutWrapper({
   const showBar =
     !isAuthRoute && !hideHeaderFooter && announcement.length > 0 && !dismissed;
 
-  // Past the fold the strip retracts and the header takes the top edge back.
-  // The announcement is news for someone arriving; forty pixels of permanent
-  // chrome is a tax on everyone still reading. `main` keeps its pt-10 either
-  // way, animating that too would shift the whole document under the reader
-  // mid-scroll, which is a far worse trade than a fixed header moving 40px.
-  const [barRetracted, setBarRetracted] = useState(false);
-  const retractedRef = useRef(false);
-  useEffect(() => {
-    if (!showBar) return;
-    // Hysteresis, not a single threshold. With one trip point the bar flips
-    // state on every pixel of jitter around it, a trackpad's elastic
-    // overscroll, or a reader nudging back and forth over the line, makes it
-    // flutter. Retracting at 96 and only returning below 24 means it comes
-    // back when someone has genuinely returned to the top, and the transition
-    // plays start to finish instead of being re-triggered midway.
-    let raf = 0;
-    const read = () => {
-      raf = 0;
-      const y = window.scrollY;
-      const next = retractedRef.current ? y > 24 : y > 96;
-      if (next === retractedRef.current) return;
-      retractedRef.current = next;
-      setBarRetracted(next);
-    };
-    // Coalesce to one read per frame. Scroll fires far more often than the
-    // screen refreshes, and each unthrottled setState is a render competing
-    // with the very animation it is driving.
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(read);
-    };
-    read();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [showBar]);
+  // The strip stays put until someone dismisses it. It used to retract past
+  // the fold, which read the browser's restored scroll position on a refresh
+  // and so appeared on some reloads and not others. The CMS decides whether
+  // there is an announcement; the reader decides when they are done with it.
 
   // ── Early returns, all hooks are above ───────────────────────────────────
 
@@ -154,17 +124,17 @@ export default function LayoutWrapper({
           just a 40px strip. Duration and curve are mirrored on the header, see the note there. */}
       {showBar && (
         <div
-          className={`fixed inset-x-0 top-0 z-[9990] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            barRetracted ? "-translate-y-full" : "translate-y-0"
-          }`}
-          aria-hidden={barRetracted}
+          className="ann-bar fixed inset-x-0 top-0 z-[9990]"
         >
           <AnnouncementBar text={announcement} href={announcementHref || undefined} scroll={announcementScroll} onDismiss={dismissBar} />
         </div>
       )}
-      {!isAuthRoute && <Header topOffset={showBar && !barRetracted ? "top-10" : "top-0"} />}
-      <main id="main-content" tabIndex={-1} className={`min-h-screen outline-none ${showBar ? "pt-10" : ""}`}>{children}</main>
-      {!isAuthRoute && <Footer />}
+      {!isAuthRoute && <SiteHeader topOffset={showBar ? "top-10 ann-offset" : "top-0"} />}
+      <main id="main-content" tabIndex={-1} className={`site min-h-screen outline-none ${showBar ? "pt-10 ann-pad" : ""}`}>
+        <RouteBreadcrumbs />
+        {children}
+      </main>
+      {!isAuthRoute && <SiteFooter />}
     </>
   );
 }

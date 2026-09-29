@@ -8,6 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   of writing another), the client/server boundary rule, security rules, and the
   pre-ship checks. Read before adding a route, a component, or a table.
 - **`DESIGN_SYSTEM.md`**, visual language and the admin component inventory.
+- **`SITE_DESIGN_LANGUAGE.md`**, the public website's design language: colour roles
+  (60-30-10), type roles, spacing, shape, elevation, motion, layout. Components in
+  `src/components/site/`. Read before touching any public page.
 
 ## Project Overview
 

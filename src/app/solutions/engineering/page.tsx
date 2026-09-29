@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import EngineeringContent from "./_content";
 
-export const metadata: Metadata = {
-  title: "Engineering Talent & Services",
-  description:
-    "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers for automotive, aerospace, power and manufacturing. Shortlists in 48 hours.",
+export const metadata: Metadata = pageMetadata({
+  path: "/solutions/engineering",
+  title: "Engineering Staffing & Services",
+  description: "Mechanical, electrical, structural, aerospace, controls and manufacturing engineers for automotive, aerospace, power and manufacturing. Shortlists in 48 hours.",
   keywords: [
     "mechanical engineer staffing",
     "aerospace engineering staffing",
@@ -16,15 +16,7 @@ export const metadata: Metadata = {
     "engineering contract staffing",
     "managed engineering SOW",
   ],
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Engineering Talent & Services | Ocean Blue Corporation",
-    description:
-      "Engineers, embedded fast, across mechanical, electrical, structural, aerospace, controls and manufacturing disciplines for the industries that build things.",
-    url: "https://oceanbluecorp.com/solutions/engineering",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/solutions/engineering" },
-};
+});
 
 export default function EngineeringPage() {
   return <EngineeringContent />;

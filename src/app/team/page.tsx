@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import TeamPage from "./_content";
 
-export const metadata: Metadata = {
-  title: "Our Team",
-  description:
-    "Meet the leadership behind Ocean Blue Corporation, senior practitioners in IT staffing, enterprise solutions, and managed services.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Our Team | Ocean Blue Corporation",
-    description: "Meet the leadership behind Ocean Blue Corporation.",
-    url: "https://oceanbluecorp.com/team",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/team" },
-};
+export const metadata: Metadata = pageMetadata({
+  path: "/team",
+  title: "Leadership Team",
+  description: "Meet the leadership behind Ocean Blue Corporation, senior practitioners in IT staffing, enterprise solutions, and managed services.",
+});
 
 export default function Team() {
   return <TeamPage />;

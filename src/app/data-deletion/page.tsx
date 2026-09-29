@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import { OG_IMAGES } from "@/lib/seo";
-import Link from "next/link";
-import { ArrowLeft, Mail, Trash2, ShieldCheck, Clock, ExternalLink } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
+import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
+import { buttonClass } from "@/components/site/button";
+import { IconMail, IconClock, IconShieldLock } from "@/components/site/icons";
+import { RelatedLinks } from "@/components/site/legal/doc";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/data-deletion",
   title: "Data Deletion Request",
-  description: "Request deletion of your personal data held by Ocean Blue Corporation by emailing hr@oceanbluecorp.com.",
-  openGraph: {
-    images: OG_IMAGES,
-    title: "Data Deletion | Ocean Blue Corporation",
-    description:
-      "How to request deletion of your personal data from Ocean Blue Corporation, what is removed, and what must be retained.",
-    url: "https://oceanbluecorp.com/data-deletion",
-  },
-  alternates: { canonical: "https://oceanbluecorp.com/data-deletion" },
-};
+  description: "Ask Ocean Blue Corporation to delete the personal data we hold about you, such as a job application or resume. Email hr@oceanbluecorp.com to make a request.",
+});
 
 const DELETE_EMAIL = "hr@oceanbluecorp.com";
 const SUBJECT = encodeURIComponent("Data deletion request");
@@ -24,112 +19,72 @@ const BODY = encodeURIComponent(
 
 export default function DataDeletionPage() {
   return (
-    <div className="horizon min-h-screen bg-white">
-      {/* Hero */}
-      <div
-        className="border-b border-[var(--hz-paper-line)]"
-        style={{
-          background: [
-            "radial-gradient(ellipse 70% 55% at 10% 20%, rgba(29,78,216,0.07) 0%, transparent 60%)",
-            "radial-gradient(ellipse 55% 45% at 90% 80%, rgba(6,182,212,0.05) 0%, transparent 60%)",
-            "#FAFBFF",
-          ].join(", "),
-        }}
-      >
-        <div className="mx-auto max-w-3xl px-6 pt-24 pb-12 md:pt-28 lg:px-8">
-          <Link
-            href="/"
-            className="group mb-8 inline-flex items-center gap-2 text-sm text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Home
-          </Link>
-
-          <h1
-            className="mt-5 text-[1.9rem] font-extrabold leading-[1.06] tracking-tight text-[var(--hz-text)] sm:text-[2.6rem] md:text-5xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
+    <>
+      <header data-opener className="border-b border-line bg-paper">
+        <div className={`${CONTAINER} ${OPENER_Y}`}>
+          <p className="rise type-label font-semibold text-cobalt">Legal and privacy</p>
+          <h1 className="rise mt-3 max-w-[18ch] type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
             Data deletion request
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--hz-text-subtle)]">
+          <p className="rise mt-5 max-w-[60ch] type-body-lg text-ink-muted" style={{ animationDelay: "180ms" }}>
             You can ask us to delete the personal data we hold about you, such as your contact form
             submissions, job application, resume, and account details, at any time.
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Content */}
-      <div className="mx-auto max-w-3xl px-6 py-12 lg:px-8">
-        {/* Primary action */}
-        <div className="rounded-2xl border border-[var(--hz-cobalt-100)] bg-[var(--hz-cobalt-100)]/40 p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl bg-[var(--hz-cobalt)] text-white">
-              <Mail className="h-5 w-5" />
+      <section data-tone="white" className={`bg-white ${SECTION_Y}`}>
+        {/* The ask on the left, what happens after on the right: one action, then the facts that answer "and then what?". */}
+        <div className={`${CONTAINER} grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-12`}>
+          <div className="reveal rounded-2xl border border-line bg-white p-7 sm:p-10">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-cobalt text-white">
+              <IconMail size={22} />
             </span>
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold text-[var(--hz-text)]" style={{ fontFamily: "var(--font-display)" }}>
-                Email us to delete your data
-              </h2>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--hz-text-mute)]">
-                Send a request to{" "}
-                <a href={`mailto:${DELETE_EMAIL}`} className="font-semibold text-[var(--hz-cobalt)] hover:underline">
-                  {DELETE_EMAIL}
-                </a>{" "}
-                from the email address associated with your data. Include your full name and the email
-                (and phone, if any) you used, so we can locate and verify your records.
+            <h2 className="mt-6 type-headline-sm font-semibold text-ink">
+              Email us to delete your data
+            </h2>
+            <p className="mt-3 max-w-[56ch] type-body text-ink-muted">
+              Send a request to{" "}
+              <a href={`mailto:${DELETE_EMAIL}`} className="font-semibold text-cobalt underline underline-offset-4">
+                {DELETE_EMAIL}
+              </a>{" "}
+              from the email address associated with your data. Include your full name and the email
+              (and phone, if any) you used, so we can locate and verify your records.
+            </p>
+            <a href={`mailto:${DELETE_EMAIL}?subject=${SUBJECT}&body=${BODY}`} className={buttonClass("accent", "lg", "mt-8 max-w-full whitespace-normal")}>
+              <IconMail size={16} /> Email {DELETE_EMAIL}
+            </a>
+          </div>
+
+          <ul className="reveal grid content-start gap-px overflow-hidden rounded-2xl border border-line bg-line">
+            <li className="bg-paper p-7">
+              <span className="flex size-10 items-center justify-center rounded-lg border border-line bg-white text-cobalt">
+                <IconShieldLock size={18} />
+              </span>
+              <h3 className="mt-4 type-title font-semibold text-ink">What we delete</h3>
+              <p className="mt-1.5 type-body text-ink-muted">
+                Your contact submissions, job applications, uploaded resumes, candidate profile, and any
+                account credentials, across our database and file storage.
               </p>
-              <a
-                href={`mailto:${DELETE_EMAIL}?subject=${SUBJECT}&body=${BODY}`}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[var(--hz-cobalt)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--hz-cobalt-600)]"
-              >
-                <Mail className="h-4 w-4" /> Email {DELETE_EMAIL}
-              </a>
-            </div>
+            </li>
+            <li className="bg-paper p-7">
+              <span className="flex size-10 items-center justify-center rounded-lg border border-line bg-white text-cobalt">
+                <IconClock size={18} />
+              </span>
+              <h3 className="mt-4 type-title font-semibold text-ink">How long it takes</h3>
+              <p className="mt-1.5 type-body text-ink-muted">
+                We confirm receipt within 3-5 business days and complete deletion within 30 days. Some
+                records may be retained where required by law (e.g. tax or contractual obligations).
+              </p>
+            </li>
+          </ul>
+        </div>
+        <div className={`${CONTAINER} mt-10 sm:mt-12`}>
+          <div className="max-w-[760px]">
+            <RelatedLinks links={[{ href: "/privacy", label: "Privacy Policy" }, { href: "/contact", label: "Contact Us" }]} />
           </div>
         </div>
-
-        {/* What happens */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 p-5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-white text-[var(--hz-cobalt)] ring-1 ring-gray-100">
-              <ShieldCheck className="h-4 w-4" />
-            </span>
-            <h3 className="mt-3 text-sm font-bold text-[var(--hz-text)]">What we delete</h3>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--hz-text-mute)]">
-              Your contact submissions, job applications, uploaded resumes, candidate profile, and any
-              account credentials, across our database and file storage.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 p-5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-white text-[var(--hz-cobalt)] ring-1 ring-gray-100">
-              <Clock className="h-4 w-4" />
-            </span>
-            <h3 className="mt-3 text-sm font-bold text-[var(--hz-text)]">How long it takes</h3>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--hz-text-mute)]">
-              We confirm receipt within 3-5 business days and complete deletion within 30 days. Some
-              records may be retained where required by law (e.g. tax or contractual obligations).
-            </p>
-          </div>
-        </div>
-
-        {/* Related */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/privacy"
-            className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-          >
-            <span>Privacy Policy</span>
-            <ExternalLink className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/contact"
-            className="flex flex-1 items-center justify-between rounded-xl border border-[var(--hz-paper-line)] bg-[var(--hz-paper)]/60 px-5 py-4 text-sm font-semibold text-[var(--hz-text-mute)] transition-all hover:border-[var(--hz-cobalt-100)] hover:bg-[var(--hz-cobalt-100)] hover:text-[var(--hz-cobalt)]"
-          >
-            <span>Contact Us</span>
-            <ExternalLink className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

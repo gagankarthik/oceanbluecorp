@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
+import { IconArrowRight, IconX } from "@/components/site/icons";
 
 /**
  * Sitewide announcement strip shown above the top navbar. Rendered only when
@@ -25,7 +25,9 @@ export default function AnnouncementBar({
   const barClass =
     "horizon relative flex h-10 w-full items-center overflow-hidden text-[13px] font-medium text-white";
   const barStyle = {
-    background: "linear-gradient(90deg, var(--hz-cobalt-600) 0%, var(--hz-cobalt) 50%, var(--hz-cobalt-600) 100%)",
+    // Ink navy, not cobalt: the strip sits above a blue hero, and blue on blue
+    // read as one smeared band. Dark bar, white header, blue hero instead.
+    background: "#0b1a33",
     color: "#ffffff", // force white, beats the .horizon base color
   } as const;
 
@@ -46,7 +48,7 @@ export default function AnnouncementBar({
       title="Dismiss"
       className="absolute right-2 top-1/2 z-[2] grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     >
-      <X className="h-4 w-4" aria-hidden="true" />
+      <IconX size={16} />
     </button>
   ) : null;
 
@@ -55,7 +57,7 @@ export default function AnnouncementBar({
     const item = (key: number) => (
       <span key={key} className="mx-10 inline-flex items-center gap-2 whitespace-nowrap">
         {text}
-        {href && <ArrowRight className="h-3.5 w-3.5 flex-none" />}
+        {href && <IconArrowRight size={14} className="flex-none text-cobalt-light" />}
       </span>
     );
     // Two identical halves so the -50% loop is seamless.
@@ -77,7 +79,7 @@ export default function AnnouncementBar({
   const label = (
     <span className="inline-flex max-w-full items-center gap-2 truncate whitespace-nowrap">
       {text}
-      {href && <ArrowRight className="h-3.5 w-3.5 flex-none transition-transform group-hover:translate-x-0.5" />}
+      {href && <IconArrowRight size={14} className="flex-none text-cobalt-light transition-transform group-hover:translate-x-0.5" />}
     </span>
   );
   return (

@@ -172,7 +172,7 @@ export default function OfficeMap({
             <span
               aria-hidden
               className={`absolute bottom-0 left-1/2 hidden w-px -translate-x-1/2 transition-colors duration-200 sm:block ${
-                active ? "bg-[var(--hz-cobalt)]" : "bg-[var(--hz-cobalt)]/40"
+                active ? "bg-cobalt" : "bg-cobalt/40"
               }`}
               style={{ height: stalk }}
             />
@@ -182,32 +182,32 @@ export default function OfficeMap({
               type="button"
               onClick={() => onSelect(i)}
               aria-pressed={active}
-              className={`absolute ${lean} hidden w-[210px] cursor-pointer rounded-lg border bg-white px-3 py-2 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hz-cobalt)] sm:block ${
+              className={`absolute ${lean} hidden w-[210px] cursor-pointer rounded-lg border bg-white px-3 py-2 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt sm:block ${
                 active
-                  ? "border-[var(--hz-cobalt)] shadow-[0_10px_28px_-10px_rgba(15,23,42,0.4)]"
-                  : "border-[var(--hz-paper-line)] shadow-[0_6px_18px_-10px_rgba(15,23,42,0.35)] hover:border-[var(--hz-cobalt)]/50"
+                  ? "border-cobalt shadow-[var(--shadow-overlay)]"
+                  : "border-line shadow-[var(--shadow-raised)] hover:border-cobalt/50"
               }`}
               style={{ bottom: stalk }}
             >
               {/* No flag emoji. Windows has no colour flag glyphs, so every
                   one of these rendered as the bare country code, "US", "IN",
                   "GB", which reads as a typo rather than a flag. */}
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--hz-text)]">
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
                 {p.city}
                 {p.hq && (
-                  <span className="rounded-full bg-[var(--hz-cobalt-100)] px-1.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[var(--hz-cobalt)]">
+                  <span className="rounded-full bg-cobalt-tint px-1.5 text-[10px] font-semibold text-cobalt">
                     HQ
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block text-[11px] text-[var(--hz-text-subtle)]">
+              <span className="mt-0.5 block text-[11.5px] text-ink-subtle">
                 {p.country}
               </span>
-              <span className="mt-1.5 block text-[11px] leading-snug text-[var(--hz-text-mute)]">
+              <span className="mt-1.5 block text-[11.5px] leading-snug text-ink-muted">
                 {p.address}
               </span>
               {p.phone && (
-                <span className="mt-1.5 block text-[11px] font-medium text-[var(--hz-cobalt)]">
+                <span className="mt-1.5 block text-[11.5px] font-medium text-cobalt">
                   {p.phone}
                 </span>
               )}
@@ -218,8 +218,8 @@ export default function OfficeMap({
               aria-hidden
               className={`absolute left-1/2 top-0 block -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white transition-all duration-200 ${
                 active
-                  ? "h-3.5 w-3.5 bg-[var(--hz-cobalt)] shadow-[0_0_0_5px_color-mix(in_srgb,var(--hz-cobalt)_26%,transparent)]"
-                  : "h-2.5 w-2.5 bg-[var(--hz-cobalt)]/70"
+                  ? "h-3.5 w-3.5 bg-cobalt shadow-[0_0_0_5px_rgb(29_78_216/0.26)]"
+                  : "h-2.5 w-2.5 bg-cobalt/70"
               }`}
             />
           </div>
@@ -231,7 +231,7 @@ export default function OfficeMap({
         href="https://www.openstreetmap.org/copyright"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute bottom-1.5 right-2 z-40 rounded bg-white/75 px-1.5 py-0.5 text-[10.5px] text-[var(--hz-text-subtle)] transition-colors hover:text-[var(--hz-text-mute)]"
+        className="absolute bottom-1.5 right-2 z-40 rounded bg-white/75 px-1.5 py-0.5 text-[10.5px] text-ink-subtle transition-colors hover:text-ink-muted"
       >
         © OpenStreetMap contributors
       </a>
