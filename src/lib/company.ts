@@ -24,12 +24,12 @@ export type Milestone = {
 };
 
 export const MILESTONES: Milestone[] = [
-  { year: "2013", title: "Foundation", description: "Ocean Blue founded with a vision to transform enterprise IT." },
-  { year: "2015", title: "First prime-vendor MSA", description: "Established our first Master Service Agreement with a prime vendor." },
-  { year: "2021", title: "Fortune 500 MSA", description: "Secured an MSA with a Fortune 500 enterprise client." },
-  { year: "2022", title: "Expansion to India", description: "Opened a new delivery center with local operations." },
-  { year: "2024", title: "Offices in the UK", description: "Strengthened European presence and client services." },
-  { year: "2025", title: "AI practice launch", description: "Launched a dedicated AI practice for production deployments." },
+  { year: "2013", title: "Company Founded", description: "Ocean Blue opened in Ohio with a vision to transform enterprise IT." },
+  { year: "2015", title: "Breakthrough Engagement", description: "Signed our first Master Service Agreement with a prime vendor, establishing credibility as a delivery partner." },
+  { year: "2021", title: "Enterprise Trust", description: "Secured an MSA with a Fortune 500 client, taking our teams into enterprise-scale programs." },
+  { year: "2022", title: "Global Delivery", description: "Opened a delivery center in India with local operations, adding a second hub alongside the US." },
+  { year: "2024", title: "Major Expansion", description: "Opened offices in the United Kingdom to strengthen our European presence and client service." },
+  { year: "2025", title: "AI Expertise", description: "Launched a dedicated AI practice that takes models from pilot to production." },
 ];
 
 /** Every year from founding through `through`, inclusive. */

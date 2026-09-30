@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { LinkButton } from "./button";
 import { DotsBackdrop } from "./dots-backdrop";
 import { IconArrowRight, IconClock, IconMail, IconPhone } from "./icons";
+import { LineGrid } from "./line-grid";
+import { CloudShader } from "@/components/ui/cloud-shader";
 
 /* The building blocks every public page is composed from. One container
    width, one section rhythm, one heading scale, so pages differ in content
@@ -28,56 +30,106 @@ export const OPENER_Y = "pt-28 pb-10 sm:pt-32 sm:pb-12 lg:pt-36 lg:pb-14";
 export const STACK_LG = "mt-10 sm:mt-12";
 export const STACK_MD = "mt-8 sm:mt-10";
 
-/** Centred section title with a supporting line; both rise in as the section scrolls into view. */
-export function SectionTitle({ title, sub, className, dark }: { title: string; sub?: string; className?: string; dark?: boolean }) {
+/** Section header: optional kicker, title, supporting line and one "Explore" link.
+ *  Left-aligned on light grounds, centred on dark ones. */
+export function SectionTitle({
+  title,
+  sub,
+  kicker,
+  link,
+  className,
+  dark,
+  align = dark ? "center" : "left",
+}: {
+  title: string;
+  sub?: string;
+  kicker?: string;
+  link?: { href: string; label: string };
+  className?: string;
+  dark?: boolean;
+  align?: "left" | "center";
+}) {
+  const center = align === "center";
   return (
-    <div className={cn("mx-auto max-w-[820px] text-center", className)}>
-      <h2 className={cn("reveal type-headline", dark ? "text-white" : "text-ink")}>{title}</h2>
-      {sub && <p className={cn("reveal mx-auto mt-5 max-w-[640px] type-body-lg", dark ? "text-white/75" : "text-ink-muted")}>{sub}</p>}
+    <div className={cn(center ? "mx-auto max-w-[820px] text-center" : "max-w-[760px]", className)}>
+      {kicker && <p className={cn("reveal type-label", dark ? "text-cobalt-light" : "text-cobalt")}>{kicker}</p>}
+      <h2 className={cn("reveal type-headline", kicker && "mt-3", dark ? "text-white" : "text-ink")}>{title}</h2>
+      {sub && <p className={cn("reveal mt-5 max-w-[640px] type-body-lg", center && "mx-auto", dark ? "text-white/75" : "text-ink-muted")}>{sub}</p>}
+      {link && (
+        <SectionLink href={link.href} dark={dark} className="reveal mt-6">
+          {link.label}
+        </SectionLink>
+      )}
     </div>
   );
 }
 
-/** A pill link under a section: the one next step that section earns. */
-export function SectionLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+/** The "Explore ▸" text link a section header ends on. */
+export function SectionLink({ href, children, className, dark }: { href: string; children: React.ReactNode; className?: string; dark?: boolean }) {
   return (
     <Link
       href={href}
       className={cn(
-        "group inline-flex items-center gap-2 rounded-full border border-line-strong bg-white px-5 py-2.5 text-[15px] font-semibold text-ink transition-colors hover:border-cobalt hover:text-cobalt",
+        "group inline-flex items-center gap-1.5 text-[15px] font-semibold transition-colors",
+        dark ? "text-white hover:text-cobalt-light" : "text-ink hover:text-cobalt",
         className,
       )}
     >
       {children}
-      <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+      <svg aria-hidden viewBox="0 0 8 10" className="size-2 fill-current transition-transform group-hover:translate-x-0.5">
+        <path d="M0 0l8 5-8 5z" />
+      </svg>
     </Link>
   );
 }
 
-/** Every section: same padding, centred title, content, then one centred link. Tones alternate. */
+type Ground = "white" | "paper";
+const GROUND: Record<Ground | "none", string> = { white: "#fff", paper: "var(--color-paper)", none: "transparent" };
+
+/** Wraps a dark band so its cut corners show the section above (`ground`) at
+ *  the top and the section below (`below`, default the same) at the bottom.
+ *  `below="none"` leaves the bottom corners clear for a section tucked under
+ *  the band (ClosingCta `tuck`). */
+export function ChamferGround({ ground = "white", below, children }: { ground?: Ground; below?: Ground | "none"; children: React.ReactNode }) {
+  return (
+    <div className="relative z-10" style={{ background: `linear-gradient(to bottom, ${GROUND[ground]} 50%, ${GROUND[below ?? ground]} 50%)` }}>
+      {children}
+    </div>
+  );
+}
+
+/** Every section: same padding, header, then content. Dark and blue tones get chamfered corners. */
 export function Section({
   tone = "white",
   title,
   sub,
+  kicker,
   link,
   children,
   id,
+  ground,
+  below,
 }: {
   /** `dark` is navy with the dot grid, `blue` cobalt with diagonal stripes: at most one of either per page (60-30-10). */
   tone?: "white" | "paper" | "dark" | "blue";
   title: string;
   sub?: string;
+  kicker?: string;
   link?: { href: string; label: string };
   children: React.ReactNode;
   id?: string;
+  /** Dark tones only: the tone of the neighbouring sections, shown in the cut corners. */
+  ground?: Ground;
+  /** Dark tones only: the tone of the section after, if it differs from `ground`. */
+  below?: Ground | "none";
 }) {
   const dark = tone === "dark" || tone === "blue";
-  return (
+  const section = (
     <section
       id={id}
       data-tone={tone}
       className={cn(
-        tone === "paper" ? "bg-paper" : tone === "blue" ? "on-dark relative isolate overflow-hidden bg-cobalt text-white" : dark ? "on-dark relative isolate overflow-hidden bg-night text-white" : "bg-white",
+        tone === "paper" ? "bg-paper" : tone === "blue" ? "on-dark chamfer relative isolate overflow-hidden bg-cobalt text-white" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
         SECTION_Y,
         id && "scroll-mt-28",
       )}
@@ -87,16 +139,12 @@ export function Section({
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[repeating-linear-gradient(115deg,rgb(255_255_255/0.09)_0_1px,transparent_1px_72px)]" />
       )}
       <div className={CONTAINER}>
-        <SectionTitle title={title} sub={sub} dark={dark} />
+        <SectionTitle title={title} sub={sub} kicker={kicker} link={link} dark={dark} />
         <div className={cn("reveal", STACK_LG)}>{children}</div>
-        {link && (
-          <div className={cn(STACK_LG, "text-center")}>
-            <SectionLink href={link.href}>{link.label}</SectionLink>
-          </div>
-        )}
       </div>
     </section>
   );
+  return dark ? <ChamferGround ground={ground} below={below}>{section}</ChamferGround> : section;
 }
 
 /** Sub-page opening: breadcrumb-free, left-aligned, one sentence of purpose. */
@@ -112,7 +160,8 @@ export function PageIntro({
   children?: React.ReactNode;
 }) {
   return (
-    <section data-opener className="border-b border-line bg-white">
+    <section data-opener className="relative isolate overflow-hidden border-b border-line bg-white">
+      <LineGrid />
       <div className={cn(CONTAINER, OPENER_Y)}>
         {kicker && <p className="rise text-[14px] font-semibold text-cobalt">{kicker}</p>}
         <h1 className="rise mt-3 max-w-[900px] type-headline-lg text-ink" style={{ animationDelay: "80ms" }}>
@@ -144,18 +193,40 @@ export function ClosingCta({
   sub = "Bring a role, a system or a deadline. We will come back with a plan and the people to deliver it.",
   primary = { href: "/contact", label: "Talk to us" },
   secondary = { href: "/careers/search", label: "Find a job" },
+  tuck,
 }: {
   title?: string;
   sub?: string;
   primary?: { href: string; label: string };
   secondary?: { href: string; label: string };
+  /** Directly after a dark band (with `below="none"`): slide up under its cut
+   *  bottom corners so the sky fills them, with no fade at the top. */
+  tuck?: boolean;
 }) {
   return (
-    <section data-tone="white" className="relative isolate overflow-hidden bg-[linear-gradient(to_bottom,#fff_70%,#f3f6fb_100%)]" aria-labelledby="cta-heading">
+    <section
+      data-tone="white"
+      data-ground="own"
+      className={cn("relative isolate overflow-hidden bg-[linear-gradient(to_bottom,#fff_70%,#f3f6fb_100%)]", tuck && "-mt-5 lg:-mt-12")}
+      aria-labelledby="cta-heading"
+    >
       {/* Downtown Columbus, a few miles from the Powell office. The crop is locked
           to the photo's proportions: it opens just above the tower tops and ends on
           the bridge, which dissolves into the footer's paper (the section's own
           background eases to the same colour), so there is no seam at any width. */}
+      {/* Drifting clouds across the top of the section, the sky over the
+          skyline; a thin fade at the top edge, out into the photo's sky below. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 -z-20 h-[80%]",
+          tuck
+            ? "[mask-image:linear-gradient(to_bottom,black_62%,transparent_95%)]"
+            : "[mask-image:linear-gradient(to_bottom,transparent,black_6%,black_62%,transparent_95%)]",
+        )}
+      >
+        <CloudShader className="min-h-0" count={6} speed={0.8} skyTopColor="#9fc0ec" skyBottomColor="#dfeaf8" cloudColor="#ffffff" />
+      </div>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 aspect-[700/290] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,rgb(0_0_0/0.04)_6%,rgb(0_0_0/0.14)_12%,rgb(0_0_0/0.3)_18%,rgb(0_0_0/0.5)_24%,rgb(0_0_0/0.7)_30%,rgb(0_0_0/0.86)_36%,#000_44%,#000_76%,rgb(0_0_0/0.8)_83%,rgb(0_0_0/0.5)_90%,rgb(0_0_0/0.18)_96%,transparent_100%)]">
         <Image src={IMG.ctaColumbus} alt="" width={2400} height={1601} sizes="100vw" className="absolute inset-x-0 top-[-19.3%] h-auto w-full max-w-none" />
       </div>
@@ -220,7 +291,8 @@ export function Band({ children, className, muted, id }: { children: React.React
 /** Opener for documents: legal, policies, statements. Paper ground, aligned to PolicyBody's prose column. */
 export function DocHero({ title, lede, updated }: { title: string; lede?: string; updated?: string }) {
   return (
-    <section data-opener className="border-b border-line bg-paper">
+    <section data-opener className="relative isolate overflow-hidden border-b border-line bg-paper">
+      <LineGrid />
       <div className={cn(CONTAINER, OPENER_Y, "lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12")}>
         <div className="hidden lg:block" />
         <div className="max-w-[760px]">

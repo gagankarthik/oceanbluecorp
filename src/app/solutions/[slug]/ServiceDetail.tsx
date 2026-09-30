@@ -66,9 +66,9 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       {/* The scope sheet: the question this page exists to answer. */}
       <Section tone="paper" title="What we cover" sub={`The ${data.capabilities.length} capabilities this practice delivers.`}>
         <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
-          {data.capabilities.map((c, i) => (
+          {data.capabilities.map((c) => (
             <li key={c} className="flex items-start gap-4 bg-white p-6 sm:p-7">
-              <span className="pt-0.5 text-[13px] font-semibold text-cobalt tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+              <IconCheck size={18} className="mt-0.5 shrink-0 text-cobalt" />
               <span className="type-body font-medium text-ink">{c}</span>
             </li>
           ))}

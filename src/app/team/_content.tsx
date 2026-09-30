@@ -4,6 +4,7 @@ import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { Band, Section, ClosingCta } from "@/components/site/sections";
 import { IconLinkedin } from "@/components/site/company/icons";
+import { IconCheck } from "@/components/site/icons";
 
 /* Team is a ROSTER. The page's whole job is "who are these people", so the
    leadership wall comes first and carries the page.
@@ -74,9 +75,9 @@ export default function TeamPage() {
             A team you can hold to the outcome
           </h2>
           <ol className="reveal divide-y divide-line border-y border-line lg:col-span-7">
-            {OPERATING.map((o, i) => (
+            {OPERATING.map((o) => (
               <li key={o.title} className="grid grid-cols-[40px_minmax(0,1fr)] gap-5 py-7">
-                <span className="pt-1 text-[15px] font-semibold text-cobalt tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                <IconCheck size={20} className="mt-1 text-cobalt" />
                 <div>
                   <h3 className="type-title-lg text-ink">{o.title}</h3>
                   <p className="mt-1.5 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>

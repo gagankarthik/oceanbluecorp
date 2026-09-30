@@ -84,8 +84,7 @@ function PracticeRow({ p, flip }: { p: Practice; flip: boolean }) {
         <Photo src={p.image} sizes="(min-width: 1024px) 500px, 100vw" />
       </div>
       <div className="flex flex-col p-7 sm:p-10">
-        <p className="text-[14px] font-semibold text-cobalt tabular-nums">{p.no}</p>
-        <h3 className="mt-2 type-headline-sm text-ink">{p.name}</h3>
+        <h3 className="type-headline-sm text-ink">{p.name}</h3>
         <p className="mt-3 max-w-[52ch] type-body text-ink-muted">{p.desc}</p>
         <ul className={`mt-7 border-t border-line ${p.services.length > 3 ? "grid gap-x-8 sm:grid-cols-2" : ""}`}>
           {p.services.map((s) => (
@@ -142,8 +141,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         <ol className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((st) => (
             <li key={st.no} className="bg-white p-7 sm:p-8">
-              <span className="flex size-10 items-center justify-center rounded-full bg-cobalt-tint text-[14px] font-semibold text-cobalt tabular-nums">{st.no}</span>
-              <h3 className="mt-6 type-title-lg text-ink">{st.title}</h3>
+              <h3 className="type-title-lg text-ink">{st.title}</h3>
               <p className="mt-2 type-body-sm text-ink-muted">{st.desc}</p>
             </li>
           ))}

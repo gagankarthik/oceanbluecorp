@@ -2065,3 +2065,70 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   font-size: 0.8125rem;
   line-height: 1.4;
 }
+
+/* Dark bands, shaped as on clerk.com: the top corners are cut, and at the
+   bottom the next section rises into the band as a trapezoid, so the dark
+   wraps around it. The ChamferGround wrapper supplies the neighbouring tone. */
+.chamfer {
+  --chamfer: 20px;
+  clip-path: polygon(
+    var(--chamfer) 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer),
+    100% 100%, calc(100% - var(--chamfer)) calc(100% - var(--chamfer)),
+    var(--chamfer) calc(100% - var(--chamfer)), 0 100%, 0 var(--chamfer)
+  );
+}
+@media (min-width: 1024px) {
+  .chamfer { --chamfer: 48px; }
+}
+
+/* Client strip: a box's mark slides up and out as the next one rises in. */
+@keyframes logo-in { from { opacity: 0; transform: translateY(40%); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes logo-out { from { opacity: 1; transform: none; filter: none; } to { opacity: 0; transform: translateY(-40%); filter: blur(6px); } }
+.logo-in { animation: logo-in 700ms var(--ease-emphasized-in) both; }
+.logo-out { animation: logo-out 550ms var(--ease-emphasized-out) both; }
+@media (prefers-reduced-motion: reduce) { .logo-in, .logo-out { animation: none; } .logo-out { display: none; } }
+
+/* Solutions showcase demos, played on the card the canvas centres on. They
+   start after the canvas has settled (it glides for 1s). */
+.demo-cursor { left: 56%; bottom: 58px; animation: demo-cursor 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both; }
+@keyframes demo-cursor {
+  0% { opacity: 0; transform: translate(70px, -110px); }
+  15% { opacity: 1; }
+  65% { transform: translate(0, 0); }
+  75% { transform: scale(0.82); }
+  85%, 100% { opacity: 1; transform: none; }
+}
+.demo-press { animation: demo-press 2.6s ease both; }
+@keyframes demo-press {
+  0%, 80% { transform: none; }
+  84% { transform: scale(0.96); background: var(--color-cobalt); }
+  92%, 100% { transform: none; background: var(--color-cobalt); }
+}
+.demo-grow { animation: demo-grow 700ms cubic-bezier(0.4, 0, 0.2, 1) 700ms both; }
+@keyframes demo-grow { from { transform: scaleX(0); } }
+.demo-rise { animation: demo-rise 500ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+@keyframes demo-rise { from { transform: scaleY(0); } }
+.demo-ring { animation: demo-ring 1s cubic-bezier(0.4, 0, 0.2, 1) 600ms both; }
+@keyframes demo-ring { from { stroke-dashoffset: 94.2; } }
+.demo-draw { stroke-dasharray: 1; animation: demo-draw 1.2s ease 600ms both; }
+@keyframes demo-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.demo-flow { animation: demo-flow 1.6s ease-in-out infinite; }
+@keyframes demo-flow { from { left: 0; } to { left: calc(100% - 8px); } }
+.demo-pulse { animation: demo-pulse 1.4s ease-in-out infinite; }
+@keyframes demo-pulse { 50% { opacity: 0.35; } }
+.demo-caret { animation: demo-pulse 1s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .demo-cursor { display: none; }
+  .demo-press, .demo-grow, .demo-rise, .demo-ring, .demo-draw, .demo-flow, .demo-pulse, .demo-caret { animation: none; }
+}
+
+
+/* Where a white section meets a paper one, the ground eases across instead
+   of stepping, so the page reads as one surface.
+   Sections that paint their own ground carry data-ground and are left alone. */
+.site :is([data-tone="white"], [data-opener]) + [data-tone="paper"]:not([data-ground]) {
+  background-image: linear-gradient(to bottom, #fff, var(--color-paper) 220px);
+}
+.site [data-tone="paper"] + [data-tone="white"]:not([data-ground]) {
+  background-image: linear-gradient(to bottom, var(--color-paper), #fff 220px);
+}

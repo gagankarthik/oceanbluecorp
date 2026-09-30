@@ -3,6 +3,7 @@ import PageHero from "@/components/landing/PageHero";
 import Photo from "@/components/landing/Photo";
 import { IMG } from "@/components/landing/media";
 import { CAREER_BENEFITS } from "@/lib/careers";
+import { CountUp } from "@/components/ui/count-up";
 import { LinkButton } from "@/components/site/button";
 import { Section, ClosingCta, CONTAINER } from "@/components/site/sections";
 import {
@@ -21,11 +22,12 @@ import {
      EEO statement      pre-existing legal copy
    Anything stated here should be something a new hire can hold us to. */
 
+// `from` keeps the founding year counting over a short run, not from zero.
 const FACTS = [
-  { v: "50+", k: "Team members" },
-  { v: "4", k: "Global offices" },
-  { v: "8", k: "Practice areas" },
-  { v: "2013", k: "Building since" },
+  { to: 50, suffix: "+", k: "Team members" },
+  { to: 4, k: "Global offices" },
+  { to: 8, k: "Practice areas" },
+  { to: 2013, from: 1995, k: "Building since" },
 ];
 
 /* Each tile opens the board as a keyword search. Departments on postings are
@@ -81,15 +83,26 @@ export default function CareersPage() {
       />
 
       {/* Four facts as a quiet strip, not a headline. */}
-      <div className="border-b border-line bg-white">
-        <dl className={`${CONTAINER} grid grid-cols-2 gap-px bg-line sm:grid-cols-4`}>
-          {FACTS.map((f) => (
-            <div key={f.k} className="flex flex-col-reverse bg-white px-2 py-8 sm:px-6">
-              <dt className="mt-1.5 type-body-sm text-ink-subtle">{f.k}</dt>
-              <dd className="type-headline font-semibold text-ink tabular-nums">{f.v}</dd>
-            </div>
-          ))}
-        </dl>
+      <div className="bg-white pb-12 sm:pb-16">
+        <div className={CONTAINER}>
+          <dl className="reveal grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+            {FACTS.map((f) => (
+              <div key={f.k} className="flex flex-col-reverse items-center bg-white px-4 py-8 text-center sm:py-10">
+                <dt className="mt-2 type-body-sm text-ink-subtle">{f.k}</dt>
+                <dd className="type-headline font-semibold text-ink tabular-nums">
+                  <span className="sr-only">
+                    {f.to}
+                    {f.suffix}
+                  </span>
+                  <span aria-hidden>
+                    <CountUp to={f.to} from={f.from} digitEffect="blur" duration={1.6} />
+                    {f.suffix}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
       <Section
