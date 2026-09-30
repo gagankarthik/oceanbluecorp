@@ -1,11 +1,13 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
+import { motion, useScroll, useSpring } from "motion/react";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { OFFICES } from "@/components/landing/Locations";
 import { Band, Section, SectionTitle, ClosingCta } from "@/components/site/sections";
-import { CertificationStrip } from "@/components/site/credentials";
+import { CredentialsBand } from "@/components/site/credentials";
 import { IconArrowRight, IconTalent, IconServer, IconBuilding, type Icon } from "@/components/site/icons";
 import { IconPin } from "@/components/site/company/icons";
 import { MILESTONES, FOUNDED_YEAR } from "@/lib/company";
@@ -28,6 +30,11 @@ const STRENGTHS: { title: string; body: string; icon: Icon }[] = [
 ];
 
 export default function AboutPage({ content = {} }: { content?: Record<string, string> }) {
+  // Timeline progress: the rail fills cobalt as the milestones scroll past
+  // (after 21st.dev's shadcnspace timeline-01).
+  const rail = useRef<HTMLOListElement>(null);
+  const { scrollYProgress } = useScroll({ target: rail, offset: ["start 70%", "end 55%"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
   const years = new Date().getFullYear() - FOUNDED_YEAR;
 
   return (
@@ -61,41 +68,54 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
         </div>
       </Band>
 
-      {/* The spine: the years in order. Sticky heading on the left, the rail
-          running down the right, so the story reads as one column of time. */}
+      {/* The journey: a centre rail with milestones alternating either side on
+          desktop, collapsing to a single left rail on mobile. */}
       <Band muted>
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-4">
-            <div className="lg:sticky lg:top-28">
-              <h2 className="reveal type-headline text-ink">
-                {years} years, in order
-              </h2>
-              <p className="reveal mt-5 max-w-[42ch] type-body-lg text-ink-muted">
-                From a single office in Ohio to four across three countries, with the practices added as clients asked for them.
-              </p>
-            </div>
-          </div>
-          <ol className="relative lg:col-span-8">
-            <span aria-hidden className="absolute top-3 bottom-3 left-[7px] w-px bg-line-strong" />
-            {MILESTONES.map((m, i) => (
-              <li key={m.year} className="reveal relative pb-6 pl-10 last:pb-0 sm:pl-12">
+        <SectionTitle
+          align="center"
+          title="Our journey"
+          sub={`${years} years of growth, delivery and client partnership, from a single office in Ohio to four across three countries.`}
+        />
+        <ol ref={rail} className="relative mx-auto mt-12 max-w-5xl sm:mt-16">
+          <span aria-hidden className="absolute top-3 bottom-3 left-[7px] w-px bg-line-strong lg:left-1/2" />
+          <motion.span
+            aria-hidden
+            style={{ scaleY: fill }}
+            className="absolute top-3 bottom-3 left-[6px] w-[3px] origin-top rounded-full bg-cobalt lg:left-[calc(50%-1px)]"
+          />
+          {MILESTONES.map((m, i) => {
+            const cardLeft = i % 2 === 0;
+            return (
+              <li
+                key={m.year}
+                className="reveal relative pb-6 pl-10 last:pb-0 sm:pl-12 lg:grid lg:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)] lg:items-center lg:pb-10 lg:pl-0"
+              >
                 <span
                   aria-hidden
-                  className={`absolute top-6 left-0 size-[15px] rounded-full border-2 border-cobalt ${
+                  className={`absolute top-7 left-0 size-[15px] rounded-full border-2 border-cobalt lg:static lg:col-start-2 lg:row-start-1 lg:justify-self-center ${
                     i === MILESTONES.length - 1 ? "bg-cobalt" : "bg-paper"
                   }`}
                 />
-                <div className="grid gap-2 rounded-2xl border border-line bg-white p-6 sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-6">
-                  <span className="type-title-lg text-cobalt tabular-nums">{m.year}</span>
-                  <div>
-                    <h3 className="type-title text-ink">{m.title}</h3>
-                    <p className="mt-1.5 type-body-sm text-ink-muted">{m.description}</p>
-                  </div>
+                <span
+                  className={`hidden type-title-lg text-cobalt tabular-nums lg:row-start-1 lg:block ${
+                    cardLeft ? "lg:col-start-3" : "lg:col-start-1 lg:text-right"
+                  }`}
+                >
+                  {m.year}
+                </span>
+                <div
+                  className={`rounded-2xl border border-line bg-white p-6 sm:p-7 lg:row-start-1 ${
+                    cardLeft ? "lg:col-start-1 lg:text-right" : "lg:col-start-3"
+                  }`}
+                >
+                  <span className="text-[13px] font-semibold text-cobalt tabular-nums lg:hidden">{m.year}</span>
+                  <h3 className="type-title-lg text-ink">{m.title}</h3>
+                  <p className="mt-2 type-body-sm text-ink-muted">{m.description}</p>
                 </div>
               </li>
-            ))}
-          </ol>
-        </div>
+            );
+          })}
+        </ol>
       </Band>
 
       {/* The standard: what we hold ourselves to, each line leading somewhere. */}
@@ -160,9 +180,10 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
         </div>
       </Band>
 
-      <CertificationStrip />
+      <CredentialsBand ground="white" below="none" />
 
       <ClosingCta
+        tuck
         title="Work with a team that owns the outcome"
         sub="Tell us what you are trying to change and we will tell you, plainly, whether we are the right people for it."
         secondary={{ href: "/team", label: "Meet the team" }}

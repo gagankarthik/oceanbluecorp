@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
 
 /**
- * Cookie consent. A card at the bottom-left on desktop, a bottom sheet on
- * phones, never covering the page's main actions.
+ * Cookie consent. A modal over a dimmed, blurred page: a card at the bottom
+ * centre on desktop, a bottom sheet on phones. The page stays locked until a choice is
+ * made.
  *
  * Rejecting is as easy as accepting (same size, same row), and "Manage
  * choices" offers real per-category switches. Anything shown as optional can
@@ -67,6 +68,7 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [manage, setManage] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({ preferences: false });
+  const card = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -84,6 +86,18 @@ export default function CookieConsent() {
     window.addEventListener(OPEN_COOKIE_SETTINGS, reopen);
     return () => window.removeEventListener(OPEN_COOKIE_SETTINGS, reopen);
   }, []);
+
+  // Lock the page behind the modal and move focus into it.
+  useEffect(() => {
+    if (!visible) return;
+    const root = document.documentElement;
+    const prev = root.style.overflow;
+    root.style.overflow = "hidden";
+    card.current?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+    return () => {
+      root.style.overflow = prev;
+    };
+  }, [visible]);
 
   const save = useCallback((level: "all" | "essential" | "custom", chosen: Prefs) => {
     try {
@@ -105,12 +119,17 @@ export default function CookieConsent() {
   return (
     <div
       role="dialog"
-      aria-modal="false"
+      aria-modal="true"
       aria-labelledby="cookie-title"
       aria-describedby="cookie-desc"
-      className="site fixed inset-x-0 bottom-0 z-[10000] sm:inset-x-auto sm:bottom-5 sm:left-5 sm:w-[420px]"
+      data-lenis-prevent
+      data-state="open"
+      className="site sheet-overlay fixed inset-0 z-[10000] flex items-end justify-center bg-[#0b1a33]/50 backdrop-blur-md sm:p-6"
     >
-      <div className="rise max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-t-3xl border border-line bg-white shadow-[var(--shadow-modal)] sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-2xl">
+      <div
+        ref={card}
+        className="rise max-h-[calc(100dvh-1rem)] w-full overflow-y-auto overscroll-contain rounded-t-3xl border border-line bg-white shadow-[var(--shadow-modal)] sm:max-h-[calc(100dvh-3rem)] sm:w-[460px] sm:rounded-2xl"
+      >
         <div className="flex items-start justify-between gap-4 px-5 pt-5 sm:px-6 sm:pt-6">
           <div className="flex items-center gap-2">
             {manage && (

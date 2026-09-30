@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { IconPause, IconPlay } from "./icons";
 
-/* Client marks as one quiet monochrome strip. Two copies make the loop
-   seamless; the second is hidden from assistive tech. */
+/* Client marks for the home page strip. */
 
 type Logo = { name: string; src: string; w: number; remote?: boolean; dark?: boolean };
 
@@ -37,32 +35,67 @@ function Mark({ l, hidden }: { l: Logo; hidden: boolean }) {
   return <Image src={l.src} alt={alt} width={l.w} height={32} sizes={`${l.w}px`} className={cls} style={{ maxWidth: l.w }} />;
 }
 
-export function CustomerMarquee() {
-  const [paused, setPaused] = useState(false);
-  const row = [...LOGOS, ...LOGOS];
+const CELLS = 4;
+const STAGGER = 110; // ms between boxes, left to right
+
+/** The client strip: a label on the left, then four fixed boxes. Every few
+ *  seconds all four move to the next set of clients together, the change
+ *  sweeping left to right. Holds still on hover and under reduced motion. */
+export function CustomerMarquee({ label }: { label: string }) {
+  // `set` counts rotations; box i shows client (set * CELLS + i) mod the list.
+  const [set, setSet] = useState(0);
+  const hover = useRef(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (!hover.current) setSet((n) => n + 1);
+    }, 3600);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const at = (n: number, i: number) => (n * CELLS + i) % LOGOS.length;
+
   return (
-    <div className="relative">
-      <div
-        data-motion={paused ? "paused" : "running"}
-        className="marquee-wrap relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
-      >
-        <ul className="marquee flex w-max items-center gap-16 py-2" aria-label="Clients">
-          {row.map((l, i) => (
-            <li key={i} aria-hidden={i >= LOGOS.length || undefined} className="group flex shrink-0 items-center">
-              <Mark l={l} hidden={i >= LOGOS.length} />
+    <div data-tone="white" className="border-b border-line bg-white">
+      <div className="mx-auto flex max-w-[1240px] flex-col sm:px-6 lg:flex-row">
+        <p className="border-b border-line px-4 py-5 text-[15px] leading-snug text-ink sm:px-0 lg:flex lg:w-[250px] lg:shrink-0 lg:items-center lg:border-r lg:border-b-0 lg:pr-8">
+          {label}
+        </p>
+        <ul
+          aria-label="Clients"
+          onMouseEnter={() => (hover.current = true)}
+          onMouseLeave={() => (hover.current = false)}
+          className="grid flex-1 grid-cols-2 sm:grid-cols-4"
+        >
+          {Array.from({ length: CELLS }, (_, i) => (
+            <li
+              key={i}
+              className={`group relative h-24 overflow-hidden border-line transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : "sm:border-r"} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
+            >
+              {set > 0 && (
+                <span
+                  key={`out-${set}`}
+                  aria-hidden
+                  className="logo-out absolute inset-0 flex items-center justify-center px-5"
+                  style={{ animationDelay: `${i * STAGGER}ms` }}
+                >
+                  <Mark l={LOGOS[at(set - 1, i)]} hidden />
+                </span>
+              )}
+              <span
+                key={`in-${set}`}
+                className={`absolute inset-0 flex items-center justify-center px-5 ${set > 0 ? "logo-in" : ""}`}
+                style={set > 0 ? { animationDelay: `${i * STAGGER + 180}ms` } : undefined}
+              >
+                <span className="flex transition-transform duration-300 ease-[var(--ease-standard)] group-hover:scale-110">
+                  <Mark l={LOGOS[at(set, i)]} hidden={false} />
+                </span>
+              </span>
             </li>
           ))}
         </ul>
       </div>
-      <button
-        type="button"
-        onClick={() => setPaused((p) => !p)}
-        aria-pressed={paused}
-        aria-label={paused ? "Play logo animation" : "Pause logo animation"}
-        className="mx-auto mt-4 flex size-8 items-center justify-center rounded-full border border-line text-ink-subtle hover:border-ink-subtle hover:text-ink"
-      >
-        {paused ? <IconPlay size={12} /> : <IconPause size={12} />}
-      </button>
     </div>
   );
 }

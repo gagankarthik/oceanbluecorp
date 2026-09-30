@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Photo from "./Photo";
 import { CONTAINER, OPENER_Y } from "@/components/site/sections";
+import { LineGrid } from "@/components/site/line-grid";
 
 /**
  * The interior-page opener, in the site system: white ground, left-aligned
@@ -29,7 +30,8 @@ export default function PageHero({
   imagePriority?: boolean;
 }) {
   return (
-    <section data-opener className="border-b border-line bg-white">
+    <section data-opener className="relative isolate overflow-hidden border-b border-line bg-white">
+      <LineGrid />
       <div
         className={`${CONTAINER} ${OPENER_Y} grid gap-10 ${
           image ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-16" : ""

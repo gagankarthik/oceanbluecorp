@@ -213,10 +213,9 @@ export default function ProductsPage() {
       <Band>
         <SectionTitle title="How both are run" sub="The people who build our products are the people we would put on yours." />
         <ul className="reveal mt-10 grid gap-[3px] sm:mt-12 md:grid-cols-3">
-          {operating.map((o, i) => (
+          {operating.map((o) => (
             <li key={o.title} className="bg-paper p-8">
-              <span className="type-label font-semibold text-cobalt tabular-nums">0{i + 1}</span>
-              <h3 className="mt-4 type-title-lg font-semibold text-ink">{o.title}</h3>
+              <h3 className="type-title-lg font-semibold text-ink">{o.title}</h3>
               <p className="mt-2 type-body text-ink-muted">{o.body}</p>
             </li>
           ))}
