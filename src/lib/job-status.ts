@@ -10,3 +10,11 @@ export type PublicJobStatus = (typeof PUBLIC_JOB_STATUSES)[number];
 export function isPubliclyOpen(status: string | null | undefined): status is PublicJobStatus {
   return (PUBLIC_JOB_STATUSES as readonly string[]).includes(status ?? "");
 }
+
+/** Which admin list a posting lives in. Both show together on the careers board. */
+export type JobCategory = "state" | "open";
+
+/** Records from before the split carry no category; they are all state roles. */
+export function jobCategory(job: { category?: string | null }): JobCategory {
+  return job.category === "open" ? "open" : "state";
+}

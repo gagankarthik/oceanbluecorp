@@ -407,7 +407,6 @@ export default function HelpPage() {
               value={query}
               onChange={setQuery}
               placeholder="Find a person, role or team"
-              className="sm:w-[280px]"
             />
             <div className="adm-scroll-hidden -mx-1 max-w-full overflow-x-auto px-1">
               <PeriodSwitcher label="Team" options={teamOptions} value={team} onChange={setTeam} />

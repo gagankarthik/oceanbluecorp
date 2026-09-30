@@ -634,7 +634,6 @@ export default function ApplicationsPage() {
             value={search}
             onChange={setSearch}
             placeholder="Search name, email, position, or a skill from their resume"
-            className="sm:w-[320px]"
           />
         }
         trailing={

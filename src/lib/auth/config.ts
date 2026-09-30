@@ -264,6 +264,7 @@ export const routeAccess: Record<string, UserRole[]> = {
   // public projection, no rates, client or assignees, and JOB_EDIT_ROLES keeps
   // the create/edit controls away from them.
   "/admin/jobs": [...ALL_STAFF, UserRole.MEDIA],
+  "/admin/open-roles": [...ALL_STAFF, UserRole.MEDIA],
   "/admin/applications": ALL_STAFF,
   "/admin/candidates": ALL_STAFF,
   "/admin/bench": ALL_STAFF,

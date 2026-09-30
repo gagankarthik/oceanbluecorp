@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
@@ -10,8 +10,16 @@ import {
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
+import { jobCategory } from "@/lib/job-status";
 
-export default function NewJobPage() {
+const LIST_HREF = { state: "/admin/jobs", open: "/admin/open-roles" } as const;
+
+export default function NewJobPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const category = jobCategory(use(searchParams));
   const { user } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
@@ -24,8 +32,8 @@ export default function NewJobPage() {
   const isRecruiter = !canEditJobs(user?.role);
 
   useEffect(() => {
-    if (user?.role && !canEditJobs(user.role)) router.replace("/admin/jobs");
-  }, [user, router]);
+    if (user?.role && !canEditJobs(user.role)) router.replace(LIST_HREF[category]);
+  }, [user, router, category]);
 
   // Clients, vendors and the staff list are the reference data behind the
   // commercial half of the form. Media does not render those panels and the
@@ -69,7 +77,7 @@ export default function NewJobPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "The job could not be created. Try again in a moment.");
-      router.push("/admin/jobs");
+      router.push(LIST_HREF[data.category]);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "The job could not be created. Try again in a moment.");
     } finally {
@@ -99,7 +107,7 @@ export default function NewJobPage() {
     <div className="pb-10">
       <JobForm
         mode="create"
-        initialData={DEFAULT_JOB_FORM}
+        initialData={{ ...DEFAULT_JOB_FORM, category }}
         clients={clients}
         vendors={vendors}
         hrUsers={hrUsers}

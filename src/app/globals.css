@@ -2077,15 +2077,28 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
     var(--chamfer) calc(100% - var(--chamfer)), 0 100%, 0 var(--chamfer)
   );
 }
+/* Top edge notched like the bottom one, mirrored. */
+.chamfer.chamfer-notched {
+  clip-path: polygon(
+    0 0, var(--chamfer) var(--chamfer), calc(100% - var(--chamfer)) var(--chamfer), 100% 0,
+    100% 100%, calc(100% - var(--chamfer)) calc(100% - var(--chamfer)),
+    var(--chamfer) calc(100% - var(--chamfer)), 0 100%
+  );
+}
+/* The notch cuts into the top padding; give it back so the heading keeps SECTION_Y's clearance. */
+.chamfer.chamfer-notched { padding-top: calc(4rem + var(--chamfer)); }
+@media (min-width: 640px) { .chamfer.chamfer-notched { padding-top: calc(5rem + var(--chamfer)); } }
+@media (min-width: 1024px) { .chamfer.chamfer-notched { padding-top: calc(6rem + var(--chamfer)); } }
 @media (min-width: 1024px) {
   .chamfer { --chamfer: 48px; }
 }
 
-/* Client strip: a box's mark slides up and out as the next one rises in. */
-@keyframes logo-in { from { opacity: 0; transform: translateY(40%); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
-@keyframes logo-out { from { opacity: 1; transform: none; filter: none; } to { opacity: 0; transform: translateY(-40%); filter: blur(6px); } }
-.logo-in { animation: logo-in 700ms var(--ease-emphasized-in) both; }
-.logo-out { animation: logo-out 550ms var(--ease-emphasized-out) both; }
+/* Client strip: a box's mark tips back and fades as the next one turns in. */
+@keyframes logo-in { from { opacity: 0; transform: rotateX(-80deg) scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes logo-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: rotateX(80deg) scale(0.92); } }
+.logo-in, .logo-out { backface-visibility: hidden; transform-origin: 50% 50%; will-change: transform, opacity; }
+.logo-in { animation: logo-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.logo-out { animation: logo-out 650ms cubic-bezier(0.55, 0, 0.45, 1) both; }
 @media (prefers-reduced-motion: reduce) { .logo-in, .logo-out { animation: none; } .logo-out { display: none; } }
 
 /* Solutions showcase demos, played on the card the canvas centres on. They
@@ -2131,4 +2144,39 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 }
 .site [data-tone="paper"] + [data-tone="white"]:not([data-ground]) {
   background-image: linear-gradient(to bottom, var(--color-paper), #fff 220px);
+}
+
+/* 404 (components/site/missing-page): the window rises in, the skeleton
+   shimmers as if loading, the magnifier sweeps the hole, the scrap flutters. */
+.nf-rise, .nf-sweep, .nf-scrap, .nf-digits { transform-box: fill-box; transform-origin: 50% 50%; }
+.nf-rise { animation: nf-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes nf-rise { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.nf-shimmer { animation: nf-shimmer 1.8s ease-in-out infinite; }
+@keyframes nf-shimmer { 50% { opacity: .45; } }
+
+.nf-digits { animation: nf-digits 1s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms both; }
+@keyframes nf-digits { from { opacity: 0; transform: translateY(26px) scale(.9); } to { opacity: 1; transform: none; } }
+
+.nf-blink { animation: nf-blink 2.4s steps(1) infinite; }
+@keyframes nf-blink { 50% { opacity: .35; } }
+
+.nf-sweep { animation: nf-sweep 7s ease-in-out 900ms infinite both; }
+@keyframes nf-sweep {
+  0%, 100% { transform: translate(-130px, 10px) rotate(-8deg); }
+  30% { transform: translate(-20px, -24px) rotate(4deg); }
+  55% { transform: translate(120px, 16px) rotate(10deg); }
+  80% { transform: translate(30px, 30px) rotate(-2deg); }
+}
+
+.nf-scrap { animation: nf-scrap 5.5s ease-in-out infinite; transform-origin: 50% 20%; }
+@keyframes nf-scrap {
+  0%, 100% { transform: translate(0, 0) rotate(-14deg); }
+  25% { transform: translate(-10px, -12px) rotate(-4deg); }
+  50% { transform: translate(6px, -4px) rotate(-20deg); }
+  75% { transform: translate(-4px, -14px) rotate(-8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-rise, .nf-shimmer, .nf-digits, .nf-blink, .nf-sweep, .nf-scrap { animation: none; }
 }

@@ -17,7 +17,7 @@ import {
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs,
   IconHome, IconHrPortal, IconLogout, IconShield,
-  IconBook, IconChart, IconQuote, IconNews,
+  IconBook, IconChart, IconQuote, IconNews, IconJob,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -40,7 +40,8 @@ type Section = (typeof SECTION_ORDER)[number];
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
-  { name: "Job Postings", href: "/admin/jobs",         icon: IconRequisition,  roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
+  { name: "State Roles",  href: "/admin/jobs",         icon: IconRequisition,  roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
+  { name: "Open Roles",   href: "/admin/open-roles",   icon: IconJob,          roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
   { name: "Resumes",      href: "/admin/resumes",      icon: IconResume,       roles: ALL_ROLES, section: "Recruiting" },
@@ -247,8 +248,11 @@ function UserMenu({
     <Avatar name={user?.name} email={user?.email} size={size} src={photoSrc} onError={() => setAvatarFailed(true)} />
   );
 
-  const item =
-    "flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]";
+  // Rows share the top bar's 36px height and 18px icons.
+  const row = "flex h-9 w-full items-center gap-3 rounded-[8px] px-2.5 text-[13.5px] transition-colors";
+  const item = cn(row, "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]");
+  const icon = "h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]";
+  const external = "ml-auto h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]";
 
   return (
     <div ref={ref} className="relative">
@@ -258,7 +262,7 @@ function UserMenu({
         aria-expanded={open}
         aria-haspopup="menu"
         className={cn(
-          "ml-1 flex items-center rounded-full p-0.5 transition-shadow hover:ring-2 hover:ring-[var(--adm-line)]",
+          "grid h-9 w-9 place-items-center rounded-full transition-shadow hover:ring-2 hover:ring-[var(--adm-line)]",
           open && "ring-2 ring-[var(--adm-focus-ring)]",
         )}
       >
@@ -271,7 +275,7 @@ function UserMenu({
           aria-label="Account"
           className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]"
         >
-          <div className="flex items-center gap-2.5 border-b border-[var(--adm-line)] px-3 py-3">
+          <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
             {avatar("md")}
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{user?.name}</p>
@@ -281,35 +285,35 @@ function UserMenu({
               {role}
             </span>
           </div>
-          <div className="p-1" role="none">
+          <div className="p-1.5" role="none">
             <Link href="/admin/settings" role="menuitem" onClick={close} className={item}>
-              <IconSettings className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Settings
+              <IconSettings className={icon} aria-hidden="true" /> Settings
             </Link>
             {canHr && (
               <a href="https://hr.oceanbluecorp.com" target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close} className={item}>
-                <IconHrPortal className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                <IconHrPortal className={icon} aria-hidden="true" />
                 HR Portal
-                <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                <ExternalLink className={external} aria-hidden="true" />
               </a>
             )}
             {user?.role === UserRole.ADMIN && (
               <Link href="/admin/docs" role="menuitem" onClick={close} className={item}>
-                <IconDocs className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" /> Developer
+                <IconDocs className={icon} aria-hidden="true" /> Developer
               </Link>
             )}
             <a href="/" target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close} className={item}>
-              <IconHome className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+              <IconHome className={icon} aria-hidden="true" />
               View website
-              <ExternalLink className="ml-auto h-3 w-3 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+              <ExternalLink className={external} aria-hidden="true" />
             </a>
           </div>
-          <div className="border-t border-[var(--adm-line)] p-1" role="none">
+          <div className="border-t border-[var(--adm-line)] p-1.5" role="none">
             <button
               role="menuitem"
               onClick={() => signOut()}
-              className="flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-danger-ink)] transition-colors hover:bg-[var(--adm-danger-soft)]"
+              className={cn(row, "text-[var(--adm-danger-ink)] hover:bg-[var(--adm-danger-soft)]")}
             >
-              <IconLogout className="h-4 w-4" aria-hidden="true" /> Sign out
+              <IconLogout className="h-[18px] w-[18px] flex-none" aria-hidden="true" /> Sign out
             </button>
           </div>
         </div>
@@ -560,7 +564,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             {canSearch && <HeaderSearch />}
           </div>
 
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-end gap-2">
             {canSearch && (
               <button type="button" onClick={openCommandPalette} aria-label="Open search" className={cn(iconButton, "md:hidden")}>
                 <Search className="h-[18px] w-[18px]" aria-hidden="true" />

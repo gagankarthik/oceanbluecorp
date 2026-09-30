@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
       // New fields
       postingId: postingIdResult.postingId,
       state: body.state,
+      category: body.category === "open" ? "open" : "state",
       // Commercial half of the record, recruiting roles only.
       clientId: commercial(body.clientId),
       clientName: commercial(body.clientName),

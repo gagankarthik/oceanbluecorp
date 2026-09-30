@@ -381,12 +381,19 @@ export default function TalentBenchPage() {
     return { name, role: u?.role };
   }, [addedByIndex]);
 
-  // Admins can browse the whole team's bench; this powers the "Added by" filter.
+  // Admins see the whole team's bench; everyone sees the whole internal bench.
+  // Either way there is more than one adder to slice by.
+  const canFilterByAdder = isAdmin || poolFilter === "internal";
+  const activeOwner = canFilterByAdder ? ownerFilter : "all";
+
   const adderNames = useMemo(
-    () => (isAdmin
-      ? [...new Set(applications.map((a) => resolveAdder(a).name).filter(Boolean))].sort()
+    () => (canFilterByAdder
+      ? [...new Set(applications
+          .filter((a) => isAdmin || poolOf(a) === "internal")
+          .map((a) => resolveAdder(a).name)
+          .filter(Boolean))].sort()
       : []),
-    [isAdmin, applications, resolveAdder],
+    [canFilterByAdder, isAdmin, applications, resolveAdder],
   );
 
   /**
@@ -403,9 +410,9 @@ export default function TalentBenchPage() {
    */
   const scopedApplications = useMemo(() => applications.filter((app) => {
     const viewer = { id: user?.id, email: user?.email, isAdmin };
-    const matchesOwner = !isAdmin || ownerFilter === "all" || resolveAdder(app).name === ownerFilter;
+    const matchesOwner = !isAdmin || activeOwner === "all" || resolveAdder(app).name === activeOwner;
     return canView(app, viewer) && matchesOwner;
-  }), [applications, isAdmin, user?.email, user?.id, ownerFilter, resolveAdder]);
+  }), [applications, isAdmin, user?.email, user?.id, activeOwner, resolveAdder]);
 
   /** Tab counts come from the scoped set, so they don't move as filters change. */
   const poolCounts = useMemo(() => ({
@@ -418,12 +425,15 @@ export default function TalentBenchPage() {
    * The selected pool. The KPI strip, status counts and the grid are all built
    * from this list, switching tabs re-scopes the whole page, not just the rows.
    */
-  const pooledApplications = useMemo(
-    () => (poolFilter === "all"
+  const pooledApplications = useMemo(() => {
+    const pooled = poolFilter === "all"
       ? scopedApplications
-      : scopedApplications.filter((a) => poolOf(a) === poolFilter)),
-    [scopedApplications, poolFilter],
-  );
+      : scopedApplications.filter((a) => poolOf(a) === poolFilter);
+    // Admins already filtered by adder in the scoped set.
+    return isAdmin || activeOwner === "all"
+      ? pooled
+      : pooled.filter((a) => resolveAdder(a).name === activeOwner);
+  }, [scopedApplications, poolFilter, isAdmin, activeOwner, resolveAdder]);
 
   /**
    * Locations present in the visible bench, with a count each. Built from the
@@ -493,9 +503,9 @@ export default function TalentBenchPage() {
     [pooledApplications],
   );
 
-  const activeFilterCount = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, ownerFilter]
+  const activeFilterCount = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, activeOwner]
     .filter((f) => f !== "all").length;
-  const hasActiveFilters = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, ownerFilter].some((f) => f !== "all")
+  const hasActiveFilters = [statusFilter, skillFilter, authFilter, hireFilter, locationFilter, activeOwner].some((f) => f !== "all")
     || debouncedSearch.trim() !== "";
 
   const clearFilters = () => {
@@ -1070,7 +1080,7 @@ export default function TalentBenchPage() {
    */
   const columns: DataTableColumn<ApplicationWithJob>[] = [
     candidateCol,
-    ...(isAdmin ? [addedByCol] : []),
+    ...(canFilterByAdder ? [addedByCol] : []),
     emailCol,
     skillsCol,
     locationCol,
@@ -1471,8 +1481,7 @@ export default function TalentBenchPage() {
                     {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
                   </FormSelect>
                 </Field>
-                {/* Only admins see the whole team's bench, so only they slice it by adder. */}
-                {isAdmin && (
+                {canFilterByAdder && (
                   <Field label="Added by" htmlFor="bench-filter-owner">
                     <FormSelect id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
                       <option value="all">Everyone</option>
@@ -1511,7 +1520,7 @@ export default function TalentBenchPage() {
           ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
           ...(hireFilter !== "all" ? [{ label: `Hire type: ${hireTypeLabel(hireFilter)}`, onClear: () => setHireFilter("all") }] : []),
           ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabelOf(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
-          ...(ownerFilter !== "all" ? [{ label: `Added by: ${ownerFilter}`, onClear: () => setOwnerFilter("all") }] : []),
+          ...(activeOwner !== "all" ? [{ label: `Added by: ${activeOwner}`, onClear: () => setOwnerFilter("all") }] : []),
         ]}
         onClearAll={clearFilters}
       />
@@ -1545,7 +1554,7 @@ export default function TalentBenchPage() {
         // Cards sit on the canvas; inside the table panel they read as cards-in-a-card.
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {filteredApplications.map((app) => {
-            const adder = isAdmin ? resolveAdder(app) : null;
+            const adder = canFilterByAdder ? resolveAdder(app) : null;
             const age = daysOnBench(app);
             return (
               <AdminCard key={app.id} hover className="flex h-full min-w-0 flex-col p-4">

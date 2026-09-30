@@ -11,7 +11,7 @@ import { LinkButton } from "@/components/site/button";
 import { LineGrid } from "@/components/site/line-grid";
 import { HeroBackdrop } from "@/components/site/hero-backdrop";
 import { IconArrowRight } from "@/components/site/icons";
-import { GeoCivic, GeoCross, GeoColumns, GeoPlant } from "@/components/site/geo-art";
+import { ArtCapitol, ArtHealth, ArtFinance, ArtFactory } from "@/components/site/industry-art";
 
 import { getSiteContent } from "@/lib/content";
 import { isAnniversaryLive } from "@/lib/anniversary";
@@ -39,10 +39,10 @@ const HERO = {
 };
 
 const INDUSTRIES = [
-  { name: "Government and public sector", body: "Staff augmentation and managed services for state agencies, from a certified MBE and WBE supplier.", Art: GeoCivic },
-  { name: "Healthcare", body: "Cloud, data and application specialists for the systems that hold patient information.", Art: GeoCross },
-  { name: "Financial services", body: "Security, data and platform engineers for regulated, always-on systems.", Art: GeoColumns },
-  { name: "Manufacturing", body: "Mechanical, electrical and controls engineers alongside the IT that runs the plant.", Art: GeoPlant },
+  { name: "Government and public sector", body: "Staff augmentation and managed services for state agencies, from a certified MBE and WBE supplier.", Art: ArtCapitol },
+  { name: "Healthcare", body: "Cloud, data and application specialists for the systems that hold patient information.", Art: ArtHealth },
+  { name: "Financial services", body: "Security, data and platform engineers for regulated, always-on systems.", Art: ArtFinance },
+  { name: "Manufacturing", body: "Mechanical, electrical and controls engineers alongside the IT that runs the plant.", Art: ArtFactory },
 ];
 
 // The Organization node lives in the root layout; these page-level nodes give
@@ -169,6 +169,7 @@ export default async function Home() {
 
       <Section
         tone="blue"
+        notched
         ground="paper"
         below="none"
         title="Why clients keep working with us"

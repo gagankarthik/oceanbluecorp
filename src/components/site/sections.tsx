@@ -109,6 +109,7 @@ export function Section({
   id,
   ground,
   below,
+  notched,
 }: {
   /** `dark` is navy with the dot grid, `blue` cobalt with diagonal stripes: at most one of either per page (60-30-10). */
   tone?: "white" | "paper" | "dark" | "blue";
@@ -122,6 +123,8 @@ export function Section({
   ground?: Ground;
   /** Dark tones only: the tone of the section after, if it differs from `ground`. */
   below?: Ground | "none";
+  /** Dark tones only: notch the top edge to mirror the bottom one. */
+  notched?: boolean;
 }) {
   const dark = tone === "dark" || tone === "blue";
   const section = (
@@ -131,6 +134,7 @@ export function Section({
       className={cn(
         tone === "paper" ? "bg-paper" : tone === "blue" ? "on-dark chamfer relative isolate overflow-hidden bg-cobalt text-white" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
         SECTION_Y,
+        dark && notched && "chamfer-notched",
         id && "scroll-mt-28",
       )}
     >

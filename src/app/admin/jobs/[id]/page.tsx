@@ -11,6 +11,7 @@ import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
 import JobDetailLoading from "./loading";
+import { jobCategory } from "@/lib/job-status";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { GridSelect, MenuSelect, RecordFact, RecordHeader, WorkspaceButton } from "@/components/admin/workspace";
@@ -183,7 +184,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     const failed = !!error && !missing;
     return (
       <div className="pb-10">
-        <RecordHeader back={{ label: "Jobs", href: "/admin/jobs" }} title="Job posting" />
+        <RecordHeader back={{ label: "State roles", href: "/admin/jobs" }} title="Job posting" />
         <AdminCard>
           <EmptyState
             variant={failed ? "error" : "fresh"}
@@ -193,7 +194,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 {failed && <WorkspaceButton variant="primary" onClick={() => void fetchData()}>Try again</WorkspaceButton>}
-                <WorkspaceButton onClick={() => router.push("/admin/jobs")}>Back to jobs</WorkspaceButton>
+                <WorkspaceButton onClick={() => router.push("/admin/jobs")}>Back to state roles</WorkspaceButton>
               </div>
             }
           />
@@ -337,7 +338,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   return (
     <div className="pb-10">
       <RecordHeader
-        back={{ label: "Jobs", href: "/admin/jobs" }}
+        back={jobCategory(job) === "open"
+          ? { label: "Open roles", href: "/admin/open-roles" }
+          : { label: "State roles", href: "/admin/jobs" }}
         title={job.title}
         status={<StatusBadge status={job.status} label={statusLabel} size="md" />}
         meta={

@@ -634,7 +634,7 @@ export function WorkspaceSearch({
   }, []);
 
   return (
-    <div className={cn("relative w-full sm:w-[260px]", className)}>
+    <div className={cn("relative w-full sm:w-[340px] lg:w-[420px]", className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         ref={ref}

@@ -10,6 +10,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { ApiScope } from "@/lib/api-scopes";
+import type { JobCategory } from "@/lib/job-status";
 
 // Read environment variables directly every time (no caching)
 const getEnvConfig = () => {
@@ -615,6 +616,7 @@ export interface Application {
 export interface Job {
   id: string; // PK
   title: string;
+  category?: JobCategory;
   department: string;
   location: string;
   type: "full-time" | "part-time" | "contract" | "contract-to-hire" | "direct-hire" | "managed-teams" | "remote";
@@ -688,7 +690,7 @@ export type PublicJob = Pick<
   Job,
   | "id" | "postingId" | "title" | "department" | "location" | "state" | "type"
   | "description" | "requirements" | "responsibilities" | "salary" | "status"
-  | "submissionDueDate" | "createdAt" | "updatedAt" | "applicationsCount"
+  | "submissionDueDate" | "createdAt" | "updatedAt" | "applicationsCount" | "category"
 >;
 
 export function toPublicJob(job: Job): PublicJob {
@@ -709,6 +711,7 @@ export function toPublicJob(job: Job): PublicJob {
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     applicationsCount: job.applicationsCount,
+    category: job.category,
   };
 }
 

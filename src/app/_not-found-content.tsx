@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { CONTAINER } from "@/components/site/sections";
 import { LinkButton } from "@/components/site/button";
+import { LineGrid } from "@/components/site/line-grid";
+import { MissingPage } from "@/components/site/missing-page";
 import { IconArrowRight, IconLayers, IconBriefcase, IconBuilding, IconMail, type Icon } from "@/components/site/icons";
 
-/* Calm, not clever: say what happened, give the two likeliest ways out, then
-   the rest of the site as real destinations. Entrance is CSS (.rise), so it
-   paints on first byte and holds still under reduced motion. */
+/* The illustration carries the 404; the copy says what happened and gives the
+   likeliest ways out, then the rest of the site as real destinations. */
 
 const destinations: { title: string; href: string; desc: string; icon: Icon }[] = [
   { title: "Solutions", href: "/solutions", desc: "Staffing, engineering, platforms and operations", icon: IconLayers },
@@ -16,21 +17,26 @@ const destinations: { title: string; href: string; desc: string; icon: Icon }[] 
 
 export default function NotFoundContent() {
   return (
-    <section className="bg-white">
-      <div className={`${CONTAINER} grid min-h-[70svh] gap-12 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16`}>
-        <div>
-          <h1 className="sr-only">404, page not found</h1>
-          <p aria-hidden className="rise font-mono text-[15px] font-medium text-cobalt">
+    <section className="relative isolate overflow-hidden bg-white">
+      <LineGrid />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(60%_60%_at_50%_30%,var(--color-cobalt-tint),transparent)]" />
+
+      <div className={`${CONTAINER} pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24`}>
+        <div className="mx-auto flex max-w-[760px] flex-col items-center text-center">
+          <MissingPage id="nf" className="rise h-auto w-full max-w-[640px]" />
+
+          <p className="rise mt-6 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 font-mono text-[13px] font-medium text-cobalt" style={{ animationDelay: "200ms" }}>
+            <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
             Error 404
           </p>
-          <p className="rise mt-3 max-w-[16ch] type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
-            This page does not exist.
+          <h1 className="rise mt-4 type-headline-lg font-semibold text-ink" style={{ animationDelay: "280ms" }}>
+            This page doesn&rsquo;t exist.
+          </h1>
+          <p className="rise mt-5 max-w-[50ch] type-body-lg text-ink-muted" style={{ animationDelay: "360ms" }}>
+            The page you&rsquo;re looking for isn&rsquo;t here. The address may be mistyped,
+            or the page may have moved. Nothing is broken on your end.
           </p>
-          <p className="rise mt-6 max-w-[46ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
-            The address may be mistyped, or the page may have moved since you last
-            saw it. Nothing is broken on your end.
-          </p>
-          <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
+          <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "440ms" }}>
             <LinkButton href="/" variant="primary" size="lg">
               Back to home <IconArrowRight size={16} />
             </LinkButton>
@@ -40,9 +46,9 @@ export default function NotFoundContent() {
           </div>
         </div>
 
-        <div className="rise" style={{ animationDelay: "320ms" }}>
-          <p className="type-label font-semibold text-ink">Or try one of these</p>
-          <ul className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+        <div className="rise mx-auto mt-16 max-w-[1040px]" style={{ animationDelay: "520ms" }}>
+          <p className="text-center type-label font-semibold text-ink">Or head somewhere useful</p>
+          <ul className="mt-5 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {destinations.map((d) => (
               <li key={d.href} className="bg-white">
                 <Link href={d.href} className="group flex h-full flex-col p-6 transition-colors hover:bg-paper">
@@ -58,7 +64,7 @@ export default function NotFoundContent() {
               </li>
             ))}
           </ul>
-          <p className="mt-6 type-body-sm text-ink-muted">
+          <p className="mt-6 text-center type-body-sm text-ink-muted">
             Looking for a role?{" "}
             <Link href="/careers/search" className="font-semibold text-ink underline underline-offset-4 hover:text-cobalt">
               Search open positions

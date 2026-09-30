@@ -71,7 +71,7 @@ export function CustomerMarquee({ label }: { label: string }) {
           {Array.from({ length: CELLS }, (_, i) => (
             <li
               key={i}
-              className={`group relative h-24 overflow-hidden border-line transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : "sm:border-r"} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
+              className={`group relative h-24 overflow-hidden border-line [perspective:600px] transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : "sm:border-r"} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
             >
               {set > 0 && (
                 <span
@@ -86,7 +86,7 @@ export function CustomerMarquee({ label }: { label: string }) {
               <span
                 key={`in-${set}`}
                 className={`absolute inset-0 flex items-center justify-center px-5 ${set > 0 ? "logo-in" : ""}`}
-                style={set > 0 ? { animationDelay: `${i * STAGGER + 180}ms` } : undefined}
+                style={set > 0 ? { animationDelay: `${i * STAGGER + 260}ms` } : undefined}
               >
                 <span className="flex transition-transform duration-300 ease-[var(--ease-standard)] group-hover:scale-110">
                   <Mark l={LOGOS[at(set, i)]} hidden={false} />

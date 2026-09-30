@@ -6,8 +6,7 @@ import PixelCard from "@/components/PixelCard";
 /* Partners and certifications as one dark band, two columns of hairline
    cells on a plain ground. Marks rest in one tone; pointed at, that cell alone
    fills with cobalt pixels (react-bits PixelCard) and the mark comes up in its
-   own colours on a white plate, so dark-text badges stay legible. Names are in
-   the alt text only.
+   own colours. Names are in the alt text only.
 
    `w`/`h` are intrinsic pixels so nothing reflows on decode; `cls` sets the
    rendered height per mark, because the ratios run from 1:1 to 4.2:1.
@@ -55,8 +54,8 @@ function MarkGrid({ marks, cols, cellClass }: { marks: Mark[]; cols: number; cel
       >
         {marks.map((m) => (
           <li key={m.name} className={cn("border-r border-b border-white/10", cellClass)} style={{ ["--pixel-card-active-color" as string]: "rgb(29 78 216 / 0.35)" }}>
-            <PixelCard noFocus gap={6} speed={30} colors="#1d4ed8,#3b82f6,#93c5fd" className="aspect-auto h-full w-full rounded-none border-0">
-              <div className="flex items-center justify-center rounded-xl px-4 py-3 transition-[background-color,translate,box-shadow] duration-300 ease-[var(--ease-standard)] group-hover:-translate-y-1 group-hover:bg-white group-hover:shadow-[var(--shadow-overlay)]">
+            <PixelCard noFocus gap={6} speed={30} clearCenter={0.5} colors="#1d4ed8,#3b82f6,#93c5fd" className="aspect-auto h-full w-full rounded-none border-0">
+              <div className="flex items-center justify-center px-4 py-3">
                 <Image
                   src={m.src}
                   alt={m.name}
@@ -103,7 +102,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
     <ChamferGround ground={ground} below={below}>
       <section
         data-tone="dark"
-        className={cn("on-dark chamfer relative isolate overflow-hidden bg-[#050912] text-white", SECTION_Y)}
+        className={cn("on-dark chamfer chamfer-notched relative isolate overflow-hidden bg-[#050912] text-white", SECTION_Y)}
         aria-labelledby="partners-heading"
       >
         <div className={cn(CONTAINER, "grid gap-16 lg:grid-cols-2 lg:gap-12")}>

@@ -106,6 +106,7 @@ export async function PUT(
     if (body.submissionDueDate !== undefined) updates.submissionDueDate = body.submissionDueDate;
     if (body.applicationsCount !== undefined) updates.applicationsCount = body.applicationsCount;
     if (body.state !== undefined) updates.state = body.state;
+    if (body.category !== undefined) updates.category = body.category === "open" ? "open" : "state";
 
     // ── commercial half, recruiting roles only ──
     if (canPrice) {

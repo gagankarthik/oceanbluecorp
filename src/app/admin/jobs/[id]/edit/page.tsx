@@ -150,7 +150,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <WorkspaceButton variant="primary" onClick={() => window.location.reload()}>Try again</WorkspaceButton>
                 )}
                 <WorkspaceButton onClick={() => router.push("/admin/jobs")}>
-                  Back to job postings
+                  Back to state roles
                 </WorkspaceButton>
               </div>
             }

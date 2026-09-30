@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, X } from "lucide-react";
 import { IconBuilding, IconCalendar, IconClock, IconEye, IconFile, IconHash, IconJob, IconLocation, IconMoney, IconSave, IconTruck, IconUserCheck } from "../icons";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
+import { jobCategory, type JobCategory } from "@/lib/job-status";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { US_STATES, normalizeState } from "@/components/admin/theme";
@@ -39,6 +40,11 @@ export const JOB_TYPES: { value: Job["type"]; label: string }[] = [
   { value: "remote",          label: "Remote" },
 ];
 
+export const JOB_CATEGORIES: { value: JobCategory; label: string }[] = [
+  { value: "state", label: "State role" },
+  { value: "open",  label: "Open role" },
+];
+
 export const JOB_STATUSES: { value: Job["status"]; label: string }[] = [
   { value: "draft",    label: "Draft" },
   { value: "open",     label: "Open" },
@@ -53,6 +59,7 @@ export const JOB_STATUSES: { value: Job["status"]; label: string }[] = [
 export interface JobFormData {
   title: string;
   status: Job["status"];
+  category: JobCategory;
   department: string;
   type: Job["type"];
   location: string;
@@ -79,7 +86,7 @@ export interface JobFormData {
 }
 
 export const DEFAULT_JOB_FORM: JobFormData = {
-  title: "", status: "draft", department: DEPARTMENTS[0], type: "full-time",
+  title: "", status: "draft", category: "state", department: DEPARTMENTS[0], type: "full-time",
   location: "", state: "", clientId: "", clientName: "", clientNotes: "",
   vendorId: "", vendorName: "", submissionDueDate: "",
   clientBillRate: "", payRate: "", salaryMin: "", salaryMax: "",
@@ -100,6 +107,7 @@ export function jobToFormData(job: Job): JobFormData {
   return {
     title: job.title || "",
     status: job.status || "draft",
+    category: jobCategory(job),
     department: job.department || DEPARTMENTS[0],
     type: job.type || "full-time",
     location: job.location || "",
@@ -135,6 +143,7 @@ export function jobToFormData(job: Job): JobFormData {
 export function formDataToPayload(data: JobFormData) {
   return {
     title: data.title,
+    category: data.category,
     department: data.department,
     location: data.location,
     state: data.state || undefined,
@@ -322,7 +331,7 @@ export function JobForm({
       {/* Owned by the form, which knows the mode, posting id and submit state. */}
       <PageHeader
         className="mb-5"
-        title={mode === "create" ? "New job posting" : "Edit job posting"}
+        title={`${mode === "create" ? "New" : "Edit"} ${data.category === "open" ? "open" : "state"} role`}
         info={mode === "create" ? "Fill in the details to create a new job listing." : undefined}
         subtitle={mode === "create" ? undefined : `Editing ${job?.title || "–"}`}
         meta={mode === "edit" && job?.postingId ? (
@@ -354,7 +363,7 @@ export function JobForm({
           <div className="p-4">
             <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-4">
                 <div className="@2xl:col-span-2">
                   <Field label="Job title" required htmlFor="job-title" error={errors.title}>
                     <FormInput
@@ -367,6 +376,15 @@ export function JobForm({
                     />
                   </Field>
                 </div>
+                <Field label="Listed under" htmlFor="job-category">
+                  <FormSelect
+                    id="job-category"
+                    value={data.category}
+                    onChange={(e) => set("category", e.target.value as JobCategory)}
+                  >
+                    {JOB_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </FormSelect>
+                </Field>
                 <Field label="Status" htmlFor="job-status">
                   <FormSelect
                     id="job-status"

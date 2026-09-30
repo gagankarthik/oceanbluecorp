@@ -69,7 +69,8 @@ interface RouteRow {
 // Paths double as React keys, keep them unique.
 const routes: RouteRow[] = [
   { path: "/admin",              name: "Dashboard",    icon: IconOverview },
-  { path: "/admin/jobs",         name: "Job postings", icon: IconJob },
+  { path: "/admin/jobs",         name: "State roles",  icon: IconJob },
+  { path: "/admin/open-roles",   name: "Open roles",   icon: IconJob },
   { path: "/admin/applications", name: "Applications", icon: IconFile },
   { path: "/admin/candidates",   name: "Candidates",   icon: IconUserStar },
   { path: "/admin/bench",        name: "Talent bench", icon: IconBoxes },

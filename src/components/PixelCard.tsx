@@ -157,6 +157,8 @@ interface PixelCardProps {
   speed?: number;
   colors?: string;
   noFocus?: boolean;
+  /** Radius (0–1 of the half-size) of an oval left clear around the content; dots thin out towards it. */
+  clearCenter?: number;
   className?: string;
   children: React.ReactNode;
 }
@@ -175,6 +177,7 @@ export default function PixelCard({
   speed,
   colors,
   noFocus,
+  clearCenter = 0,
   className = '',
   children
 }: PixelCardProps): JSX.Element {
@@ -215,6 +218,12 @@ export default function PixelCard({
         const dx = x - width / 2;
         const dy = y - height / 2;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        if (clearCenter > 0) {
+          const nd = Math.hypot(dx / (width / 2), dy / (height / 2));
+          const fade = 0.3;
+          if (nd < clearCenter) continue;
+          if (nd < clearCenter + fade && Math.random() > (nd - clearCenter) / fade) continue;
+        }
         const delay = reducedMotion ? 0 : distance;
         if (!ctx) return;
         pxs.push(new Pixel(canvasRef.current, ctx, x, y, color, getEffectiveSpeed(finalSpeed, reducedMotion), delay));
@@ -284,7 +293,7 @@ export default function PixelCard({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finalGap, finalSpeed, finalColors, finalNoFocus]);
+  }, [finalGap, finalSpeed, finalColors, finalNoFocus, clearCenter]);
 
   return (
     <div

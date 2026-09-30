@@ -5,7 +5,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CONTAINER } from "@/components/site/sections";
 import { LinkButton } from "@/components/site/button";
-import { IconArrowRight, IconChevronDown, IconX, IconPin, IconSearch, IconCalendar, IconRefresh, IconMail } from "@/components/site/icons";
+import { LineGrid } from "@/components/site/line-grid";
+import {
+  IconArrowRight, IconChevronDown, IconX, IconPin, IconSearch, IconCalendar, IconRefresh, IconMail, IconGlobe,
+} from "@/components/site/icons";
 import { IconFilter, IconMoney, IconCheckCircle } from "@/components/site/careers/careers-icons";
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
@@ -55,6 +58,10 @@ const dueLabel = (dueDate?: string): { text: string; urgent: boolean } | null =>
 };
 
 const isRemote = (job: PublicJob) => job.type === "remote" || (job.location || "").toLowerCase().includes("remote");
+
+const scrollToResults = () => document.getElementById("openings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+type Facet = "dept" | "type" | "loc" | "remote";
 
 /**
  * The job board. `initialJobs` is the public, open list rendered on the
@@ -147,55 +154,55 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([d]) => d);
   }, [openJobs]);
 
-  // Dropdown options: every department on an open role, plus the one asked for
-  // in the URL if it has no roles right now, so the control never lies.
-  const deptOptions = useMemo(
-    () => [ALL_DEPTS, ...departments, ...(dept !== ALL_DEPTS && !departments.includes(dept) ? [dept] : [])],
+  // Every department on an open role, plus the one asked for in the URL if it
+  // has no roles right now, so the control never lies.
+  const deptList = useMemo(
+    () => [...departments, ...(dept !== ALL_DEPTS && !departments.includes(dept) ? [dept] : [])],
     [departments, dept],
   );
-
+  const typeList = useMemo(() => jobTypes.slice(1).filter((t) => openJobs.some((j) => j.type === t) || t === type), [openJobs, type]);
   const locations = useMemo(() => [ALL_LOCS, ...[...new Set(openJobs.map((j) => j.location))].filter(Boolean).sort()], [openJobs]);
 
-  // Everything except the department, so the chip counts show what each chip would give.
-  const baseFiltered = useMemo(() => {
+  /** Every filter but `except`, so each facet's counts show what picking it would give. */
+  const filterExcept = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return openJobs.filter((j) => {
-      const matchesQuery = !q || [j.title, j.department, j.description, j.location].some((f) => (f || "").toLowerCase().includes(q));
-      const matchesType = type === ALL_TYPES || j.type === type;
-      const matchesLoc = location === ALL_LOCS || j.location === location;
-      const matchesRemote = !remoteOnly || isRemote(j);
-      return matchesQuery && matchesType && matchesLoc && matchesRemote;
-    });
-  }, [openJobs, query, type, location, remoteOnly]);
+    return (except: Facet | null) => openJobs.filter((j) =>
+      (!q || [j.title, j.department, j.description, j.location].some((f) => (f || "").toLowerCase().includes(q)))
+      && (except === "dept" || dept === ALL_DEPTS || j.department === dept)
+      && (except === "type" || type === ALL_TYPES || j.type === type)
+      && (except === "loc" || location === ALL_LOCS || j.location === location)
+      && (except === "remote" || !remoteOnly || isRemote(j)));
+  }, [openJobs, query, dept, type, location, remoteOnly]);
 
-  const deptCounts = useMemo(() => {
-    const counts: Record<string, number> = { [ALL_DEPTS]: baseFiltered.length };
-    baseFiltered.forEach((j) => (counts[j.department] = (counts[j.department] || 0) + 1));
+  const countBy = (list: PublicJob[], key: (j: PublicJob) => string) => {
+    const counts: Record<string, number> = {};
+    list.forEach((j) => (counts[key(j)] = (counts[key(j)] || 0) + 1));
     return counts;
-  }, [baseFiltered]);
+  };
+  const deptPool = useMemo(() => filterExcept("dept"), [filterExcept]);
+  const typePool = useMemo(() => filterExcept("type"), [filterExcept]);
+  const deptCounts = useMemo(() => countBy(deptPool, (j) => j.department), [deptPool]);
+  const typeCounts = useMemo(() => countBy(typePool, (j) => j.type), [typePool]);
 
-  const results = useMemo(() => {
-    const list = baseFiltered.filter((j) => dept === ALL_DEPTS || j.department === dept);
-    return [...list].sort((a, b) => {
-      if (sort === "closing") {
-        const da = a.submissionDueDate ? new Date(a.submissionDueDate).getTime() : Infinity;
-        const db = b.submissionDueDate ? new Date(b.submissionDueDate).getTime() : Infinity;
-        return da - db;
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-  }, [baseFiltered, dept, sort]);
+  const results = useMemo(() => [...filterExcept(null)].sort((a, b) => {
+    if (sort === "closing") {
+      const da = a.submissionDueDate ? new Date(a.submissionDueDate).getTime() : Infinity;
+      const db = b.submissionDueDate ? new Date(b.submissionDueDate).getTime() : Infinity;
+      return da - db;
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  }), [filterExcept, sort]);
 
   // Any change to what is being asked for starts the list again from the top.
   useEffect(() => setVisible(PAGE_SIZE), [query, dept, type, location, remoteOnly, sort]);
 
-  const deptSelect: SelectOption[] = deptOptions.map((d) => ({
+  const deptSelect: SelectOption[] = [ALL_DEPTS, ...deptList].map((d) => ({
     value: d,
     label: d === ALL_DEPTS ? "All departments" : d,
-    hint: loading ? undefined : deptCounts[d] || 0,
+    hint: loading ? undefined : d === ALL_DEPTS ? deptPool.length : deptCounts[d] || 0,
   }));
   const locSelect: SelectOption[] = locations.map((l) => ({ value: l, label: l === ALL_LOCS ? "All locations" : l }));
-  const typeSelect: SelectOption[] = jobTypes.map((t) => ({ value: t, label: t === ALL_TYPES ? "All types" : formatJobType(t) }));
+  const typeSelect: SelectOption[] = [ALL_TYPES, ...typeList].map((t) => ({ value: t, label: t === ALL_TYPES ? "All types" : formatJobType(t) }));
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -208,12 +215,15 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
     };
   }, [sheetOpen]);
 
-  const clearAll = () => {
-    setQuery("");
+  const resetFacets = () => {
     setDept(ALL_DEPTS);
     setType(ALL_TYPES);
     setLocation(ALL_LOCS);
     setRemoteOnly(false);
+  };
+  const clearAll = () => {
+    setQuery("");
+    resetFacets();
   };
 
   const chips = [
@@ -224,107 +234,163 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
     query.trim() && { label: `“${query.trim()}”`, clear: () => setQuery("") },
   ].filter(Boolean) as { label: string; clear: () => void }[];
 
-  const sheetCount = [dept !== ALL_DEPTS, type !== ALL_TYPES, location !== ALL_LOCS, remoteOnly].filter(Boolean).length;
+  const facetCount = [dept !== ALL_DEPTS, type !== ALL_TYPES, location !== ALL_LOCS, remoteOnly].filter(Boolean).length;
 
   return (
     <>
-      {/* Opener */}
-      <section className="bg-white">
-        <div className={cn(CONTAINER, "pt-28 pb-8 sm:pt-32 sm:pb-10 lg:pt-36")}>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="rise type-label font-semibold text-cobalt">Careers</p>
-              <h1 className="rise mt-3 type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
-                Open positions
-              </h1>
-              <p className="rise mt-4 max-w-xl type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
-                Roles across our practices and client teams. Search and filter by team, type and location.
-              </p>
-            </div>
-            {!loading && !error && (
-              <p className="rise shrink-0 type-body text-ink-muted" style={{ animationDelay: "220ms" }}>
-                <span className="type-headline font-semibold text-ink tabular-nums">{openJobs.length}</span>{" "}
-                open {openJobs.length === 1 ? "role" : "roles"}
-              </p>
-            )}
+      {/* Hero: the search is the page's first action, so it lives here. */}
+      <section className="relative isolate overflow-hidden border-b border-line bg-white">
+        <LineGrid />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(55%_70%_at_50%_0%,var(--color-cobalt-tint),transparent)]" />
+        <div className={cn(CONTAINER, "pt-28 pb-12 sm:pt-32 sm:pb-14 lg:pt-36 lg:pb-16")}>
+          <div className="mx-auto max-w-[860px] text-center">
+            <h1 className="rise type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
+              Find your next role at Ocean Blue
+            </h1>
+            <p className="rise mx-auto mt-4 max-w-[56ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
+              IT, engineering and delivery roles across our practices and client teams.
+              Search by title or skill, then narrow by team, type and location.
+            </p>
           </div>
+
+          <form
+            role="search"
+            onSubmit={(e) => { e.preventDefault(); scrollToResults(); }}
+            className="rise mx-auto mt-9 flex max-w-[860px] flex-col gap-2 rounded-[28px] border border-line bg-white p-2 shadow-overlay sm:flex-row sm:items-center sm:rounded-full"
+            style={{ animationDelay: "240ms" }}
+          >
+            <div className="relative min-w-0 flex-1">
+              <label htmlFor="job-search" className="sr-only">Search jobs by title, skill or keyword</label>
+              <IconSearch size={20} className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-ink-subtle" />
+              <input
+                id="job-search"
+                type="search"
+                autoComplete="off"
+                placeholder="Job title, skill or keyword"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-14 w-full rounded-full bg-transparent pr-4 pl-13 type-body-lg text-ink placeholder:text-ink-subtle focus:outline-none"
+              />
+            </div>
+            <span aria-hidden className="hidden h-8 w-px bg-line sm:block" />
+            <Select
+              id="hero-loc"
+              label="Location"
+              hideLabel
+              value={location}
+              onValueChange={setLocation}
+              options={locSelect}
+              className="sm:w-56 [&_button]:border-0 [&_button]:shadow-none"
+            />
+            <button
+              type="submit"
+              className="inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-cobalt px-7 text-[16px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+            >
+              Search <IconArrowRight size={16} />
+            </button>
+          </form>
         </div>
       </section>
 
-      {/* Filter bar: sticks under the site header, so filters stay in reach while scrolling results. */}
-      <div className="sticky top-16 z-30 border-y border-line bg-white/95 backdrop-blur-md md:top-[68px]">
-        <div className={cn(CONTAINER, "flex items-center gap-2 py-3 sm:gap-3")}>
-          <div className="relative min-w-0 flex-1">
-            <label htmlFor="job-search" className="sr-only">
-              Search jobs by title, keyword or location
-            </label>
-            <IconSearch size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-ink-subtle" />
-            <input
-              id="job-search"
-              type="search"
-              autoComplete="off"
-              placeholder="Search title, skill or location"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-12 w-full rounded-full border border-line-strong bg-white pr-4 pl-11 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none"
-            />
-          </div>
+      <section className="min-h-[60vh] scroll-mt-20 bg-paper" id="openings">
+        <div className={cn(CONTAINER, "py-10 sm:py-12")}>
+          <div className="grid gap-8 lg:grid-cols-[272px_minmax(0,1fr)] xl:gap-10">
+            {/* Facets: desktop sidebar. Phones get the same controls in a sheet. */}
+            <aside className="hidden lg:block lg:sticky lg:top-[96px] lg:self-start" aria-label="Filter positions">
+              <div className="rounded-2xl border border-line bg-white">
+                <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                  <p className="inline-flex items-center gap-2 text-[15px] font-semibold text-ink">
+                    <IconFilter size={16} /> Filters
+                  </p>
+                  {facetCount > 0 && (
+                    <button type="button" onClick={resetFacets} className="type-caption font-semibold text-cobalt hover:underline underline-offset-4">
+                      Reset
+                    </button>
+                  )}
+                </div>
 
-          <div className="hidden items-center gap-2 lg:flex">
-            <Select id="f-dept" label="Department" hideLabel value={dept} onValueChange={setDept} options={deptSelect} className="w-56" />
-            <Select id="f-loc" label="Location" hideLabel value={location} onValueChange={setLocation} options={locSelect} className="w-44 xl:w-48" />
-            <Select id="f-type" label="Job type" hideLabel value={type} onValueChange={setType} options={typeSelect} className="w-40 xl:w-44" />
-            <RemoteToggle on={remoteOnly} onChange={setRemoteOnly} />
-          </div>
+                <Facet title="Department">
+                  <FacetOption label="All departments" count={deptPool.length} on={dept === ALL_DEPTS} onClick={() => setDept(ALL_DEPTS)} />
+                  {deptList.map((d) => (
+                    <FacetOption key={d} label={d} count={deptCounts[d] || 0} on={dept === d} onClick={() => setDept(dept === d ? ALL_DEPTS : d)} />
+                  ))}
+                </Facet>
 
-          <button
-            type="button"
-            onClick={() => setSheetOpen(true)}
-            className="relative flex h-12 shrink-0 items-center gap-2 rounded-full border border-line-strong bg-white px-4 text-[15px] font-semibold text-ink lg:hidden"
-            aria-haspopup="dialog"
-          >
-            <IconFilter size={18} />
-            <span className="sr-only sm:not-sr-only">Filters</span>
-            {sheetCount > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-cobalt type-caption font-semibold text-white">{sheetCount}</span>
-            )}
-          </button>
-        </div>
-      </div>
+                <Facet title="Job type">
+                  <FacetOption label="All types" count={typePool.length} on={type === ALL_TYPES} onClick={() => setType(ALL_TYPES)} />
+                  {typeList.map((t) => (
+                    <FacetOption key={t} label={formatJobType(t)} count={typeCounts[t] || 0} on={type === t} onClick={() => setType(type === t ? ALL_TYPES : t)} />
+                  ))}
+                </Facet>
 
-      <section className="min-h-[60vh] bg-paper" id="openings">
-        <div className={cn(CONTAINER, "py-8 sm:py-10")}>
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="flex items-center justify-between px-5 py-4">
+                  <span className="inline-flex items-center gap-2 type-body-sm font-medium text-ink">
+                    <IconGlobe size={16} className="text-ink-subtle" /> Remote only
+                  </span>
+                  <Switch on={remoteOnly} onChange={setRemoteOnly} label="Remote only" />
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-ink p-6 text-white">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-white/10">
+                  <IconMail size={18} />
+                </span>
+                <h2 className="mt-4 text-[17px] font-semibold">Don&rsquo;t see the right role?</h2>
+                <p className="mt-1.5 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
+                <a
+                  href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
+                  className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-full bg-white type-label font-semibold text-ink transition-colors hover:bg-cobalt-tint"
+                >
+                  Email your resume
+                </a>
+              </div>
+            </aside>
+
             {/* Results */}
             <div className="min-w-0">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="type-body text-ink-muted" role="status" aria-live="polite">
-                  {loading
-                    ? "Loading positions…"
-                    : `${results.length} ${results.length === 1 ? "position" : "positions"}${chips.length ? " match" : ""}`}
+                  {loading ? "Loading positions…" : (
+                    <>
+                      <span className="font-semibold tabular-nums text-ink">{results.length}</span>{" "}
+                      {results.length === 1 ? "position" : "positions"}{chips.length ? " match your search" : ""}
+                    </>
+                  )}
                 </p>
                 <div className="flex items-center gap-2">
-                  <span aria-hidden className="type-body-sm text-ink-subtle">
-                    Sort
-                  </span>
-                  <Select
-                    id="sort"
-                    label="Sort positions"
-                    hideLabel
-                    size="md"
-                    value={sort}
-                    onValueChange={(v) => setSort(v as Sort)}
-                    options={[
-                      { value: "newest", label: "Newest first" },
-                      { value: "closing", label: "Closing soonest" },
-                    ]}
-                    className="w-44"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setSheetOpen(true)}
+                    className="relative inline-flex h-10 items-center gap-2 rounded-full border border-line-strong bg-white px-4 type-body-sm font-semibold text-ink lg:hidden"
+                    aria-haspopup="dialog"
+                  >
+                    <IconFilter size={16} /> Filters
+                    {facetCount > 0 && (
+                      <span className="flex size-5 items-center justify-center rounded-full bg-cobalt type-caption font-semibold text-white">{facetCount}</span>
+                    )}
+                  </button>
+                  <div role="radiogroup" aria-label="Sort positions" className="inline-flex h-10 items-center rounded-full border border-line bg-white p-1">
+                    {([["newest", "Newest"], ["closing", "Closing soon"]] as const).map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={sort === v}
+                        onClick={() => setSort(v)}
+                        className={cn(
+                          "h-8 rounded-full px-3.5 type-body-sm font-medium transition-colors",
+                          sort === v ? "bg-ink text-white" : "text-ink-muted hover:text-ink",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {chips.length > 0 && !loading && (
-                <ul className="mb-4 flex flex-wrap items-center gap-2" aria-label="Active filters">
+                <ul className="mb-5 flex flex-wrap items-center gap-2" aria-label="Active filters">
                   {chips.map((c) => (
                     <li key={c.label}>
                       <button
@@ -349,15 +415,12 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
               {loading ? (
                 <ul className="space-y-3" aria-hidden>
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <li key={i} className="flex animate-pulse gap-4 rounded-2xl border border-line bg-white p-5 sm:p-6" style={{ animationDelay: `${i * 70}ms` }}>
-                      <div className="size-12 shrink-0 rounded-xl bg-paper" />
-                      <div className="flex-1">
-                        <div className="h-5 w-2/3 max-w-sm rounded bg-paper-deep" />
-                        <div className="mt-3 flex gap-3">
-                          <div className="h-4 w-24 rounded bg-paper" />
-                          <div className="h-4 w-20 rounded bg-paper" />
-                          <div className="h-4 w-28 rounded bg-paper" />
-                        </div>
+                    <li key={i} className="animate-pulse rounded-2xl border border-line bg-white p-5 sm:p-6" style={{ animationDelay: `${i * 70}ms` }}>
+                      <div className="h-5 w-2/3 max-w-sm rounded bg-paper-deep" />
+                      <div className="mt-3 flex gap-3">
+                        <div className="h-4 w-24 rounded bg-paper" />
+                        <div className="h-4 w-20 rounded bg-paper" />
+                        <div className="h-4 w-28 rounded bg-paper" />
                       </div>
                     </li>
                   ))}
@@ -378,13 +441,16 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
               ) : results.length > 0 ? (
                 <>
                   <ul className="space-y-3">
-                    {results.slice(0, visible).map((job) => (
-                      <li key={job.id}>
+                    {results.slice(0, visible).map((job, i) => (
+                      <li key={job.id} className="rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                         <JobRow job={job} applied={appliedJobIds.has(job.id)} />
                       </li>
                     ))}
                   </ul>
                   <div className="mt-8 flex flex-col items-center gap-3">
+                    <div className="h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
+                      <div className="h-full rounded-full bg-ink transition-[width] duration-500" style={{ width: `${(Math.min(visible, results.length) / results.length) * 100}%` }} />
+                    </div>
                     <p className="type-body-sm text-ink-subtle">
                       Showing {Math.min(visible, results.length)} of {results.length}
                     </p>
@@ -401,56 +467,45 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
                   </div>
                 </>
               ) : (
-                <div className="rounded-2xl border border-line bg-white p-10 text-center sm:p-12">
-                  <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-paper text-ink-subtle">
+                <div className="rounded-2xl border border-dashed border-line-strong bg-white p-10 text-center sm:p-14">
+                  <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-paper text-ink-subtle">
                     <IconSearch size={24} />
                   </span>
                   <h2 className="mt-5 type-title-lg font-semibold text-ink">No positions match</h2>
                   <p className="mx-auto mt-2 max-w-sm type-body text-ink-muted">Try a broader search, or clear the filters to see every open role.</p>
-                  <button
-                    type="button"
-                    onClick={clearAll}
-                    className="mt-6 inline-flex h-11 items-center rounded-full bg-cobalt px-5 type-label font-semibold text-white hover:bg-cobalt-deep"
-                  >
-                    Clear filters
-                  </button>
+                  <div className="mt-6 flex flex-wrap justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={clearAll}
+                      className="inline-flex h-11 items-center rounded-full bg-cobalt px-5 type-label font-semibold text-white hover:bg-cobalt-deep"
+                    >
+                      Clear filters
+                    </button>
+                    <a
+                      href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
+                      className="inline-flex h-11 items-center rounded-full border border-line-strong px-5 type-label font-semibold text-ink hover:border-ink"
+                    >
+                      Email your resume
+                    </a>
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Side rail: the route for anyone the list does not serve yet. */}
-            <aside className="space-y-4 xl:sticky xl:top-[152px] xl:self-start" aria-label="More ways in">
-              <div className="rounded-2xl bg-ink p-7 text-white">
-                <span className="flex size-11 items-center justify-center rounded-xl bg-white/10">
-                  <IconMail size={20} />
-                </span>
-                <h2 className="mt-5 type-title-lg font-semibold">Don&rsquo;t see the right role?</h2>
-                <p className="mt-2 type-body-sm text-white/80">
-                  Send us your resume and we will keep it on file for roles that match.
-                </p>
-                <LinkButton href="/contact" variant="inverse" className="mt-6 w-full">
-                  Get in touch
-                </LinkButton>
-                <a
-                  href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
-                  className="mt-3 flex h-11 items-center justify-center rounded-full type-label font-semibold text-white/85 underline-offset-4 hover:text-white hover:underline"
-                >
-                  Or email HR your resume
-                </a>
-              </div>
-              <div className="rounded-2xl border border-line bg-white p-7">
-                <h2 className="text-[16px] font-semibold text-ink">Working at Ocean Blue</h2>
-                <p className="mt-2 type-body-sm text-ink-muted">
-                  How we work, what we offer, and the teams you could join.
-                </p>
-                <Link href="/careers" className="mt-4 inline-flex items-center gap-1.5 type-label font-semibold text-ink hover:text-cobalt">
+              {/* Closing strip: why work here, and the fine print. */}
+              <div className="mt-12 flex flex-col gap-4 rounded-2xl border border-line bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+                <div>
+                  <h2 className="text-[17px] font-semibold text-ink">Working at Ocean Blue</h2>
+                  <p className="mt-1 type-body-sm text-ink-muted">How we work, what we offer, and the teams you could join.</p>
+                </div>
+                <LinkButton href="/careers" variant="outline" className="shrink-0">
                   Life at Ocean Blue <IconArrowRight size={14} />
-                </Link>
-                <p className="mt-6 border-t border-line pt-5 type-caption text-ink-subtle">
-                  {EEO_STATEMENT} Need an accommodation during hiring? Tell your recruiter and we will arrange it.
-                </p>
+                </LinkButton>
               </div>
-            </aside>
+              <p className="mt-4 type-caption text-ink-subtle">
+                {EEO_STATEMENT} Need an accommodation during hiring? Tell your recruiter and we will arrange it.{" "}
+                <Link href="/contact" className="font-semibold text-ink underline underline-offset-4 hover:text-cobalt">Contact us</Link>.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -460,6 +515,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
         <div className="fixed inset-0 z-[10000] lg:hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
           <button type="button" aria-label="Close filters" className="absolute inset-0 bg-ink/40" onClick={() => setSheetOpen(false)} />
           <div className="rise absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
             <div className="flex items-center justify-between">
               <h2 id="sheet-title" className="type-title-lg font-semibold text-ink">
                 Filters
@@ -474,20 +530,11 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
               <Select id="s-type" label="Job type" value={type} onValueChange={setType} options={typeSelect} shape="field" />
               <div className="flex items-center justify-between border-t border-line pt-5">
                 <span className="type-body font-medium text-ink">Remote only</span>
-                <RemoteToggle on={remoteOnly} onChange={setRemoteOnly} compact />
+                <Switch on={remoteOnly} onChange={setRemoteOnly} label="Remote only" />
               </div>
             </div>
             <div className="mt-8 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setDept(ALL_DEPTS);
-                  setType(ALL_TYPES);
-                  setLocation(ALL_LOCS);
-                  setRemoteOnly(false);
-                }}
-                className="h-12 rounded-full border border-line-strong text-[15px] font-semibold text-ink"
-              >
+              <button type="button" onClick={resetFacets} className="h-12 rounded-full border border-line-strong text-[15px] font-semibold text-ink">
                 Reset
               </button>
               <button type="button" onClick={() => setSheetOpen(false)} className="h-12 rounded-full bg-cobalt text-[15px] font-semibold text-white">
@@ -501,23 +548,55 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
   );
 }
 
-function RemoteToggle({ on, onChange, compact }: { on: boolean; onChange: (v: boolean) => void; compact?: boolean }) {
+function Facet({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="border-b border-line px-3 py-4">
+      <legend className="sr-only">{title}</legend>
+      <p aria-hidden className="mb-2 px-2 type-caption font-semibold tracking-wide text-ink-subtle uppercase">{title}</p>
+      <div className="space-y-0.5">{children}</div>
+    </fieldset>
+  );
+}
+
+function FacetOption({ label, count, on, onClick }: { label: string; count: number; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      onClick={onClick}
+      disabled={!on && count === 0}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left type-body-sm transition-colors disabled:opacity-40",
+        on ? "bg-cobalt-tint font-semibold text-cobalt-deep" : "text-ink-muted hover:bg-paper hover:text-ink",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+          on ? "border-cobalt bg-cobalt" : "border-line-strong bg-white",
+        )}
+      >
+        {on && <span className="size-1.5 rounded-full bg-white" />}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className={cn("tabular-nums type-caption", on ? "text-cobalt-deep" : "text-ink-subtle")}>{count}</span>
+    </button>
+  );
+}
+
+function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
-      aria-label="Remote only"
+      aria-label={label}
       onClick={() => onChange(!on)}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-2.5 rounded-full type-body font-medium transition-colors",
-        compact ? "" : cn("h-12 border px-4", on ? "border-cobalt bg-cobalt text-white" : "border-line-strong bg-white text-ink hover:border-ink"),
-      )}
+      className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", on ? "bg-cobalt" : "bg-line-strong")}
     >
-      {!compact && "Remote"}
-      <span className={cn("relative h-6 w-10 rounded-full transition-colors", on ? (compact ? "bg-cobalt" : "bg-white/25") : "bg-line-strong")}>
-        <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform", on ? "translate-x-5" : "translate-x-1")} />
-      </span>
+      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform", on ? "translate-x-5" : "translate-x-1")} />
     </button>
   );
 }
