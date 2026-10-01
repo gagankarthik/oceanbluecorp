@@ -187,8 +187,8 @@ export function JobTeamCard({
   const MOTION = "duration-[var(--adm-duration-base)] ease-[var(--adm-ease)]";
 
   return (
-    <div ref={rootRef}>
-      <AdminCard>
+    <div ref={rootRef} className="flex">
+      <AdminCard className="w-full">
         <AdminCardHeader
           icon={IconUserCheck}
           title="Team"
@@ -314,50 +314,54 @@ export function JobTeamCard({
           </div>
         </div>
 
-        <div className="divide-y divide-[var(--adm-line-soft)]">
-          {job.recruitmentManagerName && (
-            <div className="flex items-center gap-2.5 px-4 py-3">
-              <Avatar name={job.recruitmentManagerName} size="sm" />
-              <div className="min-w-0">
-                <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">
-                  {job.recruitmentManagerName}
-                </p>
-                <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">Recruitment manager</p>
-              </div>
-            </div>
-          )}
+        {/* People as chips, not rows: a team of six stays two or three lines
+            tall instead of stretching the card past the role details beside it. */}
+        {memberCount === 0 ? (
+          <p className="px-4 py-3 text-[13px] text-[var(--adm-ink-subtle)]">
+            {canEdit
+              ? "Nobody is assigned yet. Use + to add a recruiter."
+              : "Nobody is assigned to this job yet."}
+          </p>
+        ) : (
+          <ul className="flex max-h-[168px] flex-wrap gap-1.5 overflow-y-auto p-3">
+            {job.recruitmentManagerName && (
+              <li
+                className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] pl-1 pr-2.5"
+                title={`${job.recruitmentManagerName}, recruitment manager`}
+              >
+                <Avatar name={job.recruitmentManagerName} size="xs" />
+                <span className="min-w-0 truncate text-[13px] font-medium text-[var(--adm-ink)]">{job.recruitmentManagerName}</span>
+                <span className="flex-none text-[12px] text-[var(--adm-ink-subtle)]">Manager</span>
+              </li>
+            )}
 
-          {names.map((name, i) => (
-            <div key={ids[i] ?? i} className="group flex items-center gap-2.5 px-4 py-3">
-              <Avatar name={name} size="sm" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{name}</p>
-                <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">Assignee</p>
-              </div>
-              {canEdit && (
-                // Revealed on hover/focus; always shown on touch, where there is no hover.
-                <button
-                  type="button"
-                  onClick={() => removeAt(i)}
-                  disabled={!!savingId}
-                  aria-label={`Remove ${name} from the team`}
-                  title="Remove from the team"
-                  className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] opacity-0 transition-[opacity,background-color,color] duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] focus-visible:opacity-100 disabled:pointer-events-none group-hover:opacity-100 [@media(hover:none)]:opacity-100"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {memberCount === 0 && (
-            <p className="px-4 py-3 text-[13px] text-[var(--adm-ink-subtle)]">
-              {canEdit
-                ? "Nobody is assigned yet. Use + to add a recruiter."
-                : "Nobody is assigned to this job yet."}
-            </p>
-          )}
-        </div>
+            {names.map((name, i) => (
+              <li
+                key={ids[i] ?? i}
+                className={cn(
+                  "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-1",
+                  canEdit ? "pr-1" : "pr-2.5",
+                )}
+                title={`${name}, assignee`}
+              >
+                <Avatar name={name} size="xs" />
+                <span className="min-w-0 truncate text-[13px] font-medium text-[var(--adm-ink)]">{name}</span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => removeAt(i)}
+                    disabled={!!savingId}
+                    aria-label={`Remove ${name} from the team`}
+                    title="Remove from the team"
+                    className="grid h-6 w-6 flex-none place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:pointer-events-none"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </AdminCard>
     </div>
   );

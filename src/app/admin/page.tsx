@@ -4,11 +4,10 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Plus, RefreshCw } from "lucide-react";
-import { WorkspaceButton, Section, MenuSelect } from "@/components/admin/workspace";
+import { BrandBand, BAND_PRIMARY, WorkspaceButton, Section, MenuSelect } from "@/components/admin/workspace";
 import { IconCalendar } from "@/components/admin/icons";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { DashboardSkeleton } from "@/components/admin/skeletons";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { Avatar } from "@/components/admin/avatar";
@@ -851,7 +850,7 @@ export default function AdminDashboard() {
   // Figures that count something link to the records behind them. Ratios have
   // no list to land on, so they carry no href.
   const headStats: { label: string; value: React.ReactNode; sub: string; href?: string }[] = [
-    { label: "Open roles",   value: openJobs.length,       sub: "Current", href: "/admin/jobs" },
+    { label: "Open roles",   value: openJobs.length,       sub: "Current", href: "/admin/state-roles" },
     { label: "Active candidates", value: activePipeline.length, sub: `of ${applications.length} applications`, href: "/admin/applications" },
     { label: "Interviews",   value: counts.interview || 0, sub: "Active now", href: "/admin/applications?status=interview" },
     { label: "Placements",   value: commercial.placements, sub: rangeStart !== null ? rangeLabel : "All time", href: "/admin/applications?status=hired" },
@@ -861,7 +860,7 @@ export default function AdminDashboard() {
 
   const attention: AttentionItem[] = [
     { label: "Roles with no candidates", hint: "Open roles with an empty pipeline", value: starvedReqs,
-      href: "/admin/jobs", severity: "danger" },
+      href: "/admin/state-roles", severity: "danger" },
     { label: "Offers awaiting response", hint: `Pending an answer for ${OFFER_STALE_DAYS}+ days`, value: offersAtRisk.length,
       href: "/admin/applications?status=offered", severity: "danger" },
     { label: "Stalled in screening", hint: `No movement for ${STALE_DAYS}+ days`, value: staleCandidates.length,
@@ -872,78 +871,32 @@ export default function AdminDashboard() {
 
   return (
     <div className="adm-stagger mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5">
-      {/* Greeting + scope */}
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)] sm:text-[21px]">
-            Recruiting overview
-          </h1>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
-            {today}
-            {loadedAt && <> · Updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>}
-          </p>
-        </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <MenuSelect
-            label="Date range"
-            icon={IconCalendar}
-            value={range}
-            onChange={setRange}
-            options={RANGES.map((r) => ({ value: r.value, label: r.long }))}
-          />
-          <WorkspaceButton onClick={() => void fetchAll()} disabled={refreshing} aria-label="Refresh dashboard">
-            <RefreshCw className={refreshing ? "animate-spin" : undefined} aria-hidden="true" />
-            Refresh
-          </WorkspaceButton>
-          <WorkspaceButton variant="primary" asChild>
-            <Link href="/admin/jobs/new">
-              <Plus aria-hidden="true" />
-              New job
-            </Link>
-          </WorkspaceButton>
-        </div>
-      </div>
-
-      {/* KPI band. Linked cells draw a cobalt rule on hover and open their records. */}
-      <AdminCard className="@container overflow-hidden">
-        <div className="grid grid-cols-2 gap-px bg-[var(--adm-line-soft)] @2xl:grid-cols-3 @4xl:grid-cols-6">
-          {headStats.map((s) => {
-            const body = (
-              <>
-                <span className="block text-[12.5px] text-[var(--adm-ink-mute)]">{s.label}</span>
-                <span className="mt-2 block text-[22px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)] sm:mt-2.5 sm:text-[26px]">
-                  {s.value}
-                </span>
-                <span className="mt-2 flex items-center justify-between gap-2 text-[12.5px] text-[var(--adm-ink-subtle)] sm:mt-2.5">
-                  <span className="truncate">{s.sub}</span>
-                  {s.href && (
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="h-3.5 w-3.5 flex-none -translate-x-1 text-[var(--adm-accent)] opacity-0 transition-[opacity,transform] group-hover:translate-x-0 group-hover:opacity-100"
-                    />
-                  )}
-                </span>
-              </>
-            );
-            const cell = "relative min-w-0 bg-[var(--adm-surface)] px-4 py-3.5 sm:py-4";
-            return s.href ? (
-              <Link
-                key={s.label}
-                href={s.href}
-                className={cn(
-                  cell,
-                  "group transition-colors hover:bg-[var(--adm-row-hover)]",
-                  "before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:origin-left before:scale-x-0 before:bg-[var(--adm-accent)] before:transition-transform before:duration-300 hover:before:scale-x-100",
-                )}
-              >
-                {body}
+      <BrandBand
+        title="Recruiting overview"
+        meta={<>{today}{loadedAt && <> · Updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>}</>}
+        stats={headStats}
+        actions={
+          <>
+            <MenuSelect
+              label="Date range"
+              icon={IconCalendar}
+              value={range}
+              onChange={setRange}
+              options={RANGES.map((r) => ({ value: r.value, label: r.long }))}
+            />
+            <WorkspaceButton onClick={() => void fetchAll()} disabled={refreshing} aria-label="Refresh dashboard">
+              <RefreshCw className={refreshing ? "animate-spin" : undefined} aria-hidden="true" />
+              Refresh
+            </WorkspaceButton>
+            <WorkspaceButton asChild className={BAND_PRIMARY}>
+              <Link href="/admin/jobs/new">
+                <Plus aria-hidden="true" />
+                New job
               </Link>
-            ) : (
-              <div key={s.label} className={cell}>{body}</div>
-            );
-          })}
-        </div>
-      </AdminCard>
+            </WorkspaceButton>
+          </>
+        }
+      />
 
       {/* Exceptions + volume */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1026,7 +979,7 @@ export default function AdminDashboard() {
       <Section
         title="Open role coverage"
         description="Roles that need sourcing, and how the pipeline splits by client."
-        action={<PanelLink href="/admin/jobs">All roles</PanelLink>}
+        action={<PanelLink href="/admin/state-roles">All roles</PanelLink>}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <AdminCard className="overflow-hidden">

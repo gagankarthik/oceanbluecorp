@@ -1102,9 +1102,16 @@
 }
 .adm-grid thead th:last-child { box-shadow: none; }
 
-/* Row dividers only. The vertical column rules were dropped: with a lighter
-   line token and 40px rows, ruling both axes turned the grid into graph paper.
-   Alignment and whitespace separate the columns; the rules separate records. */
+/* A cobalt-tinted header band ties the grid to the BrandBand above it and gives
+   the columns a clear top edge. Rows stay ruled on one axis only: column rules
+   were tried and read as graph paper. */
+.adm-scope .adm-grid thead th {
+  background: color-mix(in srgb, var(--adm-accent) 7%, var(--adm-surface));
+  color: var(--adm-ink);
+  font-weight: 600;
+  border-bottom: 1px solid color-mix(in srgb, var(--adm-accent) 22%, var(--adm-line));
+}
+
 /* Border on the CELLS, not the row: this table is `border-collapse: separate`,
    where `tr` borders are never painted, so the row divider must live on td. */
 .adm-grid tbody td { border-bottom: 1px solid var(--adm-line-soft); }
@@ -1134,6 +1141,7 @@
   background: inherit;
 }
 .adm-grid--pinned thead th:first-child { z-index: 3; background: var(--adm-head); }
+.adm-scope .adm-grid--pinned thead th:first-child { background: color-mix(in srgb, var(--adm-accent) 7%, var(--adm-surface)); }
 .adm-grid--pinned.is-scrolled thead th:first-child,
 .adm-grid--pinned.is-scrolled tbody td:first-child {
   box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgba(16, 24, 40, 0.1);

@@ -1,36 +1,11 @@
-import { Skel } from "@/components/admin/skeletons";
+import { Skel, BrandBandSkeleton } from "@/components/admin/skeletons";
 import { cn } from "@/lib/utils";
 
-/** Mirrors the jobs workspace: title → stat strip → canvas toolbar → row list / grid. */
+/** Mirrors the workspace: brand band → canvas toolbar → row list / grid. */
 export default function JobsLoading() {
   return (
     <div className="flex h-full min-h-0 flex-col" aria-busy="true" aria-label="Loading job postings">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <div className="space-y-2">
-          <Skel className="h-6 w-44" />
-          <Skel className="h-3.5 w-48" />
-        </div>
-        <div className="flex gap-2">
-          <Skel className="h-9 w-9 rounded-[10px] sm:w-[92px]" />
-          <Skel className="h-9 w-[112px] rounded-[10px]" />
-        </div>
-      </div>
-
-      <div className="mb-4 flex max-w-full self-start overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
-        {["w-[72px]", "w-[104px]", "w-[88px]", "w-12"].map((w, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex h-9 items-center gap-2 px-3.5",
-              i > 0 && "border-l border-[var(--adm-line-soft)]",
-              i > 1 && "hidden sm:flex",
-            )}
-          >
-            <Skel className={cn("h-3", w)} />
-            <Skel className="h-3.5 w-4" />
-          </div>
-        ))}
-      </div>
+      <BrandBandSkeleton size="sm" stats={5} className="mb-3" />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Skel className="h-9 w-full rounded-[10px] sm:w-[260px]" />

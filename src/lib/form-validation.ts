@@ -70,6 +70,22 @@ export const email = (message = "Enter an email address, like name@company.com."
 export const phone = (message = "Enter a phone number with 7 to 20 digits, like (614) 555-0100."): Rule => (v) =>
   isBlank(v) || isPhone(v) ? undefined : message;
 
+/**
+ * A website as people type it: "acme.com" and "www.acme.com" get https:// added,
+ * an address that already names http(s) is kept, anything with another scheme
+ * is returned untouched so isUrl still rejects it.
+ */
+export function normalizeWebsite(v: string): string {
+  const t = v.trim();
+  if (!t || /^https?:\/\//i.test(t)) return t;
+  if (t.includes("://") || /^[a-z][a-z0-9+.-]*:(?!\d)/i.test(t)) return t;
+  return `https://${t}`;
+}
+
+/** Like `url`, but the https:// is optional. Save the value through normalizeWebsite. */
+export const website = (message = "Enter a web address, like www.example.com."): Rule => (v) =>
+  isBlank(v) || isUrl(normalizeWebsite(v)) ? undefined : message;
+
 export const url = (message = "Enter a full web address starting with https://, like https://example.com."): Rule => (v) =>
   isBlank(v) || isUrl(v) ? undefined : message;
 

@@ -4,12 +4,12 @@ import Link from "next/link";
 import { Check, Minus } from "lucide-react";
 import {
   IconShield, IconGroup, IconJob, IconFile, IconMessage, IconBuilding,
-  IconSettings, IconOverview, IconBoxes, IconUserStar, IconInfo, IconRadar,
+  IconSettings, IconOverview, IconBoxes, IconUserStar, IconRadar,
 } from "@/components/admin/icons";
 import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
 import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { WorkspaceButton, NotePanel } from "@/components/admin/workspace";
+import { WorkspaceButton } from "@/components/admin/workspace";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 
 interface RoleConfig {
@@ -52,7 +52,7 @@ const roleConfigs: Record<string, RoleConfig> = {
   [UserRole.MEDIA]: {
     name: "Media",
     short: "Media",
-    description: "Blog, case studies, news, and customer stories. Jobs view-only, no rates or clients. Never sees candidate data.",
+    description: "Blog, case studies, news, and customer stories. Writes job postings, without rates or clients. Never sees candidate data.",
     icon: IconRadar,
     level: roleHierarchy[UserRole.MEDIA],
   },
@@ -69,7 +69,7 @@ interface RouteRow {
 // Paths double as React keys, keep them unique.
 const routes: RouteRow[] = [
   { path: "/admin",              name: "Dashboard",    icon: IconOverview },
-  { path: "/admin/jobs",         name: "State roles",  icon: IconJob },
+  { path: "/admin/state-roles",  name: "State roles",  icon: IconJob },
   { path: "/admin/open-roles",   name: "Open roles",   icon: IconJob },
   { path: "/admin/applications", name: "Applications", icon: IconFile },
   { path: "/admin/candidates",   name: "Candidates",   icon: IconUserStar },
@@ -122,7 +122,6 @@ export default function RolesPage() {
             <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
             <div className="min-w-0">
               <p className="font-semibold text-[var(--adm-ink)]">{r.name}</p>
-              <p className="truncate font-mono text-[12px] text-[var(--adm-ink-subtle)]">{r.path}</p>
             </div>
           </div>
         );
@@ -141,7 +140,7 @@ export default function RolesPage() {
     <div className="space-y-4 pb-10 lg:space-y-5">
       <PageHeader
         title="Roles & permissions"
-        info="Who can access what. Read-only, assignments are managed in Cognito."
+        info="Which screens each role can open. Change a teammate's role from the Users page."
         actions={
           <WorkspaceButton asChild>
             <Link href="/admin/users">
@@ -166,10 +165,10 @@ export default function RolesPage() {
                 <span className="text-[24px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
                   {grantedCount(role)}
                 </span>
-                <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} routes</span>
+                <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} screens</span>
               </div>
               <p className="text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">
-                <span className="tabular-nums">Level {c.level}</span> · {c.description}
+                {c.description}
               </p>
             </AdminCard>
           );
@@ -177,25 +176,15 @@ export default function RolesPage() {
       </div>
 
       <AdminCard className="overflow-hidden">
-        <AdminCardHeader title="Route access" subtitle="Routes down, roles across" count={routes.length} />
+        <AdminCardHeader title="Screen access" subtitle="Screens down, roles across" count={routes.length} />
         <DataTable
           columns={columns}
           rows={routes}
           rowKey={(r) => r.path}
           initialSort={{ key: "route", dir: "asc" }}
-          empty={{ icon: IconShield, title: "No routes defined" }}
+          empty={{ icon: IconShield, title: "No screens defined" }}
         />
       </AdminCard>
-
-      <NotePanel className="flex items-start gap-3">
-        <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
-        <p>
-          Permissions are defined in{" "}
-          <code className="rounded-[6px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]">src/lib/auth/config.ts</code>.
-          Role assignments live in AWS Cognito groups, change a teammate&apos;s role from the{" "}
-          <Link href="/admin/users" className="font-medium text-[var(--adm-accent)] hover:underline">Users</Link> page.
-        </p>
-      </NotePanel>
     </div>
   );
 }

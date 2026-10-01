@@ -315,7 +315,7 @@ export function DataTable<T>({
                     style={col.width ? { width: col.width } : undefined}
                     aria-sort={active ? (sort!.dir === "asc" ? "ascending" : "descending") : undefined}
                     className={cn(
-                      "h-12 whitespace-nowrap px-4 first:pl-6 last:pr-6",
+                      "h-10 whitespace-nowrap px-4 first:pl-6 last:pr-6",
                       ALIGN[col.align ?? "left"],
                       col.hideBelow && HIDE[col.hideBelow],
                       col.headerClassName,

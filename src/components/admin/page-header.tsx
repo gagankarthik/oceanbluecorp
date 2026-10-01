@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "./info-tip";
-import { WorkspaceButton } from "./workspace";
+import { BrandBand, WorkspaceButton } from "./workspace";
 
 interface PageHeaderProps {
   title: string;
@@ -40,23 +40,21 @@ interface PageHeaderProps {
  * title is the record's own name and so is genuinely worth stating.
  */
 export function PageHeader({ title, subtitle, info, actions, meta, className }: PageHeaderProps) {
+  const line = subtitle ?? info;
   return (
-    <div
-      className={cn(
-        "mb-5 flex flex-none flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-        className,
-      )}
-    >
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">{title}</h1>
-          {info && <InfoTip label={title}>{info}</InfoTip>}
-        </div>
-        {subtitle && <p className="mt-0.5 truncate text-[13px] leading-snug text-[var(--adm-ink-mute)]">{subtitle}</p>}
-        {meta && <div className="mt-2">{meta}</div>}
-      </div>
-      {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
-    </div>
+    <BrandBand
+      size="sm"
+      className={cn("mb-5", className)}
+      title={title}
+      // Chips are tinted for a white surface, so they sit on a white tab inside the band.
+      meta={line || meta ? (
+        <>
+          {line}
+          {meta && <div className={line ? "mt-2" : undefined}><span className="inline-flex rounded-[8px] bg-white p-0.5">{meta}</span></div>}
+        </>
+      ) : undefined}
+      actions={actions}
+    />
   );
 }
 

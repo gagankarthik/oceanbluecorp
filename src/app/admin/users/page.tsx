@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -14,7 +14,7 @@ import {
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Avatar } from "@/components/admin/avatar";
@@ -86,6 +86,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -138,7 +141,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const response = await fetch("/api/users");
       const data = await response.json();
@@ -422,8 +425,26 @@ export default function UsersPage() {
 
   return (
     <>
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Users & access"
+        meta={`${users.length.toLocaleString()} staff account${users.length === 1 ? "" : "s"}`}
+        stats={[
+          { label: "Active staff", value: stats.active,
+            onClick: () => setSelectedStatus("active"),
+          selected: selectedStatus === "active" },
+          { label: "Invites pending", value: stats.pending,
+            hint: stats.pending > 0 ? "Not yet signed in" : undefined,
+            onClick: () => setSelectedStatus("pending"),
+          selected: selectedStatus === "pending" },
+          { label: "Admins", value: stats.admins,
+            hint: "Full access to every screen",
+            onClick: () => setSelectedRole("admin"),
+          selected: selectedRole === "admin" },
+          { label: "Without a role", value: noRoleCount,
+            hint: noRoleCount > 0 ? "Signed in but no access" : undefined },
+        ]}
         actions={
           <>
             <WorkspaceButton asChild>
@@ -431,27 +452,11 @@ export default function UsersPage() {
                 <IconShield className="h-4 w-4" />Roles
               </Link>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={openInvite}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={openInvite}>
               <IconUserPlus className="h-4 w-4" />Invite user
             </WorkspaceButton>
           </>
         }
-      />
-      <StatStrip
-        items={[
-          { label: "Active staff", value: stats.active,
-            onClick: () => setSelectedStatus("active") },
-          { label: "Invites pending", value: stats.pending,
-            tone: stats.pending > 0 ? "warning" : "default",
-            hint: stats.pending > 0 ? "Not yet signed in" : undefined,
-            onClick: () => setSelectedStatus("pending") },
-          { label: "Admins", value: stats.admins,
-            hint: "Full access to every screen",
-            onClick: () => setSelectedRole("admin") },
-          { label: "Without a role", value: noRoleCount,
-            tone: noRoleCount > 0 ? "danger" : "default",
-            hint: noRoleCount > 0 ? "Signed in but no access" : undefined },
-        ]}
       />
 
       <WorkspaceToolbar

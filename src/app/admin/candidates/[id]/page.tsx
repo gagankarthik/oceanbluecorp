@@ -462,16 +462,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="pb-10">
-      {/* Pinned record header: back, identity, contact, actions and the tab bar
-          stay put while the record scrolls beneath. It bleeds to the main
-          padding (p-4 sm:p-5 lg:p-6): negative margins span the full width, the
-          matching negative `top` + `pt` park it flush against the scroll edge,
-          and `-mt` removes the doubled gap before it sticks. Solid canvas: an
-          opacity modifier on a CSS variable renders transparent. */}
-      <div
-        ref={headerRef}
-        className="sticky -top-4 z-20 -mx-4 -mt-4 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-4 pt-4 sm:-top-5 sm:-mx-5 sm:-mt-5 sm:px-5 sm:pt-5 lg:-top-6 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6"
-      >
+        {/* Identity on the cobalt band, like every other record; the stage track and tabs stay on the canvas. */}
+        <div className="relative z-[21] rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white">
         <BackLink onClick={() => router.back()} />
 
         <RecordBar
@@ -483,7 +475,16 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           onClaim={handleClaimOwnership}
           onEdit={() => openCandidateEditor({ candidate })}
         />
+        </div>
 
+      {/* Only the stage track and tabs stay pinned: the identity band scrolls
+          away, so the pinned strip no longer covers half a laptop screen. The
+          negative top and matching padding park it flush against the scroll
+          edge; the band sits above it so that padding never covers the band. */}
+      <div
+        ref={headerRef}
+        className="sticky -top-4 z-20 -mx-4 -mt-2 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-4 pt-4 sm:-top-5 sm:-mx-5 sm:-mt-3 sm:px-5 sm:pt-5 lg:-top-6 lg:-mx-6 lg:-mt-4 lg:px-6 lg:pt-6"
+      >
         <StageTrack
           candidate={candidate}
           saving={statusSaving}
@@ -659,11 +660,11 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 /** Same geometry as RecordHeader's back link. */
 function BackLink({ onClick }: { onClick: () => void }) {
   return (
-    <div className="mb-2">
+    <div className="mb-1.5">
       <button
         type="button"
         onClick={onClick}
-        className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
+        className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-white/75 transition-colors hover:text-white"
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
         Back

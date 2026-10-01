@@ -15,7 +15,7 @@ export function isPubliclyOpen(status: string | null | undefined): status is Pub
 export type JobCategory = "state" | "open";
 
 /** The console list each category lives on. One detail route serves both. */
-export const JOB_LIST_HREF = { state: "/admin/jobs", open: "/admin/open-roles" } as const;
+export const JOB_LIST_HREF = { state: "/admin/state-roles", open: "/admin/open-roles" } as const;
 export const JOB_LIST_LABEL = { state: "State roles", open: "Open roles" } as const;
 
 /** Records from before the split carry no category; they are all state roles. */

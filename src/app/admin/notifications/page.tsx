@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -11,7 +11,7 @@ import {
 import { IconBell, IconSuccess, IconTrash, IconAlert, IconEyeOff } from "@/components/admin/icons";
 import { fmtDateTime, fmtRelative } from "@/lib/format";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -56,6 +56,9 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [markingAllRead, setMarkingAllRead] = useState(false);
@@ -68,7 +71,7 @@ export default function NotificationsPage() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const response = await fetch("/api/notifications");
       const data = await response.json();
@@ -175,7 +178,7 @@ export default function NotificationsPage() {
 
     switch (notification.type) {
       case "job_posted":
-        return notification.relatedId ? `/admin/jobs` : "/admin/jobs";
+        return "/admin/state-roles";
       case "application_received":
         return notification.relatedId ? `/admin/applications` : "/admin/applications";
       case "contact_received":
@@ -298,27 +301,27 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Notifications"
-        info="Activity for your role, newest first. Dismissing hides an item for you only."
+        meta={"Activity for your role, newest first"}
+        stats={[
+          { label: "Unread", value: unreadCount,
+            hint: unreadCount === 0 ? "All caught up" : undefined,
+            onClick: () => setFilter("unread"),
+          selected: filter === "unread" },
+          { label: "Arrived today", value: todayCount },
+          { label: "This week", value: weekCount },
+        ]}
         actions={
           unreadCount > 0 ? (
-            <WorkspaceButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={handleMarkAllAsRead} disabled={markingAllRead}>
               {markingAllRead ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSuccess className="h-4 w-4" />}
               Mark all as read
             </WorkspaceButton>
           ) : undefined
         }
-      />
-      <StatStrip
-        items={[
-          { label: "Unread", value: unreadCount,
-            tone: unreadCount > 0 ? "warning" : "success",
-            hint: unreadCount === 0 ? "All caught up" : undefined,
-            onClick: () => setFilter("unread") },
-          { label: "Arrived today", value: todayCount },
-          { label: "This week", value: weekCount },
-        ]}
       />
 
       <WorkspaceToolbar

@@ -74,7 +74,7 @@ const ALL_ITEMS = CATEGORIES.flatMap((c) => c.items);
 
 const ROUTE_NAMES: Record<string, string> = {
   "/admin": "Dashboard",
-  "/admin/jobs": "State roles",
+  "/admin/state-roles": "State roles",
   "/admin/open-roles": "Open roles",
   "/admin/applications": "Applications",
   "/admin/candidates": "Candidate record",
@@ -529,7 +529,7 @@ export default function AdminDocsPage() {
 
             <SubSection title="Creating a job">
               <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
-                <p>Postings live in two lists: <strong>State roles</strong> (<strong>/admin/jobs</strong>) and <strong>Open roles</strong> (<strong>/admin/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
+                <p>Postings live in two lists: <strong>State roles</strong> (<strong>/admin/state-roles</strong>) and <strong>Open roles</strong> (<strong>/admin/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
                 <ol className="list-decimal list-outside space-y-1 ml-5">
                   <li><strong>Basic Info</strong>, Title, department, type (full-time / contract / etc.), location</li>
                   <li><strong>Job Details</strong>, Description, requirements, responsibilities</li>

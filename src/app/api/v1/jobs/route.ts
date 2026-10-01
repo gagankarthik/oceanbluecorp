@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
             type: "job_posted",
             title: "New Job Posted via API",
             message: `${job.title} in ${job.department} — ${job.location} (via ${auth.key.name})`,
-            link: "/admin/jobs",
+            link: "/admin/state-roles",
             relatedId: job.id,
             isRead: false,
             createdAt: new Date().toISOString(),

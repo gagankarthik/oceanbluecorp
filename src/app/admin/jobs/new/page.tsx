@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
@@ -22,6 +22,9 @@ export default function NewJobPage({
   useNavSection(LIST_HREF[category]);
   const { user } = useAuth();
   const router = useRouter();
+  // Stable identity: JobForm re-seeds from initialData whenever it changes, so a
+  // new object per render wiped the form each time a client or vendor was added.
+  const initialData = useMemo(() => ({ ...DEFAULT_JOB_FORM, category }), [category]);
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
@@ -107,7 +110,7 @@ export default function NewJobPage({
     <div className="pb-10">
       <JobForm
         mode="create"
-        initialData={{ ...DEFAULT_JOB_FORM, category }}
+        initialData={initialData}
         clients={clients}
         vendors={vendors}
         hrUsers={hrUsers}

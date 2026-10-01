@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -12,18 +12,19 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, GridSelect, StatStrip,
+  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, GridSelect, BrandBand, BAND_PRIMARY, PipelineHeader, PipelineCells,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { statusColor } from "@/components/admin/theme";
+import { Avatar } from "@/components/admin/avatar";
+import { statusColor, PIPELINE_STAGES } from "@/components/admin/theme";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { EmptyState } from "@/components/admin/empty-state";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
   IconEdit, IconTrash, IconGroup, IconLocation, IconJob,
   IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
-  IconCalendar,
+  IconCalendar, IconUser,
 } from "@/components/admin/icons";
 import JobsLoading from "./loading";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
@@ -52,6 +53,27 @@ const STATUS_TABS = [
   { key: "closed",  label: "Closed" },
 ];
 
+type PostedKey = "all" | "today" | "7d" | "30d" | "custom";
+
+const POSTED_OPTIONS: { value: PostedKey; label: string }[] = [
+  { value: "all",    label: "Any date" },
+  { value: "today",  label: "Today" },
+  { value: "7d",     label: "Last 7 days" },
+  { value: "30d",    label: "Last 30 days" },
+  { value: "custom", label: "Custom range" },
+];
+
+/** Assignee names on a posting; records from before multi-assign carry a single name. */
+function assigneesOf(j: Job): string[] {
+  return (j.assignedToNames?.length ? j.assignedToNames : [j.assignedToName]).filter((n): n is string => !!n);
+}
+
+/** Local calendar day as YYYY-MM-DD, the shape a date input holds. */
+function dayOf(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** Empty-cell placeholder. A quiet dash, never a grey sentence. */
 function Blank() {
   return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
@@ -65,6 +87,8 @@ function PostingId({ id }: { id: string }) {
     </span>
   );
 }
+
+const DATE_INPUT = "h-9 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 text-[13.5px] tabular-nums text-[var(--adm-ink)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
 
 const CATEGORY_COPY: Record<JobCategory, { title: string; noun: string; post: string; newHref: string; query: string }> = {
   state: { title: "State roles", noun: "state role", post: "Post a state role", newHref: "/admin/jobs/new", query: "" },
@@ -82,6 +106,12 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const [error, setError]               = useState<string | null>(null);
   const [searchQuery, setSearchQuery]   = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [clientFilter, setClientFilter]     = useState("all");
+  const [typeFilter, setTypeFilter]         = useState("all");
+  const [postedFilter, setPostedFilter]     = useState<PostedKey>("all");
+  const [postedFrom, setPostedFrom]         = useState("");
+  const [postedTo, setPostedTo]             = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting]         = useState(false);
   const [duplicating, setDuplicating]   = useState<string | null>(null);
@@ -91,6 +121,9 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   // JOB_EDIT_ROLES rather than spelled as "not a recruiter", which quietly
   // granted edit rights to every role added afterwards.
   const canEdit = canEditJobs(user?.role);
+  // Read inside fetchJobs without making the role a reason to refetch.
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
   // Media edits postings but is served the public projection, so client and
   // the two rate columns would be three columns of em-dashes for it — an
   // absence rendered as data (DESIGN_SYSTEM §8, Selective Attention). They are
@@ -113,18 +146,18 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
         (j) => j.submissionDueDate && new Date(j.submissionDueDate) < now && j.status !== "closed",
       );
 
-      if (toClose.length > 0) {
-        await Promise.all(toClose.map((j) =>
-          fetch(`/api/jobs/${j.id}`, {
+      // Past-deadline roles show as closed straight away; the saves run behind
+      // the list instead of holding it on the skeleton until every one returns.
+      const closedIds = new Set(toClose.map((j) => j.id));
+      setJobs(fetchedJobs.map((j) => (closedIds.has(j.id) ? { ...j, status: "closed" } : j)));
+      if (canEditRef.current) {
+        for (const j of toClose) {
+          void fetch(`/api/jobs/${j.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "closed" }),
-          }),
-        ));
-        const closedIds = new Set(toClose.map((j) => j.id));
-        setJobs(fetchedJobs.map((j) => (closedIds.has(j.id) ? { ...j, status: "closed" } : j)));
-      } else {
-        setJobs(fetchedJobs);
+          }).catch((err) => console.error("Failed to close an expired role:", err));
+        }
       }
     } catch (err) {
       console.error("Failed to load job postings:", err);
@@ -183,11 +216,59 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     const matchSearch = !q || [job.title, job.department, job.location, job.clientName, jv.vendorName, job.postingId]
       .some((f) => f?.toLowerCase().includes(q));
     const matchStatus = statusFilter === "all" || job.status === statusFilter;
-    return matchSearch && matchStatus;
+    if (!matchSearch || !matchStatus) return false;
+
+    if (assigneeFilter !== "all") {
+      const names = assigneesOf(job);
+      if (assigneeFilter === "__none" ? names.length > 0 : !names.includes(assigneeFilter)) return false;
+    }
+    if (clientFilter !== "all" && (job.clientName || "__none") !== clientFilter) return false;
+    if (typeFilter !== "all" && job.type !== typeFilter) return false;
+
+    if (postedFilter !== "all") {
+      const day = dayOf(job.createdAt);
+      if (postedFilter === "custom") {
+        if (postedFrom && day < postedFrom) return false;
+        if (postedTo && day > postedTo) return false;
+      } else {
+        const back = postedFilter === "today" ? 0 : postedFilter === "7d" ? 6 : 29;
+        const from = new Date();
+        from.setDate(from.getDate() - back);
+        if (day < dayOf(from.toISOString())) return false;
+      }
+    }
+    return true;
   // Newest first by default. The detailed view has no Created column to sort
   // on, so without a base order it would fall back to raw fetch order.
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-  [jobs, debouncedSearch, statusFilter]);
+  [jobs, debouncedSearch, statusFilter, assigneeFilter, clientFilter, typeFilter, postedFilter, postedFrom, postedTo]);
+
+  /** Filter options come from the loaded roles, with how many roles each one holds. */
+  const filterOptions = useMemo(() => {
+    const tally = (values: string[]) => {
+      const m = new Map<string, number>();
+      for (const v of values) m.set(v, (m.get(v) || 0) + 1);
+      return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([value, count]) => ({ value, label: value, count }));
+    };
+    const unassigned = jobs.filter((j) => assigneesOf(j).length === 0).length;
+    const noClient = jobs.filter((j) => !j.clientName).length;
+    return {
+      assignees: [
+        { value: "all", label: "Anyone", count: jobs.length },
+        ...tally(jobs.flatMap(assigneesOf)),
+        ...(unassigned ? [{ value: "__none", label: "Unassigned", count: unassigned }] : []),
+      ],
+      clients: [
+        { value: "all", label: "All clients", count: jobs.length },
+        ...tally(jobs.map((j) => j.clientName).filter((c): c is string => !!c)),
+        ...(noClient ? [{ value: "__none", label: "No client", count: noClient }] : []),
+      ],
+      types: [
+        { value: "all", label: "All types", count: jobs.length },
+        ...tally(jobs.map((j) => j.type).filter(Boolean)).map((o) => ({ ...o, label: o.label.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()) })),
+      ],
+    };
+  }, [jobs]);
 
   /** Open roles nobody has sourced for, the number worth acting on. */
   const starvedRoles = useMemo(
@@ -225,8 +306,23 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
 
 
 
-  const hasActiveFilters = statusFilter !== "all" || debouncedSearch.trim() !== "";
-  const clearFilters = () => { setStatusFilter("all"); setSearchQuery(""); };
+  const postedLabel = postedFilter === "custom"
+    ? [postedFrom && `from ${fmtDate(postedFrom)}`, postedTo && `to ${fmtDate(postedTo)}`].filter(Boolean).join(" ") || "Custom range"
+    : POSTED_OPTIONS.find((o) => o.value === postedFilter)?.label ?? "";
+
+  const filterChips = [
+    ...(statusFilter !== "all" ? [{ label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
+    ...(assigneeFilter !== "all" ? [{ label: `Assigned: ${assigneeFilter === "__none" ? "Unassigned" : assigneeFilter}`, onClear: () => setAssigneeFilter("all") }] : []),
+    ...(postedFilter !== "all" ? [{ label: `Posted: ${postedLabel}`, onClear: () => { setPostedFilter("all"); setPostedFrom(""); setPostedTo(""); } }] : []),
+    ...(clientFilter !== "all" ? [{ label: `Client: ${clientFilter === "__none" ? "No client" : clientFilter}`, onClear: () => setClientFilter("all") }] : []),
+    ...(typeFilter !== "all" ? [{ label: `Type: ${typeFilter.replace(/-/g, " ")}`, onClear: () => setTypeFilter("all") }] : []),
+  ];
+
+  const hasActiveFilters = filterChips.length > 0 || debouncedSearch.trim() !== "";
+  const clearFilters = () => {
+    setStatusFilter("all"); setAssigneeFilter("all"); setClientFilter("all"); setTypeFilter("all");
+    setPostedFilter("all"); setPostedFrom(""); setPostedTo(""); setSearchQuery("");
+  };
 
   // Same split as the grid: the export cannot be the way round the projection.
   const exportCSV = () => downloadCsv(
@@ -344,6 +440,28 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     ) : <StatusBadge status={j.status} />,
   };
 
+  const assigneesCol: DataTableColumn<Job> = {
+    key: "assignees",
+    header: "Assignees",
+    label: "Assignees",
+    width: "190px",
+    sortValue: (j) => assigneesOf(j).join(", "),
+    cell: (j) => {
+      const names = assigneesOf(j);
+      if (names.length === 0) return <span className="italic text-[var(--adm-ink-subtle)]">Unassigned</span>;
+      return (
+        <span className="inline-flex max-w-full items-center gap-2 align-middle" title={names.join(", ")}>
+          <span className="flex flex-none -space-x-1.5">
+            {names.slice(0, 3).map((n) => <Avatar key={n} name={n} size="sm" className="ring-2 ring-[var(--adm-surface)]" />)}
+          </span>
+          <span className="min-w-0 truncate text-[var(--adm-ink-mute)]">
+            {names.length === 1 ? names[0] : `${names[0].split(" ")[0]} +${names.length - 1}`}
+          </span>
+        </span>
+      );
+    },
+  };
+
   const applicantsCol: DataTableColumn<Job> = {
     key: "applicants",
     header: "Applicants",
@@ -355,6 +473,16 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
         {j.applicationsCount || 0}
       </span>
     ),
+  };
+
+  // Where each role's candidates sit, stage by stage; opens the role on click like the rest of the row.
+  const pipelineCol: DataTableColumn<Job> = {
+    key: "pipeline",
+    header: <PipelineHeader stages={PIPELINE_STAGES} />,
+    label: "Pipeline by stage",
+    align: "right",
+    width: `${PIPELINE_STAGES.length * 58 + 24}px`,
+    cell: (j) => <PipelineCells stages={PIPELINE_STAGES} counts={j.pipeline} />,
   };
 
   const createdCol: DataTableColumn<Job> = {
@@ -391,8 +519,9 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   // One column list; the "detailed" columns start hidden in the Display menu.
   const columns: DataTableColumn<Job>[] = canPrice
     ? [
-        idCol, titleCol, departmentCol, clientCol, locationCol,
-        payCol, billCol, statusCol, applicantsCol, createdCol, actionsCol,
+        // Assignees sit beside the title: who owns a role is asked before where it is.
+        idCol, titleCol, assigneesCol, departmentCol, clientCol, locationCol,
+        payCol, billCol, statusCol, applicantsCol, pipelineCol, createdCol, actionsCol,
       ]
     : [idCol, titleCol, departmentCol, locationCol, statusCol, createdCol, actionsCol];
 
@@ -418,34 +547,30 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   return (
     // Full-height column: the grid (or the row list below xl) scrolls inside the panel.
     <div className="flex h-full min-h-0 flex-col">
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title={copy.title}
         meta={`${stats.total.toLocaleString()} ${copy.noun}${stats.total === 1 ? "" : "s"} · ${stats.applicants.toLocaleString()} applicant${stats.applicants === 1 ? "" : "s"}`}
+        stats={[
+          { label: "All roles", value: stats.total, selected: statusFilter === "all", onClick: () => setStatusFilter("all") },
+          { label: "Active", value: stats.active, selected: statusFilter === "active", onClick: () => setStatusFilter("active") },
+          { label: "Drafts", value: stats.draft, selected: statusFilter === "draft", onClick: () => setStatusFilter("draft") },
+          { label: "Closing in 7 days", value: stats.closingSoon },
+          { label: "No applicants yet", value: starvedRoles },
+        ]}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV}>
               <IconDownload /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
             {canEdit && (
-              <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}>
+              <WorkspaceButton className={BAND_PRIMARY} onClick={() => router.push(copy.newHref)}>
                 <Plus />{copy.post}
               </WorkspaceButton>
             )}
           </>
         }
-      />
-
-      <StatStrip
-        items={[
-          { label: "Active", value: stats.active, onClick: () => setStatusFilter("active") },
-          { label: "Closing in 7 days", value: stats.closingSoon,
-            tone: stats.closingSoon > 0 ? "warning" : "default",
-            hint: "Submission deadline approaching" },
-          { label: "No applicants", value: starvedRoles,
-            tone: starvedRoles > 0 ? "danger" : "success",
-            hint: starvedRoles > 0 ? "Nothing sourced yet" : "Every open role has candidates" },
-          { label: "Drafts", value: stats.draft, onClick: () => setStatusFilter("draft") },
-        ]}
       />
 
       <WorkspaceToolbar
@@ -481,16 +606,64 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
             count: statusCounts[t.key] || 0,
           }))}
         />
+        {canPrice && (
+          <FilterPill
+            label="Assigned to"
+            icon={FilterIcon.person}
+            value={assigneeFilter}
+            onChange={setAssigneeFilter}
+            options={filterOptions.assignees}
+          />
+        )}
+        <FilterPill
+          label="Posted"
+          icon={IconCalendar}
+          value={postedFilter}
+          onChange={(v) => { setPostedFilter(v); if (v !== "custom") { setPostedFrom(""); setPostedTo(""); } }}
+          options={POSTED_OPTIONS}
+        />
+        {postedFilter === "custom" && (
+          <span className="inline-flex items-center gap-1.5">
+            <input
+              type="date"
+              aria-label="Posted from"
+              value={postedFrom}
+              max={postedTo || undefined}
+              onChange={(e) => setPostedFrom(e.target.value)}
+              className={DATE_INPUT}
+            />
+            <span className="text-[13px] text-[var(--adm-ink-subtle)]">to</span>
+            <input
+              type="date"
+              aria-label="Posted to"
+              value={postedTo}
+              min={postedFrom || undefined}
+              onChange={(e) => setPostedTo(e.target.value)}
+              className={DATE_INPUT}
+            />
+          </span>
+        )}
+        {canPrice && (
+          <FilterPill
+            label="Client"
+            icon={IconBuilding}
+            value={clientFilter}
+            onChange={setClientFilter}
+            options={filterOptions.clients}
+          />
+        )}
+        <FilterPill
+          label="Type"
+          icon={FilterIcon.type}
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={filterOptions.types}
+        />
       </WorkspaceToolbar>
 
       <ActiveFilters
         variant="canvas"
-        chips={statusFilter !== "all"
-          ? [{
-              label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`,
-              onClear: () => setStatusFilter("all"),
-            }]
-          : []}
+        chips={filterChips}
         onClearAll={clearFilters}
       />
 
@@ -544,6 +717,12 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                           <span className="inline-flex items-center gap-1.5 tabular-nums">
                             <IconCalendar className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
                             Due {fmtDate(job.submissionDueDate)}
+                          </span>
+                        )}
+                        {canPrice && (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <IconUser className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                            <span className="truncate">{assigneesOf(job).join(", ") || "Unassigned"}</span>
                           </span>
                         )}
                         <span className="inline-flex items-center gap-1.5">

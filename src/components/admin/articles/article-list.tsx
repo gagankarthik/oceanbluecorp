@@ -32,8 +32,8 @@ import {
   IconBook, IconEdit, IconEye, IconStar, IconTrash, IconWarning,
 } from "@/components/admin/icons";
 import {
-  ActiveFilters, DisplayMenu, FilterIcon, FilterPill, StatStrip,
-  Workspace, WorkspaceButton, WorkspaceSearch, WorkspaceTitle, WorkspaceToolbar,
+  ActiveFilters, BrandBand, DisplayMenu, FilterIcon, FilterPill,
+  Workspace, WorkspaceButton, WorkspaceSearch, WorkspaceToolbar,
 } from "@/components/admin/workspace";
 
 /**
@@ -413,42 +413,39 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
 
   return (
     <>
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title={config.label}
-        info={config.purpose}
+        meta={config.purpose}
+        stats={[
+          { label: "Live", value: liveCount, hint: "Visible on the site right now" },
+          {
+            label: "Scheduled",
+            value: queuedCount,
+            hint: "Approved, waiting for its publish date",
+            onClick: () => setStatusFilter("scheduled"), selected: statusFilter === "scheduled",
+          },
+          {
+            label: "In review",
+            value: statusCounts["in-review"] || 0,
+            hint: "Written, waiting on a second reader",
+            onClick: () => setStatusFilter("in-review"), selected: statusFilter === "in-review",
+          },
+          ...(namesAClient(kind)
+            ? [{
+                label: "Awaiting sign-off",
+                value: awaitingApproval,
+                hint: "Finished, but the client has not approved it yet",
+              }]
+            : [{ label: "Drafts", value: statusCounts.draft || 0, onClick: () => setStatusFilter("draft"), selected: statusFilter === "draft" }]),
+        ]}
         actions={
           <WorkspaceButton variant="primary" onClick={() => router.push(`${config.adminPath}/new`)}>
             <Plus className="h-4 w-4" />
             New {config.noun}
           </WorkspaceButton>
         }
-      />
-
-      <StatStrip
-        items={[
-          { label: "Live", value: liveCount, tone: "success", hint: "Visible on the site right now" },
-          {
-            label: "Scheduled",
-            value: queuedCount,
-            hint: "Approved, waiting for its publish date",
-            onClick: () => setStatusFilter("scheduled"),
-          },
-          {
-            label: "In review",
-            value: statusCounts["in-review"] || 0,
-            tone: (statusCounts["in-review"] || 0) > 0 ? "warning" : "default",
-            hint: "Written, waiting on a second reader",
-            onClick: () => setStatusFilter("in-review"),
-          },
-          ...(namesAClient(kind)
-            ? [{
-                label: "Awaiting sign-off",
-                value: awaitingApproval,
-                tone: (awaitingApproval > 0 ? "warning" : "success") as "warning" | "success",
-                hint: "Finished, but the client has not approved it yet",
-              }]
-            : [{ label: "Drafts", value: statusCounts.draft || 0, onClick: () => setStatusFilter("draft") }]),
-        ]}
       />
 
       <WorkspaceToolbar

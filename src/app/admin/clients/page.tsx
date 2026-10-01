@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
@@ -12,7 +12,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -23,7 +23,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Field, FormInput, FormSelect } from "@/components/admin/forms/primitives";
 import { FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { useFormErrors } from "@/hooks/use-form-errors";
-import { check, collectErrors, email, LIMITS, maxLen, phone, required, url } from "@/lib/form-validation";
+import { check, collectErrors, email, LIMITS, maxLen, phone, required, website } from "@/lib/form-validation";
 import { AdminCard } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
 
@@ -77,8 +77,8 @@ function validateClient(f: FormData) {
     name: check(f.name, required("Enter the client's name."), maxLen(LIMITS.name)),
     websiteUrl: check(
       f.websiteUrl,
-      required("Enter the client's website, like https://example.com."),
-      url(),
+      required("Enter the client's website, like www.example.com."),
+      website(),
       maxLen(LIMITS.url),
     ),
     email: check(f.email, email("Enter the client's email, like name@company.com."), maxLen(LIMITS.email)),
@@ -101,6 +101,9 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -119,7 +122,7 @@ export default function ClientsPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const response = await fetch("/api/clients");
       const data = await response.json();
@@ -417,32 +420,33 @@ export default function ClientsPage() {
 
   return (
     <>
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Clients"
+        meta={`${clients.length.toLocaleString()} client${clients.length === 1 ? "" : "s"} on record`}
+        stats={[
+          { label: "Active clients", value: statusCounts.active,
+            onClick: () => setStatusFilter("active"),
+          selected: statusFilter === "active" },
+          { label: "Inactive", value: statusCounts.inactive,
+            onClick: () => setStatusFilter("inactive"),
+          selected: statusFilter === "inactive" },
+          { label: "Missing contact details", value: noContactCount,
+            hint: noContactCount > 0 ? "No email or phone on file" : "All reachable" },
+          { label: "Added this month", value: addedThisMonth },
+        ]}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={openCreate}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={openCreate}>
               <Plus className="h-4 w-4" />Add client
             </WorkspaceButton>
           </>
         }
-      />
-      <StatStrip
-        items={[
-          { label: "Active clients", value: statusCounts.active,
-            onClick: () => setStatusFilter("active") },
-          { label: "Inactive", value: statusCounts.inactive,
-            tone: statusCounts.inactive > 0 ? "warning" : "default",
-            onClick: () => setStatusFilter("inactive") },
-          { label: "Missing contact details", value: noContactCount,
-            tone: noContactCount > 0 ? "warning" : "default",
-            hint: noContactCount > 0 ? "No email or phone on file" : "All reachable" },
-          { label: "Added this month", value: addedThisMonth },
-        ]}
       />
 
       <WorkspaceToolbar
@@ -565,10 +569,12 @@ export default function ClientsPage() {
                       <FormInput
                         id={FIELD_IDS.websiteUrl}
                         {...invalidProps("websiteUrl")}
-                        type="url"
+                        type="text"
+                        inputMode="url"
+                        autoComplete="url"
                         value={formData.websiteUrl}
                         onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                        placeholder="https://example.com"
+                        placeholder="www.example.com"
                       />
                     </Field>
                     <Field label="Status" required fullWidth htmlFor="client-status">

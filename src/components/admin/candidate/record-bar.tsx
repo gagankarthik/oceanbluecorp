@@ -33,6 +33,9 @@ export type RecordBarProps = {
   onEdit: () => void;
 };
 
+/** The bar sits on the cobalt record band, so its ink-token text re-points to white. */
+const ON_COBALT = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--adm-ink-subtle:rgba(255,255,255,0.72)]";
+
 const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const MENU_LABEL = "px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]";
 
@@ -123,19 +126,22 @@ export function RecordBar({
         <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+            <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-white">
               {candidate.name || "Unnamed candidate"}
             </h1>
-            <StatusBadge status={candidate.status} size="md" />
+            {/* Chips are tinted for a white surface, so each sits on a white tab. */}
+            <span className="inline-flex rounded-[8px] bg-white p-0.5"><StatusBadge status={candidate.status} size="md" /></span>
             {pool && (
-              <StatusBadge tone={pool === "internal" ? "blue" : "emerald"} label={POOL_LABEL[pool]} size="md" />
+              <span className="inline-flex rounded-[8px] bg-white p-0.5">
+                <StatusBadge tone={pool === "internal" ? "blue" : "emerald"} label={POOL_LABEL[pool]} size="md" />
+              </span>
             )}
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--adm-ink-mute)]">
+          <div className={cn("mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/90", ON_COBALT)}>
             <a
               href={`mailto:${candidate.email}`}
-              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-[6px] transition-colors hover:text-[var(--adm-accent)]"
+              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-[6px] underline-offset-4 hover:underline"
             >
               <IconMail className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
               <span className="truncate">{candidate.email}</span>
@@ -143,7 +149,7 @@ export function RecordBar({
             {candidate.phone && (
               <a
                 href={`tel:${candidate.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-[6px] tabular-nums transition-colors hover:text-[var(--adm-accent)]"
+                className="inline-flex items-center gap-1.5 rounded-[6px] tabular-nums underline-offset-4 hover:underline"
               >
                 <IconPhone className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                 {candidate.phone}
@@ -170,7 +176,7 @@ export function RecordBar({
 
       {/* Actions. Labels collapse to icons below 2xl so the row fits one line on a laptop. */}
       <div className="flex flex-none flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5 pr-1">
+        <div className={cn("flex items-center gap-1.5 pr-1", ON_COBALT)}>
           <StarRating rating={candidate.rating || 0} onRate={onRate} size="md" />
           <span className="hidden text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)] 2xl:inline">
             {candidate.rating ? `${candidate.rating}/5` : "Not rated"}
@@ -193,7 +199,7 @@ export function RecordBar({
             Unclaimed is a problem, so it reads as one (danger outline). */}
         {candidate.ownership ? (
           <span
-            className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[var(--adm-success-soft)] px-3 text-[13px] font-medium text-[var(--adm-success-ink)]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[6px] bg-white px-3 text-[13px] font-medium text-[var(--adm-success-ink)]"
             title={`Claimed by ${candidate.ownershipName || "a teammate"}`}
           >
             <IconUserCheck className="h-4 w-4 flex-none" aria-hidden="true" />

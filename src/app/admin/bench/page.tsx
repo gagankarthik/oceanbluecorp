@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
@@ -10,7 +11,7 @@ import BenchLoading from "./loading";
 
 import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterMenu, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterMenu, ActiveFilters, DisplayMenu,
   RecordHeader, FormActionBar, GridSelect,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -28,10 +29,9 @@ import {
   WORK_AUTH_OPTIONS, SOURCE_OPTIONS, HIRE_TYPE_OPTIONS, hireTypeLabel,
 } from "@/components/admin/theme";
 import { POOL_META, POOL_ORDER, poolOf, canView } from "@/lib/bench";
-import { CandidateTabs } from "@/components/admin/candidate-tabs";
 import {
   IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
-  IconFile, IconMail, IconPhone, IconShield, IconTrash, IconUpload,
+  IconFile, IconMail, IconPhone, IconShield, IconSource, IconTrash, IconUpload,
 } from "@/components/admin/icons";
 
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -254,9 +254,11 @@ export default function TalentBenchPage() {
 
   // ── data ──────────────────────────────────────────────────────────────────
 
+  const hasData = useRef(false);
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
+      // Skeleton on first load only; a reload after a save keeps the grid on screen.
+      if (!hasData.current) setLoading(true);
       setError(null);
       const [appsResponse, jobsResponse] = await Promise.all([
         fetch("/api/applications"),
@@ -293,9 +295,10 @@ export default function TalentBenchPage() {
       );
 
       setApplications(benchApps);
+      hasData.current = true;
     } catch (err) {
       console.error("Failed to load the talent bench:", err);
-      setError("Check your connection and try again.");
+      if (!hasData.current) setError("Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -1410,32 +1413,40 @@ export default function TalentBenchPage() {
         onCancel={() => setPendingRemove(null)}
       />
 
-      <WorkspaceTitle
+      {/* Pools re-scope everything below them, so they lead the band; the figures follow the pool. */}
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Talent bench"
+        meta={`${poolCounts.all.toLocaleString()} profile${poolCounts.all === 1 ? "" : "s"} ready for future roles`}
+        stats={[
+          { label: "All candidates", value: poolCounts.all, selected: poolFilter === "all", onClick: () => setPoolFilter("all") },
+          ...POOL_ORDER.map((pool) => ({
+            label: POOL_META[pool].label,
+            value: poolCounts[pool],
+            selected: poolFilter === pool,
+            onClick: () => setPoolFilter(pool),
+          })),
+          { label: "Available now", value: kpis.available },
+          { label: "In process", value: kpis.inProcess },
+          { label: "Placed", value: kpis.placed },
+          { label: "Idle 30+ days", value: staleBench },
+        ]}
         actions={
           <>
+            <WorkspaceButton asChild>
+              <Link href={`/admin/lead-sourcing?from=${poolFilter}`}>
+                <IconSource aria-hidden="true" /><span className="hidden md:inline">Lead sourcing</span>
+              </Link>
+            </WorkspaceButton>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={handleCreateNew}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={handleCreateNew}>
               <Plus className="h-4 w-4" />Add profile
             </WorkspaceButton>
           </>
         }
-      />
-
-      {/* Pools re-scope everything below them, so they lead. */}
-      <CandidateTabs className="mb-4" active={poolFilter} counts={poolCounts} onSelect={setPoolFilter} />
-
-      <StatStrip
-        items={[
-          { label: "Available now", value: kpis.available, hint: "Not currently in a process" },
-          { label: "In process", value: kpis.inProcess },
-          { label: "Placed", value: kpis.placed, tone: "success" },
-          { label: "On bench 30d+", value: staleBench,
-            tone: staleBench > 0 ? "warning" : "default",
-            hint: staleBench > 0 ? "Worth re-engaging" : "All recently added" },
-        ]}
       />
 
       <WorkspaceToolbar

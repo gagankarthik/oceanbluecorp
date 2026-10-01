@@ -19,7 +19,7 @@ import { useAuth, canSeeJobCommercials } from "@/lib/auth";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import {
   LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
-  payOverBillWarning, phone, rangeInverted, required, url,
+  payOverBillWarning, phone, rangeInverted, required, website,
 } from "@/lib/form-validation";
 import { FieldError, FieldWarning, FormErrorBanner } from "./form-alert";
 
@@ -676,7 +676,7 @@ function AddClientModal({
   const { errors, validateAll, revalidate, invalidProps } = useFormErrors(
     () => collectErrors({
       name: check(form.name, required("Enter the client's company name."), maxLen(LIMITS.name)),
-      websiteUrl: check(form.websiteUrl, required("Enter the client's website, like https://acme.com."), url(), maxLen(LIMITS.url)),
+      websiteUrl: check(form.websiteUrl, required("Enter the client's website, like www.acme.com."), website(), maxLen(LIMITS.url)),
       email: check(form.email, email("Enter the client's email, like contact@acme.com."), maxLen(LIMITS.email)),
       phone: check(form.phone, phone()),
     }),
@@ -722,7 +722,7 @@ function AddClientModal({
             <FormInput id="client-name" required {...invalidProps("name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corporation" />
           </Field>
           <Field label="Website URL" required htmlFor="client-website" error={errors.websiteUrl}>
-            <FormInput id="client-website" required type="url" {...invalidProps("websiteUrl")} value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://example.com" />
+            <FormInput id="client-website" required type="text" inputMode="url" autoComplete="url" {...invalidProps("websiteUrl")} value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="www.example.com" />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Email" htmlFor="client-email" error={errors.email}>

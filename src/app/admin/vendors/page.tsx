@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
@@ -12,7 +12,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -101,6 +101,9 @@ export default function VendorsPage() {
   const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
   const [searchQuery, setSearchQuery] = useState("");
   const [vendorLeadFilter, setVendorLeadFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -133,7 +136,7 @@ export default function VendorsPage() {
 
   const fetchVendors = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const response = await fetch("/api/vendors");
       const data = await response.json();
@@ -445,28 +448,30 @@ export default function VendorsPage() {
         onCancel={() => setPendingDelete(null)}
       />
 
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Vendors"
+        meta={`${vendors.length.toLocaleString()} vendor${vendors.length === 1 ? "" : "s"} on record`}
+        stats={[
+          { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr"),
+          selected: vendorLeadFilter === "hr" },
+          { label: "Admin-led", value: stats.admin, onClick: () => setVendorLeadFilter("admin"),
+          selected: vendorLeadFilter === "admin" },
+          { label: "No contact on file", value: stats.noContact,
+            hint: stats.noContact > 0 ? "Cannot be called or emailed" : "All reachable" },
+        ]}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredVendors.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={openCreate}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={openCreate}>
               <Plus className="h-4 w-4" />Add vendor
             </WorkspaceButton>
           </>
         }
-      />
-      <StatStrip
-        items={[
-          { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr") },
-          { label: "Admin-led", value: stats.admin, onClick: () => setVendorLeadFilter("admin") },
-          { label: "No contact on file", value: stats.noContact,
-            tone: stats.noContact > 0 ? "warning" : "default",
-            hint: stats.noContact > 0 ? "Cannot be called or emailed" : "All reachable" },
-        ]}
       />
 
       <WorkspaceToolbar

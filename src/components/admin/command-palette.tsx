@@ -46,7 +46,7 @@ type NavItem = {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",     href: "/admin",                icon: IconOverview },
-  { name: "State roles",   href: "/admin/jobs",           icon: IconJob,       keywords: "jobs positions roles postings state" },
+  { name: "State roles",   href: "/admin/state-roles",    icon: IconJob,       keywords: "jobs positions roles postings state" },
   { name: "Open roles",    href: "/admin/open-roles",     icon: IconJob,       keywords: "jobs positions roles postings open" },
   { name: "Applications",  href: "/admin/applications",   icon: IconApplication,           keywords: "applicants candidates talent" },
   { name: "Talent bench",  href: "/admin/bench",          icon: IconBench,           keywords: "bench future" },

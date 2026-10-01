@@ -1,5 +1,6 @@
-import { JobsWorkspace } from "./_jobs-workspace";
+import { redirect } from "next/navigation";
 
-export default function StateRolesPage() {
-  return <JobsWorkspace category="state" />;
+// The list moved to /admin/state-roles; old links and bookmarks still land on it.
+export default function JobsIndexRedirect() {
+  redirect("/admin/state-roles");
 }

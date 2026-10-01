@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
@@ -14,7 +14,7 @@ import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { EmptyState } from "@/components/admin/empty-state";
 import { AdminCard } from "@/components/admin/admin-card";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
 import { ContactTable, CONTACT_COLUMN_OPTIONS } from "@/components/admin/contacts/contact-table";
 import { CONTACT_STATUSES, CONTACT_STATUS_META, type ContactStatus } from "@/components/admin/contacts/contact-status";
@@ -26,6 +26,9 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [inquiryFilter, setInquiryFilter] = useState("all");
@@ -43,7 +46,7 @@ export default function ContactsPage() {
 
   const fetchContacts = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const response = await fetch("/api/contacts");
       const data = await response.json();
@@ -159,26 +162,29 @@ export default function ContactsPage() {
 
   return (
     <>
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Contacts"
+        meta={`${contacts.length.toLocaleString()} enquir${contacts.length === 1 ? "y" : "ies"} from the website`}
+        stats={[
+          { label: "Awaiting a reply", value: statusCounts.new || 0,
+            onClick: () => setStatusFilter("new"),
+          selected: statusFilter === "new" },
+          { label: "Read, not answered", value: statusCounts.read || 0,
+            onClick: () => setStatusFilter("read"),
+          selected: statusFilter === "read" },
+          { label: "Responded", value: statusCounts.responded || 0,
+            onClick: () => setStatusFilter("responded"),
+          selected: statusFilter === "responded" },
+          { label: "Response rate", value: responseRate,
+            hint: "Of all enquiries received" },
+        ]}
         actions={
           <WorkspaceButton onClick={exportCSV} disabled={filteredContacts.length === 0} aria-label="Export CSV">
             <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
           </WorkspaceButton>
         }
-      />
-      <StatStrip
-        items={[
-          { label: "Awaiting a reply", value: statusCounts.new || 0,
-            tone: (statusCounts.new || 0) > 0 ? "warning" : "default",
-            onClick: () => setStatusFilter("new") },
-          { label: "Read, not answered", value: statusCounts.read || 0,
-            onClick: () => setStatusFilter("read") },
-          { label: "Responded", value: statusCounts.responded || 0,
-            tone: "success", onClick: () => setStatusFilter("responded") },
-          { label: "Response rate", value: responseRate,
-            hint: "Of all enquiries received" },
-        ]}
       />
 
       <WorkspaceToolbar

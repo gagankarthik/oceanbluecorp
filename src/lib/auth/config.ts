@@ -263,7 +263,9 @@ export const routeAccess: Record<string, UserRole[]> = {
   // Media reads postings so they can promote them. The API hands them the
   // public projection, no rates, client or assignees, and JOB_EDIT_ROLES keeps
   // the create/edit controls away from them.
+  // /admin/jobs still guards the posting pages (detail, edit, new) shared by both lists.
   "/admin/jobs": [...ALL_STAFF, UserRole.MEDIA],
+  "/admin/state-roles": [...ALL_STAFF, UserRole.MEDIA],
   "/admin/open-roles": [...ALL_STAFF, UserRole.MEDIA],
   "/admin/applications": ALL_STAFF,
   "/admin/candidates": ALL_STAFF,

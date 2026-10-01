@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
   FilterMenu, ActiveFilters,
-  DisplayMenu, SelectionBar, StatStrip,
+  DisplayMenu, SelectionBar, StageStrip, BrandBand, BAND_PRIMARY,
 } from "@/components/admin/workspace";
 import { Field, FormSelect } from "@/components/admin/forms/primitives";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -245,9 +245,11 @@ export default function ApplicationsPage() {
     if (sv && sv in VIEW_PREDICATE) setSavedView(sv as ViewKey);
   }, []);
 
+  const hasData = useRef(false);
   const load = useCallback(async () => {
     try {
-      setLoading(true);
+      // Skeleton on first load only; a reload after a save keeps the grid on screen.
+      if (!hasData.current) setLoading(true);
       setError(null);
       const [ar, jr] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs?fields=summary")]);
       const ad = await ar.json(); const jd = await jr.json();
@@ -261,9 +263,11 @@ export default function ApplicationsPage() {
       });
       list.sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
       setApplications(list);
+      hasData.current = true;
     } catch (e) {
       console.error("Failed to load applications:", e);
-      setError("Check your connection and try again.");
+      if (hasData.current) toast.error("Couldn't refresh applications. Showing the last loaded list.");
+      else setError("Check your connection and try again.");
     } finally { setLoading(false); }
   }, [setCtxJobs]);
 
@@ -305,11 +309,6 @@ export default function ApplicationsPage() {
     return [...known, ...extra];
   }, [applications]);
 
-  const statusCounts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const a of applications) c[a.status] = (c[a.status] || 0) + 1;
-    return c;
-  }, [applications]);
 
   const viewCtx = useMemo(
     () => ({ userId: user?.id, userName: user?.name ?? undefined }),
@@ -328,10 +327,10 @@ export default function ApplicationsPage() {
   const views: { key: ViewKey; label: string; count: number }[] = [
     { key: "all",          label: "All applicants", count: viewCounts.all },
     { key: "mine",         label: "My queue",       count: viewCounts.mine },
-    { key: "review",       label: "Needs review",   count: viewCounts.review },
+    { key: "review",       label: "Awaiting review", count: viewCounts.review },
     { key: "interviewing", label: "Interviewing",   count: viewCounts.interviewing },
-    { key: "offers",       label: "Offers out",     count: viewCounts.offers },
-    { key: "stale",        label: "Stale",          count: viewCounts.stale },
+    { key: "offers",       label: "Offers extended", count: viewCounts.offers },
+    { key: "stale",        label: "Stalled 7+ days", count: viewCounts.stale },
     { key: "hired",        label: "Hired",          count: viewCounts.hired },
   ];
 
@@ -354,6 +353,13 @@ export default function ApplicationsPage() {
     () => applications.filter((a) => VIEW_PREDICATE[savedView](a, viewCtx)),
     [applications, savedView, viewCtx],
   );
+
+  /** Stage counts inside the current view: the strip and the stage filter agree with the tab. */
+  const statusCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const a of inView) c[a.status] = (c[a.status] || 0) + 1;
+    return c;
+  }, [inView]);
 
   /**
    * Searchable text per record, built once per loaded list rather than on every
@@ -475,7 +481,6 @@ export default function ApplicationsPage() {
     v === "__none" ? "No location" : STATE_NAME.get(v) || v;
 
   const filterChips: { label: string; onClear: () => void }[] = [
-    ...(savedView !== "all" ? [{ label: `View: ${views.find((v) => v.key === savedView)?.label ?? savedView}`, onClear: () => setSavedView("all") }] : []),
     ...(statusFilter !== "all" ? [{ label: `Stage: ${sLabel(statusFilter)}`, onClear: () => setStatusFilter("all") }] : []),
     ...(posFilter !== "all"    ? [{ label: `Position: ${posFilter}`, onClear: () => setPosFilter("all") }] : []),
     ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabel(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
@@ -610,35 +615,28 @@ export default function ApplicationsPage() {
     // Full-height column so the table scrolls inside the panel, not the page.
     // `min-h-0` is load-bearing: without it the column grows to the table's height.
     <div className="flex h-full min-h-0 flex-col">
-      <WorkspaceTitle
+      {/* The saved views are the band's figures: pick one to scope the grid. */}
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Applications"
         meta={`${applications.length.toLocaleString()} applicant${applications.length === 1 ? "" : "s"} across ${positions.length} position${positions.length === 1 ? "" : "s"}`}
+        stats={views.map((v) => ({
+          label: v.label,
+          value: v.count,
+          selected: v.key === savedView,
+          onClick: () => { setSavedView(v.key); setSelected([]); },
+        }))}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV}>
               <IconDownload /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ mode: "create" })}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={() => openCandidateEditor({ mode: "create" })}>
               <Plus />Add applicant
             </WorkspaceButton>
           </>
         }
-      />
-
-      <StatStrip
-        items={[
-          { label: "Needs review", value: viewCounts.review,
-            tone: viewCounts.review > 0 ? "warning" : "default",
-            onClick: () => setSavedView("review") },
-          { label: "Interviewing", value: viewCounts.interviewing,
-            onClick: () => setSavedView("interviewing") },
-          { label: "Offers out", value: viewCounts.offers,
-            onClick: () => setSavedView("offers") },
-          { label: "Stale 7d+", value: viewCounts.stale,
-            tone: viewCounts.stale > 0 ? "danger" : "success",
-            hint: viewCounts.stale > 0 ? "No movement in 7+ days" : "Pipeline moving",
-            onClick: () => setSavedView("stale") },
-        ]}
       />
 
       <WorkspaceToolbar
@@ -653,20 +651,6 @@ export default function ApplicationsPage() {
         trailing={
           <>
             <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
-              <Field label="Saved view" htmlFor="filter-view">
-                <FormSelect
-                  id="filter-view"
-                  value={savedView}
-                  onChange={(e) => { setSavedView(e.target.value as ViewKey); setSelected([]); }}
-                >
-                  {views.map((v) => (
-                    <option key={v.key} value={v.key}>
-                      {v.label}{typeof v.count === "number" ? ` (${v.count})` : ""}
-                    </option>
-                  ))}
-                </FormSelect>
-              </Field>
-
               <Field label="Stage" htmlFor="filter-stage">
                 <FormSelect id="filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                   <option value="all">All stages ({inView.length})</option>
@@ -763,6 +747,23 @@ export default function ApplicationsPage() {
       <ActiveFilters variant="canvas" chips={filterChips} onClearAll={clearFilters} />
 
       <Workspace>
+        {/* The board already lays the stages out as columns. */}
+        {view !== "kanban" && (
+          <StageStrip
+            variant="band"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            items={[
+              { key: "all", label: "All stages", count: inView.length },
+              ...ALL_STATUSES.map((st) => ({
+                key: st,
+                label: sLabel(st),
+                count: statusCounts[st] || 0,
+                color: stageColor(st),
+              })),
+            ]}
+          />
+        )}
         {isGrid && (
           <DataTable
             noun="applications"

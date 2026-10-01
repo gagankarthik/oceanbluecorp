@@ -639,6 +639,8 @@ export interface Job {
   postedByEmail?: string; // Email of admin/HR who posted
   postedByRole?: string; // Role of poster (admin/hr)
   applicationsCount?: number;
+  /** Applicants per pipeline stage. Derived per request for recruiting staff, never stored. */
+  pipeline?: Record<string, number>;
 
   // Cached "best candidates", the matching engine's ranking of the resume bank
   // for this job. Recomputed on demand; stored so the panel loads instantly and
@@ -1070,11 +1072,29 @@ export async function getAllApplications(): Promise<{ success: boolean; data?: A
  * Live applicant count per job. The stored `applicationsCount` is only bumped
  * by portal applications and never decremented, so it drifts from the pipeline.
  */
-export async function getApplicationCountsByJob(): Promise<Map<string, number>> {
-  const result = await getAllApplications();
-  const counts = new Map<string, number>();
-  for (const app of result.data || []) {
-    if (app.jobId) counts.set(app.jobId, (counts.get(app.jobId) || 0) + 1);
+export async function getApplicationCountsByJob(): Promise<Map<string, { total: number; byStatus: Record<string, number> }>> {
+  const counts = new Map<string, { total: number; byStatus: Record<string, number> }>();
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return counts;
+
+  try {
+    // Two attributes only: a full scan drags every parsed resume across the
+    // wire just to count rows, which made the roles lists slow to load.
+    const rows = await scanAll<Pick<Application, "jobId" | "status">>(dbCheck.client!, {
+      TableName: getTables().applications,
+      ProjectionExpression: "jobId, #s",
+      ExpressionAttributeNames: { "#s": "status" },
+    });
+    for (const app of rows) {
+      if (!app.jobId) continue;
+      const entry = counts.get(app.jobId) ?? { total: 0, byStatus: {} };
+      entry.total += 1;
+      entry.byStatus[app.status] = (entry.byStatus[app.status] || 0) + 1;
+      counts.set(app.jobId, entry);
+    }
+  } catch (error) {
+    // A missing count must not take the roles list down with it.
+    console.error("Error counting applications by job:", error);
   }
   return counts;
 }

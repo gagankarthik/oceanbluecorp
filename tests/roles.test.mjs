@@ -147,7 +147,7 @@ describe("routeAccess for media", () => {
   test("media reaches exactly the publishing sections plus job postings", () => {
     for (const path of [
       "/admin/blog", "/admin/case-studies", "/admin/customer-stories",
-      "/admin/news", "/admin/jobs",
+      "/admin/news", "/admin/jobs", "/admin/state-roles", "/admin/open-roles",
     ]) {
       assert.equal(allows(path, UserRole.MEDIA), true, `media should reach ${path}`);
     }

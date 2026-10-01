@@ -51,7 +51,12 @@ export async function GET(request: NextRequest) {
     // callers keep the stored figure and skip the extra read.
     const counted = isStaff || isEditor
       ? await getApplicationCountsByJob().then((counts) =>
-          jobs.map((j) => ({ ...j, applicationsCount: counts.get(j.id) || 0 })))
+          // The stage split is recruiting data: staff only. toPublicJob drops it for media.
+          jobs.map((j) => ({
+            ...j,
+            applicationsCount: counts.get(j.id)?.total || 0,
+            pipeline: isStaff ? counts.get(j.id)?.byStatus ?? {} : undefined,
+          })))
       : jobs;
     const payload = isStaff
       ? counted
@@ -166,7 +171,7 @@ export async function POST(request: NextRequest) {
             type: "job_posted",
             title: "New Job Posted",
             message: `${job.title} in ${job.department} - ${job.location}`,
-            link: `/admin/jobs`,
+            link: `/admin/state-roles`,
             relatedId: job.id,
             isRead: false,
             createdAt: new Date().toISOString(),

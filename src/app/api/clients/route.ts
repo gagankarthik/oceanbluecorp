@@ -1,3 +1,4 @@
+import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { NextRequest, NextResponse } from "next/server";
 import { getAllClients, createClient, Client } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
@@ -56,9 +57,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate website URL format
-    try {
-      new URL(body.websiteUrl);
-    } catch {
+    body.websiteUrl = normalizeWebsite(String(body.websiteUrl));
+    if (!isUrl(body.websiteUrl)) {
       return NextResponse.json(
         { error: "Invalid website URL format" },
         { status: 400 }

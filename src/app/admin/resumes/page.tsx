@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, StatStrip,
+  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -129,6 +129,9 @@ export default function ResumeBankPage() {
   const [resumes, setResumes]     = useState<BankResume[]>([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
+  // Skeleton on first load only; later reloads keep the list on screen.
+  const loadedOnce = useRef(false);
+  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
 
   const [queue, setQueue]         = useState<QueueItem[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -147,7 +150,7 @@ export default function ResumeBankPage() {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!loadedOnce.current) setLoading(true);
       setError(null);
       const res = await fetch("/api/resume-bank");
       const data = await res.json();
@@ -579,32 +582,31 @@ export default function ResumeBankPage() {
         </div>
       )}
 
-      <WorkspaceTitle
+      <BrandBand
+        size="sm"
+        className="mb-3"
         title="Resume bank"
+        meta={`${resumes.length.toLocaleString()} resume${resumes.length === 1 ? "" : "s"} on file`}
+        stats={[
+          { label: "Resumes", value: resumes.length },
+          { label: "Indexed", value: `${resumes.filter((r) => r.indexed).length}/${resumes.length}`,
+            hint: "Searchable in Lead Sourcing / Best candidates" },
+          { label: "This month", value: monthCount },
+          { label: "No candidate name", value: unnamedCount,
+            hint: "No candidate name recorded" },
+          { label: "Storage", value: storageUsed },
+        ]}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
             {/* Yields the filled style to the queue's commit button while files wait. */}
-            <WorkspaceButton variant={pendingCount > 0 ? "secondary" : "primary"} onClick={() => fileInputRef.current?.click()}>
+            <WorkspaceButton className={BAND_PRIMARY} onClick={() => fileInputRef.current?.click()}>
               <IconUpload className="h-4 w-4" />Upload
             </WorkspaceButton>
           </>
         }
-      />
-      <StatStrip
-        items={[
-          { label: "Files", value: resumes.length },
-          { label: "Indexed", value: `${resumes.filter((r) => r.indexed).length}/${resumes.length}`,
-            tone: resumes.some((r) => !r.indexed) ? "warning" : "success",
-            hint: "Searchable in Lead Sourcing / Best candidates" },
-          { label: "This month", value: monthCount },
-          { label: "Unlinked", value: unnamedCount,
-            tone: unnamedCount > 0 ? "warning" : "default",
-            hint: "No candidate name recorded" },
-          { label: "Storage", value: storageUsed },
-        ]}
       />
 
       {panelOpen && queue.length > 0 && (

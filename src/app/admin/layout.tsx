@@ -40,7 +40,7 @@ type Section = (typeof SECTION_ORDER)[number];
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
-  { name: "State Roles",  href: "/admin/jobs",         icon: IconStateRole,    roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
+  { name: "State Roles",  href: "/admin/state-roles", icon: IconStateRole,    roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Open Roles",   href: "/admin/open-roles",   icon: IconJob,          roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },

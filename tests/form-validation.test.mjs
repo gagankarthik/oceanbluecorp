@@ -22,6 +22,21 @@ describe("predicates", () => {
     assert.equal(fv.isPhone("1".repeat(21)), false);
   });
 
+  test("website accepts an address with or without https://", () => {
+    assert.equal(fv.normalizeWebsite(" www.example.com "), "https://www.example.com");
+    assert.equal(fv.normalizeWebsite("example.com/careers"), "https://example.com/careers");
+    assert.equal(fv.normalizeWebsite("http://example.com"), "http://example.com");
+    assert.equal(fv.normalizeWebsite("HTTPS://example.com"), "HTTPS://example.com");
+    assert.equal(fv.normalizeWebsite("example.com:8080"), "https://example.com:8080");
+    assert.equal(fv.website()("www.example.com"), undefined);
+    assert.equal(fv.website()("example.com"), undefined);
+    assert.equal(fv.website()("https://example.com"), undefined);
+    assert.equal(fv.website()(""), undefined);
+    assert.equal(typeof fv.website()("javascript:alert(1)"), "string");
+    assert.equal(typeof fv.website()("ftp://example.com"), "string");
+    assert.equal(typeof fv.website()("not a site"), "string");
+  });
+
   test("isUrl requires http(s) and a dotted host", () => {
     assert.equal(fv.isUrl("https://example.com"), true);
     assert.equal(fv.isUrl("http://sub.example.co.uk/path?q=1"), true);

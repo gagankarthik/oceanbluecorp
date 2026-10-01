@@ -37,32 +37,13 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
 export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0, label = "Loading list" }: { stats?: number; rows?: number; tabs?: number; label?: string }) {
   return (
     <div className="pb-10" {...busy(label)}>
-      {/* title + actions */}
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <Skel className="h-6 w-44" />
-        <div className="flex gap-2">
-          <Skel className="hidden h-9 w-24 sm:block" />
-          <Skel className="h-9 w-28" />
-        </div>
-      </div>
+      <BrandBandSkeleton size="sm" stats={Math.max(stats, 1)} className="mb-3" />
 
       {/* segmented tabs (e.g. bench pools) */}
       {tabs > 0 && (
         <div className="mb-4 inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5">
           {Array.from({ length: tabs }).map((_, i) => (
             <Skel key={i} className="h-7 w-28 rounded-[6px]" />
-          ))}
-        </div>
-      )}
-
-      {/* stat strip */}
-      {stats > 0 && (
-        <div className="mb-4 inline-flex overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-          {Array.from({ length: stats }).map((_, i) => (
-            <div key={i} className={cn("flex h-9 items-center gap-2 px-3.5", i > 0 && "border-l border-[var(--adm-line-soft)]")}>
-              <Skel className="h-3 w-16" />
-              <Skel className="h-3.5 w-6" />
-            </div>
           ))}
         </div>
       )}
@@ -216,32 +197,40 @@ export function KanbanSkeleton({
  *
  * If you move a band on the dashboard, move it here. The two are a pair.
  */
+/** Placeholder for a BrandBand: same footprint, a quiet tint instead of the full cobalt. */
+export function BrandBandSkeleton({ stats, size = "md", className }: { stats: number; size?: "sm" | "md"; className?: string }) {
+  const sm = size === "sm";
+  const bar = "rounded-[6px] bg-[var(--adm-accent)] opacity-15";
+  return (
+    <div className={cn("flex-none overflow-hidden rounded-[8px] bg-[var(--adm-accent-soft)]", className)}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
+        <div className="space-y-2">
+          <div className={cn(bar, "h-6 w-44")} />
+          <div className={cn(bar, "h-3.5 w-56")} />
+        </div>
+        <div className="flex gap-2">
+          <div className={cn(bar, "h-9 w-24")} />
+          <div className={cn(bar, "h-9 w-32")} />
+        </div>
+      </div>
+      <div className="flex gap-px border-t border-[var(--adm-surface)]">
+        {Array.from({ length: stats }).map((_, i) => (
+          <div key={i} className={cn("min-w-0 flex-1 space-y-2 px-5", sm ? "py-2.5" : "py-4", i > 1 && "hidden sm:block", i > 3 && "sm:hidden lg:block")}>
+            <div className={cn(bar, "h-3 w-20 max-w-full")} />
+            <div className={cn(bar, sm ? "h-5 w-10" : "h-7 w-14")} />
+            {!sm && <div className={cn(bar, "h-3 w-24 max-w-full")} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function DashboardSkeleton() {
   const card = "rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]";
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5" {...busy("Loading dashboard")}>
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <Skel className="h-6 w-56" />
-          <Skel className="mt-2 h-3.5 w-64" />
-        </div>
-        <div className="flex gap-2">
-          <Skel className="h-9 w-52 rounded-[9px]" />
-          <Skel className="h-9 w-24 rounded-[9px]" />
-        </div>
-      </div>
-
-      <div className={cn(card, "@container overflow-hidden")}>
-        <div className="grid grid-cols-2 gap-px bg-[var(--adm-line-soft)] @2xl:grid-cols-3 @4xl:grid-cols-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-[var(--adm-surface)] px-5 py-5">
-              <Skel className="h-3.5 w-20" />
-              <Skel className="mt-3 h-8 w-14" />
-              <Skel className="mt-2.5 h-3 w-24" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <BrandBandSkeleton stats={6} />
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Skel className="h-[260px] rounded-[8px]" />

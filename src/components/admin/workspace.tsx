@@ -122,6 +122,9 @@ export function WorkspaceTitle({
   );
 }
 
+/** True inside a BrandBand's action slot. */
+const BandContext = React.createContext(false);
+
 /**
  * Toolbar button. One geometry for every control in the workspace chrome.
  *
@@ -146,6 +149,8 @@ export function WorkspaceButton({
   asChild?: boolean;
 }) {
   const Comp = asChild ? Slot.Root : "button";
+  // On the cobalt BrandBand a filled or ghost button would vanish, so it inverts.
+  const onBand = React.useContext(BandContext);
   return (
     <Comp
       {...(asChild ? {} : { type: "button" as const })}
@@ -155,11 +160,14 @@ export function WorkspaceButton({
         size === "sm" ? "h-8 rounded-[6px] px-3 text-[13px]" : "h-9 rounded-[6px] px-3.5 text-[13.5px]",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
-        variant === "primary" &&
-          "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]",
+        variant === "primary" && (onBand
+          ? "bg-white text-[var(--adm-accent)] hover:bg-white/90"
+          : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]"),
         variant === "secondary" &&
           "border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
-        variant === "ghost" && "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+        variant === "ghost" && (onBand
+          ? "text-white/85 hover:bg-white/10 hover:text-white"
+          : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"),
         className,
       )}
     >
@@ -205,25 +213,19 @@ export function RecordHeader({
       {back.label}
     </>
   );
+  // On cobalt, like BrandBand. Facts and links are built on the ink tokens, so
+  // the text rows re-point those tokens to white; the status chip keeps its own
+  // colours on a white tab.
+  const onCobalt = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--adm-ink-subtle:rgba(255,255,255,0.72)]";
+  const backCls = "-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-white/75 transition-colors hover:text-white";
   return (
-    <div className={cn("mb-5 flex-none", className)}>
+    <div className={cn("mb-5 flex-none rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white", className)}>
       {back && (
-        <div className="mb-2">
+        <div className="mb-1.5">
           {back.href ? (
-            <Link
-              href={back.href}
-              className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
-            >
-              {backContent}
-            </Link>
+            <Link href={back.href} className={backCls}>{backContent}</Link>
           ) : (
-            <button
-              type="button"
-              onClick={back.onClick}
-              className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
-            >
-              {backContent}
-            </button>
+            <button type="button" onClick={back.onClick} className={backCls}>{backContent}</button>
           )}
         </div>
       )}
@@ -231,20 +233,22 @@ export function RecordHeader({
       <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h1 className="min-w-0 break-words text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+            <h1 className="min-w-0 break-words text-[21px] font-semibold leading-7 tracking-[-0.02em]">
               {title}
             </h1>
-            {status}
+            {status && <span className="inline-flex rounded-[8px] bg-white p-0.5">{status}</span>}
           </div>
-          {subtitle && <p className="mt-0.5 text-[13.5px] text-[var(--adm-ink-mute)]">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-[13.5px] text-white/80">{subtitle}</p>}
           {meta && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+            <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]", onCobalt)}>
               {meta}
             </div>
           )}
         </div>
         {actions && (
-          <div className="flex flex-none items-center gap-2 max-sm:[&>*:last-child]:flex-1">{actions}</div>
+          <BandContext.Provider value={true}>
+            <div className="flex flex-none items-center gap-2 max-sm:[&>*:last-child]:flex-1">{actions}</div>
+          </BandContext.Provider>
         )}
       </div>
     </div>
@@ -466,6 +470,137 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
   );
 }
 
+export interface BrandStat {
+  label: string;
+  value: React.ReactNode;
+  /** Small line under the figure. */
+  sub?: string;
+  /** Tooltip explaining the figure. */
+  hint?: string;
+  href?: string;
+  onClick?: () => void;
+  /** Marks the cell as the active scope. */
+  selected?: boolean;
+}
+
+/**
+ * The console's signature header: a screen's name, its actions and its headline
+ * figures on the brand colour. Figures that link or filter are the cells
+ * themselves, so the band is a control surface, not a banner.
+ */
+export function BrandBand({
+  title,
+  meta,
+  actions,
+  stats = [],
+  size = "md",
+  className,
+}: {
+  title: string;
+  meta?: React.ReactNode;
+  /** Buttons render white on the band; pass secondary WorkspaceButtons. */
+  actions?: React.ReactNode;
+  stats?: BrandStat[];
+  /** "sm" is the list-screen band: one line of figures, no sub line. */
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const sm = size === "sm";
+  return (
+    <section className={cn("@container flex-none overflow-hidden rounded-[8px] bg-[var(--adm-accent)] text-white", className)}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
+        <div className="min-w-0">
+          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] sm:text-[21px]">{title}</h1>
+          {meta && <div className="mt-0.5 text-[13px] text-white/75">{meta}</div>}
+        </div>
+        {actions && (
+          <BandContext.Provider value={true}>
+            <div className="flex flex-wrap items-center gap-2">{actions}</div>
+          </BandContext.Provider>
+        )}
+      </div>
+
+      {stats.length > 0 && (
+        <div
+          className={cn(
+            "grid gap-px border-t border-white/15 bg-white/15",
+            sm ? "adm-scroll-hidden auto-cols-[minmax(128px,1fr)] grid-flow-col overflow-x-auto" : "grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-6",
+          )}
+        >
+          {stats.map((s) => {
+            const interactive = !!(s.href || s.onClick);
+            const cls = cn(
+              "group min-w-0 px-5 text-left transition-colors",
+              sm ? "py-2.5" : "py-4",
+              s.selected ? "bg-[var(--adm-accent-strong)]" : "bg-[var(--adm-accent)]",
+              interactive && "hover:bg-[var(--adm-accent-strong)]",
+            );
+            const body = (
+              <>
+                <span className="block truncate text-[12.5px] text-white/75">{s.label}</span>
+                <span
+                  className={cn(
+                    "block font-semibold leading-none tracking-[-0.025em] tabular-nums",
+                    sm ? "mt-1.5 text-[20px]" : "mt-2 text-[24px] sm:text-[28px]",
+                  )}
+                >
+                  {s.value}
+                </span>
+                {!sm && s.sub && <span className="mt-2 block truncate text-[12.5px] text-white/70">{s.sub}</span>}
+                {s.selected && <span className="sr-only">(selected)</span>}
+              </>
+            );
+            if (s.href) return <Link key={s.label} href={s.href} title={s.hint} className={cls}>{body}</Link>;
+            if (s.onClick) return <button key={s.label} type="button" title={s.hint} aria-pressed={!!s.selected} onClick={s.onClick} className={cls}>{body}</button>;
+            return <div key={s.label} title={s.hint} className={cls}>{body}</div>;
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** White-on-band button styling for a BrandBand's primary action. */
+export const BAND_PRIMARY = "border-transparent text-[var(--adm-accent)]";
+
+/** Shared geometry so a PipelineHeader's labels sit over a PipelineCells row's figures. */
+const PIPE_CELL = "w-[58px] flex-none text-right";
+
+/** Stage labels for a pipeline column header. */
+export function PipelineHeader({ stages }: { stages: { key: string; label: string }[] }) {
+  return (
+    <span className="inline-flex">
+      {stages.map((s) => <span key={s.key} className={cn(PIPE_CELL, "truncate")}>{s.label}</span>)}
+    </span>
+  );
+}
+
+/** One row of per-stage figures; zero recedes so the eye lands on where candidates are. */
+export function PipelineCells({
+  stages,
+  counts,
+}: {
+  stages: { key: string; label: string }[];
+  counts?: Record<string, number>;
+}) {
+  return (
+    <span className="inline-flex tabular-nums">
+      {stages.map((s) => {
+        const n = counts?.[s.key] || 0;
+        return (
+          <span
+            key={s.key}
+            title={`${s.label}: ${n}`}
+            className={cn(PIPE_CELL, n > 0 ? "font-semibold text-[var(--adm-ink)]" : "text-[var(--adm-ink-subtle)]")}
+          >
+            {n > 0 ? n : "–"}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export interface StageStripItem {
   key: string;
   label: string;
@@ -482,13 +617,51 @@ export function StageStrip({
   items,
   value,
   onChange,
+  variant = "figure",
   className,
 }: {
   items: StageStripItem[];
   value: string;
   onChange: (key: string) => void;
+  /** "band" is one line tall and sits inside a Workspace panel, above its grid. */
+  variant?: "figure" | "band";
   className?: string;
 }) {
+  if (variant === "band") {
+    return (
+      <div
+        role="group"
+        aria-label="Pipeline stages"
+        className={cn("adm-scroll-hidden flex flex-none overflow-x-auto border-b border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}
+      >
+        {items.map((s, i) => {
+          const selected = s.key === value;
+          return (
+            <button
+              key={s.key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(s.key)}
+              className={cn(
+                "relative inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3.5 text-[13px] transition-colors duration-150",
+                i > 0 && "border-l border-[var(--adm-line-soft)]",
+                selected
+                  ? "bg-[var(--adm-accent-tint)] font-medium text-[var(--adm-ink)]"
+                  : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+              )}
+            >
+              {s.color && <span aria-hidden className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: s.color }} />}
+              {s.label}
+              <span className={cn("font-semibold tabular-nums", s.count === 0 ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-ink)]")}>
+                {s.count}
+              </span>
+              {selected && <span aria-hidden className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--adm-accent)]" />}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div
       role="group"
@@ -653,20 +826,24 @@ export function WorkspaceToolbar({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2",
+        // The trailing controls never wrap: search and filters share the space
+        // to their left and wrap inside it, so Display stays top-right at any width.
+        "flex items-start gap-2",
         variant === "panel"
           ? "border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 lg:px-4"
           : "mb-3",
         className,
       )}
     >
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
       {search}
       {/* Filters are their own cluster, separated from the search box and from
           the view/action group on the right. Eleven controls in one evenly
           spaced row read as eleven equal choices; grouped by what they do, the
           eye picks the right cluster first and only then the control. */}
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
-      {trailing && <div className="ml-auto flex flex-shrink-0 items-center gap-2">{trailing}</div>}
+      {children && <div className="flex min-w-0 flex-wrap items-center gap-2">{children}</div>}
+      </div>
+      {trailing && <div className="flex flex-none items-center gap-2">{trailing}</div>}
     </div>
   );
 }
@@ -702,7 +879,8 @@ export function WorkspaceSearch({
   }, []);
 
   return (
-    <div className={cn("relative w-full sm:w-[340px] lg:w-[420px]", className)}>
+    // Gives up width before the filters beside it have to wrap.
+    <div className={cn("relative w-full min-w-[200px] sm:w-auto sm:max-w-[320px] sm:flex-1", className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" />
       <input
         ref={ref}

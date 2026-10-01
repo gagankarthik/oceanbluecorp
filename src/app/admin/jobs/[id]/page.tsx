@@ -11,7 +11,7 @@ import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
 import JobDetailLoading from "./loading";
-import { jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
+import { isPubliclyOpen, jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb, useNavSection } from "@/components/admin/admin-provider";
 import { GridSelect, RecordFact, RecordHeader, StageStrip, WorkspaceButton } from "@/components/admin/workspace";
@@ -25,7 +25,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { SearchInput } from "@/components/admin/toolbar";
 import { Avatar } from "@/components/admin/avatar";
 import {
-  IconRequisition, IconBuilding, IconCopy, IconClock,
+  IconRequisition, IconBuilding, IconLink, IconClock,
   IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
   IconGroup, IconSource, IconSend,
 } from "@/components/admin/icons";
@@ -148,10 +148,17 @@ export default function JobDetailPage({
     }
   };
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // The public careers page, not this console URL: the link a candidate can open.
+  const publicUrl = () => `${window.location.origin}/careers/search/${jobId}`;
+  const shareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("Public link copied. Anyone with it can view this posting.");
+    } catch {
+      toast.error("The link couldn't be copied. Open the public posting and copy its address instead.");
+    }
   };
 
   const filteredApps = applications.filter((a) => {
@@ -387,14 +394,31 @@ export default function JobDetailPage({
               <DropdownMenuContent
                 align="end"
                 sideOffset={6}
-                className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+                className="w-64 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
               >
-                <DropdownMenuItem onClick={copyLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
-                  {copied
-                    ? <Check className="h-4 w-4 text-[var(--adm-success-ink)]" aria-hidden="true" />
-                    : <IconCopy className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />}
-                  {copied ? "Link copied" : "Copy link"}
-                </DropdownMenuItem>
+                {isPubliclyOpen(job.status) ? (
+                  <>
+                    <DropdownMenuItem onClick={shareLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+                      {copied
+                        ? <Check className="h-4 w-4 text-[var(--adm-success-ink)]" aria-hidden="true" />
+                        : <IconLink className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />}
+                      {copied ? "Link copied" : "Share link"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => window.open(publicUrl(), "_blank", "noopener")}
+                      className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]"
+                    >
+                      <IconEye className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                      View public posting
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  // A draft, on-hold or closed posting has no public page to share.
+                  <DropdownMenuItem disabled className="gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink-subtle)]">
+                    <IconLink className="h-4 w-4" aria-hidden="true" />
+                    Share link (set the role to Active first)
+                  </DropdownMenuItem>
+                )}
                 {canManageApplicants && filteredApps.length > 0 && (
                   <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
                     <IconDownload className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
@@ -434,7 +458,7 @@ export default function JobDetailPage({
         />
       )}
 
-      <div className={cn("mb-4 grid grid-cols-1 items-start gap-4", canPrice && "lg:grid-cols-[minmax(0,1fr)_320px]")}>
+      <div className={cn("mb-4 grid grid-cols-1 items-stretch gap-4", canPrice && "lg:grid-cols-2")}>
         <AdminCard className="overflow-hidden">
           <dl aria-label="Role details" className="flex flex-wrap gap-x-10 gap-y-4 px-5 py-4">
             {details.filter((d) => d.value).map((d) => (
