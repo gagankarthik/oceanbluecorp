@@ -282,7 +282,9 @@ export function DataTable<T>({
       <div
         ref={scrollRef}
         data-density={density}
-        className="min-h-0 flex-1 overflow-auto"
+        // `relative` keeps sr-only text in cells (position:absolute) inside this
+        // scroller; unpositioned, it escapes and adds blank scroll below the table.
+        className="relative min-h-0 flex-1 overflow-auto"
         style={maxHeight ? { maxHeight } : undefined}
       >
         <table
@@ -353,7 +355,7 @@ export function DataTable<T>({
                 <tr key={i}>
                   <td colSpan={colSpan} className="px-4">
                     <div
-                      className="h-3.5 animate-pulse rounded-[6px] bg-[var(--adm-line)]/70"
+                      className="skel h-3.5"
                       style={{ width: `${85 - (i % 4) * 12}%` }}
                     />
                   </td>
@@ -418,7 +420,7 @@ export function DataTable<T>({
                     ))}
                     {rowActions && (
                       <td className="w-14 pl-2 pr-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+                        <div className="flex justify-end transition-opacity focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100">
                           {rowActions(row)}
                         </div>
                       </td>
@@ -443,7 +445,7 @@ export function DataTable<T>({
             <>
               <span className="font-semibold text-[var(--adm-ink-mute)]">{firstRow}&ndash;{lastRow}</span>
               {" of "}
-              <span className="font-semibold text-[var(--adm-ink-mute)]">{sorted.length}</span>
+              <span className="font-semibold text-[var(--adm-ink-mute)]">{sorted.length.toLocaleString()}</span>
               {" "}{noun}
             </>
           )}

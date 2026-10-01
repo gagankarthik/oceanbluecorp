@@ -110,7 +110,8 @@ export function articleMetadata(article: Article): Metadata {
   const image = article.heroImageUrl;
 
   return {
-    title,
+    // The root template appends the brand; a long headline goes without it.
+    title: title.length > 45 ? { absolute: title } : title,
     description,
     authors: article.authorName ? [{ name: article.authorName }] : undefined,
     openGraph: {

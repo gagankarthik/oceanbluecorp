@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { LEGAL_DOCS } from "@/lib/legal";
 import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks, HQ_ADDRESS } from "@/components/site/legal/doc";
 
 export const metadata: Metadata = pageMetadata({
@@ -11,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
 const SECTIONS = [
   { id: "acceptance",      label: "Acceptance of Terms" },
   { id: "services",        label: "Description of Services" },
-  { id: "accounts",        label: "User Accounts" },
+  { id: "accounts",        label: "Applications and Accounts" },
   { id: "staffing",        label: "Staffing & Recruitment" },
   { id: "client",          label: "Client Obligations" },
   { id: "ip",              label: "Intellectual Property" },
@@ -27,13 +28,14 @@ const SECTIONS = [
 ];
 
 export default function TermsPage() {
-  const EFFECTIVE = "April 1, 2026";
+  const { effective: EFFECTIVE, updated, history } = LEGAL_DOCS.terms;
 
   return (
     <DocPage
       title="Terms of Service"
       lede={<>These Terms of Service govern your access to and use of Ocean Blue Corporation&apos;s website, platform, and services. Please read them carefully before using our services.</>}
-      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Jurisdiction", value: "State of Ohio, USA" }]}
+      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Jurisdiction", value: "State of Ohio, USA" }]}
+      history={history}
       toc={SECTIONS}
     >
 
@@ -79,27 +81,25 @@ export default function TermsPage() {
               </P>
             </DocSection>
 
-            <DocSection id="accounts" number="03" title="User Accounts and Registration">
+            <DocSection id="accounts" number="03" title="Applications and Staff Accounts">
               <P>
-                To access certain features of our platform, including submitting job applications, uploading
-                resumes, and tracking application status, you must register for an account. You agree to:
+                You do not need an account to use this Site, to contact us, or to apply for a role.
+                When you submit a job application, a resume, or a contact form, you agree to:
               </P>
               <UL items={[
-                "Provide accurate, current, and complete registration information",
-                "Maintain and promptly update your account information to keep it accurate",
-                "Keep your password confidential and not share it with any third party",
-                "Notify us immediately of any unauthorized use of your account at hr@oceanbluecorp.com",
-                "Accept responsibility for all activities that occur under your account",
-                "Not create an account using false information or impersonating another person",
+                "Provide accurate, current, and complete information",
+                "Submit only information that is your own, or that you are authorized to share",
+                "Not submit an application using false information or impersonating another person",
+                "Tell us at hr@oceanbluecorp.com if something you sent us needs correcting",
               ]} />
               <P>
-                Ocean Blue reserves the right to suspend or terminate accounts that violate these Terms,
-                contain false information, or have been inactive for extended periods, at our sole
-                discretion and without liability.
+                The staff console is for Ocean Blue employees. Accounts are created by invitation, and
+                there is no public registration. Staff must keep their password confidential and report
+                any unauthorized use of their account immediately.
               </P>
               <P>
-                You must be at least 18 years of age to create an account or use our services. By
-                registering, you represent and warrant that you meet this age requirement.
+                You must be at least 18 years of age to apply for a role or use our services. By
+                submitting an application, you represent and warrant that you meet this age requirement.
               </P>
             </DocSection>
 
@@ -277,8 +277,8 @@ export default function TermsPage() {
                 without prior notice or liability, for any reason, including if you breach these Terms.
               </P>
               <P>
-                You may terminate your account at any time by contacting us at hr@oceanbluecorp.com.
-                Upon termination, your right to use the Site and services will immediately cease.
+                You may withdraw an application or ask us to stop working with you at any time by
+                contacting us at hr@oceanbluecorp.com.
               </P>
               <P>
                 The following provisions survive termination: Intellectual Property, Confidentiality,
@@ -336,12 +336,12 @@ export default function TermsPage() {
                 Ocean Blue reserves the right to update or modify these Terms at any time. When we do,
                 we will revise the &quot;Effective&quot; date at the top of this page. For material changes,
                 we will provide at least thirty (30) days&apos; notice by posting a prominent notice on our
-                Site or by emailing the address associated with your account.
+                Site or by emailing candidates and clients we are actively working with.
               </P>
               <P>
                 Your continued use of the Site or services after any changes constitutes acceptance of the
                 revised Terms. If you do not agree to the updated Terms, you must stop using the Site and
-                services and may request account deletion.
+                services and may request deletion of your data.
               </P>
             </DocSection>
 

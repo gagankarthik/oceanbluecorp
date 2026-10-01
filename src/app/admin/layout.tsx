@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, ChevronRight, Search, PanelLeft, ExternalLink } from "lucide-react";
+import { X, ChevronRight, ExternalLink } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useAuth, UserRole, routeAccess, PUBLISHING_ROLES, RECRUITING_ROLES, landingRouteFor,
@@ -15,9 +15,9 @@ import { Avatar } from "@/components/admin/avatar";
 import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
-  IconBell, IconHelp, IconSettings, IconDocs,
+  IconBell, IconHelp, IconSettings, IconDocs, IconMenu, IconSearch, IconSidebar,
   IconHome, IconHrPortal, IconLogout, IconShield,
-  IconBook, IconChart, IconQuote, IconNews, IconJob,
+  IconBlog, IconChart, IconQuote, IconNews, IconJob, IconStateRole,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -40,7 +40,7 @@ type Section = (typeof SECTION_ORDER)[number];
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard",    href: "/admin",              icon: IconOverview,     roles: ALL_ROLES, section: "Recruiting" },
-  { name: "State Roles",  href: "/admin/jobs",         icon: IconRequisition,  roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
+  { name: "State Roles",  href: "/admin/jobs",         icon: IconStateRole,    roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Open Roles",   href: "/admin/open-roles",   icon: IconJob,          roles: [...ALL_ROLES, UserRole.MEDIA], section: "Recruiting" },
   { name: "Applications", href: "/admin/applications", icon: IconApplication,  roles: ALL_ROLES, section: "Recruiting" },
   { name: "Talent Bench", href: "/admin/bench",        icon: IconBench,        roles: ALL_ROLES, section: "Recruiting" },
@@ -49,7 +49,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: "Clients",      href: "/admin/clients",      icon: IconClient,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   { name: "Vendors",      href: "/admin/vendors",      icon: IconVendor,       roles: [UserRole.ADMIN, UserRole.HR], section: "Relationships" },
   // PUBLISHING_ROLES is the same constant routeAccess and requirePublisher use.
-  { name: "Blog",             href: "/admin/blog",             icon: IconBook,    roles: PUBLISHING_ROLES, section: "Publishing" },
+  { name: "Blog",             href: "/admin/blog",             icon: IconBlog,    roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "Case Studies",     href: "/admin/case-studies",     icon: IconChart,   roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "Customer Stories", href: "/admin/customer-stories", icon: IconQuote, roles: PUBLISHING_ROLES, section: "Publishing" },
   { name: "News",             href: "/admin/news",             icon: IconNews,  roles: PUBLISHING_ROLES, section: "Publishing" },
@@ -146,7 +146,7 @@ function Sidebar({
       )}
       aria-label="Sidebar"
     >
-      <div className={cn("flex h-[60px] flex-none items-center gap-2 border-b border-[var(--adm-nav-line)] px-4", rail && "lg:justify-center lg:px-0")}>
+      <div className={cn("flex h-[60px] flex-none items-center gap-2 px-4", rail && "lg:justify-center lg:px-0")}>
         <Link
           href="/admin"
           aria-label="Ocean Blue, dashboard"
@@ -180,8 +180,8 @@ function Sidebar({
           const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
           if (items.length === 0) return null;
           return (
-            <div key={section} className={cn(groupIdx > 0 && "mt-4")}>
-              <p className={cn("px-2.5 pb-1.5 text-[12px] font-medium text-[var(--adm-nav-subtle)]", rail && "lg:hidden")}>
+            <div key={section} className={cn(groupIdx > 0 && "mt-5")}>
+              <p className={cn("px-3 pb-1.5 text-[12px] font-medium text-[var(--adm-nav-subtle)]", rail && "lg:hidden")}>
                 {section}
               </p>
               {rail && groupIdx > 0 && <div className="mx-3 mb-3 hidden border-t border-[var(--adm-nav-line)] lg:block" />}
@@ -197,17 +197,17 @@ function Sidebar({
                         onClick={onClose}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] transition-colors",
+                          "group relative flex h-9 items-center gap-2.5 rounded-[8px] px-3 text-[13.5px] transition-colors",
                           rail && "lg:justify-center lg:px-0",
                           active
-                            ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
+                            ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-1.5 before:-left-2.5 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
                             : "font-medium text-[var(--adm-nav-mute)] hover:bg-[var(--adm-nav-hover)] hover:text-[var(--adm-nav-ink)]",
                         )}
                       >
                         <item.icon
                           aria-hidden="true"
                           className={cn(
-                            "h-5 w-5 flex-none transition-colors",
+                            "h-[18px] w-[18px] flex-none transition-colors",
                             active ? "text-[var(--adm-nav-active-icon)]" : "text-[var(--adm-nav-mute)] group-hover:text-[var(--adm-nav-ink)]",
                           )}
                         />
@@ -385,10 +385,10 @@ function NotificationsPanel() {
               <div className="space-y-3 p-3.5" aria-label="Loading notifications">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="flex gap-2.5">
-                    <div className="mt-0.5 h-4 w-4 animate-pulse rounded bg-[var(--adm-surface-2)]" />
+                    <div className="mt-0.5 skel h-4 w-4" />
                     <div className="flex-1 space-y-1.5">
-                      <div className="h-3 w-2/3 animate-pulse rounded bg-[var(--adm-surface-2)]" />
-                      <div className="h-3 w-full animate-pulse rounded bg-[var(--adm-surface-2)]" />
+                      <div className="skel h-3 w-2/3" />
+                      <div className="skel h-3 w-full" />
                     </div>
                   </div>
                 ))}
@@ -484,8 +484,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const narrowViewport = useMediaQuery("(max-width: 1439.98px)");
   const sidebarCollapsed = storedCollapsed ?? narrowViewport;
   const { user, signOut, hasAnyRole } = useAuth();
-  const { openCommandPalette, pageCrumb } = useAdmin();
-  const section = currentSection(pathname);
+  const { openCommandPalette, pageCrumb, navSection } = useAdmin();
+  const section = currentSection(navSection ?? pathname);
 
   // Media has no dashboard; bounce only the bare /admin landing.
   const home = landingRouteFor(user?.role);
@@ -533,7 +533,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         open={sidebarOpen}
         collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
-        pathname={pathname}
+        pathname={navSection ?? pathname}
         hasAnyRole={hasAnyRole}
       />
 
@@ -547,7 +547,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 grid h-[60px] grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
           <div className="flex min-w-0 items-center gap-1">
             <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className={cn(iconButton, "lg:hidden")}>
-              <Menu className="h-[18px] w-[18px]" aria-hidden="true" />
+              <IconMenu className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
             <button
               onClick={toggleSidebarCollapse}
@@ -555,7 +555,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               className={cn(iconButton, "hidden lg:inline-flex")}
             >
-              <PanelLeft className="h-[18px] w-[18px]" aria-hidden="true" />
+              <IconSidebar className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
             <h1 className="ml-1 truncate text-[14px] font-semibold text-[var(--adm-ink)] md:hidden">{title}</h1>
           </div>
@@ -567,7 +567,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-end gap-2">
             {canSearch && (
               <button type="button" onClick={openCommandPalette} aria-label="Open search" className={cn(iconButton, "md:hidden")}>
-                <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+                <IconSearch className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             )}
             <NotificationsPanel />
@@ -582,7 +582,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             matches the -mx/-mb bleed of the sticky form bars. */}
         <main
           id="adm-main"
-          className="flex h-[calc(100dvh-60px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
+          // `relative`: sr-only labels inside are position:absolute. Without a
+          // positioned scroller they anchor to <body>, escape this overflow and
+          // stretch the document, which shows as blank space under the page.
+          className="relative flex h-[calc(100dvh-60px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
         >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>

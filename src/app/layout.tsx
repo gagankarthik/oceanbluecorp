@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Bricolage_Grotesque, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Sans } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
@@ -14,28 +14,12 @@ import { jsonLdString } from "@/lib/seo";
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
 export const revalidate = 60;
 
-/**
- * A string made safe to embed in an inline <script>. JSON.stringify escapes
- * quotes but not `<`, so CMS text containing "</script>" would close the tag
- * and run what follows as markup (stored XSS via /admin/content). Escaping `<`
- * and the JS line terminators U+2028/U+2029 keeps it an inert string literal.
- */
-function inlineJsonString(value: string): string {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
-}
-
+// Fallback face outside the .site and .adm-scope scopes; no page leads with
+// it, so it is not preloaded.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-});
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["400", "500", "600", "700", "800"],
+  preload: false,
 });
 
 // The public site's typeface (.site scope in globals.css). Admin stays on Geist.
@@ -44,14 +28,6 @@ const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   weight: ["400", "500", "600", "700"],
 });
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  variable: "--font-plex-mono",
-  weight: ["400", "500"],
-});
-
-// Instrument Serif was loaded here and referenced nowhere: a webfont downloaded
-// on every page for no rendered glyph. Removed rather than left as a tax.
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -266,17 +242,16 @@ export default async function RootLayout({
         {announcement.text && (
           <script
             dangerouslySetInnerHTML={{
-              __html: `try{var k=${inlineJsonString(`ob.announcement.dismissed:${announcement.text}`)};if(localStorage.getItem(k)==="1"||sessionStorage.getItem(k)==="1")document.documentElement.setAttribute("data-ann-dismissed","")}catch(e){}`,
+              __html: `try{var k=${jsonLdString(`ob.announcement.dismissed:${announcement.text}`)};if(localStorage.getItem(k)==="1"||sessionStorage.getItem(k)==="1")document.documentElement.setAttribute("data-ann-dismissed","")}catch(e){}`,
             }}
           />
         )}
         {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
-            are injected automatically by Next.js from the App Router file conventions. */}
-        <link rel="manifest" href="/manifest.json" />
-        {/* The hero photo (the LCP element) is served from Unsplash's CDN, so
-            the connection opens during HTML parse and the image request is not
-            waiting on DNS + TLS when the preload scanner reaches it. */}
-        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+            and the manifest (src/app/manifest.ts) are injected by Next.js from the
+            App Router file conventions. */}
+        {/* Interior-page photography comes from Unsplash through /_next/image,
+            so the browser never connects there itself; a DNS hint covers the
+            few direct background images. */}
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <script
           type="application/ld+json"
@@ -284,7 +259,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${bricolage.variable} ${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} ${plexMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} font-sans antialiased`}
       >
         {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
             and the admin layout (→ #adm-main), so none is needed here. */}

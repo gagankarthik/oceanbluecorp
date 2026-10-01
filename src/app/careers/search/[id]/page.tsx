@@ -118,9 +118,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? fullDescription.substring(0, 297).trimEnd() + "..."
       : fullDescription;
     // …and a version capped at 160 chars for the SEO meta description.
-    const metaDescription = ogDescription.length > 160
+    const capped = ogDescription.length > 160
       ? ogDescription.substring(0, 157).trimEnd() + "..."
       : ogDescription;
+    // A posting with a thin description still gets a full snippet.
+    const metaDescription = capped.length < 110
+      ? `${capped.replace(/\.*$/, "")}. Apply online for the ${job.title} role at Ocean Blue Corporation.`
+      : capped;
 
     return {
       // Bare job title, the layout template appends the brand suffix once.

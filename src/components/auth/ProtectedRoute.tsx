@@ -31,10 +31,10 @@ export default function ProtectedRoute({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div role="status" className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div aria-hidden="true" className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-cobalt border-t-transparent" />
+          <p className="mt-4 text-[14px] text-ink-muted">Checking your sign-in…</p>
         </div>
       </div>
     );

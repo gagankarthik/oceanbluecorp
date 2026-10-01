@@ -400,7 +400,7 @@ export default function ClientsPage() {
 
   // ── states ────────────────────────────────────────────────────────────────
 
-  if (loading) return <AdminListSkeleton stats={4} rows={8} />;
+  if (loading) return <AdminListSkeleton stats={4} rows={8} label="Loading clients" />;
 
   if (error) return (
     <div className="flex min-h-[60vh] items-center justify-center">

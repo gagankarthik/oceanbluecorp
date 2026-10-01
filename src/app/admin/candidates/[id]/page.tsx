@@ -355,7 +355,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     return () => ro.disconnect();
   }, [candidate?.id]);
 
-  if (loading) return <AdminDetailSkeleton />;
+  if (loading) return <AdminDetailSkeleton label="Loading candidate" />;
 
   if (error || missing || !candidate) {
     const failed = !!error && !missing;

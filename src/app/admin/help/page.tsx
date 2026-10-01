@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, ChevronRight, Command, X, Plus, Loader2 } from "lucide-react";
+import { Check, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import {
-  IconBook, IconCopy, IconMail, IconPhone, IconEdit, IconTrash, IconSettings,
+  IconContact, IconCopy, IconDocs, IconInfo, IconMail, IconPhone, IconEdit, IconSearch, IconTrash,
 } from "@/components/admin/icons";
 import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -15,12 +15,13 @@ import { FormInput, FormSelect } from "@/components/admin/forms/primitives";
 import { FieldError, FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { check, collectErrors, email, isBlank, maxLen, phone, required } from "@/lib/form-validation";
-import { WorkspaceButton, WorkspaceSearch } from "@/components/admin/workspace";
+import { NotePanel, WorkspaceButton, WorkspaceSearch } from "@/components/admin/workspace";
 import { PeriodSwitcher } from "@/components/admin/charts";
 import { useAdmin } from "@/components/admin/admin-provider";
 import { useAuth, UserRole } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/company";
 
 // Directory grouped by what each team handles, so "who do I ask about payroll"
 // is one glance at a heading rather than a read of every card.
@@ -339,6 +340,7 @@ export default function HelpPage() {
 
   const [members, setMembers] = React.useState<TeamMember[]>(DEFAULT_TEAM);
   const [editing, setEditing] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [team, setTeam] = React.useState<TeamFilter>("all");
 
@@ -346,11 +348,14 @@ export default function HelpPage() {
   React.useEffect(() => {
     let alive = true;
     fetch("/api/help/directory")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
       .then((d) => {
         if (alive && d && Array.isArray(d.members) && d.members.length) setMembers(d.members);
       })
-      .catch(() => { /* keep defaults */ });
+      .catch(() => { if (alive) setLoadFailed(true); });
     return () => { alive = false; };
   }, []);
 
@@ -399,9 +404,40 @@ export default function HelpPage() {
         ) : undefined}
       />
 
+      <ul className={cn("mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2", isAdmin ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+        <li>
+          <a href={`mailto:${CONTACT_EMAIL}`} className={HELP_CARD}>
+            <HelpCardBody icon={IconContact} title="Email the team" description="HR routes it for you" />
+          </a>
+        </li>
+        <li>
+          <a href={CONTACT_PHONE.href} className={HELP_CARD}>
+            <HelpCardBody icon={IconPhone} title="Call the office" description={CONTACT_PHONE.label} />
+          </a>
+        </li>
+        <li>
+          <button type="button" onClick={openCommandPalette} className={cn(HELP_CARD, "w-full text-left")}>
+            <HelpCardBody icon={IconSearch} title="Search anything" description="Jobs, people, screens" />
+          </button>
+        </li>
+        {isAdmin && (
+          <li>
+            <Link href="/admin/docs" className={HELP_CARD}>
+              <HelpCardBody icon={IconDocs} title="Developer docs" description="Routes and API reference" />
+            </Link>
+          </li>
+        )}
+      </ul>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* Directory */}
         <div className="min-w-0 space-y-3">
+          {loadFailed && (
+            <NotePanel className="flex items-start gap-2.5">
+              <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
+              The saved directory could not be loaded, so this is the built-in list and may be out of date. Refresh to try again.
+            </NotePanel>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             <WorkspaceSearch
               value={query}
@@ -451,31 +487,7 @@ export default function HelpPage() {
           )}
         </div>
 
-        {/* Rail: getting unstuck, shortcuts, your account */}
-        <aside className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:sticky lg:top-0 lg:grid-cols-1">
-          <AdminCard className="overflow-hidden">
-            <AdminCardHeader title="Get help" />
-            <ul className="divide-y divide-[var(--adm-line-soft)]">
-              <li>
-                <a href="mailto:hr@oceanbluecorp.com" className={RAIL_LINK}>
-                  <RailLinkBody icon={IconMail} title="Ask the team" description="Email HR; it gets routed to the right person." />
-                </a>
-              </li>
-              <li>
-                <button type="button" onClick={openCommandPalette} className={cn(RAIL_LINK, "w-full text-left")}>
-                  <RailLinkBody icon={Command} title="Search anything" description="Jobs, candidates and screens from anywhere." />
-                </button>
-              </li>
-              {isAdmin && (
-                <li>
-                  <Link href="/admin/docs" className={RAIL_LINK}>
-                    <RailLinkBody icon={IconBook} title="Developer docs" description="API keys, endpoints and integration notes." />
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </AdminCard>
-
+        <aside className="lg:sticky lg:top-0">
           <AdminCard className="overflow-hidden">
             <AdminCardHeader title="Keyboard shortcuts" />
             <ul className="divide-y divide-[var(--adm-line-soft)]">
@@ -489,23 +501,6 @@ export default function HelpPage() {
               ))}
             </ul>
           </AdminCard>
-
-          {user && (
-            <AdminCard className="md:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-3 p-4">
-                <Avatar name={user.name} email={user.email} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{user.name || user.email}</p>
-                  <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)] capitalize">{user.role ?? "No role"} · {user.email}</p>
-                </div>
-                <WorkspaceButton asChild size="sm" variant="ghost">
-                  <Link href="/admin/settings" aria-label="Open settings">
-                    <IconSettings className="h-4 w-4" /> Settings
-                  </Link>
-                </WorkspaceButton>
-              </div>
-            </AdminCard>
-          )}
         </aside>
       </div>
 
@@ -520,26 +515,26 @@ export default function HelpPage() {
   );
 }
 
-const RAIL_LINK =
-  "group flex items-start gap-3 px-4 py-3 transition-colors duration-150 hover:bg-[var(--adm-row-hover)]";
+const HELP_CARD =
+  "group flex h-full items-center gap-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
 
-function RailLinkBody({
+function HelpCardBody({
   icon: Icon,
   title,
   description,
 }: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
 }) {
   return (
     <>
-      <Icon className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" strokeWidth={1.75} />
+      <Icon className="h-5 w-5 flex-none text-[var(--adm-ink-mute)] transition-colors group-hover:text-[var(--adm-accent)]" />
       <span className="min-w-0 flex-1">
         <span className="block text-[13.5px] font-semibold text-[var(--adm-ink)]">{title}</span>
-        <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--adm-ink-mute)]">{description}</span>
+        <span className="block truncate text-[12.5px] text-[var(--adm-ink-mute)]">{description}</span>
       </span>
-      <ChevronRight className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      <ChevronRight className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
     </>
   );
 }

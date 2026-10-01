@@ -141,7 +141,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Cybersecurity Services",
       description:
-        "Proactive, compliance-aligned cybersecurity, assessments, identity & access management, vulnerability management, cloud security posture, and HIPAA / SOC 2 / NIST readiness.",
+        "Compliance-aligned cybersecurity: assessments, identity and access management, vulnerability management, cloud security posture, and HIPAA, SOC 2 and NIST readiness.",
       keywords: ["cybersecurity services", "IAM", "vulnerability management", "cloud security", "SOC 2", "HIPAA compliance", "NIST"],
     },
   },
@@ -217,7 +217,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Salesforce Consulting Services",
       description:
-        "Salesforce implementation, Apex & LWC development, workflow automation, integrations, and managed admin services, for cleaner data, better adoption, and reporting you can act on.",
+        "Salesforce implementation, Apex and LWC development, workflow automation, integrations and managed admin, for cleaner data and reporting you can act on.",
       keywords: ["Salesforce services", "Salesforce implementation", "Apex development", "Lightning Web Components", "Salesforce admin", "CRM automation"],
     },
   },
@@ -255,7 +255,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "AI & Data Services",
       description:
-        "Business-first AI and data services, workflow and document automation, predictive analytics, LLM integrations, data engineering, BI, and MLOps with governance and security built in.",
+        "Business-first AI and data services: workflow automation, predictive analytics, LLM integrations, data engineering, BI and MLOps, with governance built in.",
       keywords: ["AI services", "data intelligence", "predictive analytics", "LLM integration", "data engineering", "MLOps", "workflow automation"],
     },
   },
@@ -293,7 +293,7 @@ export const SOLUTIONS: Record<string, SolutionPage> = {
     meta: {
       title: "Managed IT Services",
       description:
-        "24/7 managed services, monitoring, helpdesk and application support, cloud and infrastructure management, security monitoring, and quarterly business reviews on one accountable SLA.",
+        "24/7 managed services: monitoring, helpdesk and application support, cloud and infrastructure management, and security monitoring, on one accountable SLA.",
       keywords: ["managed services", "24/7 monitoring", "IT helpdesk", "infrastructure management", "application support", "managed SLA"],
     },
   },

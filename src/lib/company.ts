@@ -7,6 +7,10 @@
 export const BRAND_NAME = "Ocean Blue Solutions";
 export const LEGAL_NAME = "Ocean Blue Corporation";
 
+/** The one public phone line and inbox. */
+export const CONTACT_PHONE = { label: "+1 (614) 844-6925", href: "tel:+16148446925" };
+export const CONTACT_EMAIL = "hr@oceanbluecorp.com";
+
 export const FOUNDED_YEAR = 2013;
 
 /** Month is 1-indexed here (8 = August), this is a label, not a Date arg. */

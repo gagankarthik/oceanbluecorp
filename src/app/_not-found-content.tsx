@@ -21,28 +21,30 @@ export default function NotFoundContent() {
       <LineGrid />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(60%_60%_at_50%_30%,var(--color-cobalt-tint),transparent)]" />
 
-      <div className={`${CONTAINER} pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24`}>
-        <div className="mx-auto flex max-w-[760px] flex-col items-center text-center">
-          <MissingPage id="nf" className="rise h-auto w-full max-w-[640px]" />
+      <div className={`${CONTAINER} pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pb-24`}>
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12">
+          <MissingPage id="nf" className="rise mx-auto h-auto w-full max-w-[420px] lg:order-2 lg:max-w-none" />
 
-          <p className="rise mt-6 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 font-mono text-[13px] font-medium text-cobalt" style={{ animationDelay: "200ms" }}>
-            <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
-            Error 404
-          </p>
-          <h1 className="rise mt-4 type-headline-lg font-semibold text-ink" style={{ animationDelay: "280ms" }}>
-            This page doesn&rsquo;t exist.
-          </h1>
-          <p className="rise mt-5 max-w-[50ch] type-body-lg text-ink-muted" style={{ animationDelay: "360ms" }}>
-            The page you&rsquo;re looking for isn&rsquo;t here. The address may be mistyped,
-            or the page may have moved. Nothing is broken on your end.
-          </p>
-          <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "440ms" }}>
-            <LinkButton href="/" variant="primary" size="lg">
-              Back to home <IconArrowRight size={16} />
-            </LinkButton>
-            <LinkButton href="/contact" variant="outline" size="lg">
-              Contact us
-            </LinkButton>
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+            <p className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 font-mono text-[13px] font-medium text-cobalt" style={{ animationDelay: "200ms" }}>
+              <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
+              Error 404
+            </p>
+            <h1 className="rise mt-4 type-headline-lg font-semibold text-ink" style={{ animationDelay: "280ms" }}>
+              This page doesn&rsquo;t exist.
+            </h1>
+            <p className="rise mt-5 max-w-[50ch] type-body-lg text-ink-muted" style={{ animationDelay: "360ms" }}>
+              The page you&rsquo;re looking for isn&rsquo;t here. The address may be mistyped,
+              or the page may have moved. Nothing is broken on your end.
+            </p>
+            <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: "440ms" }}>
+              <LinkButton href="/" variant="primary" size="lg">
+                Back to home <IconArrowRight size={16} />
+              </LinkButton>
+              <LinkButton href="/contact" variant="outline" size="lg">
+                Contact us
+              </LinkButton>
+          </div>
           </div>
         </div>
 

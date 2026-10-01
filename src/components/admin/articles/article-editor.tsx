@@ -86,6 +86,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [deleting, setDeleting] = useState(false);
   /** Locked once the author edits the slug, so a headline fix cannot move a live URL. */
   const slugTouched = useRef(false);
@@ -1005,7 +1006,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
             : undefined
         }
       >
-        <WorkspaceButton onClick={() => router.push(config.adminPath)}>Cancel</WorkspaceButton>
+        <WorkspaceButton onClick={() => (dirty ? setConfirmLeave(true) : router.push(config.adminPath))}>Cancel</WorkspaceButton>
         <WorkspaceButton
           variant="primary"
           onClick={save}
@@ -1027,6 +1028,14 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         busy={deleting}
         onConfirm={performDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+      <ConfirmDialog
+        open={confirmLeave}
+        title="Discard unsaved changes?"
+        body={`Your edits to this ${config.noun} have not been saved.`}
+        confirmLabel="Discard"
+        onConfirm={() => router.push(config.adminPath)}
+        onCancel={() => setConfirmLeave(false)}
       />
     </>
   );

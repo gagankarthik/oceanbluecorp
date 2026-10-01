@@ -36,6 +36,9 @@ export default function AdminNotFound() {
             <Link href={home}>{home === "/admin" ? "Back to dashboard" : "Go to your workspace"}</Link>
           </WorkspaceButton>
         </div>
+        <Link href="/admin/help" className="mt-4 text-[13px] font-medium text-[var(--adm-accent)] underline-offset-4 hover:underline">
+          Contact support
+        </Link>
       </div>
     </div>
   );

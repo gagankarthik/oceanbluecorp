@@ -20,6 +20,9 @@ interface AdminContextValue {
   /** Trailing breadcrumb shown in the top nav on detail pages (e.g. "APP-2026-0103"). */
   pageCrumb: string | null;
   setPageCrumb: (crumb: string | null) => void;
+  /** Sidebar item to highlight when the URL alone cannot say (see useNavSection). */
+  navSection: string | null;
+  setNavSection: (href: string | null) => void;
 }
 
 const AdminContext = React.createContext<AdminContextValue | null>(null);
@@ -42,6 +45,20 @@ export function usePageCrumb(label: string | null | undefined) {
   }, [label, setPageCrumb]);
 }
 
+/**
+ * Highlight `href` in the sidebar for this page (cleared on unmount).
+ *
+ * State roles and open roles share one detail route, /admin/jobs/[id], so the
+ * path always reads as a state role. The record knows which list it came from.
+ */
+export function useNavSection(href: string | null | undefined) {
+  const { setNavSection } = useAdmin();
+  React.useEffect(() => {
+    setNavSection(href || null);
+    return () => setNavSection(null);
+  }, [href, setNavSection]);
+}
+
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -49,6 +66,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [revision, setRevision] = React.useState(0);
   const [jobs, setJobs] = React.useState<Job[]>([]);
   const [pageCrumb, setPageCrumb] = React.useState<string | null>(null);
+  const [navSection, setNavSection] = React.useState<string | null>(null);
 
   const openCandidateEditor = React.useCallback((opts: OpenEditOptions = {}) => {
     const isCreate = !opts.candidate && opts.mode !== "edit";
@@ -83,8 +101,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [openCandidateEditor]);
 
   const value = React.useMemo<AdminContextValue>(
-    () => ({ openCandidateEditor, openCommandPalette, candidateRevision: revision, setJobs, pageCrumb, setPageCrumb }),
-    [openCandidateEditor, openCommandPalette, revision, pageCrumb],
+    () => ({ openCandidateEditor, openCommandPalette, candidateRevision: revision, setJobs, pageCrumb, setPageCrumb, navSection, setNavSection }),
+    [openCandidateEditor, openCommandPalette, revision, pageCrumb, navSection],
   );
 
   return (

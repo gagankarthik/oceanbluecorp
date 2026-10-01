@@ -82,6 +82,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
   const [sort, setSort] = useState<Sort>("newest");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [urlRead, setUrlRead] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
 
   // Accept ?q= / ?department= / ?type= / ?remote=1 so /careers can deep-link
@@ -95,8 +96,25 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
     if (d) setDept(d);
     const t = params.get("type");
     if (t && jobTypes.includes(t)) setType(t);
+    const l = params.get("location");
+    if (l) setLocation(l);
     if (params.get("remote") === "1") setRemoteOnly(true);
+    setUrlRead(true);
   }, []);
+
+  // Written back with replaceState: Back from a job lands on the same filtered
+  // list, and the filtering itself adds no history entries.
+  useEffect(() => {
+    if (!urlRead) return;
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (dept !== ALL_DEPTS) params.set("department", dept);
+    if (type !== ALL_TYPES) params.set("type", type);
+    if (location !== ALL_LOCS) params.set("location", location);
+    if (remoteOnly) params.set("remote", "1");
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [urlRead, query, dept, type, location, remoteOnly]);
 
   useEffect(() => {
     if (initialJobs !== null) return;
@@ -426,7 +444,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
                   ))}
                 </ul>
               ) : error ? (
-                <div className="rounded-2xl border border-line bg-white p-10 text-center sm:p-12">
+                <div role="alert" className="rounded-2xl border border-line bg-white p-10 text-center sm:p-12">
                   <p className="type-title-lg font-semibold text-ink">We couldn&rsquo;t load the positions.</p>
                   <p className="mx-auto mt-2 max-w-sm type-body text-ink-muted">{error}</p>
                   <button

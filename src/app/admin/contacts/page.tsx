@@ -140,7 +140,7 @@ export default function ContactsPage() {
 
   // ── states ────────────────────────────────────────────────────────────────
 
-  if (loading) return <AdminListSkeleton stats={4} rows={8} />;
+  if (loading) return <AdminListSkeleton stats={4} rows={8} label="Loading contacts" />;
 
   if (error) {
     return (

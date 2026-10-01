@@ -392,38 +392,52 @@ export default function ApplicationsPage() {
 
   const patchStatus = async (id: string, status: Application["status"]) => {
     setApplications((p) => p.map((a) => (a.id === id ? { ...a, status } : a)));
-    await fetch(`/api/applications/${id}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
-    }).catch(() => { toast.error("Failed to update status"); load(); });
+    try {
+      const res = await fetch(`/api/applications/${id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
+      });
+      if (!res.ok) throw new Error();
+    } catch { toast.error("The stage could not be changed. Nothing was saved."); load(); }
   };
 
   const patchRating = async (id: string, rating: number) => {
     setApplications((p) => p.map((a) => (a.id === id ? { ...a, rating } : a)));
-    await fetch(`/api/applications/${id}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating }),
-    }).catch(() => load());
+    try {
+      const res = await fetch(`/api/applications/${id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating }),
+      });
+      if (!res.ok) throw new Error();
+    } catch { toast.error("The rating could not be saved."); load(); }
   };
 
   const deleteOne = async () => {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      await fetch(`/api/applications/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`/api/applications/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
       setApplications((p) => p.filter((a) => a.id !== deleteId));
       toast.success("Application deleted");
-    } catch { toast.error("Failed to delete"); }
+    } catch { toast.error("The application could not be deleted."); }
     finally { setDeleting(false); setDeleteId(null); }
   };
 
   const deleteBulk = async () => {
     setDeleting(true);
     try {
-      await Promise.all(selected.map((id) => fetch(`/api/applications/${id}`, { method: "DELETE" })));
-      setApplications((p) => p.filter((a) => !selected.includes(a.id)));
-      toast.success(`${selected.length} application${selected.length > 1 ? "s" : ""} deleted`);
-      setSelected([]);
-    } catch { toast.error("Failed to delete"); }
+      const results = await Promise.all(
+        selected.map((id) =>
+          fetch(`/api/applications/${id}`, { method: "DELETE" }).then((r) => (r.ok ? id : null), () => null),
+        ),
+      );
+      const gone = results.filter((id): id is string => id !== null);
+      const failed = selected.length - gone.length;
+      setApplications((p) => p.filter((a) => !gone.includes(a.id)));
+      setSelected((p) => p.filter((id) => !gone.includes(id)));
+      if (gone.length) toast.success(`${gone.length} application${gone.length > 1 ? "s" : ""} deleted`);
+      if (failed) toast.error(`${failed} could not be deleted and ${failed > 1 ? "are" : "is"} still selected.`);
+    } catch { toast.error("The applications could not be deleted."); }
     finally { setDeleting(false); setBulkDeleteOpen(false); }
   };
 

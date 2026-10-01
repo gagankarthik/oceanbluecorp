@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Plus } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { WorkspaceButton, Section, MenuSelect } from "@/components/admin/workspace";
 import { IconCalendar } from "@/components/admin/icons";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -456,6 +456,7 @@ export default function AdminDashboard() {
   // their own 30D/90D/1Y segmented picker, which just duplicated it.
   const period: Period = range === "7d" || range === "30d" ? "30d" : range === "90d" ? "90d" : "1y";
 
+  const [loadedAt, setLoadedAt] = useState<Date | null>(null);
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
@@ -474,6 +475,7 @@ export default function AdminDashboard() {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
+      setLoadedAt(new Date());
     }
   }, [setProviderJobs]);
 
@@ -868,7 +870,10 @@ export default function AdminDashboard() {
           <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)] sm:text-[21px]">
             {greeting()}{firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{today}</p>
+          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+            {today}
+            {loadedAt && <> · Updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>}
+          </p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <MenuSelect
@@ -878,6 +883,10 @@ export default function AdminDashboard() {
             onChange={setRange}
             options={RANGES.map((r) => ({ value: r.value, label: r.long }))}
           />
+          <WorkspaceButton onClick={() => void fetchAll()} disabled={loading} aria-label="Refresh dashboard">
+            <RefreshCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+            Refresh
+          </WorkspaceButton>
           <WorkspaceButton variant="primary" asChild>
             <Link href="/admin/jobs/new">
               <Plus aria-hidden="true" />

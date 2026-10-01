@@ -12,7 +12,7 @@ import { CloudShader } from "@/components/ui/cloud-shader";
    width, one section rhythm, one heading scale, so pages differ in content
    and never in chrome. */
 
-export const CONTAINER = "mx-auto w-full max-w-[1240px] px-4 sm:px-6";
+export const CONTAINER = "mx-auto w-full max-w-[var(--grid-max)] px-[var(--space-layout-gutter)]";
 
 /* The site's vertical rhythm. Every section, opener and gap draws from these,
    so spacing is decided once instead of per page.
@@ -25,10 +25,10 @@ export const CONTAINER = "mx-auto w-full max-w-[1240px] px-4 sm:px-6";
               fixed top (globals.css), so the gap across the opener's hairline
               is the same on every page.
    STACK_*    gaps inside a section: title to content, content to its link. */
-export const SECTION_Y = "py-16 sm:py-20 lg:py-24";
+export const SECTION_Y = "py-[var(--space-layout-section-gap)]";
 export const OPENER_Y = "pt-28 pb-10 sm:pt-32 sm:pb-12 lg:pt-36 lg:pb-14";
-export const STACK_LG = "mt-10 sm:mt-12";
-export const STACK_MD = "mt-8 sm:mt-10";
+export const STACK_LG = "mt-[var(--space-layout-stack-lg)]";
+export const STACK_MD = "mt-[var(--space-layout-stack-md)]";
 
 /** Section header: optional kicker, title, supporting line and one "Explore" link.
  *  Left-aligned on light grounds, centred on dark ones. */

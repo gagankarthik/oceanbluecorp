@@ -14,12 +14,23 @@ import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminCard } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
+import { useNavSection } from "@/components/admin/admin-provider";
+import { jobCategory, JOB_LIST_HREF } from "@/lib/job-status";
 
-export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditJobPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ category?: string }>;
+}) {
   const { id } = use(params);
+  const hint = use(searchParams);
   const router = useRouter();
   const { user } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
+  // The link's hint until the record loads, then the record itself.
+  useNavSection(JOB_LIST_HREF[jobCategory(job ?? hint)]);
   const [initialData, setInitialData] = useState<JobFormData | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -115,7 +126,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
   // Hold the skeleton rather than flashing an editable form the redirect is
   // about to take away.
-  if (loading || isRecruiter) return <AdminFormSkeleton />;
+  if (loading || isRecruiter) return <AdminFormSkeleton label="Loading job form" />;
 
   return (
     <div className="pb-10">

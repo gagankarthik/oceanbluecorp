@@ -1,9 +1,10 @@
 # Ocean Blue site design language
 
 The public website's design system (`/`, `/solutions`, `/careers`, resources,
-legal). The admin console has its own, in `DESIGN_SYSTEM.md`. Tokens live in
-`src/app/globals.css` (`@theme` block and the SITE / TYPE ROLES blocks);
-components live in `src/components/site/`.
+legal). The admin console has its own, in `DESIGN_SYSTEM.md`, which also holds
+the token rules both share (§2: tiers, naming, token-or-literal, how to add
+one). Tokens live in `src/app/globals.css` (`TOKENS`, `@theme`, and the SITE /
+TYPE ROLES blocks); components live in `src/components/site/`.
 
 Pages compose roles. They never pick a raw colour, pixel size, shadow or
 duration. If a page needs something the roles do not cover, add a role here
@@ -14,6 +15,10 @@ first.
 ## 1. Colour
 
 ### Roles
+
+Each Tailwind role below is an alias of a semantic token (`text-ink` is
+`--color-text-primary`, `bg-cobalt` is `--color-action-primary`), which points
+at a primitive. Pages use the role; nothing references a primitive.
 
 | Role | Token (Tailwind) | Value | Use |
 |---|---|---|---|
@@ -78,15 +83,19 @@ use `text-wrap: pretty` (both set globally).
 
 ## 3. Space
 
-An 8-point system (4 for fine adjustments). Section and stack spacing come from
-`src/components/site/sections.tsx`:
+Base 4, mostly in steps of 8. Layout spacing is tokens, read through the
+constants in `src/components/site/sections.tsx`:
 
-- `SECTION_Y`: 64 / 80 / 96px (phone / tablet / desktop), on the `<section>` with `data-tone`.
-  Two borderless sections of the same tone collapse the second's top padding.
+- `SECTION_Y` = `--space-layout-section-gap`: 64 / 80 / 96px (phone / tablet /
+  desktop), on the `<section>` with `data-tone`. Two borderless sections of the
+  same tone collapse the second's top padding.
 - `OPENER_Y`: first block under the fixed header.
-- `STACK_LG` (40/48) title → content; `STACK_MD` (32/40) between groups.
-- Gutters and card gaps: 16px phone, 20–24px from tablet. Card padding 24px phone,
-  32px from tablet (compact cards 20/24).
+- `STACK_LG` = `--space-layout-stack-lg` (40/48) title → content; `STACK_MD` =
+  `--space-layout-stack-md` (32/40) between groups.
+- `CONTAINER`: `--grid-max` 1240 wide, `--space-layout-gutter` (16, 24 from sm)
+  at the edges.
+- Inside a component use the Tailwind scale: card padding 24px phone, 32px from tablet (compact
+  cards 20/24); card gaps 16px phone, 20–24px from tablet.
 
 ## 4. Shape and elevation
 
@@ -116,7 +125,9 @@ explains (where a sheet came from, what changed); it never decorates.
 
 ## 6. Layout and placement
 
-- Grid: 4 columns on phones, 8 on tablets, 12 on desktop; container 1240px; header 1440px.
+- Grid: 4 columns on phones, 8 from md, 12 from lg,
+  gutter 16 then 24; container 1240px; header 1440px. Breakpoints are sm 640, md 768,
+  lg 1024, xl 1280.
 - **Z-pattern** for openers and the home hero: logo top-left, navigation, primary action
   top-right, then headline → supporting line → action.
 - **F-pattern** for reading pages (solutions, careers, legal): left-aligned headings,

@@ -32,20 +32,132 @@ it needs to keep ~25 admin screens consistent.
 
 ## 2. Design tokens (development layer, foundation)
 
-Defined in `src/app/globals.css` under the `ADMIN` block. Admin UI may reference **only**
-`--adm-*` tokens (they alias the landing `--hz-*` brand primitives so a rebrand is a
-one-file change). TypeScript-side constants live in `src/components/admin/theme.ts`.
+All tokens live in `src/app/globals.css`. The `TOKENS` block at the top of that
+file is the source; everything below it consumes it.
+
+### 2.1 Three tiers, one direction
+
+| Tier | Pattern | Holds | Example |
+|---|---|---|---|
+| Primitive | `--p-{scale}-{step}` | A raw value with no meaning | `--p-blue-700`, `--p-space-4` |
+| Semantic | `--{category}-{property}-{role}[-{state}]` | A purpose | `--color-text-danger`, `--color-action-primary-hover`, `--space-layout-section-gap` |
+| Component | `--{component}-{part}-{property}[-{state}]` | A decision scoped to one element | `--button-primary-background-pressed`, `--skeleton-background` |
+
+A component reads a semantic or component token, **never a primitive**. A
+semantic token points at a primitive; a component token points at a semantic
+one. That is what makes a retheme a change to one block.
+
+A name is read left to right, general to specific, and states come last
+(`-hover`, `-pressed`, `-selected`, `-disabled`, `-inverse`). If a name needs a
+comment to explain what it is for, the name is wrong.
+
+Two semantic namespaces exist, one per surface:
+
+- **Public site:** `--color-*`, exposed as Tailwind roles (`text-ink`,
+  `bg-paper`, `border-line`, `bg-cobalt`) in `@theme`. Light only, by design.
+- **Console:** `--adm-{role}[-{variant}]` on `.adm-scope`, with a complete
+  parallel dark set (`[data-theme="dark"]` and the OS preference). Dark is its
+  own palette on the same roles, not an inversion of light.
+
+`--hz-*` is the retired landing namespace. It survives only for the
+anniversary page, the announcement bar and the maintenance screen; do not add
+to it.
+
+### 2.2 Token or hardcoded value
+
+It is a token if **any** of these is true: it is a colour; it repeats on two or
+more screens; it encodes a decision someone could later change system-wide
+(radius, elevation, duration, a control height); it must differ by theme or
+density. It stays a literal if it is geometry local to one component (an icon's
+18px box, a one-off illustration offset) or a Tailwind scale step used for
+layout inside a component (`gap-2`, `p-4` are the base-4 primitives by another
+name).
+
+Never a raw hex, rgba, pixel font size, shadow or duration in a page.
+
+### 2.3 Adding a token
+
+1. Look for an existing token whose *purpose* matches. Same value is not the
+   test; same meaning is.
+2. If none: add the primitive only if the value is new, then the semantic
+   token that names the purpose. Add a component token only when one element
+   needs to diverge from the semantic default.
+3. A colour that carries text or a control goes into `tests/contrast.test.mjs`
+   with the surfaces it sits on. The test reads `globals.css`, so it fails when
+   the token is retuned below AA (4.5:1 text, 3:1 large text and UI).
+4. Document it in the table below, in the same change.
+5. Review: token changes are system-wide, so the PR carries screenshots of the
+   dashboard, one list page and one form page (light and dark for `--adm-*`),
+   and is approved by whoever owns this file.
+
+### 2.4 Colour
 
 | Group | Tokens | Use |
 |---|---|---|
-| Accent | `--adm-accent`, `-strong`, `-soft`, `-tint`, `--adm-focus-ring` | Primary actions, hovers, selected rows, focus rings |
-| Surface | `--adm-canvas`, `--adm-surface`, `--adm-line`, `--adm-line-soft` | Page bg, cards, borders, dividers |
-| Ink | `--adm-ink`, `-mute`, `-subtle` | Headings → labels → hints |
-| Status | `--adm-success`, `-warning`, `-danger`, `-info` | Semantic states only |
-| Charts | `--adm-chart-1…7` / `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
-| Elevation | `--adm-shadow-sm/md/lg` | Card → popover → modal |
-| Motion | `--adm-ease`, `--adm-duration-fast/base/slow` | One easing curve everywhere |
-| Radius | `--adm-radius-control/input/chip/card` (8/10/12/16px) | Size ↔ roundness scale |
+| Primitive ramps | `--p-neutral-0`, `--p-slate-50…900`, `--p-gray-50…900`, `--p-blue-50…900`, `--p-green/amber/red/rose-*`, `--p-brand-blue/aqua` | Raw material only |
+| Background | `--color-background-primary / secondary / tertiary / inverse / selected` | Page, alternate section, well, dark band, selected chip |
+| Text | `--color-text-primary / secondary / tertiary / inverse / interactive / brand` | Heading, body, meta, on dark, link, logo blue |
+| Border | `--color-border-default / strong / interactive / focus` | Card, input, hover edge, focus ring |
+| Interactive state | `--color-action-primary`, `-hover`, `-pressed`, `--color-action-on-primary`, `--opacity-disabled`, `--color-background-selected`, `--color-border-focus` | Default, hover, pressed, disabled, selected, focused, on every filled action |
+| Feedback | `--color-text-{success,warning,danger,info}` with `--color-background-{…}` | Alerts, validation, badges, status |
+| Console | `--adm-accent`(`-strong`/`-soft`/`-tint`), `--adm-canvas`, `--adm-surface`(`-2`/`-sunken`), `--adm-line`(`-soft`/`-strong`), `--adm-ink`(`-mute`/`-subtle`), `--adm-success/warning/danger/info` with `-ink` (text) and `-soft` (tint) | Same roles, themed light and dark |
+
+**Brand.** Cobalt (`--p-blue-700`, 6.7:1 under white text) carries every text
+and interactive role. Logo blue passes for text (4.9:1). Aqua is 2.7:1 on
+white, so it is restricted to fills and marks.
+
+**Contrast.** Measured pairs are in SITE_DESIGN_LANGUAGE.md §1 and asserted for
+the console in `tests/contrast.test.mjs`. Status colours have a separate `-ink`
+shade because a tone tuned as a fill fails as text, and a tinted background
+eats contrast again.
+
+**Colour is never the only signal.** A status is a dot or icon *and* a text
+label (`StatusBadge`), an error is an icon and a sentence, a sorted column has
+an arrow. Red/green pairs (hired/rejected) therefore survive deuteranopia and
+protanopia; check any new state in greyscale before shipping it.
+
+### 2.5 Space, grid, breakpoints, density
+
+Base unit 4px. Primitives `--p-space-1 2 4 6 8 10 12 16 20 24` = 4, 8, 16, 24,
+32, 40, 48, 64, 80, 96; the step is the multiple, so it matches Tailwind
+(`p-4` = `--p-space-4`).
+
+Two scales, kept apart on purpose:
+
+| Scale | Tokens | For |
+|---|---|---|
+| Component | Tailwind's scale (`p-2 3 4 6`, `gap-1 2 3 4`), which is the same base-4 steps | Padding and gaps *inside* a component |
+| Layout | `--space-layout-gutter` (16 → 24), `--space-layout-section-gap` (64 → 80 → 96), `--space-layout-stack-md` (32 → 40), `--space-layout-stack-lg` (40 → 48) | Distance *between* components; steps up with the breakpoint |
+
+Breakpoints, shared with design: **sm 640, md 768, lg 1024, xl 1280**
+(`--breakpoint-*` in `@theme`; use the Tailwind prefixes, never a bare pixel
+media query).
+
+Column grid, built with Tailwind's `grid-cols-*` inside `CONTAINER`:
+
+| Breakpoint | Columns | Gutter | Margin |
+|---|---|---|---|
+| below md | 4 | 16 (24 from sm) | `--space-layout-gutter` |
+| md | 8 | 24 | 24 |
+| lg and up | 12 | 24 | 24, content capped at `--grid-max` 1240 |
+
+Density, console data grids only (`data-density` on the grid, a user setting
+that persists): **compact 44 · default 56 · relaxed 68** row height
+(`--adm-row-h-*`). Only vertical rhythm changes; type size does not.
+
+Vertical rhythm: control heights are 32/36 in the console and `--size-control-lg/xl` = 40/48 on the site,
+and row heights 44/56/68, all multiples of 4, so stacked controls and rows land
+on the same beat.
+
+### 2.6 Other console tokens
+
+| Group | Tokens | Use |
+|---|---|---|
+| Charts | `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
+| Elevation | `--adm-shadow-sm/md/lg/pop` | Card → popover → modal |
+| Motion | `--adm-ease`, `--adm-duration-fast/base` | One easing curve everywhere |
+| Radius | `--adm-radius-control/card` | Size ↔ roundness scale |
+| Loading | `--skeleton-background/radius/duration`, `--content-enter-duration` | See "Loading" under §4 |
 
 Type ramp (Geist Sans, set on `.adm-scope`): page title 21px semibold · headline
 figures 22–26px semibold, tight tracking · card title 14.5px semibold · body 13.5–14px ·
@@ -78,15 +190,14 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 
 | Atom | Source | Notes |
 |---|---|---|
-| Button | `ui/button.tsx` | The one button. `PageHeaderButton` (`page-header.tsx`) is a thin cobalt-styling layer over it (`primary`/`secondary`/`ghost` → ui variants + accent class). Never fork a button. |
+| Button | `WorkspaceButton` (`workspace.tsx`) | The one console button: `primary` (one per view), default, and `asChild` for links. Never fork a button. |
 | Checkbox | `ui/checkbox.tsx` | Supports `indeterminate` (DataTable select-all); pass the cobalt override class. |
-| Select / Input / Label / Avatar / Card / DropdownMenu / Sheet / Separator | `ui/*` | Use these; don't recreate. |
-| Switch, Tooltip | _not yet in ui/_ | Add to `ui/` (shadcn style) when first needed, do **not** create an admin-only copy. |
+| DropdownMenu / Sheet / Tooltip | `ui/*` | Use these; don't recreate. Inputs and selects are the form primitives below; cards are `AdminCard`. |
 | `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
 | `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted 6px chip. Tone text uses the `-ink` tokens. |
 | `PeriodSwitcher` | `admin/charts.tsx` | The segmented control (date ranges, small view toggles). |
-| `StarRating`, `OceanSpinner` | `admin/*`, `ui/ocean-spinner` | , |
+| `StarRating` | `admin/star-rating.tsx` | , |
 | Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
 
 ## 4. Patterns (components composed to solve a problem)
@@ -95,18 +206,38 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 |---|---|---|
 | `PageHeader` | `page-header.tsx` | Title + subtitle + meta chips + actions on every page. |
 | `AdminCard` / `AdminCardHeader` | `admin-card.tsx` | The canonical surface. |
-| `StatCard` | `stat-card.tsx` | KPI: tinted icon + big number + delta chip + optional `trend` sparkline. |
 | `SearchInput`, `FilterToggle`, `ViewSwitcher`, `BulkBar` | `toolbar.tsx` | The list-page toolbar kit. |
 | `FilterChips` | `filter-chips.tsx` | Active filters stay visible & dismissible. |
 | `DataTable<T>` | `data-table.tsx` | Sortable, selectable, paginated table with built-in loading skeletons and `EmptyState`. Numbers right-aligned; secondary columns `hideBelow`. |
 | `AssigneePicker` | `forms/primitives.tsx` | Search + chip multi-select. |
 | `ConfirmDialog` | `confirm-dialog.tsx` | Destructive confirmations (pair with `danger` button). |
 | `CommandPalette` | `command-palette.tsx` | Global ⌘K navigation/search. |
-| Skeletons | `skeletons.tsx` | Loading mirrors layout. |
+| Skeletons | `skeletons.tsx` | Loading mirrors layout. See below. |
 
-**Canonical list page** = `PageHeader` → `StatCard` row (optional) → `AdminCard` toolbar
+**Canonical list page** = `PageHeader` → stat strip (optional) → `AdminCard` toolbar
 (`SearchInput` + `FilterToggle` + `ViewSwitcher` + `BulkBar`, `FilterChips` below) →
 `AdminCard` + `DataTable`. Reference implementation: `/admin/contacts` (migrated).
+
+### Loading
+
+A skeleton (`skeletons.tsx`, the `.skel` class) is used when a view takes long
+enough to notice: a route's `loading.tsx` or a first fetch. Anything that
+resolves at once shows nothing, and an action on an existing view (save,
+delete) puts its state on the button that started it, not over the page.
+
+- **Mirrors the layout.** Same blocks, same sizes, same order as the content,
+  so nothing moves when it lands. When a screen's layout changes, its skeleton
+  changes in the same commit.
+- **Flat and neutral.** `--skeleton-background`, no border, no shadow, radius
+  `--skeleton-radius`. One quiet pulse (`--skeleton-duration`), off under
+  reduced motion.
+- **Says what is loading.** The skeleton root is `role="status"` with a
+  specific label ("Loading candidates"), passed through the `label` prop.
+  "Loading" alone is the fallback.
+- **Hands over with a fade.** Content entering `#adm-main` fades in over
+  `--content-enter-duration`.
+- **Spinners** (`Loader2`) are for an in-flight button only, next to a verb
+  ("Saving…"), inheriting the button's text colour so they read on any ground.
 
 ---
 
@@ -133,7 +264,7 @@ Always: server-side check in the API route too. UI gating is UX, not security.
 
 Strategy for dashboards (implemented in `/admin`):
 
-1. **Layered altitude.** Row 1: 4 KPI `StatCard`s (value + delta + sparkline), answer
+1. **Layered altitude.** Row 1: the KPI band (value + delta), answer
    "is anything wrong?" in 5 seconds. Row 2: behavior over time (area chart) + composition
    (donut). Row 3: process diagnostics (funnel, sources, leaderboards). Row 4: work queues
    ("Needs attention", recent items), every insight ends in a clickable action.
@@ -147,8 +278,8 @@ Strategy for dashboards (implemented in `/admin`):
    in a page.
 4. **Annotation over legend-hunting.** Put numbers on the chart (funnel counts, conversion
    pills); axis labels 10px slate-400; gridlines horizontal-only, slate-100.
-5. **Performance.** recharts only for charts with axes/tooltips; sparklines and donuts are
-   hand-rolled SVG (no extra bundle). Aggregate in `useMemo` off one fetched dataset rather
+5. **Performance.** Every chart is hand-rolled SVG (`charts.tsx`); there is no charting
+   dependency in the bundle. Aggregate in `useMemo` off one fetched dataset rather
    than re-fetching per widget. Respect `prefers-reduced-motion` (`useReducedMotion`)
    for entrance animation; count-ups and bar fills are decorative only.
 6. **Empty & loading.** Every chart has a designed empty state; the dashboard skeleton
@@ -162,7 +293,7 @@ Strategy for dashboards (implemented in `/admin`):
 `src/components/admin/` and consumes `--adm-*` tokens. One-off page logic stays in the page.
 
 **Contribution checklist** (PR review gate for admin UI):
-- [ ] No raw hex/rgba in pages, tokens or `theme.ts` constants only.
+- [ ] No raw hex/rgba in pages, tokens or `theme.ts` constants only. A new token followed §2.3.
 - [ ] Reused `ui/` primitives (Button, Checkbox, Select, …) with a cobalt override class, did NOT fork a parallel admin copy.
 - [ ] No hand-rolled buttons, search inputs, badges, empty states, or tables, use §3/§4.
 - [ ] New status/tone added to `theme.ts` (`statusMeta`/`tones`), not inline.
@@ -252,7 +383,14 @@ Audited 2026-08-07 against the admin app.
    fixed Hick's at the toolbar and moved the cost inside the menu. Acceptable while
    the fields stay labelled and scannable; if a screen needs more than ~8, group
    them or make the menu two-column. Watch it.
-2. **Tables scroll the page, not themselves.** `DataTable` already has everything
+2. **Checklist gaps, recorded rather than implied.** Not yet built: typed
+   confirmation for irreversible deletes (`ConfirmDialog` has no `requireText`);
+   an account-level audit log; a custom date range on the dashboard; date
+   grouping on the notifications list; list filters surviving a round trip to
+   a record; the pinned first column (`pinFirstColumn`) switched on for the
+   wide grids; exports that name how many rows they hold; the Notifications
+   tab in settings, which is disabled until it has a backend.
+3. **Tables scroll the page, not themselves.** `DataTable` already has everything
    needed to scroll internally, an `overflow-auto` container, a `maxHeight` prop,
    and a sticky `thead` (`.adm-grid thead th`, in `globals.css` rather than the
    component, which is easy to miss). What is missing is at the page level: list

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Loader2, X } from "lucide-react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import {
   IconKey,
   IconTrash,
@@ -135,6 +136,7 @@ export default function ApiKeysPage() {
 
   // Delete confirmation
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<ApiKeyRecord | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [scopingId, setScopingId] = useState<string | null>(null);
 
@@ -388,7 +390,7 @@ export default function ApiKeysPage() {
           </button>
           <button
             type="button"
-            onClick={() => handleDelete(k.id)}
+            onClick={() => setPendingRevoke(k)}
             disabled={deletingId === k.id}
             aria-label={`Revoke ${k.name}`}
             title="Revoke key permanently"
@@ -622,6 +624,19 @@ export default function ApiKeysPage() {
           </form>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingRevoke !== null}
+        title={`Revoke ${pendingRevoke?.name ?? "this key"}?`}
+        body="Calls made with this key start failing immediately, and it cannot be restored. To pause it instead, disable it."
+        confirmLabel="Revoke key"
+        busy={deletingId !== null}
+        onConfirm={async () => {
+          if (pendingRevoke) await handleDelete(pendingRevoke.id);
+          setPendingRevoke(null);
+        }}
+        onCancel={() => setPendingRevoke(null)}
+      />
     </div>
   );
 }

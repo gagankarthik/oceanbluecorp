@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Check, Loader2, Twitter, Linkedin } from "lucide-react";
 import {
-  IconUser, IconBell, IconShield, IconGlobe, IconSave, IconEye, IconEyeOff,
+  IconUser, IconShield, IconGlobe, IconSave, IconEye, IconEyeOff,
   IconMail, IconPhone, IconLocation, IconLink, IconCamera, IconAlert,
   IconBuilding, IconInfo,
 } from "@/components/admin/icons";
@@ -14,7 +14,6 @@ import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Field, FormInput } from "@/components/admin/forms/primitives";
-import { Checkbox } from "@/components/ui/checkbox";
 import type { Tone } from "@/components/admin/theme";
 import { WorkspaceButton, NotePanel } from "@/components/admin/workspace";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -23,34 +22,9 @@ import { useFormErrors } from "@/hooks/use-form-errors";
 import { check, collectErrors, maxLen, phone, required, strongPassword, LIMITS } from "@/lib/form-validation";
 
 const tabs = [
-  {
-    id: "profile",
-    name: "Profile",
-    icon: IconUser,
-    description: "Your personal information",
-    adminOnly: false,
-  },
-  {
-    id: "notifications",
-    name: "Notifications",
-    icon: IconBell,
-    description: "Alert preferences",
-    adminOnly: false,
-  },
-  {
-    id: "security",
-    name: "Security",
-    icon: IconShield,
-    description: "Password & access",
-    adminOnly: false,
-  },
-  {
-    id: "site",
-    name: "System",
-    icon: IconGlobe,
-    description: "Site configuration",
-    adminOnly: true,
-  },
+  { id: "profile", name: "Profile", icon: IconUser, adminOnly: false },
+  { id: "security", name: "Security", icon: IconShield, adminOnly: false },
+  { id: "site", name: "System", icon: IconGlobe, adminOnly: true },
 ];
 
 /** Role chip in the header. Categorical, so neutral except admin. */
@@ -62,33 +36,6 @@ const ROLE_CHIP: Record<string, { label: string; tone: Tone }> = {
   media:     { label: "Media",         tone: "slate" },
 };
 const DEFAULT_ROLE_CHIP = { label: "User", tone: "slate" as Tone };
-
-/** ui/Checkbox defaults to the navy --primary; nudge it to the cobalt accent. */
-const checkboxAccent =
-  "border-[var(--adm-line)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]";
-
-const NOTIFICATION_ROWS = [
-  {
-    key: "newApplications" as const,
-    title: "New applications",
-    description: "Get notified when a candidate submits a new application",
-  },
-  {
-    key: "applicationStatusUpdates" as const,
-    title: "Application status updates",
-    description: "Notifications when an application status changes",
-  },
-  {
-    key: "weeklyReports" as const,
-    title: "Weekly reports",
-    description: "Receive a weekly summary of site and pipeline activity",
-  },
-  {
-    key: "marketingEmails" as const,
-    title: "Marketing & updates",
-    description: "Receive news about new features and platform updates",
-  },
-];
 
 const SITE_DETAILS = [
   { label: "Site name",     value: "Ocean Blue Corporation", icon: IconBuilding },
@@ -150,13 +97,6 @@ export default function SettingsPage() {
   const [photoFailed, setPhotoFailed] = useState(false); // no photo / load error → initials
   const [hasPhoto, setHasPhoto] = useState(false); // a photo actually loaded
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-
-  const [notifications, setNotifications] = useState({
-    newApplications: true,
-    applicationStatusUpdates: true,
-    weeklyReports: false,
-    marketingEmails: false,
-  });
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -403,14 +343,6 @@ export default function SettingsPage() {
     setSaveError(null);
     if (activeTab === "profile") handleSaveProfile();
     else if (activeTab === "security") handleSavePassword();
-    else {
-      setIsSaving(true);
-      setTimeout(() => {
-        setIsSaving(false);
-        setShowSaved(true);
-        setTimeout(() => setShowSaved(false), 2500);
-      }, 500);
-    }
   };
 
   const roleChip = ROLE_CHIP[profileForm.role] || DEFAULT_ROLE_CHIP;
@@ -425,13 +357,13 @@ export default function SettingsPage() {
     <div className="space-y-4 pb-10 lg:space-y-5">
       <PageHeader
         title="Settings"
-        info="Your profile, alerts, password and, for admins, site settings."
+        info="Your profile, password and, for admins, site settings."
         meta={<StatusBadge tone={roleChip.tone} label={roleChip.label} size="md" />}
       />
 
       <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
 
-      <div className="grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-[208px_minmax(0,1fr)] lg:gap-5">
+      <div className="grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-[184px_minmax(0,1fr)] lg:gap-5">
 
         <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
           <nav
@@ -447,17 +379,14 @@ export default function SettingsPage() {
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); profileCheck.reset(); passwordCheck.reset(); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex flex-none items-center gap-2.5 rounded-[8px] px-3 py-2 text-left transition-colors duration-150 lg:w-full lg:items-start lg:py-2.5",
+                    "flex h-9 flex-none items-center gap-2.5 rounded-[8px] px-3 text-left text-[13.5px] transition-colors duration-150 lg:w-full",
                     active
-                      ? "bg-[var(--adm-accent-tint)] text-[var(--adm-accent)]"
-                      : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                      ? "bg-[var(--adm-accent-tint)] font-semibold text-[var(--adm-accent)]"
+                      : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
-                  <tab.icon className={cn("h-4 w-4 flex-none lg:mt-0.5", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} strokeWidth={1.75} />
-                  <span className="min-w-0">
-                    <span className="block whitespace-nowrap text-[13.5px] font-medium">{tab.name}</span>
-                    <span className="hidden text-[12.5px] leading-snug text-[var(--adm-ink-subtle)] lg:block">{tab.description}</span>
-                  </span>
+                  <tab.icon className={cn("h-[18px] w-[18px] flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")} />
+                  <span className="whitespace-nowrap">{tab.name}</span>
                 </button>
               );
             })}
@@ -564,51 +493,12 @@ export default function SettingsPage() {
                       placeholder="+1 (555) 000-0000"
                     />
                   </Field>
-                </div>
-              </AdminCard>
-
-              <AdminCard>
-                <AdminCardHeader title="Account details" />
-                <div className="p-4 sm:max-w-sm">
                   <Field label="Role" htmlFor="role" helper="Your role is assigned by an administrator.">
                     <FormInput id="role" value={profileForm.role} readOnly disabled className="capitalize" />
                   </Field>
                 </div>
               </AdminCard>
             </>
-          )}
-
-          {activeTab === "notifications" && (
-            <AdminCard className="overflow-hidden">
-              <AdminCardHeader title="Notification preferences" />
-              <div>
-                {NOTIFICATION_ROWS.map((item) => {
-                  const labelId = `notify-${item.key}-label`;
-                  const controlId = `notify-${item.key}`;
-                  return (
-                    <label
-                      key={item.key}
-                      htmlFor={controlId}
-                      className="flex cursor-pointer items-start gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 transition-colors duration-150 last:border-0 hover:bg-[var(--adm-row-hover)]"
-                    >
-                      <Checkbox
-                        id={controlId}
-                        className={cn("mt-0.5", checkboxAccent)}
-                        checked={notifications[item.key]}
-                        onCheckedChange={(v) =>
-                          setNotifications({ ...notifications, [item.key]: v === true })
-                        }
-                        aria-labelledby={labelId}
-                      />
-                      <span className="min-w-0">
-                        <span id={labelId} className="block text-[14px] font-medium text-[var(--adm-ink)]">{item.title}</span>
-                        <span className="mt-0.5 block text-[13px] leading-snug text-[var(--adm-ink-mute)]">{item.description}</span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </AdminCard>
           )}
 
           {activeTab === "security" && (
@@ -779,7 +669,7 @@ export default function SettingsPage() {
           )}
 
           {activeTab !== "site" && (
-            <AdminCard className="flex flex-wrap items-center justify-end gap-3 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               {showSaved && (
                 <span role="status" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-success-ink)]">
                   <Check className="h-4 w-4" />All changes saved
@@ -792,7 +682,7 @@ export default function SettingsPage() {
                   <><IconSave />Save changes</>
                 )}
               </WorkspaceButton>
-            </AdminCard>
+            </div>
           )}
         </div>
       </div>

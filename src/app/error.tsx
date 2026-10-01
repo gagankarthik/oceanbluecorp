@@ -3,23 +3,19 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { CONTAINER } from "@/components/site/sections";
-import { LinkButton } from "@/components/site/button";
-import { IconArrowRight, type IconProps } from "@/components/site/icons";
+import { LinkButton, buttonClass } from "@/components/site/button";
+import { IconArrowRight, IconRefresh } from "@/components/site/icons";
+import { LineGrid } from "@/components/site/line-grid";
+import { LoadErrorArt } from "@/components/site/load-error-art";
 
 /**
  * Route-level error boundary for the public site. Without this, an unhandled
  * render error drops visitors on Next's stock screen with no way back.
  *
- * Same treatment as the 404: white ground, cobalt accent, plain language, real
- * routes out. The digest is surfaced so anyone reporting the problem has
- * something specific to quote.
+ * Same layout as the 404 and the maintenance screen: the picture says what
+ * happened, the words are a heading, one line and the way out. The digest is
+ * shown so anyone reporting the problem has something specific to quote.
  */
-
-const IconRefresh = ({ size = 16, ...rest }: IconProps) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-    <path d="M19.5 11A7.5 7.5 0 0 0 6.2 6.8M4.5 13a7.5 7.5 0 0 0 13.3 4.2M5.5 3.5V7H9M18.5 20.5V17H15" />
-  </svg>
-);
 
 export default function Error({
   error,
@@ -34,23 +30,27 @@ export default function Error({
   }, [error]);
 
   return (
-    <section className="bg-white">
-      <div className={`${CONTAINER} grid min-h-[70svh] gap-10 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-16`}>
-        <div>
-          <p className="rise type-label font-semibold text-cobalt">Something went wrong</p>
-          <h1 className="rise mt-3 max-w-[16ch] type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
-            This page did not load.
-          </h1>
-          <p className="rise mt-6 max-w-[46ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
-            The problem is on our end, not yours. Trying again usually clears it.
-            If it keeps happening, tell us and we will look into it.
+    <section className="relative isolate overflow-hidden bg-white">
+      <LineGrid />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(60%_60%_at_50%_30%,var(--color-cobalt-tint),transparent)]" />
+
+      <div className={`${CONTAINER} grid min-h-[70svh] items-center gap-8 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12 lg:pb-24`}>
+        <LoadErrorArt className="rise mx-auto h-auto w-full max-w-[420px] lg:order-2 lg:max-w-none" />
+
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <p className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 type-caption font-semibold text-danger" style={{ animationDelay: "200ms" }}>
+            <span className="size-1.5 rounded-full bg-danger" aria-hidden />
+            Something went wrong
           </p>
-          <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-cobalt px-6 text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep active:translate-y-px"
-            >
+          <h1 className="rise mt-4 type-headline-lg font-semibold text-ink" style={{ animationDelay: "280ms" }}>
+            This page didn&rsquo;t load.
+          </h1>
+          <p className="rise mt-4 max-w-[44ch] type-body-lg text-ink-muted" style={{ animationDelay: "360ms" }}>
+            The problem is on our end, not yours. Trying again usually clears it.
+          </p>
+
+          <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: "440ms" }}>
+            <button type="button" onClick={reset} className={buttonClass("primary", "lg")}>
               <IconRefresh size={16} />
               Try again
             </button>
@@ -59,19 +59,19 @@ export default function Error({
               <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </LinkButton>
           </div>
-        </div>
 
-        <div className="rise rounded-2xl border border-line bg-paper p-7 sm:p-8" style={{ animationDelay: "320ms" }}>
-          <p className="text-[16px] font-semibold text-ink">Still stuck?</p>
-          <p className="mt-2 type-body text-ink-muted">
-            <Link href="/contact" className="font-semibold text-cobalt underline underline-offset-4">
+          <p className="rise mt-6 type-body-sm text-ink-muted" style={{ animationDelay: "520ms" }}>
+            Still stuck?{" "}
+            <Link href="/contact" className="font-semibold text-ink underline underline-offset-4 hover:text-cobalt">
               Report this
-            </Link>{" "}
-            {error.digest ? "and include the reference below, so we can find it in our logs." : "and tell us which page you were on."}
+            </Link>
+            {error.digest && (
+              <>
+                {" "}and quote <span className="font-mono text-[13px] break-all text-ink">{error.digest}</span>
+              </>
+            )}
+            .
           </p>
-          {error.digest && (
-            <p className="mt-6 border-t border-line pt-5 font-mono text-[13px] break-all text-ink-subtle">Reference: {error.digest}</p>
-          )}
         </div>
       </div>
     </section>

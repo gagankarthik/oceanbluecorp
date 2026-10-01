@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ThirteenYearsPage from "./_content";
-import { OG_IMAGES } from "@/lib/seo";
+import { jsonLdString, OG_IMAGES } from "@/lib/seo";
 import { BRAND_NAME, FOUNDED_YEAR, MILESTONES } from "@/lib/company";
 import {
   ANNIVERSARY_COPY,
@@ -59,7 +59,7 @@ export default function ThirteenYears() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
       />
       <ThirteenYearsPage />
     </>

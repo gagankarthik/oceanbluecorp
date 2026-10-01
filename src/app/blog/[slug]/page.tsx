@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticleDetail from "@/components/landing/ArticleDetail";
-import { safeJsonLd } from "@/lib/json-ld";
+import { jsonLdString } from "@/lib/seo";
 import {
   articleJsonLd, articleMetadata, getLiveArticle, getRelatedArticles,
 } from "@/lib/articles-public";
@@ -42,7 +42,7 @@ export default async function BlogPost({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(articleJsonLd(article)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(articleJsonLd(article)) }}
       />
       <ArticleDetail article={article} related={related} />
     </>

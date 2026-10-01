@@ -31,12 +31,12 @@ that holds and should shed logic into `src/lib` and `src/components/admin` as
 they are next touched:
 
 ```
-2638  src/lib/aws/dynamodb.ts      (acceptable, one entity section per block)
-2222  src/app/admin/bench/page.tsx           ← worst offender
-1321  src/components/admin/workspace.tsx
-1180  src/app/admin/applications/page.tsx
-1162  src/app/admin/page.tsx
-1080  src/app/admin/candidates/[id]/page.tsx
+3273  src/lib/aws/dynamodb.ts
+1736  src/app/admin/bench/page.tsx
+1518  src/components/admin/workspace.tsx
+1184  src/app/admin/applications/page.tsx
+1132  src/app/admin/page.tsx
+674  src/app/admin/candidates/[id]/page.tsx
 ```
 
 Rule of thumb: past ~600 lines a page is carrying something that belongs in a
@@ -125,6 +125,10 @@ was duplicated first**.
 | Validate a form field on the client | `lib/form-validation.ts` + `hooks/use-form-errors.ts` | a per-page regex |
 | Who sees a notification | `lib/notifications.ts` | filtering by type in a page |
 | Explain a heading | `<InfoTip>` via `subtitle` / `info` props (card, section, page headers) | a grey sentence under every title |
+| Put JSON-LD or any value in an inline `<script>` | `jsonLdString` (`lib/seo.ts`) | a bare `JSON.stringify` |
+| Page title, description, canonical, OG card | `pageMetadata` (`lib/seo.ts`) | a hand-built `metadata` object |
+| Loading placeholder | `Skel` and the layout skeletons (`admin/skeletons.tsx`), with a `label` | `animate-pulse` on an ad-hoc div |
+| A colour, space, radius or duration | a token (DESIGN_SYSTEM.md §2) | a raw value in a page |
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and
 `jobTitle` so cross-candidate lists need no second read. That is a considered
@@ -311,7 +315,8 @@ Recorded honestly rather than left implied:
    `/api/auth/session` read that returns only the profile; (c) route refresh
    through a server endpoint; (d) once the CSP report log is quiet, flip the
    full policy to enforcing and move `script-src` to per-request nonces from
-   `src/proxy.ts`. Test sign-in, invite completion, refresh and sign-out on each step.
+   `src/proxy.ts` (today it only answers 503 during maintenance; headers come
+   from `next.config.ts`). Test sign-in, invite completion, refresh and sign-out on each step.
 
 Closed since the audit: the public routes are now rate limited (§5.4), and the
 privileged-field hole in §5.2 is gated.
@@ -349,6 +354,12 @@ Non-negotiable, and already established in the codebase:
 - **A failure never blocks the task.** A resume that will not parse still
   attaches; a failed analysis still lets the record save. Report it and move on.
 - **Empty states say what to do next**, not just that something is empty.
+- **A write that failed is not shown as done.** Check `res.ok` before keeping an
+  optimistic change or toasting success; on failure, say so and reload.
+- **Every error state offers a way to get help**: `/contact` on the public
+  site, `/admin/help` in the console.
+- **Unsaved work is not discarded silently.** A form that tracks dirty state
+  confirms before leaving.
 
 ---
 

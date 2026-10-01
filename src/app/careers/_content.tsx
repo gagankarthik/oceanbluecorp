@@ -192,6 +192,10 @@ export default function CareersPage() {
                   </li>
                 ))}
               </ul>
+              <Link href="/careers/search?remote=1" className="mt-5 inline-flex items-center gap-1.5 type-label font-semibold text-ink transition-colors hover:text-cobalt">
+                See remote roles
+                <IconArrowRight size={14} />
+              </Link>
             </div>
 
             <div className="rounded-2xl border border-line bg-white p-7">
