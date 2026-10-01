@@ -14,7 +14,7 @@ import JobDetailLoading from "./loading";
 import { jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
 import { usePageCrumb, useNavSection } from "@/components/admin/admin-provider";
-import { GridSelect, RecordFact, RecordHeader, StatStrip, WorkspaceButton } from "@/components/admin/workspace";
+import { GridSelect, RecordFact, RecordHeader, StageStrip, WorkspaceButton } from "@/components/admin/workspace";
 import { BestCandidates } from "@/components/admin/best-candidates";
 import { JobSubmissions } from "@/components/admin/job-submissions";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -368,6 +368,7 @@ export default function JobDetailPage({
               {job.location}{job.state ? `, ${job.state}` : ""}
             </RecordFact>
             {canPrice && job.clientName && <RecordFact icon={IconBuilding}>{job.clientName}</RecordFact>}
+            {canPrice && job.vendorName && <RecordFact icon={IconTruck}>{job.vendorName}</RecordFact>}
             {job.type && (
               <RecordFact icon={IconClock}>
                 <span className="capitalize">{job.type.replace(/-/g, " ")}</span>
@@ -415,6 +416,23 @@ export default function JobDetailPage({
           </>
         }
       />
+
+      {canPrice && applications.length > 0 && (
+        <StageStrip
+          className="mb-4"
+          value={activeTab === "applicants" ? statusFilter : ""}
+          onChange={showStage}
+          items={[
+            { key: "all", label: "All applicants", count: applications.length },
+            ...APP_STATUSES.map((s) => ({
+              key: s.value,
+              label: s.label,
+              count: pipelineCounts[s.value] || 0,
+              color: statusColor(s.value),
+            })),
+          ]}
+        />
+      )}
 
       <div className={cn("mb-4 grid grid-cols-1 items-start gap-4", canPrice && "lg:grid-cols-[minmax(0,1fr)_320px]")}>
         <AdminCard className="overflow-hidden">
@@ -531,19 +549,6 @@ export default function JobDetailPage({
             <div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
                 <SearchInput value={search} onChange={setSearch} placeholder="Search by name or email…" />
-                {applications.length > 0 && (
-                  <StatStrip
-                    className="mb-0 shadow-none"
-                    items={[
-                      { label: "All", value: applications.length, onClick: () => showStage("all") },
-                      ...APP_STATUSES.filter((s) => pipelineCounts[s.value]).map((s) => ({
-                        label: s.label,
-                        value: pipelineCounts[s.value],
-                        onClick: () => showStage(s.value),
-                      })),
-                    ]}
-                  />
-                )}
                 {statusFilter !== "all" && (
                   <WorkspaceButton size="sm" variant="ghost" onClick={() => setStatusFilter("all")}>
                     <X aria-hidden="true" />

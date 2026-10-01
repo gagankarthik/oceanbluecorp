@@ -94,7 +94,7 @@ export function ConfirmDialog({
       aria-labelledby="confirm-dialog-title"
       aria-describedby={body ? "confirm-dialog-body" : undefined}
     >
-      <div className="w-full max-w-md rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+      <div className="w-full max-w-md rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
         <div className="flex gap-3.5 p-5 sm:p-6">
           {danger ? (
             <IconTrash className="mt-0.5 h-5 w-5 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
@@ -113,7 +113,7 @@ export function ConfirmDialog({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-4 sm:flex-row sm:justify-end sm:px-6 rounded-b-[14px]">
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-4 sm:flex-row sm:justify-end sm:px-6 rounded-b-[8px]">
           <button
             ref={cancelRef}
             onClick={onCancel}

@@ -552,7 +552,7 @@ export default function UsersPage() {
           aria-labelledby="invite-title"
         >
           {/* Bounded, middle scrolls: the role list outgrows a laptop viewport. */}
-          <form onSubmit={handleInvite} onBlur={revalidateInvite} noValidate className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+          <form onSubmit={handleInvite} onBlur={revalidateInvite} noValidate className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
             <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
               <h2 id="invite-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Invite a teammate</h2>
               <button
@@ -633,7 +633,7 @@ export default function UsersPage() {
           aria-modal="true"
           aria-labelledby="role-title"
         >
-          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
             <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar name={userToEdit.name} email={userToEdit.email} size="md" />

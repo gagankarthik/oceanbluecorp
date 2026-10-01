@@ -11,14 +11,13 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
 import {
-  IconBookmarkCheck, IconBookmarkPlus, IconEdit, IconError, IconJob,
+  IconBookmarkCheck, IconBookmarkPlus, IconEdit, IconJob,
   IconLocation, IconMail, IconPhone, IconUserCheck,
 } from "@/components/admin/icons";
-import { PIPELINE_STAGES, statusColor, type AppStatus } from "@/components/admin/theme";
 import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 
-/* RecordBar: identity, contact, stage and the record's actions, pinned by the
+/* RecordBar: identity, contact and the record's actions, pinned by the
    page for the whole ~4,000px record (Fitts). It stays whole rather than
    condensing on scroll: contact and rating are what a recruiter reaches for
    while reading the resume below. Built short instead: identity and contact in
@@ -26,10 +25,8 @@ import { cn } from "@/lib/utils";
 
 export type RecordBarProps = {
   candidate: Application & { jobDepartment?: string };
-  statusSaving: boolean;
   benchSaving: boolean;
   ownerSaving: boolean;
-  onStage: (s: AppStatus) => void;
   onRate: (n: number) => void;
   onBench: (p: BenchType | null) => void;
   onClaim: () => void;
@@ -38,76 +35,6 @@ export type RecordBarProps = {
 
 const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const MENU_LABEL = "px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]";
-
-/** Compact stage control; the full stepper lives in the Pipeline tab. */
-function StageSelect({
-  candidate,
-  saving,
-  onStage,
-}: {
-  candidate: Application;
-  saving: boolean;
-  onStage: (s: AppStatus) => void;
-}) {
-  const isRejected = candidate.status === "rejected";
-  const current = PIPELINE_STAGES.find((s) => s.key === candidate.status);
-  const c = statusColor(candidate.status);
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {/* Tinted by the stage it shows (tinted = state, filled = action), in the
-            same colour the stage carries everywhere else. Inline because the
-            value is resolved at runtime. */}
-        <WorkspaceButton
-          disabled={saving}
-          aria-label={`Stage: ${isRejected ? "Rejected" : current?.label ?? "none"}. Change stage`}
-          style={{
-            color: c,
-            borderColor: `color-mix(in srgb, ${c} 45%, transparent)`,
-            background: `color-mix(in srgb, ${c} 8%, var(--adm-surface))`,
-          }}
-          className="hover:brightness-[0.97]"
-        >
-          {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : (
-            <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: c }} />
-          )}
-          <span className="font-semibold">{isRejected ? "Rejected" : current?.label ?? "–"}</span>
-          <ChevronDown className="opacity-60" aria-hidden="true" />
-        </WorkspaceButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className={cn("min-w-[220px]", MENU)}>
-        <DropdownMenuLabel className={MENU_LABEL}>Move to stage</DropdownMenuLabel>
-        {PIPELINE_STAGES.map((stage) => {
-          const selected = !isRejected && stage.key === candidate.status;
-          return (
-            <DropdownMenuItem
-              key={stage.key}
-              onClick={() => onStage(stage.key)}
-              className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
-                selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
-              )}
-            >
-              <Check className={cn("h-3.5 w-3.5 flex-none text-[var(--adm-accent)]", selected ? "opacity-100" : "opacity-0")} aria-hidden="true" />
-              <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: statusColor(stage.key) }} />
-              {stage.label}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-        {/* Rejection is terminal and off the ordered flow, so it is an action, not a seventh stage. */}
-        <DropdownMenuItem
-          onClick={() => onStage("rejected")}
-          className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]"
-        >
-          <IconError className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
-          {isRejected ? "Rejected" : "Reject candidate"}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 /** Talent-bench control: pick a pool, or take the candidate off the bench. */
 function BenchMenu({
@@ -178,10 +105,8 @@ function BenchMenu({
 
 export function RecordBar({
   candidate,
-  statusSaving,
   benchSaving,
   ownerSaving,
-  onStage,
   onRate,
   onBench,
   onClaim,
@@ -292,10 +217,8 @@ export function RecordBar({
 
         <BenchMenu candidate={candidate} saving={benchSaving} onBench={onBench} compact />
 
-        <StageSelect candidate={candidate} saving={statusSaving} onStage={onStage} />
-
-        {/* The record's one filled action. */}
-        <WorkspaceButton variant="primary" onClick={onEdit} aria-label="Edit profile">
+        {/* Secondary: the filled action is the stage move in StageTrack. */}
+        <WorkspaceButton onClick={onEdit} aria-label="Edit profile">
           <IconEdit aria-hidden="true" />
           <span className="hidden sm:inline">Edit profile</span>
         </WorkspaceButton>

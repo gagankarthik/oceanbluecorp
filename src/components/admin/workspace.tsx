@@ -57,7 +57,7 @@ export function Workspace({ className, children }: { className?: string; childre
         // row and the right-hand toolbar controls. With it, the panel fits the
         // viewport and the GRID scrolls horizontally inside its own container,
         // which is where a wide table should scroll.
-        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
@@ -152,7 +152,7 @@ export function WorkspaceButton({
       {...props}
       className={cn(
         "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
-        size === "sm" ? "h-8 rounded-[8px] px-3 text-[13px]" : "h-9 rounded-[9px] px-3.5 text-[13.5px]",
+        size === "sm" ? "h-8 rounded-[6px] px-3 text-[13px]" : "h-9 rounded-[6px] px-3.5 text-[13.5px]",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
         variant === "primary" &&
@@ -387,7 +387,7 @@ export function KpiRow({ items, className }: { items: KpiItem[]; className?: str
           </>
         );
         const cls = cn(
-          "group/kpi flex min-w-0 flex-col gap-2.5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-left shadow-[var(--adm-shadow-sm)]",
+          "group/kpi flex min-w-0 flex-col gap-2.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-left shadow-[var(--adm-shadow-sm)]",
           k.onClick &&
             "transition-[border-color,box-shadow] duration-150 ease-[var(--adm-ease)] hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)]",
         );
@@ -460,6 +460,72 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
           <span key={s.label} title={s.hint} className={cls}>
             {body}
           </span>
+        );
+      })}
+    </div>
+  );
+}
+
+export interface StageStripItem {
+  key: string;
+  label: string;
+  count: number;
+  /** Stage colour, shown as a dot beside the label. */
+  color?: string;
+}
+
+/**
+ * Figure-led pipeline strip: one cell per stage, count over label. A cell is a
+ * filter, so the strip is both the summary and the control for the grid below.
+ */
+export function StageStrip({
+  items,
+  value,
+  onChange,
+  className,
+}: {
+  items: StageStripItem[];
+  value: string;
+  onChange: (key: string) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Pipeline stages"
+      className={cn(
+        "adm-scroll-hidden flex overflow-x-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
+        className,
+      )}
+    >
+      {items.map((s, i) => {
+        const selected = s.key === value;
+        return (
+          <button
+            key={s.key}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(s.key)}
+            className={cn(
+              "relative min-w-[104px] flex-1 px-4 py-2.5 text-left transition-colors duration-150",
+              i > 0 && "border-l border-[var(--adm-line-soft)]",
+              selected ? "bg-[var(--adm-accent-tint)]" : "hover:bg-[var(--adm-row-hover)]",
+            )}
+          >
+            <span
+              className={cn(
+                "block text-[19px] font-semibold leading-6 tracking-[-0.02em] tabular-nums",
+                s.count === 0 ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-ink)]",
+              )}
+            >
+              {s.count}
+            </span>
+            <span className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-[var(--adm-ink-mute)]">
+              {s.color && <span aria-hidden className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: s.color }} />}
+              {s.label}
+            </span>
+            {selected && <span aria-hidden className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--adm-accent)]" />}
+          </button>
         );
       })}
     </div>

@@ -38,11 +38,6 @@ function ago(ms: number): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
-function greeting(d = new Date()) {
-  const h = d.getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-}
-
 /** Days above which a stage's median age is called out as a bottleneck. */
 const STAGE_AGE_WARN = 7;
 
@@ -440,7 +435,6 @@ function AttentionPanel({
 // ── dashboard ────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
   const router = useRouter();
   const { setJobs: setProviderJobs, candidateRevision } = useAdmin();
 
@@ -457,9 +451,12 @@ export default function AdminDashboard() {
   const period: Period = range === "7d" || range === "30d" ? "30d" : range === "90d" ? "90d" : "1y";
 
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const hasData = useRef(false);
   const fetchAll = useCallback(async () => {
     try {
-      setLoading(true);
+      // Skeleton on first load only; a refresh keeps the figures on screen.
+      if (hasData.current) setRefreshing(true); else setLoading(true);
       setError(null);
       const [ar, jr] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs?fields=summary")]);
       const [ad, jd] = await Promise.all([ar.json(), jr.json()]);
@@ -471,15 +468,27 @@ export default function AdminDashboard() {
       })));
       setJobs(jobsList);
       setProviderJobs(jobsList);
+      hasData.current = true;
+      setLoadedAt(new Date());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      // A failed refresh leaves the last good figures up.
+      if (!hasData.current) setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
-      setLoadedAt(new Date());
+      setRefreshing(false);
     }
   }, [setProviderJobs]);
 
   useEffect(() => { void fetchAll(); }, [fetchAll, candidateRevision]);
+
+  // Returning to the tab after a while refetches, so the figures are never an hour old.
+  useEffect(() => {
+    const onFocus = () => {
+      if (loadedAt && Date.now() - loadedAt.getTime() > 5 * 60_000) void fetchAll();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchAll, loadedAt]);
 
   const drillToStatus = useCallback(
     (status?: string) => router.push(`/admin/applications${status ? `?status=${status}` : ""}`),
@@ -710,7 +719,7 @@ export default function AdminDashboard() {
 
   const starvedReqs = reqCoverage.filter((r) => r.value === 0).length;
 
-  /** Channel mix by application VOLUME, the share each source contributes. */
+  /** Candidate sourcing by application VOLUME, the share each source contributes. */
   const channelMix = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of applications) {
@@ -824,7 +833,6 @@ export default function AdminDashboard() {
     (starvedReqs > 0 ? 1 : 0);
   const healthy = openItems === 0;
 
-  const firstName = (user?.name ?? "").split("@")[0].trim().split(/\s+/)[0];
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   if (loading) return <DashboardSkeleton />;
@@ -844,21 +852,21 @@ export default function AdminDashboard() {
   // no list to land on, so they carry no href.
   const headStats: { label: string; value: React.ReactNode; sub: string; href?: string }[] = [
     { label: "Open roles",   value: openJobs.length,       sub: "Current", href: "/admin/jobs" },
-    { label: "In play",      value: activePipeline.length, sub: `of ${applications.length} applications`, href: "/admin/applications" },
+    { label: "Active candidates", value: activePipeline.length, sub: `of ${applications.length} applications`, href: "/admin/applications" },
     { label: "Interviews",   value: counts.interview || 0, sub: "Active now", href: "/admin/applications?status=interview" },
     { label: "Placements",   value: commercial.placements, sub: rangeStart !== null ? rangeLabel : "All time", href: "/admin/applications?status=hired" },
-    { label: "Coverage",     value: coverage !== null ? coverage : "–", sub: "Candidates per role" },
+    { label: "Candidates per role", value: coverage !== null ? coverage : "–", sub: "Average across open roles" },
     { label: "Time to hire", value: timeToHire !== null ? `${timeToHire}d` : "–", sub: "Median" },
   ];
 
   const attention: AttentionItem[] = [
-    { label: "Roles with no candidates", hint: "Open requisitions with an empty pipeline", value: starvedReqs,
+    { label: "Roles with no candidates", hint: "Open roles with an empty pipeline", value: starvedReqs,
       href: "/admin/jobs", severity: "danger" },
-    { label: "Offers going cold", hint: `Pending an answer for ${OFFER_STALE_DAYS}+ days`, value: offersAtRisk.length,
+    { label: "Offers awaiting response", hint: `Pending an answer for ${OFFER_STALE_DAYS}+ days`, value: offersAtRisk.length,
       href: "/admin/applications?status=offered", severity: "danger" },
-    { label: "Stale in screening", hint: `No movement for ${STALE_DAYS}+ days`, value: staleCandidates.length,
+    { label: "Stalled in screening", hint: `No movement for ${STALE_DAYS}+ days`, value: staleCandidates.length,
       href: "/admin/applications?status=pending", severity: "warning" },
-    { label: "Candidates without an owner", hint: "Active, but nobody assigned", value: unassignedActive,
+    { label: "Unassigned candidates", hint: "Active, but nobody assigned", value: unassignedActive,
       href: "/admin/applications", severity: "warning" },
   ];
 
@@ -868,7 +876,7 @@ export default function AdminDashboard() {
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)] sm:text-[21px]">
-            {greeting()}{firstName ? `, ${firstName}` : ""}
+            Recruiting overview
           </h1>
           <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
             {today}
@@ -883,8 +891,8 @@ export default function AdminDashboard() {
             onChange={setRange}
             options={RANGES.map((r) => ({ value: r.value, label: r.long }))}
           />
-          <WorkspaceButton onClick={() => void fetchAll()} disabled={loading} aria-label="Refresh dashboard">
-            <RefreshCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+          <WorkspaceButton onClick={() => void fetchAll()} disabled={refreshing} aria-label="Refresh dashboard">
+            <RefreshCw className={refreshing ? "animate-spin" : undefined} aria-hidden="true" />
             Refresh
           </WorkspaceButton>
           <WorkspaceButton variant="primary" asChild>
@@ -982,7 +990,7 @@ export default function AdminDashboard() {
       </div>
 
       <Section
-        title="Pipeline and channels"
+        title="Pipeline and sourcing"
         description="How candidates move through stages, and where they come from."
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -1003,7 +1011,7 @@ export default function AdminDashboard() {
           </AdminCard>
 
           <AdminCard className="flex flex-col overflow-hidden">
-            <AdminCardHeader title="Channel mix" subtitle="Share of applications by source" />
+            <AdminCardHeader title="Candidate sourcing" subtitle="Share of applications by source" />
             {channelMix.length > 0 ? (
               <div className="grid flex-1 place-items-center px-4 py-5">
                 <DonutChart segments={channelMix} centerCaption="applications" />
@@ -1016,18 +1024,18 @@ export default function AdminDashboard() {
       </Section>
 
       <Section
-        title="Where the work is"
+        title="Open role coverage"
         description="Roles that need sourcing, and how the pipeline splits by client."
         action={<PanelLink href="/admin/jobs">All roles</PanelLink>}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <AdminCard className="overflow-hidden">
-            <AdminCardHeader title="Requisition coverage" subtitle="Active candidates per open role, thinnest first" />
-            <RankedBars items={reqCoverage} emptyMessage="No open requisitions" />
+            <AdminCardHeader title="Role coverage" subtitle="Active candidates per open role, thinnest first" />
+            <RankedBars items={reqCoverage} emptyMessage="No open roles" />
           </AdminCard>
 
           <AdminCard className="overflow-hidden">
-            <AdminCardHeader title="Client concentration" subtitle="Share of pipeline by client" />
+            <AdminCardHeader title="Pipeline by client" subtitle="Share of pipeline by client" />
             <RankedBars items={clientMix} emptyMessage="No client data yet" />
             {topClientShare !== null && topClientShare >= 40 && clientMix.length > 0 && (
               <p className="border-t border-[var(--adm-line)] px-4 py-2.5 text-[12.5px] text-[var(--adm-ink-mute)]">
@@ -1082,7 +1090,7 @@ export default function AdminDashboard() {
 
         <AdminCard className="overflow-hidden lg:col-span-3">
           <AdminCardHeader
-            title="Recruiter throughput"
+            title="Recruiter performance"
             subtitle="Submissions against hires"
             action={<PanelLink href="/admin/applications">All</PanelLink>}
           />

@@ -560,7 +560,7 @@ export default function ResumeBankPage() {
     <div
       className={cn(
         "flex flex-col pb-6",
-        dragActive && "rounded-[14px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
+        dragActive && "rounded-[8px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -571,7 +571,7 @@ export default function ResumeBankPage() {
 
       {dragActive && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[var(--adm-scrim)] p-4">
-          <div className="w-full max-w-sm rounded-[14px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
+          <div className="w-full max-w-sm rounded-[8px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
             <IconUpload className="mx-auto mb-3 h-6 w-6 text-[var(--adm-accent)]" strokeWidth={1.75} />
             <p className="text-[16px] font-semibold text-[var(--adm-ink)]">Drop resumes to upload</p>
             <p className="mt-1 text-[13px] text-[var(--adm-ink-mute)]">PDF or Word &middot; up to 5MB each</p>
@@ -899,7 +899,7 @@ export default function ResumeBankPage() {
           aria-label={previewName || "Resume preview"}
           className="fixed inset-0 z-50 flex flex-col bg-[var(--adm-scrim)] sm:p-6"
         >
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)] sm:rounded-[14px]">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)] sm:rounded-[8px]">
             <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
               <p className="min-w-0 truncate text-[15px] font-semibold text-[var(--adm-ink)]">{previewName}</p>
               <div className="flex flex-none items-center gap-2">

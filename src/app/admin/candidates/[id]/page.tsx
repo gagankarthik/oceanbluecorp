@@ -16,7 +16,7 @@ import { PipelinePanel } from "@/components/admin/pipeline-panel";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { EmptyState } from "@/components/admin/empty-state";
 import { RecordBar } from "@/components/admin/candidate/record-bar";
-import { StageRail } from "@/components/admin/candidate/stage-rail";
+import { StageTrack } from "@/components/admin/candidate/stage-track";
 import { ApplicantDetails } from "@/components/admin/candidate/applicant-details";
 import { RecordSidebar } from "@/components/admin/candidate/record-sidebar";
 import { NotesTab } from "@/components/admin/candidate/notes-tab";
@@ -476,14 +476,19 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
         <RecordBar
           candidate={candidate}
-          statusSaving={statusSaving}
           benchSaving={benchSaving}
           ownerSaving={ownerSaving}
-          onStage={handleStageClick}
           onRate={handleRating}
           onBench={handleBenchChange}
           onClaim={handleClaimOwnership}
           onEdit={() => openCandidateEditor({ candidate })}
+        />
+
+        <StageTrack
+          candidate={candidate}
+          saving={statusSaving}
+          daysInStage={daysInStage}
+          onStage={handleStageClick}
         />
 
         {/* Tabs ride with the header: they navigate the whole record. */}
@@ -596,12 +601,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
           {activeTab === "pipeline" && (
             <div className="space-y-4">
-              <StageRail
-                candidate={candidate}
-                saving={statusSaving}
-                daysInStage={daysInStage}
-                onStage={handleStageClick}
-              />
               <PipelinePanel
                 applicationId={id}
                 candidateName={candidate.name}

@@ -22,7 +22,7 @@ export function AdminCard({
   return (
     <div
       className={cn(
-        "min-w-0 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "min-w-0 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         // Interactive panels change border + wash instead of translating; the
         // grid must not shift under the pointer.
         hover &&
@@ -57,7 +57,7 @@ export function AdminCardHeader({
 }) {
   const t = tones[tone];
   return (
-    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[14px] border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-4 py-2.5">
+    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[8px] border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-4 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         {Icon && <Icon className={cn("h-4 w-4 flex-none", tone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text)} strokeWidth={1.75} />}
         <div className="min-w-0">

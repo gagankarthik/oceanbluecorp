@@ -248,7 +248,7 @@ function DirectoryEditor({
       aria-label="Edit directory"
     >
       <div
-        className="flex max-h-[86dvh] w-full max-w-4xl flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        className="flex max-h-[86dvh] w-full max-w-4xl flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
@@ -516,7 +516,7 @@ export default function HelpPage() {
 }
 
 const HELP_CARD =
-  "group flex h-full items-center gap-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
+  "group flex h-full items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
 
 function HelpCardBody({
   icon: Icon,

@@ -7,16 +7,18 @@ import {
   ArrowLeft, Plus, X, Loader2, ExternalLink,
 } from "lucide-react";
 import {
-  IconJob, IconFile, IconWarning, IconUpload, IconSave, IconSparkles, IconEdit,
+  IconJob, IconFile, IconWarning, IconUpload, IconSave, IconSparkles, IconEdit, IconGroup,
 } from "@/components/admin/icons";
-import type { BenchType, Job } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   PIPELINE_STAGES, SOURCE_OPTIONS, US_STATES, COMMON_SKILLS,
   WORK_AUTH_GROUPS, workAuthExpires, workAuthNeedsSponsorship,
   HIRE_TYPE_OPTIONS, type AppStatus,
 } from "@/components/admin/theme";
-import { POOL_META, POOL_ORDER } from "@/lib/bench";
+import { POOL_META, POOL_ORDER, POOL_LABEL, poolOf } from "@/lib/bench";
+import { EmptyState } from "@/components/admin/empty-state";
+import { SearchInput } from "@/components/admin/toolbar";
 import { PageHeader } from "@/components/admin/page-header";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -101,7 +103,17 @@ function NewApplicationInner() {
   // chooses, because reading the resume first fills most of it in, offering the
   // empty form straight away buries that and invites re-typing what the document
   // already says.
-  const [mode, setMode] = useState<"choose" | "reading" | "form">("choose");
+  const [mode, setMode] = useState<"choose" | "reading" | "bench" | "form">("choose");
+  // Bench route: the profile's fields and its already-stored resume are carried
+  // into a NEW application, so the bench record itself is left as it is.
+  const [benchList, setBenchList]       = useState<Application[] | null>(null);
+  const [benchError, setBenchError]     = useState<string | null>(null);
+  const [benchQuery, setBenchQuery]     = useState("");
+  const [benchPicking, setBenchPicking] = useState<string | null>(null);
+  const [benchFrom, setBenchFrom]       = useState<string | null>(null);
+  const [benchResume, setBenchResume]   = useState<{
+    resumeId: string; fileName?: string; fileKey?: string; analysis?: unknown;
+  } | null>(null);
   const [parsing, setParsing] = useState(false);
   // Kept apart from resumeError: that one belongs to the file itself (wrong type,
   // too big, upload failed) and shows in the Documents card. A failed READ is
@@ -137,6 +149,56 @@ function NewApplicationInner() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openBench = () => {
+    setResumeError(null);
+    setMode("bench");
+    if (benchList) return;
+    setBenchError(null);
+    fetch("/api/applications")
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Couldn't load the talent bench.");
+        setBenchList((d.applications || []).filter((a: Application) => a.addToTalentBench === true));
+      })
+      .catch((err) => setBenchError(err instanceof Error ? err.message : "Couldn't load the talent bench."));
+  };
+
+  const pickFromBench = async (row: Application) => {
+    setBenchPicking(row.id);
+    // The list is lean; the full record carries the stored resume analysis.
+    let app = row;
+    try {
+      const r = await fetch(`/api/applications/${row.id}`);
+      const d = await r.json();
+      if (r.ok && d.application) app = d.application;
+    } catch { /* the list row is enough to fill the form */ }
+
+    const [first, ...rest] = (app.name || "").split(" ");
+    setFirstName(app.firstName || first || "");
+    setLastName(app.lastName || rest.join(" "));
+    setEmail(app.email || "");
+    setPhone(app.phone || "");
+    setCity(app.city || "");
+    setState(app.state || "");
+    setSkills(app.skills || []);
+    setExperience(app.experience || "");
+    setWorkAuth(app.workAuthorization || "");
+    setVisaExpiry(app.visaExpiry || "");
+    setNeedsSponsorship(!!app.visaSponsorshipRequired);
+    setHireType(app.hireType || "");
+    setBenchResume(app.resumeId
+      ? { resumeId: app.resumeId, fileName: app.resumeFileName, fileKey: app.resumeFileKey, analysis: app.resumeAnalysis }
+      : null);
+    setBenchFrom(app.name || app.email);
+    setBenchPicking(null);
+    setMode("form");
+  };
+
+  const benchMatches = (benchList || []).filter((a) => {
+    const q = benchQuery.trim().toLowerCase();
+    return !q || [a.name, a.email, a.jobTitle, ...(a.skills || [])].some((f) => f?.toLowerCase().includes(q));
+  });
 
   const addSkill = (s: string) => {
     const t = s.trim();
@@ -316,6 +378,13 @@ function NewApplicationInner() {
         if (parsedAnalysis && parsedFile.current === resumeFile) {
           resumePayload.resumeAnalysis = parsedAnalysis;
         }
+      } else if (benchResume) {
+        resumePayload = {
+          resumeId: benchResume.resumeId,
+          resumeFileName: benchResume.fileName,
+          resumeFileKey: benchResume.fileKey,
+          ...(benchResume.analysis ? { resumeAnalysis: benchResume.analysis } : {}),
+        };
       }
 
       const job = jobs.find((j) => j.id === jobId);
@@ -397,7 +466,7 @@ function NewApplicationInner() {
       {mode === "choose" ? (
         <AdminCard>
           <AdminCardHeader title="How do you want to add this candidate?" subtitle="Reading a resume fills most of the form for you to check." />
-          <div className="grid gap-3 p-4 sm:grid-cols-2">
+          <div className="grid gap-3 p-4 sm:grid-cols-3">
             <label className={choiceCls}>
               <input type="file" accept=".pdf,.doc,.docx" onChange={handleStartFromResume} className="sr-only" />
               <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
@@ -419,12 +488,62 @@ function NewApplicationInner() {
                 Fill the form in yourself. A resume can still be attached at the end, and read at any point.
               </span>
             </button>
+
+            <button type="button" onClick={openBench} className={cn(choiceCls, "text-left")}>
+              <IconGroup className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+              <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Pick from talent bench</span>
+              <span className="mt-1 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                Choose someone already on the bench. Their details and resume are carried over for you to check.
+              </span>
+            </button>
           </div>
           {resumeError && (
             <p role="alert" className={cn(inlineErrorCls, "mx-4 mb-4")}>
               <IconWarning className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
               {resumeError}
             </p>
+          )}
+        </AdminCard>
+      ) : mode === "bench" ? (
+        <AdminCard>
+          <AdminCardHeader title="Pick from talent bench" count={benchList?.length} />
+          <div className="flex flex-wrap items-center gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
+            <SearchInput value={benchQuery} onChange={setBenchQuery} placeholder="Search name, email or skill…" />
+            <WorkspaceButton variant="ghost" className="ml-auto" onClick={() => setMode("choose")}>Back</WorkspaceButton>
+          </div>
+          {benchError ? (
+            <EmptyState variant="error" title="Couldn't load the talent bench" description={benchError} />
+          ) : !benchList ? (
+            <div className="flex items-center justify-center gap-2 px-5 py-12 text-[13.5px] text-[var(--adm-ink-mute)]" role="status">
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />Loading the bench…
+            </div>
+          ) : benchMatches.length === 0 ? (
+            <EmptyState
+              title={benchList.length === 0 ? "Nobody on the bench yet" : "No matching bench profiles"}
+              description={benchList.length === 0 ? "Add candidates to the bench from their record, then pick them here." : "Try a different name, email or skill."}
+            />
+          ) : (
+            <ul className="max-h-[60vh] divide-y divide-[var(--adm-line-soft)] overflow-y-auto">
+              {benchMatches.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    disabled={!!benchPicking}
+                    onClick={() => void pickFromBench(a)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-60"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium text-[var(--adm-ink)]">{a.name || a.email}</span>
+                      <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">
+                        {[a.email, a.jobTitle, (a.skills || []).slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                    <span className="flex-none text-[12.5px] text-[var(--adm-ink-mute)]">{POOL_LABEL[poolOf(a)]}</span>
+                    {benchPicking === a.id && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </AdminCard>
       ) : mode === "reading" ? (
@@ -452,6 +571,16 @@ function NewApplicationInner() {
               <p className="text-[13.5px] text-[var(--adm-ink-mute)]" role="status" aria-live="polite">
                 Still reading {resumeFile?.name ?? "the resume"}; empty fields may fill in shortly.
                 Anything you type stays as you typed it.
+              </p>
+            </div>
+          )}
+
+          {benchFrom && (
+            <div className={cn(wellCls, "flex items-start gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
+              <IconGroup className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
+              <p className="text-[13.5px] text-[var(--adm-ink-mute)]">
+                Filled from <span className="font-medium text-[var(--adm-ink)]">{benchFrom}</span>&apos;s bench profile.
+                Check the values before saving; they stay on the bench.
               </p>
             </div>
           )}
@@ -488,7 +617,7 @@ function NewApplicationInner() {
         onSubmit={handleSubmit}
         onBlur={revalidate}
         noValidate
-        className={cn("grid grid-cols-1 items-start gap-4 lg:grid-cols-3", mode === "choose" && "hidden")}
+        className={cn("grid grid-cols-1 items-start gap-4 lg:grid-cols-3", (mode === "choose" || mode === "bench") && "hidden")}
       >
         <div className="min-w-0 space-y-4 lg:col-span-2">
           <AdminCard>
@@ -622,6 +751,17 @@ function NewApplicationInner() {
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
+                </div>
+              ) : benchResume ? (
+                <div className={cn(wellCls, "flex flex-wrap items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-3")}>
+                  <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{benchResume.fileName || "Resume"}</p>
+                    <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">From the bench profile</p>
+                  </div>
+                  <button type="button" aria-label="Remove resume" onClick={() => setBenchResume(null)} className={iconBtnDangerCls}>
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
                 </div>
               ) : (
                 <label className={dropzoneCls}>
@@ -793,7 +933,7 @@ function NewApplicationInner() {
         </div>
       </form>
 
-      <div className={cn(actionBarCls, mode === "choose" && "hidden")}>
+      <div className={cn(actionBarCls, (mode === "choose" || mode === "bench") && "hidden")}>
         <p className="min-w-0 text-[13px] font-medium text-[var(--adm-danger-ink)]">
           {Object.keys(errors).length > 0 ? "Fix the highlighted fields to add this applicant." : error}
         </p>

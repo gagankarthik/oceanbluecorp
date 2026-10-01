@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getAllJobs, createJob, createNotification, getNextPostingId, Job, toPublicJob } from "@/lib/aws/dynamodb";
+import { getAllJobs, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireJobEditor, getClaims } from "@/lib/auth/verify";
@@ -47,10 +47,16 @@ export async function GET(request: NextRequest) {
     // still gets the public projection: no rates, client, vendor or assignees.
     // Anonymous visitors keep the old rule exactly.
     const isEditor = hasJobEditAccess(claims?.groups);
+    // Signed-in lists count applicants from the applications table; anonymous
+    // callers keep the stored figure and skip the extra read.
+    const counted = isStaff || isEditor
+      ? await getApplicationCountsByJob().then((counts) =>
+          jobs.map((j) => ({ ...j, applicationsCount: counts.get(j.id) || 0 })))
+      : jobs;
     const payload = isStaff
-      ? jobs
+      ? counted
       : isEditor
-        ? jobs.map(toPublicJob)
+        ? counted.map(toPublicJob)
         : jobs
             .filter((j) => isPubliclyOpen(j.status))
             .map(toPublicJob);
@@ -130,6 +136,8 @@ export async function POST(request: NextRequest) {
       clientName: commercial(body.clientName),
       clientBillRate: commercial(body.clientBillRate),
       payRate: commercial(body.payRate),
+      vendorId: commercial(body.vendorId) || undefined,
+      vendorName: commercial(body.vendorName) || undefined,
       recruitmentManagerId: commercial(body.recruitmentManagerId),
       recruitmentManagerName: commercial(body.recruitmentManagerName),
       recruitmentManagerEmail: commercial(body.recruitmentManagerEmail),

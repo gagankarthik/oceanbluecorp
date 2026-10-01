@@ -1066,6 +1066,19 @@ export async function getAllApplications(): Promise<{ success: boolean; data?: A
   }
 }
 
+/**
+ * Live applicant count per job. The stored `applicationsCount` is only bumped
+ * by portal applications and never decremented, so it drifts from the pipeline.
+ */
+export async function getApplicationCountsByJob(): Promise<Map<string, number>> {
+  const result = await getAllApplications();
+  const counts = new Map<string, number>();
+  for (const app of result.data || []) {
+    if (app.jobId) counts.set(app.jobId, (counts.get(app.jobId) || 0) + 1);
+  }
+  return counts;
+}
+
 export async function updateApplicationStatus(
   id: string,
   status: Application["status"],

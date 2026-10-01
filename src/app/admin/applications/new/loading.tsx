@@ -9,7 +9,7 @@ export default function NewApplicationLoading() {
         <Skel className="h-6 w-40" />
         <Skel className="h-3.5 w-72 max-w-full" />
       </div>
-      <div className="rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="space-y-1.5 border-b border-[var(--adm-line-soft)] px-4 py-3">
           <Skel className="h-4 w-64 max-w-full" />
           <Skel className="h-3 w-80 max-w-full" />

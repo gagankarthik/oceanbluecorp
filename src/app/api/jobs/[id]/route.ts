@@ -114,6 +114,8 @@ export async function PUT(
       if (body.clientName !== undefined) updates.clientName = body.clientName;
       if (body.clientBillRate !== undefined) updates.clientBillRate = body.clientBillRate;
       if (body.payRate !== undefined) updates.payRate = body.payRate;
+      if (body.vendorId !== undefined) updates.vendorId = body.vendorId;
+      if (body.vendorName !== undefined) updates.vendorName = body.vendorName;
       if (body.recruitmentManagerId !== undefined) updates.recruitmentManagerId = body.recruitmentManagerId;
       if (body.recruitmentManagerName !== undefined) updates.recruitmentManagerName = body.recruitmentManagerName;
       if (body.recruitmentManagerEmail !== undefined) updates.recruitmentManagerEmail = body.recruitmentManagerEmail;

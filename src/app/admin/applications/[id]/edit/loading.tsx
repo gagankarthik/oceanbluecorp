@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 function CardSkel({ fields, cols }: { fields: number; cols: string }) {
   return (
-    <div className="rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+    <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
       <div className="border-b border-[var(--adm-line-soft)] px-4 py-4">
         <Skel className="h-4 w-36" />
       </div>

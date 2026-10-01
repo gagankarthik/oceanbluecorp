@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export function ListPanel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn("min-w-0 overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]", className)}>
+    <div className={cn("min-w-0 overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]", className)}>
       {children}
     </div>
   );

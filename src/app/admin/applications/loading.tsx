@@ -40,7 +40,7 @@ export default function ApplicationsLoading() {
         </div>
       </div>
 
-      <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="flex h-11 items-center gap-6 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4">
           <Skel className="h-4 w-4 rounded-[4px]" />
           <Skel className="h-3 w-24" />

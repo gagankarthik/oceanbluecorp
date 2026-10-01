@@ -1,6 +1,6 @@
 import { AdminRowsSkeleton, Skel } from "@/components/admin/skeletons";
 
-const CARD = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
+const CARD = "rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
 
 /** Mirrors roles: header, per-role count cards, then the route matrix card. */
 export default function RolesLoading() {

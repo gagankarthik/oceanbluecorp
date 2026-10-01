@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Client, Vendor } from "@/lib/aws/dynamodb";
 import {
-  JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload,
+  JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload, createVendorFromForm,
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
@@ -116,6 +116,11 @@ export default function NewJobPage({
         onDismissError={() => setServerError(null)}
         onSubmit={handleSubmit}
         onAddClient={handleAddClient}
+        onAddVendor={async (vendorData) => {
+          const vendor = await createVendorFromForm(vendorData);
+          setVendors((prev) => [vendor, ...prev]);
+          return vendor;
+        }}
       />
     </div>
   );

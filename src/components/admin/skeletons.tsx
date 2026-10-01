@@ -78,7 +78,7 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0, label = "Load
       </div>
 
       {/* table panel */}
-      <div className="overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] px-6 py-4">
           <Skel className="h-3 w-32 max-w-[40%] flex-1" />
           <Skel className="hidden h-3 w-24 sm:block" />
@@ -106,7 +106,7 @@ export function AdminDetailSkeleton({ label = "Loading record" }: { label?: stri
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_288px] xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           {Array.from({ length: 2 }).map((_, s) => (
-            <div key={s} className="space-y-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+            <div key={s} className="space-y-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
               <Skel className="h-4 w-40" />
               {["w-full", "w-11/12", "w-full", "w-10/12", "w-9/12"].map((w, i) => (
                 <Skel key={i} className={`h-3.5 ${w}`} />
@@ -115,12 +115,12 @@ export function AdminDetailSkeleton({ label = "Loading record" }: { label?: stri
           ))}
         </div>
         <div className="space-y-4">
-          <div className="flex flex-col items-center gap-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+          <div className="flex flex-col items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
             <Skel className="h-16 w-16 rounded-full" />
             <Skel className="h-4 w-32" />
             <Skel className="h-3 w-24" />
           </div>
-          <div className="space-y-2.5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+          <div className="space-y-2.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
             {Array.from({ length: 5 }).map((_, i) => <Skel key={i} className="h-3.5 w-full" />)}
           </div>
         </div>
@@ -138,7 +138,7 @@ export function AdminFormSkeleton({ label = "Loading form" }: { label?: string }
         <Skel className="h-3 w-36" />
       </div>
       {Array.from({ length: 2 }).map((_, s) => (
-        <div key={s} className="space-y-5 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 sm:p-5">
+        <div key={s} className="space-y-5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 sm:p-5">
           <Skel className="h-4 w-40" />
           <div className="grid gap-5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -217,7 +217,7 @@ export function KanbanSkeleton({
  * If you move a band on the dashboard, move it here. The two are a pair.
  */
 export function DashboardSkeleton() {
-  const card = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)]";
+  const card = "rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]";
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5" {...busy("Loading dashboard")}>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
@@ -244,10 +244,10 @@ export function DashboardSkeleton() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Skel className="h-[260px] rounded-[14px]" />
+        <Skel className="h-[260px] rounded-[8px]" />
         <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
-          <Skel className="h-[260px] rounded-[14px]" />
-          <Skel className="h-[260px] rounded-[14px]" />
+          <Skel className="h-[260px] rounded-[8px]" />
+          <Skel className="h-[260px] rounded-[8px]" />
         </div>
       </div>
 
@@ -258,15 +258,15 @@ export function DashboardSkeleton() {
             <Skel className="mt-1.5 h-3 w-72" />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Skel className="h-[320px] rounded-[14px]" />
-            <Skel className="h-[320px] rounded-[14px]" />
+            <Skel className="h-[320px] rounded-[8px]" />
+            <Skel className="h-[320px] rounded-[8px]" />
           </div>
         </div>
       ))}
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <Skel className="h-[380px] rounded-[14px] lg:col-span-2" />
-        <Skel className="h-[380px] rounded-[14px] lg:col-span-3" />
+        <Skel className="h-[380px] rounded-[8px] lg:col-span-2" />
+        <Skel className="h-[380px] rounded-[8px] lg:col-span-3" />
       </div>
     </div>
   );
@@ -307,7 +307,7 @@ export function CardGridSkeleton({
   return (
     <div className={cn("grid gap-4", columns)} {...busy("Loading")}>
       {Array.from({ length: cards }).map((_, i) => (
-        <div key={i} className="rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
+        <div key={i} className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1.5 flex-1">
               <Skel className="h-4 w-3/4" />

@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
-  JobForm, JobFormData, jobToFormData, formDataToPayload,
+  JobForm, JobFormData, jobToFormData, formDataToPayload, createVendorFromForm,
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -143,6 +143,11 @@ export default function EditJobPage({
           onDismissError={() => setServerError(null)}
           onSubmit={handleSubmit}
           onAddClient={handleAddClient}
+          onAddVendor={async (vendorData) => {
+            const vendor = await createVendorFromForm(vendorData);
+            setVendors((prev) => [vendor, ...prev]);
+            return vendor;
+          }}
         />
       ) : (
         <AdminCard>

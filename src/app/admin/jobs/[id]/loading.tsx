@@ -31,7 +31,7 @@ export default function JobDetailLoading() {
 
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
         {/* Main card: tabs, toolbar, rows */}
-        <div className="overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+        <div className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
           <div className="flex h-11 items-center gap-6 border-b border-[var(--adm-line)] px-4">
             <Skel className="h-4 w-24" />
             <Skel className="h-4 w-24" />
@@ -62,7 +62,7 @@ export default function JobDetailLoading() {
         {/* Rail */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1">
           {[8, 3].map((rows, i) => (
-            <div key={i} className="overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+            <div key={i} className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
               <div className="flex min-h-12 items-center border-b border-[var(--adm-line-soft)] px-4">
                 <Skel className="h-4 w-28" />
               </div>

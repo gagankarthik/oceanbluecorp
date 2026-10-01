@@ -38,7 +38,7 @@ export default function JobsLoading() {
         <Skel className="ml-auto hidden h-9 w-[96px] rounded-[10px] xl:block" />
       </div>
 
-      <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="hidden h-11 items-center gap-8 border-b border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 xl:flex">
           <Skel className="h-3 w-14" />
           <Skel className="h-3 w-40" />

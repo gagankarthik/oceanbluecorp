@@ -1,7 +1,7 @@
 import { AdminRowsSkeleton, Skel } from "@/components/admin/skeletons";
 import { cn } from "@/lib/utils";
 
-const CARD = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
+const CARD = "rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
 
 /** Mirrors API keys: header, stat strip, issued-keys table, then the feed reference card. */
 export default function ApiKeysLoading() {

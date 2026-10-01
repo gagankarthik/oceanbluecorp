@@ -368,7 +368,7 @@ export default function SettingsPage() {
         <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
           <nav
             aria-label="Settings sections"
-            className="flex gap-1 overflow-x-auto rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1.5 shadow-[var(--adm-shadow-sm)] lg:flex-col lg:overflow-visible"
+            className="flex gap-1 overflow-x-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1.5 shadow-[var(--adm-shadow-sm)] lg:flex-col lg:overflow-visible"
           >
             {visibleTabs.map((tab) => {
               const active = activeTab === tab.id;

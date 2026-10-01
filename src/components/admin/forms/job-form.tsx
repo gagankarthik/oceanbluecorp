@@ -163,8 +163,9 @@ export function formDataToPayload(data: JobFormData) {
     clientId: data.clientId || undefined,
     clientName: data.clientName || undefined,
     clientNotes: data.clientNotes || undefined,
-    vendorId: data.vendorId || undefined,
-    vendorName: data.vendorName || undefined,
+    // Empty string, not undefined: JSON drops undefined, so "No vendor" could never clear one.
+    vendorId: data.vendorId || "",
+    vendorName: data.vendorName || "",
     recruitmentManagerId: data.recruitmentManagerId || undefined,
     recruitmentManagerName: data.recruitmentManagerName || undefined,
     recruitmentManagerEmail: data.recruitmentManagerEmail || undefined,
@@ -189,7 +190,22 @@ interface JobFormProps {
   onDismissError?: () => void;
   onSubmit: (data: JobFormData) => void;
   onAddClient: (clientData: { name: string; websiteUrl: string; email: string; phone: string }) => Promise<Client>;
+  onAddVendor: (vendorData: NewVendorInput) => Promise<Vendor>;
   formId?: string;
+}
+
+export type NewVendorInput = Pick<Vendor, "name" | "contactPerson" | "email" | "vendorLeadId" | "vendorLeadName" | "vendorLeadRole">;
+
+/** POST /api/vendors for the form's "+ Add new vendor" option. */
+export async function createVendorFromForm(vendorData: NewVendorInput): Promise<Vendor> {
+  const res = await fetch("/api/vendors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(vendorData),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "The vendor could not be added. Try again in a moment.");
+  return json.vendor;
 }
 
 /** Lead-in line for a panel. */
@@ -200,13 +216,14 @@ function PanelNote({ children }: { children: React.ReactNode }) {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function JobForm({
-  mode, initialData, job, clients, vendors, hrUsers, submitting, serverError, onDismissError, onSubmit, onAddClient, formId = "job-form",
+  mode, initialData, job, clients, vendors, hrUsers, submitting, serverError, onDismissError, onSubmit, onAddClient, onAddVendor, formId = "job-form",
 }: JobFormProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [data, setData] = React.useState<JobFormData>(initialData || DEFAULT_JOB_FORM);
   const [showPreview, setShowPreview] = React.useState(false);
   const [showAddClient, setShowAddClient] = React.useState(false);
+  const [showAddVendor, setShowAddVendor] = React.useState(false);
 
   /* Media authors postings but never prices them, so client, vendor, rates and
      team assignment are not rendered for it — removed, not disabled
@@ -234,6 +251,7 @@ export function JobForm({
   };
 
   const handleVendorSelect = (vendorId: string) => {
+    if (vendorId === "add-new") { setShowAddVendor(true); return; }
     if (vendorId === "none" || !vendorId) { set("vendorId", ""); set("vendorName", ""); return; }
     const vendor = vendors.find((v) => v.id === vendorId);
     set("vendorId", vendorId);
@@ -460,6 +478,7 @@ export function JobForm({
             <div className="p-4">
               <FormSelect aria-label="Vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
                 <option value="none">No vendor</option>
+                <option value="add-new">+ Add new vendor</option>
                 {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </FormSelect>
             </div>
@@ -607,6 +626,19 @@ export function JobForm({
         />
       )}
 
+      {showAddVendor && (
+        <AddVendorModal
+          leads={hrUsers.filter((u) => u.role === "admin" || u.role === "hr")}
+          defaultLeadId={user?.id}
+          onClose={() => setShowAddVendor(false)}
+          onAdd={async (vendorData) => {
+            const vendor = await onAddVendor(vendorData);
+            setData((prev) => ({ ...prev, vendorId: vendor.id, vendorName: vendor.name }));
+            setShowAddVendor(false);
+          }}
+        />
+      )}
+
       {showPreview && (
         <PreviewModal data={data} typeLabel={typeLabel} onClose={() => setShowPreview(false)} />
       )}
@@ -675,7 +707,7 @@ function AddClientModal({
       aria-labelledby="add-client-title"
     >
       <div
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
@@ -712,6 +744,108 @@ function AddClientModal({
   );
 }
 
+// ── Add Vendor Modal ───────────────────────────────────────────────────────────
+
+function AddVendorModal({
+  leads,
+  defaultLeadId,
+  onClose,
+  onAdd,
+}: {
+  leads: AssigneeUser[];
+  defaultLeadId?: string;
+  onClose: () => void;
+  onAdd: (data: NewVendorInput) => Promise<void>;
+}) {
+  const [form, setForm] = React.useState({
+    name: "", contactPerson: "", email: "",
+    vendorLeadId: leads.some((u) => u.id === defaultLeadId) ? defaultLeadId! : "",
+  });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const { errors, validateAll, revalidate, invalidProps } = useFormErrors(
+    () => collectErrors({
+      name: check(form.name, required("Enter the vendor's company name."), maxLen(LIMITS.name)),
+      contactPerson: check(form.contactPerson, maxLen(LIMITS.name)),
+      email: check(form.email, email("Enter the vendor's email, like contact@acme.com."), maxLen(LIMITS.email)),
+      vendorLeadId: check(form.vendorLeadId, required("Choose who leads this vendor.")),
+    }),
+    { name: "vendor-name", contactPerson: "vendor-contact", email: "vendor-email", vendorLeadId: "vendor-lead" },
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    if (!validateAll()) return;
+    const lead = leads.find((u) => u.id === form.vendorLeadId);
+    if (!lead) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onAdd({
+        name: form.name,
+        contactPerson: form.contactPerson,
+        email: form.email,
+        vendorLeadId: lead.id,
+        vendorLeadName: lead.name || lead.email,
+        vendorLeadRole: lead.role as "admin" | "hr",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The vendor could not be added. Try again in a moment.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-vendor-title"
+    >
+      <div
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-none items-center justify-between gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
+          <h2 id="add-vendor-title" className="min-w-0 truncate text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
+            Add new vendor
+          </h2>
+          <ModalClose onClose={onClose} />
+        </div>
+        <form noValidate onSubmit={handleSubmit} onBlur={revalidate} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+          <FormErrorBanner message={error} onDismiss={() => setError(null)} />
+          <Field label="Vendor name" required htmlFor="vendor-name" error={errors.name}>
+            <FormInput id="vendor-name" required {...invalidProps("name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Staffing" />
+          </Field>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Contact person" htmlFor="vendor-contact" error={errors.contactPerson}>
+              <FormInput id="vendor-contact" {...invalidProps("contactPerson")} value={form.contactPerson} onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} placeholder="Jane Doe" />
+            </Field>
+            <Field label="Email" htmlFor="vendor-email" error={errors.email}>
+              <FormInput id="vendor-email" type="email" {...invalidProps("email")} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@example.com" />
+            </Field>
+          </div>
+          <Field label="Vendor lead" required htmlFor="vendor-lead" error={errors.vendorLeadId}>
+            <FormSelect id="vendor-lead" required {...invalidProps("vendorLeadId")} value={form.vendorLeadId} onChange={(e) => setForm({ ...form, vendorLeadId: e.target.value })}>
+              <option value="">Select lead</option>
+              {leads.map((u) => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+            </FormSelect>
+          </Field>
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <WorkspaceButton variant="ghost" onClick={onClose}>Cancel</WorkspaceButton>
+            <WorkspaceButton type="submit" variant="primary" disabled={submitting}>
+              {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add vendor
+            </WorkspaceButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Preview Modal ──────────────────────────────────────────────────────────────
 
 const PREVIEW_PROSE =
@@ -727,7 +861,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
       aria-labelledby="job-preview-title"
     >
       <div
-        className="my-auto w-full max-w-4xl overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-[var(--adm-shadow-lg)]"
+        className="my-auto w-full max-w-4xl overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] shadow-[var(--adm-shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">

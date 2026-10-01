@@ -67,7 +67,7 @@ export function ContactDetail({
               />
             </div>
           </div>
-          <div className="rounded-b-[14px] border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-2 py-1.5">
+          <div className="rounded-b-[8px] border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-2 py-1.5">
             <WorkspaceButton
               variant="ghost"
               onClick={onDelete}

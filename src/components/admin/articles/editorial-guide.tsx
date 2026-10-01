@@ -43,7 +43,7 @@ export function EditorialGuide({
         aria-expanded={open}
         className={cn(
           "flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)]",
-          open ? "rounded-t-[14px]" : "rounded-[14px]",
+          open ? "rounded-t-[8px]" : "rounded-[8px]",
         )}
       >
         <IconBook className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />

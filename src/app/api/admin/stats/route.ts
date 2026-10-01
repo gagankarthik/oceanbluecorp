@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
           title: job.title,
           department: job.department,
           location: job.location,
-          applicants: job.applicationsCount || 0,
+          applicants: applications.filter((a) => a.jobId === job.id).length,
           status: job.status,
         })),
 

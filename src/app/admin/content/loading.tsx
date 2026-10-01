@@ -1,6 +1,6 @@
 import { Skel } from "@/components/admin/skeletons";
 
-const CARD = "overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
+const CARD = "overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
 
 /** Mirrors content: header with preview/save, page nav cards (rail from lg), then the field editor. */
 export default function ContentLoading() {

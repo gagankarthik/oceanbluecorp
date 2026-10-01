@@ -1,6 +1,6 @@
 import { Skel } from "@/components/admin/skeletons";
 
-const CARD = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
+const CARD = "rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]";
 
 /** Mirrors help: header, directory ledger on the left, help rail on the right. */
 export default function HelpLoading() {

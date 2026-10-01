@@ -42,7 +42,7 @@ export default function BenchLoading() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+      <div className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
         <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] px-4 py-3">
           <Skel className="h-3 w-32 max-w-[40%] flex-1" />
           <Skel className="hidden h-3 w-24 sm:block" />

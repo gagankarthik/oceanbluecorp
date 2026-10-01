@@ -57,7 +57,7 @@ export function StatCard({ label, value, icon: Icon, tone = "blue", delta, hint,
   const body = (
     <div
       className={cn(
-        "group relative flex min-w-0 flex-col rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)] transition-[border-color,box-shadow] duration-150",
+        "group relative flex min-w-0 flex-col rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)] transition-[border-color,box-shadow] duration-150",
         sm ? "gap-2.5 p-4" : "gap-3 p-4",
         href && "cursor-pointer hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)]",
         className,
