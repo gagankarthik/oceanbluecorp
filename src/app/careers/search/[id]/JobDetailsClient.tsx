@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
   const [showApply, setShowApply] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  // The upload that already succeeded for this file, so a retry does not repeat it.
+  const uploadedResume = useRef<{ file: File; resumeId: string } | null>(null);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -107,17 +109,18 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
     setSubmitting(true);
     setApplyError(null);
     try {
-      let resumeId = null;
-      if (resumeFile) {
+      let resumeId: string | null = null;
+      if (resumeFile && uploadedResume.current?.file === resumeFile) {
+        resumeId = uploadedResume.current.resumeId;
+      } else if (resumeFile) {
         const fd = new FormData();
         fd.append("file", resumeFile);
         fd.append("userId", formData.email);
         const up = await fetch("/api/resume/upload", { method: "POST", body: fd });
-        if (!up.ok) {
-          const data = await up.json();
-          throw new Error(data.error || "Failed to upload resume");
-        }
-        resumeId = (await up.json()).resumeId;
+        const data = await up.json().catch(() => ({}));
+        if (!up.ok) throw new Error(data.error || "Your resume could not be uploaded. Try again.");
+        resumeId = data.resumeId ?? null;
+        if (resumeId) uploadedResume.current = { file: resumeFile, resumeId };
       }
 
       const res = await fetch("/api/applications", {
@@ -135,8 +138,8 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
         }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to submit application");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Your application could not be submitted. Try again.");
       }
       setApplicationSubmitted(true);
       setHasApplied(true);

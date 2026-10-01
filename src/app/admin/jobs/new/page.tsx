@@ -10,9 +10,8 @@ import {
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
-import { jobCategory } from "@/lib/job-status";
-
-const LIST_HREF = { state: "/admin/jobs", open: "/admin/open-roles" } as const;
+import { jobCategory, JOB_LIST_HREF as LIST_HREF } from "@/lib/job-status";
+import { useNavSection } from "@/components/admin/admin-provider";
 
 export default function NewJobPage({
   searchParams,
@@ -20,6 +19,7 @@ export default function NewJobPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const category = jobCategory(use(searchParams));
+  useNavSection(LIST_HREF[category]);
   const { user } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
@@ -101,7 +101,7 @@ export default function NewJobPage({
 
   // Hold the skeleton rather than flashing an editable form the redirect is
   // about to take away.
-  if (isRecruiter) return <AdminFormSkeleton />;
+  if (isRecruiter) return <AdminFormSkeleton label="Loading job form" />;
 
   return (
     <div className="pb-10">

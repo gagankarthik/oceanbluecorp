@@ -228,10 +228,10 @@ export function RecordHeader({
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+      <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h1 className="min-w-0 break-words text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
               {title}
             </h1>
             {status}
@@ -243,7 +243,9 @@ export function RecordHeader({
             </div>
           )}
         </div>
-        {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex flex-none items-center gap-2 max-sm:[&>*:last-child]:flex-1">{actions}</div>
+        )}
       </div>
     </div>
   );
@@ -288,7 +290,7 @@ export function FormActionBar({
   children: React.ReactNode;
 }) {
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6">
+    <div className="sticky -bottom-4 z-20 -mx-4 -mb-4 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-bottom-5 sm:-mx-5 sm:-mb-5 sm:px-5 lg:-bottom-6 lg:-mx-6 lg:-mb-6 lg:px-6">
       <p className="text-[13px] text-[var(--adm-ink-mute)]">
         {message ?? (dirty ? (
           <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
@@ -640,6 +642,7 @@ export function WorkspaceSearch({
         ref={ref}
         type="search"
         autoComplete="off"
+        aria-label={placeholder.replace(/…$/, "")}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
@@ -1466,7 +1469,7 @@ export function WorkspaceFooter({
 }) {
   return (
     <div className="mt-auto flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
-      <p className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+      <p role="status" className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
         <span className="font-medium text-[var(--adm-ink)]">{shown}</span>
         {shown !== total && <> of <span className="font-medium text-[var(--adm-ink)]">{total}</span></>} {noun}
       </p>

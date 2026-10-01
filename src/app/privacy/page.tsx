@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { LEGAL_DOCS } from "@/lib/legal";
 import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks, HQ_ADDRESS } from "@/components/site/legal/doc";
 
 export const metadata: Metadata = pageMetadata({
@@ -26,14 +27,15 @@ const SECTIONS = [
 ];
 
 export default function PrivacyPage() {
-  const EFFECTIVE = "April 1, 2026";
+  const { effective: EFFECTIVE, updated, history } = LEGAL_DOCS.privacy;
 
   return (
     <DocPage
       title="Privacy Policy"
       lede={<>Ocean Blue Corporation is committed to protecting your privacy. This policy explains what personal information we collect, how we use it, and what rights you have over your data.</>}
-      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Controller", value: "Ocean Blue Corporation, Powell, OH" }]}
+      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Controller", value: "Ocean Blue Corporation, Powell, OH" }]}
       toc={SECTIONS}
+      history={history}
     >
 
             <DocSection id="introduction" number="01" title="Introduction">
@@ -49,7 +51,7 @@ export default function PrivacyPage() {
                 you acknowledge that you have read and understood this Privacy Policy.
               </P>
               <Callout title="At a Glance">
-                <p>We collect your information to match candidates with job opportunities, deliver enterprise services to clients, and improve our platform. We do not sell your personal data. You have rights to access, correct, and delete your information.</p>
+                <p>We collect what you send us: a job application and resume, or a contact form. We use it to match candidates with roles and to answer enquiries. This site runs no analytics or advertising trackers, and we do not sell personal data. You can ask to see, correct, or delete what we hold.</p>
               </Callout>
             </DocSection>
 
@@ -60,26 +62,26 @@ export default function PrivacyPage() {
 
               <SubHead>2.1 Information You Provide Directly</SubHead>
               <UL items={[
-                "Account registration data: name, email address, password, phone number",
-                "Profile and resume information: work history, education, skills, certifications, portfolio links",
-                "Job applications: cover letters, availability, salary expectations, visa/work authorization status",
-                "Contact form submissions: name, company, message, service interests",
+                "Job applications: name, email address, phone number, cover letter, and the resume file you upload. You do not need an account to apply",
+                "Resume contents: work history, education, skills, certifications, and links included in the file",
+                "Details you give a recruiter during the process: availability, pay expectations, work authorization status",
+                "Contact form submissions: name, email address, phone number, company, job title, inquiry type, and your message",
                 "Client account data: company name, billing address, tax identification, authorized contacts",
-                "Communications: emails, chat transcripts, and notes from calls with our team",
+                "Communications: emails and notes from calls with our team",
+                "Staff accounts: name, work email, phone number, and password. These are created by invitation for Ocean Blue employees only; there is no public sign-up",
               ]} />
 
               <SubHead>2.2 Information Collected Automatically</SubHead>
               <UL items={[
-                "Device information: IP address, browser type and version, operating system, device identifiers",
-                "Usage data: pages visited, links clicked, time spent, referring URLs, search queries",
+                "IP address: used for a few minutes to limit how often the application, resume upload, and contact forms can be submitted from one connection",
                 "Log data: server logs that may include IP addresses, dates/times, browser type, and requested pages",
-                "Location data: approximate geographic location derived from IP address",
-                "Cookies and tracking technologies: as described in Section 8",
+                "Browser storage: your cookie choice and similar preferences, as described in Section 8",
+                "We do not use analytics or advertising trackers, and we do not build a profile of the pages you visit",
               ]} />
 
               <SubHead>2.3 Information from Third Parties</SubHead>
               <UL items={[
-                "Professional networks (e.g., LinkedIn) if you connect such accounts or apply through them",
+                "Job boards and professional networks (e.g., LinkedIn) where you applied to one of our roles or made your profile available to recruiters",
                 "Referrals from existing employees, contractors, or clients",
                 "Background check providers (with your consent, where required by applicable law)",
                 "Skills assessment platforms used during our recruitment process",
@@ -95,6 +97,7 @@ export default function PrivacyPage() {
               <SubHead>For Candidates</SubHead>
               <UL items={[
                 "Evaluate your qualifications and match you with suitable job opportunities",
+                "Read your resume with software that extracts your contact details, skills, and experience and scores how closely they fit a role. The score is a guide for the recruiter; the software does not reject or advance an application on its own",
                 "Present your profile to client companies with appropriate positions",
                 "Communicate updates about your applications and placement status",
                 "Conduct onboarding for contract or direct-hire positions",
@@ -113,9 +116,8 @@ export default function PrivacyPage() {
               <SubHead>For All Users</SubHead>
               <UL items={[
                 "Operate, maintain, and improve our website and platform",
-                "Send administrative communications (account confirmations, security alerts)",
-                "Send marketing emails and newsletters (with your consent, and you may opt out at any time)",
-                "Analyze usage trends to enhance user experience",
+                "Send administrative communications (application confirmations, replies to enquiries)",
+                "Send marketing emails (with your consent, and you may opt out at any time)",
                 "Detect, investigate, and prevent fraudulent activity and security incidents",
                 "Comply with legal obligations and enforce our Terms of Service",
               ]} />
@@ -141,7 +143,7 @@ export default function PrivacyPage() {
               </P>
               <UL items={[
                 <><strong>Client Companies:</strong> We share candidate profiles (with candidate consent) with client employers in connection with specific job opportunities. Clients are contractually bound to use this information only for hiring purposes.</>,
-                <><strong>Service Providers:</strong> We engage third-party vendors to help operate our business (cloud hosting, payroll processing, background check services, email delivery, analytics). These vendors have access to personal data only as necessary to perform their functions and are contractually bound to protect it.</>,
+                <><strong>Service Providers:</strong> We engage third-party vendors to help operate our business. This site runs on Amazon Web Services, which provides its hosting, database, file storage, staff sign-in, and email delivery, and resumes are read by a resume parsing and matching service. Other vendors support payroll processing and background checks. These vendors have access to personal data only as necessary to perform their functions and are contractually bound to protect it.</>,
                 <><strong>Legal Requirements:</strong> We may disclose information when required by law, regulation, court order, or governmental authority, or to protect the rights, property, or safety of Ocean Blue, our users, or others.</>,
                 <><strong>Business Transfers:</strong> In connection with a merger, acquisition, sale of assets, or bankruptcy, your information may be transferred. We will notify you before your information becomes subject to a different privacy policy.</>,
                 <><strong>With Your Consent:</strong> We may share information with other third parties when you explicitly authorize us to do so.</>,
@@ -150,6 +152,12 @@ export default function PrivacyPage() {
                 All third-party service providers are required to maintain the confidentiality and security
                 of your personal information and are prohibited from using it for any purpose other than
                 providing services to Ocean Blue.
+              </P>
+              <P>
+                A few items on this site load directly from other servers: the office map (OpenStreetMap)
+                and some client and partner logos, which come from those companies&apos; own websites. When
+                your browser requests them, those servers receive your IP address, as with any web request.
+                We send them nothing else.
               </P>
             </DocSection>
 
@@ -160,11 +168,11 @@ export default function PrivacyPage() {
                 agreements. Specific retention periods:
               </P>
               <UL items={[
-                "Active candidate profiles: maintained while your account is active and for 2 years after your last login",
+                "Active candidate profiles: maintained while we are working with you and for 2 years after our last contact",
                 "Placed contractor records: retained for 7 years following placement to comply with tax and employment law",
                 "Job applications (unplaced): retained for 1 year from submission date",
                 "Client engagement records: retained for 7 years following the end of the engagement",
-                "Website usage logs and analytics: retained for 12 months",
+                "Form submission counters (by IP address): deleted automatically within minutes",
                 "Marketing communications preferences: retained until you opt out and for 3 years thereafter",
                 "Background check results: deleted within 90 days of a final hiring decision",
               ]} />
@@ -204,7 +212,7 @@ export default function PrivacyPage() {
                 choices. We do not use analytics or advertising cookies. We use the following types:
               </P>
               <UL items={[
-                <><strong>Strictly Necessary Cookies:</strong> Essential for the Site to function (e.g., authentication tokens, session management). Cannot be disabled.</>,
+                <><strong>Strictly Necessary Storage:</strong> Your cookie choice, and, for Ocean Blue staff only, the sign-in session for the staff console. Cannot be disabled.</>,
                 <><strong>Preference Storage:</strong> Remembers choices you make, such as a dismissed announcement. Kept across visits only with your consent.</>,
               ]} />
               <P>
@@ -213,9 +221,8 @@ export default function PrivacyPage() {
                 Site functionality.
               </P>
               <P>
-                We also use pixel tags and web beacons in our email communications to determine whether
-                emails have been opened and links clicked. You can disable this by setting your email
-                client to not download images.
+                The emails this site sends, such as an application confirmation, carry no tracking pixels.
+                The full list of what is stored is in our <a href="/cookies">Cookie Policy</a>.
               </P>
             </DocSection>
 
@@ -297,7 +304,7 @@ export default function PrivacyPage() {
                 within 45 days. You may designate an authorized agent to submit requests on your behalf.
               </P>
               <Callout title="Categories of Personal Information Collected (Past 12 Months)">
-                <p>Identifiers (name, email, IP), professional/employment information (resume, work history), internet activity (browsing on our Site), and inferences drawn from the above to create a candidate profile. No personal information sold.</p>
+                <p>Identifiers (name, email, phone, IP address), professional/employment information (resume, work history), and inferences drawn from a resume to assess fit for a role. We do not collect browsing activity. No personal information sold.</p>
               </Callout>
             </DocSection>
 
@@ -309,13 +316,13 @@ export default function PrivacyPage() {
               </P>
               <P>
                 For material changes, we will provide at least 30 days&apos; notice by posting a prominent
-                notice on our Site, sending an email to registered users, or both. We encourage you to
+                notice on our Site, emailing candidates and clients we are actively working with, or both. We encourage you to
                 review this policy periodically to stay informed.
               </P>
               <P>
                 Your continued use of our Site or services after any changes to this Privacy Policy
                 constitutes your acceptance of the updated policy. If you do not agree with the changes,
-                you must stop using our Site and services and may request deletion of your account.
+                you must stop using our Site and services and may request deletion of your data.
               </P>
             </DocSection>
 

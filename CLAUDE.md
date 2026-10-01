@@ -7,7 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`STANDARDS.md`**, structure, naming, reuse (which shared helper to use instead
   of writing another), the client/server boundary rule, security rules, and the
   pre-ship checks. Read before adding a route, a component, or a table.
-- **`DESIGN_SYSTEM.md`**, visual language and the admin component inventory.
+- **`DESIGN_SYSTEM.md`**, visual language and the admin component inventory. §2 is
+  the token system for the whole app: tiers, naming, spacing, grid, breakpoints,
+  density, and how a token gets added.
 - **`SITE_DESIGN_LANGUAGE.md`**, the public website's design language: colour roles
   (60-30-10), type roles, spacing, shape, elevation, motion, layout. Components in
   `src/components/site/`. Read before touching any public page.
@@ -22,16 +24,18 @@ Ocean Blue Corporation enterprise website built with Next.js 16, React 19, TypeS
 npm run dev      # Start development server (localhost:3000)
 npm run build    # Production build
 npm run start    # Start production server
+npm test         # node --test over tests/*.test.mjs (pure functions only)
+npm run typecheck
 ```
 
-No test runner is configured.
+There is no ESLint config; `npm test` and `npm run typecheck` are the gate.
 
 ## Architecture
 
 ### Frontend Stack
 - **Next.js 16** with App Router (`src/app/`)
 - **React 19** with TypeScript
-- **Tailwind CSS 4** with shadcn/ui components (new-york style)
+- **Tailwind CSS 4**; a few shadcn/ui primitives (new-york style) in `components/ui`
 - **Radix UI** primitives for accessible components
 - Path alias: `@/*` maps to `./src/*`
 
@@ -91,9 +95,12 @@ src/
 │   │                   # news, customer-stories)
 │   └── auth/           # Authentication pages (signin, callback, signout), invite-only, no sign-up
 ├── components/
-│   ├── ui/             # shadcn/ui components
+│   ├── ui/             # shadcn/ui primitives (dropdown, sheet, tooltip, checkbox)
+│   ├── site/           # Public website components
+│   ├── admin/          # Console components
 │   └── providers/      # Context providers (wraps AuthProvider)
 ├── lib/
+│   ├── seo.ts          # pageMetadata, breadcrumbs, jsonLdString for every public page
 │   ├── auth/           # Cognito auth config and context
 │   ├── articles.ts     # Editorial model for the four public content sections
 │   ├── editorial.ts    # House style: structure, rules and body templates per kind

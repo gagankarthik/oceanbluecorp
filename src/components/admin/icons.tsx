@@ -36,14 +36,35 @@ const base = {
   strokeLinejoin: "round",
 } as const;
 
-/** Application record: a document with a candidate mark on it. */
+/** State roles: a public-sector posting, so a government building rather than a second briefcase. */
+export function IconStateRole(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.5 9.5 12 4l8.5 5.5z" />
+      <path d="M6 12.5v5M10 12.5v5M14 12.5v5M18 12.5v5" />
+      <path d="M3.5 20.5h17" />
+    </svg>
+  );
+}
+
+/** Blog: a pen on a line of writing. */
+export function IconBlog(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5 19l.9-4L16.4 4.5a2 2 0 0 1 2.9 0l.2.2a2 2 0 0 1 0 2.9L9 18.1z" />
+      <path d="m14.5 6.4 3.1 3.1" />
+      <path d="M13 20h7" />
+    </svg>
+  );
+}
+
+/** Applications: an inbox tray with one arriving. */
 export function IconApplication(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-      <path d="M14 3v5h5" />
-      <circle cx="12" cy="13" r="2" />
-      <path d="M9 18a3 3 0 0 1 6 0" />
+      <path d="M3.5 13.5 6.2 5.6a1.5 1.5 0 0 1 1.4-1h8.8a1.5 1.5 0 0 1 1.4 1l2.7 7.9v4.5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z" />
+      <path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5" />
+      <path d="M12 7v4.5M10 9.8l2 2 2-2" />
     </svg>
   );
 }
@@ -208,38 +229,38 @@ export function IconOverview(props: IconProps) {
   );
 }
 
-/** Talent bench: figures held in reserve, stacked behind one another. */
+/** Talent bench: two people seated, ready to place. */
 export function IconBench(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <circle cx="9" cy="8" r="3" />
-      <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
-      <path d="M16 9.5h4.5" />
-      <path d="M16 13h4.5" />
-      <path d="M16 16.5h4.5" />
+      <circle cx="8" cy="7" r="2.25" />
+      <circle cx="16" cy="7" r="2.25" />
+      <path d="M4.5 15.5v-.75a3.5 3.5 0 0 1 7 0v.75" />
+      <path d="M12.5 15.5v-.75a3.5 3.5 0 0 1 7 0v.75" />
+      <path d="M3 15.5h18" />
+      <path d="M6 15.5v5M18 15.5v5" />
     </svg>
   );
 }
 
-/** Resume: a sheet with a folded corner and a candidate's ruled lines. */
+/** Resume: a page with the person it describes. */
 export function IconResume(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
       <path d="M14 3v5h5" />
-      <path d="M8.5 12.5h7M8.5 16h4.5" />
+      <circle cx="12" cy="12.5" r="2" />
+      <path d="M8.5 18a3.5 3.5 0 0 1 7 0" />
     </svg>
   );
 }
 
-/** Contact enquiry: a message with an unread state dot. */
+/** Contact submissions: an envelope, apart from the quote bubble of customer stories. */
 export function IconContact(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9l-4.5 3.5V16.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z" />
-      <circle cx="9" cy="11" r="1" fill="currentColor" stroke="none" />
-      <circle cx="12.5" cy="11" r="1" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="11" r="1" fill="currentColor" stroke="none" />
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="m3.5 7.5 8.5 6 8.5-6" />
     </svg>
   );
 }
@@ -292,23 +313,54 @@ export function IconStaff(props: IconProps) {
   );
 }
 
-/** Notifications: a bell whose clapper is a live state dot. */
+/** Notifications: a bell with its clapper. */
 export function IconBell(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z" />
-      <path d="M10.2 19a2 2 0 0 0 3.6 0" />
+      <path d="M6 16.5c1-1.2 1.5-2.7 1.5-5.5a4.5 4.5 0 0 1 9 0c0 2.8.5 4.3 1.5 5.5z" />
+      <path d="M12 4v2.5" />
+      <path d="M10 19.5a2.1 2.1 0 0 0 4 0" />
     </svg>
   );
 }
 
-/** Help: a ring buoy, support, not a generic question mark. */
+/** Sidebar toggle: the window with its left rail. */
+export function IconSidebar(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <path d="M9.5 4.5v15" />
+      <path d="M6 8.5h1M6 11.5h1" />
+    </svg>
+  );
+}
+
+/** Open the navigation drawer. */
+export function IconMenu(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 7h16M4 12h16M4 17h10" />
+    </svg>
+  );
+}
+
+/** Search. */
+export function IconSearch(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4 4" />
+    </svg>
+  );
+}
+
+/** Help: a question mark, the one glyph nobody has to learn. */
 export function IconHelp(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="3.5" />
-      <path d="M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5" />
+      <path d="M9.6 9.6a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.3 1-1.3 2" />
+      <circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -346,14 +398,14 @@ export function IconDocs(props: IconProps) {
   );
 }
 
-/** Settings: control sliders, not a cog, these are preferences, not machinery. */
+/** Settings: three sliders, each track broken where its handle sits. */
 export function IconSettings(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M4 7h16M4 12h16M4 17h16" />
-      <circle cx="9" cy="7" r="2" fill="none" />
-      <circle cx="15" cy="12" r="2" fill="none" />
-      <circle cx="8" cy="17" r="2" fill="none" />
+      <path d="M4 7h3M11 7h9M4 12h9M17 12h3M4 17h2M10 17h10" />
+      <circle cx="9" cy="7" r="2" />
+      <circle cx="15" cy="12" r="2" />
+      <circle cx="8" cy="17" r="2" />
     </svg>
   );
 }
@@ -785,12 +837,14 @@ export function IconTrend(props: IconProps) {
   );
 }
 
-/** Chart, a bar reading. */
+/** Case study: a page carrying a result. */
 export function IconChart(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M4 4v16h16" />
-      <path d="M8 20v-6M13 20v-9M18 20v-4" strokeWidth={2} />
+      <rect x="4.5" y="3.5" width="15" height="17" rx="2" />
+      <path d="M8 7.5h4.5" />
+      <path d="m8 16 3-3.5 2.5 2 2.5-4" />
+      <path d="M14.2 10.5H16v1.8" />
     </svg>
   );
 }

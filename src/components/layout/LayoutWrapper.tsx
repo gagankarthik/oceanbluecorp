@@ -102,7 +102,7 @@ export default function LayoutWrapper({
   // purpose: the switch is turned off from /admin/settings, and locking staff
   // out of the page that turns it off would leave nobody able to bring the
   // site back without a deploy.
-  if (maintenance?.enabled && !isAuthRoute) {
+  if (maintenance?.enabled && !isAuthRoute && !pathname?.startsWith("/status")) {
     return <Maintenance message={maintenance.message} eta={maintenance.eta} />;
   }
 
@@ -116,7 +116,7 @@ export default function LayoutWrapper({
       {/* Skip link (WCAG 2.4.1 Bypass Blocks) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--hz-cobalt)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+        className="site sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--hz-cobalt)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
       >
         Skip to content
       </a>

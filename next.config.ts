@@ -193,21 +193,19 @@ const nextConfig: NextConfig = {
       //
       // Split by how the file changes, not by extension. Marks under /logos
       // are replaced under a new name when a brand changes (aws-partner.png ->
-      // aws-partner-trimmed.png), so they are safe to freeze. /images holds
-      // named slots like hero-bg.png that do get overwritten in place, so those
-      // get a month, long enough for the audit and short enough that a swap
-      // lands. (Most /images reads go through /_next/image anyway, which sets
-      // its own TTL from `minimumCacheTTL` below.)
+      // aws-partner-trimmed.png), so they are safe to freeze. /images and
+      // /videos hold named slots that get overwritten in place, so those get a
+      // month.
       {
         source: "/logos/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
-        source: "/images/:path*",
+        source: "/:dir(images|videos|anniversary)/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" }],
       },
       {
-        source: "/:file(favicon.png|logo.png|logo.webp|manifest.json)",
+        source: "/:file(favicon.png|logo.png|logo.webp|Logo_400x400.png)",
         headers: [{ key: "Cache-Control", value: "public, max-age=604800" }],
       },
     ];

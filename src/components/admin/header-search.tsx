@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
-import { IconJob, IconApplication, IconUserStar, IconContact } from "./icons";
+import { X } from "lucide-react";
+import { IconJob, IconApplication, IconUserStar, IconContact, IconSearch } from "./icons";
 import { Avatar } from "./avatar";
 import { StatusBadge } from "./status-badge";
 import { cn } from "@/lib/utils";
@@ -75,7 +75,7 @@ export function HeaderSearch() {
 
   return (
     <div ref={ref} className="relative hidden w-[min(22rem,34vw)] md:block lg:w-[26rem] xl:w-[32rem]">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+      <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
       <input
         type="search"
         autoComplete="off"

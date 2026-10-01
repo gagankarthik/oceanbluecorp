@@ -2,5 +2,5 @@ import { AdminListSkeleton } from "@/components/admin/skeletons";
 
 // Same skeleton ArticleList shows while it loads.
 export default function Loading() {
-  return <AdminListSkeleton stats={4} rows={8} />;
+  return <AdminListSkeleton stats={4} rows={8} label="Loading blog posts" />;
 }

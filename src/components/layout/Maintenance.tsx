@@ -1,25 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SOCIAL_LINKS } from "@/components/layout/social";
+import { buttonClass } from "@/components/site/button";
+import {
+  IconClock,
+  IconMail,
+  IconOverview,
+  IconPhone,
+} from "@/components/site/icons";
+import { MaintenanceArt } from "@/components/site/maintenance-art";
+import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/company";
 
 /**
  * The maintenance screen, shown in place of the public site while the switch
  * at /admin/settings is on.
  *
- * Branded rather than a bare "be right back": a page that still looks like the
- * company reads as planned work, and an unstyled one reads as the whole thing
- * having fallen over.
- *
- * Two pieces of honesty are built into the shape:
- *
- *  · Scheduled work and an unexpected outage get different headings, because
- *    people respond very differently to each and conflating them reads as
- *    evasive. Whoever flips the switch chooses by filling in the estimate.
- *  · When an estimate is given it is stated. "Back soon" tells nobody
- *    anything; even a rough window is worth more.
- *
- * The status page, phone and email stay reachable throughout, since the
- * routes people need most are the ones this page is standing in front of.
+ * The picture carries the message; the words are a heading, one line and the
+ * estimate. Scheduled work and an unexpected outage get different headings
+ * (whoever flips the switch chooses by filling in the estimate), and the phone,
+ * email and status page stay reachable, since this page stands in front of them.
  */
 
 export default function Maintenance({
@@ -34,60 +33,73 @@ export default function Maintenance({
   const planned = Boolean(eta);
 
   return (
-    <main className="horizon flex min-h-[100svh] w-full flex-col bg-[var(--hz-canvas)]">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-16 sm:px-10">
+    <main className="site flex min-h-[100svh] w-full flex-col bg-white">
+      <div className="mx-auto w-full max-w-[var(--grid-max)] px-[var(--space-layout-gutter)] pt-6">
         <Image
-          src="/logo.png"
+          src="/logo.webp"
           alt="Ocean Blue Corporation"
-          width={340}
-          height={80}
-          className="h-12 w-auto"
+          width={150}
+          height={40}
+          className="mx-auto h-8 w-auto lg:mx-0"
           priority
         />
+      </div>
 
-        <p className="hz-eyebrow mt-14 text-[var(--hz-cobalt)]">
-          {planned ? "Scheduled maintenance" : "Temporarily unavailable"}
-        </p>
+      <div className="mx-auto grid w-full max-w-[var(--grid-max)] flex-1 items-center gap-8 px-[var(--space-layout-gutter)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12">
+        <MaintenanceArt className="mx-auto h-auto w-full max-w-[420px] lg:order-2 lg:max-w-none" />
 
-        <h1 className="hz-display hz-h2 mt-5 max-w-[18ch] text-[var(--hz-text)]">
-          {planned ? "We are making some updates." : "The site is briefly offline."}
-        </h1>
-
-        <p className="mt-6 max-w-[52ch] text-lead text-[var(--hz-text-mute)]">
-          {message ||
-            (planned
-              ? "The site is down for planned work and will be back shortly. Nothing you have sent us has been lost."
-              : "We are working on it now and expect to be back shortly. Nothing you have sent us has been lost.")}
-        </p>
-
-        {eta && (
-          <p className="mt-5 max-w-[52ch] text-body font-semibold text-[var(--hz-text)]">
-            Expected back {eta}.
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <p
+            className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 type-caption font-semibold text-cobalt"
+            style={{ animationDelay: "200ms" }}
+          >
+            <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
+            {planned ? "Scheduled maintenance" : "Temporarily offline"}
           </p>
-        )}
 
-        <div className="mt-12 border-t border-[var(--hz-line)] pt-8">
-          <p className="hz-eyebrow text-[var(--hz-text-subtle)]">If you need us now</p>
-          <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-3">
-            <a
-              href="tel:+16148446925"
-              className="hz-focus text-body font-semibold text-[var(--hz-cobalt)] transition-opacity hover:opacity-75"
+          <h1
+            className="rise mt-4 type-headline-lg font-semibold text-ink"
+            style={{ animationDelay: "280ms" }}
+          >
+            {planned ? "We’re making updates." : "We’ll be right back."}
+          </h1>
+
+          <p
+            className="rise mt-4 max-w-[44ch] type-body-lg text-ink-muted"
+            style={{ animationDelay: "360ms" }}
+          >
+            {message || "Nothing you have sent us has been lost."}
+          </p>
+
+          {eta && (
+            <p
+              className="rise mt-5 inline-flex items-center gap-2 rounded-full bg-cobalt-tint px-4 py-2 type-label font-semibold text-ink"
+              style={{ animationDelay: "400ms" }}
             >
-              +1 (614) 844-6925
+              <IconClock size={16} className="text-cobalt" />
+              Expected back {eta}
+            </p>
+          )}
+
+          <div
+            className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+            style={{ animationDelay: "440ms" }}
+          >
+            <a href={CONTACT_PHONE.href} className={buttonClass("outline")}>
+              <IconPhone size={16} />
+              {CONTACT_PHONE.label}
             </a>
             <a
-              href="mailto:hr@oceanbluecorp.com"
-              className="hz-focus text-body font-semibold text-[var(--hz-cobalt)] transition-opacity hover:opacity-75"
+              href={`mailto:${CONTACT_EMAIL}`}
+              className={buttonClass("outline")}
             >
-              hr@oceanbluecorp.com
+              <IconMail size={16} />
+              {CONTACT_EMAIL}
             </a>
-            {/* /status is served by the same app, so it is only useful while
-                this page is the thing that is up. It is listed because that is
-                the common case: the switch is on, the app is fine. */}
-            <Link
-              href="/status"
-              className="hz-focus text-body text-[var(--hz-text-mute)] underline decoration-[var(--hz-line-2)] underline-offset-4 transition-colors hover:text-[var(--hz-text)]"
-            >
+            {/* /status is served by the same app, so it only helps while this
+                page is the thing that is up, which is the common case. */}
+            <Link href="/status" className={buttonClass("ghost")}>
+              <IconOverview size={16} />
               System status
             </Link>
           </div>
@@ -100,22 +112,18 @@ export default function Maintenance({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.name}
-                className="hz-focus grid h-10 w-10 place-items-center rounded-full text-[var(--hz-text)] ring-1 ring-[var(--hz-line-2)] transition-all duration-300 hover:bg-[var(--hz-text)] hover:text-white hover:ring-[var(--hz-text)]"
+                className="flex size-10 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-ink hover:text-ink"
               >
-                <s.icon className="h-[17px] w-[17px]" strokeWidth={1.5} />
+                <s.icon className="size-4" strokeWidth={1.5} />
               </a>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="border-t border-[var(--hz-line)]">
-        <div className="mx-auto w-full max-w-2xl px-6 py-6 sm:px-10">
-          <p className="text-fine text-[var(--hz-text-subtle)]">
-            © {new Date().getFullYear()} Ocean Blue Corporation
-          </p>
-        </div>
-      </div>
+      <p className="border-t border-line px-[var(--space-layout-gutter)] py-5 text-center type-caption text-ink-subtle">
+        © {new Date().getFullYear()} Ocean Blue Corporation
+      </p>
     </main>
   );
 }

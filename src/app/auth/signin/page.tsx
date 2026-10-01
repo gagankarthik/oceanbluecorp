@@ -305,7 +305,16 @@ export default function SignInPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not reset the password.");
 
-      const result = await signInWithCredentials(email, newPassword);
+      let result;
+      try {
+        result = await signInWithCredentials(email, newPassword);
+      } catch {
+        setStep("signin");
+        setPassword("");
+        setResetCode("");
+        setError("Your password was changed. Sign in with the new one.");
+        return;
+      }
       if (result.status === "NEW_PASSWORD_REQUIRED") {
         // Should not happen after a completed reset, but never strand them.
         setSession(result.session);

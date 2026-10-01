@@ -41,11 +41,10 @@ export async function getSiteContent(pageId: string): Promise<Record<string, str
  * revalidatePath("/", "layout") on save, so flipping it takes effect at once
  * rather than on the next revalidation.
  *
- * Deliberately NOT enforced in middleware. Middleware would need a database
- * read on every single request, and if that read failed the whole site would
- * go dark. Read here it fails safe: a lookup error returns `false` and the
- * site stays up, which is the correct way round for a switch whose job is
- * taking the site down.
+ * The screen is swapped in by the root layout from this read. The proxy
+ * (src/proxy.ts) reads the same flag, cached and failing open, only to answer
+ * 503 with Retry-After, so search engines treat the downtime as temporary. A
+ * lookup error here returns `false` and the site stays up.
  */
 export async function getMaintenance(): Promise<{
   enabled: boolean;

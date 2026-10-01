@@ -87,7 +87,16 @@ export function AuthShell({
         </div>
 
         <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-10 lg:py-8">
-          <div className="rise w-full max-w-[420px]">{children}</div>
+          <div className="rise w-full max-w-[420px]">
+            {children}
+            <p className="mt-8 type-caption text-ink-subtle lg:hidden">
+              Need an account, or a new invitation? Email{" "}
+              <a href="mailto:hr@oceanbluecorp.com" className="font-semibold text-cobalt underline-offset-4 hover:underline">
+                hr@oceanbluecorp.com
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </div>
     </div>

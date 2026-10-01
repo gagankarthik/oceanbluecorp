@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import PageHero from "@/components/landing/PageHero";
 import { SOCIAL_LINKS } from "@/components/layout/social";
@@ -32,6 +32,13 @@ const DIRECT = [
   { icon: IconPin, k: "Head office", v: "Powell, Ohio", href: "#locations" },
 ];
 
+/** For the visitor who is not here to start a project. */
+const ROUTES = [
+  { k: "Applying for a job", v: "Browse open roles", href: "/careers/search" },
+  { k: "Your personal data", v: "Request access or deletion", href: "/data-deletion" },
+  { k: "Something wrong with the site", v: "Check system status", href: "/status" },
+];
+
 export default function ContactPage({ content = {} }: { content?: Record<string, string> }) {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "", company: "", jobTitle: "", inquiryType: "", message: "",
@@ -39,6 +46,11 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The submit button sits below a long form; bring the error to the reader.
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [error]);
   const honeypotRef = useRef<HTMLInputElement>(null);
   const renderedAt = useRef<number>(Date.now());
 
@@ -56,8 +68,8 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
           _elapsedMs: Date.now() - renderedAt.current,
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to submit form");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Your message could not be sent. Try again.");
       setSubmitted(true);
       setFormData({ firstName: "", lastName: "", email: "", phone: "", company: "", jobTitle: "", inquiryType: "", message: "" });
     } catch (err) {
@@ -107,7 +119,11 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                 <p className="mt-2 text-[16px] text-ink-muted">Fill out the form and we&apos;ll get back to you as soon as possible.</p>
 
                 {error && (
-                  <div role="alert" className="mt-6 rounded-xl border border-danger/25 bg-danger-container p-4">
+                  <div
+                    role="alert"
+                    ref={errorRef}
+                    className="mt-6 rounded-xl border border-danger/25 bg-danger-container p-4"
+                  >
                     <p className="text-[14.5px] text-danger">{error}</p>
                   </div>
                 )}
@@ -209,6 +225,18 @@ export default function ContactPage({ content = {} }: { content?: Record<string,
                       <span className="block text-[16px] font-semibold text-ink">{row.v}</span>
                     )}
                   </span>
+                </li>
+              ))}
+            </ul>
+
+            <h3 className="mt-9 type-title font-semibold text-ink">Here for something else?</h3>
+            <ul className="mt-3 space-y-2.5">
+              {ROUTES.map((r) => (
+                <li key={r.href} className="flex flex-wrap items-baseline gap-x-2 type-body-sm">
+                  <span className="text-ink-subtle">{r.k}:</span>
+                  <Link href={r.href} className="font-semibold text-ink underline-offset-4 hover:text-cobalt hover:underline">
+                    {r.v}
+                  </Link>
                 </li>
               ))}
             </ul>

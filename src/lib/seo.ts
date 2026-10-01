@@ -64,8 +64,10 @@ export function pageMetadata({
 }
 
 /**
- * Serialise JSON-LD for an inline <script>. `<` is escaped so no string can
- * close the tag, and U+2028/U+2029 because they are illegal in JS literals.
+ * Serialise a value for an inline <script> (JSON-LD, or a string literal).
+ * `<` is escaped so authored text cannot close the tag, and U+2028/U+2029
+ * because they are illegal in JS literals. Every inline script on a public
+ * page goes through this, never a bare JSON.stringify.
  */
 export function jsonLdString(data: unknown): string {
   return JSON.stringify(data)

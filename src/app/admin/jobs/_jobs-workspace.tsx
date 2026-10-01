@@ -66,9 +66,9 @@ function PostingId({ id }: { id: string }) {
   );
 }
 
-const CATEGORY_COPY: Record<JobCategory, { title: string; noun: string; newHref: string }> = {
-  state: { title: "State roles", noun: "state role", newHref: "/admin/jobs/new" },
-  open:  { title: "Open roles",  noun: "open role",  newHref: "/admin/jobs/new?category=open" },
+const CATEGORY_COPY: Record<JobCategory, { title: string; noun: string; post: string; newHref: string; query: string }> = {
+  state: { title: "State roles", noun: "state role", post: "Post a state role", newHref: "/admin/jobs/new", query: "" },
+  open:  { title: "Open roles",  noun: "open role",  post: "Post an open role", newHref: "/admin/jobs/new?category=open", query: "?category=open" },
 };
 
 /** One list per category; the careers board shows both together. */
@@ -265,8 +265,8 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
       job={job}
       canEdit={canEdit}
       duplicating={duplicating === job.id}
-      onView={() => router.push(`/admin/jobs/${job.id}`)}
-      onEdit={() => router.push(`/admin/jobs/${job.id}/edit`)}
+      onView={() => router.push(`/admin/jobs/${job.id}${copy.query}`)}
+      onEdit={() => router.push(`/admin/jobs/${job.id}/edit${copy.query}`)}
       onDuplicate={() => handleDuplicate(job)}
       onDelete={() => setShowDeleteConfirm(job.id)}
     />
@@ -412,7 +412,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   );
 
   const emptyAction = jobs.length === 0
-    ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}><Plus />Post a {copy.noun}</WorkspaceButton> : undefined)
+    ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
     : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton> : undefined);
 
   return (
@@ -428,7 +428,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
             </WorkspaceButton>
             {canEdit && (
               <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}>
-                <Plus />Post a {copy.noun}
+                <Plus />{copy.post}
               </WorkspaceButton>
             )}
           </>
@@ -508,7 +508,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <button
                           type="button"
-                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                          onClick={() => router.push(`/admin/jobs/${job.id}${copy.query}`)}
                           className="min-w-0 max-w-full truncate text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                         >
                           {job.title}
@@ -582,7 +582,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
             columns={columns}
             rows={filteredJobs}
             rowKey={(j) => j.id}
-            onRowClick={(j) => router.push(`/admin/jobs/${j.id}`)}
+            onRowClick={(j) => router.push(`/admin/jobs/${j.id}${copy.query}`)}
             initialSort={{ key: "created", dir: "desc" }}
             pageSize={rows}
             onPageSizeChange={setRows}

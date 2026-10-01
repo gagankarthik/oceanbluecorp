@@ -6,13 +6,13 @@ import {
   ChevronRight, Minus, Check, PlayCircle, ListTree,
 } from "lucide-react";
 import {
-  IconOverview, IconJob, IconBookmark, IconBuilding, IconPhone, IconUserRole,
+  IconOverview, IconJob, IconBench, IconClient, IconContact, IconStaff,
   IconBell, IconTerminal, IconShield, IconCloud, IconKey, IconInfo,
-  IconSuccess, IconAlert, IconCopy, IconLayers, IconSettings,
+  IconSuccess, IconAlert, IconCopy, IconApplication, IconSettings, IconBlog,
 } from "@/components/admin/icons";
 import { cn } from "@/lib/utils";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { UserRole } from "@/lib/auth";
+import { UserRole, routeAccess } from "@/lib/auth";
 import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -36,23 +36,23 @@ const CATEGORIES = [
     label: "Core features",
     items: [
       { id: "jobs",         label: "Job postings", icon: IconJob },
-      { id: "applications", label: "Applications", icon: IconLayers },
-      { id: "talent-bench", label: "Talent bench", icon: IconBookmark },
+      { id: "applications", label: "Applications", icon: IconApplication },
+      { id: "talent-bench", label: "Talent bench", icon: IconBench },
     ],
   },
   {
     id: "relationships",
     label: "Relationships",
     items: [
-      { id: "clients-vendors", label: "Clients & vendors", icon: IconBuilding },
-      { id: "contacts",        label: "Contacts",          icon: IconPhone },
+      { id: "clients-vendors", label: "Clients & vendors", icon: IconClient },
+      { id: "contacts",        label: "Contacts",          icon: IconContact },
     ],
   },
   {
     id: "administration",
     label: "Administration",
     items: [
-      { id: "users-roles",      label: "Users & roles",      icon: IconUserRole },
+      { id: "users-roles",      label: "Users & roles",      icon: IconStaff },
       { id: "search-notifs",    label: "Search & alerts",    icon: IconBell },
       { id: "content-settings", label: "Content & settings", icon: IconSettings },
     ],
@@ -69,6 +69,53 @@ const CATEGORIES = [
 ];
 
 const ALL_ITEMS = CATEGORIES.flatMap((c) => c.items);
+
+// ── Route table, read from the access map so it cannot drift from the guards ──
+
+const ROUTE_NAMES: Record<string, string> = {
+  "/admin": "Dashboard",
+  "/admin/jobs": "State roles",
+  "/admin/open-roles": "Open roles",
+  "/admin/applications": "Applications",
+  "/admin/candidates": "Candidate record",
+  "/admin/bench": "Talent bench",
+  "/admin/lead-sourcing": "Lead sourcing",
+  "/admin/resumes": "Resume bank",
+  "/admin/contacts": "Contacts",
+  "/admin/clients": "Clients",
+  "/admin/vendors": "Vendors",
+  "/admin/content": "Site content",
+  "/admin/blog": "Blog",
+  "/admin/case-studies": "Case studies",
+  "/admin/customer-stories": "Customer stories",
+  "/admin/news": "News",
+  "/admin/users": "Users",
+  "/admin/roles": "Roles",
+  "/admin/api-keys": "API keys",
+  "/admin/settings": "Settings (System tab: admin)",
+  "/admin/docs": "Developer docs",
+  "/admin/help": "Help",
+  "/admin/notifications": "Notifications",
+};
+
+const ROLE_SHORT: Record<UserRole, string> = {
+  [UserRole.ADMIN]: "Admin",
+  [UserRole.HR]: "HR",
+  [UserRole.RECRUITER]: "Recruiter",
+  [UserRole.SALES]: "Sales",
+  [UserRole.MEDIA]: "Media",
+};
+const ROLE_ORDER = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SALES, UserRole.MEDIA];
+
+function accessBadge(roles: UserRole[]): { label: string; tone: Tone } {
+  if (roles.length === ROLE_ORDER.length) return { label: "All roles", tone: "blue" };
+  if (roles.length === 1) return { label: `${ROLE_SHORT[roles[0]]} only`, tone: "rose" };
+  return { label: ROLE_ORDER.filter((r) => roles.includes(r)).map((r) => ROLE_SHORT[r]).join(" · "), tone: "slate" };
+}
+
+const ROUTE_ROWS = Object.entries(routeAccess)
+  .filter(([route]) => route in ROUTE_NAMES)
+  .map(([route, roles]) => ({ route, name: ROUTE_NAMES[route], ...accessBadge(roles) }));
 
 // ── Primitives ─────────────────────────────────────────────────────────────────
 
@@ -380,22 +427,22 @@ export default function AdminDocsPage() {
               id="overview"
               icon={IconOverview}
               title="Overview"
-              description="Ocean Blue Admin is the internal operations platform for managing job postings, applicant pipelines, clients, vendors, contacts, and team members."
+              description="The staff console: job postings, the applicant pipeline, clients, vendors, contact enquiries, the four publishing sections, and team access."
             />
 
             <AdminCard className="mt-4 overflow-hidden">
             <div className="grid grid-cols-1 gap-px bg-[var(--adm-line-soft)] sm:grid-cols-2 xl:grid-cols-3">
               {[
-                { icon: IconJob, label: "Jobs", desc: "Post and manage open roles" },
-                { icon: IconLayers,    label: "Applications", desc: "Track candidate pipeline" },
-                { icon: IconBookmark, label: "Talent bench", desc: "Save top candidates" },
-                { icon: IconBuilding, label: "Clients",      desc: "Manage client accounts" },
-                { icon: IconPhone,     label: "Contacts",     desc: "Handle site inquiries" },
-                { icon: IconUserRole,   label: "Users",        desc: "Manage team access" },
+                { icon: IconJob,         label: "Jobs",         desc: "State roles and open roles" },
+                { icon: IconApplication, label: "Applications", desc: "Every candidate, by pipeline stage" },
+                { icon: IconBench,       label: "Talent bench", desc: "Candidates ready to place" },
+                { icon: IconClient,      label: "Clients",      desc: "Client and vendor accounts" },
+                { icon: IconContact,     label: "Contacts",     desc: "Enquiries from the website" },
+                { icon: IconBlog,        label: "Publishing",   desc: "Blog, case studies, stories, news" },
               ].map((f) => (
                 <div key={f.label} className="bg-[var(--adm-surface)] p-4">
                   <div className="mb-1 flex items-center gap-2">
-                    <f.icon className="h-4 w-4 text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
+                    <f.icon className="h-[18px] w-[18px] text-[var(--adm-ink-mute)]" />
                     <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{f.label}</span>
                   </div>
                   <p className="text-[13px] text-[var(--adm-ink-mute)]">{f.desc}</p>
@@ -405,21 +452,12 @@ export default function AdminDocsPage() {
             </AdminCard>
 
             <SubSection title="Admin panel URL structure">
+              <p className="text-[13px] text-[var(--adm-ink-mute)]">
+                Read from <code className={CODE}>routeAccess</code> in <code className={CODE}>src/lib/auth/config.ts</code>, the same map the layout enforces.
+              </p>
               <DataTable
                 headers={["Route", "Page", "Access"]}
-                rows={[
-                  ["/admin", "Dashboard", <Badge key="a" label="All staff roles" tone="blue" />],
-                  ["/admin/jobs", "Job Postings", <Badge key="b" label="Admin · HR · Recruiter" tone="blue" />],
-                  ["/admin/applications", "Applications", <Badge key="c" label="Admin · HR · Recruiter" tone="blue" />],
-                  ["/admin/bench", "Talent Bench", <Badge key="d" label="Admin · HR · Recruiter" tone="blue" />],
-                  ["/admin/clients", "Clients", <Badge key="e" label="Admin · HR" tone="slate" />],
-                  ["/admin/vendors", "Vendors", <Badge key="f" label="Admin · HR" tone="slate" />],
-                  ["/admin/contacts", "Contacts", <Badge key="g" label="Admin · HR" tone="slate" />],
-                  ["/admin/users", "User Management", <Badge key="h" label="Admin only" tone="rose" />],
-                  ["/admin/content", "CMS Content", <Badge key="i" label="Admin only" tone="rose" />],
-                  ["/admin/settings", "Settings", <Badge key="j" label="All roles · System tab: Admin" tone="blue" />],
-                  ["/admin/docs", "Developer Docs", <Badge key="k" label="Admin only" tone="rose" />],
-                ]}
+                rows={ROUTE_ROWS.map((r) => [r.route, r.name, <Badge key={r.route} label={r.label} tone={r.tone} />])}
               />
             </SubSection>
           </section>
@@ -435,10 +473,10 @@ export default function AdminDocsPage() {
             <SubSection title="Authentication">
               <div className="space-y-3">
                 <p className="text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
-                  The admin panel is <strong>staff-only and invite-based</strong>, there is no public sign-up. Sign in with your email and password directly on <code className={CODE}>/auth/signin</code>; the form posts to <code className={CODE}>/api/auth/signin</code>, which authenticates against Cognito and returns your tokens. There is no Cognito Hosted UI redirect.
+                  The console is <strong>staff-only and invite-based</strong>; there is no public sign-up. A forgotten password is reset from the same page with an emailed code. Sign in with your email and password directly on <code className={CODE}>/auth/signin</code>; the form posts to <code className={CODE}>/api/auth/signin</code>, which authenticates against Cognito and returns your tokens. There is no Cognito Hosted UI redirect.
                 </p>
                 <InfoCard variant="info">
-                  Sessions are stored in browser localStorage. Closing the browser tab does not sign you out, use the <strong>Sign Out</strong> button in the sidebar or header.
+                  Sessions are stored in browser localStorage. Closing the browser tab does not sign you out, use <strong>Sign out</strong> in the account menu, top right.
                 </InfoCard>
                 <InfoCard variant="tip">
                   On your <strong>first sign-in</strong> after an invite, Cognito raises a one-time password change. The sign-in page switches to a &ldquo;Complete your account&rdquo; step where you set your full name, phone, and a permanent password before any tokens are issued.
@@ -448,32 +486,17 @@ export default function AdminDocsPage() {
 
             <SubSection title="User roles">
               <DataTable
-                headers={["Role", "Level", "Permissions"]}
+                headers={["Role", "What it is for"]}
                 rows={[
-                  [
-                    <Badge key="1" label="Admin" tone="slate" />,
-                    "4",
-                    "Full platform access, all features, user management, content, settings",
-                  ],
-                  [
-                    <Badge key="2" label="HR" tone="blue" />,
-                    "3",
-                    "Jobs, applications, candidates, clients, vendors, contacts",
-                  ],
-                  [
-                    <Badge key="3" label="Recruiter" tone="emerald" />,
-                    "2",
-                    "Jobs, applications, candidates, talent bench, no clients/contacts",
-                  ],
-                  [
-                    <Badge key="4" label="Sales" tone="amber" />,
-                    "2",
-                    "Same as Recruiter, clients and vendors read-only",
-                  ],
+                  [<Badge key="1" label="Admin" tone="slate" />, "Everything, including users, roles, API keys, site content and settings"],
+                  [<Badge key="2" label="HR" tone="blue" />, "Recruiting, clients, vendors, contacts, publishing, and inviting staff"],
+                  [<Badge key="3" label="Recruiter" tone="emerald" />, "Applications, candidates, bench and resumes. Reads job postings without editing them"],
+                  [<Badge key="4" label="Sales" tone="amber" />, "Same recruiting access as Recruiter, and can create and edit job postings"],
+                  [<Badge key="5" label="Media" tone="violet" />, "Publishing sections and the public copy of job postings. No candidates, rates, clients or vendors"],
                 ]}
               />
               <InfoCard variant="info">
-                These four staff groups are the only roles. There is no public &ldquo;user&rdquo; account, job applicants submit anonymously through <code className={CODE}>/careers/search</code> with no login required.
+                These five staff groups are the only roles, and access is granted by naming a role, not by rank. There is no public &ldquo;user&rdquo; account, job applicants submit anonymously through <code className={CODE}>/careers/search</code> with no login required.
               </InfoCard>
             </SubSection>
 
@@ -481,7 +504,7 @@ export default function AdminDocsPage() {
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {[
                   { keys: "⌘ K", desc: "Open global command palette / search" },
-                  { keys: "⌘ /", desc: "Focus search bar on current page" },
+                  { keys: "/", desc: "Focus the search field on a list page" },
                   { keys: "Esc", desc: "Close modals, drawers, dropdowns" },
                   { keys: "Enter", desc: "Confirm selection in dropdowns" },
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
@@ -506,7 +529,7 @@ export default function AdminDocsPage() {
 
             <SubSection title="Creating a job">
               <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
-                <p>Navigate to <strong>/admin/jobs</strong> and click <strong>New Job</strong>. The form is organized into sections:</p>
+                <p>Postings live in two lists: <strong>State roles</strong> (<strong>/admin/jobs</strong>) and <strong>Open roles</strong> (<strong>/admin/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
                 <ol className="list-decimal list-outside space-y-1 ml-5">
                   <li><strong>Basic Info</strong>, Title, department, type (full-time / contract / etc.), location</li>
                   <li><strong>Job Details</strong>, Description, requirements, responsibilities</li>
@@ -574,7 +597,7 @@ export default function AdminDocsPage() {
           <section>
             <SectionHeader
               id="applications"
-              icon={IconLayers}
+              icon={IconApplication}
               title="Applications & pipeline"
               description="Track every candidate through the hiring pipeline from initial review to hire or rejection."
             />
@@ -650,7 +673,7 @@ export default function AdminDocsPage() {
           <section>
             <SectionHeader
               id="talent-bench"
-              icon={IconBookmark}
+              icon={IconBench}
               title="Talent bench"
               description="A curated pool of pre-qualified candidates available for future roles."
             />
@@ -680,7 +703,7 @@ export default function AdminDocsPage() {
           <section>
             <SectionHeader
               id="clients-vendors"
-              icon={IconBuilding}
+              icon={IconClient}
               title="Clients & vendors"
               description="Manage the companies you place candidates with (clients) and staffing partners (vendors)."
             />
@@ -715,7 +738,7 @@ export default function AdminDocsPage() {
           <section>
             <SectionHeader
               id="contacts"
-              icon={IconPhone}
+              icon={IconContact}
               title="Contacts"
               description="Manage inquiries submitted through the website contact form at /contact."
             />
@@ -754,9 +777,9 @@ export default function AdminDocsPage() {
           <section>
             <SectionHeader
               id="users-roles"
-              icon={IconUserRole}
+              icon={IconStaff}
               title="Users & roles"
-              description="Manage team member access through AWS Cognito groups. Admin-only feature."
+              description="Team access through AWS Cognito groups. Admin and HR; only an admin changes Admin or HR roles."
             />
 
             <SubSection title="User management">
@@ -764,7 +787,7 @@ export default function AdminDocsPage() {
                 <p>Navigate to <strong>/admin/users</strong> to see all Cognito users. You can:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>View all registered users with their email, status, and role</li>
-                  <li>Assign roles by adding users to Cognito groups (admin, hr, recruiter, sales)</li>
+                  <li>Assign a role, which is a Cognito group (admin, hr, recruiter, sales, media)</li>
                   <li>Enable or disable user accounts</li>
                   <li>Delete users from the pool (irreversible)</li>
                 </ul>
@@ -773,20 +796,19 @@ export default function AdminDocsPage() {
 
             <SubSection title="Role permission matrix">
               <DataTable
-                headers={["Feature", "Admin", "HR", "Recruiter", "Sales"]}
+headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
                 rows={[
-                  ["Dashboard", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Jobs (R/W)", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Applications (R/W)", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Talent Bench", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Clients / Vendors", <Yes />, <Yes />, <No />, <No />],
-                  ["Contacts", <Yes />, <Yes />, <No />, <No />],
-                  ["Resume Bank", <Yes />, <Yes />, <Yes />, <No />],
-                  ["Settings. Profile / Security / Notifications", <Yes />, <Yes />, <Yes />, <Yes />],
-                  ["Settings. System tab", <Yes />, <No />, <No />, <No />],
-                  ["User Management", <Yes />, <No />, <No />, <No />],
-                  ["CMS Content", <Yes />, <No />, <No />, <No />],
-                  ["Developer / API Docs", <Yes />, <No />, <No />, <No />],
+                  ["Dashboard", <Yes />, <Yes />, <Yes />, <Yes />, <No />],
+                  ["Job postings, read", <Yes />, <Yes />, <Yes />, <Yes />, <Yes />],
+                  ["Job postings, create and edit", <Yes />, <Yes />, <No />, <Yes />, <Yes />],
+                  ["Job commercials (rates, client, vendor, team)", <Yes />, <Yes />, <Yes />, <Yes />, <No />],
+                  ["Applications, candidates, bench, resumes", <Yes />, <Yes />, <Yes />, <Yes />, <No />],
+                  ["Clients, vendors, contacts", <Yes />, <Yes />, <No />, <No />, <No />],
+                  ["Publishing (blog, case studies, stories, news)", <Yes />, <Yes />, <No />, <No />, <Yes />],
+                  ["Users (invite, deactivate)", <Yes />, <Yes />, <No />, <No />, <No />],
+                  ["Roles, API keys, site content, developer docs", <Yes />, <No />, <No />, <No />, <No />],
+                  ["Settings: profile and security", <Yes />, <Yes />, <Yes />, <Yes />, <Yes />],
+                  ["Settings: System tab (maintenance mode)", <Yes />, <No />, <No />, <No />, <No />],
                 ]}
               />
             </SubSection>
@@ -794,7 +816,7 @@ export default function AdminDocsPage() {
             <SubSection title="Inviting a team member">
               <ol className="text-[14px] text-[var(--adm-ink-mute)] space-y-1.5 list-decimal list-outside ml-5 leading-relaxed">
                 <li>Go to <strong>/admin/users</strong> → click <strong>Invite User</strong></li>
-                <li>Enter the email address and select the role: <code className={CODE}>admin</code>, <code className={CODE}>hr</code>, <code className={CODE}>recruiter</code>, or <code className={CODE}>sales</code></li>
+                <li>Enter the email address and select the role: <code className={CODE}>admin</code>, <code className={CODE}>hr</code>, <code className={CODE}>recruiter</code>, <code className={CODE}>sales</code>, or <code className={CODE}>media</code></li>
                 <li>Cognito emails the invite with a temporary password</li>
                 <li>On first sign-in they&apos;re prompted to set their full name, phone number, and a permanent password</li>
               </ol>
@@ -828,8 +850,8 @@ export default function AdminDocsPage() {
               <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>The bell icon in the admin header shows unread notification count. Notifications are created automatically for:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
-                  <li>New application received for a job you manage</li>
-                  <li>Application status changed</li>
+                  <li>New application received</li>
+                  <li>New contact form submission</li>
                   <li>New job posting created</li>
                 </ul>
                 <InfoCard variant="info">
@@ -842,10 +864,10 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Trigger", "Recipients"]}
                 rows={[
-                  ["New portal application submitted", "Candidate (confirmation) + Recruitment Manager + Assigned Team"],
-                  ["Application status updated", "Candidate (if email enabled in settings)"],
+                  ["New portal application submitted", "Candidate (confirmation) + recruitment manager + assigned team"],
                   ["New job posted", "Assigned team members"],
-                  ["Interview scheduled", "Candidate + interviewer"],
+                  ["Contact form submitted", "The team inbox"],
+                  ["Staff invited", "The invitee, from Cognito, with a temporary password"],
                 ]}
               />
             </SubSection>
@@ -873,6 +895,15 @@ export default function AdminDocsPage() {
                 </InfoCard>
               </div>
             </SubSection>
+
+            <SubSection title="Maintenance mode">
+              <div className="space-y-2 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                <p><strong>Settings → System</strong> replaces the public site with the maintenance screen. Set <em>Expected back</em> for planned work; left empty, the screen reads as an unexpected outage. <strong>Preview what visitors will see</strong> opens <code className={CODE}>/maintenance</code>.</p>
+                <InfoCard variant="info">
+                  While it is on, public pages answer <strong>503</strong> with <code>Retry-After</code>, so search engines keep the indexed pages. The console, sign-in, the API, <code>/status</code>, <code>robots.txt</code> and <code>sitemap.xml</code> stay up. The status code follows the switch within 30 seconds.
+                </InfoCard>
+              </div>
+            </SubSection>
           </section>
 
           <section>
@@ -885,7 +916,7 @@ export default function AdminDocsPage() {
 
             <div className="mt-4">
               <InfoCard variant="info">
-                All API routes are server-side only. Admin routes (<code>/api/admin/*</code>, <code>/api/users/*</code>) require an <code>Authorization</code> header with a valid Cognito Bearer token.
+                Every handler guards itself as its first statement. The caller is identified by the httpOnly <code>ob_session</code> cookie set at sign-in (an <code>Authorization: Bearer</code> token is also accepted), and the JWT is verified on every request. Public by design, and rate limited: sign-in, password reset, the application and resume upload forms, and the contact form.
               </InfoCard>
             </div>
 
@@ -900,6 +931,7 @@ export default function AdminDocsPage() {
                   [<HttpBadge key="5" method="DELETE" />, "/api/jobs/[id]", "Delete a job (irreversible)"],
                   [<HttpBadge key="6" method="POST" />, "/api/jobs/[id]/duplicate", "Clone a job with new Posting ID"],
                   [<HttpBadge key="7" method="POST" />, "/api/jobs/notify-update", "Send team notification about job update"],
+                  [<HttpBadge key="8" method="POST" />, "/api/jobs/[id]/match-candidates", "Rank bench candidates against the posting"],
                 ]}
               />
             </SubSection>
@@ -913,6 +945,8 @@ export default function AdminDocsPage() {
                   [<HttpBadge key="3" method="GET" />, "/api/applications/[id]", "Get single application"],
                   [<HttpBadge key="4" method="PUT" />, "/api/applications/[id]", "Update status, notes, rating"],
                   [<HttpBadge key="5" method="DELETE" />, "/api/applications/[id]", "Delete application"],
+                  [<HttpBadge key="6" method="POST" />, "/api/applications/[id]/analyze", "Parse the attached resume"],
+                  [<HttpBadge key="7" method="POST" />, "/api/applications/[id]/job-fit", "Score the candidate against the job"],
                 ]}
               />
             </SubSection>
@@ -938,9 +972,12 @@ export default function AdminDocsPage() {
                   [<HttpBadge key="1" method="GET" />, "/api/admin/stats", "Dashboard statistics (requires auth)"],
                   [<HttpBadge key="2" method="GET" />, "/api/admin/search?q=", "Global search across all entities"],
                   [<HttpBadge key="3" method="GET" />, "/api/users", "List all Cognito users"],
-                  [<HttpBadge key="4" method="PUT" />, "/api/users/[id]", "Update user role / enable / disable"],
+                  [<HttpBadge key="4" method="PATCH" />, "/api/users/[id]", "Update user role / enable / disable"],
                   [<HttpBadge key="5" method="DELETE" />, "/api/users/[id]", "Remove user from Cognito pool"],
-                  [<HttpBadge key="6" method="GET" />, "/api/users/me", "Get current user's profile"],
+                  [<HttpBadge key="6" method="PATCH" />, "/api/users/me", "Update your own profile"],
+                  [<HttpBadge key="7" method="POST" />, "/api/users/me/password", "Change your own password"],
+                  [<HttpBadge key="8" method="POST" />, "/api/users/invite", "Invite a teammate (Admin, HR)"],
+                  [<HttpBadge key="9" method="PUT" />, "/api/content", "Save a site content block, including maintenance mode (Admin)"],
                 ]}
               />
             </SubSection>
@@ -951,12 +988,43 @@ export default function AdminDocsPage() {
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/clients", "List all clients"],
                   [<HttpBadge key="2" method="POST" />, "/api/clients", "Create client"],
-                  [<HttpBadge key="3" method="PUT" />, "/api/clients/[id]", "Update client"],
+                  [<HttpBadge key="3" method="PATCH" />, "/api/clients/[id]", "Update client"],
                   [<HttpBadge key="4" method="GET" />, "/api/vendors", "List all vendors"],
                   [<HttpBadge key="5" method="POST" />, "/api/vendors", "Create vendor"],
                   [<HttpBadge key="6" method="GET" />, "/api/contacts", "List contact submissions"],
                   [<HttpBadge key="7" method="POST" />, "/api/contacts", "Create contact (public, from website form)"],
-                  [<HttpBadge key="8" method="PUT" />, "/api/contacts/[id]", "Update contact status"],
+                  [<HttpBadge key="8" method="PATCH" />, "/api/contacts/[id]", "Update contact status"],
+                ]}
+              />
+            </SubSection>
+
+            <SubSection title="Publishing, pipeline and notifications">
+              <DataTable
+                headers={["Method", "Route", "Description"]}
+                rows={[
+                  [<HttpBadge key="1" method="GET" />, "/api/articles", "List articles by kind (Admin, HR, Media)"],
+                  [<HttpBadge key="2" method="POST" />, "/api/articles", "Create a blog post, case study, news item or customer story"],
+                  [<HttpBadge key="3" method="PATCH" />, "/api/articles/[id]", "Edit, publish, archive"],
+                  [<HttpBadge key="4" method="DELETE" />, "/api/articles/[id]", "Delete an article"],
+                  [<HttpBadge key="5" method="GET" />, "/api/pipeline", "Submissions, interviews and placements for a candidate or job"],
+                  [<HttpBadge key="6" method="POST" />, "/api/pipeline", "Create a pipeline record; the body is validated against a declared schema"],
+                  [<HttpBadge key="7" method="PUT" />, "/api/pipeline/[id]", "Update a pipeline record"],
+                  [<HttpBadge key="8" method="GET" />, "/api/notifications", "The caller's notifications and unread count"],
+                  [<HttpBadge key="9" method="PATCH" />, "/api/notifications", "Mark all as read"],
+                ]}
+              />
+            </SubSection>
+
+            <SubSection title="Sign-in and session">
+              <DataTable
+                headers={["Method", "Route", "Description"]}
+                rows={[
+                  [<HttpBadge key="1" method="POST" />, "/api/auth/signin", "Email and password against Cognito; returns tokens or the first-sign-in challenge"],
+                  [<HttpBadge key="2" method="POST" />, "/api/auth/complete-invite", "Answer the first-sign-in challenge: name, phone, permanent password"],
+                  [<HttpBadge key="3" method="POST" />, "/api/auth/forgot-password", "Email a reset code. Always answers the same, so it cannot confirm an address"],
+                  [<HttpBadge key="4" method="POST" />, "/api/auth/reset-password", "Set a new password with the emailed code"],
+                  [<HttpBadge key="5" method="POST" />, "/api/auth/session", "Set the httpOnly session cookie; DELETE clears it"],
+                  [<HttpBadge key="6" method="GET" />, "/api/status", "Health check, no data"],
                 ]}
               />
             </SubSection>
@@ -1014,7 +1082,7 @@ export default function AdminDocsPage() {
               <DataTable
                 headers={["Table", "PK", "GSIs", "Purpose"]}
                 rows={[
-                  ["oceanblue-jobs", "id", "–", "Job postings with all metadata"],
+                  ["oceanblue-jobs", "id", "status-index", "Job postings with all metadata"],
                   ["oceanblue-applications", "id", "userId-index, jobId-index", "Candidate applications (portal + HR-created)"],
                   ["oceanblue-candidates", "id", "email-index, userId-index", "Talent bench candidate profiles"],
                   ["oceanblue-resumes", "id", "userId-index", "Resume metadata (file key, size, type)"],
@@ -1023,7 +1091,8 @@ export default function AdminDocsPage() {
                   ["oceanblue-clients", "id", "–", "Client company records"],
                   ["oceanblue-vendors", "id", "–", "Vendor partner records"],
                   ["oceanblue-counters", "id", "–", "Auto-increment counters for Posting IDs"],
-                  ["oceanblue-content", "id", "–", "CMS content blocks with version history"],
+                  ["oceanblue-content", "id", "–", "Two record types, told apart by recordType: CMS blocks, and published articles"],
+                  ["oceanblue-pipeline", "id", "–", "Submissions, interviews and placements"],
                   ["oceanblue-api-keys", "id", "–", "Partner API keys for the Job Feed API (v1)"],
                 ]}
               />
@@ -1045,6 +1114,13 @@ NEXT_AWS_DYNAMODB_TABLE_APPLICATIONS=oceanblue-applications
 NEXT_AWS_DYNAMODB_TABLE_CANDIDATES=oceanblue-candidates
 NEXT_AWS_DYNAMODB_TABLE_RESUMES=oceanblue-resumes
 NEXT_AWS_DYNAMODB_TABLE_CONTACTS=oceanblue-contacts
+NEXT_AWS_DYNAMODB_TABLE_CLIENTS=oceanblue-clients
+NEXT_AWS_DYNAMODB_TABLE_VENDORS=oceanblue-vendors
+NEXT_AWS_DYNAMODB_TABLE_NOTIFICATIONS=oceanblue-notifications
+NEXT_AWS_DYNAMODB_TABLE_COUNTERS=oceanblue-counters
+NEXT_AWS_DYNAMODB_TABLE_CONTENT=oceanblue-content
+NEXT_AWS_DYNAMODB_TABLE_API_KEYS=oceanblue-api-keys
+NEXT_AWS_DYNAMODB_TABLE_PIPELINE=oceanblue-pipeline
 
 # Cognito
 NEXT_PUBLIC_COGNITO_USER_POOL_ID=us-east-2_XXXXXXXXX
@@ -1055,7 +1131,16 @@ NEXT_PUBLIC_APP_URL=https://oceanbluecorp.com
 # SES / SMTP
 NEXT_AWS_STMP=smtp_username
 NEXT_AWS_STMP_PASSWORD=smtp_password
-NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
+NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com
+
+# Resume parsing and matching engine (server-side)
+NEXT_PUBLIC_RESUME_PARSER_API_URL=https://...
+NEXT_EXTRACTION_SHARED_SECRET=shared_secret
+RESUME_MATCH_API_URL=https://...
+RESUME_MATCH_API_KEY=your_key`}</CodeBlock>
+              <InfoCard variant="warning">
+                A table variable must exist in three places or production silently falls back to the default name: <code>.env.local</code>, <code>src/lib/aws/config.ts</code>, and <code>amplify.yml</code>.
+              </InfoCard>
             </SubSection>
           </section>
 
@@ -1073,8 +1158,8 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
                   <li>User enters email + password on <code className={CODE}>/auth/signin</code> and submits to <code className={CODE}>/api/auth/signin</code></li>
                   <li>The route runs Cognito <code className={CODE}>USER_PASSWORD_AUTH</code> and returns ID + access + refresh tokens</li>
                   <li>First-time invited users get a <code className={CODE}>NEW_PASSWORD_REQUIRED</code> challenge, completed via <code className={CODE}>/api/auth/complete-invite</code> before tokens are issued</li>
-                  <li>Tokens stored in localStorage, user object decoded from JWT claims</li>
-                  <li>Cognito groups in JWT claims map to app roles (admin → ADMIN, hr → HR, etc.)</li>
+                  <li>The browser keeps the tokens in localStorage and the server sets an httpOnly <code className={CODE}>ob_session</code> cookie; every API request re-verifies the JWT</li>
+                  <li>Cognito groups in the JWT map to the five roles (admin, hr, recruiter, sales, media)</li>
                 </ol>
               </div>
             </SubSection>
@@ -1089,6 +1174,8 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
                   ["Permissions-Policy", "camera=(), mic=(), geolocation=()", "Disables sensitive browser APIs"],
                   ["Strict-Transport-Security", "max-age=63072000; preload", "Forces HTTPS for 2 years"],
                   ["Cache-Control (API)", "no-store, max-age=0", "Prevents API response caching"],
+                  ["Content-Security-Policy", "object-src, base-uri, frame-ancestors, form-action enforced", "Blocks plugin embeds, base hijacking, framing and off-site form posts; the full policy runs report-only"],
+                  ["X-Robots-Tag (/admin, /auth, /api)", "noindex", "Keeps the console and API out of search results"],
                 ]}
               />
             </SubSection>
@@ -1102,7 +1189,7 @@ NEXT_AWS_SES_FROM_EMAIL=hiring@oceanbluecorp.com`}</CodeBlock>
                   Resume files are stored in S3 with <strong>presigned URLs</strong> that expire after 1 hour. Direct public access to the S3 bucket is blocked.
                 </InfoCard>
                 <InfoCard variant="warning">
-                  Admin API routes require an Authorization header with a valid Cognito Bearer token. Requests without a token receive a <code>401 Unauthorized</code> response.
+                  A request with no valid session gets <code>401</code>; a valid session without the role gets <code>403</code>. Public forms are rate limited per connection: 5 applications a minute, 10 resume uploads per 5 minutes, 3 contact messages per 5 minutes. Staff are exempt.
                 </InfoCard>
               </div>
             </SubSection>

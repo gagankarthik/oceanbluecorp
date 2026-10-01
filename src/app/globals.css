@@ -2,36 +2,202 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   TOKENS. Three tiers, referenced in one direction only:
+
+     primitive   --p-{scale}-{step}                           a raw value
+     semantic    --{category}-{property}-{role}[-{state}]     a purpose
+     component   --{component}-{part}-{property}[-{state}]    one element
+
+   Components read semantic or component tokens, never a primitive,
+   so a retheme is a change to the semantic block and nothing else.
+   The console's semantic layer is --adm-* (light + dark, below); the
+   public site's is --color-*, surfaced as Tailwind roles in @theme.
+   Rules and the review process: DESIGN_SYSTEM.md §2.
+   ============================================================ */
+:root {
+  /* ── Tier 1: primitives ─────────────────────────────────── */
+
+  /* Blue-grey: the public site's neutral, navy at the dark end. */
+  --p-neutral-0:   #ffffff;
+  --p-slate-50:    #f3f6fb;
+  --p-slate-100:   #e7edf6;
+  --p-slate-200:   #e2e8f1;
+  --p-slate-300:   #cbd5e3;
+  --p-slate-600:   #56637b;
+  --p-slate-700:   #3a4a66;
+  --p-slate-900:   #0b1a33;
+
+  /* Cool grey: the console's neutral. */
+  --p-gray-50:     #f9fafb;
+  --p-gray-75:     #f5f7fa;
+  --p-gray-100:    #f2f4f7;
+  --p-gray-150:    #eef1f5;
+  --p-gray-200:    #e4e7ec;
+  --p-gray-300:    #d0d5dd;
+  --p-gray-500:    #667085;
+  --p-gray-600:    #475467;
+  --p-gray-900:    #101828;
+
+  /* Blue: cobalt is 700. */
+  --p-blue-50:     #eef2ff;
+  --p-blue-300:    #a9c1ff;
+  --p-blue-700:    #1d4ed8;
+  --p-blue-800:    #1740ad;
+  --p-blue-900:    #12348c;
+
+  /* Logo blues. Aqua is 2.7:1 on white: fills and marks, never text. */
+  --p-brand-blue:  #0975c1;
+  --p-brand-aqua:  #0cacCF;
+
+  --p-green-50:    #ecfdf5;
+  --p-green-600:   #059669;
+  --p-green-700:   #047857;
+  --p-amber-50:    #fffbeb;
+  --p-amber-600:   #d97706;
+  --p-amber-700:   #b45309;
+  --p-amber-800:   #92400e;
+  --p-red-50:      #fef2f2;
+  --p-red-700:     #b91c1c;
+  --p-rose-700:    #be123c;
+  --p-indigo-600:  #4f46e5;
+
+  /* Space: base 4. The step number is the multiple, matching Tailwind's
+     scale, so p-4 and --p-space-4 are the same 16px. */
+  --p-space-1:  0.25rem;   /*  4 */
+  --p-space-2:  0.5rem;    /*  8 */
+  --p-space-4:  1rem;      /* 16 */
+  --p-space-6:  1.5rem;    /* 24 */
+  --p-space-8:  2rem;      /* 32 */
+  --p-space-10: 2.5rem;    /* 40 */
+  --p-space-12: 3rem;      /* 48 */
+  --p-space-16: 4rem;      /* 64 */
+  --p-space-20: 5rem;      /* 80 */
+  --p-space-24: 6rem;      /* 96 */
+
+  /* ── Tier 2: semantic ───────────────────────────────────── */
+
+  /* Colour, public site (light only; the console themes --adm-*). */
+  --color-background-primary:   var(--p-neutral-0);
+  --color-background-secondary: var(--p-slate-50);
+  --color-background-tertiary:  var(--p-slate-100);
+  --color-background-inverse:   var(--p-slate-900);
+  --color-background-selected:  var(--p-blue-50);
+
+  --color-text-primary:         var(--p-slate-900);
+  --color-text-secondary:       var(--p-slate-700);
+  --color-text-tertiary:        var(--p-slate-600);
+  --color-text-inverse:         var(--p-neutral-0);
+  --color-text-interactive:     var(--p-blue-700);
+  --color-text-interactive-inverse: var(--p-blue-300);
+  --color-text-brand:           var(--p-brand-blue);
+
+  --color-border-default:       var(--p-slate-200);
+  --color-border-strong:        var(--p-slate-300);
+  --color-border-interactive:   var(--p-blue-700);
+  --color-border-focus:         var(--p-blue-700);
+  --color-border-focus-inverse: var(--p-neutral-0);
+
+  /* Interactive states: one ramp for every filled action. Disabled is an
+     opacity, not a colour, so it holds on any ground. */
+  --color-action-primary:          var(--p-blue-700);
+  --color-action-primary-hover:    var(--p-blue-800);
+  --color-action-primary-pressed:  var(--p-blue-900);
+  --color-action-on-primary:       var(--p-neutral-0);
+  --opacity-disabled:              0.4;
+
+  /* Feedback. Text shades pass AA on white and on their own container. */
+  --color-text-success:         var(--p-green-700);
+  --color-background-success:   var(--p-green-50);
+  --color-text-warning:         var(--p-amber-800);
+  --color-background-warning:   var(--p-amber-50);
+  --color-text-danger:          var(--p-red-700);
+  --color-background-danger:    var(--p-red-50);
+  --color-text-info:            var(--p-blue-700);
+  --color-background-info:      var(--p-blue-50);
+
+  /* Space between components: the page's rhythm. Steps up at sm and lg.
+     Inside a component, spacing is the Tailwind scale (the same base-4 steps). */
+  --space-layout-gutter:        var(--p-space-4);
+  --space-layout-section-gap:   var(--p-space-16);
+  --space-layout-stack-md:      var(--p-space-8);
+  --space-layout-stack-lg:      var(--p-space-10);
+
+  /* Content column. */
+  --grid-max:     77.5rem;   /* 1240 */
+
+  /* Control heights sit on the 4px unit so stacked controls keep the beat. */
+  --size-control-lg: 2.5rem;    /* 40 */
+  --size-control-xl: 3rem;      /* 48 */
+
+  /* ── Tier 3: component ──────────────────────────────────── */
+
+  --button-primary-background:         var(--color-action-primary);
+  --button-primary-background-hover:   var(--color-action-primary-hover);
+  --button-primary-background-pressed: var(--color-action-primary-pressed);
+  --button-primary-text:               var(--color-action-on-primary);
+  --button-height-md:                  var(--size-control-lg);
+  --button-height-lg:                  var(--size-control-xl);
+
+  --skeleton-background: var(--color-background-tertiary);
+  --skeleton-radius:     6px;
+  --skeleton-duration:   1.6s;
+  --content-enter-duration: 200ms;
+}
+
+/* The named breakpoints are sm 640, md 768, lg 1024, xl 1280 (@theme below).
+   Custom properties cannot sit in a media condition, so the literals here are
+   those same values. */
+@media (min-width: 40rem) {
+  :root {
+    --space-layout-gutter:      var(--p-space-6);
+    --space-layout-section-gap: var(--p-space-20);
+    --space-layout-stack-md:    var(--p-space-10);
+    --space-layout-stack-lg:    var(--p-space-12);
+  }
+}
+@media (min-width: 64rem) {
+  :root {
+    --space-layout-section-gap: var(--p-space-24);
+  }
+}
+
 @theme inline {
+  /* Breakpoints, named once and shared with design. */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+
   /* Public site palette, drawn from the Ocean Blue mark (see the SITE block at
      the end of this file). Navy for type and dark surfaces, cobalt for action,
      the logo's blue and aqua for accents, and a cool blue-grey for grounds.
      Measured: navy on white 17.4:1, ink-muted 8.9:1, ink-subtle 6.1:1 (5.2:1
      on paper-deep), white on cobalt 6.7:1, brand on white 4.9:1. Aqua is 2.7:1
      on white, so it is for fills and marks only, never text. */
-  --color-ink: #0b1a33;
-  --color-ink-muted: #3a4a66;
-  --color-ink-subtle: #56637b;
-  --color-paper: #f3f6fb;
-  --color-paper-deep: #e7edf6;
-  --color-line: #e2e8f1;
-  --color-line-strong: #cbd5e3;
-  --color-cobalt: #1d4ed8;
-  --color-cobalt-deep: #1740ad;
-  --color-cobalt-tint: #eef2ff;
-  --color-cobalt-light: #a9c1ff;
-  --color-brand: #0975c1;
-  --color-aqua: #0cacCF;
-  --color-night: #0b1a33;
+  --color-ink: var(--color-text-primary);
+  --color-ink-muted: var(--color-text-secondary);
+  --color-ink-subtle: var(--color-text-tertiary);
+  --color-paper: var(--color-background-secondary);
+  --color-paper-deep: var(--color-background-tertiary);
+  --color-line: var(--color-border-default);
+  --color-line-strong: var(--color-border-strong);
+  --color-cobalt: var(--color-action-primary);
+  --color-cobalt-deep: var(--color-action-primary-hover);
+  --color-cobalt-tint: var(--color-background-selected);
+  --color-cobalt-light: var(--color-text-interactive-inverse);
+  --color-brand: var(--color-text-brand);
+  --color-aqua: var(--p-brand-aqua);
+  --color-night: var(--color-background-inverse);
   /* Status roles. Text shades are 700/800 so they pass AA on white and on
      their own container tint. Warm amber is the one complementary hue: it
      means "time-sensitive" and nothing else. */
-  --color-success: #047857;
-  --color-success-container: #ecfdf5;
-  --color-warning: #92400e;
-  --color-warning-container: #fffbeb;
-  --color-danger: #b91c1c;
-  --color-danger-container: #fef2f2;
+  --color-success: var(--color-text-success);
+  --color-success-container: var(--color-background-success);
+  --color-warning: var(--color-text-warning);
+  --color-warning-container: var(--color-background-warning);
+  --color-danger: var(--color-text-danger);
+  --color-danger-container: var(--color-background-danger);
   /* Elevation: navy-tinted, one light source from above. */
   --shadow-raised: 0 1px 2px rgb(11 26 51 / 0.06), 0 8px 24px -16px rgb(11 26 51 / 0.28);
   --shadow-overlay: 0 24px 48px -20px rgb(11 26 51 / 0.35);
@@ -118,17 +284,6 @@
   --text-display--line-height: 1.05;
   --text-display--letter-spacing: -0.035em;
 
-  /* ── Spacing ──────────────────────────────────────────────
-     Tailwind's base-4 scale already covers component padding.
-     What was missing is the LAYOUT rhythm: the vertical beat
-     between sections and the page gutters, which were being
-     retyped as py-16 sm:py-20 lg:py-24 on every section.       */
-  --spacing-section:    4rem;    /* 64px  · band, phone        */
-  --spacing-section-sm: 5rem;    /* 80px  · band, tablet       */
-  --spacing-section-lg: 6rem;    /* 96px  · band, desktop      */
-  --spacing-gutter:     1.5rem;  /* 24px  · page edge, phone   */
-  --spacing-gutter-sm:  2.5rem;  /* 40px  · page edge, tablet  */
-  --spacing-gutter-lg:  4rem;    /* 64px  · page edge, desktop */
 }
 
 :root {
@@ -156,52 +311,11 @@
   --accent: #0891b2;
   --accent-foreground: #ffffff;
 
-  /* Warm Amber for stats/highlights */
-  --amber: #f59e0b;
-  --amber-light: #fef3c7;
-
-  /* Indigo to Purple for testimonials */
-  --indigo: #6366f1;
-  --purple: #a855f7;
-
-  /* Emerald for trust signals */
-  --emerald: #10b981;
-  --emerald-light: #d1fae5;
-
   --destructive: #dc2626;
   --border: #e5e7eb;
   --input: #e5e7eb;
   --ring: #0891b2;
 
-  /* Deep Blues Palette */
-  --deep-900: #0a192f;
-  --deep-800: #112240;
-  --deep-700: #1a365d;
-
-  /* Ocean Blues */
-  --ocean-50: #f0f9ff;
-  --ocean-100: #e0f2fe;
-  --ocean-200: #bae6fd;
-  --ocean-300: #7dd3fc;
-  --ocean-400: #38bdf8;
-  --ocean-500: #0ea5e9;
-  --ocean-600: #0284c7;
-  --ocean-700: #0369a1;
-  --ocean-800: #075985;
-  --ocean-900: #0c4a6e;
-  --ocean-950: #082f49;
-
-  /* Cyan/Teal Accent Colors */
-  --cyan-50: #ecfeff;
-  --cyan-100: #cffafe;
-  --cyan-200: #a5f3fc;
-  --cyan-300: #67e8f9;
-  --cyan-400: #22d3ee;
-  --cyan-500: #06b6d4;
-  --cyan-600: #0891b2;
-  --cyan-700: #0e7490;
-  --cyan-800: #155e75;
-  --cyan-900: #164e63;
   --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: hsl(240 5.3% 26.1%);
   --sidebar-primary: hsl(240 5.9% 10%);
@@ -294,371 +408,6 @@
 
 }
 
-/* Custom Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.animate-slide-in-left {
-  animation: slideInLeft 0.6s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.6s ease-out forwards;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 3s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Animation delays */
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-1000 { animation-delay: 1000ms; }
-
-/* Gradient backgrounds */
-.gradient-ocean {
-  background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
-}
-
-.gradient-ocean-light {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-}
-
-.gradient-ocean-dark {
-  background: linear-gradient(135deg, #1e3a8a 0%, #0e7490 100%);
-}
-
-.gradient-hero {
-  background: linear-gradient(135deg, #0a192f 0%, #112240 50%, #1e3a8a 100%);
-}
-
-.gradient-primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-}
-
-
-/* Glass effect */
-
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.12);
-}
-
-/* Button styles */
-.btn-primary {
-  @apply bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-300;
-}
-
-.btn-primary:hover {
-  @apply shadow-lg;
-  background: #1d4ed8;
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-300 border border-border;
-}
-
-.btn-secondary:hover {
-  @apply bg-muted shadow-md;
-}
-
-.btn-outline {
-  @apply border-2 border-primary text-primary px-6 py-3 rounded-lg font-semibold transition-all duration-300;
-}
-
-.btn-outline:hover {
-  @apply bg-primary text-primary-foreground;
-}
-
-/* Section padding */
-.section-padding {
-  @apply py-16 md:py-20 lg:py-24;
-}
-
-/* Container */
-.container-custom {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-}
-
-/* Text styles */
-.heading-xl {
-  @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight;
-}
-
-.heading-lg {
-  @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight;
-}
-
-.heading-md {
-  @apply text-2xl md:text-3xl font-bold tracking-tight;
-}
-
-.heading-sm {
-  @apply text-xl md:text-2xl font-semibold;
-}
-
-.text-body {
-  @apply text-base md:text-lg text-muted-foreground leading-relaxed;
-}
-
-/* Focus styles for accessibility */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
-}
-
-/* Header height variable for spacing */
-:root {
-  --header-height: 72px;
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --header-height: 80px;
-  }
-}
-
-
-/* Typography System */
-
-
-.heading-subsection {
-  @apply text-2xl md:text-3xl lg:text-4xl;
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-
-/* Enhanced Gradient Backgrounds */
-.bg-gradient-deep {
-  background: linear-gradient(135deg, #0a192f 0%, #112240 50%, #0891b2 100%);
-}
-
-.bg-gradient-cta {
-  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%);
-}
-
-.bg-gradient-warm-gray {
-  background: linear-gradient(180deg, #f9fafb 0%, #ffffff 50%, #f9fafb 100%);
-}
-
-/* Perspective for 3D effects */
-.perspective {
-  perspective: 1000px;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-/* Enhanced marquee animation */
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 40s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-/* Floating animation variations */
-@keyframes float-slow {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(2deg);
-  }
-}
-
-@keyframes float-slower {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-30px) scale(1.02);
-  }
-}
-
-@keyframes orb-float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  25% {
-    transform: translate(10px, -10px) scale(1.05);
-  }
-  50% {
-    transform: translate(-5px, 5px) scale(0.95);
-  }
-  75% {
-    transform: translate(-10px, -5px) scale(1.02);
-  }
-}
-
-.animate-float-slow {
-  animation: float-slow 6s ease-in-out infinite;
-}
-
-.animate-float-slower {
-  animation: float-slower 8s ease-in-out infinite;
-}
-
-.animate-orb {
-  animation: orb-float 15s ease-in-out infinite;
-}
-
-/* Shimmer effect for loading states */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-/* Diagonal cut background */
-.diagonal-cut {
-  clip-path: polygon(0 5%, 100% 0, 100% 95%, 0 100%);
-}
-
-.diagonal-cut-reverse {
-  clip-path: polygon(0 0, 100% 5%, 100% 100%, 0 95%);
-}
-
-/* Skew backgrounds */
-
-
-/* Tilt card effect */
-.tilt-card {
-  transition: transform 0.4s ease;
-  transform-style: preserve-3d;
-}
-
-.tilt-card:hover {
-  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateZ(10px);
-}
-
-/* Gradient border effect */
-.gradient-border {
-  position: relative;
-  background: white;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  padding: 1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, #2563eb, #0891b2, #a855f7);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.gradient-border:hover::before {
-  opacity: 1;
-}
-
-/* Underline animation */
-
-
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -668,18 +417,7 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  .animate-marquee {
-    animation: none;
-  }
 }
-
-/* NOTE: an entire `ob-*` palette and utility layer (tokens, mesh/grid/diagonal
-   backgrounds, pills, shimmer and spin keyframes) sat here from an earlier
-   design direction. Every class and every --ob-* token had zero call sites
-   outside this file. Removed rather than left to be copied by accident; the
-   live system is --hz-* above and --adm-* below. */
-
 
 /* Scrollbar.
    Was a cyan-to-blue gradient thumb, which put a saturated decorative stripe
@@ -718,149 +456,6 @@
 }
 
 /* ============================================================
-   LANDING , "Operator Console" design tokens (Register-grade)
-   Replaces all prior landing-only tokens. Cascades after them.
-   Aesthetic: Stripe / Mercury / Linear. Neutral slate base,
-   one restrained cobalt accent. Used ONLY by landing components.
-   ============================================================ */
-
-:root {
-  /* Surfaces & neutrals */
-  --reg-canvas:    #fcfcfd;
-  --reg-surface:   #ffffff;
-  --reg-surface-2: #f9fafb;
-  --reg-surface-3: #f3f4f6;
-
-  --reg-line:      #eaecf0;
-  --reg-line-2:    #d0d5dd;
-  --reg-line-3:    #98a2b3;
-
-  /* Semantic text */
-  --reg-text-primary:   #101828;
-  --reg-text-secondary: #344054;
-  --reg-text-muted:     #475467;
-  --reg-text-subtle:    #667085;
-  --reg-text-tertiary:  #98a2b3;
-
-  /* Inverse (dark panels) */
-  --reg-ink:    #0c111d;
-  --reg-ink-2:  #161b26;
-  --reg-ink-3:  #1f242f;
-  --reg-ink-4:  #2d3239;
-
-  /* Brand. Ocean cobalt (restrained) */
-  --reg-brand-25:  #f3f7ff;
-  --reg-brand-50:  #ecf2ff;
-  --reg-brand-100: #dbe6ff;
-  --reg-brand-200: #b9cdff;
-  --reg-brand-300: #8caefe;
-  --reg-brand-400: #5d89fb;
-  --reg-brand-500: #3c69f0;
-  --reg-brand-600: #1e4dd8;
-  --reg-brand-700: #1a3eb8;
-  --reg-brand-800: #173291;
-  --reg-brand-900: #142a73;
-
-  /* Semantic */
-  --reg-success-50:  #ecfdf3;
-  --reg-success-200: #abefc6;
-  --reg-success-500: #17b26a;
-  --reg-success-600: #079455;
-  --reg-success-700: #067647;
-
-  --reg-warning-50:  #fffaeb;
-  --reg-warning-200: #fedf89;
-  --reg-warning-500: #f79009;
-  --reg-warning-600: #dc6803;
-  --reg-warning-700: #b54708;
-
-  --reg-error-50:  #fef3f2;
-  --reg-error-200: #fecdca;
-  --reg-error-500: #f04438;
-  --reg-error-700: #b42318;
-
-  /* Shadows, single ring, no multi-layer drama */
-  --reg-shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
-  --reg-shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.10), 0 1px 2px -1px rgb(16 24 40 / 0.06);
-  --reg-shadow-md: 0 4px 6px -1px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.06);
-  --reg-shadow-lg: 0 12px 16px -4px rgb(16 24 40 / 0.08), 0 4px 6px -2px rgb(16 24 40 / 0.03);
-  --reg-shadow-xl: 0 20px 24px -4px rgb(16 24 40 / 0.08), 0 8px 8px -4px rgb(16 24 40 / 0.03);
-}
-
-/* Tabular numbers */
-.reg-tnum {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "ss01" 1;
-}
-
-/* Subtle dot pattern */
-.bg-reg-dots {
-  background-image: radial-gradient(circle, var(--reg-line-2) 1px, transparent 1px);
-  background-size: 16px 16px;
-}
-
-/* Live status pulse */
-@keyframes reg-live-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.5; }
-}
-.reg-live { animation: reg-live-pulse 2s ease-in-out infinite; }
-
-/* Slow horizontal marquee for logo strip */
-@keyframes reg-marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.reg-marquee { animation: reg-marquee 60s linear infinite; }
-.reg-marquee:hover { animation-play-state: paused; }
-
-/* ── Aurora animated background (used by <AuroraBackground />) ──────
-   Optimised, dark-mode-only port of the Aceternity aurora: gradient
-   logic lives here (not in a giant arbitrary-class string), colours are
-   explicit (no undefined --blue-500 vars), and background-attachment:fixed
-   is dropped (it forces repaints / breaks on iOS). */
-@keyframes aurora {
-  from { background-position: 50% 50%, 50% 50%; }
-  to   { background-position: 350% 50%, 350% 50%; }
-}
-
-.aurora-layer {
-  --aurora: repeating-linear-gradient(100deg,
-    #3b82f6 10%, #a5b4fc 15%, #93c5fd 20%, #ddd6fe 25%, #60a5fa 30%);
-  --aurora-stripes: repeating-linear-gradient(100deg,
-    #0b1224 0%, #0b1224 7%, transparent 10%, transparent 12%, #0b1224 16%);
-
-  position: absolute;
-  inset: -10px;
-  pointer-events: none;
-  opacity: 0.45;
-  background-image: var(--aurora-stripes), var(--aurora);
-  background-size: 300%, 200%;
-  background-position: 50% 50%, 50% 50%;
-  filter: blur(10px);
-  will-change: transform;
-}
-
-.aurora-layer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: var(--aurora-stripes), var(--aurora);
-  background-size: 200%, 100%;
-  mix-blend-mode: difference;
-  animation: aurora 60s linear infinite;
-}
-
-.aurora-layer.aurora-mask {
-  -webkit-mask-image: radial-gradient(ellipse at 100% 0%, #000 10%, transparent 70%);
-  mask-image: radial-gradient(ellipse at 100% 0%, #000 10%, transparent 70%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aurora-layer::after { animation: none; }
-}
-
-/* ============================================================
    HORIZON, the landing-page design system.
 
    Light canvas with dark navy bands, one cobalt accent, Geist Sans
@@ -878,17 +473,11 @@
 
   /* Dark bands, deep, futuristic near-black blue */
   --hz-ink:       #050912;   /* darkest, hero / CTA */
-  --hz-navy:      #0a1730;   /* feature band */
-  --hz-navy-2:    #0e2147;   /* raised dark surface */
-  --hz-navy-3:    #15315e;
 
   /* Text */
   --hz-text:        #0f172a;
   --hz-text-mute:   #475569;
   --hz-text-subtle: #64748b;
-  --hz-on-dark:     #f1f5f9;
-  --hz-on-dark-mute: #94a3b8;
-  --hz-line-dark:   rgba(226,232,240,0.12);
 
   /* Paper ground and its hairline, for the alternating light sections.
      Cool-biased so it belongs to the same family as the accent; a warm
@@ -897,21 +486,6 @@
      Kept separate from --hz-canvas: sections designed against pure white
      would all shift if the global canvas were tinted. */
   --hz-paper:      #F7F9FC;
-  --hz-paper-line: #E4E9F0;
-
-  /* One step lighter again, for the accreditation strip. At --hz-paper-line
-     weight its dividers read as a drawn table rather than separators. */
-  --hz-strip-line: #EBEFF5;
-
-  /* Dark plate for the service cards. Cool-tinted, not neutral grey, so the
-     panels sit in the same family as the rest of the page's neutrals. */
-  --hz-plate:       #242B38;
-  --hz-plate-hover: #2E3746;
-  --hz-plate-well:  #151A22;
-
-  /* Client-work row ground. One tint for every row: per-row hues put three
-     accents the brand does not own into a single-accent page. */
-  --hz-story:      #EDF2FB;
 
   /* The light end of the logo gradient, measured off the mark (the droplet
      runs #0975C1 at its base to #0CACCF at the arc tips). */
@@ -921,22 +495,12 @@
   --hz-cobalt:     #1d4ed8;
   --hz-cobalt-600: #1740ad;
   --hz-cobalt-100: #dbe6fe;
-  /* The same accent lightened for a dark ground, where #1d4ed8 is too dark
-     to read. One hue, two grounds; not a second accent. */
-  --hz-cobalt-300: #8fb4fd;
   --hz-cyan:       #2ad8ef;
-  --hz-cyan-400:   #5ce0f7;
-  --hz-indigo:     #6366f1;
 
   /* Alternating section band. --hz-ivory is a legacy alias. */
   --hz-band:       #f4f7fb;
   --hz-band-line:  #e6ecf4;
   --hz-ivory:      var(--hz-band);
-
-  /* Amber highlight, the single warm accent (eyebrows, stat suffixes) */
-  --hz-amber:      #d97706;
-  --hz-amber-600:  #b45309;
-  --hz-amber-100:  #fde7c9;
 
   /* Gold, for the anniversary line-work only (anniversary/CornerArches.tsx),
      used as low-alpha drawn geometry and never as a fill or text colour so it
@@ -946,14 +510,11 @@
      the ornament rather than degrade it. --hz-gold-ink is the only value dark
      enough for text on white. */
   --hz-gold:      #c9a227;
-  --hz-gold-300:  #e3c268;
-  --hz-gold-100:  #f4e6bf;
   --hz-gold-ink:  #7a5c12;
 
   /* Cool-tinted shadows */
   --hz-shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.05);
   --hz-shadow-md: 0 10px 30px -12px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);
-  --hz-shadow-lg: 0 30px 60px -24px rgba(10,37,64,0.35), 0 12px 24px -12px rgba(15,23,42,0.12);
 }
 
 /* Landing base. Geist Sans everywhere (no Inter body on the landing) */
@@ -972,33 +533,6 @@
   font-weight: 600;
 }
 
-/* Section heading scale. Two roles, both fluid, used everywhere:
-
-   .hz-h2         opens a section and carries its argument.
-   .hz-statement  supports one, e.g. the line introducing a logo row.
-                  Deliberately smaller so it sets up the marks beneath it.
-
-   The hero and the closing CTA keep their own larger sizes.
-
-   `text-wrap: balance` on both: these are full sentences at a large size
-   against a wide measure, which is the shape that strands single words.
-
-   The vw coefficients are set so each clamp reaches its maximum at roughly
-   1800px, not at ~1300px as they used to. Saturating that early meant a 1280
-   laptop and a 27" monitor rendered these headings at the same size, which is
-   why the site read as oversized on a 14" screen: the fluid range covered
-   phone-to-laptop and then stopped. Large displays are unchanged. */
-.hz-h2 {
-  font-size: clamp(1.6rem, 2.31vw, 2.6rem);
-  line-height: 1.06;
-  text-wrap: balance;
-}
-.hz-statement {
-  font-size: clamp(1.25rem, 1.73vw, 1.95rem);
-  line-height: 1.15;
-  text-wrap: balance;
-}
-
 /* `pretty` rather than `balance` on body copy: it fixes the last-line orphan
    and leaves the rest ragged. Scoped to .horizon; the admin console is
    untouched. */
@@ -1006,23 +540,13 @@
   text-wrap: pretty;
 }
 
-/* Shared focus ring, in two grounds: cobalt is not visible on the dark bands
-   and white is not visible on canvas. No border-radius here on purpose, an
-   outline already follows whatever radius the element has. */
-.hz-focus:focus-visible,
-.hz-focus-dark:focus-visible {
+/* Focus ring. No border-radius: an outline follows the element's own. */
+.hz-focus:focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-offset: 3px;
 }
 .hz-focus:focus-visible      { outline-color: var(--hz-cobalt); }
-.hz-focus-dark:focus-visible { outline-color: #ffffff; }
-
-/* NOTE: a `.hz-container` shell class was tried here and was silently dropped
-   from the generated stylesheet while every neighbouring rule compiled, so
-   sections rendered with no gutter. The page shell is Tailwind utilities at
-   each call site instead. Do not reintroduce it without checking the built
-   CSS actually contains it. */
 
 /* Eyebrow: mono, uppercase, tracked. The colour lives here rather than at the
    call sites, which had drifted into pairing it with amber and turning a
@@ -1037,76 +561,11 @@
   color: var(--hz-text-subtle);
 }
 
-/* Film grain, applied only to a fixed, pointer-events-none overlay */
-.hz-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-}
-
 /* Tabular numerals for stats */
 .hz-tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
-
-/* Primary CTA, cobalt, with a fill-up-from-bottom hover */
-.hz-btn-primary {
-  position: relative; overflow: hidden; z-index: 0;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 22px; border-radius: 10px;
-  background: var(--hz-cobalt); color: #fff;
-  font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
-  transition: transform .2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .25s ease;
-  /* rgb(29,78,216) is --hz-cobalt: the shadow carries the button's own hue. */
-  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -12px rgba(29,78,216,0.6);
-}
-.hz-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -12px rgba(29,78,216,0.7); }
-.hz-btn-primary:active { transform: translateY(0) scale(.985); }
-
-/* Fill-up hover: a darker layer scales up from the bottom edge behind the text.
-   Reusable on any solid-cobalt button (e.g. the header Sign In pill). */
-.hz-btn-primary::before,
-.hz-btn-fill::before {
-  content: ""; position: absolute; inset: 0; z-index: -1;
-  background: var(--hz-cobalt-600);
-  transform: scaleY(0); transform-origin: bottom;
-  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
-}
-.hz-btn-primary:hover::before,
-.hz-btn-fill:hover::before { transform: scaleY(1); }
-.hz-btn-fill { position: relative; overflow: hidden; z-index: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .hz-btn-primary::before, .hz-btn-fill::before { transition: none; }
-}
-
-/* Ghost CTA on light */
-.hz-btn-ghost {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 20px; border-radius: 10px;
-  background: var(--hz-canvas); color: var(--hz-text);
-  font-size: 14px; font-weight: 600; border: 1px solid var(--hz-line-2);
-  transition: all .2s ease;
-}
-.hz-btn-ghost:hover { border-color: var(--hz-cobalt); color: var(--hz-cobalt); transform: translateY(-2px); }
-
-/* Ghost CTA on dark */
-.hz-btn-ghost-dark {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 20px; border-radius: 10px;
-  background: rgba(241,245,249,0.04); color: var(--hz-on-dark);
-  font-size: 14px; font-weight: 600; border: 1px solid var(--hz-line-dark);
-  transition: all .2s ease;
-}
-.hz-btn-ghost-dark:hover { background: rgba(241,245,249,0.10); transform: translateY(-2px); }
-
-/* The one card in the system: white, a hairline, a modest radius, nothing
-   else. Hover darkens the hairline rather than lifting the card. */
-.hz-card {
-  background: #fff;
-  border: 1px solid var(--hz-paper-line);
-  border-radius: 12px;
-  transition: border-color .2s ease;
-}
-.hz-card:hover { border-color: color-mix(in srgb, var(--hz-cobalt) 40%, transparent); }
 
 /* Ambient aurora wash, a soft, drifting color field (no grids) */
 @keyframes hz-aurora {
@@ -1128,33 +587,6 @@
   .hz-marquee { animation: none; }
 }
 
-/* Above-the-fold entrance, in CSS so the copy animates on first paint rather
-   than waiting for hydration (which cost 5-8s of LCP when this was
-   framer-motion). Use only above the fold; below it, whileInView is right. */
-@keyframes hz-enter {
-  from { opacity: 0; transform: translate3d(0, 14px, 0); }
-  to   { opacity: 1; transform: none; }
-}
-.hz-enter {
-  /* `both` holds the from-state during animation-delay, so a staged
-     sequence doesn't flash all its steps before the first one runs. */
-  animation: hz-enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Cinematic hold on the hero block: a 1.5% push-in over 2.5s, small enough
-   to read as the frame settling rather than as an element sliding in.
-   Transform and opacity only, so the long duration is free per frame. */
-@keyframes hz-cinema {
-  from { opacity: 0; transform: scale(1.015); }
-  to   { opacity: 1; transform: none; }
-}
-.hz-cinema {
-  animation: hz-cinema 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hz-cinema { animation: none; opacity: 1; transform: none; }
-}
-
 /* Word-by-word headline rise. The parent span clips, the inner one
    travels, same effect WordsReveal produced in JS. */
 @keyframes hz-word {
@@ -1169,15 +601,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   /* Never leave the text hidden, drop the travel, keep it legible. */
-  .hz-enter, .hz-word { animation: none; opacity: 1; transform: none; }
+  .hz-word { animation: none; opacity: 1; transform: none; }
 }
-
-/* NOTE: a `.hz-defer { content-visibility: auto }` helper was tried here to
-   skip painting below-the-fold sections. It was removed because every landing
-   section reveals with framer-motion's `whileInView … once: true`: if the
-   content-visibility activation and the IntersectionObserver race, the reveal
-   can resolve before the element has a box and the section stays permanently
-   at opacity 0. Not worth the paint saving. */
 
 /* ============================================================
    ADMIN, semantic design tokens (the only values admin UI may
@@ -1227,22 +652,22 @@
   --adm-ink-subtle: #6b7280;                  /* hints, timestamps */
 
   /* Status (match tones in components/admin/theme.ts) */
-  --adm-success: #059669;
-  --adm-warning: #d97706;
+  --adm-success: var(--p-green-600);
+  --adm-warning: var(--p-amber-600);
   /* Text-weight variants. The base tokens above are tuned as FILLS, dots,
      switch tracks, tinted chips, where they read correctly, but as TEXT they
      are 3.77:1 (success) and 3.19:1 (warning) on white and fail 1.4.3. Two
      tokens rather than darkening the base, because darkening the base would
      also darken every dot and fill that is currently right. */
-  --adm-success-ink: #047857;                 /* 5.48:1 on white */
-  --adm-warning-ink: #b45309;                 /* 5.02:1 on white */
+  --adm-success-ink: var(--p-green-700);                 /* 5.48:1 on white */
+  --adm-warning-ink: var(--p-amber-700);                 /* 5.02:1 on white */
   /* --adm-danger is 4.70:1 on white and passes there, but only 4.01:1 on its
      own 10% tint, which is exactly where it is used, in the unclaimed claim
      button. Tinted backgrounds eat contrast, so the tint case needs its own
      value even when the plain case is fine. */
-  --adm-danger-ink:  #be123c;                 /* 6.29:1 white, 5.37:1 on tint */
+  --adm-danger-ink:  var(--p-rose-700);                 /* 6.29:1 white, 5.37:1 on tint */
   --adm-danger:  #e11d48;
-  --adm-info:    #4f46e5;
+  --adm-info:    var(--p-indigo-600);
 
   /* Categorical chart palette, use IN ORDER, max 7 series per chart.
      Series 1 is always the brand accent; emerald is reserved for
@@ -1317,17 +742,7 @@
   --adm-row-h-relaxed:  68px;
   --adm-row-h:          var(--adm-row-h-default);
 
-  /* ── Spacing: 8px grid, 4px half-step (Ant Design convention) ──
-     Every gap, pad and margin in admin must land on one of these.
-     "Alignment" and "Proximity" only read as intentional if the
-     rhythm is quantised; ad-hoc 5px/13px/20px values are what make
-     a dense screen feel accidental. */
-  --adm-space-1: 4px;    /* icon-to-label, chip padding */
-  --adm-space-2: 8px;    /* inside a control */
-  --adm-space-3: 12px;   /* between controls in a group */
-  --adm-space-4: 16px;   /* panel padding, between panels */
-  --adm-space-6: 24px;   /* between section groups */
-  --adm-space-8: 32px;   /* major section break */
+  /* Spacing comes from the shared --space-* tier at the top of this file. */
 
   /* ── Type scale ──
      Five sizes only. A back-office screen that invents a size per
@@ -1395,7 +810,7 @@
 .adm-scope {
   /* Ocean Blue brand cobalt, matches the marketing site (--hz-cobalt). Green
      is reserved for the "healthy/success" semantic only, so accent ≠ success. */
-  --adm-accent:        #1d4ed8;                  /* cobalt-700, primary/brand */
+  --adm-accent:        var(--p-blue-700);        /* primary/brand */
   --adm-accent-strong: #1e40af;                  /* cobalt-800, hover/pressed */
   --adm-accent-soft:   rgba(29, 78, 216, 0.10);  /* tinted chips, active nav pill */
   --adm-accent-tint:   rgba(29, 78, 216, 0.07);  /* row hover / selected wash */
@@ -1407,20 +822,20 @@
   /* Chrome (sidebar + top bar) is a cool grey sheet; the content pane is an
      inset white panel on it. Cards sit on a barely-tinted canvas so they keep
      an edge without needing heavy shadows. */
-  --adm-canvas:        #f5f7fa;
+  --adm-canvas:        var(--p-gray-75);
   --adm-chrome:        #f1f4f9;
   --adm-chrome-hover:  rgba(16, 24, 40, 0.05);
-  --adm-line:          #e4e7ec;
-  --adm-line-soft:     #eef1f5;
-  --adm-line-strong:   #d0d5dd;
+  --adm-line:          var(--p-gray-200);
+  --adm-line-soft:     var(--p-gray-150);
+  --adm-line-strong:   var(--p-gray-300);
   --adm-row-hover:     #f7f9fc;
-  --adm-head:          #f9fafb;
-  --adm-head-ink:      #667085;
+  --adm-head:          var(--p-gray-50);
+  --adm-head-ink:      var(--p-gray-500);
 
   /* Ink ramp, one cool grey family, AA on both white and the canvas. */
-  --adm-ink:        #101828;
-  --adm-ink-mute:   #475467;
-  --adm-ink-subtle: #667085;
+  --adm-ink:        var(--p-gray-900);
+  --adm-ink-mute:   var(--p-gray-600);
+  --adm-ink-subtle: var(--p-gray-500);
   --adm-danger:     #d91a43;
 
   /* Navigation recedes: white frame with the top bar, brand only on the
@@ -1437,7 +852,7 @@
   --adm-nav-active-ink:  #1d4ed8;
   --adm-nav-active-icon: #1d4ed8;
 
-  --adm-surface-2:    #f2f4f7;
+  --adm-surface-2:    var(--p-gray-100);
   --adm-seg-track:    #f2f4f7;
   --adm-seg-active:   #ffffff;
 
@@ -1458,6 +873,8 @@
 
   --adm-radius-control: 10px;
   --adm-radius-card:    16px;
+
+  --skeleton-background: color-mix(in srgb, var(--adm-line-soft) 70%, transparent);
 
   background: var(--adm-canvas);
   color: var(--adm-ink);
@@ -1879,10 +1296,9 @@ html.lenis body {
   --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
 }
 
-/* Literal values: @theme inline tokens are not emitted as CSS variables. */
 .site {
   font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  color: #0b1a33;
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
 }
 .site h1, .site h2, .site h3 { text-wrap: balance; }
@@ -1907,12 +1323,12 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 
 /* One focus style for every interactive element (WCAG 2.4.7). */
 .site :focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
   border-radius: 4px;
 }
 .site .on-dark :focus-visible,
-.site .on-dark:focus-visible { outline-color: #fff; }
+.site .on-dark:focus-visible { outline-color: var(--color-border-focus-inverse); }
 
 /* Page-load sequence for heroes */
 @keyframes site-rise {
@@ -1993,7 +1409,6 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   .rise, .word, .menu-in, .side-sheet, .sheet-overlay, .marquee, .geo-art, .geo-art .geo-plane, .geo-art line[stroke-dasharray],
   .reveal, .timeline-fill { animation: none !important; }
 }
-
 
 /* ============================================================
    TYPE ROLES, the only text sizes public pages should use.
@@ -2135,7 +1550,6 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   .demo-press, .demo-grow, .demo-rise, .demo-ring, .demo-draw, .demo-flow, .demo-pulse, .demo-caret { animation: none; }
 }
 
-
 /* Where a white section meets a paper one, the ground eases across instead
    of stepping, so the page reads as one surface.
    Sections that paint their own ground carry data-ground and are left alone. */
@@ -2177,6 +1591,58 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   75% { transform: translate(-4px, -14px) rotate(-8deg); }
 }
 
+/* Maintenance (components/site/maintenance-art): gears turn in mesh, a card
+   drops into its slot, the bar fills. It shares nf-rise/shimmer/blink. */
+.mt-spin, .mt-spin-rev, .mt-drop { transform-box: fill-box; transform-origin: 50% 50%; }
+.mt-spin { animation: mt-spin 12s linear infinite; }
+.mt-spin-rev { animation: mt-spin 8s linear infinite reverse; }
+@keyframes mt-spin { to { transform: rotate(360deg); } }
+
+.mt-drop { animation: mt-drop 5s cubic-bezier(0.22, 1, 0.36, 1) 600ms infinite both; }
+@keyframes mt-drop {
+  0% { opacity: 0; transform: translateY(-34px) rotate(-7deg); }
+  22%, 86% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+
+.mt-fill { transform-box: fill-box; transform-origin: 0 50%; animation: mt-fill 5s cubic-bezier(0.4, 0, 0.2, 1) 600ms infinite both; }
+@keyframes mt-fill {
+  0% { opacity: 1; transform: scaleX(0.03); }
+  86% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+
+/* Load error (components/site/load-error-art): the plug nudges at the socket. */
+.er-nudge { animation: er-nudge 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes er-nudge {
+  0%, 100% { transform: translateX(-6px); }
+  45%, 60% { transform: translateX(14px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .mt-spin, .mt-spin-rev, .mt-drop, .mt-fill, .er-nudge { animation: none; }
   .nf-rise, .nf-shimmer, .nf-digits, .nf-blink, .nf-sweep, .nf-scrap { animation: none; }
 }
+
+/* ============================================================
+   LOADING. A skeleton is a flat neutral block that pulses; the
+   content that replaces it fades in rather than snapping. Both
+   stop under reduced motion.
+   ============================================================ */
+.skel {
+  background: var(--skeleton-background);
+  border-radius: var(--skeleton-radius);
+  animation: skel-pulse var(--skeleton-duration) ease-in-out infinite;
+}
+@keyframes skel-pulse { 50% { opacity: 0.5; } }
+
+/* `backwards` only: a held end state would leave a stacking context behind. */
+#adm-main > * {
+  animation: content-in var(--content-enter-duration) var(--ease-standard) backwards;
+}
+@keyframes content-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .skel, #adm-main > * { animation: none; }
+}
+

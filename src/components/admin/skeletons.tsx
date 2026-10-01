@@ -1,9 +1,13 @@
 import { cn } from "@/lib/utils";
 
-/** Single pulsing placeholder block. */
+/** One placeholder block. Colour, radius and pulse come from the --skeleton-* tokens. */
 export function Skel({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-[6px] bg-[var(--adm-line-soft)]/70", className)} />;
+  return <div className={cn("skel", className)} />;
 }
+
+/* A skeleton says what is loading: role="status" with a specific label, read
+   once, over blocks that carry no text of their own. */
+const busy = (label: string) => ({ role: "status" as const, "aria-busy": true, "aria-label": label });
 
 /** Plain divide-y rows, drop inside an existing card/table container while data loads. */
 export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
@@ -11,7 +15,7 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
     <div className="divide-y divide-[var(--adm-line-soft)]" aria-hidden="true">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 px-4 py-3.5">
-          <div className="h-9 w-9 flex-shrink-0 animate-pulse rounded-full bg-[var(--adm-line-soft)]/70" />
+          <Skel className="h-9 w-9 flex-shrink-0 rounded-full" />
           <div className="flex-1 space-y-1.5">
             <Skel className="h-3.5 w-1/3" />
             <Skel className="h-2.5 w-1/4" />
@@ -30,9 +34,9 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
  * when data lands: title row → inline stat strip → slim canvas toolbar
  * (search left, filter pills + Display right) → table panel with footer.
  */
-export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: number; rows?: number; tabs?: number }) {
+export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0, label = "Loading list" }: { stats?: number; rows?: number; tabs?: number; label?: string }) {
   return (
-    <div className="pb-10" aria-hidden="true" aria-label="Loading…">
+    <div className="pb-10" {...busy(label)}>
       {/* title + actions */}
       <div className="mb-4 flex items-center justify-between gap-4">
         <Skel className="h-6 w-44" />
@@ -92,9 +96,9 @@ export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0 }: { stats?: n
 }
 
 /** Detail view: header + 2-column content/aside. */
-export function AdminDetailSkeleton() {
+export function AdminDetailSkeleton({ label = "Loading record" }: { label?: string }) {
   return (
-    <div className="space-y-4 pb-10 lg:space-y-5" aria-hidden="true" aria-label="Loading…">
+    <div className="space-y-4 pb-10 lg:space-y-5" {...busy(label)}>
       <div className="space-y-2">
         <Skel className="h-6 w-52" />
         <Skel className="h-3 w-36" />
@@ -112,7 +116,7 @@ export function AdminDetailSkeleton() {
         </div>
         <div className="space-y-4">
           <div className="flex flex-col items-center gap-3 rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-            <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--adm-line-soft)]/70" />
+            <Skel className="h-16 w-16 rounded-full" />
             <Skel className="h-4 w-32" />
             <Skel className="h-3 w-24" />
           </div>
@@ -126,9 +130,9 @@ export function AdminDetailSkeleton() {
 }
 
 /** Form view: header + sectioned field grid. */
-export function AdminFormSkeleton() {
+export function AdminFormSkeleton({ label = "Loading form" }: { label?: string }) {
   return (
-    <div className="mx-auto max-w-5xl space-y-4 pb-12 lg:space-y-5" aria-hidden="true" aria-label="Loading…">
+    <div className="mx-auto max-w-5xl space-y-4 pb-12 lg:space-y-5" {...busy(label)}>
       <div className="space-y-2">
         <Skel className="h-6 w-52" />
         <Skel className="h-3 w-36" />
@@ -163,11 +167,7 @@ export function KanbanSkeleton({
   cardsPerColumn?: number;
 }) {
   return (
-    <div
-      className="flex gap-3 overflow-x-auto pb-4"
-      aria-hidden="true"
-      aria-label="Loading…"
-    >
+    <div className="flex gap-3 overflow-x-auto pb-4" {...busy("Loading board")}>
       {Array.from({ length: columns }).map((_, c) => (
         <div
           key={c}
@@ -205,7 +205,6 @@ export function KanbanSkeleton({
   );
 }
 
-/** Dashboard skeleton, stat cards + chart placeholder + recent list. */
 /**
  * Mirrors /admin exactly, six bands in the order the page renders them.
  *
@@ -220,7 +219,7 @@ export function KanbanSkeleton({
 export function DashboardSkeleton() {
   const card = "rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)]";
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5" aria-hidden="true">
+    <div className="mx-auto w-full max-w-[1600px] space-y-4 pb-6 lg:space-y-5" {...busy("Loading dashboard")}>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <Skel className="h-6 w-56" />
@@ -275,18 +274,14 @@ export function DashboardSkeleton() {
 
 export function ChartSkeleton({ height = 180 }: { height?: number }) {
   return (
-    <div
-      className="flex flex-col gap-3"
-      aria-hidden="true"
-      aria-label="Loading chart…"
-    >
+    <div className="flex flex-col gap-3" {...busy("Loading chart")}>
       <div className="flex items-end gap-1.5 px-2" style={{ height }}>
         {Array.from({ length: 12 }).map((_, i) => {
           const pct = 30 + Math.sin(i * 0.8) * 30 + (i % 3) * 10;
           return (
             <div
               key={i}
-              className="flex-1 animate-pulse rounded-t-sm bg-[var(--adm-line-soft)]/70"
+              className="skel flex-1 rounded-b-none"
               style={{ height: `${pct}%` }}
             />
           );
@@ -310,7 +305,7 @@ export function CardGridSkeleton({
   columns?: string;
 }) {
   return (
-    <div className={`grid gap-4 ${columns}`} aria-hidden="true" aria-label="Loading…">
+    <div className={cn("grid gap-4", columns)} {...busy("Loading")}>
       {Array.from({ length: cards }).map((_, i) => (
         <div key={i} className="rounded-[14px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
           <div className="flex items-start justify-between">

@@ -11,13 +11,13 @@ import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
 import JobDetailLoading from "./loading";
-import { jobCategory } from "@/lib/job-status";
+import { jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
 import { CandidateEditDrawer } from "@/components/admin/candidate-edit-drawer";
-import { usePageCrumb } from "@/components/admin/admin-provider";
-import { GridSelect, MenuSelect, RecordFact, RecordHeader, WorkspaceButton } from "@/components/admin/workspace";
+import { usePageCrumb, useNavSection } from "@/components/admin/admin-provider";
+import { GridSelect, RecordFact, RecordHeader, StatStrip, WorkspaceButton } from "@/components/admin/workspace";
 import { BestCandidates } from "@/components/admin/best-candidates";
 import { JobSubmissions } from "@/components/admin/job-submissions";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { AdminCard } from "@/components/admin/admin-card";
 import { JobTeamCard } from "@/components/admin/job-team-card";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -48,34 +48,24 @@ const APP_STATUSES: { value: Application["status"]; label: string }[] = [
   { value: "rejected",  label: "Rejected"  },
 ];
 
-const STATUS_FILTERS = [
-  { key: "all", label: "All stages" },
-  ...APP_STATUSES.map((s) => ({ key: s.value as string, label: s.label })),
-];
-
 /** Empty-cell placeholder, aligned with the other columns. */
 function Blank() {
   return <span className="text-[var(--adm-ink-subtle)]">–</span>;
 }
 
-/** Label/value row used by the rail panels. */
-function MetaRow({ label, value }: { label: string; value?: React.ReactNode }) {
-  const empty = value === undefined || value === null || value === "";
-  return (
-    <div className="flex items-baseline justify-between gap-3 px-4 py-2.5">
-      <dt className="flex-none text-[13px] text-[var(--adm-ink-mute)]">{label}</dt>
-      <dd className="min-w-0 break-words text-right text-[13.5px] text-[var(--adm-ink)]">
-        {empty ? <Blank /> : value}
-      </dd>
-    </div>
-  );
-}
-
+// Reading measure and paragraph rhythm: a posting is prose, not a data cell.
 const PROSE =
-  "text-[14px] leading-relaxed text-[var(--adm-ink-mute)] [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_li]:marker:text-[var(--adm-ink-subtle)]";
+  "max-w-[72ch] text-[14px] leading-relaxed text-[var(--adm-ink-mute)] [&_p+p]:mt-3 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_li]:marker:text-[var(--adm-ink-subtle)] [&_strong]:font-semibold [&_strong]:text-[var(--adm-ink)]";
 
-export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function JobDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ category?: string }>;
+}) {
   const { id: jobId } = use(params);
+  const hint = use(searchParams);
   const router = useRouter();
   const { user, hasAnyRole } = useAuth();
   const canEdit = canEditJobs(user?.role);
@@ -90,7 +80,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string | null>(null);
   const [missing, setMissing]             = useState(false);
-  const [storedTab, setActiveTab]         = useState<Tab>("applicants");
+  const [storedTab, setActiveTab]         = useState<Tab | null>(null);
   const [search, setSearch]               = useState("");
   const [statusFilter, setStatusFilter]   = useState("all");
   const [copied, setCopied]               = useState(false);
@@ -101,7 +91,14 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
      held in state: `user` is null on the first render while the session
      resolves, and an initial value read from it would leave a recruiter stuck
      on the tab media gets. */
-  const activeTab: Tab = canPrice ? storedTab : "info";
+  // Until a tab is picked: the applicants when there are some, the posting when there are none.
+  const activeTab: Tab = !canPrice ? "info" : storedTab ?? (applications.length > 0 ? "applicants" : "info");
+
+  // Both lists open this one route. The link's hint covers the moment before
+  // the record loads; the record decides after.
+  const category = jobCategory(job ?? hint);
+  useNavSection(JOB_LIST_HREF[category]);
+  const list = { label: JOB_LIST_LABEL[category], href: JOB_LIST_HREF[category] };
 
   const debouncedSearch = useDebouncedValue(search, 250);
 
@@ -173,6 +170,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     ]),
   );
 
+  const showStage = (stage: string) => { setStatusFilter(stage); setActiveTab("applicants"); };
+
   const pipelineCounts = applications.reduce((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1;
     return acc;
@@ -184,7 +183,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     const failed = !!error && !missing;
     return (
       <div className="pb-10">
-        <RecordHeader back={{ label: "State roles", href: "/admin/jobs" }} title="Job posting" />
+        <RecordHeader back={list} title="Job posting" />
         <AdminCard>
           <EmptyState
             variant={failed ? "error" : "fresh"}
@@ -194,7 +193,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 {failed && <WorkspaceButton variant="primary" onClick={() => void fetchData()}>Try again</WorkspaceButton>}
-                <WorkspaceButton onClick={() => router.push("/admin/jobs")}>Back to state roles</WorkspaceButton>
+                <WorkspaceButton onClick={() => router.push(list.href)}>Back to {list.label.toLowerCase()}</WorkspaceButton>
               </div>
             }
           />
@@ -319,6 +318,28 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     },
   ];
 
+  const editHref = `/admin/jobs/${jobId}/edit${category === "open" ? "?category=open" : ""}`;
+
+  const details: { label: string; value?: React.ReactNode }[] = [
+    ...(canPrice ? [
+      { label: "Client", value: job.clientName },
+      { label: "Vendor", value: job.vendorName ? (
+        <span className="inline-flex items-center gap-1.5">
+          <IconTruck className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{job.vendorName}
+        </span>
+      ) : undefined },
+      { label: "Pay rate", value: job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined },
+      { label: "Bill rate", value: job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined },
+    ] : []),
+    { label: "Salary range", value: job.salary ? (
+      <span className="tabular-nums">${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}</span>
+    ) : undefined },
+    { label: "Deadline", value: job.submissionDueDate ? <span className="tabular-nums">{fmtDate(job.submissionDueDate)}</span> : undefined },
+    { label: "Created", value: <span className="tabular-nums">{fmtDate(job.createdAt)}</span> },
+    { label: "Posted by", value: job.postedByName },
+  ];
+  const missingDetails = details.filter((d) => !d.value).map((d) => d.label);
+
   const hasRequirements = !!richTextToPlain(job.requirements);
   const hasResponsibilities = !!richTextToPlain(job.responsibilities);
 
@@ -329,18 +350,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     { id: "info" as Tab,        label: "About job",       count: undefined, icon: IconFile },
   ]).filter((tab) => canPrice || tab.id === "info");
 
-  const stageOptions = STATUS_FILTERS.map((s) => ({
-    value: s.key,
-    label: s.label,
-    hint: String(s.key === "all" ? applications.length : pipelineCounts[s.key] || 0),
-  }));
-
   return (
     <div className="pb-10">
       <RecordHeader
-        back={jobCategory(job) === "open"
-          ? { label: "Open roles", href: "/admin/open-roles" }
-          : { label: "State roles", href: "/admin/jobs" }}
+        back={list}
         title={job.title}
         status={<StatusBadge status={job.status} label={statusLabel} size="md" />}
         meta={
@@ -364,18 +377,33 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         }
         actions={
           <>
-            <WorkspaceButton onClick={copyLink} aria-label={copied ? "Link copied" : "Copy link"}>
-              {copied ? <Check className="text-[var(--adm-success-ink)]" aria-hidden="true" /> : <IconCopy aria-hidden="true" />}
-              <span className="hidden sm:inline">{copied ? "Copied" : "Copy link"}</span>
-            </WorkspaceButton>
-            {canManageApplicants && (
-              <WorkspaceButton onClick={handleExport} aria-label="Export applicants">
-                <IconDownload aria-hidden="true" />
-                <span className="hidden sm:inline">Export</span>
-              </WorkspaceButton>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <WorkspaceButton aria-label="More actions" className="px-2.5">
+                  <MoreHorizontal aria-hidden="true" />
+                </WorkspaceButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={6}
+                className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+              >
+                <DropdownMenuItem onClick={copyLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+                  {copied
+                    ? <Check className="h-4 w-4 text-[var(--adm-success-ink)]" aria-hidden="true" />
+                    : <IconCopy className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />}
+                  {copied ? "Link copied" : "Copy link"}
+                </DropdownMenuItem>
+                {canManageApplicants && filteredApps.length > 0 && (
+                  <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+                    <IconDownload className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                    Export {filteredApps.length} applicant{filteredApps.length === 1 ? "" : "s"}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {canEdit && (
-              <WorkspaceButton onClick={() => router.push(`/admin/jobs/${jobId}/edit`)}>
+              <WorkspaceButton onClick={() => router.push(editHref)}>
                 <IconEdit aria-hidden="true" />Edit
               </WorkspaceButton>
             )}
@@ -388,11 +416,37 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         }
       />
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
-
-        {/* Main column */}
+      <div className={cn("mb-4 grid grid-cols-1 items-start gap-4", canPrice && "lg:grid-cols-[minmax(0,1fr)_320px]")}>
         <AdminCard className="overflow-hidden">
-          <div role="tablist" aria-label="Job sections" className="flex gap-1 overflow-x-auto border-b border-[var(--adm-line)] px-2 sm:px-3">
+          <dl aria-label="Role details" className="flex flex-wrap gap-x-10 gap-y-4 px-5 py-4">
+            {details.filter((d) => d.value).map((d) => (
+              <div key={d.label} className="min-w-0">
+                <dt className="text-[12.5px] text-[var(--adm-ink-subtle)]">{d.label}</dt>
+                <dd className="mt-1 break-words text-[14.5px] font-semibold text-[var(--adm-ink)]">{d.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {missingDetails.length > 0 && (
+            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-2.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+              Not recorded: {missingDetails.join(", ").toLowerCase()}.
+              {canEdit && (
+                <>
+                  {" "}
+                  <button type="button" onClick={() => router.push(editHref)} className="font-medium text-[var(--adm-accent)] underline-offset-4 hover:underline">
+                    Add them
+                  </button>
+                </>
+              )}
+            </p>
+          )}
+        </AdminCard>
+
+        {/* Always rendered, even when empty: its + is how the first recruiter gets assigned. */}
+        {canPrice && <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />}
+      </div>
+
+      <AdminCard className="overflow-hidden">
+          <div role="tablist" aria-label="Job sections" className="adm-scroll-hidden flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[var(--adm-line)] px-2 sm:px-3">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -403,7 +457,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   aria-selected={isActive}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "-mb-px inline-flex h-11 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
+                    "inline-flex h-11 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
                     isActive
                       ? "border-[var(--adm-accent)] text-[var(--adm-ink)]"
                       : "border-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]",
@@ -429,8 +483,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           {activeTab === "candidates" && <BestCandidates jobId={jobId} bare />}
 
           {activeTab === "info" && (
-            job.description || hasRequirements || hasResponsibilities ? (
-              <div className="space-y-5 p-4">
+            job.description || hasRequirements || hasResponsibilities || job.clientNotes ? (
+              <div className="space-y-6 p-5">
                 {job.description ? (
                   <section>
                     <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Description</h3>
@@ -451,6 +505,13 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                     <div className={PROSE} dangerouslySetInnerHTML={renderListField(job.responsibilities)} />
                   </section>
                 )}
+
+                {job.clientNotes && (
+                  <section>
+                    <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Client notes</h3>
+                    <p className={cn(PROSE, "whitespace-pre-wrap")}>{job.clientNotes}</p>
+                  </section>
+                )}
               </div>
             ) : (
               <EmptyState
@@ -458,7 +519,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                 title="No posting copy yet"
                 description="Add a description, requirements and responsibilities so candidates know what the role involves."
                 action={canEdit ? (
-                  <WorkspaceButton onClick={() => router.push(`/admin/jobs/${jobId}/edit`)}>
+                  <WorkspaceButton onClick={() => router.push(editHref)}>
                     <IconEdit aria-hidden="true" />Write the posting
                   </WorkspaceButton>
                 ) : undefined}
@@ -468,16 +529,26 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
           {activeTab === "applicants" && (
             <div>
-              <div className="flex flex-wrap items-center gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
                 <SearchInput value={search} onChange={setSearch} placeholder="Search by name or email…" />
                 {applications.length > 0 && (
-                  <MenuSelect
-                    label="Stage"
-                    value={statusFilter}
-                    options={stageOptions}
-                    onChange={setStatusFilter}
-                    align="start"
+                  <StatStrip
+                    className="mb-0 shadow-none"
+                    items={[
+                      { label: "All", value: applications.length, onClick: () => showStage("all") },
+                      ...APP_STATUSES.filter((s) => pipelineCounts[s.value]).map((s) => ({
+                        label: s.label,
+                        value: pipelineCounts[s.value],
+                        onClick: () => showStage(s.value),
+                      })),
+                    ]}
                   />
+                )}
+                {statusFilter !== "all" && (
+                  <WorkspaceButton size="sm" variant="ghost" onClick={() => setStatusFilter("all")}>
+                    <X aria-hidden="true" />
+                    {APP_STATUSES.find((s) => s.value === statusFilter)?.label ?? "Stage"} only
+                  </WorkspaceButton>
                 )}
                 <span className="ml-auto flex-none text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
                   <span className="font-medium text-[var(--adm-ink-mute)]">{filteredApps.length}</span> of {applications.length}
@@ -511,46 +582,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               />
             </div>
           )}
-        </AdminCard>
-
-        {/* Right rail, stacks below xl */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1">
-          <AdminCard className="overflow-hidden">
-            <AdminCardHeader icon={IconBuilding} title="Role details" />
-            <dl className="divide-y divide-[var(--adm-line-soft)] py-1">
-              {canPrice && <MetaRow label="Client" value={job.clientName} />}
-              {canPrice && <MetaRow label="Vendor" value={job.vendorName ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <IconTruck className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{job.vendorName}
-                </span>
-              ) : undefined} />}
-              {canPrice && <MetaRow label="Pay rate" value={job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined} />}
-              {canPrice && <MetaRow label="Bill rate" value={job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined} />}
-              <MetaRow
-                label="Salary range"
-                value={job.salary ? (
-                  <span className="tabular-nums">
-                    ${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}
-                  </span>
-                ) : undefined}
-              />
-              <MetaRow label="Deadline" value={job.submissionDueDate ? <span className="tabular-nums">{fmtDate(job.submissionDueDate)}</span> : undefined} />
-              <MetaRow label="Created" value={<span className="tabular-nums">{fmtDate(job.createdAt)}</span>} />
-              <MetaRow label="Posted by" value={job.postedByName} />
-            </dl>
-          </AdminCard>
-
-          {/* Always rendered, even when empty: its + is how the first recruiter gets assigned. */}
-          {canPrice && <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />}
-
-          {job.clientNotes && (
-            <AdminCard className="overflow-hidden">
-              <AdminCardHeader icon={IconFile} title="Client notes" />
-              <p className="whitespace-pre-wrap p-4 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{job.clientNotes}</p>
-            </AdminCard>
-          )}
-        </div>
-      </div>
+      </AdminCard>
 
       <CandidateEditDrawer
         open={drawerOpen}

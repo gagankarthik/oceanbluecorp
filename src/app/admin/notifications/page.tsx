@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { IconBell, IconSuccess, IconTrash, IconAlert, IconEyeOff } from "@/components/admin/icons";
-import { fmtRelative } from "@/lib/format";
+import { fmtDateTime, fmtRelative } from "@/lib/format";
 import {
   Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu, StatStrip,
 } from "@/components/admin/workspace";
@@ -238,7 +238,11 @@ export default function NotificationsPage() {
       align: "right",
       hideBelow: "sm",
       sortValue: (n) => new Date(n.createdAt).getTime(),
-      cell: (n) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtRelative(n.createdAt)}</span>,
+      cell: (n) => (
+        <time dateTime={n.createdAt} title={fmtDateTime(n.createdAt)} className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+          {fmtRelative(n.createdAt)}
+        </time>
+      ),
     },
     {
       key: "actions",
@@ -290,7 +294,7 @@ export default function NotificationsPage() {
     },
   ];
 
-  if (loading) return <AdminListSkeleton stats={4} rows={6} />;
+  if (loading) return <AdminListSkeleton stats={4} rows={6} label="Loading notifications" />;
 
   return (
     <>

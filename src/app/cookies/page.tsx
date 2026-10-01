@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { LEGAL_DOCS } from "@/lib/legal";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { DocPage, DocSection, P, UL, DocTable, RelatedLinks, IconPin } from "@/components/site/legal/doc";
+import { DocPage, DocSection, P, UL, DocTable, RelatedLinks, IconPin, Callout } from "@/components/site/legal/doc";
 import { IconShieldLock, IconSettings, IconExternal, IconMail, type Icon } from "@/components/site/icons";
 
 export const metadata: Metadata = pageMetadata({
@@ -62,14 +63,15 @@ const COOKIE_TABLE = [
 ];
 
 export default function CookiesPage() {
-  const EFFECTIVE = "April 1, 2026";
+  const { effective: EFFECTIVE, updated, history } = LEGAL_DOCS.cookies;
 
   return (
     <DocPage
       title="Cookie Policy"
       lede={<>This Cookie Policy explains how Ocean Blue Corporation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold text-ink">oceanbluecorp.com</strong>.</>}
-      meta={[{ label: "Effective date", value: EFFECTIVE }, { label: "Last updated", value: "September 30, 2026" }]}
+      meta={[{ label: "Effective date", value: EFFECTIVE }, { label: "Last updated", value: updated }]}
       toc={SECTIONS}
+      history={history}
       aside={
         <div className="rounded-xl border border-line bg-paper p-4">
           <p className="type-label font-semibold text-ink">Questions?</p>
@@ -83,6 +85,9 @@ export default function CookiesPage() {
       }
     >
               <DocSection id="what-are-cookies" number="01" title="What Are Cookies">
+                <Callout title="At a Glance">
+                  <p>This site stores only what it needs to work: your cookie choice, whether you closed an announcement, and, for staff, the sign-in session. It sets no analytics or advertising cookies. You can clear any of it in your browser at any time.</p>
+                </Callout>
                 <P>
                   Cookies are small text files placed on your device (computer, tablet, or smartphone) when you visit a website. They are widely used to make websites work, improve user experience, and provide reporting information to website owners.
                 </P>

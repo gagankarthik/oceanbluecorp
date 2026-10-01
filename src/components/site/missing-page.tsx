@@ -5,8 +5,7 @@
  * globals.css) and holds still under reduced motion.
  */
 
-const W = 640;
-const H = 420;
+import { ART_H as H, ART_W as W, ArtShadows, ArtWindow } from "./art-window";
 
 /** Deterministic 0..1 noise, so server and client draw the same edge. */
 const noise = (i: number) => {
@@ -47,12 +46,7 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label="404: a web page with a piece torn out of it">
       <defs>
-        <filter id={`${id}-shadow`} x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#0b1a33" floodOpacity=".14" />
-        </filter>
-        <filter id={`${id}-soft`} x="-40%" y="-40%" width="180%" height="200%">
-          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#0b1a33" floodOpacity=".18" />
-        </filter>
+        <ArtShadows id={id} />
         <linearGradient id={`${id}-void`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#c9d6ec" />
           <stop offset="1" stopColor="#e7edf6" />
@@ -72,20 +66,9 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
       </defs>
 
       <g className="nf-rise">
-        {/* Window. */}
-        <g filter={`url(#${id}-shadow)`}>
-          <rect x="60" y="24" width="520" height="360" rx="18" fill="#fff" />
-        </g>
-        <rect x="60.5" y="24.5" width="519" height="359" rx="17.5" fill="none" stroke="#e2e8f1" />
-        <path d="M60 60h520" stroke="#e2e8f1" />
-        {["#f3b5ae", "#f4d9a1", "#b9dfc3"].map((c, i) => (
-          <circle key={c} cx={84 + i * 16} cy="42" r="5" fill={c} />
-        ))}
-        <rect x="180" y="32" width="280" height="20" rx="10" fill="#f3f6fb" />
-        <circle cx="194" cy="42" r="3.5" fill="none" stroke="#9aa6ba" strokeWidth="1.5" />
-        <text x="206" y="46" fontSize="11" fill="#56637b" fontFamily="inherit">
+        <ArtWindow id={id}>
           oceanbluecorp.com/<tspan fill="#e8432f" className="nf-blink">page-not-found</tspan>
-        </text>
+        </ArtWindow>
 
         {/* Page skeleton, shimmering as if still loading. */}
         {lines.map(([x, y, w], i) => (

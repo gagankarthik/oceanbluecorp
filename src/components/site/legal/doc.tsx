@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { LegalRevision } from "@/lib/legal";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "../sections";
 import { IconArrowRight, IconChevronDown, IconMail, IconPhone, IconPin, type IconProps } from "../icons";
 export { IconPin, IconArrowLeft, IconPhone } from "../icons";
@@ -51,6 +52,7 @@ export function DocPage({
   meta,
   toc,
   aside,
+  history,
   children,
 }: {
   title: string;
@@ -59,8 +61,11 @@ export function DocPage({
   toc: DocToc;
   /** Extra block under the contents list, e.g. a contact line. */
   aside?: React.ReactNode;
+  /** Revisions, newest first. Rendered as the document's last section. */
+  history?: LegalRevision[];
   children: React.ReactNode;
 }) {
+  const contents = history?.length ? [...toc, { id: "version-history", label: "Version history" }] : toc;
   return (
     <>
       <section data-opener className="border-b border-line bg-paper">
@@ -95,17 +100,31 @@ export function DocPage({
             <IconChevronDown size={16} className="text-ink-subtle transition-transform group-open:rotate-180" />
           </summary>
           <div className="px-4 pb-4">
-            <Contents toc={toc} />
+            <Contents toc={contents} />
           </div>
         </details>
         <nav aria-label="On this page" className="hidden lg:sticky lg:top-28 lg:block lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto">
           <p className="type-label font-semibold text-ink">On this page</p>
           <div className="mt-3">
-            <Contents toc={toc} />
+            <Contents toc={contents} />
           </div>
           {aside && <div className="mt-8">{aside}</div>}
         </nav>
-        <div className="min-w-0 max-w-[760px]">{children}</div>
+        <div className="min-w-0 max-w-[760px]">
+          {children}
+          {history && history.length > 0 && (
+            <DocSection id="version-history" title="Version history">
+              <ol className="space-y-4">
+                {history.map((r) => (
+                  <li key={r.date} className="grid gap-1 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-6">
+                    <span className="font-semibold text-ink">{r.date}</span>
+                    <span>{r.summary}</span>
+                  </li>
+                ))}
+              </ol>
+            </DocSection>
+          )}
+        </div>
       </div>
     </>
   );

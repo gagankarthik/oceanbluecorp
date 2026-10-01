@@ -8,10 +8,13 @@ import { cn } from "@/lib/utils";
 type Variant = "primary" | "accent" | "dark" | "outline" | "ghost" | "inverse" | "outline-dark";
 type Size = "md" | "lg";
 
+const PRIMARY =
+  "bg-[var(--button-primary-background)] text-[var(--button-primary-text)] border border-[var(--button-primary-background)] hover:bg-[var(--button-primary-background-hover)] hover:border-[var(--button-primary-background-hover)] active:bg-[var(--button-primary-background-pressed)]";
+
 const variants: Record<Variant, string> = {
   // The brand's action colour. `accent` is kept as an alias for older call sites.
-  primary: "bg-cobalt text-white border border-cobalt hover:bg-cobalt-deep hover:border-cobalt-deep",
-  accent: "bg-cobalt text-white border border-cobalt hover:bg-cobalt-deep hover:border-cobalt-deep",
+  primary: PRIMARY,
+  accent: PRIMARY,
   dark: "bg-ink text-white border border-ink hover:bg-ink-muted hover:border-ink-muted",
   outline: "bg-white text-ink border border-line-strong hover:border-cobalt hover:text-cobalt",
   ghost: "bg-transparent text-ink-muted border border-transparent hover:text-ink hover:bg-paper",
@@ -20,14 +23,14 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  md: "h-10 px-4 text-[14.5px] gap-2",
-  lg: "h-12 px-6 text-[15.5px] gap-2",
+  md: "h-[var(--button-height-md)] px-4 text-[14.5px] gap-2",
+  lg: "h-[var(--button-height-lg)] px-6 text-[15.5px] gap-2",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
     "inline-flex shrink-0 items-center justify-center rounded-full font-semibold whitespace-nowrap transition-colors duration-200 active:translate-y-px",
-    "disabled:pointer-events-none disabled:opacity-40",
+    "disabled:pointer-events-none disabled:opacity-[var(--opacity-disabled)]",
     variants[variant],
     sizes[size],
     className,

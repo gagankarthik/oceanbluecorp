@@ -14,6 +14,10 @@ export function isPubliclyOpen(status: string | null | undefined): status is Pub
 /** Which admin list a posting lives in. Both show together on the careers board. */
 export type JobCategory = "state" | "open";
 
+/** The console list each category lives on. One detail route serves both. */
+export const JOB_LIST_HREF = { state: "/admin/jobs", open: "/admin/open-roles" } as const;
+export const JOB_LIST_LABEL = { state: "State roles", open: "Open roles" } as const;
+
 /** Records from before the split carry no category; they are all state roles. */
 export function jobCategory(job: { category?: string | null }): JobCategory {
   return job.category === "open" ? "open" : "state";

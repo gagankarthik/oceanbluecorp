@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { LEGAL_DOCS } from "@/lib/legal";
 import Link from "next/link";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 import { LinkButton } from "@/components/site/button";
@@ -30,21 +31,21 @@ const documents: { name: string; href: string; updated: string | null; desc: str
   {
     name: "Privacy Policy",
     href: "/privacy",
-    updated: "April 1, 2026",
+    updated: LEGAL_DOCS.privacy.updated,
     desc: "What personal data we collect, how it is used, how long it is kept, and the rights available to you, including under CCPA.",
     icon: IconLock,
   },
   {
     name: "Terms of Service",
     href: "/terms",
-    updated: "April 1, 2026",
+    updated: LEGAL_DOCS.terms.updated,
     desc: "The agreement governing use of this site and our services: your responsibilities, acceptable use, and limitation of liability.",
     icon: IconCaseStudy,
   },
   {
     name: "Cookie Policy",
     href: "/cookies",
-    updated: "April 1, 2026",
+    updated: LEGAL_DOCS.cookies.updated,
     desc: "Which cookies this site sets, what each one does, and how to control them in your browser.",
     icon: IconCookie,
   },
@@ -106,7 +107,7 @@ export default function Legal() {
                     <d.icon size={20} />
                   </span>
                   <h2 className="mt-6 type-title-lg font-semibold text-ink">{d.name}</h2>
-                  {d.updated && <p className="mt-1 type-body-sm text-ink-subtle">Effective {d.updated}</p>}
+                  {d.updated && <p className="mt-1 type-body-sm text-ink-subtle">Last updated {d.updated}</p>}
                   <p className="mt-3 type-body text-ink-muted">{d.desc}</p>
                   <span className="mt-auto inline-flex items-center gap-2 pt-6 type-label font-semibold text-ink">
                     Read
