@@ -184,7 +184,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
  * not records, so they need no sorting, selection, or pagination. Chrome comes
  * from the shared `.adm-grid` rules so it reads like every other admin grid.
  */
-function DataTable({
+function DocTable({
   headers,
   rows,
 }: {
@@ -242,10 +242,6 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
       <pre className="max-w-full overflow-x-auto whitespace-pre p-4 font-mono text-[12.5px] leading-relaxed text-[var(--adm-ink)]">{children}</pre>
     </div>
   );
-}
-
-function Badge({ label, tone }: { label: string; tone: Tone }) {
-  return <StatusBadge tone={tone} label={label} />;
 }
 
 function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" }) {
@@ -455,9 +451,9 @@ export default function AdminDocsPage() {
               <p className="text-[13px] text-[var(--adm-ink-mute)]">
                 Read from <code className={CODE}>routeAccess</code> in <code className={CODE}>src/lib/auth/config.ts</code>, the same map the layout enforces.
               </p>
-              <DataTable
+              <DocTable
                 headers={["Route", "Page", "Access"]}
-                rows={ROUTE_ROWS.map((r) => [r.route, r.name, <Badge key={r.route} label={r.label} tone={r.tone} />])}
+                rows={ROUTE_ROWS.map((r) => [r.route, r.name, <StatusBadge key={r.route} label={r.label} tone={r.tone} />])}
               />
             </SubSection>
           </section>
@@ -485,14 +481,14 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="User roles">
-              <DataTable
+              <DocTable
                 headers={["Role", "What it is for"]}
                 rows={[
-                  [<Badge key="1" label="Admin" tone="slate" />, "Everything, including users, roles, API keys, site content and settings"],
-                  [<Badge key="2" label="HR" tone="blue" />, "Recruiting, clients, vendors, contacts, publishing, and inviting staff"],
-                  [<Badge key="3" label="Recruiter" tone="emerald" />, "Applications, candidates, bench and resumes. Reads job postings without editing them"],
-                  [<Badge key="4" label="Sales" tone="amber" />, "Same recruiting access as Recruiter, and can create and edit job postings"],
-                  [<Badge key="5" label="Media" tone="violet" />, "Publishing sections and the public copy of job postings. No candidates, rates, clients or vendors"],
+                  [<StatusBadge key="1" label="Admin" tone="slate" />, "Everything, including users, roles, API keys, site content and settings"],
+                  [<StatusBadge key="2" label="HR" tone="blue" />, "Recruiting, clients, vendors, contacts, publishing, and inviting staff"],
+                  [<StatusBadge key="3" label="Recruiter" tone="emerald" />, "Applications, candidates, bench and resumes. Reads job postings without editing them"],
+                  [<StatusBadge key="4" label="Sales" tone="amber" />, "Same recruiting access as Recruiter, and can create and edit job postings"],
+                  [<StatusBadge key="5" label="Media" tone="violet" />, "Publishing sections and the public copy of job postings. No candidates, rates, clients or vendors"],
                 ]}
               />
               <InfoCard variant="info">
@@ -562,7 +558,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Job fields reference">
-              <DataTable
+              <DocTable
                 headers={["Field", "Required", "Description"]}
                 rows={[
                   ["Posting ID", "Auto", "Generated as OB-YYYY-XXXX (e.g. OB-2025-0042)"],
@@ -621,7 +617,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Views">
-              <DataTable
+              <DocTable
                 headers={["View", "Best for"]}
                 rows={[
                   ["Table View", "Bulk scanning, sorting, searching many applicants at once"],
@@ -646,7 +642,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Application fields">
-              <DataTable
+              <DocTable
                 headers={["Field", "Description"]}
                 rows={[
                   ["Name / Email / Phone", "Candidate contact information"],
@@ -709,7 +705,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Clients">
-              <DataTable
+              <DocTable
                 headers={["Field", "Description"]}
                 rows={[
                   ["Name", "Company name, appears on job postings"],
@@ -723,7 +719,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Vendors">
-              <DataTable
+              <DocTable
                 headers={["Field", "Description"]}
                 rows={[
                   ["Name", "Vendor company name"],
@@ -761,7 +757,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Contact fields">
-              <DataTable
+              <DocTable
                 headers={["Field", "Description"]}
                 rows={[
                   ["Name / Email / Phone", "Submitter contact details"],
@@ -795,7 +791,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Role permission matrix">
-              <DataTable
+              <DocTable
 headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
                 rows={[
                   ["Dashboard", <Yes />, <Yes />, <Yes />, <Yes />, <No />],
@@ -834,7 +830,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             <SubSection title="Global command palette">
               <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)]">
                 <p>Press <Kbd className={KBD}>⌘ K</Kbd> (Mac) or <Kbd className={KBD}>Ctrl K</Kbd> (Windows) from anywhere in the admin panel to open the command palette.</p>
-                <DataTable
+                <DocTable
                   headers={["Search scope", "Examples"]}
                   rows={[
                     ["Jobs", "Search by title, department, client, posting ID"],
@@ -861,7 +857,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Email notifications (SES)">
-              <DataTable
+              <DocTable
                 headers={["Trigger", "Recipients"]}
                 rows={[
                   ["New portal application submitted", "Candidate (confirmation) + recruitment manager + assigned team"],
@@ -921,7 +917,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </div>
 
             <SubSection title="Jobs">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/jobs", "List all jobs (optional ?status= filter)"],
@@ -937,7 +933,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Applications">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/applications", "List applications (?jobId= or ?userId=)"],
@@ -952,7 +948,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Resumes">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="POST" />, "/api/resume/upload", "Upload a resume: server-side to S3 + DynamoDB record"],
@@ -966,7 +962,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Admin & stats">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/admin/stats", "Dashboard statistics (requires auth)"],
@@ -983,7 +979,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Clients, vendors & contacts">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/clients", "List all clients"],
@@ -999,7 +995,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Publishing, pipeline and notifications">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/articles", "List articles by kind (Admin, HR, Media)"],
@@ -1016,7 +1012,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Sign-in and session">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="POST" />, "/api/auth/signin", "Email and password against Cognito; returns tokens or the first-sign-in challenge"],
@@ -1034,7 +1030,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
                 These are public-facing routes authenticated by API keys (not Cognito). Manage keys at{" "}
                 <strong>/admin/api-keys</strong>. Public docs at <strong>/developers</strong>.
               </InfoCard>
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Auth", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/v1/jobs", "X-API-Key, jobs:read", "Paginated list of active/open jobs. Query: status, department, type, page, limit"],
@@ -1045,7 +1041,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="API key management (admin)">
-              <DataTable
+              <DocTable
                 headers={["Method", "Route", "Description"]}
                 rows={[
                   [<HttpBadge key="1" method="GET" />, "/api/admin/api-keys", "List all partner API keys (key value previewed only)"],
@@ -1066,7 +1062,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             />
 
             <SubSection title="Services in use">
-              <DataTable
+              <DocTable
                 headers={["Service", "Purpose", "Config file"]}
                 rows={[
                   ["DynamoDB", "Primary database, all app data", "src/lib/aws/dynamodb.ts"],
@@ -1079,7 +1075,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="DynamoDB tables">
-              <DataTable
+              <DocTable
                 headers={["Table", "PK", "GSIs", "Purpose"]}
                 rows={[
                   ["oceanblue-jobs", "id", "status-index", "Job postings with all metadata"],
@@ -1165,7 +1161,7 @@ RESUME_MATCH_API_KEY=your_key`}</CodeBlock>
             </SubSection>
 
             <SubSection title="HTTP security headers">
-              <DataTable
+              <DocTable
                 headers={["Header", "Value", "Protection"]}
                 rows={[
                   ["X-Frame-Options", "SAMEORIGIN", "Prevents clickjacking in iframes"],

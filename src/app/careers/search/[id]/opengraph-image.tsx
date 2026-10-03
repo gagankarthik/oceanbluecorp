@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getJob } from "@/lib/aws/dynamodb";
+import { loadJob } from "./job";
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 627 };
@@ -28,7 +28,7 @@ export default async function OGImage({
   let jobDepartment = "";
 
   try {
-    const result = await getJob(id);
+    const result = await loadJob(id);
     if (result.success && result.data) {
       const job = result.data;
       jobTitle = job.title || "Open Position";

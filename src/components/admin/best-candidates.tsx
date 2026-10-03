@@ -39,12 +39,19 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
   const [error, setError] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [matchedAt, setMatchedAt] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // Load the cached ranking on open, instant, no re-vectorizing.
   useEffect(() => {
     let active = true;
+    setLoadError(false);
     fetch(`/api/jobs/${jobId}/match-candidates`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        // A 4xx just means no saved ranking yet.
+        if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
+        return r.ok ? r.json() : null;
+      })
       .then((d) => {
         if (active && d && Array.isArray(d.candidates) && d.candidates.length) {
           setCandidates(d.candidates);
@@ -52,11 +59,11 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
           setRan(true);
         }
       })
-      .catch(() => {});
+      .catch(() => { if (active) setLoadError(true); });
     return () => {
       active = false;
     };
-  }, [jobId]);
+  }, [jobId, loadAttempt]);
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -117,6 +124,14 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {!loading && !error && loadError && !ran && (
+        <div role="alert" className="mb-3 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+          <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
+          <span className="min-w-0 flex-1">The saved ranking couldn&apos;t be loaded.</span>
+          <WorkspaceButton className="h-8 px-3 text-[13px]" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
         </div>
       )}
 

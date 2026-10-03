@@ -4,18 +4,18 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LayoutGrid, LayoutList, Loader2, Plus, X } from "lucide-react";
+import { LayoutGrid, LayoutList, Plus, X } from "lucide-react";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import { useAuth, UserRole } from "@/lib/auth";
 import BenchLoading from "./loading";
 
-import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
+import { Field, FormSelect } from "@/components/admin/forms/primitives";
 import {
   Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterMenu, ActiveFilters, DisplayMenu,
-  RecordHeader, FormActionBar, GridSelect,
+  GridSelect,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { AdminCard } from "@/components/admin/admin-card";
 import { ViewMenu } from "@/components/admin/toolbar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StarRating } from "@/components/admin/star-rating";
@@ -25,19 +25,15 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { Empty as BlankCell } from "@/components/admin/list-panel";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
-  statusMeta, statusColor, US_STATES, normalizeState,
-  WORK_AUTH_OPTIONS, SOURCE_OPTIONS, HIRE_TYPE_OPTIONS, hireTypeLabel,
+  statusMeta, statusColor, stateOf, STATE_NAME, HIRE_TYPE_OPTIONS, hireTypeLabel,
 } from "@/components/admin/theme";
 import { POOL_META, POOL_ORDER, poolOf, canView } from "@/lib/bench";
 import {
-  IconAlert, IconBoxes, IconDownload, IconEdit, IconEye,
-  IconFile, IconMail, IconPhone, IconShield, IconSource, IconTrash, IconUpload,
+  IconBoxes, IconDownload, IconEdit, IconEye,
+  IconFile, IconMail, IconPhone, IconShield, IconSource, IconTrash,
 } from "@/components/admin/icons";
 
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useFormErrors } from "@/hooks/use-form-errors";
-import { FormErrorBanner } from "@/components/admin/forms/form-alert";
-import { LIMITS, check, collectErrors, email, maxLen, phone, required } from "@/lib/form-validation";
 import { downloadCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +54,6 @@ interface CognitoUser {
 }
 
 type ViewMode = "table" | "cards";
-type PageMode = "list" | "create" | "edit";
 
 // ── config ───────────────────────────────────────────────────────────────────
 
@@ -83,22 +78,6 @@ const STATUS_TABS = [
  * candidate-tabs.tsx, because Lead Sourcing renders the same row.
  */
 type PoolKey = "all" | BenchType;
-
-const WORK_AUTH_CHOICES = WORK_AUTH_OPTIONS as NonNullable<Application["workAuthorization"]>[];
-const SOURCE_CHOICES = SOURCE_OPTIONS as NonNullable<Application["source"]>[];
-
-/**
- * A bench record's state as a canonical 2-letter code, for grouping, export and
- * display. Legacy rows stored the full name ("Texas"), so everything that reads
- * `state` goes through here to land in the same bucket as a row saved as "TX".
- * Anything `normalizeState` doesn't recognise passes through untouched rather
- * than disappearing.
- */
-function stateOf(value?: string | null): string {
-  return normalizeState(value) || value?.trim() || "";
-}
-
-const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
 
 /**
  * The location filter keys on STATE, not on the city string.
@@ -159,7 +138,6 @@ export default function TalentBenchPage() {
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
   // Jobs are fetched only to resolve each bench record's job title/department.
   const [, setJobs] = useState<Job[]>([]);
-  const [hrUsers, setHrUsers] = useState<CognitoUser[]>([]);
   const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,72 +163,8 @@ export default function TalentBenchPage() {
 
   const router = useRouter();
 
-  // Form states
-  const [pageMode, setPageMode] = useState<PageMode>("list");
-  const [selectedApplication, setSelectedApplication] = useState<ApplicationWithJob | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [skillInput, setSkillInput] = useState("");
-
-  // Resume upload states
-  const [resumeFile, setResumeFile] = useState<globalThis.File | null>(null);
-  const [resumeUploading, setResumeUploading] = useState(false);
-  const [resumeError, setResumeError] = useState<string | null>(null);
-  const [existingResume, setExistingResume] = useState<{ id: string; fileName: string } | null>(null);
-
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
-
-  // Which record is being re-parsed right now, if any.
-  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    source: "" as Application["source"] | "",
-    status: "active" as Application["status"],
-    benchType: "external" as BenchType,
-    jobId: "",
-    jobTitle: "",
-    ownership: "",
-    ownershipName: "",
-    workAuthorization: "" as Application["workAuthorization"] | "",
-    hireType: "",
-    rating: 0,
-    notes: "",
-    skills: [] as string[],
-    experience: "",
-    resumeId: "",
-    resumeFileName: "",
-    resumeFileKey: "",
-  });
-
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const {
-    errors: fieldErrors, validateAll, revalidate, reset: resetFieldErrors, invalidProps,
-  } = useFormErrors(() =>
-    collectErrors({
-      firstName: check(formData.firstName, required("Enter the candidate's first name."), maxLen(LIMITS.name)),
-      lastName: check(formData.lastName, required("Enter the candidate's last name."), maxLen(LIMITS.name)),
-      email: check(
-        formData.email,
-        required("Enter the candidate's email, like name@company.com."),
-        email("That email doesn't look complete. Use the form name@company.com."),
-        maxLen(LIMITS.email),
-      ),
-      phone: check(formData.phone, phone()),
-      address: check(formData.address, maxLen(LIMITS.short)),
-      city: check(formData.city, maxLen(LIMITS.name)),
-      zipCode: check(formData.zipCode, maxLen(10, "Enter a 5-digit ZIP code, or ZIP+4 like 10001-1234.")),
-      experience: check(formData.experience, maxLen(LIMITS.notes)),
-      notes: check(formData.notes, maxLen(LIMITS.notes)),
-    }),
-  );
 
   // ── data ──────────────────────────────────────────────────────────────────
 
@@ -261,7 +175,7 @@ export default function TalentBenchPage() {
       if (!hasData.current) setLoading(true);
       setError(null);
       const [appsResponse, jobsResponse] = await Promise.all([
-        fetch("/api/applications"),
+        fetch("/api/applications?bench=1&fields=summary"),
         fetch("/api/jobs?fields=summary"),
       ]);
 
@@ -279,7 +193,6 @@ export default function TalentBenchPage() {
       );
 
       const benchApps = (appsData.applications || [])
-        .filter((app: Application) => app.addToTalentBench === true)
         .map((app: Application) => {
           const job = app.jobId ? jobsMap.get(app.jobId) : null;
           return {
@@ -311,7 +224,6 @@ export default function TalentBenchPage() {
       if (response.ok) {
         const users = data.users || [];
         setAllUsers(users);
-        setHrUsers(users.filter((u: CognitoUser) => u.role === "hr" || u.role === "admin"));
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);
@@ -322,31 +234,6 @@ export default function TalentBenchPage() {
     void fetchData();
     void fetchUsers();
   }, [fetchData, fetchUsers]);
-
-  /**
-   * Poll the open record while its resume is being parsed in the background.
-   * Attaching a resume queues extraction server-side, so without this the
-   * profile would sit on "Analyzing…" until someone reloaded the page.
-   */
-  useEffect(() => {
-    const status = selectedApplication?.resumeAnalysisStatus;
-    const appId = selectedApplication?.id;
-    if (!appId || (status !== "pending" && status !== "processing")) return;
-
-    const timer = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/applications/${appId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const updated = data.application as ApplicationWithJob;
-        setSelectedApplication((prev) => (prev && prev.id === appId ? { ...prev, ...updated } : prev));
-        setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, ...updated } : a)));
-        if (updated.resumeAnalysisStatus === "completed") toast.success("Resume analyzed");
-      } catch { /* non-fatal, the next tick retries */ }
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [selectedApplication?.id, selectedApplication?.resumeAnalysisStatus]);
 
   // ── derived ───────────────────────────────────────────────────────────────
 
@@ -528,11 +415,7 @@ export default function TalentBenchPage() {
       const response = await fetch(`/api/applications/${appId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: newStatus,
-          changedBy: user?.id,
-          changedByName: user?.name,
-        }),
+        body: JSON.stringify({ status: newStatus }),
       });
 
       if (!response.ok) throw new Error("Failed to update status");
@@ -606,207 +489,16 @@ export default function TalentBenchPage() {
     ]),
   );
 
-  // ── form handlers ─────────────────────────────────────────────────────────
+  // ── navigation ────────────────────────────────────────────────────────────
 
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      phone: "",
-      email: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      source: "",
-      status: "active",
-      benchType: "external",
-      jobId: "",
-      jobTitle: "",
-      ownership: "",
-      ownershipName: "",
-      workAuthorization: "",
-      hireType: "",
-      rating: 0,
-      notes: "",
-      skills: [],
-      experience: "",
-      resumeId: "",
-      resumeFileName: "",
-      resumeFileKey: "",
-    });
-    setSkillInput("");
-    setResumeFile(null);
-    setResumeError(null);
-    setExistingResume(null);
-    setSaveError(null);
-    resetFieldErrors();
-  };
+  const handleCreateNew = () => router.push("/admin/applications/new?bench=1");
 
-  const handleCreateNew = () => {
-    resetForm();
-    setSelectedApplication(null);
-    setResumeFile(null);
-    setResumeError(null);
-    setExistingResume(null);
-    setPageMode("create");
-  };
-
-  const handleEditApplication = (app: ApplicationWithJob) => {
-    setSelectedApplication(app);
-    setFormData({
-      firstName: app.firstName || app.name?.split(" ")[0] || "",
-      lastName: app.lastName || app.name?.split(" ").slice(1).join(" ") || "",
-      phone: app.phone || "",
-      email: app.email,
-      address: app.address || "",
-      city: app.city || "",
-      // Legacy rows hold a full state name; the picker submits codes, so
-      // normalise on load or the select would render blank.
-      state: normalizeState(app.state),
-      zipCode: app.zipCode || "",
-      source: app.source || "",
-      status: app.status,
-      benchType: poolOf(app),
-      jobId: app.jobId || "",
-      jobTitle: app.jobTitle || "",
-      ownership: app.ownership || "",
-      ownershipName: app.ownershipName || "",
-      workAuthorization: app.workAuthorization || "",
-      hireType: app.hireType || "",
-      rating: app.rating || 0,
-      notes: app.notes || "",
-      skills: app.skills || [],
-      experience: app.experience || "",
-      resumeId: app.resumeId || "",
-      resumeFileName: app.resumeFileName || "",
-      resumeFileKey: app.resumeFileKey || "",
-    });
-    // Set existing resume info if available
-    if (app.resumeId && app.resumeFileName) {
-      setExistingResume({ id: app.resumeId, fileName: app.resumeFileName });
-    } else {
-      setExistingResume(null);
-    }
-    setResumeFile(null);
-    setResumeError(null);
-    setSaveError(null);
-    resetFieldErrors();
-    setPageMode("edit");
-  };
+  const handleEditApplication = (app: ApplicationWithJob) =>
+    router.push(`/admin/applications/${app.id}/edit?return=/admin/bench`);
 
   /** Opens the shared candidate record, the same one Applications uses. */
   const handleViewApplication = (app: ApplicationWithJob) => {
     router.push(`/admin/candidates/${app.id}`);
-  };
-
-  const handleOwnershipSelect = (userId: string) => {
-    const selectedUser = hrUsers.find((u) => u.id === userId);
-    setFormData({
-      ...formData,
-      ownership: userId,
-      ownershipName: selectedUser?.name || selectedUser?.email || "",
-    });
-  };
-
-  const handleAddSkill = () => {
-    if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
-      setFormData({ ...formData, skills: [...formData.skills, skillInput.trim()] });
-      setSkillInput("");
-    }
-  };
-
-  const handleRemoveSkill = (skill: string) => {
-    setFormData({ ...formData, skills: formData.skills.filter((s) => s !== skill) });
-  };
-
-  // Resume handlers
-  const handleResumeSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setResumeError(null);
-
-    if (!file) return;
-
-    // Validated on the extension rather than the MIME type, browsers report
-    // .doc/.docx inconsistently, and a type allow-list rejected valid resumes.
-    const name = file.name.toLowerCase();
-    if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
-      setResumeError("Choose a PDF or Word document (.pdf, .doc or .docx).");
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setResumeError("This file is larger than 5 MB. Choose a smaller copy of the resume.");
-      return;
-    }
-
-    setResumeFile(file);
-  };
-
-  const handleRemoveResume = () => {
-    setResumeFile(null);
-    setResumeError(null);
-  };
-
-  const handleRemoveExistingResume = () => {
-    setExistingResume(null);
-    setFormData({ ...formData, resumeId: "", resumeFileName: "", resumeFileKey: "" });
-  };
-
-  const uploadResume = async (userId: string): Promise<{ resumeId: string; fileName: string; fileKey: string } | null> => {
-    if (!resumeFile) return null;
-
-    setResumeUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", resumeFile);
-      fd.append("userId", userId);
-
-      const response = await fetch("/api/resume/upload", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "The resume didn't upload. Try again, or remove it and save without one.");
-      }
-
-      const { resumeId, fileKey } = await response.json();
-      return { resumeId, fileName: resumeFile.name, fileKey };
-    } catch (err) {
-      console.error("Resume upload error:", err);
-      setResumeError(err instanceof Error ? err.message : "The resume didn't upload. Try again, or remove it and save without one.");
-      return null;
-    } finally {
-      setResumeUploading(false);
-    }
-  };
-
-  /**
-   * Run (or re-run) resume extraction for a bench record.
-   *
-   * Uploading a resume from this page now queues extraction automatically, so
-   * this is the manual path: profiles added before that existed, and re-parsing
-   * after replacing a document.
-   */
-  const handleAnalyzeResume = async (appId: string) => {
-    setAnalyzingId(appId);
-    try {
-      const response = await fetch(`/api/applications/${appId}/analyze`, { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Analysis failed");
-
-      const updated = data.application as ApplicationWithJob;
-      setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, ...updated } : a)));
-      setSelectedApplication((prev) => (prev && prev.id === appId ? { ...prev, ...updated } : prev));
-      toast.success("Resume analyzed");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to analyze resume");
-    } finally {
-      setAnalyzingId(null);
-    }
   };
 
   const handleDownloadResume = async (resumeId: string) => {
@@ -818,100 +510,6 @@ export default function TalentBenchPage() {
       window.open(data.downloadUrl, "_blank");
     } catch {
       toast.error("Failed to download resume");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting || resumeUploading) return;
-    setSaveError(null);
-    if (!validateAll()) return;
-    setSubmitting(true);
-
-    try {
-      // Use existing application ID for edit mode, or generate a temp user ID for new entries
-      const userId = selectedApplication?.id || user?.id || `bench-${Date.now()}`;
-
-      // Upload resume if a new file is selected
-      let resumeData: { resumeId?: string; resumeFileName?: string; resumeFileKey?: string } = {};
-      if (resumeFile) {
-        const uploadResult = await uploadResume(userId);
-        if (uploadResult) {
-          resumeData = {
-            resumeId: uploadResult.resumeId,
-            resumeFileName: uploadResult.fileName,
-            resumeFileKey: uploadResult.fileKey,
-          };
-        } else {
-          throw new Error("The resume didn't upload, so the profile wasn't saved. Try again, or remove the file and save without it.");
-        }
-      } else if (existingResume) {
-        // Keep existing resume data
-        resumeData = {
-          resumeId: formData.resumeId,
-          resumeFileName: formData.resumeFileName,
-          resumeFileKey: formData.resumeFileKey,
-        };
-      }
-
-      const applicationData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        name: `${formData.firstName} ${formData.lastName}`,
-        phone: formData.phone || undefined,
-        email: formData.email,
-        address: formData.address || undefined,
-        city: formData.city || undefined,
-        state: formData.state || undefined,
-        zipCode: formData.zipCode || undefined,
-        source: formData.source || "Other",
-        status: formData.status,
-        benchType: formData.benchType,
-        jobId: formData.jobId || undefined,
-        jobTitle: formData.jobTitle || undefined,
-        ownership: formData.ownership || undefined,
-        ownershipName: formData.ownershipName || undefined,
-        workAuthorization: formData.workAuthorization || undefined,
-        hireType: formData.hireType || undefined,
-        rating: formData.rating || undefined,
-        notes: formData.notes || undefined,
-        addToTalentBench: true,
-        benchAddedBy: user?.email || user?.id || "system",
-        skills: formData.skills.length > 0 ? formData.skills : undefined,
-        experience: formData.experience || undefined,
-        createdBy: user?.email || user?.id || "system",
-        createdByName: user?.name || user?.email?.split("@")[0] || "System",
-        ...resumeData,
-      };
-
-      let response;
-      if (pageMode === "edit" && selectedApplication) {
-        response = await fetch(`/api/applications/${selectedApplication.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(applicationData),
-        });
-      } else {
-        response = await fetch("/api/applications", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(applicationData),
-        });
-      }
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "The profile couldn't be saved. Try again in a moment.");
-      }
-
-      await fetchData();
-      setPageMode("list");
-      resetForm();
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "The profile couldn't be saved. Try again in a moment.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -1126,274 +724,6 @@ export default function TalentBenchPage() {
           description={error}
           action={<WorkspaceButton onClick={() => void fetchData()}>Try again</WorkspaceButton>}
         />
-      </div>
-    );
-  }
-
-  // ── create / edit form ────────────────────────────────────────────────────
-
-  if (pageMode === "create" || pageMode === "edit") {
-    const closeForm = () => { setPageMode("list"); resetForm(); };
-    const set = <K extends keyof typeof formData>(k: K, v: (typeof formData)[K]) => setFormData({ ...formData, [k]: v });
-    return (
-      <div className="flex flex-col">
-        <RecordHeader
-          back={{ label: "Talent bench", onClick: closeForm }}
-          title={pageMode === "create" ? "Add bench profile" : "Edit bench profile"}
-          subtitle={pageMode === "edit" ? selectedApplication?.name || undefined : "Only first name, last name and email are required."}
-        />
-
-        <form onSubmit={handleSubmit} onBlur={revalidate} noValidate>
-          <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} className="mb-4" />
-          <div className="grid grid-cols-1 items-start gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0 space-y-4 lg:space-y-5">
-              <FormCard title="Personal information">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="First name" required htmlFor="firstName" error={fieldErrors.firstName}>
-                    <FormInput id="firstName" required value={formData.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="John" {...invalidProps("firstName")} />
-                  </Field>
-                  <Field label="Last name" required htmlFor="lastName" error={fieldErrors.lastName}>
-                    <FormInput id="lastName" required value={formData.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder="Doe" {...invalidProps("lastName")} />
-                  </Field>
-                  <Field label="Email" required htmlFor="email" error={fieldErrors.email}>
-                    <FormInput id="email" required type="email" value={formData.email} onChange={(e) => set("email", e.target.value)} placeholder="john.doe@example.com" {...invalidProps("email")} />
-                  </Field>
-                  <Field label="Phone" htmlFor="phone" error={fieldErrors.phone}>
-                    <FormInput id="phone" type="tel" className="tabular-nums" value={formData.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 123-4567" {...invalidProps("phone")} />
-                  </Field>
-                </div>
-              </FormCard>
-
-              <FormCard title="Location" subtitle="State drives the bench's location filter">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
-                  <Field label="Address" htmlFor="address" className="sm:col-span-6" error={fieldErrors.address}>
-                    <FormInput id="address" value={formData.address} onChange={(e) => set("address", e.target.value)} placeholder="123 Main Street" {...invalidProps("address")} />
-                  </Field>
-                  <Field label="City" htmlFor="city" className="sm:col-span-3" error={fieldErrors.city}>
-                    <FormInput id="city" value={formData.city} onChange={(e) => set("city", e.target.value)} placeholder="New York" {...invalidProps("city")} />
-                  </Field>
-                  <Field label="State" htmlFor="state" className="sm:col-span-2">
-                    <FormSelect id="state" value={formData.state} onChange={(e) => set("state", e.target.value)}>
-                      <option value="">Select state</option>
-                      {US_STATES.map((s) => (
-                        <option key={s.code} value={s.code}>{s.name}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <Field label="ZIP code" htmlFor="zipCode" className="sm:col-span-1" error={fieldErrors.zipCode}>
-                    <FormInput id="zipCode" className="tabular-nums" value={formData.zipCode} onChange={(e) => set("zipCode", e.target.value)} placeholder="10001" {...invalidProps("zipCode")} />
-                  </Field>
-                </div>
-              </FormCard>
-
-              <FormCard title="Skills and experience">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <Field label="Skills" htmlFor="skillInput" helper="Press Enter to add each skill." className="sm:col-span-3">
-                    <div className="flex gap-2">
-                      <FormInput
-                        id="skillInput"
-                        value={skillInput}
-                        onChange={(e) => setSkillInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); }
-                        }}
-                        placeholder="React, Python, AWS…"
-                      />
-                      <WorkspaceButton onClick={handleAddSkill} aria-label="Add skill" className="px-3.5">
-                        <Plus aria-hidden="true" />
-                        <span className="hidden sm:inline">Add</span>
-                      </WorkspaceButton>
-                    </div>
-                    {formData.skills.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {formData.skills.map((skill) => (
-                          <span key={skill} className={cn(skillChip, "gap-0.5 pr-0.5")}>
-                            {skill}
-                            <button
-                              type="button"
-                              aria-label={`Remove ${skill}`}
-                              onClick={() => handleRemoveSkill(skill)}
-                              className="grid h-5 w-5 place-items-center rounded-[6px] transition-colors hover:bg-[var(--adm-accent)] hover:text-white"
-                            >
-                              <X className="h-3 w-3" aria-hidden="true" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </Field>
-                  <Field label="Experience summary" htmlFor="experience" className="sm:col-span-3" error={fieldErrors.experience}>
-                    <FormTextarea
-                      id="experience"
-                      {...invalidProps("experience")}
-                      rows={3}
-                      value={formData.experience}
-                      onChange={(e) => set("experience", e.target.value)}
-                      placeholder="Brief summary of experience and background…"
-                    />
-                  </Field>
-                  <Field label="Work authorization" htmlFor="workAuthorization">
-                    <FormSelect
-                      id="workAuthorization"
-                      value={formData.workAuthorization}
-                      onChange={(e) => set("workAuthorization", e.target.value as Application["workAuthorization"])}
-                    >
-                      <option value="">Select authorization</option>
-                      {WORK_AUTH_CHOICES.map((o) => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <Field label="Source" htmlFor="source">
-                    <FormSelect
-                      id="source"
-                      value={formData.source}
-                      onChange={(e) => set("source", e.target.value as Application["source"])}
-                    >
-                      <option value="">Select source</option>
-                      {SOURCE_CHOICES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <Field label="Type of hire" htmlFor="hireType">
-                    <FormSelect id="hireType" value={formData.hireType} onChange={(e) => set("hireType", e.target.value)}>
-                      <option value="">Select hire type</option>
-                      {HIRE_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                </div>
-              </FormCard>
-
-              <FormCard title="Notes">
-                <Field label="Notes" htmlFor="notes" error={fieldErrors.notes}>
-                  <FormTextarea
-                    id="notes"
-                    {...invalidProps("notes")}
-                    rows={4}
-                    value={formData.notes}
-                    onChange={(e) => set("notes", e.target.value)}
-                    placeholder="Anything the next recruiter should know about this candidate…"
-                  />
-                </Field>
-              </FormCard>
-            </div>
-
-            {/* Right rail: where the record sits on the bench, then its document. */}
-            <div className="min-w-0 space-y-4 lg:space-y-5">
-              <FormCard title="Bench placement">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                  <Field label="Stage" htmlFor="status">
-                    <FormSelect id="status" value={formData.status} onChange={(e) => set("status", e.target.value as Application["status"])}>
-                      {BENCH_STATUSES.map((s) => (
-                        <option key={s} value={s}>{statusMeta[s].label}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <Field label="Assigned to" htmlFor="ownership">
-                    <FormSelect id="ownership" value={formData.ownership} onChange={(e) => handleOwnershipSelect(e.target.value)}>
-                      <option value="">Unassigned</option>
-                      {hrUsers.map((u) => (
-                        <option key={u.id} value={u.id}>{u.name || u.email}</option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <Field label="Talent pool" htmlFor="benchType" helper={POOL_META[formData.benchType].hint} className="sm:col-span-2 xl:col-span-1">
-                    <FormSelect id="benchType" value={formData.benchType} onChange={(e) => set("benchType", e.target.value as BenchType)}>
-                      {POOL_ORDER.map((p) => (
-                        <option key={p} value={p}>
-                          {POOL_META[p].label} · {POOL_META[p].badge.toLowerCase()}
-                        </option>
-                      ))}
-                    </FormSelect>
-                  </Field>
-                  <div className="sm:col-span-2 xl:col-span-1">
-                    <p className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Rating</p>
-                    <div className="flex h-9 items-center gap-3">
-                      <StarRating size="lg" rating={formData.rating} onRate={(n) => set("rating", n)} />
-                      {formData.rating > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => set("rating", 0)}
-                          className="rounded-[6px] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-ink)]"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </FormCard>
-
-              <FormCard title="Resume" meta="PDF, DOC or DOCX, up to 5MB">
-                <div className="space-y-3">
-                  {existingResume && !resumeFile && (
-                    <FileRow
-                      name={existingResume.fileName}
-                      meta="Current resume on file"
-                      actions={
-                        <>
-                          <IconButton label="Download resume" onClick={() => void handleDownloadResume(existingResume.id)}>
-                            <IconDownload className="h-4 w-4" />
-                          </IconButton>
-                          <IconButton label="Remove resume" danger onClick={handleRemoveExistingResume}>
-                            <IconTrash className="h-4 w-4" />
-                          </IconButton>
-                        </>
-                      }
-                    />
-                  )}
-
-                  {resumeFile && (
-                    <FileRow
-                      name={resumeFile.name}
-                      meta={`${(resumeFile.size / 1024).toFixed(1)} KB · ready to upload`}
-                      actions={
-                        <IconButton label="Remove selected file" danger onClick={handleRemoveResume}>
-                          <X className="h-4 w-4" />
-                        </IconButton>
-                      }
-                    />
-                  )}
-
-                  {!resumeFile && (
-                    <label className="group relative block cursor-pointer rounded-[12px] border border-dashed border-[var(--adm-line-strong)] px-4 py-5 text-center transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]">
-                      <input
-                        type="file"
-                        id="resume-upload"
-                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        onChange={handleResumeSelect}
-                        className="sr-only"
-                      />
-                      <IconUpload className="mx-auto mb-2 h-5 w-5 text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" />
-                      <span className="block text-[14px] font-medium text-[var(--adm-ink)]">
-                        {existingResume ? "Upload a replacement" : "Choose a resume"}
-                      </span>
-                      <span className="mt-0.5 block text-[12.5px] text-[var(--adm-ink-subtle)]">Parsed automatically once saved</span>
-                    </label>
-                  )}
-
-                  {resumeError && (
-                    <p role="alert" className="flex items-start gap-2 rounded-[12px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
-                      <IconAlert className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-                      {resumeError}
-                    </p>
-                  )}
-                </div>
-              </FormCard>
-            </div>
-          </div>
-
-          <FormActionBar>
-            <WorkspaceButton onClick={closeForm}>Cancel</WorkspaceButton>
-            <WorkspaceButton type="submit" variant="primary" disabled={submitting || resumeUploading}>
-              {(submitting || resumeUploading) && <Loader2 className="animate-spin" aria-hidden="true" />}
-              {resumeUploading ? "Uploading resume…" : pageMode === "create" ? "Add to bench" : "Save changes"}
-            </WorkspaceButton>
-          </FormActionBar>
-        </form>
       </div>
     );
   }
@@ -1693,35 +1023,6 @@ function RowAction({
     <a href={href} title={label} aria-label={label} className={cls}>{children}</a>
   ) : (
     <button type="button" title={label} aria-label={label} onClick={onClick} className={cls}>{children}</button>
-  );
-}
-
-/** Same geometry as RowAction, for form controls that are not in a row. */
-const IconButton = RowAction;
-
-/** A titled form section. */
-function FormCard({ title, subtitle, meta, children }: { title: string; subtitle?: string; meta?: string; children: React.ReactNode }) {
-  return (
-    <AdminCard>
-      <AdminCardHeader title={title} subtitle={subtitle} meta={meta} />
-      <div className="p-4">{children}</div>
-    </AdminCard>
-  );
-}
-
-/** A resume already attached, or one picked and waiting to upload. */
-function FileRow({ name, meta, actions }: { name: string; meta: string; actions: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] py-2 pl-3.5 pr-1.5">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <IconFile className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-        <div className="min-w-0">
-          <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{name}</p>
-          <p className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{meta}</p>
-        </div>
-      </div>
-      <div className="flex flex-none items-center gap-0.5">{actions}</div>
-    </div>
   );
 }
 

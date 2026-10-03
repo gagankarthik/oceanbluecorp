@@ -95,3 +95,12 @@ export function canView(app: Application, viewer: Viewer): boolean {
   if (poolOf(app) === "internal") return true;
   return !!viewer.isAdmin || isOwnRecord(app, viewer);
 }
+
+/**
+ * Whether a viewer may see an application anywhere: read, edit, delete,
+ * search, match. Only bench records carry the pool rule; `canView` alone would
+ * hide every non-hired applicant, since poolOf falls back to "external".
+ */
+export function isVisibleApplication(app: Application, viewer: Viewer): boolean {
+  return !app.addToTalentBench || canView(app, viewer);
+}

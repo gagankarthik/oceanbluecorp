@@ -41,6 +41,15 @@ export function ApplicantDetails({
     { label: "Source", value: candidate.source },
     { label: "Visa expiry", value: candidate.visaExpiry ? fmtDate(candidate.visaExpiry) : undefined },
     { label: "Sponsorship", value: candidate.visaSponsorshipRequired ? "Required" : undefined },
+    {
+      label: "LinkedIn",
+      // Only an http(s) address becomes a link; anything else would be an unsafe href.
+      value: candidate.linkedinUrl && /^https?:\/\//i.test(candidate.linkedinUrl) ? (
+        <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--adm-accent)] hover:underline">
+          {candidate.linkedinUrl.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}
+        </a>
+      ) : undefined,
+    },
     { label: "Street address", value: candidate.address },
     { label: "ZIP code", value: candidate.zipCode },
     { label: "Applied", value: fmtDate(candidate.appliedAt) },

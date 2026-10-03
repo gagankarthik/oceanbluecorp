@@ -47,7 +47,6 @@ const SECTIONS: Group[] = [
       { name: "About us", href: "/about" },
       { name: "Our team", href: "/team" },
       { name: "Products", href: "/products" },
-      { name: "Thirteen years", href: "/13-years" },
       { name: "Contact us", href: "/contact" },
     ],
   },

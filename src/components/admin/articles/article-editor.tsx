@@ -24,6 +24,7 @@ import {
 } from "@/lib/articles";
 import { editorialGuide } from "@/lib/editorial";
 import { useAuth } from "@/lib/auth";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { fmtDateTime } from "@/lib/format";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -151,14 +152,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
   const dirty = baseline !== "" && JSON.stringify(form) !== baseline;
 
-  // Leaving with unsaved words in the box is the one loss this screen can
-  // actually cause, so the browser asks. Registered only while dirty.
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedChanges(dirty);
 
   const blockers = useMemo(() => publishBlockers(form), [form]);
   const warnings = useMemo(() => editorialWarnings(form), [form]);

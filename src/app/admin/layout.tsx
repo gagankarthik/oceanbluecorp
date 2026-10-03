@@ -16,7 +16,7 @@ import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs, IconMenu, IconSearch, IconSidebar,
-  IconHome, IconHrPortal, IconLogout, IconShield,
+  IconHome, IconHrPortal, IconLogout, IconShield, IconClock, IconTrash,
   IconBlog, IconChart, IconQuote, IconNews, IconJob, IconStateRole,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -62,6 +62,8 @@ const NOTIFICATION_ICONS = {
   job_posted: IconRequisition,
   application_received: IconApplication,
   contact_received: IconContact,
+  task_assigned: IconClock,
+  application_deleted: IconTrash,
 };
 
 const ROLE_LABEL: Record<string, string> = {

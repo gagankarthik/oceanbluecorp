@@ -139,53 +139,6 @@ export function AdminFormSkeleton({ label = "Loading form" }: { label?: string }
   );
 }
 
-/** Kanban board skeleton, a row of stage columns, each with stacked cards. */
-export function KanbanSkeleton({
-  columns = 5,
-  cardsPerColumn = 3,
-}: {
-  columns?: number;
-  cardsPerColumn?: number;
-}) {
-  return (
-    <div className="flex gap-3 overflow-x-auto pb-4" {...busy("Loading board")}>
-      {Array.from({ length: columns }).map((_, c) => (
-        <div
-          key={c}
-          className="flex w-64 flex-shrink-0 flex-col gap-2 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3"
-        >
-          {/* Column header */}
-          <div className="flex items-center gap-2 px-1 pb-1">
-            <Skel className="h-5 w-5 rounded-full" />
-            <Skel className="h-3.5 w-24" />
-            <Skel className="ml-auto h-4 w-6 rounded-[6px]" />
-          </div>
-          {/* Cards */}
-          {Array.from({ length: cardsPerColumn }).map((_, i) => (
-            <div
-              key={i}
-              className="space-y-2.5 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3"
-            >
-              <div className="flex items-start gap-2">
-                <Skel className="h-8 w-8 flex-shrink-0 rounded-full" />
-                <div className="flex-1 space-y-1.5">
-                  <Skel className="h-3 w-3/4" />
-                  <Skel className="h-2.5 w-1/2" />
-                </div>
-              </div>
-              <Skel className="h-2.5 w-full" />
-              <div className="flex items-center gap-1.5">
-                <Skel className="h-5 w-16 rounded-[6px]" />
-                <Skel className="h-5 w-12 rounded-[6px]" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /**
  * Mirrors /admin exactly, six bands in the order the page renders them.
  *
@@ -257,62 +210,6 @@ export function DashboardSkeleton() {
         <Skel className="h-[380px] rounded-[8px] lg:col-span-2" />
         <Skel className="h-[380px] rounded-[8px] lg:col-span-3" />
       </div>
-    </div>
-  );
-}
-
-export function ChartSkeleton({ height = 180 }: { height?: number }) {
-  return (
-    <div className="flex flex-col gap-3" {...busy("Loading chart")}>
-      <div className="flex items-end gap-1.5 px-2" style={{ height }}>
-        {Array.from({ length: 12 }).map((_, i) => {
-          const pct = 30 + Math.sin(i * 0.8) * 30 + (i % 3) * 10;
-          return (
-            <div
-              key={i}
-              className="skel flex-1 rounded-b-none"
-              style={{ height: `${pct}%` }}
-            />
-          );
-        })}
-      </div>
-      <div className="flex justify-between px-2">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skel key={i} className="h-2.5 w-8" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Card grid skeleton, matches a 3-up or 4-up responsive card layout. */
-export function CardGridSkeleton({
-  cards = 6,
-  columns = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-}: {
-  cards?: number;
-  columns?: string;
-}) {
-  return (
-    <div className={cn("grid gap-4", columns)} {...busy("Loading")}>
-      {Array.from({ length: cards }).map((_, i) => (
-        <div key={i} className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1.5 flex-1">
-              <Skel className="h-4 w-3/4" />
-              <Skel className="h-3 w-1/2" />
-            </div>
-            <Skel className="h-6 w-16 rounded-[6px] flex-shrink-0 ml-2" />
-          </div>
-          <Skel className="h-3 w-full" />
-          <Skel className="h-3 w-4/5" />
-          <div className="flex items-center gap-2 pt-1">
-            <Skel className="h-6 w-6 rounded-full" />
-            <Skel className="h-3 w-20" />
-            <Skel className="ml-auto h-3 w-16" />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

@@ -14,7 +14,7 @@
    both taken from the brand rather than from a component
    gallery:
 
-     ARC  , time and progress. From the anniversary artwork: a
+     ARC  , time and progress: a
              number inside a ring of years. Arcs DRAW.
      WAVE , the name and the logo mark. Waves TRAVEL, and their
              amplitude answers to scroll.

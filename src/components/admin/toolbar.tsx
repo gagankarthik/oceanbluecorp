@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { IconComponent } from "./icons";
-import { Search, SlidersHorizontal, ChevronDown, X, Check } from "lucide-react";
+import { Search, ChevronDown, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -55,54 +55,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
   );
 }
 
-// ── Filter bar + counted filter menu ───────────────────────────────────────────
-
-/**
- * The single toolbar row every list page sits behind: search, then filters,
- * then (pushed right) view controls and bulk actions.
- *
- * Pages previously stacked a search row above a wrapping row of status chips,
- * six or seven pills each carrying a count, which on a page like Jobs took a
- * full extra band of vertical space to say "210 / 12 / 1 / 0 / 0 / 0". Most of
- * those counts were zero and none were worth permanent real estate. Put the
- * segments in a `FilterMenu` instead and the whole control set fits one line.
- */
-export function FilterBar({
-  search,
-  children,
-  className,
-}: {
-  /** Pinned to the left edge. Always the search box. */
-  search?: React.ReactNode;
-  /** Filters and view controls, pinned to the right edge, in order. */
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {search}
-      {/* Search anchors left, everything else anchors right. Making this the
-          component's job rather than each page's stops the two ends drifting
-          back together into one crowded left-hand clump, which is what happened
-          while the order was merely a convention. */}
-      <div className="ml-auto flex flex-wrap items-center gap-2">{children}</div>
-    </div>
-  );
-}
-
-/**
- * Result tally. Renders ONLY while a filter is actually narrowing the list.
- * "210 of 210" is not information, it is a label restating that nothing has
- * happened yet, on every page, permanently.
- */
-export function ResultCount({ shown, total }: { shown: number; total: number }) {
-  if (shown >= total) return null;
-  return (
-    <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
-      <span className="font-semibold text-[var(--adm-ink-mute)]">{shown}</span> of {total}
-    </span>
-  );
-}
+// ── Counted filter menu ──────────────────────────────────────────────────────────
 
 export interface FilterOption<V extends string> {
   value: V;
@@ -201,98 +154,12 @@ export function FilterMenu<V extends string>({
   );
 }
 
-/** Clears every active filter. Renders nothing when there is nothing to clear. */
-export function ClearFilters({ show, onClick }: { show: boolean; onClick: () => void }) {
-  if (!show) return null;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-9 items-center gap-1 rounded-[10px] px-2 text-[12.5px] font-semibold text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
-    >
-      <X className="h-3.5 w-3.5" />Clear
-    </button>
-  );
-}
-
-// ── Filters toggle ─────────────────────────────────────────────────────────────
-
-/** Toggle for the expandable advanced-filter panel; shows the active count. */
-export function FilterToggle({
-  open,
-  activeCount = 0,
-  onClick,
-  className,
-}: {
-  open: boolean;
-  activeCount?: number;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-[6px] border px-3 py-2 text-sm font-medium transition-colors",
-        open || activeCount > 0
-          ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-          : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
-        className,
-      )}
-    >
-      <SlidersHorizontal className="h-4 w-4" />
-      Filters
-      {activeCount > 0 && (
-        <span className="rounded-[6px] bg-[var(--adm-accent)] px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
-          {activeCount}
-        </span>
-      )}
-      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
-    </button>
-  );
-}
-
 // ── View switcher ──────────────────────────────────────────────────────────────
 
 export interface ViewOption<V extends string> {
   value: V;
   label: string;
   icon: IconComponent;
-}
-
-/** Segmented control for table/kanban/list (or grid/list) view modes. */
-export function ViewSwitcher<V extends string>({
-  options,
-  value,
-  onChange,
-  className,
-}: {
-  options: readonly ViewOption<V>[];
-  value: V;
-  onChange: (value: V) => void;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-center overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]", className)}>
-      {options.map(({ value: v, label, icon: Icon }, i) => (
-        <button
-          key={v}
-          type="button"
-          title={label}
-          onClick={() => onChange(v)}
-          className={cn(
-            "flex h-9 items-center gap-1.5 px-2.5 text-[12.5px] font-medium transition-colors",
-            i > 0 && "border-l border-[var(--adm-line)]",
-            value === v ? "bg-[var(--adm-accent)] text-white" : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
-          )}
-        >
-          <Icon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{label}</span>
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /** Dropdown variant of the view switcher, a "View" button that opens the options. */
@@ -341,36 +208,5 @@ export function ViewMenu<V extends string>({
         })}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-// ── Bulk actions bar ───────────────────────────────────────────────────────────
-
-/** Appears in the toolbar when rows are selected; children are the actions. */
-export function BulkBar({
-  count,
-  onClear,
-  children,
-  className,
-}: {
-  count: number;
-  onClear: () => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  if (count === 0) return null;
-  return (
-    <div className={cn("ml-auto flex items-center gap-2", className)}>
-      <span className="text-[13px] font-medium tabular-nums text-[var(--adm-ink-mute)]">{count} selected</span>
-      {children}
-      <button
-        type="button"
-        onClick={onClear}
-        aria-label="Clear selection"
-        className="rounded-[6px] p-2 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
   );
 }

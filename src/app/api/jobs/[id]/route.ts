@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getJob, updateJob, deleteJob, toPublicJob, Job } from "@/lib/aws/dynamodb";
+import { NextRequest, NextResponse, after } from "next/server";
+import { getJob, updateJob, deleteJob, toPublicJob, getApplicationsByJob, updateApplication, Job } from "@/lib/aws/dynamodb";
 import { requireStaff, requireJobEditor, getClaims } from "@/lib/auth/verify";
 import { hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen } from "@/lib/job-status";
+import { jobInputError, parseSalary, publishedAtFor } from "@/lib/job-input";
 
 /**
  * GET /api/jobs/[id]
@@ -74,6 +75,9 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
+    }
 
     /* Same split as the create route: media edits the posting's words, not its
        commercials. Every gated field is skipped outright rather than written
@@ -91,20 +95,29 @@ export async function PUT(
       );
     }
 
+    const invalid = jobInputError(body, { partial: true, currentType: existingJob.data.type });
+    if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+
     // Prepare updates (exclude id, createdAt, createdBy, postingId)
     const updates: Partial<Omit<Job, "id" | "createdAt" | "createdBy" | "postingId">> = {};
 
     if (body.title !== undefined) updates.title = body.title;
     if (body.department !== undefined) updates.department = body.department;
-    if (body.location !== undefined) updates.location = body.location;
+    if (body.location !== undefined) updates.location = typeof body.location === "string" ? body.location.trim() : "";
     if (body.type !== undefined) updates.type = body.type;
     if (body.description !== undefined) updates.description = sanitizeRichText(body.description);
     if (body.requirements !== undefined) updates.requirements = typeof body.requirements === "string" ? sanitizeRichText(body.requirements) : body.requirements;
     if (body.responsibilities !== undefined) updates.responsibilities = typeof body.responsibilities === "string" ? sanitizeRichText(body.responsibilities) : body.responsibilities;
-    if (body.salary !== undefined) updates.salary = body.salary;
-    if (body.status !== undefined) updates.status = body.status;
+    if (body.salary !== undefined) {
+      const salary = parseSalary(body.salary);
+      if (salary.ok) updates.salary = salary.value ?? undefined;
+    }
+    if (body.status !== undefined) {
+      updates.status = body.status;
+      const publishedAt = publishedAtFor(body.status, existingJob.data);
+      if (publishedAt) updates.publishedAt = publishedAt;
+    }
     if (body.submissionDueDate !== undefined) updates.submissionDueDate = body.submissionDueDate;
-    if (body.applicationsCount !== undefined) updates.applicationsCount = body.applicationsCount;
     if (body.state !== undefined) updates.state = body.state;
     if (body.category !== undefined) updates.category = body.category === "open" ? "open" : "state";
 
@@ -130,6 +143,19 @@ export async function PUT(
 
     if (!result.success) {
       return serverError("Updating job", result.error, "Couldn't save the job. Please try again.");
+    }
+
+    // Applications carry a copy of the title for lists; a rename follows them.
+    if (updates.title && updates.title !== existingJob.data.title) {
+      const title = updates.title;
+      after(async () => {
+        try {
+          const apps = await getApplicationsByJob(id);
+          await Promise.all((apps.data || []).map((a) => updateApplication(a.id, { jobTitle: title })));
+        } catch (err) {
+          console.error("Propagating job title to applications failed:", err);
+        }
+      });
     }
 
     // Fetch updated job. Answered through the same projection the GET uses, so

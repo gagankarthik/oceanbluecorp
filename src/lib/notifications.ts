@@ -5,7 +5,9 @@
 // alone would still ship "Jane Doe applied for X" to a Media account.
 import { UserRole, RECRUITING_ROLES, staffRolesOf } from "@/lib/auth/config";
 
-export const NOTIFICATION_TYPES = ["job_posted", "application_received", "contact_received"] as const;
+export const NOTIFICATION_TYPES = [
+  "job_posted", "application_received", "contact_received", "task_assigned", "application_deleted",
+] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export const NOTIFICATION_AUDIENCE: Readonly<Record<NotificationType, readonly UserRole[]>> = {
@@ -15,6 +17,10 @@ export const NOTIFICATION_AUDIENCE: Readonly<Record<NotificationType, readonly U
   application_received: RECRUITING_ROLES,
   // Mirrors the contacts inbox (requireUserAdmin).
   contact_received: [UserRole.ADMIN, UserRole.HR],
+  // Addressed to one person via recipientId; the role set is the outer bound.
+  task_assigned: RECRUITING_ROLES,
+  // Audit trail for a destroyed record.
+  application_deleted: [UserRole.ADMIN],
 };
 
 // A type added later without an entry above stays with admins until it is named.
@@ -46,6 +52,8 @@ export interface NotificationRecord {
   /** Cognito subs. A DynamoDB string set, so the DocumentClient hands back a Set. */
   readBy?: Iterable<string>;
   dismissedBy?: Iterable<string>;
+  /** Cognito sub of the one person this is for; absent = everyone in the audience. */
+  recipientId?: string;
   createdAt: string;
 }
 
@@ -102,6 +110,9 @@ export function notificationsFor(
   const roles = staffRolesOf(viewer.groups);
   if (roles.length === 0) return [];
   return items
-    .filter((n) => canSeeNotificationType(n.type, roles) && !isDismissedBy(n, viewer.userId))
+    .filter((n) =>
+      canSeeNotificationType(n.type, roles)
+      && (!n.recipientId || n.recipientId === viewer.userId)
+      && !isDismissedBy(n, viewer.userId))
     .map((n) => toNotificationView(n, viewer.userId));
 }

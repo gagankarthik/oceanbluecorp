@@ -368,6 +368,22 @@ export default function VendorsPage() {
       },
     },
     {
+      key: "jobs",
+      header: "Jobs",
+      label: "Jobs posted",
+      width: "120px",
+      align: "right",
+      sortValue: (r) => r.jobCount ?? 0,
+      cell: (r) => (r.jobCount
+        ? (
+          <span className="tabular-nums" title={`${r.jobCount} posted, ${r.openJobCount ?? 0} open`}>
+            <span className="font-medium text-[var(--adm-ink)]">{r.jobCount}</span>
+            {r.openJobCount ? <span className="text-[var(--adm-ink-subtle)]"> · {r.openJobCount} open</span> : null}
+          </span>
+        )
+        : <Blank />),
+    },
+    {
       key: "lead",
       header: "Vendor lead",
       label: "Vendor lead",

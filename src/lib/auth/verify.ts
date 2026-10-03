@@ -15,6 +15,7 @@ import {
   UserRole, hasStaffAccess, hasRecruitingAccess, hasPublishingAccess,
   hasJobEditAccess, staffRolesOf,
 } from "./config";
+import type { Viewer } from "@/lib/bench";
 
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2";
 const POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "";
@@ -30,8 +31,11 @@ type Jwk = { kid: string; kty: string; n: string; e: string; alg?: string; use?:
 let jwksCache: { keys: Jwk[]; at: number } | null = null;
 const JWKS_TTL_MS = 60 * 60 * 1000;
 
-async function getJwks(): Promise<Jwk[]> {
-  if (jwksCache && Date.now() - jwksCache.at < JWKS_TTL_MS) return jwksCache.keys;
+// Unknown-kid refetches are throttled so a forged header can't hammer Cognito.
+const JWKS_MIN_REFRESH_MS = 60 * 1000;
+
+async function getJwks(force = false): Promise<Jwk[]> {
+  if (jwksCache && Date.now() - jwksCache.at < (force ? JWKS_MIN_REFRESH_MS : JWKS_TTL_MS)) return jwksCache.keys;
   const res = await fetch(JWKS_URL);
   if (!res.ok) throw new Error(`Failed to fetch JWKS (${res.status})`);
   const data = (await res.json()) as { keys: Jwk[] };
@@ -43,7 +47,7 @@ function b64urlToBuffer(s: string): Buffer {
   return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }
 
-export type Claims = { sub: string; email?: string; groups: string[]; tokenUse?: string };
+export type Claims = { sub: string; email?: string; name?: string; groups: string[]; tokenUse?: string };
 
 // Verify a Cognito JWT: RS256 signature against JWKS, plus issuer / audience /
 // expiry checks. Returns the claims, or null if anything fails.
@@ -57,6 +61,8 @@ export async function verifyCognitoJwt(token: string): Promise<Claims | null> {
 
     if (header.alg !== "RS256" || !header.kid) return null;
     if (payload.iss !== ISSUER) return null;
+    // The session is the ID token; access tokens carry no email, so pool rules can't apply to them.
+    if (payload.token_use !== "id") return null;
 
     const now = Math.floor(Date.now() / 1000);
     if (typeof payload.exp !== "number" || payload.exp < now) return null;
@@ -65,7 +71,9 @@ export async function verifyCognitoJwt(token: string): Promise<Claims | null> {
     const aud = (payload.aud as string | undefined) ?? (payload.client_id as string | undefined);
     if (CLIENT_ID && aud !== CLIENT_ID) return null;
 
-    const jwk = (await getJwks()).find((k) => k.kid === header.kid);
+    // A key rotation shows up as an unknown kid before the hourly cache expires.
+    const jwk = (await getJwks()).find((k) => k.kid === header.kid)
+      ?? (await getJwks(true)).find((k) => k.kid === header.kid);
     if (!jwk) return null;
 
     const pubKey = crypto.createPublicKey({ key: jwk as crypto.JsonWebKey, format: "jwk" });
@@ -76,6 +84,7 @@ export async function verifyCognitoJwt(token: string): Promise<Claims | null> {
     return {
       sub: String(payload.sub ?? ""),
       email: payload.email as string | undefined,
+      name: payload.name as string | undefined,
       groups,
       tokenUse: payload.token_use as string | undefined,
     };
@@ -190,6 +199,11 @@ export async function requireAdmin(req: NextRequest): Promise<Guard> {
 /** True when the verified caller holds this site's admin role. */
 export function isAdminClaims(claims: Claims): boolean {
   return staffRolesOf(claims.groups).includes(UserRole.ADMIN);
+}
+
+/** The bench-visibility viewer for a verified caller. */
+export function viewerOf(claims: Claims): Viewer {
+  return { id: claims.sub, email: claims.email, isAdmin: isAdminClaims(claims) };
 }
 
 /**

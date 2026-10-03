@@ -26,7 +26,7 @@ import {
   IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
   IconCalendar, IconUser,
 } from "@/components/admin/icons";
-import JobsLoading from "./loading";
+import JobsLoading from "@/app/admin/jobs/loading";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,

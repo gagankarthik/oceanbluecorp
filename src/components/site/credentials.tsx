@@ -102,7 +102,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
     <ChamferGround ground={ground} below={below}>
       <section
         data-tone="dark"
-        className={cn("on-dark chamfer chamfer-notched relative isolate overflow-hidden bg-[#050912] text-white", SECTION_Y)}
+        className={cn("on-dark chamfer chamfer-notched relative isolate overflow-hidden bg-night text-white", SECTION_Y)}
         aria-labelledby="partners-heading"
       >
         <div className={cn(CONTAINER, "grid gap-16 lg:grid-cols-2 lg:gap-12")}>

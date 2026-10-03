@@ -64,7 +64,7 @@ type Overall =
   "operational" | "degraded" | "outage" | "maintenance" | "unknown";
 const STATUS: Record<Overall, { dot: string; label: string }> = {
   operational: { dot: "bg-success", label: "All systems operational" },
-  maintenance: { dot: "bg-sky-600", label: "Scheduled maintenance" },
+  maintenance: { dot: "bg-brand", label: "Scheduled maintenance" },
   degraded: { dot: "bg-warning", label: "Partial degradation" },
   outage: { dot: "bg-danger", label: "Service disruption" },
   unknown: { dot: "bg-line-strong", label: "System status" },

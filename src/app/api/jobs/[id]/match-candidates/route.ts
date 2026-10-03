@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJob, updateJob } from "@/lib/aws/dynamodb";
 import { matchCandidates, jobToPayload } from "@/lib/aws/match-candidates";
 import { enrichMatches } from "@/lib/aws/enrich-matches";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, viewerOf } from "@/lib/auth/verify";
 
 // GET /api/jobs/[id]/match-candidates
 // Return the CACHED ranking (instant, no embedding/LLM work). The resumes were
@@ -20,7 +20,7 @@ export async function GET(
   }
   // The cache stores the raw engine result; origin/link data is derived on
   // read so it never goes stale (e.g. a candidate later added to the bench).
-  const candidates = await enrichMatches(jobResult.data.candidateMatches ?? []);
+  const candidates = await enrichMatches(jobResult.data.candidateMatches ?? [], viewerOf(auth.claims));
   return NextResponse.json({
     success: true,
     candidates,
@@ -69,6 +69,6 @@ export async function POST(
     console.error(`[match-candidates] cache write failed for ${id}:`, e),
   );
 
-  const candidates = await enrichMatches(result.candidates);
+  const candidates = await enrichMatches(result.candidates, viewerOf(auth.claims));
   return NextResponse.json({ success: true, count: candidates.length, candidates, matchedAt });
 }

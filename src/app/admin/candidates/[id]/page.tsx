@@ -21,9 +21,11 @@ import { ApplicantDetails } from "@/components/admin/candidate/applicant-details
 import { RecordSidebar } from "@/components/admin/candidate/record-sidebar";
 import { NotesTab } from "@/components/admin/candidate/notes-tab";
 import { ActivityTab } from "@/components/admin/candidate/activity-tab";
+import { TasksTab } from "@/components/admin/candidate/tasks-tab";
+import { EmailComposer } from "@/components/admin/candidate/email-composer";
 import {
   IconPipeline, IconEdit, IconFile, IconHistory,
-  IconMessageText, IconRefresh, IconSparkles,
+  IconMessageText, IconRefresh, IconSparkles, IconSuccess,
 } from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
 import { statusMeta, type AppStatus } from "@/components/admin/theme";
@@ -46,7 +48,7 @@ interface CandidateDetail extends Application {
   jobType?: string;
 }
 
-type TabKey = "overview" | "resume" | "pipeline" | "activity" | "notes";
+type TabKey = "overview" | "resume" | "pipeline" | "tasks" | "activity" | "notes";
 
 export default function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -66,6 +68,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   const [addingNote, setAddingNote] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisEditOpen, setAnalysisEditOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   /** The linked requisition, for the pipeline panel's client/vendor/rate defaults. */
   const [jobDetail, setJobDetail] = useState<Job | null>(null);
   /** One unattended retry per visit, not per render, and not a loop. */
@@ -91,6 +94,16 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
   }, [id]);
 
   useEffect(() => { void fetchCandidate(); }, [fetchCandidate]);
+
+  /** Re-reads the record without the skeleton, e.g. to pick up server-written activity. */
+  const refreshRecord = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/applications/${id}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
+    } catch { /* non-fatal */ }
+  }, [id]);
 
   // Enrich with the linked job's details, fetched once per job, off the render path.
   const jobEnrichedRef = useRef<string | null>(null);
@@ -171,12 +184,12 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     const previous = candidate.status;
     setStatusSaving(true);
     try {
-      const updated = await patch({ status: stage, changedBy: user?.id, changedByName: user?.name || user?.email || "Admin" });
+      const updated = await patch({ status: stage });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
       undoable({
         message: `Moved to ${statusMeta[stage]?.label ?? stage}`,
         undo: async () => {
-          const back = await patch({ status: previous, changedBy: user?.id, changedByName: user?.name || user?.email || "Admin" });
+          const back = await patch({ status: previous });
           setCandidate((p) => (p ? { ...p, ...back } : p));
         },
       });
@@ -201,13 +214,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     setCandidate((p) => (p ? { ...p, addToTalentBench: !!pool, benchType: pool || p.benchType } : p));
     try {
       await patch(pool
-        ? { addToTalentBench: true, benchType: pool, benchAddedBy: user?.email || user?.id }
+        ? { addToTalentBench: true, benchType: pool }
         : { addToTalentBench: false });
       undoable({
         message: pool ? `Added to ${POOL_LABEL[pool]}` : "Removed from bench",
         undo: async () => {
           await patch(current
-            ? { addToTalentBench: true, benchType: current, benchAddedBy: user?.email || user?.id }
+            ? { addToTalentBench: true, benchType: current }
             : { addToTalentBench: false });
           setCandidate((p) => (p ? { ...p, addToTalentBench: !!current, benchType: current || p.benchType } : p));
         },
@@ -263,7 +276,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const res = await fetch(`/api/applications/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addNote: { text: newNote.trim(), addedBy: user?.id || "admin", addedByName: user?.name || user?.email || "Admin" } }),
+        body: JSON.stringify({ addNote: { text: newNote.trim() } }),
       });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
@@ -304,23 +317,13 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         // The record now carries the fresh failure and its retryable flag; the
         // panel shows it. A toast on a retry nobody asked for is just noise.
         console.error("[candidate] automatic resume re-analysis failed:", err);
-        await refreshAnalysisState();
+        await refreshRecord();
       } else {
         toast.error(err instanceof Error ? err.message : "Analysis failed", { id: toastId });
       }
     } finally {
       setAnalyzing(false);
     }
-  };
-
-  /** Pull just the analysis fields back after an unattended attempt. */
-  const refreshAnalysisState = async () => {
-    try {
-      const res = await fetch(`/api/applications/${id}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
-    } catch { /* non-fatal, the stale message stays on screen */ }
   };
 
   // A failed analysis retries itself once per visit. Most failures are not about
@@ -386,6 +389,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   const notes: NoteEntry[] = candidate.notesHistory || [];
   const history = candidate.statusHistory || [];
+  const activity = candidate.activity || [];
+  const tasks = candidate.tasks || [];
+  const openTasks = tasks.filter((t) => !t.done).length;
 
   // How long the candidate has been sitting in the current stage; falls back
   // to the application date for records with no history entries.
@@ -411,8 +417,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     // Overview answers "who is this and should we proceed" in one screen.
     { key: "resume"   as TabKey, label: "Resume",   icon: IconSparkles,    count: undefined as number | undefined },
     { key: "pipeline" as TabKey, label: "Pipeline", icon: IconPipeline,    count: undefined as number | undefined },
+    { key: "tasks"    as TabKey, label: "Tasks",    icon: IconSuccess,     count: openTasks },
     { key: "notes"    as TabKey, label: "Notes",    icon: IconMessageText, count: notes.length },
-    { key: "activity" as TabKey, label: "Activity", icon: IconHistory,     count: history.length },
+    { key: "activity" as TabKey, label: "Activity", icon: IconHistory,     count: history.length + activity.length },
   ];
 
   /* The analyse call-to-action, placed by state: on Overview when there is
@@ -474,6 +481,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           onBench={handleBenchChange}
           onClaim={handleClaimOwnership}
           onEdit={() => openCandidateEditor({ candidate })}
+          onEmail={() => setEmailOpen(true)}
         />
         </div>
 
@@ -633,7 +641,19 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
             />
           )}
 
-          {activeTab === "activity" && <ActivityTab history={history} />}
+          {activeTab === "tasks" && user && (
+            <TasksTab
+              applicationId={id}
+              tasks={tasks}
+              me={{ id: user.id, name: user.name || user.email || "Me" }}
+              onChange={(next) => {
+                setCandidate((p) => (p ? { ...p, tasks: next } : p));
+                void refreshRecord();
+              }}
+            />
+          )}
+
+          {activeTab === "activity" && <ActivityTab history={history} activity={activity} />}
         </div>
 
         <RecordSidebar
@@ -646,6 +666,15 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           onViewResume={handleViewResume}
         />
       </div>
+
+      <EmailComposer
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+        applicationId={id}
+        candidate={candidate}
+        senderName={user?.name || user?.email || ""}
+        onSent={() => void refreshRecord()}
+      />
 
       <ResumeAnalysisEditDrawer
         open={analysisEditOpen}

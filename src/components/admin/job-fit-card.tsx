@@ -27,12 +27,19 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
   const [error, setError] = useState<string | null>(null);
   /** The cached verdict was scored against a different job and was withheld. */
   const [staleForJobChange, setStale] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // Load the cached verdict on mount.
   useEffect(() => {
     let active = true;
+    setLoadError(false);
     fetch(`/api/applications/${applicationId}/job-fit`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        // A 4xx just means nothing has been scored yet.
+        if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
+        return r.ok ? r.json() : null;
+      })
       .then((d) => {
         if (active && d) {
           setFit(d.jobFit ?? null);
@@ -40,11 +47,11 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
           setStale(!!d.staleForJobChange);
         }
       })
-      .catch(() => {});
+      .catch(() => { if (active) setLoadError(true); });
     return () => {
       active = false;
     };
-  }, [applicationId]);
+  }, [applicationId, loadAttempt]);
 
   const score = useCallback(async () => {
     setLoading(true);
@@ -90,6 +97,14 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
               This candidate moved to a different job, so the previous fit score no longer
               applies. Score again to rate them against the job they are on now.
             </span>
+          </div>
+        )}
+
+        {loadError && !fit && !error && (
+          <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+            <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
+            <span className="min-w-0 flex-1">The saved fit score couldn&apos;t be loaded.</span>
+            <WorkspaceButton className="h-8 px-3 text-[13px]" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
           </div>
         )}
 

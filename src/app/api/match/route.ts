@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { matchCandidates } from "@/lib/aws/match-candidates";
 import { enrichMatches } from "@/lib/aws/enrich-matches";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, viewerOf } from "@/lib/auth/verify";
 
 // POST /api/match, find candidates for a pasted job description.
 // Body: { jobText?: string, job?: {...}, topK?: number }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   // Resolve each hit to its origin (resume bank / talent bench / applicant)
   // so the UI can badge and link it correctly.
-  const candidates = await enrichMatches(result.candidates);
+  const candidates = await enrichMatches(result.candidates, viewerOf(auth.claims));
 
   return NextResponse.json({ success: true, count: candidates.length, candidates });
 }

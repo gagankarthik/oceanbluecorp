@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllVendors, createVendor, Vendor } from "@/lib/aws/dynamodb";
+import { getAllVendors, createVendor, getJobCountsByParty, Vendor } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
 import { serverError } from "@/lib/api-errors";
@@ -12,16 +12,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const vendorLeadRole = searchParams.get("vendorLeadRole") as "hr" | "admin" | null;
 
-    const result = await getAllVendors(vendorLeadRole || undefined);
+    const [result, counts] = await Promise.all([getAllVendors(vendorLeadRole || undefined), getJobCountsByParty()]);
 
     if (!result.success) {
       return serverError("Fetching vendors", result.error, "Couldn't load the vendors. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
-    const vendors = (result.data || []).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const vendors = (result.data || [])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map((v) => ({ ...v, jobCount: counts.byVendor.get(v.id)?.total ?? 0, openJobCount: counts.byVendor.get(v.id)?.open ?? 0 }));
 
     return NextResponse.json({ vendors });
   } catch (error) {

@@ -12,7 +12,7 @@ import { clearScroll, writeScroll } from "@/lib/scroll-signal";
    Lenis rather than GSAP's ScrollSmoother, for one decisive
    reason: ScrollSmoother animates a transformed wrapper, and a
    transformed ancestor breaks `position: sticky` on everything
-   inside it. The /13-years journey dial is sticky. Lenis drives
+   inside it, and this site uses sticky panels. Lenis drives
    the real window scroll instead, so sticky, scroll-margin and
    the fixed header all keep working, and framer-motion's
    `useScroll`, which 16 files depend on, still receives the

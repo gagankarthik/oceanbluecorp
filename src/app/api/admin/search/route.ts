@@ -7,9 +7,13 @@ import {
   Application,
   Contact,
 } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, viewerOf } from "@/lib/auth/verify";
+import { isVisibleApplication } from "@/lib/bench";
 import { staffRolesOf, UserRole } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";
+
+/** Case-insensitive contains that tolerates a missing field on an old record. */
+const has = (value: string | null | undefined, q: string) => !!value && value.toLowerCase().includes(q);
 
 interface SearchResult {
   type: "job" | "application" | "contact";
@@ -47,10 +51,10 @@ export async function GET(request: NextRequest) {
     // Search jobs
     if (jobsResult.success && jobsResult.data) {
       const matchingJobs = jobsResult.data.filter((job: Job) =>
-        job.title.toLowerCase().includes(query) ||
-        job.department.toLowerCase().includes(query) ||
-        job.location.toLowerCase().includes(query) ||
-        job.description.toLowerCase().includes(query)
+        has(job.title, query) ||
+        has(job.department, query) ||
+        has(job.location, query) ||
+        has(job.description, query)
       );
 
       matchingJobs.slice(0, 5).forEach((job: Job) => {
@@ -67,18 +71,21 @@ export async function GET(request: NextRequest) {
 
     // Search applications
     if (applicationsResult.success && applicationsResult.data) {
+      const viewer = viewerOf(auth.claims);
       const matchingApps = applicationsResult.data.filter((app: Application) =>
-        app.name.toLowerCase().includes(query) ||
-        app.email.toLowerCase().includes(query) ||
-        (app.phone?.toLowerCase().includes(query) || false) ||
-        (app.skills?.some(skill => skill.toLowerCase().includes(query)) || false)
+        isVisibleApplication(app, viewer) && (
+          has(app.name, query) ||
+          has(app.email, query) ||
+          has(app.phone, query) ||
+          (app.skills?.some((skill) => has(skill, query)) || false)
+        )
       );
 
       matchingApps.slice(0, 5).forEach((app: Application) => {
         results.push({
           type: "application",
           id: app.id,
-          title: app.name,
+          title: app.name || app.email || "Unnamed applicant",
           subtitle: [app.applicationId, app.email].filter(Boolean).join(" · "),
           // Straight to the candidate record, the applications list ignores
           // a ?search param, so linking there landed on an unfiltered page.
@@ -91,11 +98,11 @@ export async function GET(request: NextRequest) {
     // Search contacts
     if (contactsResult.success && contactsResult.data) {
       const matchingContacts = contactsResult.data.filter((contact: Contact) =>
-        contact.firstName.toLowerCase().includes(query) ||
-        contact.lastName.toLowerCase().includes(query) ||
-        contact.email.toLowerCase().includes(query) ||
-        contact.company.toLowerCase().includes(query) ||
-        contact.message.toLowerCase().includes(query)
+        has(contact.firstName, query) ||
+        has(contact.lastName, query) ||
+        has(contact.email, query) ||
+        has(contact.company, query) ||
+        has(contact.message, query)
       );
 
       matchingContacts.slice(0, 5).forEach((contact: Contact) => {
@@ -112,8 +119,8 @@ export async function GET(request: NextRequest) {
 
     // Sort by relevance (exact matches first)
     results.sort((a, b) => {
-      const aExact = a.title.toLowerCase().startsWith(query) ? 0 : 1;
-      const bExact = b.title.toLowerCase().startsWith(query) ? 0 : 1;
+      const aExact = (a.title || "").toLowerCase().startsWith(query) ? 0 : 1;
+      const bExact = (b.title || "").toLowerCase().startsWith(query) ? 0 : 1;
       return aExact - bExact;
     });
 

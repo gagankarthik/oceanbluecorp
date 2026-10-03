@@ -76,7 +76,7 @@ const ST: Record<S, {
   label: string; dot: string; ring: string; bg: string; text: string; bar: string; icon: (p: IconProps) => React.ReactElement;
 }> = {
   operational:  { label: "Operational",   dot: "bg-success", ring: "ring-success/25", bg: "bg-success-container", text: "text-success", bar: "bg-success", icon: IconOk },
-  investigating:{ label: "Investigating", dot: "bg-sky-500",     ring: "ring-sky-200",     bg: "bg-sky-50",     text: "text-sky-700",     bar: "bg-sky-500",     icon: IconInfo },
+  investigating:{ label: "Investigating", dot: "bg-cobalt",      ring: "ring-cobalt/25",    bg: "bg-cobalt-tint",  text: "text-cobalt",       bar: "bg-cobalt",      icon: IconInfo },
   degraded:     { label: "Degraded",      dot: "bg-warning",   ring: "ring-warning/25",   bg: "bg-warning-container",   text: "text-warning",   bar: "bg-warning",   icon: IconWarn },
   outage:       { label: "Outage",        dot: "bg-danger",    ring: "ring-danger/25",    bg: "bg-danger-container",    text: "text-danger",    bar: "bg-danger",    icon: IconStop },
   unknown:      { label: "Unknown",       dot: "bg-line-strong", ring: "ring-line",        bg: "bg-paper",      text: "text-ink-muted",   bar: "bg-line-strong", icon: IconInfo },

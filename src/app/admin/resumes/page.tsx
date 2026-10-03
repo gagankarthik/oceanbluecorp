@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminRowsSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
+import { Empty as Blank } from "@/components/admin/list-panel";
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -74,11 +75,6 @@ function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/** Placeholder for an empty cell, aligned with the other columns. */
-function Blank() {
-  return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
 }
 
 /** Format mark: a small text chip, not a tinted tile. */

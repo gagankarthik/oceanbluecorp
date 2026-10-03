@@ -13,12 +13,6 @@ export const CONTACT_EMAIL = "hr@oceanbluecorp.com";
 
 export const FOUNDED_YEAR = 2013;
 
-/** Month is 1-indexed here (8 = August), this is a label, not a Date arg. */
-export const FOUNDED_MONTH = 8;
-export const FOUNDED_DAY = 8;
-
-/** "08/08/2013", matches the founding date printed on the anniversary artwork. */
-export const FOUNDED_SHORT = "08/08/2013";
 export const FOUNDED_LONG = "August 8, 2013";
 
 export type Milestone = {

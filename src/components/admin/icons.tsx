@@ -113,42 +113,6 @@ export function IconConversion(props: IconProps) {
   );
 }
 
-/** Offer awaiting response: sealed envelope with a waiting indicator. */
-export function IconOfferPending(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h11a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 15.5 15h-11A1.5 1.5 0 0 1 3 13.5z" />
-      <path d="M3.4 6l6.6 5 6.6-5" />
-      <circle cx="18.5" cy="17.5" r="4" />
-      <path d="M18.5 15.8v1.9l1.3.8" />
-    </svg>
-  );
-}
-
-/** Ageing record: an hourglass with the sand run down. */
-export function IconStale(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <path d="M7 3h10M7 21h10" />
-      <path d="M8 3v3.5c0 1.2 1.6 2.6 4 5.5 2.4-2.9 4-4.3 4-5.5V3" />
-      <path d="M8 21v-3.5c0-1.2 1.6-2.6 4-5.5 2.4 2.9 4 4.3 4 5.5V21" />
-      <path d="M9.5 19h5" strokeWidth={2.5} />
-    </svg>
-  );
-}
-
-/** Unassigned: a person outline with no owner attached. */
-export function IconUnassigned(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <circle cx="10" cy="8" r="3.5" />
-      <path d="M4 20a6 6 0 0 1 12 0" />
-      <path d="M17 6.5h5" />
-      <path d="M19.5 4v5" />
-    </svg>
-  );
-}
-
 /** Team member throughput, used by the submissions table header. */
 export function IconTeam(props: IconProps) {
   return (
@@ -169,17 +133,6 @@ export function IconSource(props: IconProps) {
       <path d="M3.5 19a5.5 5.5 0 0 1 8.2-4.8" />
       <circle cx="17" cy="15.5" r="3" />
       <path d="m19.2 17.7 2.3 2.3" />
-    </svg>
-  );
-}
-
-/** Live/streaming state marker for the refresh control. */
-export function IconLive(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
-      <path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 16.2a6 6 0 0 0 0-8.4" />
-      <path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 19.1a10 10 0 0 0 0-14.2" opacity={0.45} />
     </svg>
   );
 }
@@ -410,45 +363,12 @@ export function IconSettings(props: IconProps) {
   );
 }
 
-/** Export: a record leaving the system into a tray. */
-export function IconExport(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <path d="M12 3v10" />
-      <path d="M8.5 9.5 12 13l3.5-3.5" />
-      <path d="M4.5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V15" />
-    </svg>
-  );
-}
-
 /** Refresh: re-read the record set. */
 export function IconRefresh(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M20 12a8 8 0 1 1-2.5-5.8" />
       <path d="M20 4v4h-4" />
-    </svg>
-  );
-}
-
-/** Coverage: a gauge, supply measured against demand. */
-export function IconCoverage(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <path d="M4 17a8 8 0 1 1 16 0" />
-      <path d="M12 17l4.2-4.6" />
-      <circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-/** Time in stage: an ageing mark for velocity readings. */
-export function IconDwell(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <circle cx="12" cy="12.5" r="7.5" />
-      <path d="M12 8.5v4.5l3 1.8" />
-      <path d="M9.5 3h5" />
     </svg>
   );
 }
@@ -530,16 +450,6 @@ export function IconInfo(props: IconProps) {
   );
 }
 
-/** Blocked / banned: a ring barred through. */
-export function IconBlocked(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M5.6 5.6l12.8 12.8" />
-    </svg>
-  );
-}
-
 /** Clock: a pending or timed record. */
 export function IconClock(props: IconProps) {
   return (
@@ -580,17 +490,6 @@ export function IconUserPlus(props: IconProps) {
       <circle cx="9.5" cy="8" r="3.4" />
       <path d="M3.5 20a6 6 0 0 1 12 0" />
       <path d="M19 8.5v5M16.5 11h5" />
-    </svg>
-  );
-}
-
-/** Remove a person. */
-export function IconUserMinus(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <circle cx="9.5" cy="8" r="3.4" />
-      <path d="M3.5 20a6 6 0 0 1 12 0" />
-      <path d="M16.5 11h5" />
     </svg>
   );
 }
@@ -770,18 +669,6 @@ export function IconInbox(props: IconProps) {
   );
 }
 
-/** ID card, a candidate profile. */
-export function IconIdCard(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <circle cx="8.5" cy="10.8" r="2.2" />
-      <path d="M5.4 16a3.2 3.2 0 0 1 6.2 0" />
-      <path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5" />
-    </svg>
-  );
-}
-
 /** Interview, a candidate in conversation. */
 export function IconInterview(props: IconProps) {
   return (
@@ -823,16 +710,6 @@ export function IconPercent(props: IconProps) {
       <path d="M6 18L18 6" />
       <circle cx="7.5" cy="7.5" r="2.5" />
       <circle cx="16.5" cy="16.5" r="2.5" />
-    </svg>
-  );
-}
-
-/** Trend, a rising line. */
-export function IconTrend(props: IconProps) {
-  return (
-    <svg {...base} {...props}>
-      <path d="M3 16.5L9.5 10l4 4L21 6.5" />
-      <path d="M15.5 6.5H21V12" />
     </svg>
   );
 }

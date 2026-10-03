@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { jsonLdString, pageMetadata } from "@/lib/seo";
 import { Fragment } from "react";
-import Anniversary from "@/components/landing/anniversary/Anniversary";
 import { CustomerMarquee } from "@/components/site/customer-marquee";
 import { ClientVoices } from "@/components/site/client-voices";
 import { PracticeShowcase } from "@/components/site/practice-showcase";
@@ -14,7 +13,6 @@ import { IconArrowRight } from "@/components/site/icons";
 import { ArtCapitol, ArtHealth, ArtFinance, ArtFactory } from "@/components/site/industry-art";
 
 import { getSiteContent } from "@/lib/content";
-import { isAnniversaryLive } from "@/lib/anniversary";
 
 // Re-read CMS content (edited at /admin/content) at most once a minute, so
 // admin edits go live without a rebuild while the page stays effectively static.
@@ -88,16 +86,10 @@ const homeJsonLd = {
 
 export default async function Home() {
   const content = await getSiteContent("homepage");
-  // Resolved on the server and passed down. A client component reading the
-  // clock itself would let server and browser disagree across midnight and
-  // break hydration.
-  const anniversary = isAnniversaryLive(content);
   const title = content.heroTitle || HERO.title;
   return (
     <div className="site">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(homeJsonLd) }} />
-
-      {anniversary && <Anniversary content={content} />}
 
       {/* Hero: navy with beams running along the line grid. */}
       <section className="on-dark relative isolate overflow-hidden bg-night">

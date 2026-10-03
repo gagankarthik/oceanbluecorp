@@ -1,5 +1,3 @@
-"use client";
-
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { Band, Section, ClosingCta } from "@/components/site/sections";
@@ -42,7 +40,7 @@ export default function TeamPage() {
             <li key={l.name} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
               <span
                 aria-hidden
-                className="grid aspect-[4/3] w-full place-items-center border-b border-line bg-paper text-[64px] leading-none font-semibold tracking-[-0.04em] text-cobalt [background-image:linear-gradient(to_right,rgb(11_26_51/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(11_26_51/0.05)_1px,transparent_1px)] [background-size:28px_28px]"
+                className="grid aspect-[4/3] w-full place-items-center border-b border-line bg-paper text-[64px] leading-none font-semibold tracking-[-0.04em] text-brand [background-image:linear-gradient(to_right,rgb(11_26_51/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(11_26_51/0.05)_1px,transparent_1px)] [background-size:28px_28px]"
               >
                 {l.initials}
               </span>
@@ -55,7 +53,7 @@ export default function TeamPage() {
                     href={l.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-auto inline-flex items-center gap-2 self-start pt-5 text-[14px] font-semibold text-ink transition-colors hover:text-cobalt"
+                    className="mt-auto inline-flex items-center gap-2 self-start pt-5 type-label font-semibold text-ink transition-colors hover:text-cobalt"
                   >
                     <IconLinkedin size={17} />
                     LinkedIn
@@ -77,7 +75,7 @@ export default function TeamPage() {
           <ol className="reveal divide-y divide-line border-y border-line lg:col-span-7">
             {OPERATING.map((o) => (
               <li key={o.title} className="grid grid-cols-[40px_minmax(0,1fr)] gap-5 py-7">
-                <IconCheck size={20} className="mt-1 text-cobalt" />
+                <IconCheck size={20} className="mt-1 text-brand" />
                 <div>
                   <h3 className="type-title-lg text-ink">{o.title}</h3>
                   <p className="mt-1.5 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>

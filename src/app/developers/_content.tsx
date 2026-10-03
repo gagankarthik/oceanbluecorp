@@ -13,12 +13,12 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
   const [copied, setCopied] = useState(false);
   return (
     // min-w-0 + overflow-x-auto on the <pre>: long lines scroll inside the pane, never the page.
-    <div className="my-4 min-w-0 overflow-hidden rounded-xl border border-[#1c2f52] bg-night shadow-overlay">
-      <div className="flex items-center justify-between border-b border-white/10 bg-[#12254a] px-4 py-2">
+    <div className="my-4 min-w-0 overflow-hidden rounded-xl border border-white/10 bg-night shadow-overlay">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-2">
         <span className="flex items-center gap-2">
-          <span aria-hidden className="size-2.5 rounded-full bg-[#ff5f57]" />
-          <span aria-hidden className="size-2.5 rounded-full bg-[#febc2e]" />
-          <span aria-hidden className="size-2.5 rounded-full bg-[#28c840]" />
+          <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
+          <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
+          <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
           <span className="ml-2 font-mono text-[11.5px] text-white/70">{lang}</span>
         </span>
         <button
@@ -34,7 +34,7 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="max-w-full overflow-x-auto p-4 font-mono text-[13px] leading-relaxed whitespace-pre text-[#e7e7e2]">{children}</pre>
+      <pre className="max-w-full overflow-x-auto p-4 font-mono text-[13px] leading-relaxed whitespace-pre text-white/90">{children}</pre>
     </div>
   );
 }
@@ -299,8 +299,8 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
                 <tbody className="divide-y divide-line">
                   <tr><td className="py-3 px-4"><Badge label="401" color="bg-danger-container text-danger border-danger/25" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Missing API key</td><td className="py-3 px-4 text-ink-muted">No X-API-Key header provided</td></tr>
                   <tr><td className="py-3 px-4"><Badge label="401" color="bg-danger-container text-danger border-danger/25" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Invalid API key</td><td className="py-3 px-4 text-ink-muted">Key not found in our system</td></tr>
-                  <tr><td className="py-3 px-4"><Badge label="403" color="bg-orange-50 text-orange-800 border-orange-200" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Key disabled</td><td className="py-3 px-4 text-ink-muted">Key has been revoked or disabled</td></tr>
-                  <tr><td className="py-3 px-4"><Badge label="403" color="bg-orange-50 text-orange-800 border-orange-200" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Missing scope</td><td className="py-3 px-4 text-ink-muted">Key does not hold the scope this endpoint needs</td></tr>
+                  <tr><td className="py-3 px-4"><Badge label="403" color="bg-warning-container text-warning border-warning/25" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Key disabled</td><td className="py-3 px-4 text-ink-muted">Key has been revoked or disabled</td></tr>
+                  <tr><td className="py-3 px-4"><Badge label="403" color="bg-warning-container text-warning border-warning/25" /></td><td className="py-3 px-4 font-mono text-xs text-ink-muted">Missing scope</td><td className="py-3 px-4 text-ink-muted">Key does not hold the scope this endpoint needs</td></tr>
                 </tbody>
               </table>
             </div>
@@ -576,7 +576,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
                     ["500", "Internal server error", "Retry after a moment; contact us if persistent"],
                   ].map(([code, meaning, action]) => (
                     <tr key={code} className="hover:bg-paper">
-                      <td className="py-3 px-4"><Badge label={code} color={code === "404" ? "bg-paper text-ink-muted border-line" : code === "500" ? "bg-danger-container text-danger border-danger/25" : "bg-orange-50 text-orange-800 border-orange-200"} /></td>
+                      <td className="py-3 px-4"><Badge label={code} color={code === "404" ? "bg-paper text-ink-muted border-line" : code === "500" ? "bg-danger-container text-danger border-danger/25" : "bg-warning-container text-warning border-warning/25"} /></td>
                       <td className="py-3 px-4 text-sm text-ink-muted">{meaning}</td>
                       <td className="py-3 px-4 text-sm text-ink-subtle">{action}</td>
                     </tr>

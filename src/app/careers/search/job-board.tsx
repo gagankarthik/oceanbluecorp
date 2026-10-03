@@ -13,7 +13,10 @@ import { IconFilter, IconMoney, IconCheckCircle } from "@/components/site/career
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
 import type { PublicJob } from "@/lib/aws/dynamodb";
-import { isPubliclyOpen } from "@/lib/job-status";
+import { isAcceptingApplications } from "@/lib/job-status";
+import { formatSalary } from "@/lib/salary";
+import { SideSheet } from "@/components/site/side-sheet";
+import { toBoardJob, type BoardJob } from "./board-job";
 import { useAuth } from "@/lib/auth";
 
 const ALL_DEPTS = "All Departments";
@@ -57,7 +60,7 @@ const dueLabel = (dueDate?: string): { text: string; urgent: boolean } | null =>
   return { text: `Closes ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`, urgent: false };
 };
 
-const isRemote = (job: PublicJob) => job.type === "remote" || (job.location || "").toLowerCase().includes("remote");
+const isRemote = (job: BoardJob) => job.type === "remote" || (job.location || "").toLowerCase().includes("remote");
 
 const scrollToResults = () => document.getElementById("openings")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -69,9 +72,9 @@ type Facet = "dept" | "type" | "loc" | "remote";
  * indexable. `null` means the server load failed; the board then fetches
  * from the API itself, with its loading and error states.
  */
-export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | null }) {
+export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | null }) {
   const { user, isAuthenticated } = useAuth();
-  const [jobs, setJobs] = useState<PublicJob[]>(initialJobs ?? []);
+  const [jobs, setJobs] = useState<BoardJob[]>(initialJobs ?? []);
   const [loading, setLoading] = useState(initialJobs === null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -125,7 +128,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
         const res = await fetch("/api/jobs");
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
-        setJobs((data.jobs || []).filter((j: PublicJob) => isPubliclyOpen(j.status)));
+        setJobs((data.jobs || []).filter((j: PublicJob) => isAcceptingApplications(j)).map(toBoardJob));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch jobs");
       } finally {
@@ -159,11 +162,8 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
     })();
   }, [isAuthenticated, user?.id, user?.email]);
 
-  // Postings whose deadline has passed are not shown at all.
-  const openJobs = useMemo(() => {
-    const now = Date.now();
-    return jobs.filter((j) => !j.submissionDueDate || new Date(j.submissionDueDate).getTime() >= now);
-  }, [jobs]);
+  // Postings whose deadline has passed are not shown at all (the server list can be a minute stale).
+  const openJobs = useMemo(() => jobs.filter((j) => isAcceptingApplications(j)), [jobs]);
 
   // Departments as they actually appear on open roles, most roles first.
   const departments = useMemo(() => {
@@ -185,14 +185,14 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
   const filterExcept = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (except: Facet | null) => openJobs.filter((j) =>
-      (!q || [j.title, j.department, j.description, j.location].some((f) => (f || "").toLowerCase().includes(q)))
+      (!q || [j.title, j.department, j.excerpt, j.location].some((f) => (f || "").toLowerCase().includes(q)))
       && (except === "dept" || dept === ALL_DEPTS || j.department === dept)
       && (except === "type" || type === ALL_TYPES || j.type === type)
       && (except === "loc" || location === ALL_LOCS || j.location === location)
       && (except === "remote" || !remoteOnly || isRemote(j)));
   }, [openJobs, query, dept, type, location, remoteOnly]);
 
-  const countBy = (list: PublicJob[], key: (j: PublicJob) => string) => {
+  const countBy = (list: BoardJob[], key: (j: BoardJob) => string) => {
     const counts: Record<string, number> = {};
     list.forEach((j) => (counts[key(j)] = (counts[key(j)] || 0) + 1));
     return counts;
@@ -221,17 +221,6 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
   }));
   const locSelect: SelectOption[] = locations.map((l) => ({ value: l, label: l === ALL_LOCS ? "All locations" : l }));
   const typeSelect: SelectOption[] = [ALL_TYPES, ...typeList].map((t) => ({ value: t, label: t === ALL_TYPES ? "All types" : formatJobType(t) }));
-
-  useEffect(() => {
-    if (!sheetOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSheetOpen(false);
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [sheetOpen]);
 
   const resetFacets = () => {
     setDept(ALL_DEPTS);
@@ -353,7 +342,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
                 <span className="flex size-10 items-center justify-center rounded-xl bg-white/10">
                   <IconMail size={18} />
                 </span>
-                <h2 className="mt-4 text-[17px] font-semibold">Don&rsquo;t see the right role?</h2>
+                <h2 className="mt-4 type-title font-semibold">Don&rsquo;t see the right role?</h2>
                 <p className="mt-1.5 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
                 <a
                   href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
@@ -459,8 +448,9 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
               ) : results.length > 0 ? (
                 <>
                   <ul className="space-y-3">
-                    {results.slice(0, visible).map((job, i) => (
-                      <li key={job.id} className="rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                    {/* Every role is in the HTML for crawlers; past the page they are hidden, not omitted. */}
+                    {results.map((job, i) => (
+                      <li key={job.id} className={cn("rise", i >= visible && "hidden")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                         <JobRow job={job} applied={appliedJobIds.has(job.id)} />
                       </li>
                     ))}
@@ -512,7 +502,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
               {/* Closing strip: why work here, and the fine print. */}
               <div className="mt-12 flex flex-col gap-4 rounded-2xl border border-line bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
                 <div>
-                  <h2 className="text-[17px] font-semibold text-ink">Working at Ocean Blue</h2>
+                  <h2 className="type-title font-semibold text-ink">Working at Ocean Blue</h2>
                   <p className="mt-1 type-body-sm text-ink-muted">How we work, what we offer, and the teams you could join.</p>
                 </div>
                 <LinkButton href="/careers" variant="outline" className="shrink-0">
@@ -529,39 +519,31 @@ export default function JobBoard({ initialJobs }: { initialJobs: PublicJob[] | n
       </section>
 
       {/* Phone filter sheet */}
-      {sheetOpen && (
-        <div className="fixed inset-0 z-[10000] lg:hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-          <button type="button" aria-label="Close filters" className="absolute inset-0 bg-ink/40" onClick={() => setSheetOpen(false)} />
-          <div className="rise absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white p-6 pb-8">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
-            <div className="flex items-center justify-between">
-              <h2 id="sheet-title" className="type-title-lg font-semibold text-ink">
-                Filters
-              </h2>
-              <button type="button" onClick={() => setSheetOpen(false)} className="flex size-10 items-center justify-center rounded-full hover:bg-paper" aria-label="Close">
-                <IconX size={18} />
-              </button>
-            </div>
-            <div className="mt-6 space-y-5">
-              <Select id="s-dept" label="Department" value={dept} onValueChange={setDept} options={deptSelect} shape="field" />
-              <Select id="s-loc" label="Location" value={location} onValueChange={setLocation} options={locSelect} shape="field" />
-              <Select id="s-type" label="Job type" value={type} onValueChange={setType} options={typeSelect} shape="field" />
-              <div className="flex items-center justify-between border-t border-line pt-5">
-                <span className="type-body font-medium text-ink">Remote only</span>
-                <Switch on={remoteOnly} onChange={setRemoteOnly} label="Remote only" />
-              </div>
-            </div>
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <button type="button" onClick={resetFacets} className="h-12 rounded-full border border-line-strong text-[15px] font-semibold text-ink">
-                Reset
-              </button>
-              <button type="button" onClick={() => setSheetOpen(false)} className="h-12 rounded-full bg-cobalt text-[15px] font-semibold text-white">
-                Show {results.length}
-              </button>
-            </div>
+      <SideSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title="Filters"
+        footer={
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" onClick={resetFacets} className="h-12 rounded-full border border-line-strong text-[15px] font-semibold text-ink">
+              Reset
+            </button>
+            <button type="button" onClick={() => setSheetOpen(false)} className="h-12 rounded-full bg-cobalt text-[15px] font-semibold text-white">
+              Show {results.length}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-5">
+          <Select id="s-dept" label="Department" value={dept} onValueChange={setDept} options={deptSelect} shape="field" />
+          <Select id="s-loc" label="Location" value={location} onValueChange={setLocation} options={locSelect} shape="field" />
+          <Select id="s-type" label="Job type" value={type} onValueChange={setType} options={typeSelect} shape="field" />
+          <div className="flex items-center justify-between border-t border-line pt-5">
+            <span className="type-body font-medium text-ink">Remote only</span>
+            <Switch on={remoteOnly} onChange={setRemoteOnly} label="Remote only" />
           </div>
         </div>
-      )}
+      </SideSheet>
     </>
   );
 }
@@ -619,9 +601,10 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-function JobRow({ job, applied }: { job: PublicJob; applied: boolean }) {
+function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
   const due = dueLabel(job.submissionDueDate);
   const mode = workMode(job);
+  const salary = formatSalary(job.salary);
   return (
     <Link
       href={`/careers/search/${job.id}`}
@@ -645,12 +628,10 @@ function JobRow({ job, applied }: { job: PublicJob; applied: boolean }) {
             {job.location}
           </li>
           <li>{formatJobType(job.type)}</li>
-          {job.salary && (
+          {salary && (
             <li className="inline-flex items-center gap-1.5">
               <IconMoney size={14} className="text-ink-subtle" />
-              {job.salary.currency}
-              {job.salary.min.toLocaleString()} – {job.salary.currency}
-              {job.salary.max.toLocaleString()}
+              {salary}
             </li>
           )}
         </ul>

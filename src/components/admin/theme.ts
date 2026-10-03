@@ -1,6 +1,7 @@
 import {
   Clock, Eye, MessageSquare, Mail, CheckCircle2, XCircle, FileText,
 } from "lucide-react";
+import type { SalaryPeriod } from "@/lib/aws/dynamodb";
 
 export type Tone =
   | "blue" | "indigo" | "violet" | "emerald" | "amber" | "rose" | "sky" | "slate" | "teal" | "cyan" | "purple";
@@ -360,3 +361,22 @@ export function normalizeState(value?: string | null): string {
   const byName = US_STATES.find((s) => s.name.toLowerCase() === v.toLowerCase());
   return byName ? byName.code : "";
 }
+
+/**
+ * A record's state as a canonical 2-letter code. Legacy rows stored the full
+ * name ("Texas"); unrecognised values pass through rather than disappearing.
+ */
+export function stateOf(value?: string | null): string {
+  return normalizeState(value) || value?.trim() || "";
+}
+
+export const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
+
+/** Job pay periods; a salary without one is annual. */
+export const SALARY_PERIODS: { value: SalaryPeriod; label: string; short: string }[] = [
+  { value: "hour",  label: "Per hour",  short: "/hr" },
+  { value: "day",   label: "Per day",   short: "/day" },
+  { value: "week",  label: "Per week",  short: "/wk" },
+  { value: "month", label: "Per month", short: "/mo" },
+  { value: "year",  label: "Per year",  short: "/yr" },
+];

@@ -16,8 +16,9 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   IconPipeline, IconSend, IconInterview, IconPlacement, IconMoney,
-  IconCalendar, IconTrash, IconWarning, IconBuilding, IconPercent, IconUser,
+  IconCalendar, IconTrash, IconWarning, IconBuilding, IconPercent, IconUser, IconDownload,
 } from "@/components/admin/icons";
+import { buildIcs } from "@/lib/ics";
 import { Skel } from "./skeletons";
 import type {
   Client, Interview, PipelineKind, PipelineRecord, Placement, RateUnit, Submission, Vendor,
@@ -292,6 +293,33 @@ export function PipelinePanel({
   );
 }
 
+/** Builds the invite in the browser; nothing is sent to the candidate. */
+function downloadInterviewIcs(interview: Interview) {
+  const start = new Date(interview.scheduledAt);
+  if (Number.isNaN(start.getTime())) {
+    toast.error("This interview has no valid date");
+    return;
+  }
+  const who = interview.candidateName || "Candidate";
+  const ics = buildIcs({
+    uid: `${interview.id}@oceanbluecorp.com`,
+    start,
+    durationMinutes: interview.durationMinutes || 30,
+    title: `Interview: ${who}${interview.jobTitle ? ` (${interview.jobTitle})` : ""}`,
+    description: `Round ${interview.round}, ${INTERVIEW_MODE_LABELS[interview.mode]}${interview.panel?.length ? `. Panel: ${interview.panel.join(", ")}` : ""}`,
+    location: interview.location,
+    url: /^https?:\/\//.test(interview.location || "") ? interview.location : undefined,
+  });
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `interview-${who.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "candidate"}-round-${interview.round}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 const addLinkCls =
   "inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
 
@@ -452,6 +480,17 @@ function InterviewLine({
           </p>
         )}
       </div>
+      {interview.status !== "cancelled" && (
+        <button
+          type="button"
+          onClick={() => downloadInterviewIcs(interview)}
+          aria-label="Download invite (.ics)"
+          title="Download invite (.ics)"
+          className="-my-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        >
+          <IconDownload className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
       <RowActions record={interview} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );

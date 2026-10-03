@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getAllJobs, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
+import { getAllJobs, getPublicJobs, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireJobEditor, getClaims } from "@/lib/auth/verify";
@@ -9,6 +9,7 @@ import {
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen } from "@/lib/job-status";
+import { jobInputError, parseSalary, publishedAtFor } from "@/lib/job-input";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -17,8 +18,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") as Job["status"] | null;
     // List screens only need the summary; the long-form copy is ~80% of the payload.
     const summary = searchParams.get("fields") === "summary";
+    const claims = await getClaims(request);
+    const isStaff = hasRecruitingAccess(claims?.groups);
+    const isEditor = hasJobEditAccess(claims?.groups);
 
-    const result = await getAllJobs(status || undefined);
+    // Anonymous callers only ever see live postings, so query those instead of scanning.
+    const result = !isStaff && !isEditor && !status
+      ? await getPublicJobs()
+      : await getAllJobs(status || undefined);
 
     if (!result.success) {
       return serverError("API /api/jobs GET - failed", result.error, "Couldn't load jobs. Please try again.");
@@ -40,13 +47,10 @@ export async function GET(request: NextRequest) {
     // "sales"]` compared against the RAW group, which does not match the
     // namespaced `web:admin` this pool writes, so it was one pool migration
     // away from silently serving staff the public projection.
-    const claims = await getClaims(request);
-    const isStaff = hasRecruitingAccess(claims?.groups);
     // Media authors postings now, so it must see the drafts it is working on —
     // the open-only filter would hide a posting from the person writing it. It
     // still gets the public projection: no rates, client, vendor or assignees.
     // Anonymous visitors keep the old rule exactly.
-    const isEditor = hasJobEditAccess(claims?.groups);
     // Signed-in lists count applicants from the applications table; anonymous
     // callers keep the stored figure and skip the extra read.
     const counted = isStaff || isEditor
@@ -91,37 +95,34 @@ export async function POST(request: NextRequest) {
     const canPrice = hasJobCommercialAccess(auth.claims.groups);
     const commercial = <T,>(value: T): T | undefined => (canPrice ? value : undefined);
 
-    // Validate required fields
-    const requiredFields = ["title", "department", "location", "type", "description"];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { error: `Missing required field: ${field}` },
-          { status: 400 }
-        );
-      }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
     }
+    const invalid = jobInputError(body);
+    if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+    const salary = parseSalary(body.salary ?? null);
 
-    // Generate OB-ID (posting ID)
+    // Every posting carries an OB-ID; one without it can't be referenced by staff or partners.
     const postingIdResult = await getNextPostingId();
     if (!postingIdResult.success || !postingIdResult.postingId) {
-      console.error("Failed to generate posting ID:", postingIdResult.error);
-      // Continue without posting ID if generation fails
+      return serverError("Generating posting ID", postingIdResult.error, "Couldn't create the job. Please try again.");
     }
+    const status: Job["status"] = body.status || "draft";
 
     const job: Job = {
       id: uuidv4(),
       title: body.title,
       department: body.department,
-      location: body.location,
+      location: typeof body.location === "string" ? body.location.trim() : "",
       type: body.type,
       description: sanitizeRichText(body.description),
       requirements: typeof body.requirements === "string" ? sanitizeRichText(body.requirements) : (body.requirements || []),
       responsibilities: typeof body.responsibilities === "string" ? sanitizeRichText(body.responsibilities) : (body.responsibilities || []),
-      salary: body.salary,
-      status: body.status || "draft",
+      salary: salary.ok && salary.value ? salary.value : undefined,
+      status,
       submissionDueDate: body.submissionDueDate,
       createdAt: new Date().toISOString(),
+      publishedAt: publishedAtFor(status),
       // Attribution from the verified token, not the body (STANDARDS §5.1).
       // These were read straight off the request, so the poster's identity and
       // role were whatever the caller typed — harmless while only recruiting

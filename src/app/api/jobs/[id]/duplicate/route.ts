@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getJob, createJob, getNextPostingId, Job } from "@/lib/aws/dynamodb";
+import { getJob, createJob, getNextPostingId, toPublicJob, Job } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireJobEditor } from "@/lib/auth/verify";
+import { hasJobCommercialAccess } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";
 
 // POST /api/jobs/[id]/duplicate - Duplicate a job posting
@@ -9,7 +10,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  // Duplicating is authoring a posting, so it follows the edit rule, not the recruiting one.
+  const auth = await requireJobEditor(request);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
@@ -28,12 +30,16 @@ export async function POST(
     // Generate new OB-ID (posting ID)
     const postingIdResult = await getNextPostingId();
     if (!postingIdResult.success || !postingIdResult.postingId) {
-      console.error("Failed to generate posting ID:", postingIdResult.error);
+      return serverError("Generating posting ID", postingIdResult.error, "Couldn't duplicate the job. Please try again.");
     }
 
-    // Create duplicated job with new ID and postingId
+    // Media copies the posting copy only; the commercials stay with recruiting.
+    const canPrice = hasJobCommercialAccess(auth.claims.groups);
     const duplicatedJob: Job = {
-      ...originalJob,
+      ...(canPrice ? originalJob : (toPublicJob(originalJob) as Job)),
+      createdBy: auth.claims.sub,
+      postedByEmail: auth.claims.email || originalJob.postedByEmail,
+      publishedAt: undefined,
       id: uuidv4(),
       postingId: postingIdResult.postingId,
       title: `${originalJob.title} (Copy)`,
@@ -50,7 +56,7 @@ export async function POST(
       return serverError("Duplicating job", result.error, "Couldn't duplicate the job. Please try again.");
     }
 
-    return NextResponse.json({ job: duplicatedJob }, { status: 201 });
+    return NextResponse.json({ job: canPrice ? duplicatedJob : toPublicJob(duplicatedJob) }, { status: 201 });
   } catch (error) {
     return serverError("Error duplicating job", error, "Couldn't duplicate the job. Please try again.");
   }

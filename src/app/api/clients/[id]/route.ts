@@ -87,12 +87,13 @@ export async function PATCH(
     if (body.name !== undefined) updates.name = body.name.trim();
     if (body.websiteUrl !== undefined) updates.websiteUrl = body.websiteUrl.trim();
     if (body.status !== undefined) updates.status = body.status;
-    if (body.email !== undefined) updates.email = body.email?.trim() || undefined;
-    if (body.phone !== undefined) updates.phone = body.phone?.trim() || undefined;
-    if (body.address !== undefined) updates.address = body.address?.trim() || undefined;
-    if (body.city !== undefined) updates.city = body.city?.trim() || undefined;
-    if (body.state !== undefined) updates.state = body.state?.trim() || undefined;
-    if (body.zipCode !== undefined) updates.zipCode = body.zipCode?.trim() || undefined;
+    // "" clears a field; the update skips undefined, so it would keep the old value.
+    if (body.email !== undefined) updates.email = body.email?.trim() ?? "";
+    if (body.phone !== undefined) updates.phone = body.phone?.trim() ?? "";
+    if (body.address !== undefined) updates.address = body.address?.trim() ?? "";
+    if (body.city !== undefined) updates.city = body.city?.trim() ?? "";
+    if (body.state !== undefined) updates.state = body.state?.trim() ?? "";
+    if (body.zipCode !== undefined) updates.zipCode = body.zipCode?.trim() ?? "";
 
     const result = await updateClient(id, updates);
 

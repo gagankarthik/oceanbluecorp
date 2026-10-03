@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import { getAllArticles, type Article, type ArticleKind } from "@/lib/aws/dynamodb";
 import { ARTICLE_KIND_CONFIG, byNewest, isLive } from "@/lib/articles";
 import { richTextToPlain } from "@/lib/rich-text";
-import { OG_IMAGES } from "@/lib/seo";
+import { OG_IMAGES, breadcrumbJsonLd } from "@/lib/seo";
 
 export const SITE = "https://oceanbluecorp.com";
 
@@ -143,6 +143,15 @@ export function articleMetadata(article: Article): Metadata {
  * Only fields we genuinely hold are emitted, the same rule the JobPosting
  * markup follows: padded or invented values are penalised, not rewarded.
  */
+/** Home › section › piece, for the detail pages. */
+export function articleBreadcrumbJsonLd(article: Article) {
+  const config = ARTICLE_KIND_CONFIG[article.kind as ArticleKind];
+  return breadcrumbJsonLd([
+    { name: config.label, path: config.publicPath },
+    { name: article.title, path: `${config.publicPath}/${article.slug}` },
+  ]);
+}
+
 export function articleJsonLd(article: Article) {
   const config = ARTICLE_KIND_CONFIG[article.kind as ArticleKind];
   const url = `${SITE}${config.publicPath}/${article.slug}`;
@@ -150,6 +159,7 @@ export function articleJsonLd(article: Article) {
     "@type": "Organization",
     name: "Ocean Blue Corporation",
     url: SITE,
+    logo: { "@type": "ImageObject", url: `${SITE}/Logo_400x400.png`, width: 400, height: 400 },
   };
 
   return {

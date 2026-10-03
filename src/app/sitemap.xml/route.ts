@@ -1,5 +1,5 @@
-import { getAllJobs } from "@/lib/aws/dynamodb";
-import { isPubliclyOpen } from "@/lib/job-status";
+import { getPublicJobs } from "@/lib/aws/dynamodb";
+import { isAcceptingApplications } from "@/lib/job-status";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
 import { getLiveArticles } from "@/lib/articles-public";
 
@@ -23,7 +23,6 @@ const STATIC: Entry[] = [
   { url: `${BASE}/solutions/transformation`, changefreq: "monthly", priority: 0.85 },
   { url: `${BASE}/solutions/engineering`, changefreq: "monthly", priority: 0.85 },
   { url: `${BASE}/team`, changefreq: "monthly", priority: 0.7 },
-  { url: `${BASE}/13-years`, changefreq: "yearly", priority: 0.4 },
   { url: `${BASE}/products`, changefreq: "monthly", priority: 0.75 },
   { url: `${BASE}/developers`, changefreq: "monthly", priority: 0.6 },
   { url: `${BASE}/brand-kit`, changefreq: "yearly", priority: 0.4 },
@@ -54,10 +53,10 @@ export async function GET() {
   const entries: Entry[] = [...STATIC];
 
   try {
-    const result = await getAllJobs();
+    const result = await getPublicJobs();
     if (result.success && result.data) {
       for (const job of result.data) {
-        if (isPubliclyOpen(job.status)) {
+        if (isAcceptingApplications(job)) {
           entries.push({
             url: `${BASE}/careers/search/${job.id}`,
             lastmod: new Date(job.updatedAt || job.createdAt).toISOString(),

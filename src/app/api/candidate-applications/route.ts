@@ -8,6 +8,7 @@ import {
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { visibleTo } from "@/lib/aws/application-access";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/candidate-applications - Get all candidate applications
@@ -25,7 +26,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by createdAt descending (newest first)
-    const applications = (result.data || []).sort(
+    // Same table as /api/applications, so the same My Pool rule.
+    const applications = (result.data || []).filter(visibleTo(auth.claims)).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 

@@ -134,7 +134,8 @@ export async function uploadResume(
 // Get a signed URL for downloading a resume
 export async function getResumeDownloadUrl(
   key: string,
-  expiresIn: number = 3600 // 1 hour default
+  // Short-lived: the link is fetched on click, and a leaked one stops working quickly.
+  expiresIn: number = 300
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     const command = new GetObjectCommand({

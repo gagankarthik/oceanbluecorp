@@ -9,10 +9,19 @@
  * embedded quote by doubling it, which is what `escapeCell` does.
  */
 
-/** Quote a single field per RFC 4180: double the quotes, wrap the whole thing. */
-function escapeCell(value: unknown): string {
+/**
+ * Quote a single field per RFC 4180: double the quotes, wrap the whole thing.
+ * A cell a spreadsheet would run as a formula gets a leading apostrophe;
+ * applicant names come from the public form. Phone-like and signed numbers
+ * are left alone.
+ */
+export function escapeCell(value: unknown): string {
   if (value === null || value === undefined) return '""';
-  return `"${String(value).replace(/"/g, '""')}"`;
+  let text = String(value);
+  if (/^[=@\t\r]/.test(text) || (/^[+-]/.test(text) && !/^[+-][\d\s().-]*$/.test(text))) {
+    text = `'${text}`;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
 }
 
 /**

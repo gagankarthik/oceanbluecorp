@@ -60,7 +60,7 @@ Two semantic namespaces exist, one per surface:
   own palette on the same roles, not an inversion of light.
 
 `--hz-*` is the retired landing namespace. It survives only for the
-anniversary page, the announcement bar and the maintenance screen; do not add
+announcement bar and the maintenance screen; do not add
 to it.
 
 ### 2.2 Token or hardcoded value

@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { breadcrumbJsonLd, jsonLdString, OG_IMAGES } from "@/lib/seo";
+import { workMode } from "@/lib/careers";
+import { currencyCode, salaryUnitText } from "@/lib/salary";
 import { notFound } from "next/navigation";
 import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -22,13 +24,47 @@ const EMPLOYMENT_TYPE: Record<string, string> = {
 };
 
 /**
+ * "Columbus, OH (Hybrid)" → locality + region. A bare value is a city unless it
+ * matches the posting's state. Free text that does not parse stays a locality.
+ */
+function postalAddress(location: string, state?: string) {
+  const clean = location
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\b(hybrid|on-?site)\b/gi, "")
+    .replace(/^[\s,–-]+|[\s,–-]+$/g, "")
+    .trim();
+  const parts = clean.split(",").map((p) => p.trim()).filter(Boolean);
+  let locality: string | undefined = parts[0];
+  let region = state?.trim() || undefined;
+  if (parts.length >= 2) {
+    region = region || parts[1].replace(/\s+\d{5}(-\d{4})?$/, "");
+  } else if (locality && region && locality.toLowerCase() === region.toLowerCase()) {
+    locality = undefined;
+  } else if (locality && /^[A-Z]{2}$/.test(locality)) {
+    region = region || locality;
+    locality = undefined;
+  }
+  return {
+    "@type": "PostalAddress",
+    ...(locality ? { addressLocality: locality } : {}),
+    ...(region ? { addressRegion: region } : {}),
+    addressCountry: "US",
+  };
+}
+
+/** The deadline is a calendar date; the posting stays open through that day. */
+function endOfDay(date: string) {
+  return `${date.slice(0, 10)}T23:59:59`;
+}
+
+/**
  * JobPosting structured data. Without this, listings cannot appear in Google
  * Jobs at all, the single largest source of organic traffic for a careers
  * board. Only fields we genuinely hold are emitted; Google penalises padded
  * or invented values.
  */
-function jobPostingLd(job: PublicJob, id: string) {
-  const remote = /remote/i.test(job.location) || job.type === "remote";
+function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
+  const remote = workMode(job) === "Remote";
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -39,8 +75,8 @@ function jobPostingLd(job: PublicJob, id: string) {
       name: "Ocean Blue Corporation",
       value: job.postingId || id,
     },
-    datePosted: job.createdAt,
-    ...(job.submissionDueDate ? { validThrough: job.submissionDueDate } : {}),
+    datePosted: publishedAt ?? job.createdAt,
+    ...(job.submissionDueDate ? { validThrough: endOfDay(job.submissionDueDate) } : {}),
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "OTHER",
     hiringOrganization: {
       "@type": "Organization",
@@ -49,29 +85,20 @@ function jobPostingLd(job: PublicJob, id: string) {
       logo: "https://oceanbluecorp.com/Logo_400x400.png",
     },
     ...(job.department ? { industry: job.department } : {}),
-    jobLocation: {
-      "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: job.location,
-        ...(job.state ? { addressRegion: job.state } : {}),
-        addressCountry: "US",
-      },
-    },
-    // Required by Google whenever the role is remote.
+    // Fully remote: Google wants TELECOMMUTE plus where applicants may live, and no jobLocation.
     ...(remote
-      ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "USA" } }
-      : {}),
+      ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "US" } }
+      : { jobLocation: { "@type": "Place", address: postalAddress(job.location || "", job.state) } }),
     ...(job.salary
       ? {
           baseSalary: {
             "@type": "MonetaryAmount",
-            currency: job.salary.currency || "USD",
+            currency: currencyCode(job.salary.currency),
             value: {
               "@type": "QuantitativeValue",
               minValue: job.salary.min,
               maxValue: job.salary.max,
-              unitText: "YEAR",
+              unitText: salaryUnitText(job.salary),
             },
           },
         }
@@ -143,7 +170,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: "summary_large_image",
         title: `${job.title} - ${jobType}`,
         description: ogDescription,
-        images: OG_IMAGES,
       },
       alternates: {
         canonical: url,
@@ -182,7 +208,7 @@ export default async function JobDetailsPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: jsonLdString([
-            jobPostingLd(job, id),
+            jobPostingLd(job, id, result.data.publishedAt),
             breadcrumbJsonLd([
               { name: "Careers", path: "/careers" },
               { name: "Open jobs", path: "/careers/search" },
@@ -191,7 +217,7 @@ export default async function JobDetailsPage({ params }: Props) {
           ]),
         }}
       />
-      <JobDetailsClient job={job} jobId={id} />
+      <JobDetailsClient job={job} jobId={id} publishedAt={result.data.publishedAt} />
     </>
   );
 }

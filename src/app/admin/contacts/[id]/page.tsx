@@ -38,6 +38,15 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
     if (!res.ok) throw new Error("Failed to update status");
   }, [id]);
 
+  // Opening an unread enquiry marks it read; a failed write puts it back to "new".
+  const markRead = useCallback(() => {
+    setContact((c) => (c ? { ...c, status: "read" } : c));
+    patchStatus("read").catch(() => {
+      setContact((c) => (c && c.status === "read" ? { ...c, status: "new" } : c));
+      toast.error("Couldn't mark this enquiry as read.", { action: { label: "Retry", onClick: () => markRead() } });
+    });
+  }, [patchStatus]);
+
   const fetchContact = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -48,18 +57,14 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load enquiry");
       const c: Contact = data.contact;
-      // Opening an unread enquiry marks it read, as the old reading pane did.
-      if (c.status === "new") {
-        c.status = "read";
-        patchStatus("read").catch(() => {});
-      }
       setContact(c);
+      if (c.status === "new") markRead();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load enquiry");
     } finally {
       setLoading(false);
     }
-  }, [id, patchStatus]);
+  }, [id, markRead]);
 
   useEffect(() => { void fetchContact(); }, [fetchContact]);
 

@@ -29,7 +29,7 @@ import {
   IconDownload, IconEdit, IconEye, IconFile, IconHash, IconLocation, IconTruck,
   IconGroup, IconSource, IconSend,
 } from "@/components/admin/icons";
-import { statusMeta, statusColor, type AppStatus } from "@/components/admin/theme";
+import { statusMeta, statusColor, SALARY_PERIODS, type AppStatus } from "@/components/admin/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -339,7 +339,7 @@ export default function JobDetailPage({
       { label: "Bill rate", value: job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined },
     ] : []),
     { label: "Salary range", value: job.salary ? (
-      <span className="tabular-nums">${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}</span>
+      <span className="tabular-nums">${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}{SALARY_PERIODS.find((p) => p.value === (job.salary?.period || "year"))?.short}</span>
     ) : undefined },
     { label: "Deadline", value: job.submissionDueDate ? <span className="tabular-nums">{fmtDate(job.submissionDueDate)}</span> : undefined },
     { label: "Created", value: <span className="tabular-nums">{fmtDate(job.createdAt)}</span> },

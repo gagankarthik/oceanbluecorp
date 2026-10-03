@@ -7,6 +7,8 @@ import {
   getJob,
 } from "@/lib/aws/dynamodb";
 import { requireStaff } from "@/lib/auth/verify";
+import { visibleTo } from "@/lib/aws/application-access";
+import { emailKeyOf, nameKeyOf } from "@/lib/application-input";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/candidate-applications/[id] - Get a specific candidate application
@@ -25,7 +27,7 @@ export async function GET(
       return serverError("Fetching candidate application", result.error, "Couldn't load the candidate application. Please try again.");
     }
 
-    if (!result.data) {
+    if (!result.data || !visibleTo(auth.claims)(result.data)) {
       return NextResponse.json(
         { error: "Candidate application not found" },
         { status: 404 }
@@ -51,7 +53,7 @@ export async function PUT(
 
     // Check if application exists
     const existingApp = await getCandidateApplication(id);
-    if (!existingApp.success || !existingApp.data) {
+    if (!existingApp.success || !existingApp.data || !visibleTo(auth.claims)(existingApp.data)) {
       return NextResponse.json(
         { error: "Candidate application not found" },
         { status: 404 }
@@ -74,7 +76,8 @@ export async function PUT(
     }
 
     // Get job title if jobId is provided and changed
-    let jobTitle = body.jobTitle;
+    // The title always comes from the job, so it can't drift from it.
+    let jobTitle: string | undefined;
     if (body.jobId && body.jobId !== existingApp.data.jobId) {
       const jobResult = await getJob(body.jobId);
       if (jobResult.success && jobResult.data) {
@@ -104,6 +107,19 @@ export async function PUT(
     if (body.notes !== undefined) updates.notes = body.notes;
     if (body.addToTalentBench !== undefined) updates.addToTalentBench = body.addToTalentBench;
 
+    // Keep the combined name and the lookup keys in step with the parts.
+    if (updates.firstName !== undefined || updates.lastName !== undefined) {
+      const first = updates.firstName ?? existingApp.data.firstName ?? "";
+      const last = updates.lastName ?? existingApp.data.lastName ?? "";
+      updates.name = `${first} ${last}`.trim();
+      const nameKey = nameKeyOf({ firstName: first, lastName: last });
+      if (nameKey) updates.nameKey = nameKey;
+    }
+    if (updates.email !== undefined) {
+      const emailKey = emailKeyOf(updates.email);
+      if (emailKey) updates.emailKey = emailKey;
+    }
+
     const result = await updateCandidateApplication(id, updates);
 
     if (!result.success) {
@@ -131,7 +147,7 @@ export async function DELETE(
 
     // Check if application exists
     const existingApp = await getCandidateApplication(id);
-    if (!existingApp.success || !existingApp.data) {
+    if (!existingApp.success || !existingApp.data || !visibleTo(auth.claims)(existingApp.data)) {
       return NextResponse.json(
         { error: "Candidate application not found" },
         { status: 404 }

@@ -1,98 +1,71 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { X, Plus } from "lucide-react";
 import {
-  X, Plus, MoreHorizontal,
-} from "lucide-react";
-import {
-  IconDownload, IconEye, IconStar, IconTrash, IconEdit, IconGroup, IconClock,
+  IconDownload, IconStar, IconTrash, IconGroup, IconClock,
 } from "@/components/admin/icons";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import ApplicationsLoading from "./loading";
 import { useAdmin } from "@/components/admin/admin-provider";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
+  Workspace, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
   FilterMenu, ActiveFilters,
-  DisplayMenu, SelectionBar, StageStrip, BrandBand, BAND_PRIMARY,
+  DisplayMenu, SelectionBar, BrandBand, BAND_PRIMARY,
 } from "@/components/admin/workspace";
 import { Field, FormSelect } from "@/components/admin/forms/primitives";
-import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
 import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
-  statusMeta, SOURCE_OPTIONS, WORK_AUTH_GROUPS,
-  HIRE_TYPE_OPTIONS, hireTypeLabel, normalizeState, US_STATES,
-  type AppStatus,
+  SOURCE_OPTIONS, WORK_AUTH_GROUPS, HIRE_TYPE_OPTIONS, hireTypeLabel, stateOf, STATE_NAME,
 } from "@/components/admin/theme";
+import { Empty as Blank } from "@/components/admin/list-panel";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { fmtDate } from "@/lib/format";
 import { daysInStage, isStale, TERMINAL, STALE_DAYS } from "@/lib/pipeline";
 import { haystackOf, matchesTerms, searchTerms } from "@/lib/candidate-search";
 import { downloadCsv } from "@/lib/csv";
+import {
+  KANBAN_COLS, stageColor, sLabel, locationOf, type ApplicationRow as App,
+} from "@/components/admin/applications/stages";
+import { KanbanView, ListView, RowActionsMenu } from "@/components/admin/applications/pipeline-views";
+import { SavedViewsMenu, type SavedSearch } from "@/components/admin/applications/saved-views";
 
-interface App extends Application {
-  jobDepartment?: string;
-}
 
 type ViewMode = "table" | "kanban" | "list";
+const VIEW_MODES: ViewMode[] = ["table", "kanban", "list"];
 
-const PIPELINE = ["pending", "reviewing", "submitted", "interview", "offered", "hired"] as const;
-const KANBAN_COLS = [...PIPELINE, "rejected"] as const;
+/** What a saved search restores. */
+interface ListState {
+  savedView: ViewKey;
+  view: ViewMode;
+  search: string;
+  status: string;
+  position: string;
+  location: string;
+  source: string;
+  auth: string;
+  hire: string;
+  minRating: number;
+}
+
 const ALL_STATUSES = [...KANBAN_COLS] as string[];
 
-/**
- * Stage inks. In-flight stages are one ordered progression, so they share a
- * single accent ramp; offered and the terminal states take the status tokens.
- */
-const STAGE_COLOR: Record<string, string> = {
-  pending:   "color-mix(in srgb, var(--adm-accent) 35%, var(--adm-surface))",
-  reviewing: "color-mix(in srgb, var(--adm-accent) 55%, var(--adm-surface))",
-  submitted: "color-mix(in srgb, var(--adm-accent) 78%, var(--adm-surface))",
-  interview: "var(--adm-accent)",
-  offered:   "var(--adm-warning)",
-  hired:     "var(--adm-success)",
-  rejected:  "var(--adm-danger)",
-};
-const stageColor = (s: string) => STAGE_COLOR[s] ?? "var(--adm-ink-subtle)";
 
-const sLabel = (s: string) => statusMeta[s as AppStatus]?.label ?? s;
-
-/** Empty-cell placeholder. A quiet dash, never a grey sentence. */
-function Blank() {
-  return <span className="select-none text-[var(--adm-ink-subtle)]">&mdash;</span>;
-}
 
 // ── location ─────────────────────────────────────────────────────────────────
 
-/**
- * A record's state as a canonical 2-letter code. Older rows stored the full
- * name ("Texas"), so every read goes through here to land in the same bucket as
- * a row saved as "TX", otherwise one filter option per spelling appears and
- * neither finds the whole set. Unrecognised values pass through rather than
- * disappearing.
- */
-function stateOf(value?: string | null): string {
-  return normalizeState(value) || value?.trim() || "";
-}
-
-const STATE_NAME = new Map(US_STATES.map((s) => [s.code, s.name]));
-
-/** "Austin, TX", what a recruiter actually calls the location. */
-function locationOf(a: Pick<App, "city" | "state">): string {
-  return [a.city?.trim(), stateOf(a.state)].filter(Boolean).join(", ");
-}
 
 /**
  * The location filter keys on STATE, not on the full city string.
@@ -251,7 +224,7 @@ export default function ApplicationsPage() {
       // Skeleton on first load only; a reload after a save keeps the grid on screen.
       if (!hasData.current) setLoading(true);
       setError(null);
-      const [ar, jr] = await Promise.all([fetch("/api/applications"), fetch("/api/jobs?fields=summary")]);
+      const [ar, jr] = await Promise.all([fetch("/api/applications?fields=summary"), fetch("/api/jobs?fields=summary")]);
       const ad = await ar.json(); const jd = await jr.json();
       if (!ar.ok || !jr.ok) throw new Error("Failed to fetch");
       const jArr: Job[] = jd.jobs || [];
@@ -401,7 +374,7 @@ export default function ApplicationsPage() {
     try {
       const res = await fetch(`/api/applications/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
+        body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error();
     } catch { toast.error("The stage could not be changed. Nothing was saved."); load(); }
@@ -455,7 +428,7 @@ export default function ApplicationsPage() {
     try {
       await Promise.all(ids.map((id) => fetch(`/api/applications/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, changedBy: user?.id, changedByName: user?.name || "Admin" }),
+        body: JSON.stringify({ status }),
       })));
       toast.success(`${ids.length} moved to ${sLabel(status)}`);
     } catch { toast.error("Failed to move candidates"); load(); }
@@ -471,6 +444,39 @@ export default function ApplicationsPage() {
       fmtDate(a.appliedAt), a.rating || "",
     ]),
   );
+
+  const [savedSearches, setSavedSearches] = useLocalStorage<SavedSearch<ListState>[]>("adm.applications.savedSearches", []);
+  const savedList = Array.isArray(savedSearches) ? savedSearches : [];
+
+  const listState: ListState = {
+    savedView, view, search,
+    status: statusFilter, position: posFilter, location: locationFilter,
+    source: sourceFilter, auth: authFilter, hire: hireFilter, minRating,
+  };
+  const listStateKey = JSON.stringify(listState);
+  const activeSavedId = savedList.find((s) => JSON.stringify({ ...listState, ...s.state }) === listStateKey)?.id ?? null;
+
+  const applySaved = ({ state: st }: SavedSearch<ListState>) => {
+    const str = (v: unknown) => (typeof v === "string" ? v : "all");
+    setSavedView(st.savedView in VIEW_PREDICATE ? st.savedView : "all");
+    setView(VIEW_MODES.includes(st.view) ? st.view : "table");
+    setSearch(typeof st.search === "string" ? st.search : "");
+    setStatusFilter(str(st.status)); setPosFilter(str(st.position)); setLocationFilter(str(st.location));
+    setSourceFilter(str(st.source)); setAuthFilter(str(st.auth)); setHireFilter(str(st.hire));
+    setMinRating(typeof st.minRating === "number" ? st.minRating : 0);
+    setSelected([]);
+  };
+
+  const saveCurrent = (name: string) => {
+    setSavedSearches((prev) => [
+      ...(Array.isArray(prev) ? prev.filter((s) => s.name !== name) : []),
+      { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, state: listState, createdAt: new Date().toISOString() },
+    ]);
+    toast.success(`Saved view "${name}"`);
+  };
+
+  const deleteSaved = (id: string) =>
+    setSavedSearches((prev) => (Array.isArray(prev) ? prev.filter((s) => s.id !== id) : []));
 
   const clearFilters = () => {
     setSearch(""); setStatusFilter("all"); setPosFilter("all"); setLocationFilter("all");
@@ -650,6 +656,14 @@ export default function ApplicationsPage() {
         }
         trailing={
           <>
+            <SavedViewsMenu
+              items={savedList}
+              activeId={activeSavedId}
+              onApply={applySaved}
+              onSave={saveCurrent}
+              onDelete={deleteSaved}
+            />
+
             <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
               <Field label="Stage" htmlFor="filter-stage">
                 <FormSelect id="filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -747,23 +761,6 @@ export default function ApplicationsPage() {
       <ActiveFilters variant="canvas" chips={filterChips} onClearAll={clearFilters} />
 
       <Workspace>
-        {/* The board already lays the stages out as columns. */}
-        {view !== "kanban" && (
-          <StageStrip
-            variant="band"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            items={[
-              { key: "all", label: "All stages", count: inView.length },
-              ...ALL_STATUSES.map((st) => ({
-                key: st,
-                label: sLabel(st),
-                count: statusCounts[st] || 0,
-                color: stageColor(st),
-              })),
-            ]}
-          />
-        )}
         {isGrid && (
           <DataTable
             noun="applications"
@@ -871,315 +868,5 @@ export default function ApplicationsPage() {
         />
       </Workspace>
     </div>
-  );
-}
-
-// ── shared row actions ───────────────────────────────────────────────────────
-
-interface RowActions {
-  onView: (id: string) => void;
-  onEdit: (app: App) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, s: Application["status"]) => void;
-  onRating: (id: string, r: number) => void;
-}
-interface SharedProps extends RowActions {
-  apps: App[];
-}
-
-const menuCls =
-  "w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-[13px]";
-
-/** View / edit / move / delete, shared by the grid, the board and the list. */
-function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, className }: {
-  app: App;
-  onView: (id: string) => void;
-  onEdit: (app: App) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, s: Application["status"]) => void;
-  className?: string;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          title="Actions"
-          aria-label={`Actions for ${app.name || app.email}`}
-          className={cn(
-            "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]",
-            className,
-          )}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={4} className={menuCls}>
-        <DropdownMenuItem onClick={() => onView(app.id)} className={menuItemCls}>
-          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View profile
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEdit(app)} className={menuItemCls}>
-          <IconEdit className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Edit
-        </DropdownMenuItem>
-        <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-        <div className="px-1 py-1">
-          <p className="px-1 pb-1 text-[12px] font-medium text-[var(--adm-ink-subtle)]">Move to</p>
-          {KANBAN_COLS.filter((c) => c !== app.status).map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => onStatusChange(app.id, c as Application["status"])}
-              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
-            >
-              <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(c) }} />
-              {sLabel(c)}
-            </button>
-          ))}
-        </div>
-        <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-        <DropdownMenuItem
-          onClick={() => onDelete(app.id)}
-          className={cn(menuItemCls, "text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]")}
-        >
-          <IconTrash className="mr-2 h-4 w-4" />Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/** Neutral skill chips; the accent stays reserved for actions and selection. */
-function SkillChips({ skills, max }: { skills?: string[]; max: number }) {
-  const all = skills || [];
-  if (all.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1">
-      {all.slice(0, max).map((s) => (
-        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-ink-mute)]">
-          {s}
-        </span>
-      ))}
-      {all.length > max && (
-        <span className="px-1 py-0.5 text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
-          +{all.length - max}
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ── kanban ───────────────────────────────────────────────────────────────────
-
-function KanbanView({ apps, ...shared }: SharedProps) {
-  const [dragId, setDragId]     = React.useState<string | null>(null);
-  const [dragOver, setDragOver] = React.useState<string | null>(null);
-
-  const grouped = useMemo(
-    () => Object.fromEntries(KANBAN_COLS.map((k) => [k, apps.filter((a) => a.status === k)])),
-    [apps],
-  );
-
-  const handleDrop = (col: string) => {
-    if (dragId && dragId !== col) {
-      const app = apps.find((a) => a.id === dragId);
-      if (app && app.status !== col) shared.onStatusChange(dragId, col as Application["status"]);
-    }
-    setDragId(null);
-    setDragOver(null);
-  };
-
-  return (
-    <div className="flex min-h-full min-w-max gap-3">
-      {KANBAN_COLS.map((col) => {
-        const list = grouped[col] || [];
-        const isOver = dragOver === col;
-        return (
-          <section
-            key={col}
-            aria-label={`${sLabel(col)}, ${list.length}`}
-            className={cn(
-              "flex w-64 flex-col rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] transition-colors",
-              isOver && "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]",
-            )}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(col); }}
-            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
-            onDrop={() => handleDrop(col)}
-          >
-            <header className="flex items-center gap-2 px-3 pb-2 pt-3">
-              <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(col) }} />
-              <h3 className="text-[13px] font-semibold text-[var(--adm-ink)]">{sLabel(col)}</h3>
-              <span className="ml-auto text-[12.5px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
-                {list.length}
-              </span>
-            </header>
-
-            <div className="flex-1 space-y-2 px-2 pb-2">
-              {list.length === 0 ? (
-                <div className={cn(
-                  "grid h-20 place-items-center rounded-[10px] border border-dashed text-[12.5px] transition-colors",
-                  isOver
-                    ? "border-[var(--adm-accent)] font-medium text-[var(--adm-accent)]"
-                    : "border-[var(--adm-line-strong)] text-[var(--adm-ink-subtle)]",
-                )}>
-                  {isOver ? "Drop here" : "No candidates"}
-                </div>
-              ) : list.map((app) => (
-                <KanbanCard
-                  key={app.id}
-                  app={app}
-                  isDragging={dragId === app.id}
-                  onDragStart={() => setDragId(app.id)}
-                  onDragEnd={() => { setDragId(null); setDragOver(null); }}
-                  {...shared}
-                />
-              ))}
-              {list.length > 0 && isOver && (
-                <div className="grid h-14 place-items-center rounded-[10px] border border-dashed border-[var(--adm-accent)] text-[12.5px] font-medium text-[var(--adm-accent)]">
-                  Drop here
-                </div>
-              )}
-            </div>
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-function KanbanCard({ app, onView, onEdit, onDelete, onStatusChange, onRating, isDragging, onDragStart, onDragEnd }: RowActions & {
-  app: App;
-  isDragging: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-}) {
-  return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      className={cn(
-        "group cursor-grab select-none rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3 shadow-[var(--adm-shadow-sm)] transition-[border-color,box-shadow,opacity] duration-150 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] active:cursor-grabbing",
-        isDragging && "opacity-40",
-      )}
-    >
-      <div className="flex items-start gap-2.5">
-        <Avatar name={app.name} email={app.email} size="sm" />
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={() => onView(app.id)}
-            className="block w-full truncate text-left text-[13.5px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
-          >
-            {app.name || app.email}
-          </button>
-          {app.jobTitle && <p className="mt-0.5 truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{app.jobTitle}</p>}
-        </div>
-        <RowActionsMenu
-          app={app}
-          onView={onView}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onStatusChange={onStatusChange}
-          className="-mr-1.5 -mt-1.5 lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
-        />
-      </div>
-
-      {(app.skills || []).length > 0 && (
-        <div className="mt-2.5">
-          <SkillChips skills={app.skills} max={3} />
-        </div>
-      )}
-
-      <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-2.5">
-        <StarRating rating={app.rating || 0} onRate={(r) => onRating(app.id, r === app.rating ? 0 : r)} />
-        <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">
-          {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ── list ─────────────────────────────────────────────────────────────────────
-
-function ListView({ apps, empty, onAdd, onClear, ...shared }: SharedProps & {
-  empty: boolean;
-  onAdd: () => void;
-  onClear: () => void;
-}) {
-  if (apps.length === 0) {
-    return empty ? (
-      <EmptyState
-        icon={IconGroup}
-        title="No applicants yet"
-        description="Add your first candidate to start tracking the pipeline."
-        action={<WorkspaceButton variant="primary" onClick={onAdd}><Plus />Add applicant</WorkspaceButton>}
-      />
-    ) : (
-      <EmptyState
-        variant="filtered"
-        title="No matching applicants"
-        description="Try a different search, or clear the filters."
-        action={<WorkspaceButton onClick={onClear}><X />Clear filters</WorkspaceButton>}
-      />
-    );
-  }
-
-  return (
-    <ul className="divide-y divide-[var(--adm-line-soft)]">
-      {apps.map((app) => {
-        const meta = [app.workAuthorization, app.hireType].filter(Boolean).join(" · ");
-        const loc = locationOf(app);
-        return (
-          <li key={app.id} className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[var(--adm-row-hover)] sm:gap-4 lg:px-5">
-            <Avatar name={app.name} email={app.email} size="md" />
-
-            <div className="grid min-w-0 flex-1 gap-x-4 gap-y-2 sm:grid-cols-3">
-              <div className="min-w-0">
-                <button
-                  type="button"
-                  onClick={() => shared.onView(app.id)}
-                  className="block max-w-full truncate text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
-                >
-                  {app.name || app.email}
-                </button>
-                <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{app.email}</p>
-                {(app.skills || []).length > 0 && (
-                  <div className="mt-2">
-                    <SkillChips skills={app.skills} max={4} />
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 space-y-0.5 text-[13px] text-[var(--adm-ink-subtle)]">
-                <p className="truncate text-[13.5px] text-[var(--adm-ink-mute)]">
-                  {app.jobTitle || <span className="text-[var(--adm-ink-subtle)]">No position</span>}
-                </p>
-                {loc && <p className="truncate">{loc}</p>}
-                {app.source && <p className="truncate">{app.source}</p>}
-                {meta && <p className="truncate">{meta}</p>}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-1.5">
-                <StatusBadge status={app.status} />
-                <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
-                <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(app.appliedAt)}</span>
-                {app.addToTalentBench && <StatusBadge tone="emerald" label="Bench" />}
-              </div>
-            </div>
-
-            <RowActionsMenu
-              app={app}
-              onView={shared.onView}
-              onEdit={shared.onEdit}
-              onDelete={shared.onDelete}
-              onStatusChange={shared.onStatusChange}
-              className="lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
-            />
-          </li>
-        );
-      })}
-    </ul>
   );
 }

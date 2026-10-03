@@ -12,6 +12,9 @@ import { useAuth } from "@/lib/auth";
 import { renderRichText } from "@/lib/rich-text";
 import { SideSheet } from "@/components/site/side-sheet";
 import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
+import { isAcceptingApplications } from "@/lib/job-status";
+import { formatSalary } from "@/lib/salary";
+import { normalizeWebsite, website } from "@/lib/form-validation";
 
 const TYPE_LABEL: Record<string, string> = {
   "full-time": "Full-time",
@@ -44,12 +47,37 @@ const timeAgo = (date: Date): string => {
   return `${Math.floor(days / 30)} months ago`;
 };
 
+const RESUME_EXT = /\.(pdf|docx?)$/i;
+const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+
+/** Why a chosen file cannot be used, or null. Mirrors /api/resume/upload. */
+const resumeProblem = (file: File): string | null => {
+  if (!RESUME_EXT.test(file.name)) return "Choose a PDF, DOC or DOCX file.";
+  if (file.size > RESUME_MAX_BYTES) return `That file is ${(file.size / 1048576).toFixed(1)} MB. The limit is 5 MB.`;
+  return null;
+};
+
+const linkedinRule = website("Enter your LinkedIn profile address, like linkedin.com/in/your-name.");
+
+// Saved jobs live in this browser only; candidates have no account.
+const SAVED_KEY = "ob.savedJobs";
+const readSaved = (): string[] => {
+  try {
+    const v: unknown = JSON.parse(window.localStorage.getItem(SAVED_KEY) || "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
 interface JobDetailsClientProps {
   job: PublicJob;
   jobId: string;
+  /** When the posting first went live; falls back to createdAt. */
+  publishedAt?: string;
 }
 
-export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) {
+export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetailsClientProps) {
   const { user, isAuthenticated } = useAuth();
 
   const [showApply, setShowApply] = useState(false);
@@ -62,7 +90,32 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", coverLetter: "" });
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", coverLetter: "", linkedinUrl: "" });
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [linkedinError, setLinkedinError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const accepting = isAcceptingApplications(job);
+
+  useEffect(() => setSaved(readSaved().includes(jobId)), [jobId]);
+
+  const toggleSaved = () => {
+    const next = !saved;
+    setSaved(next);
+    try {
+      const ids = readSaved().filter((id) => id !== jobId);
+      if (next) ids.push(jobId);
+      window.localStorage.setItem(SAVED_KEY, JSON.stringify(ids.slice(-100)));
+    } catch {
+      // Private mode or storage full: the toggle still works for this visit.
+    }
+  };
+
+  const pickResume = (file: File | undefined) => {
+    if (!file) return;
+    const problem = resumeProblem(file);
+    setResumeError(problem);
+    if (!problem) setResumeFile(file);
+  };
 
   // Has the signed-in visitor already applied? Checked by id and by email, to
   // catch applications submitted before they signed in.
@@ -106,6 +159,18 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!accepting) return;
+    const linkedin = formData.linkedinUrl.trim();
+    const liError = linkedinRule(linkedin) ?? null;
+    setLinkedinError(liError);
+    if (liError) {
+      document.getElementById("apply-linkedin")?.focus();
+      return;
+    }
+    if (!resumeFile && !linkedin) {
+      setApplyError("Add your resume or your LinkedIn profile so we can review your experience.");
+      return;
+    }
     setSubmitting(true);
     setApplyError(null);
     try {
@@ -135,6 +200,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
           coverLetter: formData.coverLetter,
           resumeId,
           resumeFileName: resumeFile?.name,
+          ...(linkedin ? { linkedinUrl: normalizeWebsite(linkedin) } : {}),
         }),
       });
       if (!res.ok) {
@@ -173,11 +239,10 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
   };
 
   const due = dueLabel(job.submissionDueDate);
-  const postedDate = new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const postedAt = publishedAt ?? job.createdAt;
+  const postedDate = new Date(postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const statusLabel = applicationStatus ? applicationStatus.replace("-", " ") : null;
-  const salary = job.salary
-    ? `${job.salary.currency}${job.salary.min.toLocaleString()} – ${job.salary.currency}${job.salary.max.toLocaleString()}`
-    : null;
+  const salary = formatSalary(job.salary);
 
   const mode = workMode(job);
   const facts = [
@@ -197,7 +262,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
   const saveBtn = (
     <button
       type="button"
-      onClick={() => setSaved(!saved)}
+      onClick={toggleSaved}
       aria-pressed={saved}
       className={cn(
         "inline-flex h-12 items-center justify-center gap-2 rounded-full border px-5 text-[15px] font-semibold transition-colors",
@@ -231,6 +296,12 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
       <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
     </button>
   );
+  const closedBadge = (cls?: string) => (
+    <div className={cn("inline-flex h-12 items-center justify-center rounded-full bg-paper px-5 text-[15px] font-semibold text-ink-muted", cls)}>
+      Applications closed
+    </div>
+  );
+  const applyAction = (cls?: string) => (hasApplied ? appliedBadge(cls) : accepting ? applyBtn(cls) : closedBadge(cls));
   const appliedBadge = (cls?: string) => (
     <div className={cn("inline-flex h-12 items-center justify-center gap-2 rounded-full bg-success-container px-5 text-[15px] font-semibold text-success", cls)}>
       <IconCheckCircle size={18} />
@@ -300,7 +371,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
             </div>
             {/* Actions in the header from tablet up; phones get the fixed bar at the bottom. */}
             <div className="rise hidden shrink-0 flex-wrap items-center gap-2.5 sm:flex" style={{ animationDelay: "120ms" }}>
-              {hasApplied ? appliedBadge() : applyBtn()}
+              {applyAction()}
               {saveBtn}
               {shareBtn}
             </div>
@@ -349,7 +420,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               {hasApplied ? (
                 <>
                   <p className="flex items-center gap-2 type-title-lg font-semibold">
-                    <IconCheckCircle size={22} className="text-emerald-300" />
+                    <IconCheckCircle size={22} className="text-cobalt-light" />
                     Application submitted
                   </p>
                   <p className="mt-2 type-body text-white/80">
@@ -408,17 +479,17 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                 </p>
               )}
               <div className="mt-5 grid gap-2.5">
-                {hasApplied ? appliedBadge("w-full") : applyBtn("w-full")}
+                {applyAction("w-full")}
                 <div className="grid grid-cols-2 gap-2.5">
                   {saveBtn}
                   {shareBtn}
                 </div>
               </div>
-              <p className="mt-5 border-t border-line pt-4 type-caption text-ink-subtle">Posted {timeAgo(new Date(job.createdAt)).toLowerCase()}</p>
+              <p className="mt-5 border-t border-line pt-4 type-caption text-ink-subtle">Posted {timeAgo(new Date(postedAt)).toLowerCase()}</p>
             </div>
 
             <div className="rounded-2xl bg-paper p-6">
-              <p className="text-[16px] font-semibold text-ink">Ocean Blue Solutions</p>
+              <p className="type-body font-semibold text-ink">Ocean Blue Solutions</p>
               <p className="mt-2 type-body-sm text-ink-muted">
                 IT staffing, engineering, enterprise solutions, managed services and training for enterprises and government agencies.
               </p>
@@ -431,7 +502,7 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
       </div>
 
       {/* Phones: the action stays in reach at the bottom of the screen. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 py-3 backdrop-blur-md sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate type-label font-semibold text-ink">{job.title}</p>
@@ -442,10 +513,12 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
               <IconCheckCircle size={16} />
               Applied
             </span>
-          ) : (
+          ) : accepting ? (
             <button type="button" onClick={() => setShowApply(true)} className="h-11 shrink-0 rounded-full bg-cobalt px-5 text-[15px] font-semibold text-white">
               Apply now
             </button>
+          ) : (
+            <span className="inline-flex h-11 items-center rounded-full bg-paper px-4 type-label font-semibold text-ink-muted">Closed</span>
           )}
         </div>
       </div>
@@ -542,6 +615,9 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
 
                   <fieldset className="space-y-4 border-t border-line pt-5">
                     <legend className="mb-3 type-caption font-semibold text-ink-subtle">Resume and note</legend>
+                    <p id="apply-materials-hint" className="type-body-sm text-ink-muted">
+                      Add your resume, your LinkedIn profile, or both. We need at least one.
+                    </p>
                     <div>
                       <p id="apply-resume-label" className={labelCls}>
                         Resume
@@ -563,18 +639,69 @@ export default function JobDetailsClient({ job, jobId }: JobDetailsClientProps) 
                           </button>
                         </div>
                       ) : (
-                        <label className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-line-strong bg-paper px-4 py-7 text-center transition-colors focus-within:border-cobalt hover:border-ink-subtle">
+                        <label
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setDragging(true);
+                          }}
+                          onDragLeave={() => setDragging(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setDragging(false);
+                            pickResume(e.dataTransfer.files?.[0]);
+                          }}
+                          className={cn(
+                            "flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors focus-within:border-cobalt hover:border-ink-subtle",
+                            dragging ? "border-cobalt bg-cobalt-tint" : resumeError ? "border-danger bg-paper" : "border-line-strong bg-paper",
+                          )}
+                        >
                           <IconUpload size={24} className="text-ink-subtle" />
-                          <span className="mt-2 type-label font-semibold text-ink">Upload resume</span>
+                          <span className="mt-2 type-label font-semibold text-ink">Upload or drop your resume</span>
                           <span className="type-caption text-ink-subtle">PDF, DOC, DOCX (max 5MB)</span>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx"
                             aria-labelledby="apply-resume-label"
-                            onChange={(e) => e.target.files?.[0] && setResumeFile(e.target.files[0])}
+                            aria-describedby={resumeError ? "apply-resume-error" : "apply-materials-hint"}
+                            aria-invalid={Boolean(resumeError)}
+                            onChange={(e) => {
+                              pickResume(e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
                             className="sr-only"
                           />
                         </label>
+                      )}
+                      {resumeError && (
+                        <p id="apply-resume-error" role="alert" className="mt-1.5 type-caption text-danger">
+                          {resumeError}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="apply-linkedin" className={labelCls}>
+                        LinkedIn profile
+                      </label>
+                      <input
+                        id="apply-linkedin"
+                        type="text"
+                        inputMode="url"
+                        autoComplete="url"
+                        placeholder="linkedin.com/in/your-name"
+                        value={formData.linkedinUrl}
+                        onChange={(e) => {
+                          setFormData({ ...formData, linkedinUrl: e.target.value });
+                          if (linkedinError) setLinkedinError(null);
+                        }}
+                        onBlur={(e) => setLinkedinError(linkedinRule(e.target.value) ?? null)}
+                        aria-invalid={Boolean(linkedinError)}
+                        aria-describedby={linkedinError ? "apply-linkedin-error" : "apply-materials-hint"}
+                        className={cn(inputCls, linkedinError && "border-danger")}
+                      />
+                      {linkedinError && (
+                        <p id="apply-linkedin-error" className="mt-1.5 type-caption text-danger">
+                          {linkedinError}
+                        </p>
                       )}
                     </div>
                     <div>

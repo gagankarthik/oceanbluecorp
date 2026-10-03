@@ -88,6 +88,8 @@ async function groupsByUsername(): Promise<Map<string, string[]>> {
 
 export interface CognitoUser {
   id: string;
+  /** Cognito sub: what session claims and task assignees are keyed on. */
+  sub?: string;
   email: string;
   name: string;
   phone?: string;
@@ -159,6 +161,7 @@ export async function listCognitoUsers(options?: {
 
         const cognitoUser: CognitoUser = {
           id: user.Username || "",
+          sub: attrs.find((a) => a.Name === "sub")?.Value,
           email,
           name,
           phone,

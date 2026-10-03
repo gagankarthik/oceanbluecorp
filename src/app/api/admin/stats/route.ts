@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllJobs, getAllApplications } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, viewerOf } from "@/lib/auth/verify";
+import { isVisibleApplication } from "@/lib/bench";
+import { isPubliclyOpen } from "@/lib/job-status";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/admin/stats - Get dashboard statistics
@@ -19,13 +21,16 @@ export async function GET(request: NextRequest) {
     }
 
     const jobs = jobsResult.data || [];
-    const applications = applicationsResult.data || [];
+    const viewer = viewerOf(auth.claims);
+    const applications = (applicationsResult.data || []).filter((a) => isVisibleApplication(a, viewer));
 
     // Calculate stats
     const stats = {
       // Job stats
       totalJobs: jobs.length,
-      activeJobs: jobs.filter((j) => j.status === "active").length,
+      // Live = what the careers board shows: "active" and "open".
+      activeJobs: jobs.filter((j) => isPubliclyOpen(j.status)).length,
+      onHoldJobs: jobs.filter((j) => j.status === "on-hold").length,
       pausedJobs: jobs.filter((j) => j.status === "paused").length,
       draftJobs: jobs.filter((j) => j.status === "draft").length,
       closedJobs: jobs.filter((j) => j.status === "closed").length,

@@ -32,11 +32,11 @@ they are next touched:
 
 ```
 3273  src/lib/aws/dynamodb.ts
-1736  src/app/admin/bench/page.tsx
-1518  src/components/admin/workspace.tsx
-1184  src/app/admin/applications/page.tsx
-1132  src/app/admin/page.tsx
-674  src/app/admin/candidates/[id]/page.tsx
+1504  src/components/admin/workspace.tsx
+1048  src/app/admin/bench/page.tsx
+ 815  src/app/admin/applications/page.tsx
+ 743  src/app/admin/page.tsx
+ 674  src/app/admin/candidates/[id]/page.tsx
 ```
 
 Rule of thumb: past ~600 lines a page is carrying something that belongs in a

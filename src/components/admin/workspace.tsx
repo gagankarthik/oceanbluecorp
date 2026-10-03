@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Slot } from "radix-ui";
-import { AlignJustify, ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Plus, RotateCcw, Route, Search, Settings2, SlidersHorizontal, Tag, Workflow, Wrench, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Plus, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
 import { IconBookmark, IconJob, IconLocation, IconShield, IconUser } from "./icons";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -308,109 +308,11 @@ export function FormActionBar({
   );
 }
 
-// ── Overview KPIs ────────────────────────────────────────────────────────────
-
-export interface KpiItem {
-  label: string;
-  value: string | number;
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  /** Short qualifier under the figure. Use for context, never to restate it. */
-  hint?: string;
-  /** Draws the figure in a state colour. Use only where the value IS a state. */
-  tone?: "default" | "warning" | "danger" | "success";
-  /** Makes the tile a filter shortcut. */
-  onClick?: () => void;
-}
-
-/* Container widths, not viewport widths: this strip sits inside the content
-   pane, which is narrower than the window by the sidebar and the padding, so
-   `lg:` was promising room the row did not have. @xl 576 · @2xl 672 · @3xl 768
-   · @4xl 896. */
-const KPI_COLS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "@md:grid-cols-1",
-  2: "@md:grid-cols-2",
-  3: "@2xl:grid-cols-3",
-  4: "@3xl:grid-cols-4",
-  5: "@4xl:grid-cols-5",
-};
-
-const KPI_TONE = {
-  default: "text-[var(--adm-ink)]",
-  warning: "text-[var(--adm-warning-ink)]",
-  danger:  "text-[var(--adm-danger-ink)]",
-  success: "text-[var(--adm-success-ink)]",
-} as const;
+// ── Stat strip ───────────────────────────────────────────────────────────────
 
 /**
- * Overview strip above a workspace panel.
- *
- * An earlier pass deleted the KPI rows outright, because what was there was
- * filler: "Total clients 14 / Active 14 / Inactive 0" restated the status
- * filter, and three of four tiles drew a proportion bar against a denominator
- * the figure was not a part of ("Reachable 1, 7%").
- *
- * Reinstated deliberately, under two rules that the old rows broke:
- *   1. No share bars. If a percentage is not a true part-to-whole, it is noise.
- *   2. Every tile is either something you cannot get by reading the grid
- *      (an age, a median, a rate) or something you can click to filter to.
- * A tile that only counts rows the footer already counts does not earn a place.
- */
-export function KpiRow({ items, className }: { items: KpiItem[]; className?: string }) {
-  if (items.length === 0) return null;
-  return (
-    // The container is measured, the grid inside it reads the measurement — a
-    // container query never applies to the element that declares the container.
-    <div className={cn("@container mb-4 flex-none", className)}>
-    <div
-      className={cn(
-        // Static class names only. Tailwind cannot see an interpolated
-        // `@3xl:grid-cols-${n}`, so that variant would never be generated.
-        "grid gap-3 grid-cols-1 @md:grid-cols-2",
-        KPI_COLS[Math.min(items.length, 5) as 1 | 2 | 3 | 4 | 5],
-      )}
-    >
-      {items.map((k) => {
-        const Icon = k.icon;
-        const body = (
-          <>
-            <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-[13px] font-medium text-[var(--adm-ink-mute)]">{k.label}</span>
-              {Icon && (
-                <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-colors group-hover/kpi:text-[var(--adm-accent)]" strokeWidth={1.75} />
-              )}
-            </span>
-            <span
-              className={cn(
-                "text-[24px] font-semibold leading-none tracking-[-0.025em] tabular-nums",
-                KPI_TONE[k.tone ?? "default"],
-              )}
-            >
-              {k.value}
-            </span>
-            {k.hint && <span className="truncate text-[12px] leading-snug text-[var(--adm-ink-subtle)]">{k.hint}</span>}
-          </>
-        );
-        const cls = cn(
-          "group/kpi flex min-w-0 flex-col gap-2.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-left shadow-[var(--adm-shadow-sm)]",
-          k.onClick &&
-            "transition-[border-color,box-shadow] duration-150 ease-[var(--adm-ease)] hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)]",
-        );
-        return k.onClick ? (
-          <button key={k.label} type="button" onClick={k.onClick} className={cls}>{body}</button>
-        ) : (
-          <div key={k.label} className={cls}>{body}</div>
-        );
-      })}
-    </div>
-    </div>
-  );
-}
-
-/**
- * Conduktor-style inline stat strip: LABEL value · LABEL value, one short line
- * under the page title. Replaces the KpiRow card grid on list screens where
- * vertical space belongs to the table, not to four boxes repeating what the
- * grid already shows. Clickable stats filter, exactly like KPI tiles did.
+ * Inline stat strip: LABEL value · LABEL value, one short line under the page
+ * title, so vertical space goes to the table. Clickable stats filter.
  */
 export interface StatItem {
   label: string;
@@ -1149,40 +1051,6 @@ export function FilterPill<V extends string>({
   );
 }
 
-/** Toggle for the advanced-filter drawer. Badges the count of active fields. */
-export function AdvancedFilterToggle({
-  open,
-  activeCount = 0,
-  onClick,
-}: {
-  open: boolean;
-  activeCount?: number;
-  onClick: () => void;
-}) {
-  const engaged = open || activeCount > 0;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-expanded={open}
-      className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors",
-        engaged
-          ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-          : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
-      )}
-    >
-      <SlidersHorizontal className="h-3.5 w-3.5" />
-      <span className="hidden sm:inline">Filters</span>
-      {activeCount > 0 && (
-        <span className="rounded-[5px] bg-[var(--adm-accent)] px-1.5 text-[11.5px] font-bold leading-[1.5] text-white">
-          {activeCount}
-        </span>
-      )}
-    </button>
-  );
-}
-
 // ── Menu select ──────────────────────────────────────────────────────────────
 
 export interface MenuOption<V extends string> {
@@ -1338,137 +1206,9 @@ export function GridSelect({
   );
 }
 
-// ── Density + columns ────────────────────────────────────────────────────────
+// ── Density ──────────────────────────────────────────────────────────────────
 
 export type Density = "compact" | "default" | "relaxed";
-
-const DENSITY_LABEL: Record<Density, string> = {
-  compact: "Compact",
-  default: "Default",
-  relaxed: "Relaxed",
-};
-
-/** Row-height control. Persisted by the caller so it survives navigation. */
-export function DensityMenu({ value, onChange }: { value: Density; onChange: (d: Density) => void }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          title="Row density"
-          aria-label={`Row density: ${DENSITY_LABEL[value]}`}
-          className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-row-hover)]"
-        >
-          <AlignJustify className="h-3.5 w-3.5" />
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="min-w-[150px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
-      >
-        <DropdownMenuLabel className="px-2 py-1 text-[11.5px] font-semibold text-[var(--adm-ink-subtle)]">
-          Row density
-        </DropdownMenuLabel>
-        {(Object.keys(DENSITY_LABEL) as Density[]).map((d) => (
-          <DropdownMenuItem
-            key={d}
-            onClick={() => onChange(d)}
-            className={cn(
-              "flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]",
-              d === value && "font-semibold text-[var(--adm-accent)]",
-            )}
-          >
-            <Check className={cn("h-3.5 w-3.5", d === value ? "opacity-100" : "opacity-0")} />
-            {DENSITY_LABEL[d]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/**
- * Column visibility. Takes the full column list and the set currently hidden.
- * `locked` columns (the identity column, the row-action column) are listed but
- * not togglable, so the control never lets you hide the thing that identifies
- * the record you are looking at.
- */
-export function ColumnsMenu({
-  columns,
-  hidden,
-  onChange,
-}: {
-  columns: { key: string; label: string; locked?: boolean }[];
-  hidden: string[];
-  onChange: (hidden: string[]) => void;
-}) {
-  const toggle = (key: string) =>
-    onChange(hidden.includes(key) ? hidden.filter((k) => k !== key) : [...hidden, key]);
-
-  const hiddenCount = hidden.length;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          title="Edit columns"
-          aria-label="Edit columns"
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
-            hiddenCount > 0
-              ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
-          )}
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Columns</span>
-          {hiddenCount > 0 && <span className="text-[12px] font-semibold tabular-nums">{hiddenCount}</span>}
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="min-w-[190px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
-      >
-        <DropdownMenuLabel className="px-2 py-1 text-[11.5px] font-semibold text-[var(--adm-ink-subtle)]">
-          Columns
-        </DropdownMenuLabel>
-        {columns.map((c) => {
-          const shown = !hidden.includes(c.key);
-          return (
-            <DropdownMenuItem
-              key={c.key}
-              disabled={c.locked}
-              onSelect={(e) => { e.preventDefault(); if (!c.locked) toggle(c.key); }}
-              className={cn(
-                "flex items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]",
-                c.locked ? "cursor-default opacity-45" : "cursor-pointer",
-              )}
-            >
-              <Check className={cn("h-3.5 w-3.5 flex-none", shown ? "opacity-100 text-[var(--adm-accent)]" : "opacity-0")} />
-              <span className="flex-1 truncate">{c.label}</span>
-            </DropdownMenuItem>
-          );
-        })}
-        {hiddenCount > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onChange([])}
-              className="cursor-pointer rounded-[5px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-accent)]"
-            >
-              Show all columns
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 // ── Display menu ─────────────────────────────────────────────────────────────
 

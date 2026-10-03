@@ -31,6 +31,7 @@ export type RecordBarProps = {
   onBench: (p: BenchType | null) => void;
   onClaim: () => void;
   onEdit: () => void;
+  onEmail: () => void;
 };
 
 /** The bar sits on the cobalt record band, so its ink-token text re-points to white. */
@@ -114,6 +115,7 @@ export function RecordBar({
   onBench,
   onClaim,
   onEdit,
+  onEmail,
 }: RecordBarProps) {
   const router = useRouter();
   const location = [candidate.city, candidate.state].filter(Boolean).join(", ");
@@ -222,6 +224,13 @@ export function RecordBar({
         )}
 
         <BenchMenu candidate={candidate} saving={benchSaving} onBench={onBench} compact />
+
+        {candidate.email && (
+          <WorkspaceButton onClick={onEmail} aria-label="Email candidate" title="Email candidate">
+            <IconMail aria-hidden="true" />
+            <span className="hidden 2xl:inline">Email</span>
+          </WorkspaceButton>
+        )}
 
         {/* Secondary: the filled action is the stage move in StageTrack. */}
         <WorkspaceButton onClick={onEdit} aria-label="Edit profile">

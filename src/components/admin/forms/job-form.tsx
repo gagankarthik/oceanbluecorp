@@ -4,11 +4,11 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, X } from "lucide-react";
 import { IconBuilding, IconCalendar, IconClock, IconEye, IconFile, IconHash, IconJob, IconLocation, IconMoney, IconSave, IconTruck, IconUserCheck } from "../icons";
-import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
+import type { Job, Client, Vendor, SalaryPeriod } from "@/lib/aws/dynamodb";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { US_STATES, normalizeState } from "@/components/admin/theme";
+import { US_STATES, normalizeState, SALARY_PERIODS } from "@/components/admin/theme";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
 import { WorkspaceButton } from "@/components/admin/workspace";
@@ -17,6 +17,7 @@ import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { renderRichText, renderListField } from "@/lib/rich-text";
 import { useAuth, canSeeJobCommercials } from "@/lib/auth";
 import { useFormErrors } from "@/hooks/use-form-errors";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
   payOverBillWarning, phone, rangeInverted, required, website,
@@ -74,6 +75,7 @@ export interface JobFormData {
   payRate: string;
   salaryMin: string;
   salaryMax: string;
+  salaryPeriod: SalaryPeriod;
   recruitmentManagerId: string;
   recruitmentManagerName: string;
   recruitmentManagerEmail: string;
@@ -89,7 +91,7 @@ export const DEFAULT_JOB_FORM: JobFormData = {
   title: "", status: "draft", category: "state", department: DEPARTMENTS[0], type: "full-time",
   location: "", state: "", clientId: "", clientName: "", clientNotes: "",
   vendorId: "", vendorName: "", submissionDueDate: "",
-  clientBillRate: "", payRate: "", salaryMin: "", salaryMax: "",
+  clientBillRate: "", payRate: "", salaryMin: "", salaryMax: "", salaryPeriod: "year",
   recruitmentManagerId: "", recruitmentManagerName: "", recruitmentManagerEmail: "",
   assignedToIds: [], assignedToNames: [], assignedToEmails: [],
   description: "", requirements: "", responsibilities: "",
@@ -125,6 +127,8 @@ export function jobToFormData(job: Job): JobFormData {
     payRate: job.payRate?.toString() || "",
     salaryMin: job.salary?.min?.toString() || "",
     salaryMax: job.salary?.max?.toString() || "",
+    // Records without a period predate the field and are annual.
+    salaryPeriod: job.salary?.period || "year",
     recruitmentManagerId: job.recruitmentManagerId || "",
     recruitmentManagerName: job.recruitmentManagerName || "",
     recruitmentManagerEmail: job.recruitmentManagerEmail || "",
@@ -154,7 +158,7 @@ export function formDataToPayload(data: JobFormData) {
     requirements: data.requirements?.trim() ? data.requirements : undefined,
     responsibilities: data.responsibilities?.trim() ? data.responsibilities : undefined,
     salary: data.salaryMin && data.salaryMax
-      ? { min: parseInt(data.salaryMin), max: parseInt(data.salaryMax), currency: "$" }
+      ? { min: parseFloat(data.salaryMin), max: parseFloat(data.salaryMax), currency: "$", period: data.salaryPeriod }
       : undefined,
     clientBillRate: data.clientBillRate ? parseFloat(data.clientBillRate) : undefined,
     payRate: data.payRate ? parseFloat(data.payRate) : undefined,
@@ -239,6 +243,16 @@ export function JobForm({
     if (initialData) setData(initialData);
   }, [initialData]);
 
+  // Rich-text fields compare by text: the editor rewrites "" as "<p></p>" on mount.
+  const snapshot = (d: JobFormData) => JSON.stringify({
+    ...d,
+    description: htmlText(d.description),
+    requirements: htmlText(d.requirements),
+    responsibilities: htmlText(d.responsibilities),
+  });
+  const baseline = React.useMemo(() => snapshot(initialData || DEFAULT_JOB_FORM), [initialData]);
+  useUnsavedChanges(!submitting && snapshot(data) !== baseline);
+
   const set = <K extends keyof JobFormData>(k: K, v: JobFormData[K]) =>
     setData((prev) => ({ ...prev, [k]: v }));
 
@@ -292,15 +306,17 @@ export function JobForm({
       const salaryHalf = !isBlank(data.salaryMin) !== !isBlank(data.salaryMax);
       return collectErrors({
         title: check(data.title, required("Enter a job title, like Senior Software Engineer."), maxLen(LIMITS.title)),
-        location: check(data.location, required("Enter the city or location, like Columbus."), maxLen(LIMITS.title)),
+        location: data.type === "remote"
+          ? check(data.location, maxLen(LIMITS.title))
+          : check(data.location, required("Enter the city or location, like Columbus."), maxLen(LIMITS.title)),
         clientNotes: check(data.clientNotes, maxLen(LIMITS.notes)),
         clientBillRate: canPrice ? check(data.clientBillRate, nonNegative("Enter the bill rate as a number, like 75.")) : undefined,
         payRate: canPrice ? check(data.payRate, nonNegative("Enter the pay rate as a number, like 55.")) : undefined,
         salaryMin:
-          check(data.salaryMin, nonNegative("Enter the minimum salary as a number, like 80000.")) ??
+          check(data.salaryMin, nonNegative("Enter the minimum pay as a number, like 80000.")) ??
           (salaryHalf && isBlank(data.salaryMin) ? "Add a minimum salary too, or clear the maximum." : undefined),
         salaryMax:
-          check(data.salaryMax, nonNegative("Enter the maximum salary as a number, like 120000.")) ??
+          check(data.salaryMax, nonNegative("Enter the maximum pay as a number, like 120000.")) ??
           (salaryHalf && isBlank(data.salaryMax) ? "Add a maximum salary too, or clear the minimum." : undefined) ??
           (rangeInverted(data.salaryMin, data.salaryMax) ? "The maximum salary is lower than the minimum." : undefined),
         description: !descText
@@ -333,6 +349,7 @@ export function JobForm({
     "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-danger-ink)]",
   };
 
+  const isRemote = data.type === "remote";
   const typeLabel = JOB_TYPES.find((t) => t.value === data.type)?.label || data.type;
 
   return (
@@ -428,8 +445,8 @@ export function JobForm({
                     {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </FormSelect>
                 </Field>
-                <Field label="City or location" required htmlFor="job-location" error={errors.location}>
-                  <FormInput id="job-location" required {...invalidProps("location")} value={data.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Columbus" />
+                <Field label="City or location" required={!isRemote} htmlFor="job-location" error={errors.location}>
+                  <FormInput id="job-location" required={!isRemote} {...invalidProps("location")} value={data.location} onChange={(e) => set("location", e.target.value)} placeholder={isRemote ? "Optional for remote roles" : "e.g. Columbus"} />
                 </Field>
                 <Field label="State" htmlFor="job-state">
                   {/* Stores the 2-letter code, shared with Applications and the bench. */}
@@ -522,11 +539,18 @@ export function JobForm({
                 {!errors.payRate && <FieldWarning>{payWarning}</FieldWarning>}
               </Field>
               )}
-              <Field label="Min salary (annual)" htmlFor="job-salary-min" error={errors.salaryMin}>
-                <MoneyInput id="job-salary-min" {...invalidProps("salaryMin")} value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder="80,000" />
+            </div>
+            <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_10rem]", canPrice && "mt-4")}>
+              <Field label="Min pay" htmlFor="job-salary-min" error={errors.salaryMin}>
+                <MoneyInput id="job-salary-min" {...invalidProps("salaryMin")} value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder={data.salaryPeriod === "year" ? "80,000" : ""} />
               </Field>
-              <Field label="Max salary (annual)" htmlFor="job-salary-max" error={errors.salaryMax}>
-                <MoneyInput id="job-salary-max" {...invalidProps("salaryMax")} value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder="120,000" />
+              <Field label="Max pay" htmlFor="job-salary-max" error={errors.salaryMax}>
+                <MoneyInput id="job-salary-max" {...invalidProps("salaryMax")} value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder={data.salaryPeriod === "year" ? "120,000" : ""} />
+              </Field>
+              <Field label="Pay period" htmlFor="job-salary-period">
+                <FormSelect id="job-salary-period" value={data.salaryPeriod} onChange={(e) => set("salaryPeriod", e.target.value as SalaryPeriod)}>
+                  {SALARY_PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </FormSelect>
               </Field>
             </div>
           </div>
@@ -881,7 +905,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-                {data.location || "–"}{data.state ? `, ${data.state}` : ""}
+                {data.location || (data.type === "remote" ? "Remote" : "–")}{data.state ? `, ${data.state}` : ""}
               </span>
               {data.submissionDueDate && (
                 <span className="inline-flex items-center gap-1.5">
@@ -892,7 +916,10 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
             </div>
             {data.salaryMin && data.salaryMax && (
               <p className="text-[18px] font-semibold tabular-nums text-[var(--adm-ink)]">
-                ${parseInt(data.salaryMin).toLocaleString()} – ${parseInt(data.salaryMax).toLocaleString()}
+                ${Number(data.salaryMin).toLocaleString()} – ${Number(data.salaryMax).toLocaleString()}
+                <span className="ml-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
+                  {SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}
+                </span>
               </p>
             )}
           </div>

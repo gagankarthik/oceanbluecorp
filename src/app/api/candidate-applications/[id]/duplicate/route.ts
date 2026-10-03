@@ -7,6 +7,7 @@ import {
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
+import { visibleTo } from "@/lib/aws/application-access";
 import { serverError } from "@/lib/api-errors";
 
 // POST /api/candidate-applications/[id]/duplicate - Duplicate a candidate application
@@ -21,7 +22,7 @@ export async function POST(
 
     // Get the original application
     const originalApp = await getCandidateApplication(id);
-    if (!originalApp.success || !originalApp.data) {
+    if (!originalApp.success || !originalApp.data || !visibleTo(auth.claims)(originalApp.data)) {
       return NextResponse.json(
         { error: "Candidate application not found" },
         { status: 404 }

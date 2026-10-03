@@ -1,5 +1,6 @@
 import * as nodemailer from "nodemailer";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
+import { escapeHtml } from "@/lib/email-templates";
 
 // SMTP Configuration for AWS SES
 const getSmtpConfig = () => ({
@@ -116,7 +117,8 @@ async function sendEmail(
   to: string,
   subject: string,
   htmlBody: string,
-  textBody: string
+  textBody: string,
+  extra: { replyTo?: string; fromName?: string; ics?: string } = {},
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const config = getSmtpConfig();
   const sender = getDefaultSender();
@@ -128,11 +130,13 @@ async function sendEmail(
 
   try {
     const result = await transporter.sendMail({
-      from: `"Ocean Blue Careers" <${sender}>`,
+      from: `"${(extra.fromName || "Ocean Blue Careers").replace(/["\r\n]/g, "")}" <${sender}>`,
       to,
       subject,
       text: textBody,
       html: htmlBody,
+      ...(extra.replyTo && { replyTo: extra.replyTo }),
+      ...(extra.ics && { icalEvent: { method: "REQUEST", filename: "interview.ics", content: extra.ics } }),
     });
     return { success: true, messageId: result.messageId };
   } catch (error) {
@@ -816,6 +820,32 @@ Ocean Blue Corporation
   `;
 
   return sendEmail(data.recipientEmail, data.subject, htmlBody, textBody);
+}
+
+/**
+ * A recruiter's message to a candidate. The body is plain text, escaped into
+ * the HTML; replies go to the recruiter, not the no-reply sender.
+ */
+export async function sendCandidateEmail(data: {
+  to: string;
+  subject: string;
+  body: string;
+  replyTo?: string;
+  senderName?: string;
+  ics?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const htmlBody = `
+    ${getEmailHeader()}
+    <div style="color: #475569; line-height: 1.6; margin: 0; white-space: normal;">
+      ${escapeHtml(data.body).replace(/\n/g, "<br>")}
+    </div>
+    ${getEmailFooter().replace("This is an automated message. Please do not reply directly to this email.", "Reply to this email to reach your recruiter.")}
+  `;
+  return sendEmail(data.to, data.subject.replace(/[\r\n]/g, " "), htmlBody, data.body, {
+    replyTo: data.replyTo,
+    fromName: data.senderName ? `${data.senderName} · Ocean Blue` : undefined,
+    ics: data.ics,
+  });
 }
 
 // Send job posting notification to HR team

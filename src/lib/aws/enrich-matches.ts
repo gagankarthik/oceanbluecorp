@@ -4,8 +4,9 @@
 // which, a bank hit links to a downloadable file and gets its identity from
 // the parsed contact card; an application hit links to the candidate's
 // profile page. Server-side only (reads DynamoDB).
-import { getApplication, getBankResumeContacts } from "./dynamodb";
+import { getApplicationsByIds, getBankResumeContacts } from "./dynamodb";
 import { parseResumeBankKey } from "./s3";
+import { isVisibleApplication, type Viewer } from "@/lib/bench";
 
 export type MatchOrigin = "bank" | "bench" | "applicant";
 
@@ -20,18 +21,28 @@ export interface MatchEnrichment {
 
 /**
  * Attach origin, identity and navigation data to each match. One batched read
- * covers every bank hit; application hits are per-candidate GetItems on a
- * topK-sized list. A failed lookup degrades to a plain hit rather than
- * failing the response.
+ * covers the bank hits and one the application hits. A hit in a colleague's
+ * private pool is dropped, as everywhere else. A failed lookup degrades to a
+ * plain hit rather than failing the response.
  */
 export async function enrichMatches<T extends { resume_id: string; candidate_name?: string | null }>(
   candidates: T[],
+  viewer: Viewer,
 ): Promise<(T & MatchEnrichment)[]> {
   const bankKeys = candidates.map((c) => c.resume_id).filter((id) => id.startsWith("resume-bank/"));
-  const contacts = await getBankResumeContacts(bankKeys);
+  const appIds = candidates.map((c) => c.resume_id).filter((id) => !id.startsWith("resume-bank/"));
+  const [contacts, appsResult] = await Promise.all([
+    getBankResumeContacts(bankKeys),
+    getApplicationsByIds(appIds).catch(() => ({ success: false as const, data: undefined })),
+  ]);
+  const apps = new Map((appsResult.data || []).map((a) => [a.id, a]));
 
-  return Promise.all(
-    candidates.map(async (c) => {
+  const visible = candidates.filter((c) => {
+    const app = apps.get(c.resume_id);
+    return !app || isVisibleApplication(app, viewer);
+  });
+
+  return visible.map((c) => {
       if (c.resume_id.startsWith("resume-bank/")) {
         const meta = parseResumeBankKey(c.resume_id);
         const contact = contacts[c.resume_id];
@@ -45,23 +56,17 @@ export async function enrichMatches<T extends { resume_id: string; candidate_nam
           phone: contact?.phone,
         };
       }
-      try {
-        const res = await getApplication(c.resume_id);
-        if (res.success && res.data) {
-          const app = res.data;
-          return {
-            ...c,
-            origin: app.addToTalentBench ? ("bench" as const) : ("applicant" as const),
-            profileId: app.id,
-            email: app.email,
-            phone: app.phone,
-            candidate_name: c.candidate_name || app.name || null,
-          };
-        }
-      } catch {
-        /* lookup is best-effort */
+      const app = apps.get(c.resume_id);
+      if (app) {
+        return {
+          ...c,
+          origin: app.addToTalentBench ? ("bench" as const) : ("applicant" as const),
+          profileId: app.id,
+          email: app.email,
+          phone: app.phone,
+          candidate_name: c.candidate_name || app.name || null,
+        };
       }
       return { ...c, origin: "applicant" as const };
-    }),
-  );
+  });
 }

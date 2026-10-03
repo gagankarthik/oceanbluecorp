@@ -73,10 +73,11 @@ export async function PATCH(
     const updates: Partial<Omit<Vendor, "id" | "createdAt">> = {};
 
     if (body.name !== undefined) updates.name = body.name.trim();
-    if (body.contactPerson !== undefined) updates.contactPerson = body.contactPerson?.trim() || undefined;
-    if (body.email !== undefined) updates.email = body.email?.trim() || undefined;
-    if (body.zipCode !== undefined) updates.zipCode = body.zipCode?.trim() || undefined;
-    if (body.state !== undefined) updates.state = body.state?.trim() || undefined;
+    // "" clears a field; the update skips undefined, so it would keep the old value.
+    if (body.contactPerson !== undefined) updates.contactPerson = body.contactPerson?.trim() ?? "";
+    if (body.email !== undefined) updates.email = body.email?.trim() ?? "";
+    if (body.zipCode !== undefined) updates.zipCode = body.zipCode?.trim() ?? "";
+    if (body.state !== undefined) updates.state = body.state?.trim() ?? "";
     if (body.vendorLeadId !== undefined) updates.vendorLeadId = body.vendorLeadId;
     if (body.vendorLeadName !== undefined) updates.vendorLeadName = body.vendorLeadName;
     if (body.vendorLeadRole !== undefined) updates.vendorLeadRole = body.vendorLeadRole;

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { IconSave, IconEye, IconAlert } from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { FormActionBar, NotePanel, WorkspaceButton } from "@/components/admin/workspace";
@@ -48,7 +49,6 @@ const PAGES: PageDef[] = [
     path: "/",
     sections: [
       { id: "hero", label: "Hero section" },
-      { id: "anniversary", label: "Anniversary" },
       { id: "stats", label: "Statistics" },
       { id: "cta", label: "Call to action" },
     ],
@@ -61,17 +61,6 @@ const PAGES: PageDef[] = [
         { key: "heroSubtitle", label: "Subheadline", type: "textarea", placeholder: "IT staffing, enterprise solutions, and managed services, one accountable partner, one accountable standard." },
         { key: "heroCtaText", label: "Primary button", type: "text", placeholder: "Start a conversation" },
         { key: "heroCtaSecondary", label: "Secondary button", type: "text", placeholder: "Explore what we do" },
-      ],
-      // TEMPORARY, the 13-year celebration band. Delete this section with
-      // src/components/landing/anniversary/. The toggle is the kill switch:
-      // off hides the band immediately, and with it left untouched the band
-      // retires itself after the celebration window (see lib/anniversary.ts).
-      anniversary: [
-        { key: "anniversary", label: "Show the 13-year celebration band", type: "toggle" },
-        { key: "anniversaryHeading", label: "Heading", type: "text", placeholder: "Ocean Blue turns 13" },
-        { key: "anniversaryTagline", label: "Tagline", type: "text", placeholder: "Celebrating 13 years of innovation, trust, and excellence." },
-        { key: "anniversaryThanks", label: "Thank-you line", type: "textarea", placeholder: "Thank you to our employees, clients, and partners for being part of our journey." },
-        { key: "anniversaryCtaText", label: "Button label", type: "text", placeholder: "Read our 13-year story" },
       ],
       stats: [
         { key: "statsHeading", label: "Section heading", type: "text", wide: true, placeholder: "Over a decade of delivery, one accountable team." },
@@ -242,13 +231,7 @@ export default function ContentPage() {
   const dirty = dirtyPages.includes(activePage);
   const anyDirty = dirtyPages.length > 0;
 
-  // Closing the tab is the one exit a confirm cannot cover.
-  useEffect(() => {
-    if (!anyDirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [anyDirty]);
+  useUnsavedChanges(anyDirty);
 
   const setField = (key: string, value: string) =>
     setContent((prev) => ({ ...prev, [activePage]: { ...(prev[activePage] || {}), [key]: value } }));

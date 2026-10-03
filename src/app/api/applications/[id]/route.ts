@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import {
   getApplication,
+  getJob,
   updateApplicationStatus,
   updateApplication,
   deleteApplication,
   Application,
   NoteEntry,
+  createNotification,
 } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff, isAdminClaims } from "@/lib/auth/verify";
-import { canView } from "@/lib/bench";
+import { requireStaff } from "@/lib/auth/verify";
+import {
+  loadVisibleApplication as loadVisible, applicationNotFound as notFound, actorOf, activityEntry,
+} from "@/lib/aws/application-access";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import { serverError } from "@/lib/api-errors";
+import { applicationInputError, changedFields, changeKind, describeChange } from "@/lib/application-input";
+import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 
 // Attaching a resume on update kicks off the extraction Lambda via after();
 // its multi-agent pipeline runs 30–90s, so the invocation needs the headroom.
@@ -27,45 +33,15 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const result = await getApplication(id);
-
+    // My Pool is private to its recruiter (admins excepted). 404, not 403: a
+    // 403 would confirm the person is in a colleague's pipeline.
+    const result = await loadVisible(id, auth.claims);
+    if (!result) return notFound();
     if (!result.success) {
       return serverError("Fetching application", result.error, "Couldn't load the application. Please try again.");
     }
 
-    if (!result.data) {
-      return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
-      );
-    }
-
-    /**
-     * My Pool is private to the recruiter who built it (admins excepted).
-     *
-     * The list endpoint filters these out, but filtering a list is not access
-     * control on its own: the ids are guessable from anywhere else they appear,
-     * and this route would happily return the full record, resume analysis
-     * included, to any staff caller who asked for one directly.
-     *
-     * 404 rather than 403 on purpose. A 403 confirms the record exists, which
-     * is itself the thing being protected: whether a given person is in a
-     * colleague's sourcing pipeline. To a caller with no right to it, the
-     * record should be indistinguishable from one that was never there.
-     */
-    const app = result.data;
-    if (app.addToTalentBench) {
-      const visible = canView(app, {
-        id: auth.claims.sub,
-        email: auth.claims.email,
-        isAdmin: isAdminClaims(auth.claims),
-      });
-      if (!visible) {
-        return NextResponse.json({ error: "Application not found" }, { status: 404 });
-      }
-    }
-
-    return NextResponse.json({ application: app });
+    return NextResponse.json({ application: result.data });
   } catch (error) {
     return serverError("Error fetching application", error, "Couldn't load the application. Please try again.");
   }
@@ -81,51 +57,31 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    const actor = actorOf(auth.claims);
 
-    // Check if application exists
-    const existingApp = await getApplication(id);
-    if (!existingApp.success || !existingApp.data) {
-      return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
-      );
+    const existingApp = await loadVisible(id, auth.claims);
+    if (!existingApp?.success || !existingApp.data) return notFound();
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
     }
-
-    // Validate status if provided
-    const validStatuses: Application["status"][] = [
-      "pending",
-      "reviewing",
-      "submitted",
-      "interview",
-      "offered",
-      "hired",
-      "rejected",
-      "active",
-      "inactive",
-    ];
-
-    if (body.status && !validStatuses.includes(body.status)) {
-      return NextResponse.json(
-        { error: "Invalid status value" },
-        { status: 400 }
-      );
-    }
+    const invalid = applicationInputError(body);
+    if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
     // Handle addNote payload - append to notesHistory array
     if (body.addNote) {
-      const { text, addedBy, addedByName } = body.addNote;
-      if (!text || !addedBy || !addedByName) {
-        return NextResponse.json(
-          { error: "addNote requires text, addedBy, and addedByName" },
-          { status: 400 }
-        );
+      const text = typeof body.addNote.text === "string" ? body.addNote.text.trim() : "";
+      if (!text) {
+        return NextResponse.json({ error: "addNote requires text" }, { status: 400 });
+      }
+      if (text.length > 5000) {
+        return NextResponse.json({ error: "Keep the note under 5,000 characters." }, { status: 400 });
       }
 
-      // Get existing notes history, or start with empty array
-      let notesHistory: NoteEntry[] = existingApp.data.notesHistory || [];
+      const notesHistory: NoteEntry[] = [];
 
       // Migrate legacy string notes if present and notesHistory is empty
-      if (!notesHistory.length && existingApp.data.notes && typeof existingApp.data.notes === "string") {
+      if (!existingApp.data.notesHistory?.length && existingApp.data.notes && typeof existingApp.data.notes === "string") {
         notesHistory.push({
           id: "legacy",
           text: existingApp.data.notes,
@@ -140,16 +96,18 @@ export async function PUT(
         id: uuidv4(),
         text,
         addedAt: new Date().toISOString(),
-        addedBy,
-        addedByName,
+        addedBy: actor.id,
+        addedByName: actor.name,
       };
       notesHistory.push(newNote);
 
-      // Update with new notes history and clear legacy notes field
-      const result = await updateApplication(id, {
-        notesHistory,
-        notes: "", // Clear legacy notes after migration
-      });
+      // Appended in place so two people noting at once both land.
+      const result = await updateApplication(
+        id,
+        notesHistory.length > 1 ? { notes: "" } : {},
+        [],
+        { notesHistory },
+      );
 
       if (!result.success) {
         return serverError("Adding application note", result.error, "Couldn't add the note. Please try again.");
@@ -171,10 +129,10 @@ export async function PUT(
       body.ownership !== undefined || body.skills || body.experience || body.jobId !== undefined ||
       body.resumeId !== undefined || body.resumeFileName !== undefined ||
       body.resumeFileKey !== undefined || body.hireType !== undefined ||
-      body.addToTalentBench !== undefined || body.benchAddedBy !== undefined ||
-      body.benchType !== undefined ||
+      body.addToTalentBench !== undefined || body.benchType !== undefined ||
       body.resumeAnalysis !== undefined ||
-      body.visaSponsorshipRequired !== undefined || body.visaExpiry !== undefined;
+      body.visaSponsorshipRequired !== undefined || body.visaExpiry !== undefined ||
+      body.linkedinUrl !== undefined;
 
     if (hasFullUpdateFields || isHire) {
       // Full application update
@@ -192,6 +150,13 @@ export async function PUT(
       // Contact info
       if (body.email !== undefined) updates.email = body.email;
       if (body.phone !== undefined) updates.phone = body.phone;
+      if (body.linkedinUrl !== undefined) {
+        const url = body.linkedinUrl ? normalizeWebsite(body.linkedinUrl) : "";
+        if (url && !isUrl(url)) {
+          return NextResponse.json({ error: "Enter a LinkedIn address, like linkedin.com/in/jane-smith." }, { status: 400 });
+        }
+        updates.linkedinUrl = url;
+      }
 
       // Address
       if (body.address !== undefined) updates.address = body.address;
@@ -222,7 +187,11 @@ export async function PUT(
         updates.jobFitAt = "";
         updates.jobFitJobId = "";
       }
-      if (body.jobTitle !== undefined) updates.jobTitle = body.jobTitle;
+      // The title always comes from the job, so it can't drift from it.
+      if (body.jobId !== undefined && body.jobId !== existingApp.data.jobId) {
+        const job = body.jobId ? await getJob(body.jobId) : null;
+        updates.jobTitle = job?.data?.title ?? "";
+      }
       if (body.source !== undefined) updates.source = body.source;
       if (body.workAuthorization !== undefined) updates.workAuthorization = body.workAuthorization;
       if (body.hireType !== undefined) updates.hireType = body.hireType;
@@ -248,12 +217,14 @@ export async function PUT(
 
       // Notes & rating
       if (body.notes !== undefined) updates.notes = body.notes;
-      if (body.notesHistory !== undefined) updates.notesHistory = body.notesHistory;
       if (body.rating !== undefined) updates.rating = body.rating;
 
-      // Talent bench flag
+      // Talent bench flag. Whoever puts a record on the bench owns it, which
+      // decides who can see a My Pool entry, so it comes from the session.
       if (body.addToTalentBench !== undefined) updates.addToTalentBench = body.addToTalentBench;
-      if (body.benchAddedBy !== undefined) updates.benchAddedBy = body.benchAddedBy;
+      if (body.addToTalentBench && !existingApp.data.addToTalentBench) {
+        updates.benchAddedBy = auth.claims.email || auth.claims.sub;
+      }
       if (body.benchType !== undefined) updates.benchType = body.benchType;
 
       // Hiring moves the candidate onto the internal bench: they are now one
@@ -313,18 +284,21 @@ export async function PUT(
         updates.resumeAnalysisRetryable = false;
       }
 
-      // Handle status history for status changes
-      if (isStatusChange) {
-        const statusHistory = existingApp.data.statusHistory || [];
-        const newHistoryEntry = {
-          status: body.status,
-          changedAt: new Date().toISOString(),
-          changedBy: body.changedBy,
-          changedByName: body.changedByName,
-          notes: body.statusNote,
-        };
-        updates.statusHistory = [...statusHistory, newHistoryEntry];
-      }
+      const statusEntry = isStatusChange
+        ? [{
+            status: body.status,
+            changedAt: new Date().toISOString(),
+            changedBy: actor.id,
+            changedByName: actor.name,
+            notes: typeof body.statusNote === "string" ? body.statusNote : undefined,
+          }]
+        : undefined;
+
+      // Stage moves have their own history; everything else goes in the change log.
+      const edited = changedFields(existingApp.data as unknown as Record<string, unknown>, updates).filter((f) => f !== "status");
+      const logEntry = edited.length
+        ? [activityEntry(auth.claims, changeKind(edited), describeChange(edited), edited)]
+        : undefined;
 
       const result = await updateApplication(
         id,
@@ -337,6 +311,7 @@ export async function PUT(
           : resumeDetached
             ? ["resumeAnalysis", "resumeAnalyzedAt", "jobFit", "jobFitAt", "resumeAnalysisStatus"]
             : [],
+        { statusHistory: statusEntry, activity: logEntry },
       );
 
       if (!result.success) {
@@ -359,8 +334,8 @@ export async function PUT(
         body.status || existingApp.data.status,
         body.notes,
         body.rating,
-        body.changedBy,
-        body.changedByName
+        actor.id,
+        actor.name,
       );
 
       if (!result.success) {
@@ -387,20 +362,33 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Check if application exists
-    const existingApp = await getApplication(id);
-    if (!existingApp.success || !existingApp.data) {
-      return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
-      );
-    }
+    const existingApp = await loadVisible(id, auth.claims);
+    if (!existingApp?.success || !existingApp.data) return notFound();
 
     const result = await deleteApplication(id);
 
     if (!result.success) {
       return serverError("Deleting application", result.error, "Couldn't delete the application. Please try again.");
     }
+
+    // The record is gone, so the trail lives in an admin-only notification.
+    const gone = existingApp.data;
+    const actor = actorOf(auth.claims);
+    after(async () => {
+      try {
+        await createNotification({
+          id: uuidv4(),
+          type: "application_deleted",
+          title: "Candidate deleted",
+          message: `${actor.name} deleted ${gone.name || gone.email}${gone.jobTitle ? ` (${gone.jobTitle})` : ""}`,
+          relatedId: id,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error("Failed to record application deletion:", err);
+      }
+    });
 
     return NextResponse.json({ message: "Application deleted successfully" });
   } catch (error) {

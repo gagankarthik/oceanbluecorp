@@ -35,18 +35,23 @@ export interface RateLimitRule {
 /**
  * Best guess at the caller, from the proxy headers Amplify/CloudFront set.
  *
- * `x-forwarded-for` is client-controlled in principle, so the LEFTMOST entry is
- * taken only as a bucket key, never as an identity. A caller who forges it just
- * spreads their own traffic across buckets, which is why the limits below are
- * per-IP but deliberately not the only protection.
+ * The LEFTMOST `x-forwarded-for` entry is whatever the caller sent, so keying on
+ * it let a script rotate the header and get a fresh bucket per request. Each
+ * trusted proxy APPENDS the address it saw, so the entry RATE_LIMIT_PROXY_HOPS
+ * from the right (default 1: CloudFront's view of the client) is the one the
+ * caller cannot choose. CloudFront's own viewer header wins when present.
  */
-export function clientKey(request: Request): string {
+export function clientKey(request: Request, proxyHops = Number(process.env.RATE_LIMIT_PROXY_HOPS) || 1): string {
   const headers = request.headers;
-  const forwarded = headers.get("x-forwarded-for");
+  const viewer = headers.get("cloudfront-viewer-address")?.trim();
+  // "ip:port", IPv6 included; the port is per-connection and would split the bucket.
+  const viewerIp = viewer ? viewer.slice(0, viewer.lastIndexOf(":")).replace(/^\[|\]$/g, "") : "";
+  const hops = (headers.get("x-forwarded-for") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const forwarded = hops.length ? hops[Math.max(0, hops.length - proxyHops)] : "";
   const ip =
-    (forwarded ? forwarded.split(",")[0] : "").trim() ||
+    viewerIp ||
+    forwarded ||
     headers.get("x-real-ip")?.trim() ||
-    headers.get("cf-connecting-ip")?.trim() ||
     "unknown";
   return ip.slice(0, 45); // an IPv6 address at its longest
 }

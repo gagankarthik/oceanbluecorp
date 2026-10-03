@@ -1,6 +1,6 @@
 import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { NextRequest, NextResponse } from "next/server";
-import { getAllClients, createClient, Client } from "@/lib/aws/dynamodb";
+import { getAllClients, createClient, getJobCountsByParty, Client } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { requireStaff } from "@/lib/auth/verify";
 import { serverError } from "@/lib/api-errors";
@@ -13,16 +13,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as Client["status"] | null;
 
-    const result = await getAllClients(status || undefined);
+    const [result, counts] = await Promise.all([getAllClients(status || undefined), getJobCountsByParty()]);
 
     if (!result.success) {
       return serverError("Fetching clients", result.error, "Couldn't load the clients. Please try again.");
     }
 
     // Sort by createdAt descending (newest first)
-    const clients = (result.data || []).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const clients = (result.data || [])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map((c) => ({ ...c, jobCount: counts.byClient.get(c.id)?.total ?? 0, openJobCount: counts.byClient.get(c.id)?.open ?? 0 }));
 
     return NextResponse.json({ clients });
   } catch (error) {

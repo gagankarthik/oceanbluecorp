@@ -10,7 +10,8 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { ApiScope } from "@/lib/api-scopes";
-import type { JobCategory } from "@/lib/job-status";
+import { PUBLIC_JOB_STATUSES, isPubliclyOpen, type JobCategory } from "@/lib/job-status";
+import { emailKeyOf, nameKeyOf } from "@/lib/application-input";
 
 // Read environment variables directly every time (no caching)
 const getEnvConfig = () => {
@@ -88,10 +89,20 @@ const createDocClient = (): DynamoDBDocumentClient | null => {
     },
   });
 
-  // Any write drops cached scans, so a change is visible on the next read.
+  // A write drops cached scans of its own table, so a change is visible on the
+  // next read. Counter bumps (rate limits, ID sequences) are never scanned.
   client.middlewareStack.add(
     (next, context) => async (args) => {
-      if (WRITE_COMMAND.test(context.commandName ?? "")) scanCache.clear();
+      if (WRITE_COMMAND.test(context.commandName ?? "")) {
+        const input = args.input as { TableName?: string; RequestItems?: object; TransactItems?: unknown[] };
+        if (input.TableName) {
+          if (input.TableName !== getTables().counters) invalidateScans(input.TableName);
+        } else if (input.RequestItems) {
+          Object.keys(input.RequestItems).forEach(invalidateScans);
+        } else {
+          scanCache.clear();
+        }
+      }
       return next(args);
     },
     { step: "initialize", name: "invalidateScanCache" },
@@ -153,7 +164,11 @@ const getTables = () => getEnvConfig().tables;
 const SCAN_TTL_MS = 15_000;
 const SCAN_STALE_MS = 60_000;
 const SCAN_SEGMENTS = 4;
-const scanCache = new Map<string, { at: number; items: Promise<unknown[]>; refreshing?: boolean }>();
+const scanCache = new Map<string, { table?: string; at: number; items: Promise<unknown[]>; refreshing?: boolean }>();
+
+function invalidateScans(table: string) {
+  for (const [key, entry] of scanCache) if (entry.table === table) scanCache.delete(key);
+}
 
 async function scanSegment<T>(
   client: DynamoDBDocumentClient,
@@ -208,7 +223,7 @@ async function scanAll<T>(
       hit.refreshing = true;
       scan().then(
         (fresh) => {
-          if (scanCache.get(key) === hit) scanCache.set(key, { at: Date.now(), items: Promise.resolve(fresh) });
+          if (scanCache.get(key) === hit) scanCache.set(key, { table: params?.TableName, at: Date.now(), items: Promise.resolve(fresh) });
         },
         (error) => {
           hit.refreshing = false;
@@ -221,7 +236,7 @@ async function scanAll<T>(
 
   const items = scan();
   if (cacheable) {
-    scanCache.set(key, { at: Date.now(), items });
+    scanCache.set(key, { table: params?.TableName, at: Date.now(), items });
     items.catch(() => { if (scanCache.get(key)?.items === items) scanCache.delete(key); });
   }
   return structuredClone(await items) as T[];
@@ -304,6 +319,30 @@ export type WorkAuthorization =
  */
 export type HireType =
   | "W2" | "C2C" | "1099" | "Full-time" | "Contract-to-Hire" | "Internal";
+
+export interface ActivityEntry {
+  id: string;
+  at: string;
+  by: string;       // Cognito sub
+  byName: string;
+  kind: "edit" | "email" | "bench" | "ownership" | "resume" | "task";
+  summary: string;
+  /** Field names an edit touched. */
+  fields?: string[];
+}
+
+export interface TaskEntry {
+  id: string;
+  text: string;
+  dueAt?: string;         // ISO date or date-time
+  assigneeId?: string;    // Cognito sub
+  assigneeName?: string;
+  done: boolean;
+  doneAt?: string;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+}
 
 export interface NoteEntry {
   id: string;           // UUID for each note
@@ -524,6 +563,10 @@ export interface Application {
   lastName?: string;
   email: string;
   phone?: string;
+  linkedinUrl?: string;
+  /** Index keys (emailKey-index, nameKey-index); written by this module only. */
+  emailKey?: string;
+  nameKey?: string;
 
   // Extended applicant info
   address?: string;
@@ -603,6 +646,11 @@ export interface Application {
    *  indistinguishable from a current one. */
   jobFitJobId?: string;
 
+  /** Edits, emails and bench/ownership moves, appended by the API. Newest last. */
+  activity?: ActivityEntry[];
+  /** Follow-ups on this candidate. */
+  tasks?: TaskEntry[];
+
   // Status history for timeline
   statusHistory?: Array<{
     status: string;
@@ -612,6 +660,8 @@ export interface Application {
     notes?: string;
   }>;
 }
+
+export type SalaryPeriod = "year" | "month" | "week" | "day" | "hour";
 
 export interface Job {
   id: string; // PK
@@ -629,10 +679,14 @@ export interface Job {
     min: number;
     max: number;
     currency: string;
+    /** Pay period. Records without one predate the field and are annual. */
+    period?: SalaryPeriod;
   };
   status: "active" | "paused" | "closed" | "draft" | "open" | "on-hold";
   submissionDueDate?: string; // ISO date string for application deadline
   createdAt: string;
+  /** First time the posting went live; set by the API, never by the client. */
+  publishedAt?: string;
   updatedAt?: string;
   createdBy: string;
   postedByName?: string; // Name of admin/HR who posted
@@ -773,7 +827,9 @@ export interface Contact {
 
 export interface Notification {
   id: string; // PK
-  type: "job_posted" | "application_received" | "contact_received";
+  type: "job_posted" | "application_received" | "contact_received" | "task_assigned" | "application_deleted";
+  /** Cognito sub of the one person this is for; absent = the whole audience. */
+  recipientId?: string;
   title: string;
   message: string;
   link?: string; // URL to navigate to when clicked
@@ -790,6 +846,9 @@ export interface Notification {
 
 export interface Client {
   id: string; // PK
+  /** List responses only, counted from the jobs table; never stored. */
+  jobCount?: number;
+  openJobCount?: number;
   name: string; // Client Name (mandatory)
   websiteUrl: string; // Website URL (mandatory)
   status: "active" | "inactive"; // Status (mandatory)
@@ -805,6 +864,9 @@ export interface Client {
 
 export interface Vendor {
   id: string; // PK
+  /** List responses only, counted from the jobs table; never stored. */
+  jobCount?: number;
+  openJobCount?: number;
   name: string; // Vendor Name (mandatory)
   contactPerson?: string; // Contact Person
   email?: string; // Email
@@ -819,6 +881,8 @@ export interface Vendor {
 
 export interface CandidateApplication {
   id: string; // PK
+  emailKey?: string;
+  nameKey?: string;
   applicationId: string; // Auto-generated APP-XXXX format
   name: string; // Combined firstName + lastName for compatibility
   firstName: string; // Mandatory
@@ -960,7 +1024,7 @@ export async function createApplication(application: Application): Promise<{ suc
     await dbCheck.client!.send(
       new PutCommand({
         TableName: getTables().applications,
-        Item: application,
+        Item: { ...application, emailKey: emailKeyOf(application.email), nameKey: nameKeyOf(application) },
       })
     );
     return { success: true };
@@ -1063,8 +1127,154 @@ export async function getAllApplications(): Promise<{ success: boolean; data?: A
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error("Error getting all applications:", errorName, errorMessage, error);
-    // Return empty array for read operations to allow the app to function
-    return { success: true, data: [] };
+    // A failed read is not an empty table; callers show an error, not zero rows.
+    return { success: false, error: errorMessage };
+  }
+}
+
+/** Full records for a set of ids, in BatchGet chunks of 100. Missing ids are absent. */
+export async function getApplicationsByIds(ids: string[]): Promise<{ success: boolean; data?: Application[]; error?: string }> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return { success: true, data: [] };
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    const table = getTables().applications;
+    const out: Application[] = [];
+    for (let i = 0; i < unique.length; i += 100) {
+      let keys: Record<string, unknown>[] | undefined = unique.slice(i, i + 100).map((id) => ({ id }));
+      // Throttled keys come back unprocessed; retry them a few times.
+      for (let attempt = 0; keys?.length && attempt < 4; attempt++) {
+        const result = await dbCheck.client!.send(new BatchGetCommand({ RequestItems: { [table]: { Keys: keys } } }));
+        out.push(...((result.Responses?.[table] || []) as Application[]));
+        keys = result.UnprocessedKeys?.[table]?.Keys as Record<string, unknown>[] | undefined;
+      }
+    }
+    return { success: true, data: out };
+  } catch (error) {
+    console.error("Error batch-getting applications:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get applications" };
+  }
+}
+
+/**
+ * Ids whose index key matches, via a KEYS_ONLY GSI. If the index is missing
+ * or not yet backfilled-readable, falls back to a narrow scan so a lookup
+ * never silently comes back empty.
+ */
+async function idsByKey(
+  client: DynamoDBDocumentClient,
+  index: "emailKey-index" | "nameKey-index",
+  attr: "emailKey" | "nameKey",
+  key: string,
+  fallback: (row: Application) => string | undefined,
+): Promise<string[]> {
+  try {
+    const rows = await queryAll<{ id: string }>(client, {
+      TableName: getTables().applications,
+      IndexName: index,
+      KeyConditionExpression: "#k = :k",
+      ExpressionAttributeNames: { "#k": attr },
+      ExpressionAttributeValues: { ":k": key },
+    });
+    return rows.map((r) => r.id);
+  } catch (error) {
+    console.warn(`[dynamodb] ${index} unavailable, scanning instead:`, error instanceof Error ? error.message : error);
+    const rows = await scanAll<Application>(client, {
+      TableName: getTables().applications,
+      ProjectionExpression: "id, email, #n, firstName, lastName",
+      ExpressionAttributeNames: { "#n": "name" },
+    });
+    return rows.filter((r) => fallback(r) === key).map((r) => r.id);
+  }
+}
+
+/** Applications for an email, case-insensitive. */
+export async function getApplicationsByEmail(email: string): Promise<{ success: boolean; data?: Application[]; error?: string }> {
+  const key = emailKeyOf(email);
+  if (!key) return { success: true, data: [] };
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    return getApplicationsByIds(await idsByKey(dbCheck.client!, "emailKey-index", "emailKey", key, (r) => emailKeyOf(r.email)));
+  } catch (error) {
+    console.error("Error finding applications by email:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get applications" };
+  }
+}
+
+/** Applications for a full name, ignoring case, accents and punctuation. */
+export async function getApplicationsByName(name: string): Promise<{ success: boolean; data?: Application[]; error?: string }> {
+  const key = nameKeyOf({ name });
+  if (!key) return { success: true, data: [] };
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    return getApplicationsByIds(await idsByKey(dbCheck.client!, "nameKey-index", "nameKey", key, (r) => nameKeyOf(r)));
+  } catch (error) {
+    console.error("Error finding applications by name:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get applications" };
+  }
+}
+
+/**
+ * Replace an application's task list, only if nobody else saved the record
+ * since `expectedUpdatedAt`. False on a lost race; the caller re-reads and retries.
+ */
+export async function replaceApplicationTasks(
+  id: string,
+  tasks: TaskEntry[],
+  expectedUpdatedAt: string | undefined,
+  activity?: ActivityEntry,
+): Promise<{ success: boolean; conflict?: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    await dbCheck.client!.send(
+      new UpdateCommand({
+        TableName: getTables().applications,
+        Key: { id },
+        UpdateExpression: activity
+          ? "SET #t = :t, #u = :now, #a = list_append(if_not_exists(#a, :empty), :a)"
+          : "SET #t = :t, #u = :now",
+        ConditionExpression: expectedUpdatedAt ? "#u = :prev" : "attribute_not_exists(#u)",
+        ExpressionAttributeNames: { "#t": "tasks", "#u": "updatedAt", ...(activity && { "#a": "activity" }) },
+        ExpressionAttributeValues: {
+          ":t": tasks,
+          ":now": new Date().toISOString(),
+          ...(expectedUpdatedAt && { ":prev": expectedUpdatedAt }),
+          ...(activity && { ":a": [activity], ":empty": [] }),
+        },
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConditionalCheckFailedException") return { success: false, conflict: true };
+    console.error("Error saving application tasks:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to save tasks" };
+  }
+}
+
+/** Applications that carry any tasks, with just what a task list needs. */
+export async function getApplicationsWithTasks(): Promise<{
+  success: boolean;
+  data?: Pick<Application, "id" | "name" | "jobTitle" | "tasks" | "addToTalentBench" | "benchType" | "benchAddedBy" | "createdBy" | "status">[];
+  error?: string;
+}> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    const data = await scanAll<Pick<Application, "id" | "name" | "jobTitle" | "tasks" | "addToTalentBench" | "benchType" | "benchAddedBy" | "createdBy" | "status">>(dbCheck.client!, {
+      TableName: getTables().applications,
+      ProjectionExpression: "id, #n, jobTitle, tasks, addToTalentBench, benchType, benchAddedBy, createdBy, #s",
+      FilterExpression: "size(tasks) > :zero",
+      ExpressionAttributeNames: { "#n": "name", "#s": "status" },
+      ExpressionAttributeValues: { ":zero": 0 },
+    });
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error listing tasks:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to list tasks" };
   }
 }
 
@@ -1113,11 +1323,6 @@ export async function updateApplicationStatus(
   }
 
   try {
-    // First get the current application to append to status history
-    const currentApp = await getApplication(id);
-    const statusHistory = currentApp.data?.statusHistory || [];
-
-    // Add new status change to history
     const newHistoryEntry = {
       status,
       changedAt: new Date().toISOString(),
@@ -1129,12 +1334,14 @@ export async function updateApplicationStatus(
     const updateExpressions: string[] = [
       "#status = :status",
       "#updatedAt = :updatedAt",
-      "#statusHistory = :statusHistory",
+      // Appended in place, so two saves at once can't drop each other's entry.
+      "#statusHistory = list_append(if_not_exists(#statusHistory, :emptyList), :statusHistory)",
     ];
     const expressionAttributeValues: Record<string, unknown> = {
       ":status": status,
       ":updatedAt": new Date().toISOString(),
-      ":statusHistory": [...statusHistory, newHistoryEntry],
+      ":statusHistory": [newHistoryEntry],
+      ":emptyList": [],
     };
     const expressionAttributeNames: Record<string, string> = {
       "#status": "status",
@@ -1184,14 +1391,34 @@ export async function updateApplicationStatus(
  */
 type ApplicationPatch = Partial<Omit<Application, "id" | "applicationId" | "createdAt" | "createdBy">>;
 
+/** List attributes appended to atomically, never read-modify-written. */
+export type ApplicationAppend = {
+  statusHistory?: NonNullable<Application["statusHistory"]>;
+  notesHistory?: NoteEntry[];
+  activity?: ActivityEntry[];
+};
+
 export async function updateApplication(
   id: string,
   updates: ApplicationPatch,
-  remove: (keyof ApplicationPatch)[] = []
+  remove: (keyof ApplicationPatch)[] = [],
+  append: ApplicationAppend = {},
 ): Promise<{ success: boolean; error?: string }> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) {
     return { success: false, error: dbCheck.error };
+  }
+
+  // Keep the index keys in step. An index key can't be "", so a blank one is removed.
+  updates = { ...updates };
+  remove = [...remove];
+  if (updates.email !== undefined) {
+    updates.emailKey = emailKeyOf(updates.email);
+    if (!updates.emailKey) remove.push("emailKey");
+  }
+  if (updates.name !== undefined) {
+    updates.nameKey = nameKeyOf({ name: updates.name });
+    if (!updates.nameKey) remove.push("nameKey");
   }
 
   try {
@@ -1210,6 +1437,14 @@ export async function updateApplication(
         expressionAttributeValues[`:${key}`] = value;
       }
     });
+
+    for (const [key, items] of Object.entries(append)) {
+      if (!items?.length || updates[key as keyof ApplicationPatch] !== undefined) continue;
+      expressionAttributeNames[`#${key}`] = key;
+      expressionAttributeValues[`:${key}`] = items;
+      expressionAttributeValues[":emptyList"] = [];
+      updateExpressions.push(`#${key} = list_append(if_not_exists(#${key}, :emptyList), :${key})`);
+    }
 
     // A field being both set and removed would make the expression invalid, so
     // an explicit set always wins.
@@ -1367,22 +1602,22 @@ export async function getAllJobs(status?: Job["status"]): Promise<{ success: boo
   }
 
   try {
-    const data = await scanAll<Job>(dbCheck.client!, {
-      TableName: getTables().jobs,
-      ...(status && {
-        FilterExpression: "#status = :status",
-        ExpressionAttributeNames: { "#status": "status" },
-        ExpressionAttributeValues: { ":status": status },
-      }),
-    });
+    const data = status
+      ? await queryAll<Job>(dbCheck.client!, {
+          TableName: getTables().jobs,
+          IndexName: "status-index",
+          KeyConditionExpression: "#status = :status",
+          ExpressionAttributeNames: { "#status": "status" },
+          ExpressionAttributeValues: { ":status": status },
+        })
+      : await scanAll<Job>(dbCheck.client!, { TableName: getTables().jobs });
     console.log("Jobs fetched successfully, count:", data.length);
     return { success: true, data };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error("Error getting jobs:", errorName, errorMessage, error);
-    // Return empty array for read operations to allow the app to function
-    return { success: true, data: [] };
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -1430,6 +1665,69 @@ export async function updateJob(
       success: false,
       error: error instanceof Error ? error.message : "Failed to update job",
     };
+  }
+}
+
+export type JobCounts = Map<string, { total: number; open: number }>;
+
+/** Postings per client and per vendor, from a four-attribute scan of the jobs table. */
+export async function getJobCountsByParty(): Promise<{ byClient: JobCounts; byVendor: JobCounts }> {
+  const byClient: JobCounts = new Map();
+  const byVendor: JobCounts = new Map();
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { byClient, byVendor };
+  try {
+    const rows = await scanAll<Pick<Job, "clientId" | "vendorId" | "status">>(dbCheck.client!, {
+      TableName: getTables().jobs,
+      ProjectionExpression: "clientId, vendorId, #s",
+      ExpressionAttributeNames: { "#s": "status" },
+    });
+    const bump = (map: JobCounts, id: string | undefined, open: boolean) => {
+      if (!id) return;
+      const c = map.get(id) ?? { total: 0, open: 0 };
+      c.total += 1;
+      if (open) c.open += 1;
+      map.set(id, c);
+    };
+    for (const j of rows) {
+      const open = isPubliclyOpen(j.status);
+      bump(byClient, j.clientId, open);
+      bump(byVendor, j.vendorId, open);
+    }
+  } catch (error) {
+    // A missing count must not take the list down with it.
+    console.error("Error counting jobs by client/vendor:", error);
+  }
+  return { byClient, byVendor };
+}
+
+/** Live postings, read from status-index rather than a full scan. */
+export async function getPublicJobs(): Promise<{ success: boolean; data?: Job[]; error?: string }> {
+  const results = await Promise.all(PUBLIC_JOB_STATUSES.map((status) => getAllJobs(status)));
+  const failed = results.find((r) => !r.success);
+  if (failed) return failed;
+  return { success: true, data: results.flatMap((r) => r.data || []) };
+}
+
+/** Atomic +1, so concurrent applications can't overwrite each other's count. */
+export async function incrementJobApplications(id: string): Promise<{ success: boolean; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    await dbCheck.client!.send(
+      new UpdateCommand({
+        TableName: getTables().jobs,
+        Key: { id },
+        UpdateExpression: "ADD #c :one SET #u = :now",
+        ConditionExpression: "attribute_exists(id)",
+        ExpressionAttributeNames: { "#c": "applicationsCount", "#u": "updatedAt" },
+        ExpressionAttributeValues: { ":one": 1, ":now": new Date().toISOString() },
+      }),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error incrementing job applications:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update job" };
   }
 }
 
@@ -1657,7 +1955,7 @@ export async function getAllNotifications(limit?: number): Promise<{ success: bo
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error getting notifications:", errorMessage, error);
-    return { success: true, data: [] };
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -2301,7 +2599,7 @@ export async function createCandidateApplication(application: CandidateApplicati
     await dbCheck.client!.send(
       new PutCommand({
         TableName: getTables().applications,
-        Item: application,
+        Item: { ...application, emailKey: emailKeyOf(application.email), nameKey: nameKeyOf(application) },
       })
     );
     return { success: true };

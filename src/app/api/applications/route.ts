@@ -1,29 +1,32 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import {
   getAllApplications,
+  getApplicationsByEmail,
   getApplicationsByJob,
   getApplicationsByUser,
   createApplication,
   createNotification,
   Application,
   getJob,
-  updateJob,
   getNextApplicationId,
+  incrementJobApplications,
 } from "@/lib/aws/dynamodb";
 import {
   sendApplicationConfirmation,
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff, getClaims, isAdminClaims } from "@/lib/auth/verify";
+import { requireStaff, getClaims, viewerOf } from "@/lib/auth/verify";
 import { hasRecruitingAccess } from "@/lib/auth/config";
 import { validate, validationMessage, type Schema } from "@/lib/validate";
-import { canView } from "@/lib/bench";
+import { isVisibleApplication } from "@/lib/bench";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
 import { candidateHaystack } from "@/lib/candidate-search";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-errors";
+import { applicationInputError } from "@/lib/application-input";
+import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { isPubliclyOpen } from "@/lib/job-status";
 
 // Resume analysis runs after the response via after(); give the invocation room
@@ -49,7 +52,11 @@ const PUBLIC_APPLICATION_SCHEMA: Schema = {
   workAuthorization: { kind: "string", maxLength: 100 },
   visaSponsorshipRequired: { kind: "boolean", coerce: true },
   visaExpiry: { kind: "string", maxLength: 40 },
+  linkedinUrl: { kind: "string", maxLength: 2048 },
 };
+
+/** Heavy text a list row never shows; detail screens read the record by key. */
+const SUMMARY_OMIT = ["notesHistory", "coverLetter"] as const;
 
 // GET /api/applications - Get applications (with optional filters)
 export async function GET(request: NextRequest) {
@@ -74,23 +81,16 @@ export async function GET(request: NextRequest) {
       // Also check if userId looks like an email - if so, also search by email field
       // This handles cases where userId was stored as email for anonymous users
       if (userId.includes("@")) {
-        const allAppsResult = await getAllApplications();
-        if (allAppsResult.success && allAppsResult.data) {
-          const emailMatches = allAppsResult.data.filter(
-            (app) => app.email?.toLowerCase() === userId.toLowerCase() &&
-                     !applications.some((a) => a.id === app.id)
-          );
-          applications = [...applications, ...emailMatches];
-        }
+        const byEmail = await getApplicationsByEmail(userId);
+        const emailMatches = (byEmail.data || []).filter((app) => !applications.some((a) => a.id === app.id));
+        applications = [...applications, ...emailMatches];
       }
     } else if (email) {
-      // Search by email field (scan with filter)
-      const allAppsResult = await getAllApplications();
-      if (allAppsResult.success && allAppsResult.data) {
-        applications = allAppsResult.data.filter(
-          (app) => app.email?.toLowerCase() === email.toLowerCase()
-        );
+      const byEmail = await getApplicationsByEmail(email);
+      if (!byEmail.success) {
+        return serverError("Looking up applications by email", byEmail.error, "Couldn't check that email. Please try again.");
       }
+      applications = byEmail.data || [];
     } else if (jobId) {
       result = await getApplicationsByJob(jobId);
       if (result.success) {
@@ -98,9 +98,10 @@ export async function GET(request: NextRequest) {
       }
     } else {
       result = await getAllApplications();
-      if (result.success) {
-        applications = result.data || [];
+      if (!result.success) {
+        return serverError("Listing applications", result.error, "Couldn't load applications. Please try again.");
       }
+      applications = result.data || [];
     }
 
     /**
@@ -125,14 +126,11 @@ export async function GET(request: NextRequest) {
      * pipeline from everyone on every other screen that reads this endpoint.
      * Only records actually on the bench carry the visibility rule.
      */
-    const viewer = {
-      id: auth.claims.sub,
-      email: auth.claims.email,
-      isAdmin: isAdminClaims(auth.claims),
-    };
-    applications = applications.filter(
-      (app) => !app.addToTalentBench || canView(app, viewer),
-    );
+    const viewer = viewerOf(auth.claims);
+    applications = applications.filter((app) => isVisibleApplication(app, viewer));
+    if (searchParams.get("bench") === "1") {
+      applications = applications.filter((app) => app.addToTalentBench);
+    }
 
     // Sort by appliedAt descending (newest first)
     applications.sort(
@@ -149,8 +147,10 @@ export async function GET(request: NextRequest) {
      * browser actually needs to filter on, and the detail screens read the full
      * record by key as they already did.
      */
+    const summary = searchParams.get("fields") === "summary";
     const lean = applications.map((app) => {
       const { resumeAnalysis, ...rest } = app;
+      if (summary) for (const k of SUMMARY_OMIT) delete rest[k];
       return {
         ...rest,
         // Computed from the full record before it is dropped.
@@ -202,6 +202,8 @@ export async function POST(request: NextRequest) {
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
         return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
       }
+      const invalid = applicationInputError(raw);
+      if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
       body = raw;
     } else {
       const checked = validate(raw, PUBLIC_APPLICATION_SCHEMA);
@@ -209,6 +211,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
       }
       body = checked.value;
+    }
+
+    // Stored only as an http(s) address, since staff screens render it as a link.
+    if (body.linkedinUrl) {
+      const url = normalizeWebsite(String(body.linkedinUrl));
+      if (!isUrl(url)) {
+        return NextResponse.json({ error: "Enter a LinkedIn address, like linkedin.com/in/jane-smith." }, { status: 400 });
+      }
+      body.linkedinUrl = url;
+    }
+    // A public application with neither a resume nor a profile gives a recruiter nothing to review.
+    if (!isStaff && !body.resumeId && !body.linkedinUrl) {
+      return NextResponse.json({ error: "Attach a resume or add your LinkedIn profile." }, { status: 400 });
     }
 
     const suppliedAnalysis: ResumeAnalysis | undefined =
@@ -229,6 +244,9 @@ export async function POST(request: NextRequest) {
      * application still goes through.
      */
     const staffOnly = <T,>(value: T, fallback: T): T => (isStaff ? value : fallback);
+    const actor = isStaff && claims
+      ? { id: claims.sub, key: claims.email || claims.sub, name: claims.name || claims.email || "Staff" }
+      : null;
 
     // For HR-created applications, email is required. For portal, jobId and email are required.
     if (!body.email) {
@@ -252,13 +270,13 @@ export async function POST(request: NextRequest) {
       if (jobResult.success && jobResult.data) {
         job = jobResult.data;
         // Portal applications only reach a live posting; staff may file against any.
-        if (!body.createdBy && !isPubliclyOpen(job.status)) {
+        if (!isStaff && !isPubliclyOpen(job.status)) {
           return NextResponse.json(
             { error: "This job is no longer accepting applications" },
             { status: 400 }
           );
         }
-        isPortalApplication = !body.createdBy;
+        isPortalApplication = !isStaff;
       }
     }
     // A public application is always to a posting; an unknown id is not one.
@@ -285,7 +303,7 @@ export async function POST(request: NextRequest) {
       applicationId,
       userId: body.userId || "anonymous",
       jobId: body.jobId || undefined,
-      jobTitle: body.jobTitle || job?.title || undefined,
+      jobTitle: job?.title || body.jobTitle || undefined,
       resumeId: body.resumeId || undefined,
       resumeFileName: body.resumeFileName || undefined,
       // The S3 key was collected by every upload path but dropped here, so no
@@ -305,6 +323,7 @@ export async function POST(request: NextRequest) {
       lastName: body.lastName,
       email: body.email,
       phone: body.phone,
+      linkedinUrl: body.linkedinUrl || undefined,
       address: body.address,
       city: body.city,
       state: body.state,
@@ -321,12 +340,13 @@ export async function POST(request: NextRequest) {
       visaExpiry: body.visaExpiry || undefined,
       ownership: staffOnly(body.ownership, undefined),
       ownershipName: staffOnly(body.ownershipName, undefined),
-      createdBy: staffOnly(body.createdBy, undefined),
-      createdByName: staffOnly(body.createdByName, undefined),
+      // From the session: createdBy decides who owns a My Pool record.
+      createdBy: staffOnly(actor?.key, undefined),
+      createdByName: staffOnly(actor?.name, undefined),
       rating: staffOnly(body.rating, undefined),
       notes: staffOnly(body.notes, undefined),
       addToTalentBench: staffOnly(body.addToTalentBench || false, false),
-      benchAddedBy: staffOnly(body.benchAddedBy, undefined),
+      benchAddedBy: staffOnly(body.addToTalentBench ? actor?.key : undefined, undefined),
       // Bench pool: hired-at-creation records land on the internal bench,
       // everything else added to the bench defaults to the external pool.
       benchType: body.benchType
@@ -336,8 +356,8 @@ export async function POST(request: NextRequest) {
       statusHistory: [{
         status: staffOnly(body.status || "pending", "pending"),
         changedAt: now,
-        changedBy: body.createdBy || "system",
-        changedByName: body.createdByName || (isPortalApplication ? "Career Portal" : "System"),
+        changedBy: actor?.id || "system",
+        changedByName: actor?.name || (isPortalApplication ? "Career Portal" : "System"),
         notes: "Application created",
       }],
     };
@@ -364,8 +384,7 @@ export async function POST(request: NextRequest) {
 
     // Only increment job applications count for portal applications
     if (job && isPortalApplication) {
-      const currentCount = job.applicationsCount || 0;
-      await updateJob(body.jobId, { applicationsCount: currentCount + 1 });
+      await incrementJobApplications(body.jobId);
 
       /* after(), and AWAITED inside it.
          Both halves matter. Unawaited, this was a promise nobody tracked, and
@@ -451,8 +470,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Wait for all emails to complete before returning response
-      await Promise.all(emailPromises);
+      // Sent after the response; the applicant doesn't wait on SES.
+      after(() => Promise.all(emailPromises));
     }
 
     return NextResponse.json({ application }, { status: 201 });
