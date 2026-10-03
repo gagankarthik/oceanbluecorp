@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,7 +21,6 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { StarRating } from "@/components/admin/star-rating";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { Empty as BlankCell } from "@/components/admin/list-panel";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import {
@@ -34,6 +33,8 @@ import {
 } from "@/components/admin/icons";
 
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { refreshApplications, useApplicationSummaries, useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
+import { undoable } from "@/lib/undo";
 import { downloadCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
@@ -135,12 +136,6 @@ export default function TalentBenchPage() {
   const { user, hasRole } = useAuth();
   const isAdmin = hasRole(UserRole.ADMIN);
 
-  const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
-  // Jobs are fetched only to resolve each bench record's job title/department.
-  const [, setJobs] = useState<Job[]>([]);
-  const [allUsers, setAllUsers] = useState<CognitoUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [skillFilter, setSkillFilter] = useState("all");
@@ -163,77 +158,46 @@ export default function TalentBenchPage() {
 
   const router = useRouter();
 
-  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
-  const [removing, setRemoving] = useState(false);
-
   // ── data ──────────────────────────────────────────────────────────────────
 
-  const hasData = useRef(false);
-  const fetchData = useCallback(async () => {
-    try {
-      // Skeleton on first load only; a reload after a save keeps the grid on screen.
-      if (!hasData.current) setLoading(true);
-      setError(null);
-      const [appsResponse, jobsResponse] = await Promise.all([
-        fetch("/api/applications?bench=1&fields=summary"),
-        fetch("/api/jobs?fields=summary"),
-      ]);
+  // Shared lists; jobs only resolve each record's job title/department.
+  const benchRes = useApplicationSummaries({ bench: true });
+  const jobsRes = useJobSummaries();
+  const { users: directory } = useUserDirectory();
+  const allUsers = useMemo(
+    () => (directory || []).map((u): CognitoUser => ({ id: u.id, email: u.email, name: u.name, role: u.role || "" })),
+    [directory],
+  );
+  const { setData: setBench } = benchRes;
 
-      const appsData = await appsResponse.json();
-      const jobsData = await jobsResponse.json();
+  const applications = useMemo<ApplicationWithJob[]>(() => {
+    const jobsMap = new Map<string, Job>((jobsRes.jobs || []).map((job) => [job.id, job]));
+    return (benchRes.applications || [])
+      .map((app) => {
+        const job = app.jobId ? jobsMap.get(app.jobId) : null;
+        return {
+          ...app,
+          jobTitle: app.jobTitle || job?.title || "",
+          jobDepartment: job?.department || "",
+          postedByName: job?.postedByName || app.ownershipName,
+        };
+      })
+      .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
+  }, [benchRes.applications, jobsRes.jobs]);
 
-      if (!appsResponse.ok || !jobsResponse.ok) {
-        throw new Error("Failed to fetch data");
-      }
+  // Skeleton on first load only; a refresh keeps the grid on screen.
+  const loading = benchRes.isLoading || jobsRes.isLoading;
+  const error = (!benchRes.applications && benchRes.error) || (!jobsRes.jobs && jobsRes.error)
+    ? "Check your connection and try again."
+    : null;
+  const fetchData = () => Promise.all([benchRes.reload(), jobsRes.reload()]);
 
-      setJobs(jobsData.jobs || []);
-
-      const jobsMap = new Map<string, Job>(
-        (jobsData.jobs || []).map((job: Job) => [job.id, job])
-      );
-
-      const benchApps = (appsData.applications || [])
-        .map((app: Application) => {
-          const job = app.jobId ? jobsMap.get(app.jobId) : null;
-          return {
-            ...app,
-            jobTitle: app.jobTitle || job?.title || "",
-            jobDepartment: job?.department || "",
-            postedByName: job?.postedByName || app.ownershipName,
-          };
-        });
-
-      benchApps.sort((a: ApplicationWithJob, b: ApplicationWithJob) =>
-        new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
-      );
-
-      setApplications(benchApps);
-      hasData.current = true;
-    } catch (err) {
-      console.error("Failed to load the talent bench:", err);
-      if (!hasData.current) setError("Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      const response = await fetch("/api/users");
-      const data = await response.json();
-      if (response.ok) {
-        const users = data.users || [];
-        setAllUsers(users);
-      }
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchData();
-    void fetchUsers();
-  }, [fetchData, fetchUsers]);
+  /** Optimistic edit of the shared bench list. */
+  const patchLocal = useCallback(
+    (fn: (list: Application[]) => Application[]) =>
+      setBench((d) => ({ ...d, applications: fn(d?.applications || []) })),
+    [setBench],
+  );
 
   // ── derived ───────────────────────────────────────────────────────────────
 
@@ -410,56 +374,58 @@ export default function TalentBenchPage() {
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
-  const handleStatusChange = async (appId: string, newStatus: Application["status"]) => {
-    try {
-      const response = await fetch(`/api/applications/${appId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
+  const putApplication = async (appId: string, body: Partial<Application>) => {
+    const response = await fetch(`/api/applications/${appId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  };
 
-      if (!response.ok) throw new Error("Failed to update status");
-      await fetchData();
+  /** Optimistic stage/rating change; rolls back only if nothing has overwritten it since. */
+  const patchField = async <K extends "status" | "rating">(
+    appId: string, field: K, value: Application[K], failMsg: string,
+  ) => {
+    let prev: Application[K] | undefined;
+    patchLocal((list) => list.map((a) => {
+      if (a.id !== appId) return a;
+      prev = a[field];
+      return { ...a, [field]: value };
+    }));
+    try {
+      await putApplication(appId, { [field]: value });
+      void refreshApplications();
     } catch {
-      toast.error("Failed to update application status");
+      patchLocal((list) => list.map((a) => (a.id === appId && a[field] === value ? { ...a, [field]: prev } : a)));
+      toast.error(failMsg);
     }
   };
 
-  const handleRatingChange = async (appId: string, rating: number) => {
+  const handleStatusChange = (appId: string, newStatus: Application["status"]) =>
+    patchField(appId, "status", newStatus, "Couldn't change the stage. Try again.");
+
+  const handleRatingChange = (appId: string, rating: number) =>
+    patchField(appId, "rating", rating, "Couldn't save the rating. Try again.");
+
+  /** Reversible, so it acts at once and offers an undo instead of a confirm. */
+  const removeFromBench = async (app: ApplicationWithJob) => {
+    const name = app.name || "Candidate";
+    patchLocal((list) => list.filter((a) => a.id !== app.id));
     try {
-      const response = await fetch(`/api/applications/${appId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating }),
+      await putApplication(app.id, { addToTalentBench: false });
+      void refreshApplications();
+      undoable({
+        message: `${name} removed from the bench`,
+        undo: () => putApplication(app.id, app.benchType
+          ? { addToTalentBench: true, benchType: app.benchType }
+          : { addToTalentBench: true }),
+        undoErrorMessage: "Couldn't put them back on the bench. Try again.",
+        onUndone: () => void refreshApplications(),
       });
-
-      if (!response.ok) throw new Error("Failed to update rating");
-
-      setApplications((prev) =>
-        prev.map((app) => (app.id === appId ? { ...app, rating } : app))
-      );
     } catch {
-      toast.error("Failed to update rating");
-    }
-  };
-
-  const performRemoveFromBench = async () => {
-    if (!pendingRemove) return;
-    setRemoving(true);
-    try {
-      const response = await fetch(`/api/applications/${pendingRemove.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addToTalentBench: false }),
-      });
-      if (!response.ok) throw new Error("Failed to update");
-      setApplications((prev) => prev.filter((app) => app.id !== pendingRemove.id));
-      toast.success("Removed from talent bench");
-      setPendingRemove(null);
-    } catch {
-      toast.error("Failed to remove from talent bench");
-    } finally {
-      setRemoving(false);
+      void benchRes.reload();
+      toast.error("Couldn't remove them from the bench. Try again.");
     }
   };
 
@@ -504,12 +470,12 @@ export default function TalentBenchPage() {
   const handleDownloadResume = async (resumeId: string) => {
     try {
       const response = await fetch(`/api/resume/${resumeId}`);
-      if (!response.ok) throw new Error("Failed to get resume");
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
       window.open(data.downloadUrl, "_blank");
     } catch {
-      toast.error("Failed to download resume");
+      toast.error("Couldn't download the resume. Try again.");
     }
   };
 
@@ -663,7 +629,7 @@ export default function TalentBenchPage() {
         <RowAction
           label="Remove from bench"
           danger
-          onClick={() => setPendingRemove({ id: a.id, name: a.name || "this candidate" })}
+          onClick={() => void removeFromBench(a)}
         >
           <IconTrash className="h-4 w-4" />
         </RowAction>
@@ -732,17 +698,6 @@ export default function TalentBenchPage() {
 
   return (
     <div className="flex flex-col pb-6">
-      <ConfirmDialog
-        open={!!pendingRemove}
-        title="Remove from talent bench?"
-        body={pendingRemove ? `${pendingRemove.name} will no longer appear in the talent bench.` : undefined}
-        confirmLabel="Remove"
-        tone="default"
-        busy={removing}
-        onConfirm={performRemoveFromBench}
-        onCancel={() => setPendingRemove(null)}
-      />
-
       {/* Pools re-scope everything below them, so they lead the band; the figures follow the pool. */}
       <BrandBand
         size="sm"
@@ -978,7 +933,7 @@ export default function TalentBenchPage() {
                     <RowAction
                       label="Remove from bench"
                       danger
-                      onClick={() => setPendingRemove({ id: app.id, name: app.name || "this candidate" })}
+                      onClick={() => void removeFromBench(app)}
                     >
                       <IconTrash className="h-4 w-4" />
                     </RowAction>

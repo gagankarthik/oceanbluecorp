@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "motion/react";
+import { useReducedMotion } from "@/components/site/use-reduced-motion";
 
 /**
  * A looping film behind a section, deferred until after `load`.

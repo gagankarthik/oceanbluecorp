@@ -1,36 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
 
-/**
- * Page-enter transition. `template.tsx` re-mounts on every navigation, which
- * is what gives each route its own enter without wiring anything per page.
- *
- * Opacity only, and nothing else, on purpose. A transform or filter on this
- * wrapper would create a containing block for the whole page and break
- * `position: sticky` everywhere inside it, which is the same trap that made
- * SmoothScroll pick Lenis over ScrollSmoother. The rise that would normally
- * pair with a fade is already carried per-section by Reveal.
- *
- * Short by design: this runs before the reader can read anything, so every
- * millisecond of it is latency they feel. Skipped for admin and auth, where
- * navigation is work rather than browsing, and under reduced motion.
- */
+// Server HTML and the hydrating render never animate, so first paint (and LCP)
+// is never hidden. Later client navigations remount this and get the CSS fade.
+let hydrated = false;
+
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const reduce = useReducedMotion();
+  // Fixed per mount, so a later re-render never replays the fade.
+  const [animate] = useState(() => hydrated);
+  const appSurface = pathname?.startsWith("/admin") || pathname?.startsWith("/auth");
 
-  const isAppSurface = pathname?.startsWith("/admin") || pathname?.startsWith("/auth");
-  if (isAppSurface || reduce) return <>{children}</>;
+  useEffect(() => {
+    hydrated = true;
+  }, []);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
+  if (appSurface) return <>{children}</>;
+  return <div className={animate ? "page-enter" : undefined}>{children}</div>;
 }

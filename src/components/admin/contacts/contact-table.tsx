@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { IconMailOpen, IconMessage, IconSend, IconTrash } from "@/components/admin/icons";
 import { fmtDateTime, fmtRelative } from "@/lib/format";
+import { isJobSeeker, seekerArea } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 import { CONTACT_STATUS_META, contactName, replyHref, type ContactStatus } from "./contact-status";
 
@@ -18,7 +19,82 @@ function Blank() {
 const iconBtn =
   "grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 
-const COLUMNS: DataTableColumn<Contact>[] = [
+export type ContactPath = "hiring" | "work" | "all";
+
+const safeHref = (url?: string) => (url && /^https?:\/\//i.test(url) ? url : undefined);
+
+/** The second and third columns say what matters for each kind of enquiry. */
+function pathColumns(path: ContactPath): DataTableColumn<Contact>[] {
+  if (path === "work") {
+    return [
+      {
+        key: "type",
+        header: "Area of expertise",
+        label: "Area of expertise",
+        width: "190px",
+        hideBelow: "sm",
+        sortValue: (c) => seekerArea(c.inquiryType),
+        cell: (c) => <span className="text-[var(--adm-ink-mute)]">{seekerArea(c.inquiryType)}</span>,
+      },
+      {
+        key: "company",
+        header: "LinkedIn",
+        label: "LinkedIn",
+        width: "130px",
+        hideBelow: "lg",
+        cell: (c) => {
+          const href = safeHref(c.linkedinUrl);
+          return href
+            ? (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="font-medium text-[var(--adm-accent)] hover:underline"
+              >
+                View profile
+              </a>
+            )
+            : <Blank />;
+        },
+      },
+    ];
+  }
+  return [
+    {
+      key: "type",
+      header: path === "all" ? "For" : "Enquiry type",
+      label: path === "all" ? "For" : "Enquiry type",
+      width: "190px",
+      hideBelow: "sm",
+      sortValue: (c) => c.inquiryType,
+      cell: (c) => path === "all"
+        ? (
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[12.5px] font-medium text-[var(--adm-ink)]">
+              {isJobSeeker(c.inquiryType) ? "Looking for work" : "Hiring staff"}
+            </span>
+            <span className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">
+              {isJobSeeker(c.inquiryType) ? seekerArea(c.inquiryType) : c.inquiryType}
+            </span>
+          </span>
+        )
+        : <span className="text-[var(--adm-ink-mute)]">{c.inquiryType}</span>,
+    },
+    {
+      key: "company",
+      header: "Company",
+      label: "Company",
+      width: "190px",
+      hideBelow: "lg",
+      sortValue: (c) => c.company,
+      cell: (c) => c.company ? <span className="text-[var(--adm-ink-mute)]">{c.company}</span> : <Blank />,
+    },
+  ];
+}
+
+const BASE_COLUMNS: DataTableColumn<Contact>[] = [
   {
     key: "name",
     header: "Name",
@@ -48,24 +124,6 @@ const COLUMNS: DataTableColumn<Contact>[] = [
         </Link>
       );
     },
-  },
-  {
-    key: "type",
-    header: "Enquiry type",
-    label: "Enquiry type",
-    width: "170px",
-    hideBelow: "sm",
-    sortValue: (c) => c.inquiryType,
-    cell: (c) => <span className="text-[var(--adm-ink-mute)]">{c.inquiryType}</span>,
-  },
-  {
-    key: "company",
-    header: "Company",
-    label: "Company",
-    width: "190px",
-    hideBelow: "lg",
-    sortValue: (c) => c.company,
-    cell: (c) => c.company ? <span className="text-[var(--adm-ink-mute)]">{c.company}</span> : <Blank />,
   },
   {
     key: "email",
@@ -123,10 +181,17 @@ const COLUMNS: DataTableColumn<Contact>[] = [
   },
 ];
 
+function columnsFor(path: ContactPath): DataTableColumn<Contact>[] {
+  const [name, ...rest] = BASE_COLUMNS;
+  return [name, ...pathColumns(path), ...rest];
+}
+
 /** For the Display menu's column toggles. */
-export const CONTACT_COLUMN_OPTIONS = COLUMNS.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }));
+export const contactColumnOptions = (path: ContactPath) =>
+  columnsFor(path).map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }));
 
 export function ContactTable({
+  path = "all",
   contacts,
   onOpen,
   onStatusChange,
@@ -136,6 +201,7 @@ export function ContactTable({
   hiddenColumns,
   empty,
 }: {
+  path?: ContactPath;
   contacts: Contact[];
   onOpen: (c: Contact) => void;
   onStatusChange: (id: string, s: ContactStatus) => void;
@@ -197,7 +263,7 @@ export function ContactTable({
     <DataTable
       noun="enquiries"
       storageKey="contacts"
-      columns={COLUMNS}
+      columns={columnsFor(path)}
       rows={contacts}
       rowKey={(c) => c.id}
       onRowClick={onOpen}

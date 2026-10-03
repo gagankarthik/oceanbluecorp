@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { AccountState } from "@/components/admin/users/account-state";
 import { undoable } from "@/lib/undo";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminDialog } from "@/components/admin/admin-dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
 import { type Tone } from "@/components/admin/theme";
@@ -398,7 +399,7 @@ export default function UsersPage() {
           onClick={() => { setUserToDelete(u.id); setShowDeleteModal(true); }}
           aria-label={`Delete ${u.name || u.email}`}
           title="Delete"
-          className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+          className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
         >
           <IconTrash className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -549,156 +550,84 @@ export default function UsersPage() {
         />
       </Workspace>
 
-      {showInviteModal && (
-        <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="invite-title"
-        >
-          {/* Bounded, middle scrolls: the role list outgrows a laptop viewport. */}
-          <form onSubmit={handleInvite} onBlur={revalidateInvite} noValidate className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
-              <h2 id="invite-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Invite a teammate</h2>
-              <button
-                type="button"
-                onClick={closeInvite}
-                aria-label="Close"
-                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-              >
-                <X className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
+      <AdminDialog
+        open={showInviteModal}
+        onOpenChange={(next) => { if (!next) closeInvite(); }}
+        title="Invite a teammate"
+        size="sm"
+        busy={inviting}
+        footer={
+          <>
+            <WorkspaceButton onClick={closeInvite} className="w-full sm:w-auto">
+              Cancel
+            </WorkspaceButton>
+            <WorkspaceButton type="submit" form="invite-form" variant="primary" disabled={inviting} className="w-full sm:w-auto">
+              {inviting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconSend className="h-4 w-4" aria-hidden="true" />}
+              {inviting ? "Sending invite" : "Send invite"}
+            </WorkspaceButton>
+          </>
+        }
+      >
+        <form id="invite-form" onSubmit={handleInvite} onBlur={revalidateInvite} noValidate className="space-y-5">
+          <FormErrorBanner message={inviteError} onDismiss={() => setInviteError(null)} />
+          <Field
+            label="Email address"
+            htmlFor="inviteEmail"
+            required
+            error={inviteErrors.email}
+            helper="We'll email them an invite with a temporary password. They set their name, phone, and password on first sign-in."
+          >
+            <FormInput
+              id="inviteEmail" type="email" required autoComplete="off" value={inviteEmail}
+              {...inviteInvalidProps("email")}
+              onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
+            />
+          </Field>
+
+          <fieldset>
+            <legend className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Role</legend>
+            <div className="space-y-2">
+              {ROLE_ORDER.map(role => {
+                const meta = ROLE_META[role];
+                const selected = inviteRole === role;
+                return (
+                  <label
+                    key={role}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 transition-colors duration-150",
+                      selected
+                        ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
+                        : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+                    )}
+                  >
+                    <input
+                      type="radio" name="inviteRole" value={role} checked={selected}
+                      onChange={() => setInviteRole(role)}
+                      className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
+                    </span>
+                  </label>
+                );
+              })}
             </div>
+          </fieldset>
+        </form>
+      </AdminDialog>
 
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
-              <FormErrorBanner message={inviteError} onDismiss={() => setInviteError(null)} />
-              <Field
-                label="Email address"
-                htmlFor="inviteEmail"
-                required
-                error={inviteErrors.email}
-                helper="We'll email them an invite with a temporary password. They set their name, phone, and password on first sign-in."
-              >
-                <FormInput
-                  id="inviteEmail" type="email" required autoFocus autoComplete="off" value={inviteEmail}
-                  {...inviteInvalidProps("email")}
-                  onChange={e => setInviteEmail(e.target.value)} placeholder="teammate@oceanbluecorp.com"
-                />
-              </Field>
-
-              <fieldset>
-                <legend className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Role</legend>
-                <div className="space-y-2">
-                  {ROLE_ORDER.map(role => {
-                    const meta = ROLE_META[role];
-                    const selected = inviteRole === role;
-                    return (
-                      <label
-                        key={role}
-                        className={cn(
-                          "flex cursor-pointer items-start gap-3 rounded-[12px] border p-3 transition-colors duration-150",
-                          selected
-                            ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                            : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
-                        )}
-                      >
-                        <input
-                          type="radio" name="inviteRole" value={role} checked={selected}
-                          onChange={() => setInviteRole(role)}
-                          className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
-                        />
-                        <span className="min-w-0">
-                          <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
-                          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            </div>
-
-            <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
-              <WorkspaceButton onClick={closeInvite} className="w-full sm:w-auto">
-                Cancel
-              </WorkspaceButton>
-              <WorkspaceButton type="submit" variant="primary" disabled={inviting} className="w-full sm:w-auto">
-                {inviting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconSend className="h-4 w-4" aria-hidden="true" />}
-                {inviting ? "Sending invite" : "Send invite"}
-              </WorkspaceButton>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {showRoleModal && userToEdit && (
-        <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="role-title"
-        >
-          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]">
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar name={userToEdit.name} email={userToEdit.email} size="md" />
-                <div className="min-w-0">
-                  <h2 id="role-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Change role</h2>
-                  <p className="truncate text-[13px] text-[var(--adm-ink-mute)]">{userToEdit.name || "Unnamed"} · {userToEdit.email}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }}
-                aria-label="Close"
-                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-              >
-                <X className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
-              <div role="radiogroup" aria-labelledby="role-title" className="space-y-2">
-                {ROLE_ORDER.map(role => {
-                  const meta = ROLE_META[role];
-                  const Icon = meta.icon;
-                  const selected = newRole === role;
-                  const current = userToEdit.role === role;
-                  return (
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-[12px] border p-3 text-left transition-colors duration-150",
-                        selected
-                          ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                          : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
-                      )}
-                    >
-                      <Icon className={cn("mt-0.5 h-4 w-4 flex-none", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
-                          {current && <StatusBadge tone="slate" label="Current" />}
-                        </span>
-                        <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
-                      </span>
-                      <span className={cn(
-                        "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 transition-colors",
-                        selected ? "border-[var(--adm-accent)] bg-[var(--adm-accent)]" : "border-[var(--adm-line-strong)]",
-                      )}>
-                        {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
+      {userToEdit && (
+        <AdminDialog
+          open={showRoleModal}
+          onOpenChange={(next) => { if (!next) { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); } }}
+          title="Change role"
+          description={`${userToEdit.name || "Unnamed"} · ${userToEdit.email}`}
+          icon={<Avatar name={userToEdit.name} email={userToEdit.email} size="md" />}
+          size="sm"
+          busy={updating}
+          footer={
+            <>
               <WorkspaceButton onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="w-full sm:w-auto">
                 Cancel
               </WorkspaceButton>
@@ -710,9 +639,48 @@ export default function UsersPage() {
               >
                 {updating && <Loader2 className="h-4 w-4 animate-spin" />}Save role
               </WorkspaceButton>
-            </div>
+            </>
+          }
+        >
+          <div role="radiogroup" aria-label="Role" className="space-y-2">
+            {ROLE_ORDER.map(role => {
+              const meta = ROLE_META[role];
+              const Icon = meta.icon;
+              const selected = newRole === role;
+              const current = userToEdit.role === role;
+              return (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  key={role}
+                  onClick={() => setNewRole(role)}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 text-left transition-colors duration-150",
+                    selected
+                      ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
+                      : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+                  )}
+                >
+                  <Icon className={cn("mt-0.5 h-4 w-4 flex-none", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                      {current && <StatusBadge tone="slate" label="Current" />}
+                    </span>
+                    <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
+                  </span>
+                  <span className={cn(
+                    "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 transition-colors",
+                    selected ? "border-[var(--adm-accent)] bg-[var(--adm-accent)]" : "border-[var(--adm-line-input)]",
+                  )}>
+                    {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </AdminDialog>
       )}
 
       <ConfirmDialog

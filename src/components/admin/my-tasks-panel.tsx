@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { TaskEntry } from "@/lib/aws/dynamodb";
@@ -11,6 +11,8 @@ import { TaskCheck } from "./tasks/task-check";
 import { postTaskOp } from "./tasks/api";
 import { DUE_TEXT, dueState, fmtDue, type DueState } from "./tasks/due";
 import { cn } from "@/lib/utils";
+import { useResource } from "@/hooks/use-resource";
+import { MY_TASKS_KEY } from "@/hooks/use-console-data";
 
 type MyTask = TaskEntry & { applicationId: string; candidateName?: string; jobTitle?: string };
 
@@ -24,32 +26,24 @@ const PER_GROUP = 5;
 
 /** Open tasks assigned to the viewer, by due date. Renders nothing for roles without access. */
 export function MyTasksPanel() {
-  const [tasks, setTasks] = useState<MyTask[] | null>(null);
-  const [hidden, setHidden] = useState(false);
+  const res = useResource<{ tasks?: MyTask[] }>(MY_TASKS_KEY);
+  const status = (res.error as { status?: number } | undefined)?.status;
+  const hidden = status === 401 || status === 403;
+  // A failed first load reads as empty rather than an endless skeleton.
+  const tasks: MyTask[] | null = res.data ? res.data.tasks || [] : res.error ? [] : null;
   const [pending, setPending] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/tasks?scope=mine&open=1");
-      if (res.status === 401 || res.status === 403) { setHidden(true); return; }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setTasks(data.tasks || []);
-    } catch {
-      setTasks((t) => t ?? []);
-    }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
 
   const complete = async (t: MyTask) => {
     setPending(t.id);
+    // Optimistic: the row leaves at once and comes back if the save fails.
+    const prev = res.data;
+    res.setData((d) => ({ ...d, tasks: (d?.tasks || []).filter((x) => x.id !== t.id) }));
     try {
       await postTaskOp(t.applicationId, { op: "update", taskId: t.id, done: true });
-      setTasks((list) => (list ? list.filter((x) => x.id !== t.id) : list));
       toast.success("Task done");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't update the task");
+      if (prev) res.setData(prev);
+      toast.error(err instanceof Error ? err.message : "Couldn't update the task. Try again.");
     } finally {
       setPending(null);
     }

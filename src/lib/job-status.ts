@@ -15,14 +15,18 @@ export function isPubliclyOpen(status: string | null | undefined): status is Pub
  * Live and not past its submission deadline. The deadline is a calendar date,
  * so it stays open through the whole of that day.
  */
+/** Past the end of its submission-due day. */
+export function isPastDeadline(job: { submissionDueDate?: string | null }, now: Date = new Date()): boolean {
+  if (!job.submissionDueDate) return false;
+  const due = new Date(job.submissionDueDate.slice(0, 10) + "T23:59:59.999");
+  return !Number.isNaN(due.getTime()) && due < now;
+}
+
 export function isAcceptingApplications(
   job: { status?: string | null; submissionDueDate?: string | null },
   now: Date = new Date(),
 ): boolean {
-  if (!isPubliclyOpen(job.status)) return false;
-  if (!job.submissionDueDate) return true;
-  const due = new Date(job.submissionDueDate.slice(0, 10) + "T23:59:59.999");
-  return Number.isNaN(due.getTime()) || due >= now;
+  return isPubliclyOpen(job.status) && !isPastDeadline(job, now);
 }
 
 /** Which admin list a posting lives in. Both show together on the careers board. */

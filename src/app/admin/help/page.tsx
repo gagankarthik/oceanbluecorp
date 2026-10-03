@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminDialog } from "@/components/admin/admin-dialog";
 import Link from "next/link";
 import { Check, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import {
@@ -92,7 +94,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         }
       }}
       className={cn(
-        "grid h-7 w-7 flex-none place-items-center rounded-[7px] transition-[opacity,background-color,color] duration-150",
+        "grid h-7 w-7 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-[opacity,background-color,color] duration-150",
         // Hover-revealed only where there is a hover; always visible on touch.
         "pointer-fine:opacity-0 pointer-fine:focus-visible:opacity-100 pointer-fine:group-hover/row:opacity-100",
         copied
@@ -187,6 +189,12 @@ function DirectoryEditor({
   const [rows, setRows] = React.useState<TeamMember[]>(initial.length ? initial : DEFAULT_TEAM);
   const [saving, setSaving] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
+  const [confirmDiscard, setConfirmDiscard] = React.useState(false);
+  const [baseline] = React.useState(rows);
+  const requestClose = () => {
+    if (!saving && JSON.stringify(rows) !== JSON.stringify(baseline)) setConfirmDiscard(true);
+    else onClose();
+  };
 
   // Keys are the control ids (`dir-${row}-${field}`) so the hook can focus them. Fully blank
   // rows are dropped on save, so they are never flagged. Limits match the API's truncation.
@@ -240,38 +248,29 @@ function DirectoryEditor({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Edit directory"
-    >
-      <div
-        className="flex max-h-[86dvh] w-full max-w-4xl flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <AdminDialog
+        open
+        onOpenChange={(next) => { if (!next) requestClose(); }}
+        title="Edit directory"
+        description="Add, edit or remove the people shown on the Help page."
+        size="xl"
+        busy={saving}
+        footer={
+          <>
+            <WorkspaceButton onClick={requestClose}>Cancel</WorkspaceButton>
+            <WorkspaceButton variant="primary" onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
+            </WorkspaceButton>
+          </>
+        }
       >
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold text-[var(--adm-ink)]">Edit directory</h2>
-            <p className="mt-0.5 text-[13px] text-[var(--adm-ink-subtle)]">Add, edit or remove the people shown on the Help page.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex-1 space-y-3 overflow-y-auto p-4" onBlur={revalidate}>
+        <div className="space-y-3" onBlur={revalidate}>
           <FormErrorBanner message={serverError} onDismiss={() => setServerError(null)} />
           {rows.map((m, i) => (
             <div
               key={i}
-              className="grid grid-cols-1 items-center gap-2 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
+              className="grid grid-cols-1 items-center gap-2 rounded-[var(--adm-radius-card)] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
             >
               {([
                 ["name", "Name", "text"],
@@ -306,7 +305,7 @@ function DirectoryEditor({
                 type="button"
                 onClick={() => remove(i)}
                 aria-label={`Remove ${m.name || "person"}`}
-                className="grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+                className="grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
               >
                 <IconTrash className="h-4 w-4" />
               </button>
@@ -316,15 +315,18 @@ function DirectoryEditor({
             <Plus className="h-4 w-4" /> Add person
           </WorkspaceButton>
         </div>
+      </AdminDialog>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
-          <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
-          <WorkspaceButton variant="primary" onClick={save} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
-          </WorkspaceButton>
-        </div>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={confirmDiscard}
+        title="Discard changes?"
+        body="Your edits to the directory have not been saved."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmDiscard(false); onClose(); }}
+        onCancel={() => setConfirmDiscard(false)}
+      />
+    </>
   );
 }
 
@@ -516,7 +518,7 @@ export default function HelpPage() {
 }
 
 const HELP_CARD =
-  "group flex h-full items-center gap-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
+  "group flex h-full items-center gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
 
 function HelpCardBody({
   icon: Icon,

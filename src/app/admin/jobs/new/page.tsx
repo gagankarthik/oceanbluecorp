@@ -12,6 +12,7 @@ import type { AssigneeUser } from "@/components/admin/forms/primitives";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
 import { jobCategory, JOB_LIST_HREF as LIST_HREF } from "@/lib/job-status";
 import { useNavSection } from "@/components/admin/admin-provider";
+import { refreshJobs, useUserDirectory } from "@/hooks/use-console-data";
 
 export default function NewJobPage({
   searchParams,
@@ -27,7 +28,6 @@ export default function NewJobPage({
   const initialData = useMemo(() => ({ ...DEFAULT_JOB_FORM, category }), [category]);
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [hrUsers, setHrUsers] = useState<AssigneeUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -49,18 +49,21 @@ export default function NewJobPage({
     Promise.all([
       fetch("/api/clients?status=active").then((r) => r.json()).then((d) => setClients(d.clients || [])),
       fetch("/api/vendors").then((r) => r.json()).then((d) => setVendors(d.vendors || [])),
-      fetch("/api/users").then((r) => r.json()).then((d) => {
-        setHrUsers(
-          (d.users || []).filter((u: AssigneeUser) =>
-            ["hr", "admin", "recruiter", "sales"].includes(u.role),
-          ),
-        );
-      }),
     ]).catch((err) => {
       console.error(err);
-      toast.error("Couldn't load every reference list, so the client, vendor and assignee pickers may be incomplete. Refresh to try again.");
+      toast.error("Couldn't load the client and vendor lists. Refresh to try again.");
     });
   }, [canPrice]);
+
+  const { users: directory, error: usersError } = useUserDirectory(canPrice);
+  const hrUsers = useMemo(
+    () => (directory || []).filter((u): u is AssigneeUser =>
+      !!u.role && ["hr", "admin", "recruiter", "sales"].includes(u.role)),
+    [directory],
+  );
+  useEffect(() => {
+    if (usersError) toast.error("Couldn't load the assignee list. Refresh to try again.");
+  }, [usersError]);
 
   const handleSubmit = async (data: JobFormData) => {
     if (submitting) return;
@@ -79,10 +82,11 @@ export default function NewJobPage({
         body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "The job could not be created. Try again in a moment.");
+      if (!res.ok) throw new Error(json.error || "Couldn't create the job. Try again.");
+      void refreshJobs();
       router.push(LIST_HREF[data.category]);
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "The job could not be created. Try again in a moment.");
+      setServerError(err instanceof Error ? err.message : "Couldn't create the job. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -97,7 +101,7 @@ export default function NewJobPage({
       body: JSON.stringify({ ...clientData, status: "active" }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "The client could not be added. Try again in a moment.");
+    if (!res.ok) throw new Error(json.error || "Couldn't add the client. Try again.");
     setClients((prev) => [json.client, ...prev]);
     return json.client;
   };

@@ -119,7 +119,7 @@ function useDismiss(open: boolean, ref: React.RefObject<HTMLElement | null>, clo
 }
 
 const iconButton =
-  "inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+  "inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ function Sidebar({
           href="/admin"
           aria-label="Ocean Blue, dashboard"
           title="Ocean Blue"
-          className="flex min-w-0 items-center rounded-[8px] p-1 transition-opacity hover:opacity-80"
+          className="flex min-w-0 items-center rounded-[var(--adm-radius-control)] p-1 transition-opacity hover:opacity-80"
         >
           {/* Full wordmark when expanded (and in the mobile drawer); the mark alone in the rail. */}
           <Image
@@ -172,7 +172,7 @@ function Sidebar({
             className={cn("hidden h-8 w-auto object-contain", rail && "lg:block")}
           />
         </Link>
-        <button onClick={onClose} aria-label="Close navigation" className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--adm-nav-mute)] transition-colors hover:bg-[var(--adm-nav-hover)] hover:text-white lg:hidden">
+        <button onClick={onClose} aria-label="Close navigation" className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-nav-mute)] transition-colors hover:bg-[var(--adm-nav-hover)] hover:text-[var(--adm-nav-ink)] lg:hidden">
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
@@ -199,7 +199,7 @@ function Sidebar({
                         onClick={onClose}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex h-9 items-center gap-2.5 rounded-[8px] px-3 text-[13.5px] transition-colors",
+                          "group relative flex h-9 items-center gap-2.5 rounded-[var(--adm-radius-control)] px-3 text-[13.5px] transition-colors",
                           rail && "lg:justify-center lg:px-0",
                           active
                             ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-1.5 before:-left-2.5 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
@@ -251,7 +251,7 @@ function UserMenu({
   );
 
   // Rows share the top bar's 36px height and 18px icons.
-  const row = "flex h-9 w-full items-center gap-3 rounded-[8px] px-2.5 text-[13.5px] transition-colors";
+  const row = "flex h-9 w-full items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 text-[13.5px] transition-colors";
   const item = cn(row, "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]");
   const icon = "h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]";
   const external = "ml-auto h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]";
@@ -275,7 +275,7 @@ function UserMenu({
         <div
           role="menu"
           aria-label="Account"
-          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]"
+          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]"
         >
           <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
             {avatar("md")}
@@ -283,7 +283,7 @@ function UserMenu({
               <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{user?.name}</p>
               <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">{user?.email}</p>
             </div>
-            <span className="flex-none rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-accent)]">
+            <span className="flex-none rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-accent)]">
               {role}
             </span>
           </div>
@@ -357,7 +357,7 @@ function NotificationsPanel() {
           role="dialog"
           aria-label="Notifications"
           className={cn(
-            "z-50 flex flex-col overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]",
+            "z-50 flex flex-col overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]",
             // Phones: a sheet under the top bar. From sm: a popover anchored to the bell.
             "fixed inset-x-3 top-[64px] max-h-[calc(100dvh-80px)]",
             "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[min(30rem,calc(100dvh-6rem))] sm:w-[22rem]",
@@ -375,7 +375,7 @@ function NotificationsPanel() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="rounded-[6px] px-1.5 py-1 text-[12px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
+                className="rounded-[var(--adm-radius-control)] px-1.5 py-1 text-[12px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
               >
                 Mark all read
               </button>
@@ -465,7 +465,7 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
         </p>
         <Link
           href={home}
-          className="mt-5 inline-flex h-8 items-center rounded-[8px] bg-[var(--adm-accent)] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
+          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
           {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
         </Link>
@@ -515,17 +515,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const title = pageCrumb ?? section.name;
 
   return (
-    <div className="adm-scope min-h-screen bg-[var(--adm-canvas)]" data-theme="light">
+    <div className="adm-scope min-h-screen bg-[var(--adm-canvas)]">
       <a
         href="#adm-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-[8px] focus:bg-[var(--adm-accent)] focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-[var(--adm-radius-control)] focus:bg-[var(--adm-accent)] focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-white"
       >
         Skip to content
       </a>
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-[var(--adm-scrim)] lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />

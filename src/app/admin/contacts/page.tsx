@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { isJobSeeker, seekerArea } from "@/lib/contact";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
@@ -16,10 +18,19 @@ import { AdminCard } from "@/components/admin/admin-card";
 import {
   Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
 } from "@/components/admin/workspace";
-import { ContactTable, CONTACT_COLUMN_OPTIONS } from "@/components/admin/contacts/contact-table";
+import { ContactTable, contactColumnOptions, type ContactPath } from "@/components/admin/contacts/contact-table";
 import { CONTACT_STATUSES, CONTACT_STATUS_META, type ContactStatus } from "@/components/admin/contacts/contact-status";
 
 const STATUS_TABS = [{ key: "all", label: "All" }, ...CONTACT_STATUSES.map((s) => ({ key: s.key as string, label: s.label }))];
+
+// The website's contact page has two paths; this inbox mirrors them.
+const PATHS: Array<{ key: ContactPath; label: string }> = [
+  { key: "hiring", label: "Hiring staff" },
+  { key: "work", label: "Looking for work" },
+  { key: "all", label: "All enquiries" },
+];
+
+const onPath = (c: Contact, path: ContactPath) => path === "all" || (path === "work") === isJobSeeker(c.inquiryType);
 
 export default function ContactsPage() {
   const router = useRouter();
@@ -32,17 +43,30 @@ export default function ContactsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [inquiryFilter, setInquiryFilter] = useState("all");
+  const [path, setPathState] = useState<ContactPath>("hiring");
   const [rows, setRows] = useLocalStorage<number>("adm.contacts.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.contacts.hiddenCols", []);
 
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Deep-link search (global command palette links here as ?search=<name>).
+  // Deep links: ?search=<name> from the command palette, ?for=hiring|work|all.
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("search");
-    if (q) setSearchQuery(q);
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("search");
+    if (q) { setSearchQuery(q); setPathState("all"); }
+    const p = params.get("for");
+    if (p === "hiring" || p === "work" || p === "all") setPathState(p);
   }, []);
+
+  const setPath = (p: ContactPath) => {
+    setPathState(p);
+    // A type picked on one path means nothing on the other.
+    setInquiryFilter("all");
+    const url = new URL(window.location.href);
+    url.searchParams.set("for", p);
+    window.history.replaceState(null, "", url);
+  };
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -63,28 +87,35 @@ export default function ContactsPage() {
 
   // ── derived ───────────────────────────────────────────────────────────────
 
+  const pathContacts = useMemo(() => contacts.filter((c) => onPath(c, path)), [contacts, path]);
+
   const inquiryTypes = useMemo(
-    () => [...new Set(contacts.map(c => c.inquiryType).filter(Boolean))],
-    [contacts],
+    () => [...new Set(pathContacts.map(c => c.inquiryType).filter(Boolean))].sort(),
+    [pathContacts],
   );
 
-  const filteredContacts = useMemo(() => contacts.filter(contact => {
+  const filteredContacts = useMemo(() => pathContacts.filter(contact => {
     const q = searchQuery.toLowerCase();
     const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
     const matchesSearch = fullName.includes(q) ||
       contact.email.toLowerCase().includes(q) ||
-      contact.company.toLowerCase().includes(q) ||
+      (contact.company || "").toLowerCase().includes(q) ||
       contact.message.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
     const matchesInquiry = inquiryFilter === "all" || contact.inquiryType === inquiryFilter;
     return matchesSearch && matchesStatus && matchesInquiry;
-  }), [contacts, searchQuery, statusFilter, inquiryFilter]);
+  }), [pathContacts, searchQuery, statusFilter, inquiryFilter]);
 
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: contacts.length };
-    for (const s of CONTACT_STATUSES) counts[s.key] = contacts.filter(c => c.status === s.key).length;
+    const counts: Record<string, number> = { all: pathContacts.length };
+    for (const s of CONTACT_STATUSES) counts[s.key] = pathContacts.filter(c => c.status === s.key).length;
     return counts;
-  }, [contacts]);
+  }, [pathContacts]);
+
+  const pathCounts = useMemo(() => Object.fromEntries(PATHS.map((p) => {
+    const list = contacts.filter((c) => onPath(c, p.key));
+    return [p.key, { total: list.length, unread: list.filter((c) => c.status === "new").length }];
+  })) as Record<ContactPath, { total: number; unread: number }>, [contacts]);
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
@@ -119,14 +150,16 @@ export default function ContactsPage() {
 
   const exportCSV = () => downloadCsv(
     "contacts",
-    ["Name", "Email", "Phone", "Company", "Job Title", "Inquiry Type", "Status", "Date", "Message"],
+    ["Name", "For", "Email", "Phone", "Company", "Job Title", "Enquiry / area", "LinkedIn", "Status", "Date", "Message"],
     filteredContacts.map((c) => [
       `${c.firstName} ${c.lastName}`,
+      isJobSeeker(c.inquiryType) ? "Looking for work" : "Hiring staff",
       c.email,
       c.phone || "",
       c.company,
       c.jobTitle || "",
-      c.inquiryType,
+      isJobSeeker(c.inquiryType) ? seekerArea(c.inquiryType) : c.inquiryType,
+      c.linkedinUrl || "",
       c.status,
       fmtDate(c.createdAt),
       c.message,
@@ -135,8 +168,8 @@ export default function ContactsPage() {
 
   const hasActiveFilters = statusFilter !== "all" || inquiryFilter !== "all" || searchQuery.trim() !== "";
 
-  const responseRate = contacts.length > 0
-    ? `${Math.round(((statusCounts.responded || 0) / contacts.length) * 100)}%`
+  const responseRate = pathContacts.length > 0
+    ? `${Math.round(((statusCounts.responded || 0) / pathContacts.length) * 100)}%`
     : "–";
 
   const clearFilters = () => { setStatusFilter("all"); setInquiryFilter("all"); setSearchQuery(""); };
@@ -166,7 +199,7 @@ export default function ContactsPage() {
         size="sm"
         className="mb-3"
         title="Contacts"
-        meta={`${contacts.length.toLocaleString()} enquir${contacts.length === 1 ? "y" : "ies"} from the website`}
+        meta={`${pathContacts.length.toLocaleString()} ${path === "work" ? "job-seeker " : path === "hiring" ? "hiring " : ""}enquir${pathContacts.length === 1 ? "y" : "ies"} from the website`}
         stats={[
           { label: "Awaiting a reply", value: statusCounts.new || 0,
             onClick: () => setStatusFilter("new"),
@@ -178,7 +211,7 @@ export default function ContactsPage() {
             onClick: () => setStatusFilter("responded"),
           selected: statusFilter === "responded" },
           { label: "Response rate", value: responseRate,
-            hint: "Of all enquiries received" },
+            hint: "Of the enquiries in this view" },
         ]}
         actions={
           <WorkspaceButton onClick={exportCSV} disabled={filteredContacts.length === 0} aria-label="Export CSV">
@@ -186,6 +219,38 @@ export default function ContactsPage() {
           </WorkspaceButton>
         }
       />
+
+      <div role="tablist" aria-label="Who the enquiry is from" className="mb-3 flex gap-1 overflow-x-auto border-b border-[var(--adm-line)]">
+        {PATHS.map((p) => {
+          const active = path === p.key;
+          const count = pathCounts[p.key];
+          return (
+            <button
+              key={p.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setPath(p.key)}
+              className={cn(
+                "-mb-px inline-flex h-11 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
+                active
+                  ? "border-[var(--adm-accent)] text-[var(--adm-ink)]"
+                  : "border-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]",
+              )}
+            >
+              {p.label}
+              <span className="rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                {count.total}
+              </span>
+              {count.unread > 0 && (
+                <span className="rounded-full bg-[var(--adm-accent)] px-1.5 py-px text-[11.5px] font-semibold tabular-nums text-white">
+                  {count.unread} new
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       <WorkspaceToolbar
         variant="canvas"
@@ -198,7 +263,7 @@ export default function ContactsPage() {
         }
         trailing={
           <DisplayMenu
-            columns={CONTACT_COLUMN_OPTIONS}
+            columns={contactColumnOptions(path)}
             hidden={hiddenColumns}
             onHiddenChange={setHiddenColumns}
             rows={rows}
@@ -219,16 +284,16 @@ export default function ContactsPage() {
           }))}
         />
         <FilterPill
-          label="Type"
+          label={path === "work" ? "Area" : "Type"}
           icon={FilterIcon.type}
           value={inquiryFilter}
           onChange={setInquiryFilter}
           options={[
-            { value: "all", label: "All types" },
+            { value: "all", label: path === "work" ? "All areas" : "All types" },
             ...inquiryTypes.map((t) => ({
               value: t,
-              label: t,
-              count: contacts.filter((c) => c.inquiryType === t).length,
+              label: isJobSeeker(t) ? seekerArea(t) : t,
+              count: pathContacts.filter((c) => c.inquiryType === t).length,
             })),
           ]}
         />
@@ -241,7 +306,7 @@ export default function ContactsPage() {
             ? [{ label: `Status: ${CONTACT_STATUS_META[statusFilter]?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
             : []),
           ...(inquiryFilter !== "all"
-            ? [{ label: `Type: ${inquiryFilter}`, onClear: () => setInquiryFilter("all") }]
+            ? [{ label: `${path === "work" ? "Area" : "Type"}: ${isJobSeeker(inquiryFilter) ? seekerArea(inquiryFilter) : inquiryFilter}`, onClear: () => setInquiryFilter("all") }]
             : []),
         ]}
         onClearAll={clearFilters}
@@ -249,6 +314,7 @@ export default function ContactsPage() {
 
       <Workspace>
         <ContactTable
+          path={path}
           contacts={filteredContacts}
           onOpen={(c) => router.push(`/admin/contacts/${c.id}`)}
           onStatusChange={handleStatusChange}
@@ -257,11 +323,15 @@ export default function ContactsPage() {
           onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           empty={{
-            title: contacts.length === 0 ? "No contacts yet" : "No contacts match your filters",
-            description: contacts.length === 0
-              ? "Submissions from the website contact form will appear here."
+            title: pathContacts.length === 0
+              ? (path === "work" ? "No job seekers yet" : path === "hiring" ? "No hiring enquiries yet" : "No contacts yet")
+              : "No contacts match your filters",
+            description: pathContacts.length === 0
+              ? (path === "work"
+                ? "People who choose \"Finding work\" on the contact page will appear here."
+                : "Submissions from the website contact form will appear here.")
               : "Try adjusting your search or clearing a filter.",
-            action: contacts.length > 0 && hasActiveFilters
+            action: pathContacts.length > 0 && hasActiveFilters
               ? <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
               : undefined,
           }}

@@ -110,12 +110,10 @@ const PAGES: PageDef[] = [
     name: "Contact",
     path: "/contact",
     sections: [
-      { id: "info", label: "Hero and details" },
+      { id: "info", label: "Contact details" },
     ],
     fields: {
       info: [
-        { key: "contactTitle", label: "Headline", type: "text", wide: true, placeholder: "Let's start a conversation." },
-        { key: "contactSubtitle", label: "Subheadline", type: "textarea", placeholder: "A question about our services, a custom solution, or a partnership." },
         { key: "contactPhone", label: "Phone", type: "tel", placeholder: "+1 (614) 844-6925" },
         { key: "contactEmail", label: "Email", type: "email", placeholder: "hr@oceanbluecorp.com" },
         { key: "contactAddress", label: "Address", type: "text", wide: true, placeholder: "9775 Fairway Drive, Suite C, Powell, OH 43065" },

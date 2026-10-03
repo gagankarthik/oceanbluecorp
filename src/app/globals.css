@@ -650,7 +650,7 @@
      tokens rather than darkening the base, because darkening the base would
      also darken every dot and fill that is currently right. */
   --adm-success-ink: var(--p-green-700);                 /* 5.48:1 on white */
-  --adm-warning-ink: var(--p-amber-700);                 /* 5.02:1 on white */
+  --adm-warning-ink: #a84d08;                            /* 5.6:1 white, 5.0:1 on its tint */
   /* --adm-danger is 4.70:1 on white and passes there, but only 4.01:1 on its
      own 10% tint, which is exactly where it is used, in the unclaimed claim
      button. Tinted backgrounds eat contrast, so the tint case needs its own
@@ -658,17 +658,6 @@
   --adm-danger-ink:  var(--p-rose-700);                 /* 6.29:1 white, 5.37:1 on tint */
   --adm-danger:  #e11d48;
   --adm-info:    var(--p-indigo-600);
-
-  /* Categorical chart palette, use IN ORDER, max 7 series per chart.
-     Series 1 is always the brand accent; emerald is reserved for
-     "hired/success" series, rose for "rejected/failure". */
-  --adm-chart-1: #1d4ed8;  /* cobalt, primary series */
-  --adm-chart-2: #8b5cf6;  /* violet */
-  --adm-chart-3: #06b6d4;  /* cyan */
-  --adm-chart-4: #10b981;  /* emerald, success series */
-  --adm-chart-5: #f59e0b;  /* amber */
-  --adm-chart-6: #ec4899;  /* pink */
-  --adm-chart-7: #94a3b8;  /* slate , "other"/neutral series */
 
   /* Elevation. Still border-led, but with a hairline lift restored: against the
      lighter canvas a pure-border panel had no edge definition at all, so the
@@ -704,14 +693,14 @@
   --adm-duration-base:   300ms;   /* lifts, reveals */
   --adm-duration-slow:   700ms;   /* progress bars, chart draws */
 
-  /* Radius scale. Ant v5 territory (6px base, 8px large), soft enough to feel
-     current and comfortable, structured enough to still read as a business
-     application. The earlier 3px pass was too hard and made the UI feel cramped
-     and dated. */
+  /* Radius scale: 4 hairline affordances, 6 buttons and chips, 8 inputs,
+     cards, panels and popovers, 12 dialogs. */
+  --adm-radius-xs:      4px;
   --adm-radius-control: 6px;
-  --adm-radius-input:   8px;
   --adm-radius-chip:    6px;
-  --adm-radius-card:    10px;
+  --adm-radius-input:   8px;
+  --adm-radius-card:    8px;
+  --adm-radius-dialog:  12px;
 
   /* Row density for data grids, now a user-facing setting, not a constant.
      `--adm-row-h` is overridden per-grid by the density toggle.
@@ -749,55 +738,11 @@
 }
 
 /* ============================================================
-   ADMIN, themeable console tokens (light + dark).
-
-   The admin section is a dense operations console, modelled on
-   Conduktor's data console, that ships in BOTH a light and a dark
-   theme, switchable by the viewer. Everything is driven THROUGH these
-   `--adm-*` tokens, so a component never needs to know which theme is
-   active, it styles once, against the token, and both themes come for
-   free.
-
-   Cascade (explicit choice must beat the OS preference in BOTH
-   directions):
-
-     1. `.adm-scope` below = the LIGHT token set. This is also the
-        base that provides the console's newer tokens (surface-2,
-        seg-*, *-soft, glow) to whichever theme wins. The bulk of the
-        light palette lives in the :root block above; this block only
-        adds what the console introduced.
-     2. `@media (prefers-color-scheme: dark) .adm-scope:not([data-theme="light"])`
-        = DARK, applied when the OS prefers dark AND the viewer has not
-        explicitly forced light.
-     3. `.adm-scope[data-theme="dark"]` = DARK, applied whenever the
-        viewer explicitly forces dark (wins on a light OS too).
-
-     An explicit `data-theme="light"` keeps light even on a dark OS,
-     because rule 2 excludes it and the base `.adm-scope` is light.
-     No attribute at all = follow the OS (rule 2).
-
-   The shell (admin/layout.tsx) sets `data-theme` on the `.adm-scope`
-   root from a persisted `useLocalStorage("adminTheme", "system")`
-   choice , "system" leaves the attribute off so the media query drives
-   it. The public marketing site never carries `.adm-scope`, so it is
-   entirely unaffected by any of this.
-
-   Dark palette, read off the Conduktor reference:
-     · near-black canvas (#0a0a0a), NOT pure black
-     · slightly-lighter card surfaces (#141414 / #1b1b1b)
-     · hairline borders (#262626), structure from lines, not shadow
-     · GREEN (#22c55e) = healthy / success · BLUE (#3b82f6) = data / graph
+   ADMIN, console tokens (light only). Declared on :root, not
+   .adm-scope, so portalled dialogs, sheets and menus resolve them.
+   Later values override the :root block above.
    ============================================================ */
-
-/* ── LIGHT (base), the console's default theme. Adds the newer tokens and
-      re-points a few :root values to the Conduktor light look; the rest of the
-      light palette is inherited from :root above.
-
-      ACCENT = green (Conduktor's brand accent, active nav, primary actions,
-      links). A separate --adm-data = blue carries graphs/charts, so a line and
-      a "healthy" tick never collide on the same hue. Semantic --adm-success
-      stays green too; they are the same family by design. ── */
-.adm-scope {
+:root {
   /* Ocean Blue brand cobalt, matches the marketing site (--hz-cobalt). Green
      is reserved for the "healthy/success" semantic only, so accent ≠ success. */
   --adm-accent:        var(--p-blue-700);        /* primary/brand */
@@ -818,6 +763,7 @@
   --adm-line:          var(--p-gray-200);
   --adm-line-soft:     var(--p-gray-150);
   --adm-line-strong:   var(--p-gray-300);
+  --adm-line-input:    #828b9c;  /* form control edge, 3.4:1 on white (1.4.11) */
   --adm-row-hover:     #f7f9fc;
   --adm-head:          var(--p-gray-50);
   --adm-head-ink:      var(--p-gray-500);
@@ -825,7 +771,7 @@
   /* Ink ramp, one cool grey family, AA on both white and the canvas. */
   --adm-ink:        var(--p-gray-900);
   --adm-ink-mute:   var(--p-gray-600);
-  --adm-ink-subtle: var(--p-gray-500);
+  --adm-ink-subtle: #606a7e;  /* 4.9:1 on surface-2; gray-500 sat at 4.51 */
   --adm-danger:     #d91a43;
 
   /* Navigation recedes: white frame with the top bar, brand only on the
@@ -859,12 +805,10 @@
   --adm-shadow-accent:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
     0 1px 2px 0 rgba(29, 78, 216, 0.24);
+}
 
-  --adm-radius-control: 10px;
-  --adm-radius-card:    16px;
-
+.adm-scope {
   --skeleton-background: color-mix(in srgb, var(--adm-line-soft) 70%, transparent);
-
   background: var(--adm-canvas);
   color: var(--adm-ink);
   color-scheme: light;
@@ -903,152 +847,6 @@
 .adm-stagger > :nth-child(n+6) { animation-delay: 250ms; }
 
 .adm-scroll-hidden::-webkit-scrollbar { display: none; }
-
-/* ── DARK token set. Declared once as a custom-property list and applied to
-      both the media-query and the explicit-attribute selectors below. ── */
-@media (prefers-color-scheme: dark) {
-  .adm-scope:not([data-theme="light"]) {
-    --adm-accent:        #3b82f6;
-    --adm-accent-strong: #2563eb;
-    --adm-accent-soft:   rgba(59, 130, 246, 0.16);
-    --adm-accent-tint:   rgba(59, 130, 246, 0.10);
-    --adm-focus-ring:    rgba(59, 130, 246, 0.40);
-
-    --adm-data:          #3b82f6;
-    --adm-data-soft:     rgba(59, 130, 246, 0.16);
-
-    --adm-canvas:    #0a0a0a;
-    --adm-chrome:    #121214;
-    --adm-chrome-hover: rgba(255, 255, 255, 0.06);
-    --adm-surface:   #141414;
-    --adm-surface-2: #1b1b1b;
-    --adm-surface-sunken: #0f0f0f;
-    --adm-line:      #262626;
-    --adm-line-strong: #363636;
-    --adm-line-soft: #1e1e1e;
-    --adm-line-rule: #1c1c1c;
-
-    --adm-head:      #121212;
-    --adm-head-ink:  #8a8a8a;
-    --adm-zebra:     #101010;
-    --adm-row-hover: #171717;
-
-    --adm-ink:        #f4f4f5;
-    --adm-ink-mute:   #a1a1aa;
-    --adm-ink-subtle: #6b7280;
-
-    --adm-success: #22c55e;
-    --adm-warning: #f59e0b;
-    --adm-danger:  #ef4444;
-    --adm-info:    #6366f1;
-
-    --adm-surface-2:    #1b1b1b;
-    --adm-seg-track:    #0f0f0f;
-    --adm-seg-active:   #262626;
-
-    --adm-success-soft: rgba(34, 197, 94, 0.14);
-    --adm-warning-soft: rgba(245, 158, 11, 0.14);
-    --adm-danger-soft:  rgba(239, 68, 68, 0.14);
-    --adm-glow:         rgba(34, 197, 94, 0.22);
-
-    --adm-chart-1: #3b82f6;
-    --adm-chart-2: #a78bfa;
-    --adm-chart-3: #22d3ee;
-    --adm-chart-4: #34d399;
-    --adm-chart-5: #fbbf24;
-    --adm-chart-6: #f472b6;
-    --adm-chart-7: #9ca3af;
-
-    --adm-shadow-sm:
-      0 1px 2px 0 rgba(0, 0, 0, 0.5);
-    --adm-shadow-md:
-      0 6px 16px -4px rgba(0, 0, 0, 0.6),
-      0 2px 4px -2px rgba(0, 0, 0, 0.5);
-    --adm-shadow-lg:
-      0 24px 56px -16px rgba(0, 0, 0, 0.7),
-      0 6px 16px -6px rgba(0, 0, 0, 0.6);
-    --adm-shadow-pop:
-      0 16px 40px -12px rgba(0, 0, 0, 0.7),
-      0 2px 8px -3px rgba(0, 0, 0, 0.5);
-    --adm-shadow-accent:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      0 1px 2px 0 rgba(0, 0, 0, 0.5),
-      0 6px 16px -6px rgba(59, 130, 246, 0.5);
-
-    color-scheme: dark;
-  }
-}
-
-/* Explicit dark, wins on a light OS too. Same values as above. */
-.adm-scope[data-theme="dark"] {
-  --adm-accent:        #3b82f6;
-  --adm-accent-strong: #2563eb;
-  --adm-accent-soft:   rgba(59, 130, 246, 0.16);
-  --adm-accent-tint:   rgba(59, 130, 246, 0.10);
-  --adm-focus-ring:    rgba(59, 130, 246, 0.40);
-
-  --adm-data:          #3b82f6;
-  --adm-data-soft:     rgba(59, 130, 246, 0.16);
-
-  --adm-canvas:    #0a0a0a;
-  --adm-chrome:    #121214;
-  --adm-chrome-hover: rgba(255, 255, 255, 0.06);
-  --adm-surface:   #141414;
-  --adm-surface-2: #1b1b1b;
-  --adm-surface-sunken: #0f0f0f;
-  --adm-line:      #262626;
-  --adm-line-strong: #363636;
-  --adm-line-soft: #1e1e1e;
-  --adm-line-rule: #1c1c1c;
-
-  --adm-head:      #121212;
-  --adm-head-ink:  #8a8a8a;
-  --adm-zebra:     #101010;
-  --adm-row-hover: #171717;
-
-  --adm-ink:        #f4f4f5;
-  --adm-ink-mute:   #a1a1aa;
-  --adm-ink-subtle: #6b7280;
-
-  --adm-success: #22c55e;
-  --adm-warning: #f59e0b;
-  --adm-danger:  #ef4444;
-  --adm-info:    #6366f1;
-
-  --adm-seg-track:    #0f0f0f;
-  --adm-seg-active:   #262626;
-
-  --adm-success-soft: rgba(34, 197, 94, 0.14);
-  --adm-warning-soft: rgba(245, 158, 11, 0.14);
-  --adm-danger-soft:  rgba(239, 68, 68, 0.14);
-  --adm-glow:         rgba(34, 197, 94, 0.22);
-
-  --adm-chart-1: #3b82f6;
-  --adm-chart-2: #a78bfa;
-  --adm-chart-3: #22d3ee;
-  --adm-chart-4: #34d399;
-  --adm-chart-5: #fbbf24;
-  --adm-chart-6: #f472b6;
-  --adm-chart-7: #9ca3af;
-
-  --adm-shadow-sm:
-    0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --adm-shadow-md:
-    0 6px 16px -4px rgba(0, 0, 0, 0.6),
-    0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --adm-shadow-lg:
-    0 24px 56px -16px rgba(0, 0, 0, 0.7),
-    0 6px 16px -6px rgba(0, 0, 0, 0.6);
-  --adm-shadow-pop:
-    0 16px 40px -12px rgba(0, 0, 0, 0.7),
-    0 2px 8px -3px rgba(0, 0, 0, 0.5);
-  --adm-shadow-accent:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    0 1px 2px 0 rgba(0, 0, 0, 0.5),
-    0 6px 16px -6px rgba(59, 130, 246, 0.5);
-
-  color-scheme: dark;
-}
 
 /* Native form controls (selects, date pickers, scrollbars) follow the theme. */
 .adm-scope input,
@@ -1183,8 +981,19 @@
 .adm-scope :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--adm-accent);
   outline-offset: 1px;
-  border-radius: var(--adm-radius-control);
 }
+/* Cobalt on cobalt is invisible; white inside the brand band. */
+.adm-scope .adm-on-band :is(a, button, [role="button"], [tabindex]):focus-visible {
+  outline-color: #fff;
+}
+/* Stat cells sit flush in an overflow-hidden grid, so their ring goes inside. */
+.adm-scope .adm-on-band .adm-band-cell:focus-visible { outline-offset: -3px; }
+
+/* AdminDialog entrance; reduced motion is handled below. */
+@keyframes adm-fade-in { from { opacity: 0; } }
+@keyframes adm-dialog-in { from { opacity: 0; transform: translateY(6px); } }
+.adm-dialog-scrim[data-state="open"] { animation: adm-fade-in 150ms var(--adm-ease); }
+.adm-dialog[data-state="open"] { animation: adm-dialog-in 180ms var(--adm-ease); }
 
 /* ── "Use Transition": one duration, one curve, and only on properties the
    compositor can animate. Anything longer reads as lag in a tool people use
@@ -1194,23 +1003,6 @@
     background-color var(--adm-duration-fast) var(--adm-ease),
     border-color var(--adm-duration-fast) var(--adm-ease),
     color var(--adm-duration-fast) var(--adm-ease);
-}
-
-/* ── Smooth light⇄dark cross-fade. The shell adds `.adm-theming` to the
-   `.adm-scope` root only for the ~300ms of the switch, then removes it, so
-   every surface eases between palettes on toggle WITHOUT carrying a transition
-   on every hover or data update, which would read as lag all day. Colour and
-   shadow only; never layout. ── */
-.adm-scope.adm-theming,
-.adm-scope.adm-theming *,
-.adm-scope.adm-theming *::before,
-.adm-scope.adm-theming *::after {
-  transition:
-    background-color 280ms var(--adm-ease),
-    border-color 280ms var(--adm-ease),
-    color 280ms var(--adm-ease),
-    fill 280ms var(--adm-ease),
-    box-shadow 280ms var(--adm-ease) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1367,6 +1159,10 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 .sheet-overlay[data-state="open"] { animation: site-overlay-in 240ms ease-out both; }
 .sheet-overlay[data-state="closed"] { animation: site-overlay-out 200ms ease-in both; }
 
+/* Route enter (app/template.tsx), client navigations only. Opacity alone: a
+   transform here would break position: sticky for the whole page. */
+.page-enter { animation: site-overlay-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 /* Logo marquee */
 @keyframes site-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee { animation: site-marquee 38s linear infinite; }
@@ -1403,7 +1199,7 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise, .word, .menu-in, .side-sheet, .sheet-overlay, .marquee, .geo-art, .geo-art .geo-plane, .geo-art line[stroke-dasharray],
+  .rise, .word, .menu-in, .page-enter, .side-sheet, .sheet-overlay, .marquee, .geo-art, .geo-art .geo-plane, .geo-art line[stroke-dasharray],
   .reveal, .timeline-fill { animation: none !important; }
 }
 

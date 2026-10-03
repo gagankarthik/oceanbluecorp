@@ -8,7 +8,7 @@ import { CONTAINER } from "@/components/site/sections";
 import { IconArrowRight, IconChevronRight, IconX } from "@/components/site/icons";
 import { IconBookmark, IconCheckCircle, IconFile, IconShare, IconSpinner, IconUpload } from "@/components/site/careers/careers-icons";
 import type { PublicJob } from "@/lib/aws/dynamodb";
-import { useAuth } from "@/lib/auth";
+import { useStaffSession } from "@/components/site/use-staff-session";
 import { renderRichText } from "@/lib/rich-text";
 import { SideSheet } from "@/components/site/side-sheet";
 import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
@@ -78,7 +78,7 @@ interface JobDetailsClientProps {
 }
 
 export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetailsClientProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useStaffSession();
 
   const [showApply, setShowApply] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);

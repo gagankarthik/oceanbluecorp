@@ -22,6 +22,7 @@ import { IconDownload, IconFile, IconTrash, IconUpload, IconWarning } from "@/co
 import {
   CANDIDATE_FIELD_IDS as IDS, RESUME_ACCEPT, type CandidateFormState,
 } from "@/hooks/use-candidate-form";
+import { useUserDirectory } from "@/hooks/use-console-data";
 import { cn } from "@/lib/utils";
 
 const wellCls = "rounded-[12px] border px-4 py-3";
@@ -51,19 +52,13 @@ interface StaffUser { id: string; email: string; name: string; role: string }
 
 const OWNER_ROLES = new Set(["admin", "hr", "recruiter", "sales"]);
 
-function useOwners() {
-  const [owners, setOwners] = React.useState<StaffUser[]>([]);
-  React.useEffect(() => {
-    let cancelled = false;
-    fetch("/api/users")
-      .then((r) => (r.ok ? r.json() : { users: [] }))
-      .then((d) => {
-        if (!cancelled) setOwners(((d.users || []) as StaffUser[]).filter((u) => OWNER_ROLES.has(u.role)));
-      })
-      .catch(() => { /* the field falls back to the current owner only */ });
-    return () => { cancelled = true; };
-  }, []);
-  return owners;
+function useOwners(): StaffUser[] {
+  const { users } = useUserDirectory();
+  // Falls back to the current owner only until (or unless) the list arrives.
+  return React.useMemo(
+    () => (users || []).filter((u): u is StaffUser => !!u.role && OWNER_ROLES.has(u.role)),
+    [users],
+  );
 }
 
 export interface CandidateFormProps {
@@ -110,7 +105,7 @@ export function CandidateForm({
       const data = await res.json();
       if (!res.ok) throw new Error();
       window.open(data.downloadUrl, "_blank");
-    } catch { toast.error("The resume could not be downloaded. Try again."); }
+    } catch { toast.error("Couldn't download the resume. Try again."); }
   };
 
   const details = (

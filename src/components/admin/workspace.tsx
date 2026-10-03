@@ -57,7 +57,7 @@ export function Workspace({ className, children }: { className?: string; childre
         // row and the right-hand toolbar controls. With it, the panel fits the
         // viewport and the GRID scrolls horizontally inside its own container,
         // which is where a wide table should scroll.
-        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
@@ -143,7 +143,8 @@ export function WorkspaceButton({
   children,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  ref?: React.Ref<HTMLButtonElement>;
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   /** "sm" (32px) fits card-header action slots. */
   size?: "sm" | "md";
   asChild?: boolean;
@@ -157,7 +158,7 @@ export function WorkspaceButton({
       {...props}
       className={cn(
         "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
-        size === "sm" ? "h-8 rounded-[6px] px-3 text-[13px]" : "h-9 rounded-[6px] px-3.5 text-[13.5px]",
+        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-[13px]" : "h-9 rounded-[var(--adm-radius-control)] px-3.5 text-[13.5px]",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
         variant === "primary" && (onBand
@@ -165,6 +166,7 @@ export function WorkspaceButton({
           : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]"),
         variant === "secondary" &&
           "border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+        variant === "danger" && "bg-[var(--adm-danger)] text-white hover:bg-[var(--adm-danger-ink)]",
         variant === "ghost" && (onBand
           ? "text-white/85 hover:bg-white/10 hover:text-white"
           : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"),
@@ -216,10 +218,10 @@ export function RecordHeader({
   // On cobalt, like BrandBand. Facts and links are built on the ink tokens, so
   // the text rows re-point those tokens to white; the status chip keeps its own
   // colours on a white tab.
-  const onCobalt = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--adm-ink-subtle:rgba(255,255,255,0.72)]";
-  const backCls = "-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-white/75 transition-colors hover:text-white";
+  const onCobalt = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.92)] [--adm-ink-subtle:rgba(255,255,255,0.85)]";
+  const backCls = "-ml-1 inline-flex items-center gap-1 rounded-[var(--adm-radius-control)] px-1 py-0.5 text-[13px] text-white/85 transition-colors hover:text-white";
   return (
-    <div className={cn("mb-5 flex-none rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white", className)}>
+    <div className={cn("adm-on-band mb-5 flex-none rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] px-5 py-4 text-white", className)}>
       {back && (
         <div className="mb-1.5">
           {back.href ? (
@@ -236,9 +238,9 @@ export function RecordHeader({
             <h1 className="min-w-0 break-words text-[21px] font-semibold leading-7 tracking-[-0.02em]">
               {title}
             </h1>
-            {status && <span className="inline-flex rounded-[8px] bg-white p-0.5">{status}</span>}
+            {status && <span className="inline-flex rounded-[var(--adm-radius-control)] bg-white p-0.5">{status}</span>}
           </div>
-          {subtitle && <p className="mt-0.5 text-[13.5px] text-white/80">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-[13.5px] text-white/90">{subtitle}</p>}
           {meta && (
             <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]", onCobalt)}>
               {meta}
@@ -335,7 +337,7 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
   return (
     <div
       className={cn(
-        "mb-4 flex max-w-full flex-none flex-wrap self-start overflow-hidden rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "mb-4 flex max-w-full flex-none flex-wrap self-start overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
@@ -409,11 +411,11 @@ export function BrandBand({
 }) {
   const sm = size === "sm";
   return (
-    <section className={cn("@container flex-none overflow-hidden rounded-[8px] bg-[var(--adm-accent)] text-white", className)}>
+    <section className={cn("adm-on-band @container flex-none overflow-hidden rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] text-white", className)}>
       <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
         <div className="min-w-0">
           <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] sm:text-[21px]">{title}</h1>
-          {meta && <div className="mt-0.5 text-[13px] text-white/75">{meta}</div>}
+          {meta && <div className="mt-0.5 text-[13px] text-white/90">{meta}</div>}
         </div>
         {actions && (
           <BandContext.Provider value={true}>
@@ -432,14 +434,15 @@ export function BrandBand({
           {stats.map((s) => {
             const interactive = !!(s.href || s.onClick);
             const cls = cn(
-              "group min-w-0 px-5 text-left transition-colors",
+              "adm-band-cell group min-w-0 px-5 text-left transition-colors",
               sm ? "py-2.5" : "py-4",
-              s.selected ? "bg-[var(--adm-accent-strong)]" : "bg-[var(--adm-accent)]",
+              // Selection is an underline bar, not just a darker fill (1.3:1 apart).
+              s.selected ? "bg-[var(--adm-accent-strong)] shadow-[inset_0_-3px_0_0_#fff]" : "bg-[var(--adm-accent)]",
               interactive && "hover:bg-[var(--adm-accent-strong)]",
             );
             const body = (
               <>
-                <span className="block truncate text-[12.5px] text-white/75">{s.label}</span>
+                <span className="block truncate text-[12.5px] text-white/90">{s.label}</span>
                 <span
                   className={cn(
                     "block font-semibold leading-none tracking-[-0.025em] tabular-nums",
@@ -448,13 +451,12 @@ export function BrandBand({
                 >
                   {s.value}
                 </span>
-                {!sm && s.sub && <span className="mt-2 block truncate text-[12.5px] text-white/70">{s.sub}</span>}
-                {s.selected && <span className="sr-only">(selected)</span>}
+                {!sm && s.sub && <span className="mt-2 block truncate text-[12.5px] text-white/85">{s.sub}</span>}
               </>
             );
-            if (s.href) return <Link key={s.label} href={s.href} title={s.hint} className={cls}>{body}</Link>;
+            if (s.href) return <Link key={s.label} href={s.href} title={s.hint} aria-current={s.selected ? "true" : undefined} className={cls}>{body}</Link>;
             if (s.onClick) return <button key={s.label} type="button" title={s.hint} aria-pressed={!!s.selected} onClick={s.onClick} className={cls}>{body}</button>;
-            return <div key={s.label} title={s.hint} className={cls}>{body}</div>;
+            return <div key={s.label} title={s.hint} aria-current={s.selected ? "true" : undefined} className={cls}>{body}</div>;
           })}
         </div>
       )}
@@ -569,7 +571,7 @@ export function StageStrip({
       role="group"
       aria-label="Pipeline stages"
       className={cn(
-        "adm-scroll-hidden flex overflow-x-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
+        "adm-scroll-hidden flex overflow-x-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
         className,
       )}
     >
@@ -663,7 +665,7 @@ export function NotePanel({ children, className }: { children: React.ReactNode; 
   return (
     <div
       className={cn(
-        "rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]",
+        "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]",
         className,
       )}
     >
@@ -793,14 +795,14 @@ export function WorkspaceSearch({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") { onChange(""); ref.current?.blur(); } }}
-        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-12 text-[13.5px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
+        className="h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] pl-9 pr-12 text-[13.5px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
           type="button"
           onClick={() => onChange("")}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[5px] p-1 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[var(--adm-radius-xs)] p-1 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -899,7 +901,7 @@ export function FilterMenu({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3.5 text-[13px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -922,7 +924,7 @@ export function FilterMenu({
         sideOffset={6}
         // Capped and scrollable: the field list grows per screen, and a menu
         // taller than the viewport puts its own footer out of reach.
-        className="max-h-[min(32rem,70vh)] w-[22rem] overflow-y-auto rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[min(32rem,70vh)] w-[22rem] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
         <div className="flex items-center justify-between border-b border-[var(--adm-line-soft)] px-4 py-2.5">
           <span className="text-[13px] font-semibold text-[var(--adm-ink)]">Filters</span>
@@ -990,7 +992,7 @@ export function FilterPill<V extends string>({
             // it fills solid with the accent tint and shows the chosen value.
             // h-8: the toolbar is one slim line, search, filters and table
             // controls together, so the grid starts as high as possible.
-            "inline-flex h-9 max-w-[240px] items-center gap-1.5 rounded-[10px] border px-3 text-[13.5px] font-medium transition-colors",
+            "inline-flex h-9 max-w-[240px] items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-[13.5px] font-medium transition-colors",
             active
               ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
@@ -1020,7 +1022,7 @@ export function FilterPill<V extends string>({
       <DropdownMenuContent
         align="start"
         sideOffset={4}
-        className="max-h-[320px] min-w-[200px] overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[320px] min-w-[200px] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -1029,7 +1031,7 @@ export function FilterPill<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]",
+                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px]",
                 selected && "font-semibold text-[var(--adm-accent)]",
               )}
             >
@@ -1087,7 +1089,7 @@ export function MenuSelect<V extends string>({
           type="button"
           aria-label={`${label}: ${current?.label ?? ""}`}
           className={cn(
-            "group inline-flex h-9 flex-none items-center gap-2 rounded-[9px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-2.5 text-[13.5px] font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
+            "group inline-flex h-9 flex-none items-center gap-2 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-2.5 text-[13.5px] font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
             "transition-[background-color,border-color,box-shadow] duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--adm-focus-ring)]",
             className,
@@ -1101,7 +1103,7 @@ export function MenuSelect<V extends string>({
       <DropdownMenuContent
         align={align}
         sideOffset={6}
-        className="min-w-[200px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="min-w-[200px] rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
           {label}
@@ -1113,7 +1115,7 @@ export function MenuSelect<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
+                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-control)] px-2 py-1.5 text-[13px]",
                 selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
               )}
             >
@@ -1186,7 +1188,7 @@ export function GridSelect({
         // at runtime and Tailwind cannot compile an arbitrary class for it.
         style={dot ? { color: dot } : undefined}
         className={cn(
-          "h-9 w-full cursor-pointer appearance-none rounded-[8px] border border-transparent bg-transparent pr-7 text-[14px]",
+          "h-9 w-full cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-transparent bg-transparent pr-7 text-[14px]",
           "transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)]",
           "focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]",
           dot ? "pl-7 font-semibold" : "pl-2.5 font-medium text-[var(--adm-ink-mute)]",
@@ -1258,7 +1260,7 @@ export function DisplayMenu({
           title="Display settings"
           aria-label="Display settings"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
             hidden.length > 0
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -1271,7 +1273,7 @@ export function DisplayMenu({
       <DropdownMenuContent
         align="end"
         sideOffset={4}
-        className="max-h-[440px] w-[230px] overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[440px] w-[230px] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {hasView && (
           <>
@@ -1286,7 +1288,7 @@ export function DisplayMenu({
                   onClick={() => onViewChange!(o.value)}
                   aria-pressed={o.value === view}
                   className={cn(
-                    "flex-1 rounded-[6px] border px-2 py-1 text-[12.5px] font-semibold transition-colors",
+                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-[12.5px] font-semibold transition-colors",
                     o.value === view
                       ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
                       : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -1311,7 +1313,7 @@ export function DisplayMenu({
                 <DropdownMenuItem
                   key={c.key}
                   onSelect={(e) => { e.preventDefault(); toggle(c.key); }}
-                  className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px]"
+                  className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px]"
                 >
                   <span className="flex-1 truncate">{c.label}</span>
                   {/* Mini switch, like the reference, reads as on/off at a glance. */}
@@ -1349,7 +1351,7 @@ export function DisplayMenu({
                   onClick={() => onRowsChange!(n)}
                   aria-pressed={n === rows}
                   className={cn(
-                    "flex-1 rounded-[6px] border px-2 py-1 text-[12.5px] font-semibold tabular-nums transition-colors",
+                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-[12.5px] font-semibold tabular-nums transition-colors",
                     n === rows
                       ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
                       : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -1367,7 +1369,7 @@ export function DisplayMenu({
             <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
             <DropdownMenuItem
               onClick={onReset}
-              className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-ink-mute)]"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-ink-mute)]"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset to default
@@ -1413,14 +1415,14 @@ export function ActiveFilters({
       {chips.map((c) => (
         <span
           key={c.label}
-          className="inline-flex h-7 items-center gap-1 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-1 text-[12.5px] text-[var(--adm-ink)]"
+          className="inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-1 text-[12.5px] text-[var(--adm-ink)]"
         >
           {c.label}
           <button
             type="button"
             onClick={c.onClear}
             aria-label={`Remove filter ${c.label}`}
-            className="rounded-[4px] p-0.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
+            className="rounded-[var(--adm-radius-xs)] p-0.5 text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink-mute)]"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -1429,7 +1431,7 @@ export function ActiveFilters({
       <button
         type="button"
         onClick={onClearAll}
-        className="ml-1 rounded-[6px] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-danger-ink)]"
+        className="ml-1 rounded-[var(--adm-radius-control)] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-danger-ink)]"
       >
         Clear all
       </button>
@@ -1484,7 +1486,7 @@ export function SelectionBar({
   if (count === 0) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-      <div className="pointer-events-auto flex items-center gap-2 rounded-[12px] border border-[var(--adm-ink)] bg-[var(--adm-ink)] py-1.5 pl-3.5 pr-1.5 text-white shadow-[var(--adm-shadow-lg)]">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-[var(--adm-radius-dialog)] border border-[var(--adm-ink)] bg-[var(--adm-ink)] py-1.5 pl-3.5 pr-1.5 text-white shadow-[var(--adm-shadow-lg)]">
         <span className="text-[13px] font-medium tabular-nums">
           {count} selected
         </span>
@@ -1494,7 +1496,7 @@ export function SelectionBar({
           type="button"
           onClick={onClear}
           aria-label="Clear selection"
-          className="rounded-[6px] p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          className="rounded-[var(--adm-radius-control)] p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>

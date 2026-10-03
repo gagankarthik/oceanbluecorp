@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import { requireUserAdmin } from "@/lib/auth/verify";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-errors";
+import { isJobSeeker, seekerArea } from "@/lib/contact";
+import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 
 // ── Spam heuristics (no external dependencies) ──────────────────────────────
 // A "token" is treated as random/bot-generated if it's long and either has no
@@ -45,7 +47,7 @@ function isLikelySpam(b: { firstName?: string; lastName?: string; company?: stri
 // whereas spam signals get a silent fake-success so bots don't adapt.
 const LIMITS: Record<string, number> = {
   firstName: 60, lastName: 60, email: 254, phone: 30,
-  company: 120, jobTitle: 120, inquiryType: 60, message: 4000,
+  company: 120, jobTitle: 120, inquiryType: 60, message: 4000, linkedinUrl: 2048,
 };
 
 const NAME_RE    = /^[\p{L}][\p{L}\p{M} .'-]{0,59}$/u;   // letters + space . ' - ; must start with a letter
@@ -65,7 +67,8 @@ function validateContact(b: Record<string, unknown>): string | null {
   if (!NAME_RE.test(str(b.lastName)))  return "Please enter a valid last name.";
   if (!EMAIL_RE.test(str(b.email)))    return "Please enter a valid email address.";
   if (str(b.phone) && !PHONE_RE.test(str(b.phone))) return "Please enter a valid phone number.";
-  if (!str(b.company))                 return "Company is required.";
+  if (!str(b.company) && !isJobSeeker(b.inquiryType)) return "Company is required.";
+  if (str(b.linkedinUrl) && !isUrl(normalizeWebsite(str(b.linkedinUrl)))) return "Please enter a valid LinkedIn address.";
   if (!INQUIRY_RE.test(str(b.inquiryType))) return "Please choose a valid inquiry type.";
   if (str(b.message).length < 10)      return "Please include a short message (at least 10 characters).";
 
@@ -143,9 +146,12 @@ export async function POST(request: NextRequest) {
       lastName: body.lastName.trim(),
       email: body.email.trim().toLowerCase(),
       phone: body.phone?.trim() || undefined,
-      company: body.company.trim(),
+      company: typeof body.company === "string" ? body.company.trim() : "",
       jobTitle: body.jobTitle?.trim() || undefined,
       inquiryType: body.inquiryType,
+      linkedinUrl: typeof body.linkedinUrl === "string" && body.linkedinUrl.trim()
+        ? normalizeWebsite(body.linkedinUrl.trim())
+        : undefined,
       message: body.message.trim(),
       status: "new",
       createdAt: new Date().toISOString(),
@@ -177,7 +183,9 @@ export async function POST(request: NextRequest) {
           id: uuidv4(),
           type: "contact_received",
           title: "New Contact Submission",
-          message: `${body.firstName} ${body.lastName} from ${body.company} - ${body.inquiryType}`,
+          message: isJobSeeker(contact.inquiryType)
+            ? `${contact.firstName} ${contact.lastName} is looking for work - ${seekerArea(contact.inquiryType)}`
+            : `${contact.firstName} ${contact.lastName} from ${contact.company} - ${contact.inquiryType}`,
           link: `/admin/contacts/${contact.id}`,
           relatedId: contact.id,
           isRead: false,

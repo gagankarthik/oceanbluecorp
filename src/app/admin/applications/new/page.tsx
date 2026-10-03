@@ -23,6 +23,7 @@ import {
   buildResumePrefill, filledKeys, PREFILL_LABELS, type ResumePrefill,
 } from "@/lib/resume-prefill";
 import { cn } from "@/lib/utils";
+import { useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 
 /** Ties the action-bar submit button to the form it sits outside of. */
 const FORM_ID = "applicant-form";
@@ -49,14 +50,18 @@ function NewApplicationInner() {
   const form = useCandidateForm({ mode: "create", initial });
   const { values, setValues } = form;
 
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // The job picker stays empty on failure; the record can still be saved.
+  const { jobs: jobList } = useJobSummaries();
+  const jobs = useMemo<Job[]>(() => jobList ?? [], [jobList]);
 
   // The form stays hidden until the recruiter chooses: reading the resume first
   // fills most of it in, and an empty form invites re-typing what the document says.
   const [mode, setMode] = useState<"choose" | "reading" | "bench" | "form">("choose");
   // Bench route: the profile's fields and stored resume go into a NEW application.
-  const [benchList, setBenchList]       = useState<Application[] | null>(null);
-  const [benchError, setBenchError]     = useState<string | null>(null);
+  const [benchWanted, setBenchWanted]   = useState(false);
+  const benchRes = useApplicationSummaries({ bench: true, enabled: benchWanted });
+  const benchList = benchRes.applications ?? null;
+  const benchError = !benchList && benchRes.error ? benchRes.error.message || "Couldn't load the talent bench." : null;
   const [benchQuery, setBenchQuery]     = useState("");
   const [benchPicking, setBenchPicking] = useState<string | null>(null);
   const [benchFrom, setBenchFrom]       = useState<string | null>(null);
@@ -70,25 +75,11 @@ function NewApplicationInner() {
   // By identity, not name: many files are called "resume.pdf".
   const parsedFile = useRef<File | null>(null);
 
-  useEffect(() => {
-    fetch("/api/jobs?fields=summary")
-      .then((r) => r.json())
-      .then((d) => setJobs(d.jobs || []))
-      .catch(() => { /* the job picker stays empty; the record can still be saved */ });
-  }, []);
-
   const openBench = () => {
     form.setResumeError(null);
     setMode("bench");
-    if (benchList) return;
-    setBenchError(null);
-    fetch("/api/applications?bench=1&fields=summary")
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || "Couldn't load the talent bench.");
-        setBenchList(d.applications || []);
-      })
-      .catch((err) => setBenchError(err instanceof Error ? err.message : "Couldn't load the talent bench."));
+    if (!benchWanted) setBenchWanted(true);
+    else if (benchError) void benchRes.reload();
   };
 
   const pickFromBench = async (row: Application) => {
@@ -176,7 +167,7 @@ function NewApplicationInner() {
         body: file,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not read this resume");
+      if (!res.ok) throw new Error(data.error || "Couldn't read this resume. Try again.");
 
       const prefill = buildResumePrefill(data.analysis, data.contact ?? undefined);
       const filled = filledKeys(prefill);
@@ -192,7 +183,7 @@ function NewApplicationInner() {
       parsedFile.current = file;
     } catch (err) {
       forgetPrefill();
-      setParseError(err instanceof Error ? err.message : "Could not read this resume");
+      setParseError(err instanceof Error ? err.message : "Couldn't read this resume. Try again.");
     } finally {
       setParsing(false);
     }

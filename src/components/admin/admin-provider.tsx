@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import type { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { CommandPalette } from "./command-palette";
 
@@ -15,8 +15,6 @@ interface OpenEditOptions {
 interface AdminContextValue {
   openCandidateEditor: (opts?: OpenEditOptions) => void;
   openCommandPalette: () => void;
-  candidateRevision: number;
-  setJobs: (jobs: Job[]) => void;
   /** Trailing breadcrumb shown in the top nav on detail pages (e.g. "APP-2026-0103"). */
   pageCrumb: string | null;
   setPageCrumb: (crumb: string | null) => void;
@@ -63,8 +61,6 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
   const [paletteOpen, setPaletteOpen] = React.useState(false);
-  const [revision, setRevision] = React.useState(0);
-  const [jobs, setJobs] = React.useState<Job[]>([]);
   const [pageCrumb, setPageCrumb] = React.useState<string | null>(null);
   const [navSection, setNavSection] = React.useState<string | null>(null);
 
@@ -91,7 +87,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         e.preventDefault();
         setPaletteOpen(v => !v);
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+      // Alt+Shift+N (⌥⇧N): Ctrl/⌘+Shift+C is the browser's inspect-element chord.
+      // e.code, because Option on a Mac turns e.key into a dead/accented character.
+      if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && e.code === "KeyN") {
         e.preventDefault();
         openCandidateEditor();
       }
@@ -101,8 +99,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [openCandidateEditor]);
 
   const value = React.useMemo<AdminContextValue>(
-    () => ({ openCandidateEditor, openCommandPalette, candidateRevision: revision, setJobs, pageCrumb, setPageCrumb, navSection, setNavSection }),
-    [openCandidateEditor, openCommandPalette, revision, pageCrumb, navSection],
+    () => ({ openCandidateEditor, openCommandPalette, pageCrumb, setPageCrumb, navSection, setNavSection }),
+    [openCandidateEditor, openCommandPalette, pageCrumb, navSection],
   );
 
   return (

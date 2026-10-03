@@ -815,9 +815,10 @@ export interface Contact {
   lastName: string;
   email: string;
   phone?: string;
-  company: string;
+  company: string;          // "" for a job seeker
   jobTitle?: string;
-  inquiryType: string;
+  inquiryType: string;      // "Job Seeker - …" marks the finding-work path
+  linkedinUrl?: string;
   message: string;
   status: "new" | "read" | "responded" | "archived";
   createdAt: string;

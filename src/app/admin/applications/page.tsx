@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Plus } from "lucide-react";
 import {
   IconDownload, IconStar, IconTrash, IconGroup, IconClock,
 } from "@/components/admin/icons";
-import type { Application, Job } from "@/lib/aws/dynamodb";
+import type { Application } from "@/lib/aws/dynamodb";
+import { refreshApplications, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { useAuth } from "@/lib/auth/AuthContext";
 import ApplicationsLoading from "./loading";
 import { useAdmin } from "@/components/admin/admin-provider";
@@ -167,12 +168,7 @@ function AgeCell({ app }: { app: App }) {
 export default function ApplicationsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { openCandidateEditor, candidateRevision, setJobs: setCtxJobs } = useAdmin();
-
-  const [applications, setApplications] = useState<App[]>([]);
-  const [, setJobs]           = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const { openCandidateEditor } = useAdmin();
 
   const [view, setView]       = useState<ViewMode>("table");
   const [savedView, setSavedView] = useState<ViewKey>("all");
@@ -218,33 +214,45 @@ export default function ApplicationsPage() {
     if (sv && sv in VIEW_PREDICATE) setSavedView(sv as ViewKey);
   }, []);
 
-  const hasData = useRef(false);
-  const load = useCallback(async () => {
-    try {
-      // Skeleton on first load only; a reload after a save keeps the grid on screen.
-      if (!hasData.current) setLoading(true);
-      setError(null);
-      const [ar, jr] = await Promise.all([fetch("/api/applications?fields=summary"), fetch("/api/jobs?fields=summary")]);
-      const ad = await ar.json(); const jd = await jr.json();
-      if (!ar.ok || !jr.ok) throw new Error("Failed to fetch");
-      const jArr: Job[] = jd.jobs || [];
-      setJobs(jArr); setCtxJobs(jArr);
-      const jMap = new Map(jArr.map((j) => [j.id, j]));
-      const list: App[] = (ad.applications || []).map((a: Application) => {
-        const j = a.jobId ? jMap.get(a.jobId) : null;
-        return { ...a, jobTitle: a.jobTitle || j?.title || "", jobDepartment: j?.department || "" };
-      });
-      list.sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
-      setApplications(list);
-      hasData.current = true;
-    } catch (e) {
-      console.error("Failed to load applications:", e);
-      if (hasData.current) toast.error("Couldn't refresh applications. Showing the last loaded list.");
-      else setError("Check your connection and try again.");
-    } finally { setLoading(false); }
-  }, [setCtxJobs]);
+  const appsRes = useApplicationSummaries();
+  const jobsRes = useJobSummaries();
+  const { setData: setRaw } = appsRes;
 
-  useEffect(() => { void load(); }, [load, candidateRevision]);
+  // Joined rows keep their identity while the source record and the jobs list
+  // are unchanged, so memoised board cards skip unrelated updates.
+  const joinCache = useMemo(() => new WeakMap<Application, App>(), [jobsRes.jobs]);
+  const applications = useMemo(() => {
+    const jMap = new Map((jobsRes.jobs || []).map((j) => [j.id, j]));
+    const list = (appsRes.applications || []).map((a) => {
+      let row = joinCache.get(a);
+      if (!row) {
+        const j = a.jobId ? jMap.get(a.jobId) : null;
+        row = { ...a, jobTitle: a.jobTitle || j?.title || "", jobDepartment: j?.department || "" };
+        joinCache.set(a, row);
+      }
+      return row;
+    });
+    return list.sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
+  }, [appsRes.applications, jobsRes.jobs, joinCache]);
+
+  // Skeleton on first load only; a refresh keeps the grid on screen.
+  const loading = appsRes.isLoading || jobsRes.isLoading;
+  const error = (!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error)
+    ? "Check your connection and try again."
+    : null;
+  const load = () => { void appsRes.reload(); void jobsRes.reload(); };
+
+  const refreshFailed = appsRes.applications && appsRes.error;
+  useEffect(() => {
+    if (refreshFailed) toast.error("Couldn't refresh applications. Showing the last loaded list.");
+  }, [refreshFailed]);
+
+  /** Optimistic edit of the shared list; every reader of it sees the change. */
+  const patchLocal = useCallback(
+    (fn: (list: Application[]) => Application[]) =>
+      setRaw((d) => ({ ...d, applications: fn(d?.applications || []) })),
+    [setRaw],
+  );
 
   // ── derived ───────────────────────────────────────────────────────────────
 
@@ -369,26 +377,40 @@ export default function ApplicationsPage() {
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
-  const patchStatus = async (id: string, status: Application["status"]) => {
-    setApplications((p) => p.map((a) => (a.id === id ? { ...a, status } : a)));
-    try {
-      const res = await fetch(`/api/applications/${id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) throw new Error();
-    } catch { toast.error("The stage could not be changed. Nothing was saved."); load(); }
-  };
+  /** Optimistic single-field change; rolls back only if nothing has overwritten it since. */
+  const patchField = useCallback(
+    async <K extends "status" | "rating">(id: string, field: K, value: Application[K], failMsg: string) => {
+      let prev: Application[K] | undefined;
+      patchLocal((p) => p.map((a) => {
+        if (a.id !== id) return a;
+        prev = a[field];
+        return { ...a, [field]: value };
+      }));
+      try {
+        const res = await fetch(`/api/applications/${id}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [field]: value }),
+        });
+        if (!res.ok) throw new Error();
+        void refreshApplications();
+      } catch {
+        patchLocal((p) => p.map((a) => (a.id === id && a[field] === value ? { ...a, [field]: prev } : a)));
+        toast.error(failMsg);
+      }
+    },
+    [patchLocal],
+  );
 
-  const patchRating = async (id: string, rating: number) => {
-    setApplications((p) => p.map((a) => (a.id === id ? { ...a, rating } : a)));
-    try {
-      const res = await fetch(`/api/applications/${id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating }),
-      });
-      if (!res.ok) throw new Error();
-    } catch { toast.error("The rating could not be saved."); load(); }
-  };
+  const patchStatus = useCallback(
+    (id: string, status: Application["status"]) =>
+      void patchField(id, "status", status, "Couldn't change the stage. Try again."),
+    [patchField],
+  );
+
+  const patchRating = useCallback(
+    (id: string, rating: number) => void patchField(id, "rating", rating, "Couldn't save the rating. Try again."),
+    [patchField],
+  );
 
   const deleteOne = async () => {
     if (!deleteId) return;
@@ -396,9 +418,10 @@ export default function ApplicationsPage() {
     try {
       const res = await fetch(`/api/applications/${deleteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      setApplications((p) => p.filter((a) => a.id !== deleteId));
+      patchLocal((p) => p.filter((a) => a.id !== deleteId));
+      void refreshApplications();
       toast.success("Application deleted");
-    } catch { toast.error("The application could not be deleted."); }
+    } catch { toast.error("Couldn't delete the application. Try again."); }
     finally { setDeleting(false); setDeleteId(null); }
   };
 
@@ -412,26 +435,44 @@ export default function ApplicationsPage() {
       );
       const gone = results.filter((id): id is string => id !== null);
       const failed = selected.length - gone.length;
-      setApplications((p) => p.filter((a) => !gone.includes(a.id)));
+      patchLocal((p) => p.filter((a) => !gone.includes(a.id)));
       setSelected((p) => p.filter((id) => !gone.includes(id)));
-      if (gone.length) toast.success(`${gone.length} application${gone.length > 1 ? "s" : ""} deleted`);
-      if (failed) toast.error(`${failed} could not be deleted and ${failed > 1 ? "are" : "is"} still selected.`);
-    } catch { toast.error("The applications could not be deleted."); }
+      if (gone.length) {
+        void refreshApplications();
+        toast.success(`${gone.length} application${gone.length > 1 ? "s" : ""} deleted`);
+      }
+      if (failed) toast.error(`Couldn't delete ${failed}; ${failed > 1 ? "they are" : "it is"} still selected. Try again.`);
+    } catch { toast.error("Couldn't delete the applications. Try again."); }
     finally { setDeleting(false); setBulkDeleteOpen(false); }
   };
 
   /** Bulk stage move, the action a multi-select is actually for. */
   const bulkStage = async (status: Application["status"]) => {
     const ids = [...selected];
-    setApplications((p) => p.map((a) => (ids.includes(a.id) ? { ...a, status } : a)));
+    const before = new Map<string, Application["status"]>();
+    patchLocal((p) => p.map((a) => {
+      if (!ids.includes(a.id)) return a;
+      before.set(a.id, a.status);
+      return { ...a, status };
+    }));
     setSelected([]);
-    try {
-      await Promise.all(ids.map((id) => fetch(`/api/applications/${id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      })));
-      toast.success(`${ids.length} moved to ${sLabel(status)}`);
-    } catch { toast.error("Failed to move candidates"); load(); }
+    const ok = await Promise.all(ids.map((id) => fetch(`/api/applications/${id}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).then((r) => r.ok, () => false)));
+    const failed = ids.filter((_, i) => !ok[i]);
+    const moved = ids.length - failed.length;
+    if (failed.length) {
+      // Put the failures back where they were and leave them selected to retry.
+      patchLocal((p) => p.map((a) => (failed.includes(a.id) && a.status === status
+        ? { ...a, status: before.get(a.id) ?? a.status }
+        : a)));
+      setSelected(failed);
+    }
+    if (moved) void refreshApplications();
+    if (!failed.length) toast.success(`${moved} moved to ${sLabel(status)}`);
+    else if (moved) toast.error(`${moved} moved to ${sLabel(status)}, ${failed.length} failed and ${failed.length > 1 ? "are" : "is"} still selected. Try again.`);
+    else toast.error(`Couldn't move ${failed.length > 1 ? `${failed.length} candidates` : "the candidate"}. Try again.`);
   };
 
   const exportCSV = () => downloadCsv(
@@ -496,13 +537,13 @@ export default function ApplicationsPage() {
     ...(minRating > 0          ? [{ label: `${minRating}+ stars`, onClear: () => setMinRating(0) }] : []),
   ];
 
-  const rowActions = {
-    onView: (id: string) => router.push(`/admin/candidates/${id}`),
-    onEdit: (app: App) => openCandidateEditor({ candidate: app, mode: "edit" }),
-    onDelete: setDeleteId,
-    onStatusChange: patchStatus,
-    onRating: patchRating,
-  };
+  // Stable, so the memoised board and list rows skip unrelated renders.
+  const onView = useCallback((id: string) => router.push(`/admin/candidates/${id}`), [router]);
+  const onEdit = useCallback((app: App) => openCandidateEditor({ candidate: app, mode: "edit" }), [openCandidateEditor]);
+  const rowActions = useMemo(
+    () => ({ onView, onEdit, onDelete: setDeleteId, onStatusChange: patchStatus, onRating: patchRating }),
+    [onView, onEdit, patchStatus, patchRating],
+  );
 
   // ── grid columns ──────────────────────────────────────────────────────────
 

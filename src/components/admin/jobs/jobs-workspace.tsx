@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -9,6 +9,7 @@ import {
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
@@ -101,9 +102,6 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [jobs, setJobs]                 = useState<Job[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
   const [searchQuery, setSearchQuery]   = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
@@ -121,9 +119,6 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   // JOB_EDIT_ROLES rather than spelled as "not a recruiter", which quietly
   // granted edit rights to every role added afterwards.
   const canEdit = canEditJobs(user?.role);
-  // Read inside fetchJobs without making the role a reason to refetch.
-  const canEditRef = useRef(canEdit);
-  canEditRef.current = canEdit;
   // Media edits postings but is served the public projection, so client and
   // the two rate columns would be three columns of em-dashes for it — an
   // absence rendered as data (DESIGN_SYSTEM §8, Selective Attention). They are
@@ -132,67 +127,63 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
 
   // ── data ──────────────────────────────────────────────────────────────────
 
-  const fetchJobs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("/api/jobs?fields=summary");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
+  // Shared summary list. The staff list endpoint closes past-deadline roles
+  // itself, so the client no longer does.
+  const jobsRes = useJobSummaries();
+  const { setData: setAllJobs } = jobsRes;
+  const jobs = useMemo(
+    () => (jobsRes.jobs || []).filter((j) => jobCategory(j) === category),
+    [jobsRes.jobs, category],
+  );
+  // Skeleton on first load only; a refetch keeps the list on screen.
+  const loading = jobsRes.isLoading;
+  const error = !jobsRes.jobs && jobsRes.error ? "Check your connection and try again." : null;
+  const fetchJobs = () => void jobsRes.reload();
 
-      const fetchedJobs: Job[] = (data.jobs || []).filter((j: Job) => jobCategory(j) === category);
-      const now = new Date();
-      const toClose = fetchedJobs.filter(
-        (j) => j.submissionDueDate && new Date(j.submissionDueDate) < now && j.status !== "closed",
-      );
-
-      // Past-deadline roles show as closed straight away; the saves run behind
-      // the list instead of holding it on the skeleton until every one returns.
-      const closedIds = new Set(toClose.map((j) => j.id));
-      setJobs(fetchedJobs.map((j) => (closedIds.has(j.id) ? { ...j, status: "closed" } : j)));
-      if (canEditRef.current) {
-        for (const j of toClose) {
-          void fetch(`/api/jobs/${j.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "closed" }),
-          }).catch((err) => console.error("Failed to close an expired role:", err));
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load job postings:", err);
-      setError("Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [category]);
-
-  useEffect(() => { void fetchJobs(); }, [fetchJobs]);
+  const setJobs = useCallback(
+    (fn: (list: Job[]) => Job[]) => setAllJobs((d) => ({ ...d, jobs: fn(d?.jobs || []) })),
+    [setAllJobs],
+  );
 
   // ── mutations ─────────────────────────────────────────────────────────────
 
+  /** Job ids with a status save in flight; their select is locked until it lands. */
+  const [statusPending, setStatusPending] = useState<ReadonlySet<string>>(new Set());
+
   const handleStatusChange = async (jobId: string, newStatus: Job["status"]) => {
+    if (statusPending.has(jobId)) return;
+    const prev = jobs.find((j) => j.id === jobId)?.status;
+    setStatusPending((s) => new Set(s).add(jobId));
+    setJobs((list) => list.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j)));
     try {
       const res = await fetch(`/api/jobs/${jobId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
-      setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j)));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      void refreshJobs();
       toast.success("Status updated");
-    } catch { toast.error("Failed to update job status"); }
+    } catch {
+      if (prev) setJobs((list) => list.map((j) => (j.id === jobId && j.status === newStatus ? { ...j, status: prev } : j)));
+      toast.error("Couldn't change the job status. Try again.");
+    } finally {
+      setStatusPending((s) => { const n = new Set(s); n.delete(jobId); return n; });
+    }
   };
 
   const handleDelete = async (jobId: string) => {
     setDeleting(true);
     try {
       const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete job");
-      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setJobs((list) => list.filter((j) => j.id !== jobId));
+      void refreshJobs();
+      // Deleting a posting removes its applications too.
+      void refreshApplications();
       setShowDeleteConfirm(null);
       toast.success("Job deleted");
-    } catch { toast.error("Failed to delete job"); }
+    } catch { toast.error("Couldn't delete the job. Try again."); }
     finally { setDeleting(false); }
   };
 
@@ -200,11 +191,11 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     setDuplicating(job.id);
     try {
       const res = await fetch(`/api/jobs/${job.id}/duplicate`, { method: "POST" });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to duplicate"); }
-      await fetchJobs();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Couldn't duplicate the job. Try again."); }
+      await refreshJobs();
       toast.success("Job duplicated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to duplicate job");
+      toast.error(err instanceof Error ? err.message : "Couldn't duplicate the job. Try again.");
     } finally { setDuplicating(null); }
   };
 
@@ -429,14 +420,19 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     // Was a bare <select>, so Windows drew its own grey bevel inside an
     // otherwise designed grid and the cell resized as the label changed.
     cell: (j) => canEdit ? (
-      <GridSelect
-        value={j.status}
-        dot={statusColor(j.status)}
-        ariaLabel={`Status for ${j.title}`}
-        onChange={(e) => handleStatusChange(j.id, e.target.value as Job["status"])}
+      <span
+        aria-busy={statusPending.has(j.id) || undefined}
+        className={cn("inline-flex", statusPending.has(j.id) && "pointer-events-none opacity-60")}
       >
-        {JOB_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-      </GridSelect>
+        <GridSelect
+          value={j.status}
+          dot={statusColor(j.status)}
+          ariaLabel={`Status for ${j.title}`}
+          onChange={(e) => void handleStatusChange(j.id, e.target.value as Job["status"])}
+        >
+          {JOB_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </GridSelect>
+      </span>
     ) : <StatusBadge status={j.status} />,
   };
 

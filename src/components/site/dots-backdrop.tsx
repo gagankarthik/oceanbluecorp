@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
+import { useReducedMotion } from "./use-reduced-motion";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 
 /**

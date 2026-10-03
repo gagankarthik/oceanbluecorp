@@ -103,12 +103,12 @@ export function EmailComposer({
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error("You've sent a lot of emails in the last hour. Try again later.");
-      if (!res.ok || !data.success) throw new Error(data.error || "The email couldn't be sent.");
+      if (!res.ok || !data.success) throw new Error(data.error || "Couldn't send the email. Try again.");
       toast.success(`Email sent to ${candidate.email}`);
       onOpenChange(false);
       onSent?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "The email couldn't be sent.");
+      toast.error(err instanceof Error ? err.message : "Couldn't send the email. Try again.");
     } finally {
       setSending(false);
     }

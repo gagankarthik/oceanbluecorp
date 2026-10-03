@@ -1,4 +1,5 @@
 import type { TaskEntry } from "@/lib/aws/dynamodb";
+import { refreshApplications, refreshTasks } from "@/hooks/use-console-data";
 
 export type TaskOp =
   | { op: "add"; text: string; dueAt?: string; assigneeId?: string; assigneeName?: string }
@@ -13,6 +14,9 @@ export async function postTaskOp(applicationId: string, op: TaskOp): Promise<Tas
     body: JSON.stringify(op),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Couldn't save the task. Please try again.");
+  if (!res.ok) throw new Error(data.error || "Couldn't save the task. Try again.");
+  // Task lists and the per-candidate task counts both read from these.
+  void refreshTasks();
+  void refreshApplications();
   return (data.tasks || []) as TaskEntry[];
 }

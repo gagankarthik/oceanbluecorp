@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth, UserRole } from "@/lib/auth";
+import { UserRole } from "@/lib/auth/config";
+import { useStaffSession, signOutStaff } from "./use-staff-session";
 import { LinkButton } from "./button";
 import { GeoStack, GeoBooks, GeoLattice } from "./geo-art";
 import {
@@ -119,8 +120,10 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   const [account, setAccount] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
   const path = usePathname();
-  const { user, isAuthenticated, isLoading, signOut, hasAnyRole } = useAuth();
+  const { user, isAuthenticated, isLoading } = useStaffSession();
 
   useEffect(() => {
     setMenu(null);
@@ -133,6 +136,9 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
       if (e.key === "Escape") {
         setMenu(null);
         setAccount(false);
+        // The panel only exists while open.
+        if (mobileRef.current) toggleRef.current?.focus();
+        setMobile(false);
       }
     };
     const onDown = (e: MouseEvent) => {
@@ -145,6 +151,11 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
       document.removeEventListener("mousedown", onDown);
     };
   }, []);
+
+  // Opening moves focus into the panel; Tab past either end wraps back to the toggle.
+  useEffect(() => {
+    if (mobile) mobileRef.current?.querySelector<HTMLElement>("summary, a, button")?.focus();
+  }, [mobile]);
 
   useEffect(() => {
     document.body.style.overflow = mobile ? "hidden" : "";
@@ -162,7 +173,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   };
   const current = MENUS.find((m) => m.key === menu);
   // Every signed-in user is staff, so this always points into the admin area.
-  const dashboard = hasAnyRole([UserRole.HR]) ? "/admin/applications" : "/admin";
+  const dashboard = user?.role === UserRole.HR ? "/admin/applications" : "/admin";
 
   return (
     <header
@@ -216,14 +227,14 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                   <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium text-ink hover:bg-paper">
                     <IconBriefcase size={16} /> HR platform
                   </a>
-                  {hasAnyRole([UserRole.ADMIN]) && (
+                  {user?.role === UserRole.ADMIN && (
                     <Link href="/admin/settings" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium text-ink hover:bg-paper">
                       <IconSettings size={16} /> Settings
                     </Link>
                   )}
                   <button
                     type="button"
-                    onClick={() => signOut()}
+                    onClick={() => void signOutStaff()}
                     className="mt-1 flex w-full items-center gap-2.5 rounded-xl border-t border-line px-3 py-2 text-[14px] font-medium text-danger hover:bg-danger-container"
                   >
                     <IconLogout size={16} /> Sign out
@@ -246,11 +257,13 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
         </div>
 
         <button
+          ref={toggleRef}
           type="button"
           className="ml-auto rounded-full p-2 text-ink hover:bg-paper md:ml-0 lg:hidden"
           onClick={() => setMobile((o) => !o)}
           aria-label={mobile ? "Close menu" : "Open menu"}
           aria-expanded={mobile}
+          aria-controls="site-mobile-menu"
         >
           {mobile ? <IconX size={22} /> : <IconMenu size={22} />}
         </button>
@@ -302,7 +315,22 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
 
       {/* Mobile menu */}
       {mobile && (
-        <div className="max-h-[calc(100dvh-64px)] overflow-y-auto border-t border-line bg-white px-4 pb-6 lg:hidden">
+        <div
+          id="site-mobile-menu"
+          ref={mobileRef}
+          onKeyDown={(e) => {
+            if (e.key !== "Tab") return;
+            const items = mobileRef.current?.querySelectorAll<HTMLElement>("summary, a[href], button");
+            if (!items?.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if ((e.shiftKey && document.activeElement === first) || (!e.shiftKey && document.activeElement === last)) {
+              e.preventDefault();
+              toggleRef.current?.focus();
+            }
+          }}
+          className="max-h-[calc(100dvh-64px)] overflow-y-auto border-t border-line bg-white px-4 pb-6 lg:hidden"
+        >
           {MENUS.map((m) => (
             <details key={m.key} className="group border-b border-line">
               <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[16px] font-semibold text-ink">
@@ -351,7 +379,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
               )}
             </div>
             {isAuthenticated && (
-              <button type="button" onClick={() => signOut()} className="mt-1 py-2 text-[14px] font-medium text-danger">
+              <button type="button" onClick={() => void signOutStaff()} className="mt-1 py-2 text-[14px] font-medium text-danger">
                 Sign out
               </button>
             )}

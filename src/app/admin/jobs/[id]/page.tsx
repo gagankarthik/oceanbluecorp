@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, use, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Check, MoreHorizontal, Plus, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials, RECRUITING_ROLES } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useResource } from "@/hooks/use-resource";
+import { refreshApplications } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
@@ -75,11 +77,26 @@ export default function JobDetailPage({
   // Applicants are recruiting data; Media edits the posting but never manages its pipeline.
   const canManageApplicants = hasAnyRole(RECRUITING_ROLES);
 
-  const [job, setJob]                     = useState<Job | null>(null);
-  const [applications, setApplications]   = useState<Application[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState<string | null>(null);
-  const [missing, setMissing]             = useState(false);
+  // Cached per key, so a write anywhere (refreshJobs / refreshApplications)
+  // updates this page too, and a refresh never swaps the page for a skeleton.
+  // Applicants are recruiting data, /api/applications answers media 403, so a
+  // caller without commercial sight does not ask for them.
+  const jobRes = useResource<{ job: Job }>(`/api/jobs/${jobId}`);
+  const appsRes = useResource<{ applications?: Application[] }>(canPrice ? `/api/applications?jobId=${jobId}` : null);
+  const job = jobRes.data?.job ?? null;
+  const applications = useMemo(() => appsRes.data?.applications ?? [], [appsRes.data]);
+  const missing = (jobRes.error as { status?: number } | undefined)?.status === 404;
+  const loading = jobRes.isLoading;
+  const error = !job && jobRes.error && !missing ? "Check your connection and try again." : null;
+  const { setData: setJobData } = jobRes;
+  const { setData: setAppsData } = appsRes;
+  const setJob = useCallback((next: Job) => setJobData({ job: next }), [setJobData]);
+  const setApplications = useCallback(
+    (fn: (list: Application[]) => Application[]) => setAppsData((d) => ({ ...d, applications: fn(d?.applications || []) })),
+    [setAppsData],
+  );
+  const fetchData = () => Promise.all([jobRes.reload(), appsRes.reload()]);
+
   const [storedTab, setActiveTab]         = useState<Tab | null>(null);
   const [search, setSearch]               = useState("");
   const [statusFilter, setStatusFilter]   = useState("all");
@@ -102,39 +119,12 @@ export default function JobDetailPage({
 
   const debouncedSearch = useDebouncedValue(search, 250);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Applicants are recruiting data — /api/applications answers a media
-      // account 403 — so a caller without commercial sight does not ask for
-      // them, and the tabs that show them are not rendered below.
-      const jobRes = await fetch(`/api/jobs/${jobId}`);
-      if (jobRes.status === 404) { setMissing(true); return; }
-      const jobData = await jobRes.json();
-      if (!jobRes.ok) throw new Error(jobData.error || `HTTP ${jobRes.status}`);
-      setJob(jobData.job);
-
-      if (canPrice) {
-        const appsRes = await fetch(`/api/applications?jobId=${jobId}`);
-        const appsData = await appsRes.json();
-        setApplications(appsData.applications || []);
-      }
-    } catch (err) {
-      console.error("Failed to load job:", err);
-      setError("Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [jobId, canPrice]);
-
-  useEffect(() => { void fetchData(); }, [fetchData]);
-
   // Show the job posting code (e.g. JOB-2026-0042) as the top-nav breadcrumb.
   usePageCrumb(job?.postingId);
 
   const handleStatusChange = async (appId: string, status: Application["status"]) => {
-    setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, status } : a)));
+    const prev = applications.find((a) => a.id === appId)?.status;
+    setApplications((list) => list.map((a) => (a.id === appId ? { ...a, status } : a)));
     try {
       const res = await fetch(`/api/applications/${appId}`, {
         method: "PUT",
@@ -142,9 +132,10 @@ export default function JobDetailPage({
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      void refreshApplications();
     } catch {
-      toast.error("Couldn't update the status. Reloading the latest data.");
-      void fetchData();
+      if (prev) setApplications((list) => list.map((a) => (a.id === appId && a.status === status ? { ...a, status: prev } : a)));
+      toast.error("Couldn't change the stage. Try again.");
     }
   };
 
@@ -157,7 +148,7 @@ export default function JobDetailPage({
       setTimeout(() => setCopied(false), 2000);
       toast.success("Public link copied. Anyone with it can view this posting.");
     } catch {
-      toast.error("The link couldn't be copied. Open the public posting and copy its address instead.");
+      toast.error("Couldn't copy the link. Open the public posting and copy its address instead.");
     }
   };
 
@@ -622,6 +613,7 @@ export default function JobDetailPage({
         defaultJobId={jobId}
         onSaved={(saved) => {
           setApplications((prev) => prev.map((a) => (a.id === saved.id ? saved : a)));
+          void refreshApplications();
         }}
       />
     </div>

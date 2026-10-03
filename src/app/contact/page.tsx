@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import ContactPage from "./_content";
 import { getSiteContent } from "@/lib/content";
-
-export const revalidate = 60;
+import ContactPage from "./_content";
+import { CONTACT_PATH_PARAM, parseContactPath } from "./paths";
 
 export const metadata: Metadata = pageMetadata({
   path: "/contact",
   title: "Contact Us",
-  description: "Talk to Ocean Blue Corporation about IT staffing, enterprise solutions or managed services. Call +1 (614) 844-6925 or email hr@oceanbluecorp.com.",
+  description: "Hiring staff or finding work: talk to Ocean Blue Corporation about IT staffing, enterprise solutions, managed services or your next role. Call +1 (614) 844-6925 or email hr@oceanbluecorp.com.",
 });
 
-export default async function Contact() {
-  const content = await getSiteContent("contact");
-  return <ContactPage content={content} />;
+// Reads ?for= on the server so the chosen path renders without a flash.
+export default async function Contact({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [content, params] = await Promise.all([getSiteContent("contact"), searchParams]);
+  return <ContactPage content={content} initialPath={parseContactPath(params[CONTACT_PATH_PARAM])} />;
 }

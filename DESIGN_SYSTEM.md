@@ -55,9 +55,9 @@ Two semantic namespaces exist, one per surface:
 
 - **Public site:** `--color-*`, exposed as Tailwind roles (`text-ink`,
   `bg-paper`, `border-line`, `bg-cobalt`) in `@theme`. Light only, by design.
-- **Console:** `--adm-{role}[-{variant}]` on `.adm-scope`, with a complete
-  parallel dark set (`[data-theme="dark"]` and the OS preference). Dark is its
-  own palette on the same roles, not an inversion of light.
+- **Console:** `--adm-{role}[-{variant}]`, light only. Declared on `:root`
+  (not `.adm-scope`) so portalled dialogs, sheets and menus resolve them; the
+  public site never reads them. The old dark set was unreachable and is gone.
 
 `--hz-*` is the retired landing namespace. It survives only for the
 announcement bar and the maintenance screen; do not add
@@ -87,7 +87,7 @@ Never a raw hex, rgba, pixel font size, shadow or duration in a page.
    the token is retuned below AA (4.5:1 text, 3:1 large text and UI).
 4. Document it in the table below, in the same change.
 5. Review: token changes are system-wide, so the PR carries screenshots of the
-   dashboard, one list page and one form page (light and dark for `--adm-*`),
+   dashboard, one list page and one form page,
    and is approved by whoever owns this file.
 
 ### 2.4 Colour
@@ -100,7 +100,7 @@ Never a raw hex, rgba, pixel font size, shadow or duration in a page.
 | Border | `--color-border-default / strong / interactive / focus` | Card, input, hover edge, focus ring |
 | Interactive state | `--color-action-primary`, `-hover`, `-pressed`, `--color-action-on-primary`, `--opacity-disabled`, `--color-background-selected`, `--color-border-focus` | Default, hover, pressed, disabled, selected, focused, on every filled action |
 | Feedback | `--color-text-{success,warning,danger,info}` with `--color-background-{…}` | Alerts, validation, badges, status |
-| Console | `--adm-accent`(`-strong`/`-soft`/`-tint`), `--adm-canvas`, `--adm-surface`(`-2`/`-sunken`), `--adm-line`(`-soft`/`-strong`), `--adm-ink`(`-mute`/`-subtle`), `--adm-success/warning/danger/info` with `-ink` (text) and `-soft` (tint) | Same roles, themed light and dark |
+| Console | `--adm-accent`(`-strong`/`-soft`/`-tint`), `--adm-canvas`, `--adm-surface`(`-2`/`-sunken`), `--adm-line`(`-soft`/`-strong`/`-input`), `--adm-ink`(`-mute`/`-subtle`), `--adm-success/warning/danger/info` with `-ink` (text) and `-soft` (tint), `--adm-scrim` | Same roles. `--adm-line` is a decorative hairline (1.2:1); a control's edge uses `--adm-line-input` (3.4:1). Every overlay dims with `--adm-scrim`. |
 
 **Brand.** Cobalt (`--p-blue-700`, 6.7:1 under white text) carries every text
 and interactive role. Logo blue passes for text (4.9:1). Aqua is 2.7:1 on
@@ -156,17 +156,24 @@ on the same beat.
 | Charts | `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
 | Elevation | `--adm-shadow-sm/md/lg/pop` | Card → popover → modal |
 | Motion | `--adm-ease`, `--adm-duration-fast/base` | One easing curve everywhere |
-| Radius | `--adm-radius-control/card` | Size ↔ roundness scale |
+| Radius | `--adm-radius-xs` 4 · `-control` 6 · `-chip` 6 · `-input` 8 · `-card` 8 · `-dialog` 12 | Hairline affordances · buttons, nav rows, menu items · badges and tags · fields · cards, panels, popovers, the BrandBand · modals and the command palette |
 | Loading | `--skeleton-background/radius/duration`, `--content-enter-duration` | See "Loading" under §4 |
 
 Type ramp (Geist Sans, set on `.adm-scope`): page title 21px semibold · headline
 figures 22–26px semibold, tight tracking · card title 14.5px semibold · body 13.5–14px ·
 labels/hints 12–12.5px. **Sentence case everywhere, no uppercase tracked
 micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
-36px (`h-9`), radius 9–10px; cards 14px; badges are pills.
+36px (`h-9`). Radius comes from the `--adm-radius-*` scale above, never a literal;
+status badges are pills.
 
-Greys are one cool family (`#101828` ink, `#475467` mute, `#667085` subtle), all
-AA on white and on the `#f5f7fa` canvas; `tests/contrast.test.mjs` enforces it.
+Greys are one cool family (`#101828` ink, `#475467` mute, `#606a7e` subtle), all
+AA on white, the `#f5f7fa` canvas and `--adm-surface-2`; `tests/contrast.test.mjs`
+enforces it with a 0.05 margin, so a pair sitting on 4.50 fails.
+
+On the cobalt band, text is white at 85% or more (5.3:1); the selected figure
+cell carries a white underline bar and `aria-pressed`/`aria-current`, because its
+darker fill alone is only 1.3:1 from its neighbours. Focus inside the band
+(`.adm-on-band`) is a white outline, not the accent.
 
 Shell: white 240px sidebar (64px rail, collapsed by default under 1440px) and
 white 60px top bar frame a grey workspace. Navigation recedes: brand colour
@@ -190,12 +197,12 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 
 | Atom | Source | Notes |
 |---|---|---|
-| Button | `WorkspaceButton` (`workspace.tsx`) | The one console button: `primary` (one per view), default, and `asChild` for links. Never fork a button. |
+| Button | `WorkspaceButton` (`workspace.tsx`) | The one console button: `primary` (one per view), default, `ghost`, `danger`, and `asChild` for links. Never fork a button. |
 | Checkbox | `ui/checkbox.tsx` | Supports `indeterminate` (DataTable select-all); pass the cobalt override class. |
 | DropdownMenu / Sheet / Tooltip | `ui/*` | Use these; don't recreate. Inputs and selects are the form primitives below; cards are `AdminCard`. |
 | `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
-| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted 6px chip. Tone text uses the `-ink` tokens. |
+| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones per lifecycle: New sky, Screening cobalt, Submitted indigo, Interview violet, Offered amber, Hired emerald, Rejected rose; job Draft sky, Active emerald, On hold amber, Closed slate (ended, not rejected). |
 | `PeriodSwitcher` | `admin/charts.tsx` | The segmented control (date ranges, small view toggles). |
 | `StarRating` | `admin/star-rating.tsx` | , |
 | Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
@@ -210,8 +217,10 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 | `FilterChips` | `filter-chips.tsx` | Active filters stay visible & dismissible. |
 | `DataTable<T>` | `data-table.tsx` | Sortable, selectable, paginated table with built-in loading skeletons and `EmptyState`. Numbers right-aligned; secondary columns `hideBelow`. |
 | `AssigneePicker` | `forms/primitives.tsx` | Search + chip multi-select. |
-| `ConfirmDialog` | `confirm-dialog.tsx` | Destructive confirmations (pair with `danger` button). |
-| `CommandPalette` | `command-palette.tsx` | Global ⌘K navigation/search. |
+| `AdminDialog` | `admin-dialog.tsx` | Every console modal. Radix Dialog: focus trap, Escape, scrim click, focus return, labelled by its title. Sizes `sm/md/lg/xl`, a `footer` slot, `actions` in the header, `busy` blocks dismissal. A form in the body pairs with a footer submit via `form="id"`. Guard unsaved work by gating `onOpenChange(false)` behind a "Discard changes?" `ConfirmDialog`. |
+| `ConfirmDialog` | `confirm-dialog.tsx` | Confirmations on `AdminDialog` (`alertdialog`), Cancel focused first, `WorkspaceButton` `danger` for destructive. |
+| `CommandPalette` | `command-palette.tsx` | Global ⌘K navigation/search. Combobox: input owns `aria-activedescendant` over a grouped listbox. |
+| `HeaderSearch` | `header-search.tsx` | The centred top-bar search, same combobox pattern, inline results. |
 | Skeletons | `skeletons.tsx` | Loading mirrors layout. See below. |
 
 **Canonical list page** = `PageHeader` → stat strip (optional) → `AdminCard` toolbar
@@ -316,6 +325,8 @@ then delete, no parallel duplicates.
    complex multi-view tables on applications/jobs/bench keep their bespoke rendering).
 4. Replace remaining `--hz-*` references in admin pages with `--adm-*`.
 5. Modal forms on `Field`/`FormInput`/`FormSelect`. DONE: clients, vendors.
+6. Hand-built `fixed inset-0` modals onto `AdminDialog`. DONE: clients, vendors, users,
+   api-keys, help, resumes preview, job-form (add client, add vendor, preview).
 
 **Health metrics.** Adoption = count of hand-rolled search inputs remaining
 (`grep 'placeholder="Search' src/app/admin` → should trend to 0); consistency = no new

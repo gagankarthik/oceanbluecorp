@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getAllJobs, getPublicJobs, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
+import { getAllJobs, getPublicJobs, updateJob, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireJobEditor, getClaims } from "@/lib/auth/verify";
@@ -8,7 +8,7 @@ import {
 } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
-import { isPubliclyOpen } from "@/lib/job-status";
+import { isPubliclyOpen, isPastDeadline, isAcceptingApplications } from "@/lib/job-status";
 import { jobInputError, parseSalary, publishedAtFor } from "@/lib/job-input";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -35,6 +35,18 @@ export async function GET(request: NextRequest) {
     const jobs = (result.data || []).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+
+    // Roles past their deadline close here, once, rather than from every
+    // browser that opens the roles list.
+    if (isStaff || isEditor) {
+      const expired = jobs.filter((j) => j.status !== "closed" && isPastDeadline(j));
+      for (const j of expired) j.status = "closed";
+      if (expired.length) {
+        after(() => Promise.all(expired.map((j) =>
+          updateJob(j.id, { status: "closed" }).catch((err) => console.error(`Auto-close of ${j.id} failed:`, err)),
+        )));
+      }
+    }
 
     // Recruiting staff get full records for all statuses. Everyone else, Media
     // and anonymous visitors alike, sees only active/open jobs with the
@@ -67,7 +79,7 @@ export async function GET(request: NextRequest) {
       : isEditor
         ? counted.map(toPublicJob)
         : jobs
-            .filter((j) => isPubliclyOpen(j.status))
+            .filter((j) => isAcceptingApplications(j))
             .map(toPublicJob);
 
     const body = summary

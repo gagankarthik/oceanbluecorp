@@ -52,7 +52,7 @@ export function TasksTab({
       onChange(await postTaskOp(applicationId, op));
       return true;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save the task");
+      toast.error(err instanceof Error ? err.message : "Couldn't save the task. Try again.");
       return false;
     } finally {
       setPending(null);

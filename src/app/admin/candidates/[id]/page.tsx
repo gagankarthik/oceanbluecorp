@@ -28,6 +28,7 @@ import {
   IconMessageText, IconRefresh, IconSparkles, IconSuccess,
 } from "@/components/admin/icons";
 import { useAdmin, usePageCrumb } from "@/components/admin/admin-provider";
+import { refreshApplications } from "@/hooks/use-console-data";
 import { statusMeta, type AppStatus } from "@/components/admin/theme";
 // Still needed by handleBenchChange, which resolves the candidate's current
 // pool before deciding whether a change is a no-op.
@@ -166,6 +167,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     });
     if (!res.ok) throw new Error("Request failed");
     const data = await res.json();
+    // Lists and the bench pick the change up next time they're read.
+    void refreshApplications();
     return data.application as Application;
   };
 
@@ -193,15 +196,19 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           setCandidate((p) => (p ? { ...p, ...back } : p));
         },
       });
-    } catch { toast.error("Failed to update status"); }
+    } catch { toast.error("Couldn't change the stage. Try again."); }
     finally { setStatusSaving(false); }
   };
 
   const handleRating = async (rating: number) => {
     if (!candidate) return;
-    const next = rating === candidate.rating ? 0 : rating;
+    const prev = candidate.rating;
+    const next = rating === prev ? 0 : rating;
     setCandidate((p) => (p ? { ...p, rating: next } : p));
-    try { await patch({ rating: next }); } catch { toast.error("Failed to update rating"); }
+    try { await patch({ rating: next }); } catch {
+      setCandidate((p) => (p && p.rating === next ? { ...p, rating: prev } : p));
+      toast.error("Couldn't save the rating. Try again.");
+    }
   };
 
   /** Put the candidate in a pool, or take them off the bench entirely (null). */
@@ -227,7 +234,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       });
     } catch {
       setCandidate(prev);
-      toast.error("Failed to update talent bench");
+      toast.error("Couldn't update the talent bench. Try again.");
     } finally { setBenchSaving(false); }
   };
 
@@ -250,7 +257,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         message: "You now own this candidate",
         undo: () => applyOwner("", ""),
       });
-    } catch { toast.error("Failed to claim ownership"); }
+    } catch { toast.error("Couldn't claim ownership. Try again."); }
     finally { setOwnerSaving(false); }
   };
 
@@ -265,7 +272,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         message: "Released, this candidate is unassigned",
         undo: () => applyOwner(prevId, prevName),
       });
-    } catch { toast.error("Failed to release ownership"); }
+    } catch { toast.error("Couldn't release ownership. Try again."); }
     finally { setOwnerSaving(false); }
   };
 
@@ -282,7 +289,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const data = await res.json();
       setCandidate((p) => (p ? { ...p, notesHistory: data.application.notesHistory } : p));
       setNewNote("");
-    } catch { toast.error("Failed to add note"); }
+      void refreshApplications();
+    } catch { toast.error("Couldn't add the note. Try again."); }
     finally { setAddingNote(false); }
   };
 
@@ -293,7 +301,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed");
       window.open(data.downloadUrl, "_blank");
-    } catch { toast.error("Failed to load resume. The file may have been deleted."); }
+    } catch { toast.error("Couldn't open the resume; the file may have been deleted. Try again."); }
   };
 
   /**
@@ -308,7 +316,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     try {
       const res = await fetch(`/api/applications/${id}/analyze`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      if (!res.ok) throw new Error(data.error || "Couldn't analyze the resume. Try again.");
       setCandidate((p) => (p ? { ...p, ...(data.application as CandidateDetail) } : p));
       if (!auto) setActiveTab("overview");
       toast.success("Resume analyzed", { id: toastId });
@@ -319,7 +327,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         console.error("[candidate] automatic resume re-analysis failed:", err);
         await refreshRecord();
       } else {
-        toast.error(err instanceof Error ? err.message : "Analysis failed", { id: toastId });
+        toast.error(err instanceof Error ? err.message : "Couldn't analyze the resume. Try again.", { id: toastId });
       }
     } finally {
       setAnalyzing(false);

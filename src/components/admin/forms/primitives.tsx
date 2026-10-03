@@ -35,7 +35,7 @@ export function FormSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
         className,
       )}
     >
@@ -114,10 +114,10 @@ export function Field({ label, required, hint, error, helper, htmlFor, children,
 // ── Shared control classes ──────────────────────────────────────────────────────
 
 const controlBase =
-  "w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[14px] text-[var(--adm-ink)] transition-colors " +
+  "w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] text-[14px] text-[var(--adm-ink)] transition-colors " +
   "shadow-[inset_0_1px_2px_rgba(16,24,40,0.03)] placeholder:text-[var(--adm-ink-subtle)] " +
   "focus:outline-none focus:border-[var(--adm-accent)] focus:ring-2 focus:ring-[var(--adm-focus-ring)] " +
-  "hover:border-[var(--adm-line)] disabled:cursor-not-allowed disabled:bg-[var(--adm-surface-sunken)] disabled:text-[var(--adm-ink-subtle)] " +
+  "hover:border-[var(--adm-ink-subtle)] disabled:border-[var(--adm-line)] disabled:cursor-not-allowed disabled:bg-[var(--adm-surface-sunken)] disabled:text-[var(--adm-ink-subtle)] " +
   "aria-[invalid=true]:border-[var(--adm-danger)] aria-[invalid=true]:focus:ring-[var(--adm-danger-soft)]";
 
 // ── Input ─────────────────────────────────────────────────────────────────────
@@ -261,7 +261,7 @@ export function AssigneePicker({
           className={cn(controlBase, "h-9 pl-9 pr-3")}
         />
         {open && filtered.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-52 overflow-y-auto rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-52 overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
             {filtered.map((u) => (
               <button
                 key={u.id}
@@ -275,7 +275,7 @@ export function AssigneePicker({
                   <p className="truncate text-sm font-medium text-[var(--adm-ink)]">{u.name || u.email}</p>
                   <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{u.email}</p>
                 </div>
-                <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium capitalize text-[var(--adm-ink-mute)]">{u.role}</span>
+                <span className="rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium capitalize text-[var(--adm-ink-mute)]">{u.role}</span>
               </button>
             ))}
           </div>

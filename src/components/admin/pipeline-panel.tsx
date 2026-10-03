@@ -186,17 +186,17 @@ export function PipelinePanel({
           <div className="divide-y divide-[var(--adm-line-soft)]" aria-busy="true" aria-label="Loading pipeline">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="flex items-start gap-2.5 px-4 py-3">
-                <Skel className="mt-0.5 h-4 w-4 flex-none rounded-[4px]" />
+                <Skel className="mt-0.5 h-4 w-4 flex-none rounded-[var(--adm-radius-xs)]" />
                 <div className="flex-1 space-y-2">
                   <Skel className="h-3.5 w-40" />
                   <Skel className="h-3 w-64 max-w-full" />
                 </div>
-                <Skel className="h-8 w-16 rounded-[8px]" />
+                <Skel className="h-8 w-16 rounded-[var(--adm-radius-control)]" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <p role="alert" className="m-4 flex items-start gap-2 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
+          <p role="alert" className="m-4 flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             {error}
           </p>
@@ -237,7 +237,7 @@ export function PipelinePanel({
                 </p>
                 <div className="space-y-2">
                   {unattached.map((record) => (
-                    <div key={record.id} className="rounded-[10px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] py-2 pl-3 pr-1.5">
+                    <div key={record.id} className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] py-2 pl-3 pr-1.5">
                       {record.kind === "interview"
                         ? <InterviewLine interview={record as Interview} onEdit={openEdit} onDelete={setPendingDelete} />
                         : <PlacementLine placement={record as Placement} onEdit={openEdit} onDelete={setPendingDelete} />}
@@ -321,7 +321,7 @@ function downloadInterviewIcs(interview: Interview) {
 }
 
 const addLinkCls =
-  "inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
+  "inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-control)] px-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
 
 /* ── Rows ────────────────────────────────────────────────────────────────── */
 
@@ -348,7 +348,7 @@ function RowActions({
       <button
         type="button"
         onClick={() => onEdit(record)}
-        className="h-8 rounded-[8px] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        className="h-8 rounded-[var(--adm-radius-control)] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         Edit
       </button>
@@ -357,7 +357,7 @@ function RowActions({
         onClick={() => onDelete(record)}
         aria-label={`Delete ${KIND_META[record.kind].label.toLowerCase()}`}
         title="Delete"
-        className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+        className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -486,7 +486,7 @@ function InterviewLine({
           onClick={() => downloadInterviewIcs(interview)}
           aria-label="Download invite (.ics)"
           title="Download invite (.ics)"
-          className="-my-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+          className="-my-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
         >
           <IconDownload className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -551,6 +551,73 @@ interface DrawerDefaults {
   payRate?: number;
 }
 
+interface EditorValues {
+  clientId: string;
+  vendorId: string;
+  submittedTo: string;
+  sentAt: string;
+  subStatus: Submission["status"];
+  rate: string;
+  rejectionReason: string;
+  round: string;
+  mode: Interview["mode"];
+  scheduledAt: string;
+  durationMinutes: string;
+  location: string;
+  panel: string;
+  ivStatus: Interview["status"];
+  outcome: NonNullable<Interview["outcome"]>;
+  feedback: string;
+  startAt: string;
+  endAt: string;
+  billRate: string;
+  payRate: string;
+  plStatus: Placement["status"];
+  poNumber: string;
+  rateUnit: RateUnit;
+  notes: string;
+}
+
+const str = (n: number | null | undefined) => (n != null ? String(n) : "");
+
+function initialValues(
+  record: PipelineRecord | null,
+  parent: Submission | null,
+  defaults: DrawerDefaults,
+): EditorValues {
+  const sub = record?.kind === "submission" ? record : null;
+  const iv = record?.kind === "interview" ? record : null;
+  const pl = record?.kind === "placement" ? record : null;
+  const now = new Date().toISOString();
+  return {
+    clientId: sub?.clientId ?? defaults.clientId ?? "",
+    vendorId: sub?.vendorId ?? defaults.vendorId ?? "",
+    submittedTo: sub?.submittedTo ?? "",
+    sentAt: toLocalInput(sub?.occurredAt || now, true),
+    subStatus: sub?.status ?? "sent",
+    rate: sub?.rate != null ? String(sub.rate) : str(defaults.billRate),
+    rejectionReason: sub?.rejectionReason ?? "",
+    round: String(iv?.round ?? 1),
+    mode: iv?.mode ?? "video",
+    scheduledAt: toLocalInput(iv?.scheduledAt || now),
+    durationMinutes: String(iv?.durationMinutes ?? 45),
+    location: iv?.location ?? "",
+    panel: (iv?.panel || []).join(", "),
+    ivStatus: iv?.status ?? "scheduled",
+    outcome: iv?.outcome ?? "pending",
+    feedback: iv?.feedback ?? "",
+    startAt: toLocalInput(pl?.startAt || now, true),
+    endAt: toLocalInput(pl?.endAt, true),
+    billRate: pl?.billRate != null ? String(pl.billRate)
+      : parent?.rate != null ? String(parent.rate) : str(defaults.billRate),
+    payRate: pl?.payRate != null ? String(pl.payRate) : str(defaults.payRate),
+    plStatus: pl?.status ?? "active",
+    poNumber: pl?.poNumber ?? "",
+    rateUnit: (sub?.rateUnit || pl?.rateUnit || parent?.rateUnit || "hourly") as RateUnit,
+    notes: record?.notes ?? "",
+  };
+}
+
 function PipelineRecordDrawer({
   open, kind, record, parentSubmission, applicationId, candidateName, jobId, jobTitle, defaults,
   onClose, onSaved,
@@ -575,48 +642,22 @@ function PipelineRecordDrawer({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Submission fields
-  const sub = record?.kind === "submission" ? record : null;
-  const [clientId, setClientId] = useState(sub?.clientId ?? defaults.clientId ?? "");
-  const [vendorId, setVendorId] = useState(sub?.vendorId ?? defaults.vendorId ?? "");
-  const [submittedTo, setSubmittedTo] = useState(sub?.submittedTo ?? "");
-  const [sentAt, setSentAt] = useState(toLocalInput(sub?.occurredAt || new Date().toISOString(), true));
-  const [subStatus, setSubStatus] = useState(sub?.status ?? "sent");
-  const [rate, setRate] = useState(sub?.rate != null ? String(sub.rate) : defaults.billRate != null ? String(defaults.billRate) : "");
-  const [rejectionReason, setRejectionReason] = useState(sub?.rejectionReason ?? "");
+  const [initial] = useState(() => initialValues(record, parentSubmission, defaults));
+  const [values, setValues] = useState(initial);
+  const set = <K extends keyof EditorValues>(key: K, value: EditorValues[K]) =>
+    setValues((prev) => ({ ...prev, [key]: value }));
+  const {
+    clientId, vendorId, submittedTo, sentAt, subStatus, rate, rejectionReason,
+    round, mode, scheduledAt, durationMinutes, location, panel, ivStatus, outcome, feedback,
+    startAt, endAt, billRate, payRate, plStatus, poNumber, rateUnit, notes,
+  } = values;
 
-  // Interview fields
-  const iv = record?.kind === "interview" ? record : null;
-  const [round, setRound] = useState(String(iv?.round ?? 1));
-  const [mode, setMode] = useState(iv?.mode ?? "video");
-  const [scheduledAt, setScheduledAt] = useState(toLocalInput(iv?.scheduledAt || new Date().toISOString()));
-  const [durationMinutes, setDurationMinutes] = useState(String(iv?.durationMinutes ?? 45));
-  const [location, setLocation] = useState(iv?.location ?? "");
-  const [panel, setPanel] = useState((iv?.panel || []).join(", "));
-  const [ivStatus, setIvStatus] = useState(iv?.status ?? "scheduled");
-  const [outcome, setOutcome] = useState(iv?.outcome ?? "pending");
-  const [feedback, setFeedback] = useState(iv?.feedback ?? "");
-
-  // Placement fields
-  const pl = record?.kind === "placement" ? record : null;
-  const [startAt, setStartAt] = useState(toLocalInput(pl?.startAt || new Date().toISOString(), true));
-  const [endAt, setEndAt] = useState(toLocalInput(pl?.endAt, true));
-  const [billRate, setBillRate] = useState(
-    pl?.billRate != null ? String(pl.billRate)
-      : parentSubmission?.rate != null ? String(parentSubmission.rate)
-        : defaults.billRate != null ? String(defaults.billRate) : "",
-  );
-  const [payRate, setPayRate] = useState(
-    pl?.payRate != null ? String(pl.payRate) : defaults.payRate != null ? String(defaults.payRate) : "",
-  );
-  const [plStatus, setPlStatus] = useState(pl?.status ?? "active");
-  const [poNumber, setPoNumber] = useState(pl?.poNumber ?? "");
-
-  // Shared
-  const [rateUnit, setRateUnit] = useState<RateUnit>(
-    (sub?.rateUnit || pl?.rateUnit || parentSubmission?.rateUnit || "hourly") as RateUnit,
-  );
-  const [notes, setNotes] = useState(record?.notes ?? "");
+  const dirty = JSON.stringify(values) !== JSON.stringify(initial);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const requestClose = () => {
+    if (dirty && !saving) setConfirmDiscard(true);
+    else onClose();
+  };
 
   // Client and vendor pickers. A failure here is not fatal: the name fields fall
   // back to free text so a submission can still be recorded.
@@ -721,8 +762,13 @@ function PipelineRecordDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <SheetContent side="right" showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="w-full sm:max-w-[520px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
+    <Sheet open={open} onOpenChange={(v) => { if (!v) requestClose(); }}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        overlayClassName="bg-[var(--adm-scrim)]"
+        onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }}
+        className="w-full sm:max-w-[520px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 sm:px-5">
           <div className="flex min-w-0 items-start gap-2.5">
             <meta.icon className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
@@ -737,7 +783,7 @@ function PipelineRecordDrawer({
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]">
+          <button type="button" onClick={requestClose} aria-label="Close" className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -745,7 +791,7 @@ function PipelineRecordDrawer({
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
             {error && (
-              <p role="alert" className="flex items-start gap-2 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+              <p role="alert" className="flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
                 <IconWarning className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 {error}
               </p>
@@ -754,29 +800,29 @@ function PipelineRecordDrawer({
             {kind === "submission" && (
               <>
                 <Field label="Client" htmlFor="pl-client" helper={clients.length ? undefined : "No clients on file yet, add them under Clients."}>
-                  <FormSelect id="pl-client" value={clientId} onChange={(e) => setClientId(e.target.value)}>
+                  <FormSelect id="pl-client" value={clientId} onChange={(e) => set("clientId", e.target.value)}>
                     <option value="">{defaults.clientName ? `${defaults.clientName} (from the job)` : "Select…"}</option>
                     {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </FormSelect>
                 </Field>
 
                 <Field label="Through vendor" htmlFor="pl-vendor" helper="Leave blank when submitting to the client directly.">
-                  <FormSelect id="pl-vendor" value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
+                  <FormSelect id="pl-vendor" value={vendorId} onChange={(e) => set("vendorId", e.target.value)}>
                     <option value="">{defaults.vendorName ? `${defaults.vendorName} (from the job)` : "Direct"}</option>
                     {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </FormSelect>
                 </Field>
 
                 <Field label="Submitted to" htmlFor="pl-to" helper="The person to chase for a response.">
-                  <FormInput id="pl-to" value={submittedTo} onChange={(e) => setSubmittedTo(e.target.value)} placeholder="name or email" />
+                  <FormInput id="pl-to" value={submittedTo} onChange={(e) => set("submittedTo", e.target.value)} placeholder="name or email" />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Date sent" htmlFor="pl-sent">
-                    <FormInput id="pl-sent" type="date" value={sentAt} onChange={(e) => setSentAt(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-sent" type="date" value={sentAt} onChange={(e) => set("sentAt", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Status" htmlFor="pl-status">
-                    <FormSelect id="pl-status" value={subStatus} onChange={(e) => setSubStatus(e.target.value as Submission["status"])}>
+                    <FormSelect id="pl-status" value={subStatus} onChange={(e) => set("subStatus", e.target.value as Submission["status"])}>
                       {SUBMISSION_STATUS_ORDER.map((s) => (
                         <option key={s} value={s}>{SUBMISSION_STATUS_LABELS[s]}</option>
                       ))}
@@ -786,10 +832,10 @@ function PipelineRecordDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Rate submitted" htmlFor="pl-rate">
-                    <FormInput id="pl-rate" type="number" step="0.01" min="0" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="85.00" className="tabular-nums" />
+                    <FormInput id="pl-rate" type="number" step="0.01" min="0" value={rate} onChange={(e) => set("rate", e.target.value)} placeholder="85.00" className="tabular-nums" />
                   </Field>
                   <Field label="Per" htmlFor="pl-unit">
-                    <FormSelect id="pl-unit" value={rateUnit} onChange={(e) => setRateUnit(e.target.value as RateUnit)}>
+                    <FormSelect id="pl-unit" value={rateUnit} onChange={(e) => set("rateUnit", e.target.value as RateUnit)}>
                       {RATE_UNITS.map((u) => <option key={u} value={u}>{RATE_UNIT_LABELS[u]}</option>)}
                     </FormSelect>
                   </Field>
@@ -797,7 +843,7 @@ function PipelineRecordDrawer({
 
                 {subStatus === "rejected" && (
                   <Field label="Rejection reason" htmlFor="pl-reject">
-                    <FormInput id="pl-reject" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="rate too high, missing skill, position filled…" />
+                    <FormInput id="pl-reject" value={rejectionReason} onChange={(e) => set("rejectionReason", e.target.value)} placeholder="rate too high, missing skill, position filled…" />
                   </Field>
                 )}
               </>
@@ -807,10 +853,10 @@ function PipelineRecordDrawer({
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Round" htmlFor="pl-round">
-                    <FormInput id="pl-round" type="number" min="1" value={round} onChange={(e) => setRound(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-round" type="number" min="1" value={round} onChange={(e) => set("round", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Mode" htmlFor="pl-mode">
-                    <FormSelect id="pl-mode" value={mode} onChange={(e) => setMode(e.target.value as Interview["mode"])}>
+                    <FormSelect id="pl-mode" value={mode} onChange={(e) => set("mode", e.target.value as Interview["mode"])}>
                       {(Object.keys(INTERVIEW_MODE_LABELS) as Interview["mode"][]).map((m) => (
                         <option key={m} value={m}>{INTERVIEW_MODE_LABELS[m]}</option>
                       ))}
@@ -820,31 +866,31 @@ function PipelineRecordDrawer({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="When" htmlFor="pl-when">
-                    <FormInput id="pl-when" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-when" type="datetime-local" value={scheduledAt} onChange={(e) => set("scheduledAt", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Duration (min)" htmlFor="pl-duration">
-                    <FormInput id="pl-duration" type="number" min="0" step="15" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-duration" type="number" min="0" step="15" value={durationMinutes} onChange={(e) => set("durationMinutes", e.target.value)} className="tabular-nums" />
                   </Field>
                 </div>
 
                 <Field label={mode === "onsite" ? "Address" : "Meeting link"} htmlFor="pl-loc">
-                  <FormInput id="pl-loc" value={location} onChange={(e) => setLocation(e.target.value)} placeholder={mode === "onsite" ? "office address" : "https://…"} />
+                  <FormInput id="pl-loc" value={location} onChange={(e) => set("location", e.target.value)} placeholder={mode === "onsite" ? "office address" : "https://…"} />
                 </Field>
 
                 <Field label="Panel" htmlFor="pl-panel" helper="Comma separated.">
-                  <FormInput id="pl-panel" value={panel} onChange={(e) => setPanel(e.target.value)} placeholder="Alex Reed, Dana Patel" />
+                  <FormInput id="pl-panel" value={panel} onChange={(e) => set("panel", e.target.value)} placeholder="Alex Reed, Dana Patel" />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Status" htmlFor="pl-ivstatus">
-                    <FormSelect id="pl-ivstatus" value={ivStatus} onChange={(e) => setIvStatus(e.target.value as Interview["status"])}>
+                    <FormSelect id="pl-ivstatus" value={ivStatus} onChange={(e) => set("ivStatus", e.target.value as Interview["status"])}>
                       {INTERVIEW_STATUS_ORDER.map((s) => (
                         <option key={s} value={s}>{INTERVIEW_STATUS_LABELS[s]}</option>
                       ))}
                     </FormSelect>
                   </Field>
                   <Field label="Outcome" htmlFor="pl-outcome">
-                    <FormSelect id="pl-outcome" value={outcome} onChange={(e) => setOutcome(e.target.value as NonNullable<Interview["outcome"]>)}>
+                    <FormSelect id="pl-outcome" value={outcome} onChange={(e) => set("outcome", e.target.value as NonNullable<Interview["outcome"]>)}>
                       {(Object.keys(INTERVIEW_OUTCOME_LABELS) as NonNullable<Interview["outcome"]>[]).map((o) => (
                         <option key={o} value={o}>{INTERVIEW_OUTCOME_LABELS[o]}</option>
                       ))}
@@ -853,7 +899,7 @@ function PipelineRecordDrawer({
                 </div>
 
                 <Field label="Feedback" htmlFor="pl-feedback">
-                  <FormTextarea id="pl-feedback" rows={4} value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="What the panel said, and what happens next…" />
+                  <FormTextarea id="pl-feedback" rows={4} value={feedback} onChange={(e) => set("feedback", e.target.value)} placeholder="What the panel said, and what happens next…" />
                 </Field>
               </>
             )}
@@ -862,22 +908,22 @@ function PipelineRecordDrawer({
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Start date" htmlFor="pl-start">
-                    <FormInput id="pl-start" type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-start" type="date" value={startAt} onChange={(e) => set("startAt", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="End date" htmlFor="pl-end" helper="Blank for open ended.">
-                    <FormInput id="pl-end" type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-end" type="date" value={endAt} onChange={(e) => set("endAt", e.target.value)} className="tabular-nums" />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <Field label="Bill rate" htmlFor="pl-bill">
-                    <FormInput id="pl-bill" type="number" step="0.01" min="0" value={billRate} onChange={(e) => setBillRate(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-bill" type="number" step="0.01" min="0" value={billRate} onChange={(e) => set("billRate", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Pay rate" htmlFor="pl-pay">
-                    <FormInput id="pl-pay" type="number" step="0.01" min="0" value={payRate} onChange={(e) => setPayRate(e.target.value)} className="tabular-nums" />
+                    <FormInput id="pl-pay" type="number" step="0.01" min="0" value={payRate} onChange={(e) => set("payRate", e.target.value)} className="tabular-nums" />
                   </Field>
                   <Field label="Per" htmlFor="pl-plunit" className="col-span-2 sm:col-span-1">
-                    <FormSelect id="pl-plunit" value={rateUnit} onChange={(e) => setRateUnit(e.target.value as RateUnit)}>
+                    <FormSelect id="pl-plunit" value={rateUnit} onChange={(e) => set("rateUnit", e.target.value as RateUnit)}>
                       {RATE_UNITS.map((u) => <option key={u} value={u}>{RATE_UNIT_LABELS[u]}</option>)}
                     </FormSelect>
                   </Field>
@@ -887,7 +933,7 @@ function PipelineRecordDrawer({
                     is worth doing should not wait until after saving. */}
                 {livePreview && (
                   <p className={cn(
-                    "rounded-[10px] px-3 py-2.5 text-[13px] font-medium tabular-nums",
+                    "rounded-[var(--adm-radius-card)] px-3 py-2.5 text-[13px] font-medium tabular-nums",
                     livePreview.pct >= 0
                       ? "bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
                       : "bg-[var(--adm-danger-soft)] text-[var(--adm-danger-ink)]",
@@ -899,32 +945,42 @@ function PipelineRecordDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Status" htmlFor="pl-plstatus">
-                    <FormSelect id="pl-plstatus" value={plStatus} onChange={(e) => setPlStatus(e.target.value as Placement["status"])}>
+                    <FormSelect id="pl-plstatus" value={plStatus} onChange={(e) => set("plStatus", e.target.value as Placement["status"])}>
                       {PLACEMENT_STATUS_ORDER.map((s) => (
                         <option key={s} value={s}>{PLACEMENT_STATUS_LABELS[s]}</option>
                       ))}
                     </FormSelect>
                   </Field>
                   <Field label="PO number" htmlFor="pl-po">
-                    <FormInput id="pl-po" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="optional" />
+                    <FormInput id="pl-po" value={poNumber} onChange={(e) => set("poNumber", e.target.value)} placeholder="optional" />
                   </Field>
                 </div>
               </>
             )}
 
             <Field label="Notes" htmlFor="pl-notes" helper="Visible to staff only.">
-              <FormTextarea id="pl-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <FormTextarea id="pl-notes" rows={3} value={notes} onChange={(e) => set("notes", e.target.value)} />
             </Field>
           </div>
 
           <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:px-5">
-            <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
+            <WorkspaceButton onClick={requestClose}>Cancel</WorkspaceButton>
             <WorkspaceButton type="submit" variant="primary" disabled={saving}>
               {saving ? <Loader2 className="animate-spin" /> : null}
               {isEdit ? "Save changes" : `Record ${meta.label.toLowerCase()}`}
             </WorkspaceButton>
           </div>
         </form>
+
+        <ConfirmDialog
+          open={confirmDiscard}
+          title="Discard changes?"
+          body={`Your ${meta.label.toLowerCase()} has not been saved.`}
+          confirmLabel="Discard"
+          cancelLabel="Keep editing"
+          onConfirm={() => { setConfirmDiscard(false); onClose(); }}
+          onCancel={() => setConfirmDiscard(false)}
+        />
       </SheetContent>
     </Sheet>
   );

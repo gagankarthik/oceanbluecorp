@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Check, Loader2, Plus, Search, X } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
@@ -9,6 +9,7 @@ import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
 import { IconUserCheck } from "@/components/admin/icons";
 import { cn } from "@/lib/utils";
+import { refreshJobs, useUserDirectory } from "@/hooks/use-console-data";
 
 /**
  * Who is working this requisition, with in-place assignment.
@@ -39,8 +40,6 @@ export function JobTeamCard({
   onJobChange: (job: Job) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [staff, setStaff] = useState<StaffUser[]>([]);
-  const [loadingStaff, setLoadingStaff] = useState(false);
   const [search, setSearch] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -51,36 +50,27 @@ export function JobTeamCard({
   const emails = job.assignedToEmails || [];
   const memberCount = (job.recruitmentManagerName ? 1 : 0) + names.length;
 
-  // A ref, not state, latches "fetch started": as an effect keyed on loading
-  // state this raced its own cleanup and stuck on "Loading…". Cleared on
-  // failure so reopening retries.
-  const staffRequested = useRef(false);
+  // Roster loads on first open, not with the page; shared with every other
+  // directory reader. Reopening after a failure retries.
+  const [wantStaff, setWantStaff] = useState(false);
+  const directory = useUserDirectory(wantStaff);
+  const loadingStaff = wantStaff && directory.isLoading;
+  const staff = useMemo(() => {
+    // Only roles that actually work a requisition; media never appears here.
+    const recruiting = RECRUITING_ROLES.map(String);
+    return (directory.users || [])
+      .filter((u): u is StaffUser => !!u.role && recruiting.includes(u.role))
+      .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
+  }, [directory.users]);
 
-  const loadStaff = useCallback(async () => {
-    if (staffRequested.current) return;
-    staffRequested.current = true;
-    setLoadingStaff(true);
-    try {
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not load the team list");
-      // Only roles that actually work a requisition. Media holds an account
-      // here but never appears as a recruiter.
-      const recruiting = RECRUITING_ROLES.map(String);
-      setStaff(
-        (data.users || [])
-          .filter((u: StaffUser) => recruiting.includes(u.role))
-          .sort((a: StaffUser, b: StaffUser) =>
-            (a.name || a.email).localeCompare(b.name || b.email),
-          ),
-      );
-    } catch (err) {
-      staffRequested.current = false;
-      toast.error(err instanceof Error ? err.message : "Could not load the team list");
-    } finally {
-      setLoadingStaff(false);
-    }
-  }, []);
+  useEffect(() => {
+    if (directory.error) toast.error("Couldn't load the team list. Try again.");
+  }, [directory.error]);
+
+  const loadStaff = useCallback(() => {
+    if (!wantStaff) setWantStaff(true);
+    else if (directory.error) void directory.reload();
+  }, [wantStaff, directory]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -124,7 +114,7 @@ export function JobTeamCard({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Could not save the team");
+          throw new Error(data.error || "Couldn't save the team. Try again.");
         }
         onJobChange({
           ...job,
@@ -132,9 +122,10 @@ export function JobTeamCard({
           assignedToNames: next.names,
           assignedToEmails: next.emails,
         });
+        void refreshJobs();
         toast.success(message);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Could not save the team");
+        toast.error(err instanceof Error ? err.message : "Couldn't save the team. Try again.");
       } finally {
         setSavingId(null);
       }

@@ -17,7 +17,8 @@ import { isAcceptingApplications } from "@/lib/job-status";
 import { formatSalary } from "@/lib/salary";
 import { SideSheet } from "@/components/site/side-sheet";
 import { toBoardJob, type BoardJob } from "./board-job";
-import { useAuth } from "@/lib/auth";
+import { useStaffSession } from "@/components/site/use-staff-session";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const ALL_DEPTS = "All Departments";
 const ALL_TYPES = "All Types";
@@ -73,7 +74,7 @@ type Facet = "dept" | "type" | "loc" | "remote";
  * from the API itself, with its loading and error states.
  */
 export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | null }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useStaffSession();
   const [jobs, setJobs] = useState<BoardJob[]>(initialJobs ?? []);
   const [loading, setLoading] = useState(initialJobs === null);
   const [error, setError] = useState<string | null>(null);
@@ -106,18 +107,20 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
   }, []);
 
   // Written back with replaceState: Back from a job lands on the same filtered
-  // list, and the filtering itself adds no history entries.
+  // list, and the filtering itself adds no history entries. Query is debounced
+  // so typing doesn't hit history on every keystroke.
+  const urlQuery = useDebouncedValue(query, 300);
   useEffect(() => {
     if (!urlRead) return;
     const params = new URLSearchParams();
-    if (query) params.set("q", query);
+    if (urlQuery) params.set("q", urlQuery);
     if (dept !== ALL_DEPTS) params.set("department", dept);
     if (type !== ALL_TYPES) params.set("type", type);
     if (location !== ALL_LOCS) params.set("location", location);
     if (remoteOnly) params.set("remote", "1");
     const qs = params.toString();
     window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [urlRead, query, dept, type, location, remoteOnly]);
+  }, [urlRead, urlQuery, dept, type, location, remoteOnly]);
 
   useEffect(() => {
     if (initialJobs !== null) return;

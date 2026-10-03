@@ -21,6 +21,7 @@ import { FormInput } from "@/components/admin/forms/primitives";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminDialog } from "@/components/admin/admin-dialog";
 import { AdminRowsSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Empty as Blank } from "@/components/admin/list-panel";
@@ -80,7 +81,7 @@ function fmtSize(bytes: number) {
 /** Format mark: a small text chip, not a tinted tile. */
 function FileTypeTag({ type }: { type: string }) {
   return (
-    <span className="inline-flex h-[22px] flex-none items-center rounded-[6px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">
+    <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">
       {formatLabel(type)}
     </span>
   );
@@ -105,7 +106,7 @@ function IconAction({
       title={label}
       aria-label={label}
       className={cn(
-        "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors",
+        "grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors",
         danger
           ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -478,7 +479,7 @@ export default function ResumeBankPage() {
         <span className="inline-flex max-w-full items-center gap-2 align-middle">
           <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
           {isDuplicate(r) && (
-            <span className="inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
+            <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
               Duplicate
             </span>
           )}
@@ -559,7 +560,7 @@ export default function ResumeBankPage() {
     <div
       className={cn(
         "flex flex-col pb-6",
-        dragActive && "rounded-[8px] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
+        dragActive && "rounded-[var(--adm-radius-card)] outline outline-2 outline-offset-4 outline-[var(--adm-accent)]",
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -570,7 +571,7 @@ export default function ResumeBankPage() {
 
       {dragActive && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[var(--adm-scrim)] p-4">
-          <div className="w-full max-w-sm rounded-[8px] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
+          <div className="w-full max-w-sm rounded-[var(--adm-radius-card)] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
             <IconUpload className="mx-auto mb-3 h-6 w-6 text-[var(--adm-accent)]" strokeWidth={1.75} />
             <p className="text-[16px] font-semibold text-[var(--adm-ink)]">Drop resumes to upload</p>
             <p className="mt-1 text-[13px] text-[var(--adm-ink-mute)]">PDF or Word &middot; up to 5MB each</p>
@@ -621,7 +622,7 @@ export default function ResumeBankPage() {
                   type="button"
                   onClick={() => setPanelOpen(false)}
                   aria-label="Close upload queue"
-                  className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                  className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -841,7 +842,7 @@ export default function ResumeBankPage() {
                 <span className="flex min-w-0 items-center gap-1.5">
                   <FileTypeTag type={r.fileType} />
                   {isDuplicate(r) && (
-                    <span className="inline-flex h-[22px] items-center rounded-[6px] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
+                    <span className="inline-flex h-[22px] items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]">
                       Duplicate
                     </span>
                   )}
@@ -855,7 +856,7 @@ export default function ResumeBankPage() {
                 <button
                   type="button"
                   onClick={() => handlePreview(r)}
-                  className="block w-full truncate rounded-[6px] text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                  className="block w-full truncate rounded-[var(--adm-radius-control)] text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                   title={r.fileName}
                 >
                   {r.fileName}
@@ -890,33 +891,23 @@ export default function ResumeBankPage() {
         onCancel={() => setDeleteId(null)}
       />
 
-      {previewUrl && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={previewName || "Resume preview"}
-          className="fixed inset-0 z-50 flex flex-col bg-[var(--adm-scrim)] sm:p-6"
-        >
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)] sm:rounded-[8px]">
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line)] px-4 py-3">
-              <p className="min-w-0 truncate text-[15px] font-semibold text-[var(--adm-ink)]">{previewName}</p>
-              <div className="flex flex-none items-center gap-2">
-                <WorkspaceButton asChild>
-                  <a href={previewUrl} download={previewName || "resume"}>
-                    <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Download</span>
-                  </a>
-                </WorkspaceButton>
-                <IconAction label="Close preview" onClick={() => { setPreviewUrl(null); setPreviewName(null); }}>
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </IconAction>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <iframe src={previewUrl} className="h-full w-full border-0" title={previewName || "Resume preview"} />
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminDialog
+        open={!!previewUrl}
+        onOpenChange={(next) => { if (!next) { setPreviewUrl(null); setPreviewName(null); } }}
+        title={<span className="block truncate">{previewName || "Resume preview"}</span>}
+        size="xl"
+        className="h-[calc(100dvh-2rem)] max-w-[min(1200px,calc(100vw-2rem))] sm:h-[calc(100dvh-3rem)]"
+        bodyClassName="flex p-0 sm:p-0 overflow-hidden"
+        actions={previewUrl && (
+          <WorkspaceButton asChild>
+            <a href={previewUrl} download={previewName || "resume"}>
+              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Download</span>
+            </a>
+          </WorkspaceButton>
+        )}
+      >
+        {previewUrl && <iframe src={previewUrl} className="h-full w-full flex-1 border-0" title={previewName || "Resume preview"} />}
+      </AdminDialog>
     </div>
   );
 }
@@ -936,7 +927,7 @@ function Notice({
   return (
     <div
       className={cn(
-        "mb-3 flex flex-col gap-3 rounded-[12px] border px-4 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between",
+        "mb-3 flex flex-col gap-3 rounded-[var(--adm-radius-card)] border px-4 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between",
         tone === "accent" && "border-[var(--adm-line)] bg-[var(--adm-accent-tint)]",
         tone === "warning" && "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]",
         tone === "neutral" && "border-[var(--adm-line)] bg-[var(--adm-surface)]",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Loader2, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminDialog } from "@/components/admin/admin-dialog";
 import {
   IconKey,
   IconTrash,
@@ -67,7 +68,7 @@ function AccessLevelChoice({
           <label
             key={level.id}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-[12px] border p-3 transition-colors duration-150",
+              "flex cursor-pointer items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 transition-colors duration-150",
               selected
                 ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
                 : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
@@ -277,7 +278,7 @@ export default function ApiKeysPage() {
 
   // ── grid columns ──────────────────────────────────────────────────────────
 
-  const codeChip = "rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]";
+  const codeChip = "rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]";
 
   const columns: DataTableColumn<ApiKeyRecord>[] = [
     {
@@ -312,7 +313,7 @@ export default function ApiKeysPage() {
             disabled={scopingId === k.id}
             onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
             onClick={(e) => e.stopPropagation()}
-            className="h-8 cursor-pointer appearance-none rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-[13px] font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-[13px] font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
           >
             {API_ACCESS_LEVELS.map((level) => (
               <option key={level.id} value={level.id}>{level.label}</option>
@@ -377,7 +378,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -394,7 +395,7 @@ export default function ApiKeysPage() {
             disabled={deletingId === k.id}
             aria-label={`Revoke ${k.name}`}
             title="Revoke key permanently"
-            className="grid h-9 w-9 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-50"
+            className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-50"
           >
             {deletingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -434,7 +435,7 @@ export default function ApiKeysPage() {
       {newKey && (
         <div
           role="status"
-          className="rounded-[12px] border border-[color-mix(in_srgb,var(--adm-warning)_35%,transparent)] bg-[var(--adm-warning-soft)] p-4"
+          className="rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-warning)_35%,transparent)] bg-[var(--adm-warning-soft)] p-4"
         >
           <div className="flex items-start gap-3">
             <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-warning-ink)]" />
@@ -445,7 +446,7 @@ export default function ApiKeysPage() {
                 <span className="font-medium text-[var(--adm-ink)]">{accessLevelMeta(newKey.accessLevel).label}</span>
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-[13px] text-[var(--adm-ink)]">
+                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-[13px] text-[var(--adm-ink)]">
                   <span className="truncate">
                     {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
                   </span>
@@ -456,7 +457,7 @@ export default function ApiKeysPage() {
                     onClick={() => setShowKey((v) => !v)}
                     aria-label={showKey ? "Hide key" : "Show key"}
                     title={showKey ? "Hide" : "Reveal"}
-                    className="grid h-9 w-9 place-items-center rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]"
+                    className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]"
                   >
                     {showKey ? <IconEyeOff className="h-4 w-4" aria-hidden="true" /> : <IconEye className="h-4 w-4" aria-hidden="true" />}
                   </button>
@@ -471,7 +472,7 @@ export default function ApiKeysPage() {
               type="button"
               onClick={() => setNewKey(null)}
               aria-label="Dismiss"
-              className="-mr-1 -mt-1 grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-warning-ink)] transition-colors duration-150 hover:bg-[var(--adm-warning-soft)]"
+              className="-mr-1 -mt-1 grid h-9 w-9 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-warning-ink)] transition-colors duration-150 hover:bg-[var(--adm-warning-soft)]"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -482,7 +483,7 @@ export default function ApiKeysPage() {
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-2.5 rounded-[12px] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-[13.5px] text-[var(--adm-danger-ink)]"
+          className="flex items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-[13.5px] text-[var(--adm-danger-ink)]"
         >
           <IconError className="h-4 w-4 flex-none" />
           <span className="min-w-0 flex-1">{error}</span>
@@ -490,7 +491,7 @@ export default function ApiKeysPage() {
             type="button"
             onClick={() => setError(null)}
             aria-label="Dismiss error"
-            className="grid h-9 w-9 flex-none place-items-center rounded-[8px] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)]"
+            className="grid h-9 w-9 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -527,7 +528,7 @@ export default function ApiKeysPage() {
             <code className={codeChip}>X-API-Key: &lt;key&gt;</code>{" "}
             header.
           </p>
-          <ul className="divide-y divide-[var(--adm-line-soft)] overflow-hidden rounded-[12px] border border-[var(--adm-line)]">
+          <ul className="divide-y divide-[var(--adm-line-soft)] overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)]">
             {[
               { route: "GET /api/v1/jobs", scope: "jobs:read" },
               { route: "GET /api/v1/jobs/:id", scope: "jobs:read" },
@@ -556,74 +557,53 @@ export default function ApiKeysPage() {
         </div>
       </AdminCard>
 
-      {showCreateForm && (
-        <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--adm-scrim)] p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="apikey-form-title"
-        >
-          {/* Bounded, middle scrolls: the access picker outgrows a laptop viewport. */}
-          <form
-            onSubmit={handleCreate}
-            onBlur={revalidate}
-            noValidate
-            className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-lg)]"
-          >
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
-              <h2 id="apikey-form-title" className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">New API key</h2>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                aria-label="Close"
-                className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-              >
-                <X className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
-              <FormErrorBanner message={createError} onDismiss={() => setCreateError(null)} />
-              <Field label="Platform name" required htmlFor="apikey-name" error={errors.name}>
-                <FormInput
-                  id="apikey-name"
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Indeed, LinkedIn, Internal Portal"
-                  required
-                  autoFocus
-                  {...invalidProps("name")}
-                />
-              </Field>
-              <Field label="Description" hint="Optional" htmlFor="apikey-desc" error={errors.desc}>
-                <FormInput
-                  id="apikey-desc"
-                  type="text"
-                  value={formDesc}
-                  onChange={(e) => setFormDesc(e.target.value)}
-                  placeholder="e.g. Used for job syndication feed"
-                  {...invalidProps("desc")}
-                />
-              </Field>
-              <div>
-                <p id="apikey-access-label" className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Access</p>
-                <AccessLevelChoice value={formAccess} onChange={setFormAccess} disabled={creating} />
-              </div>
-            </div>
-
-            <div className="flex flex-none flex-col-reverse gap-2 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
-              <WorkspaceButton onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
-                Cancel
-              </WorkspaceButton>
-              <WorkspaceButton type="submit" variant="primary" disabled={creating} className="w-full sm:w-auto">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconKey className="h-4 w-4" aria-hidden="true" />}
-                {creating ? "Generating…" : "Generate key"}
-              </WorkspaceButton>
-            </div>
-          </form>
-        </div>
-      )}
+      <AdminDialog
+        open={showCreateForm}
+        onOpenChange={setShowCreateForm}
+        title="New API key"
+        size="sm"
+        busy={creating}
+        footer={
+          <>
+            <WorkspaceButton onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
+              Cancel
+            </WorkspaceButton>
+            <WorkspaceButton type="submit" form="apikey-form" variant="primary" disabled={creating} className="w-full sm:w-auto">
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconKey className="h-4 w-4" aria-hidden="true" />}
+              {creating ? "Generating…" : "Generate key"}
+            </WorkspaceButton>
+          </>
+        }
+      >
+        <form id="apikey-form" onSubmit={handleCreate} onBlur={revalidate} noValidate className="space-y-5">
+          <FormErrorBanner message={createError} onDismiss={() => setCreateError(null)} />
+          <Field label="Platform name" required htmlFor="apikey-name" error={errors.name}>
+            <FormInput
+              id="apikey-name"
+              type="text"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              placeholder="e.g. Indeed, LinkedIn, Internal Portal"
+              required
+              {...invalidProps("name")}
+            />
+          </Field>
+          <Field label="Description" hint="Optional" htmlFor="apikey-desc" error={errors.desc}>
+            <FormInput
+              id="apikey-desc"
+              type="text"
+              value={formDesc}
+              onChange={(e) => setFormDesc(e.target.value)}
+              placeholder="e.g. Used for job syndication feed"
+              {...invalidProps("desc")}
+            />
+          </Field>
+          <div>
+            <p id="apikey-access-label" className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Access</p>
+            <AccessLevelChoice value={formAccess} onChange={setFormAccess} disabled={creating} />
+          </div>
+        </form>
+      </AdminDialog>
 
       <ConfirmDialog
         open={pendingRevoke !== null}

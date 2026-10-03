@@ -4,7 +4,7 @@
 // job. Two inputs: pick one of your jobs, or paste a job description. Results are
 // ranked by fit with matched/missing skills. Resumes are vectorized once at
 // upload; searching only embeds the job + re-ranks, so it's fast.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowRight, ChevronDown } from "lucide-react";
@@ -17,6 +17,7 @@ import { Field, FormSelect, FormTextarea } from "@/components/admin/forms/primit
 import { IconGroup, IconWarning } from "@/components/admin/icons";
 import { VerdictBadge, SkillChips, OriginBadge, fitScoreColor, type Verdict, type MatchOrigin } from "@/components/admin/fit-ui";
 import { cn } from "@/lib/utils";
+import { useJobSummaries } from "@/hooks/use-console-data";
 
 const MODES = [
   { value: "job", label: "From a job" },
@@ -61,7 +62,6 @@ export default function LeadSourcingPage() {
   }, []);
 
   const [mode, setMode] = useState<"job" | "paste">("job");
-  const [jobs, setJobs] = useState<JobOption[]>([]);
   const [jobId, setJobId] = useState("");
   const [jobText, setJobText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,25 +70,15 @@ export default function LeadSourcingPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  // Load jobs for the picker.
+  // Jobs for the picker, from the shared summary list.
+  const { jobs: allJobs, error: jobsError } = useJobSummaries();
+  const jobs: JobOption[] = useMemo(
+    () => (allJobs || []).map((j) => ({ id: j.id, title: j.title, department: j.department, status: j.status })),
+    [allJobs],
+  );
   useEffect(() => {
-    fetch("/api/jobs?fields=summary")
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((d) => {
-        if (d && Array.isArray(d.jobs)) {
-          setJobs(
-            d.jobs.map((j: JobOption) => ({ id: j.id, title: j.title, department: j.department, status: j.status })),
-          );
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to load jobs for lead sourcing:", err);
-        toast.error("Couldn't load your jobs. You can still paste a job description.");
-      });
-  }, []);
+    if (jobsError) toast.error("Couldn't load your jobs. You can still paste a job description.");
+  }, [jobsError]);
 
   const find = useCallback(async () => {
     if (mode === "job" && !jobId) return;
@@ -133,7 +123,7 @@ export default function LeadSourcingPage() {
       if (!res.ok || !data.downloadUrl) throw new Error();
       window.open(data.downloadUrl, "_blank");
     } catch {
-      setError("Could not open this resume file.");
+      setError("Couldn't open this resume file. Try again.");
     }
   };
 

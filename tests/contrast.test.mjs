@@ -5,8 +5,9 @@
 // copy of what the colour used to be. That is the whole point: contrast is a
 // property of the pair, and pairs break when one side moves.
 //
-// Admin is light-only (`data-theme="light"` is hardcoded), so only the light
-// block is asserted.
+// Admin is light-only; the dark blocks were deleted with the unreachable theme.
+// Every assertion carries a small margin so a pair sitting exactly on the AA
+// line (4.50) fails here rather than rounding into a pass.
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -17,29 +18,11 @@ const { ratioOn, contrastRatio, hexToRgb, AA } = load("src/lib/contrast.ts");
 const css = readFileSync("src/app/globals.css", "utf8");
 
 /**
- * The value a token actually resolves to in the shipped light theme.
- *
- * Two traps here, both of which made the first version of this test assert
- * against colours that never render:
- *
- * 1. Several admin tokens are defined TWICE in the light scope — an earlier
- *    block and a later retune (`--adm-canvas` is #f7f8fa then #fafafa). CSS
- *    takes the last, so taking the first tests a colour nobody sees.
- * 2. Everything from `@media (prefers-color-scheme: dark)` onward is the dark
- *    palette. Admin pins itself to light (`data-theme="light"`), so those
- *    definitions must be excluded entirely rather than being allowed to win as
- *    "the last one".
- *
- * Some tokens are also aliases (`--adm-accent: var(--hz-cobalt)`), so a var()
- * reference is followed to the primitive it points at.
+ * The value a token resolves to. Tokens are defined more than once (an early
+ * :root block, then the console retune), and CSS takes the last, so the last
+ * definition wins here too. var() aliases are followed to the primitive.
  */
-/* Cut at the at-rule itself, anchored to the start of a line. A plain
-   indexOf finds a COMMENT ten lines earlier that quotes the media query while
-   explaining the theming strategy, which silently truncates the light scope
-   and hides half the tokens from this test. */
-const DARK_AT_RULE = /^@media \(prefers-color-scheme: dark\)/m;
-const darkAt = css.search(DARK_AT_RULE);
-const LIGHT_CSS = darkAt === -1 ? css : css.slice(0, darkAt);
+const LIGHT_CSS = css;
 
 function rawToken(name, source = LIGHT_CSS) {
   const all = [...source.matchAll(new RegExp(`--${name}:\\s*([^;]+);`, "g"))];
@@ -54,6 +37,9 @@ function token(name) {
   if (alias) v = rawToken(alias[1].replace(/^--/, ""), css);
   return v;
 }
+
+const MARGIN = 0.05;
+const NEED = { text: AA.text + MARGIN, nonText: AA.nonText + MARGIN };
 
 const SURFACE = "#ffffff";
 const CANVAS = token("adm-canvas");
@@ -72,13 +58,18 @@ const WARNING = token("adm-warning");
 const SUCCESS_SOFT = token("adm-success-soft");
 const DANGER_SOFT = token("adm-danger-soft");
 const ACCENT_SOFT = token("adm-accent-soft");
+const WARNING_SOFT = token("adm-warning-soft");
+const ACCENT_STRONG = token("adm-accent-strong");
+const SURFACE_2 = token("adm-surface-2");
+const SURFACE_SUNKEN = token("adm-surface-sunken");
+const LINE_INPUT = token("adm-line-input");
 
 describe("body text", () => {
   test("the ink ramp carries on both surfaces", () => {
     for (const [name, ink] of [["ink", INK], ["ink-mute", INK_MUTE], ["ink-subtle", INK_SUBTLE]]) {
       for (const [sName, surf] of [["surface", SURFACE], ["canvas", CANVAS]]) {
         const r = ratioOn(ink, surf);
-        assert.ok(r >= AA.text, `--adm-${name} on ${sName} is ${r.toFixed(2)}:1, needs ${AA.text}`);
+        assert.ok(r >= NEED.text, `--adm-${name} on ${sName} is ${r.toFixed(2)}:1, needs ${NEED.text}`);
       }
     }
   });
@@ -101,7 +92,7 @@ describe("semantic colour as text", () => {
     for (const [name, c] of asText) {
       for (const [sName, surf] of [["surface", SURFACE], ["canvas", CANVAS]]) {
         const r = ratioOn(c, surf);
-        assert.ok(r >= AA.text, `--adm-${name} text on ${sName} is ${r.toFixed(2)}:1, needs ${AA.text}`);
+        assert.ok(r >= NEED.text, `--adm-${name} text on ${sName} is ${r.toFixed(2)}:1, needs ${NEED.text}`);
       }
     }
   });
@@ -112,10 +103,11 @@ describe("semantic colour as text", () => {
     for (const [name, c, soft] of [
       ["success-ink", SUCCESS_INK, SUCCESS_SOFT],
       ["danger-ink", DANGER_INK, DANGER_SOFT],
+      ["warning-ink", WARNING_INK, WARNING_SOFT],
       ["accent", ACCENT, ACCENT_SOFT],
     ]) {
       const r = ratioOn(c, soft);
-      assert.ok(r >= AA.text, `--adm-${name} on its soft tint is ${r.toFixed(2)}:1, needs ${AA.text}`);
+      assert.ok(r >= NEED.text, `--adm-${name} on its soft tint is ${r.toFixed(2)}:1, needs ${NEED.text}`);
     }
   });
 
@@ -124,7 +116,7 @@ describe("semantic colour as text", () => {
     // discernible against the surface behind it (1.4.11).
     for (const [name, c] of [["success", SUCCESS], ["warning", WARNING]]) {
       const r = ratioOn(c, SURFACE);
-      assert.ok(r >= AA.nonText, `--adm-${name} as a fill is ${r.toFixed(2)}:1, needs ${AA.nonText}`);
+      assert.ok(r >= NEED.nonText, `--adm-${name} as a fill is ${r.toFixed(2)}:1, needs ${NEED.nonText}`);
     }
   });
 });
@@ -144,10 +136,10 @@ describe("non-text: the account switch", () => {
     // grey reaches 3:1 on white) so it carries a border, and the border is what
     // this asserts.
     const onFill = ratioOn(SUCCESS, SURFACE);
-    assert.ok(onFill >= AA.nonText, `switch ON fill is ${onFill.toFixed(2)}:1, needs ${AA.nonText}`);
+    assert.ok(onFill >= NEED.nonText, `switch ON fill is ${onFill.toFixed(2)}:1, needs ${NEED.nonText}`);
 
     const offBorder = ratioOn(INK_SUBTLE, SURFACE);
-    assert.ok(offBorder >= AA.nonText, `switch OFF border is ${offBorder.toFixed(2)}:1, needs ${AA.nonText}`);
+    assert.ok(offBorder >= NEED.nonText, `switch OFF border is ${offBorder.toFixed(2)}:1, needs ${NEED.nonText}`);
   });
 });
 
@@ -173,8 +165,69 @@ describe("stage colours from theme.ts", () => {
       const alias = value.match(/^var\(\s*(--[\w-]+)\s*\)$/);
       const resolved = alias ? token(alias[1].replace(/^--/, "")) : value;
       const r = ratioOn(resolved, SURFACE);
-      if (r < AA.text) failures.push(`${name} ${resolved} = ${r.toFixed(2)}:1`);
+      if (r < NEED.text) failures.push(`${name} ${resolved} = ${r.toFixed(2)}:1`);
     }
-    assert.deepEqual(failures, [], `tones below ${AA.text}:1 as text`);
+    assert.deepEqual(failures, [], `tones below ${NEED.text}:1 as text`);
+  });
+});
+
+describe("quiet text on tinted greys", () => {
+  test("ink-subtle on surface-2 (chips, wells, segmented tracks)", () => {
+    const r = ratioOn(INK_SUBTLE, SURFACE_2);
+    assert.ok(r >= NEED.text, `--adm-ink-subtle on surface-2 is ${r.toFixed(2)}:1, needs ${NEED.text}`);
+  });
+});
+
+describe("form controls (1.4.11)", () => {
+  test("the input edge is discernible on every surface a field sits on", () => {
+    for (const [sName, surf] of [["surface", SURFACE], ["canvas", CANVAS], ["sunken", SURFACE_SUNKEN]]) {
+      const r = ratioOn(LINE_INPUT, surf);
+      assert.ok(r >= NEED.nonText, `--adm-line-input on ${sName} is ${r.toFixed(2)}:1, needs ${NEED.nonText}`);
+    }
+  });
+
+  test("white on the danger button", () => {
+    const r = ratioOn("#ffffff", DANGER);
+    assert.ok(r >= NEED.text, `white on --adm-danger is ${r.toFixed(2)}:1, needs ${NEED.text}`);
+  });
+});
+
+describe("the cobalt BrandBand", () => {
+  /* Alphas are read out of workspace.tsx: every text-white/NN in the band and
+     the record header must clear AA on the resting cell (accent) and on the
+     selected/hovered cell (accent-strong). */
+  const ws = readFileSync("src/components/admin/workspace.tsx", "utf8");
+  const slice = (from, to) => ws.slice(ws.indexOf(from), ws.indexOf(to, ws.indexOf(from)));
+  const band = slice("export function RecordHeader", "export function RecordFact")
+    + slice("export function BrandBand", "export const BAND_PRIMARY");
+  const alphas = [...new Set([...band.matchAll(/text-white\/(\d+)/g)].map(([, a]) => Number(a)))];
+  const inks = [...band.matchAll(/--adm-ink(?:-mute|-subtle)?:rgba\(255,255,255,([\d.]+)\)/g)].map(([, a]) => Math.round(Number(a) * 100));
+
+  test("the band text was found", () => {
+    assert.ok(alphas.length >= 2, `expected white/NN text in the band, found ${alphas.length}`);
+  });
+
+  test("every white tint reads on both cell states", () => {
+    const failures = [];
+    for (const a of [...alphas, ...inks]) {
+      for (const [bName, bg] of [["accent", ACCENT], ["accent-strong", ACCENT_STRONG]]) {
+        const r = ratioOn(`rgba(255, 255, 255, ${a / 100})`, bg);
+        if (r < NEED.text) failures.push(`white/${a} on ${bName} = ${r.toFixed(2)}:1`);
+      }
+    }
+    assert.deepEqual(failures, [], `band text below ${NEED.text}:1`);
+  });
+
+  test("selection is not carried by fill alone", () => {
+    // accent vs accent-strong is ~1.3:1, so the selected cell gets a white bar.
+    assert.match(band, /s\.selected \? "[^"]*shadow-\[inset_0_-3px_0_0_#fff\]/);
+    const bar = ratioOn("#ffffff", ACCENT_STRONG);
+    assert.ok(bar >= NEED.nonText, `selection bar is ${bar.toFixed(2)}:1, needs ${NEED.nonText}`);
+  });
+
+  test("the focus ring inside the band is white, and reads on cobalt", () => {
+    assert.match(css, /\.adm-on-band[^{]*:focus-visible\s*\{[^}]*outline-color:\s*#fff/);
+    const r = ratioOn("#ffffff", ACCENT);
+    assert.ok(r >= NEED.nonText, `white ring on accent is ${r.toFixed(2)}:1`);
   });
 });

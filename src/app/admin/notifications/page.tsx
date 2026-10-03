@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
 import {
   Loader2,
   ChevronRight,
@@ -14,6 +13,7 @@ import {
   Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu,
 } from "@/components/admin/workspace";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { notificationActions, useNotificationFeed } from "@/hooks/use-notifications";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { AdminListSkeleton } from "@/components/admin/skeletons";
@@ -45,20 +45,14 @@ const OTHER_TYPE: { label: string; short: string; tone: Tone } = { label: "Other
 
 const metaFor = (type: string) => NOTIFICATION_TYPES.find((t) => t.key === type) ?? OTHER_TYPE;
 
-const patchAction = (url: string, action: string) =>
-  fetch(url, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action }),
-  });
-
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Shared with the top-bar bell: read and dismiss land in both at once.
+  const feed = useNotificationFeed();
+  const notifications: Notification[] = useMemo(() => feed.data?.notifications ?? [], [feed.data]);
   // Skeleton on first load only; later reloads keep the list on screen.
-  const loadedOnce = useRef(false);
-  useEffect(() => { if (!loading && !error) loadedOnce.current = true; }, [loading, error]);
+  const loading = feed.isLoading;
+  const error = !feed.data && feed.error ? "Couldn't load notifications. Check your connection and try again." : null;
+  const fetchNotifications = () => void feed.reload();
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [markingAllRead, setMarkingAllRead] = useState(false);
@@ -69,89 +63,22 @@ export default function NotificationsPage() {
   const viewerRoles = useMemo(() => staffRolesOf(user?.groups), [user?.groups]);
   const isAdmin = viewerRoles.includes(UserRole.ADMIN);
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      if (!loadedOnce.current) setLoading(true);
-      setError(null);
-      const response = await fetch("/api/notifications");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch notifications");
-      }
-
-      setNotifications(data.notifications || []);
-    } catch (err) {
-      console.error("Failed to load notifications:", err);
-      setError("Couldn't load notifications. Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      const response = await patchAction(`/api/notifications/${id}`, "read");
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-        );
-      } else throw new Error(`HTTP ${response.status}`);
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
-      toast.error("Couldn't mark that notification as read. Try again.");
-    }
-  };
+  const handleMarkAsRead = (id: string) => void notificationActions.markRead(id);
 
   const handleMarkAllAsRead = async () => {
-    try {
-      setMarkingAllRead(true);
-      const response = await patchAction("/api/notifications", "read_all");
-
-      if (response.ok) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      } else throw new Error(`HTTP ${response.status}`);
-    } catch (err) {
-      console.error("Failed to mark all as read:", err);
-      toast.error("Couldn't mark notifications as read. Try again.");
-    } finally {
-      setMarkingAllRead(false);
-    }
+    setMarkingAllRead(true);
+    await notificationActions.markAllRead();
+    setMarkingAllRead(false);
   };
 
-  const handleDismiss = async (id: string) => {
-    try {
-      const response = await patchAction(`/api/notifications/${id}`, "dismiss");
-      if (response.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      } else throw new Error(`HTTP ${response.status}`);
-    } catch (err) {
-      console.error("Failed to dismiss notification:", err);
-      toast.error("Couldn't dismiss that notification. Try again.");
-    }
-  };
+  const handleDismiss = (id: string) => void notificationActions.dismiss(id);
 
   const handleDeleteForEveryone = async () => {
     if (!pendingDelete) return;
-    const { id } = pendingDelete;
-    try {
-      setDeleting(true);
-      const response = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-        setPendingDelete(null);
-      } else throw new Error(`HTTP ${response.status}`);
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-      toast.error("Couldn't delete that notification. Try again.");
-    } finally {
-      setDeleting(false);
-    }
+    setDeleting(true);
+    const ok = await notificationActions.remove(pendingDelete.id);
+    setDeleting(false);
+    if (ok) setPendingDelete(null);
   };
 
   const filteredNotifications = notifications.filter((n) => {

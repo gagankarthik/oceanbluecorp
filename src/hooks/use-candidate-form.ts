@@ -7,6 +7,7 @@ import { normalizeState, type AppStatus } from "@/components/admin/theme";
 import { poolOf } from "@/lib/bench";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { refreshApplications } from "@/hooks/use-console-data";
 import {
   LIMITS, check, collectErrors, email as emailRule, maxLen, normalizeWebsite, phone as phoneRule,
   required, website,
@@ -315,11 +316,12 @@ export function useCandidateForm({ mode, initial }: UseCandidateFormOptions) {
           body: JSON.stringify({ ...payload, visaExpiry: v.visaExpiry, rating: v.rating }),
         });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "The candidate couldn't be saved. Try again in a moment.");
+      if (!res.ok) throw new Error(data.error || "Couldn't save the candidate. Try again.");
       setSaved(true);
+      void refreshApplications();
       return data.application as Application;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The candidate couldn't be saved. Check your connection and try again.");
+      setError(err instanceof Error ? err.message : "Couldn't save the candidate. Check your connection and try again.");
       return null;
     } finally {
       setSubmitting(false);

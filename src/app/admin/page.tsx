@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, RefreshCw } from "lucide-react";
@@ -10,11 +10,10 @@ import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
 import { MyTasksPanel } from "@/components/admin/my-tasks-panel";
 import { DashboardSkeleton } from "@/components/admin/skeletons";
-import type { Application, Job } from "@/lib/aws/dynamodb";
 import { Avatar } from "@/components/admin/avatar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { FunnelChart, DonutChart, PeriodSwitcher } from "@/components/admin/charts";
-import { useAdmin } from "@/components/admin/admin-provider";
+import { useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { SERIES, statusMeta, type AppStatus } from "@/components/admin/theme";
 // Shared with the Applications workspace so both agree on what counts as stale.
 import {
@@ -77,59 +76,33 @@ interface StageStat {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { setJobs: setProviderJobs, candidateRevision } = useAdmin();
-
-  const [rawApplications, setApps] = useState<Application[]>([]);
-  const [rawJobs, setJobs]         = useState<Job[]>([]);
   /** Scopes every application-derived panel on the page. */
   const [range, setRange] = useState<RangeKey>("90d");
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
   const [recentTab, setRecentTab] = useState<"all" | "interview" | "offered">("all");
 
   // The volume charts follow the page's date-range control, they used to have
   // their own 30D/90D/1Y segmented picker, which just duplicated it.
   const period: Period = range === "7d" || range === "30d" ? "30d" : range === "90d" ? "90d" : "1y";
 
-  const [loadedAt, setLoadedAt] = useState<Date | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const hasData = useRef(false);
-  const fetchAll = useCallback(async () => {
-    try {
-      // Skeleton on first load only; a refresh keeps the figures on screen.
-      if (hasData.current) setRefreshing(true); else setLoading(true);
-      setError(null);
-      const [ar, jr] = await Promise.all([fetch("/api/applications?fields=summary"), fetch("/api/jobs?fields=summary")]);
-      const [ad, jd] = await Promise.all([ar.json(), jr.json()]);
-      if (!ar.ok || !jr.ok) throw new Error(ad.error || jd.error || "Failed to load");
-      const jobsList: Job[] = jd.jobs || [];
-      const jmap = new Map(jobsList.map((j: Job) => [j.id, j]));
-      setApps((ad.applications || []).map((a: Application) => ({
-        ...a, jobTitle: a.jobTitle || (a.jobId ? jmap.get(a.jobId)?.title : ""),
-      })));
-      setJobs(jobsList);
-      setProviderJobs(jobsList);
-      hasData.current = true;
-      setLoadedAt(new Date());
-    } catch (e) {
-      // A failed refresh leaves the last good figures up.
-      if (!hasData.current) setError(e instanceof Error ? e.message : "Failed to load");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [setProviderJobs]);
-
-  useEffect(() => { void fetchAll(); }, [fetchAll, candidateRevision]);
-
-  // Returning to the tab after a while refetches, so the figures are never an hour old.
-  useEffect(() => {
-    const onFocus = () => {
-      if (loadedAt && Date.now() - loadedAt.getTime() > 5 * 60_000) void fetchAll();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [fetchAll, loadedAt]);
+  // Shared with the Applications and Jobs screens; a refresh keeps the figures
+  // on screen and a failed one leaves the last good figures up.
+  const appsRes = useApplicationSummaries();
+  const jobsRes = useJobSummaries();
+  const rawJobs = useMemo(() => jobsRes.jobs ?? [], [jobsRes.jobs]);
+  const rawApplications = useMemo(() => {
+    const jmap = new Map(rawJobs.map((j) => [j.id, j]));
+    return (appsRes.applications ?? []).map((a) => ({
+      ...a, jobTitle: a.jobTitle || (a.jobId ? jmap.get(a.jobId)?.title : ""),
+    }));
+  }, [appsRes.applications, rawJobs]);
+  const loading = appsRes.isLoading || jobsRes.isLoading;
+  const firstError = (!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error);
+  const error = firstError ? firstError.message : null;
+  const refreshing = appsRes.isValidating || jobsRes.isValidating;
+  const loadedAt = useMemo(() => (appsRes.data && jobsRes.data ? new Date() : null), [appsRes.data, jobsRes.data]);
+  const { reload: reloadApps } = appsRes;
+  const { reload: reloadJobs } = jobsRes;
+  const fetchAll = useCallback(() => Promise.all([reloadApps(), reloadJobs()]), [reloadApps, reloadJobs]);
 
   const drillToStatus = useCallback(
     (status?: string) => router.push(`/admin/applications${status ? `?status=${status}` : ""}`),

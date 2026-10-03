@@ -18,7 +18,7 @@ import { Avatar } from "./avatar";
 import { Kbd } from "./kbd";
 import { StatusBadge } from "./status-badge";
 import { EmptyState } from "./empty-state";
-import type { Application, Job } from "@/lib/aws/dynamodb";
+import { JOB_EDIT_ROLES, RECRUITING_ROLES, type UserRole } from "@/lib/auth/config";
 
 interface SearchHit {
   type: "job" | "application" | "contact" | "candidate";
@@ -66,39 +66,47 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
   const [loading, setLoading] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+  const listId = React.useId();
+  const optId = (key: string) => `${listId}-${key.replace(/[^\w-]/g, "_")}`;
 
   // Filter nav by role
   const NAV_ITEMS = ALL_NAV_ITEMS.filter(
     (item) => !item.roles || !userRole || item.roles.includes(userRole),
   );
 
-  // Reset on open
+  // Reset on open; hand focus back to the opener on close.
   React.useEffect(() => {
-    if (open) {
-      setQuery("");
-      setHits([]);
-      setActiveIndex(0);
-      // small delay so autofocus works after animation
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!open) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    setQuery("");
+    setHits([]);
+    setActiveIndex(0);
+    const id = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => {
+      clearTimeout(id);
+      const el = returnFocusRef.current;
+      if (el?.isConnected) el.focus();
+    };
   }, [open]);
 
-  // Search via debounce
+  // Debounced; aborts the superseded request.
   React.useEffect(() => {
     if (!query.trim()) { setHits([]); return; }
+    const ctrl = new AbortController();
     const handle = setTimeout(async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`, { signal: ctrl.signal });
         const data = await res.json();
         if (res.ok) setHits(data.results || []);
-      } catch {
-        setHits([]);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") setHits([]);
       } finally {
-        setLoading(false);
+        if (!ctrl.signal.aborted) setLoading(false);
       }
     }, 200);
-    return () => clearTimeout(handle);
+    return () => { clearTimeout(handle); ctrl.abort(); };
   }, [query]);
 
   // Build flat list of results for keyboard nav
@@ -108,12 +116,11 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
     return n.name.toLowerCase().includes(q) || n.keywords?.toLowerCase().includes(q);
   });
 
-  const canPostJob = !userRole || ["admin", "hr", "sales"].includes(userRole);
   const quickActions = [
-    { id: "new-candidate", label: "Add new applicant",  icon: Plus,     hint: "Open applicant editor",  roles: undefined, onSelect: () => onCreateCandidate?.() },
-    { id: "new-job",       label: "Post new job",       icon: IconJob, hint: "Create job posting",    roles: ["admin", "hr", "sales"] as string[], onSelect: () => { onOpenChange(false); router.push("/admin/jobs/new"); } },
+    { id: "new-candidate", label: "Add new applicant",  icon: Plus,    hint: "Open applicant editor", roles: RECRUITING_ROLES, onSelect: () => onCreateCandidate?.() },
+    { id: "new-job",       label: "Post new job",       icon: IconJob, hint: "Create job posting",    roles: JOB_EDIT_ROLES,   onSelect: () => { onOpenChange(false); router.push("/admin/jobs/new"); } },
   ]
-    .filter((a) => !a.roles || !userRole || a.roles.includes(userRole))
+    .filter((a) => !!userRole && a.roles.includes(userRole as UserRole))
     .filter((a) => !query || a.label.toLowerCase().includes(query.toLowerCase()));
 
   const flatItems: { kind: "action" | "nav" | "hit"; payload: unknown; key: string }[] = [
@@ -136,13 +143,23 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
     }
   }, [router, onOpenChange]);
 
+  const count = flatItems.length;
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, flatItems.length - 1));
+      setActiveIndex((i) => (count ? (i + 1) % count : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
+      setActiveIndex((i) => (count ? (i - 1 + count) % count : 0));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(Math.max(count - 1, 0));
+    } else if (e.key === "Tab") {
+      // Options are not tab stops; the input is the only focusable element.
+      e.preventDefault();
     } else if (e.key === "Enter") {
       e.preventDefault();
       const item = flatItems[activeIndex];
@@ -153,6 +170,11 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
   };
 
   React.useEffect(() => { setActiveIndex(0); }, [query]);
+
+  const activeKey = flatItems[activeIndex]?.key;
+  React.useEffect(() => {
+    if (open && activeKey) document.getElementById(optId(activeKey))?.scrollIntoView({ block: "nearest" });
+  }, [open, activeKey]); // optId is stable per listId
 
   // Close on Escape even when focus has left the search input.
   React.useEffect(() => {
@@ -174,13 +196,18 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
         aria-modal="true"
         aria-label="Command palette"
         onClick={(e) => e.stopPropagation()}
-        className="fixed right-3 top-[68px] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-6"
+        className="fixed right-3 top-[68px] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-[var(--adm-radius-dialog)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-6"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3">
           <Search className="h-[18px] w-[18px] flex-shrink-0 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
           <input
             ref={inputRef}
+            role="combobox"
+            aria-expanded={count > 0}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={activeKey ? optId(activeKey) : undefined}
             autoComplete="off"
             aria-label="Search jobs, applications, candidates, or jump to a page"
             value={query}
@@ -194,7 +221,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
         </div>
 
         {/* Results */}
-        <div className="max-h-[60vh] overflow-y-auto py-1.5">
+        <div id={listId} role="listbox" aria-label="Results" className="max-h-[60vh] overflow-y-auto py-1.5">
           {/* Quick actions */}
           {quickActions.length > 0 && (
             <Group title="Actions">
@@ -203,13 +230,14 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                 return (
                   <Item
                     key={a.id}
+                    id={optId(a.id)}
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
                     icon={<a.icon className="h-4 w-4 text-[var(--adm-accent)]" />}
                     title={a.label}
                     subtitle={a.hint}
-                    badge={idx === 0 ? <Kbd>⌘⇧C</Kbd> : null}
+                    badge={idx === 0 ? <Kbd>Alt ⇧ N</Kbd> : null}
                   />
                 );
               })}
@@ -224,6 +252,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                 return (
                   <Item
                     key={n.href}
+                    id={optId(n.href)}
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
@@ -245,6 +274,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                 return (
                   <Item
                     key={`${h.type}-${h.id}`}
+                    id={optId(`${h.type}-${h.id}`)}
                     active={flatIdx === activeIndex}
                     onMouseEnter={() => setActiveIndex(flatIdx)}
                     onClick={() => select(flatItems[flatIdx])}
@@ -289,17 +319,19 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  const id = React.useId();
   return (
-    <div className="px-1.5 py-1">
-      <p className="px-2.5 pb-1 pt-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)]">{title}</p>
-      <div>{children}</div>
+    <div role="group" aria-labelledby={id} className="px-1.5 py-1">
+      <p id={id} className="px-2.5 pb-1 pt-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)]">{title}</p>
+      {children}
     </div>
   );
 }
 
 function Item({
-  active, onClick, onMouseEnter, icon, title, subtitle, badge,
+  id, active, onClick, onMouseEnter, icon, title, subtitle, badge,
 }: {
+  id: string;
   active?: boolean;
   onClick?: () => void;
   onMouseEnter?: () => void;
@@ -309,24 +341,27 @@ function Item({
   badge?: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      id={id}
+      role="option"
+      aria-selected={!!active}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
+      // Keep focus in the input so aria-activedescendant stays valid.
+      onMouseDown={(e) => e.preventDefault()}
       className={cn(
-        "flex w-full items-center gap-3 rounded-[8px] px-2.5 py-2 text-left transition-colors duration-150",
+        "flex w-full cursor-pointer items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 py-2 text-left transition-colors duration-150",
         active ? "bg-[var(--adm-accent-soft)]" : "hover:bg-[var(--adm-row-hover)]",
       )}
     >
       {/* Fixed slot so icons and avatars share one text edge. */}
-      {icon && <span className="grid w-7 flex-none place-items-center">{icon}</span>}
+      {icon && <span className="grid w-7 flex-none place-items-center" aria-hidden="true">{icon}</span>}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13.5px] font-medium text-[var(--adm-ink)]">{title}</p>
         {subtitle && <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{subtitle}</p>}
       </div>
       {badge && <span className="hidden flex-none sm:inline-flex">{badge}</span>}
-      {active && <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-accent)]" />}
-    </button>
+      {active && <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-accent)]" aria-hidden="true" />}
+    </div>
   );
 }
-

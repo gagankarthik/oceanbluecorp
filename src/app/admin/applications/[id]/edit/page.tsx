@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, SearchX } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -13,6 +13,7 @@ import { Skel } from "@/components/admin/skeletons";
 import { FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { CandidateForm, returnPath } from "@/components/admin/candidate-form/candidate-form";
 import { useCandidateForm } from "@/hooks/use-candidate-form";
+import { useJobSummaries } from "@/hooks/use-console-data";
 import { cn } from "@/lib/utils";
 
 /** Ties the action-bar submit button to the form it sits outside of. */
@@ -31,25 +32,23 @@ function EditApplicationInner() {
 
   const form = useCandidateForm({ mode: "edit" });
   const { load } = form;
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const { jobs: jobList } = useJobSummaries();
+  const jobs = useMemo<Job[]>(() => jobList ?? [], [jobList]);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch(`/api/applications/${id}`).then((r) => {
-        if (r.status === 404) return null;
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      }),
-      fetch("/api/jobs?fields=summary").then((r) => r.json()),
-    ]).then(([appData, jobsData]) => {
+    // Read once into the form; a shared-cache refresh must not reset edits.
+    fetch(`/api/applications/${id}`).then((r) => {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }).then((appData) => {
       const app = appData?.application;
       if (!app) { setMissing(true); return; }
-      setJobs(jobsData.jobs || []);
       load(app);
-    }).catch(() => setLoadError("This applicant could not be loaded. Refresh the page to try again."))
+    }).catch(() => setLoadError("Couldn't load this applicant. Refresh the page to try again."))
       .finally(() => setLoading(false));
   }, [id, load]);
 

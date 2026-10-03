@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Contact } from "@/lib/aws/dynamodb";
 import { fmtDateTime } from "@/lib/format";
+import { isJobSeeker, seekerArea } from "@/lib/contact";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { AdminCard } from "@/components/admin/admin-card";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { EmptyState } from "@/components/admin/empty-state";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { RecordFact, RecordHeader, WorkspaceButton } from "@/components/admin/workspace";
-import { IconBuilding, IconCalendar, IconMail, IconMessage, IconPhone } from "@/components/admin/icons";
+import { IconBuilding, IconCalendar, IconLink, IconMail, IconMessage, IconPhone } from "@/components/admin/icons";
 import { ContactDetail } from "@/components/admin/contacts/contact-detail";
 import { CONTACT_STATUS_META, contactName, type ContactStatus } from "@/components/admin/contacts/contact-status";
 import ContactLoading from "./loading";
@@ -140,7 +141,16 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
                 <a href={`tel:${contact.phone}`} className="tabular-nums transition-colors hover:text-[var(--adm-accent)]">{contact.phone}</a>
               </RecordFact>
             )}
-            {contact.company && <RecordFact icon={IconBuilding}>{contact.company}</RecordFact>}
+            {isJobSeeker(contact.inquiryType)
+              ? <RecordFact icon={IconBuilding}>Looking for work · {seekerArea(contact.inquiryType)}</RecordFact>
+              : contact.company && <RecordFact icon={IconBuilding}>{contact.company}</RecordFact>}
+            {contact.linkedinUrl && /^https?:\/\//i.test(contact.linkedinUrl) && (
+              <RecordFact icon={IconLink}>
+                <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-[var(--adm-accent)]">
+                  LinkedIn
+                </a>
+              </RecordFact>
+            )}
             <RecordFact icon={IconCalendar}>
               <time dateTime={contact.createdAt} className="tabular-nums">{fmtDateTime(contact.createdAt)}</time>
             </RecordFact>
