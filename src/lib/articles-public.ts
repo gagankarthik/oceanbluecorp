@@ -85,7 +85,7 @@ export function sectionMetadata(
     title: base.title,
     description: base.description,
     openGraph: {
-      title: `${base.title} | Ocean Blue Corporation`,
+      title: `${base.title} | Oceanblue Solutions, Inc.`,
       description: base.description,
       url,
       type: "website",
@@ -115,7 +115,7 @@ export function articleMetadata(article: Article): Metadata {
     description,
     authors: article.authorName ? [{ name: article.authorName }] : undefined,
     openGraph: {
-      title: `${title} | Ocean Blue Corporation`,
+      title: `${title} | Oceanblue Solutions, Inc.`,
       description,
       url,
       type: "article",
@@ -157,7 +157,7 @@ export function articleJsonLd(article: Article) {
   const url = `${SITE}${config.publicPath}/${article.slug}`;
   const publisher = {
     "@type": "Organization",
-    name: "Ocean Blue Corporation",
+    name: "Oceanblue Solutions, Inc.",
     url: SITE,
     logo: { "@type": "ImageObject", url: `${SITE}/Logo_400x400.png`, width: 400, height: 400 },
   };

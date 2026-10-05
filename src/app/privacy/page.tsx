@@ -6,7 +6,7 @@ import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks
 export const metadata: Metadata = pageMetadata({
   path: "/privacy",
   title: "Privacy Policy",
-  description: "How Ocean Blue Corporation collects, uses, shares and protects personal information from clients, candidates and visitors, and the rights you have over it.",
+  description: "How Oceanblue Solutions, Inc. collects, uses, shares and protects personal information from clients, candidates and visitors, and the rights you have over it.",
 });
 
 const SECTIONS = [
@@ -32,15 +32,15 @@ export default function PrivacyPage() {
   return (
     <DocPage
       title="Privacy Policy"
-      lede={<>Ocean Blue Corporation is committed to protecting your privacy. This policy explains what personal information we collect, how we use it, and what rights you have over your data.</>}
-      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Controller", value: "Ocean Blue Corporation, Powell, OH" }]}
+      lede={<>Oceanblue Solutions, Inc. is committed to protecting your privacy. This policy explains what personal information we collect, how we use it, and what rights you have over your data.</>}
+      meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Controller", value: "Oceanblue Solutions, Inc., Powell, OH" }]}
       toc={SECTIONS}
       history={history}
     >
 
             <DocSection id="introduction" number="01" title="Introduction">
               <P>
-                Ocean Blue Corporation (&quot;Ocean Blue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website
+                Oceanblue Solutions, Inc. (&quot;Oceanblue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website
                 at oceanbluecorp.com and provides enterprise IT solutions and staffing services. This
                 Privacy Policy describes how we collect, use, disclose, and safeguard personal information
                 when you visit our website, use our platform, or engage with our services.
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
                 "Contact form submissions: name, email address, phone number, company, job title, inquiry type, and your message",
                 "Client account data: company name, billing address, tax identification, authorized contacts",
                 "Communications: emails and notes from calls with our team",
-                "Staff accounts: name, work email, phone number, and password. These are created by invitation for Ocean Blue employees only; there is no public sign-up",
+                "Staff accounts: name, work email, phone number, and password. These are created by invitation for Oceanblue employees only; there is no public sign-up",
               ]} />
 
               <SubHead>2.2 Information Collected Automatically</SubHead>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
 
             <DocSection id="usage" number="03" title="How We Use Your Information">
               <P>
-                Ocean Blue uses your personal information for the following purposes:
+                Oceanblue uses your personal information for the following purposes:
               </P>
 
               <SubHead>For Candidates</SubHead>
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
                 "Present your profile to client companies with appropriate positions",
                 "Communicate updates about your applications and placement status",
                 "Conduct onboarding for contract or direct-hire positions",
-                "Process payroll and benefits for contractors placed through Ocean Blue",
+                "Process payroll and benefits for contractors placed through Oceanblue",
                 "Comply with legal requirements including employment and tax law obligations",
               ]} />
 
@@ -125,7 +125,7 @@ export default function PrivacyPage() {
 
             <DocSection id="legal-basis" number="04" title="Legal Basis for Processing (GDPR)">
               <P>
-                If you are located in the European Economic Area (EEA) or United Kingdom, Ocean Blue
+                If you are located in the European Economic Area (EEA) or United Kingdom, Oceanblue
                 processes your personal data under the following legal bases:
               </P>
               <UL items={[
@@ -138,20 +138,20 @@ export default function PrivacyPage() {
 
             <DocSection id="sharing" number="05" title="Sharing Your Information">
               <P>
-                Ocean Blue does not sell, rent, or trade your personal information to third parties for
+                Oceanblue does not sell, rent, or trade your personal information to third parties for
                 their own marketing purposes. We may share your information in the following circumstances:
               </P>
               <UL items={[
                 <><strong>Client Companies:</strong> We share candidate profiles (with candidate consent) with client employers in connection with specific job opportunities. Clients are contractually bound to use this information only for hiring purposes.</>,
                 <><strong>Service Providers:</strong> We engage third-party vendors to help operate our business. This site runs on Amazon Web Services, which provides its hosting, database, file storage, staff sign-in, and email delivery, and resumes are read by a resume parsing and matching service. Other vendors support payroll processing and background checks. These vendors have access to personal data only as necessary to perform their functions and are contractually bound to protect it.</>,
-                <><strong>Legal Requirements:</strong> We may disclose information when required by law, regulation, court order, or governmental authority, or to protect the rights, property, or safety of Ocean Blue, our users, or others.</>,
+                <><strong>Legal Requirements:</strong> We may disclose information when required by law, regulation, court order, or governmental authority, or to protect the rights, property, or safety of Oceanblue, our users, or others.</>,
                 <><strong>Business Transfers:</strong> In connection with a merger, acquisition, sale of assets, or bankruptcy, your information may be transferred. We will notify you before your information becomes subject to a different privacy policy.</>,
                 <><strong>With Your Consent:</strong> We may share information with other third parties when you explicitly authorize us to do so.</>,
               ]} />
               <P>
                 All third-party service providers are required to maintain the confidentiality and security
                 of your personal information and are prohibited from using it for any purpose other than
-                providing services to Ocean Blue.
+                providing services to Oceanblue.
               </P>
               <P>
                 A few items on this site load directly from other servers: the office map (OpenStreetMap)
@@ -212,7 +212,7 @@ export default function PrivacyPage() {
                 choices. We do not use analytics or advertising cookies. We use the following types:
               </P>
               <UL items={[
-                <><strong>Strictly Necessary Storage:</strong> Your cookie choice, and, for Ocean Blue staff only, the sign-in session for the staff console. Cannot be disabled.</>,
+                <><strong>Strictly Necessary Storage:</strong> Your cookie choice, and, for Oceanblue staff only, the sign-in session for the staff console. Cannot be disabled.</>,
                 <><strong>Preference Storage:</strong> Remembers choices you make, such as a dismissed announcement. Kept across visits only with your consent.</>,
               ]} />
               <P>
@@ -228,7 +228,7 @@ export default function PrivacyPage() {
 
             <DocSection id="security" number="09" title="Data Security">
               <P>
-                Ocean Blue implements industry-standard technical and organizational measures to protect
+                Oceanblue implements industry-standard technical and organizational measures to protect
                 your personal information from unauthorized access, disclosure, alteration, and destruction.
                 These measures include:
               </P>
@@ -251,7 +251,7 @@ export default function PrivacyPage() {
 
             <DocSection id="international" number="10" title="International Data Transfers">
               <P>
-                Ocean Blue is headquartered in the United States. If you are located outside the US,
+                Oceanblue is headquartered in the United States. If you are located outside the US,
                 your personal information will be transferred to, stored, and processed in the United
                 States, where data protection laws may differ from those in your country.
               </P>
@@ -332,7 +332,7 @@ export default function PrivacyPage() {
                 handling of your personal information, please contact our Privacy Team:
               </P>
               <ContactCard
-                title="Ocean Blue Corporation, Privacy Team"
+                title="Oceanblue Solutions, Inc., Privacy Team"
                 email={{ href: "mailto:hr@oceanbluecorp.com", label: "hr@oceanbluecorp.com" }}
                 phone={{ href: "tel:+16148446925", label: "+1 (614) 844-6925" }}
                 address={HQ_ADDRESS}

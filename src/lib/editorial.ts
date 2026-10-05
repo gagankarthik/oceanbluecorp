@@ -56,8 +56,8 @@ export interface EditorialGuide {
  * per release, if they change, change them here.
  */
 export const PRESS_BOILERPLATE =
-  "<p><strong>About Ocean Blue Corporation</strong><br>" +
-  "Ocean Blue Corporation is an IT staffing and enterprise services firm that places " +
+  "<p><strong>About Oceanblue Solutions, Inc.</strong><br>" +
+  "Oceanblue Solutions, Inc. is an IT staffing and enterprise services firm that places " +
   "engineers, consultants and delivery teams with organisations across [industries]. " +
   "Founded in [year] and headquartered in [city, state], the company supports clients " +
   "through contract, direct-hire and managed-team engagements. Learn more at " +
@@ -181,7 +181,7 @@ export const EDITORIAL_GUIDES: Record<ArticleKind, EditorialGuide> = {
     ],
     headline: {
       good: "Filling 12 hard-to-source SAP roles in six weeks for a Fortune 500 payer",
-      bad: "Ocean Blue delivers exceptional staffing solutions for healthcare client",
+      bad: "Oceanblue delivers exceptional staffing solutions for healthcare client",
       why: "The first is checkable and states the scale, the difficulty and the window. The second is an adjective with a logo attached.",
     },
     template:
@@ -242,15 +242,15 @@ export const EDITORIAL_GUIDES: Record<ArticleKind, EditorialGuide> = {
       "If it is someone else's story about us, file it as “In the press” and link out rather than restating it.",
     ],
     headline: {
-      good: "Ocean Blue Corporation earns ISO 27001 certification for information security",
-      bad: "Ocean Blue Corporation is proud to announce an exciting new milestone",
+      good: "Oceanblue Solutions, Inc. earns ISO 27001 certification for information security",
+      bad: "Oceanblue Solutions, Inc. is proud to announce an exciting new milestone",
       why: "The first states the fact and names the standard, so it can be verified and quoted. The second announces that an announcement exists.",
     },
     template:
-      "<p><strong>[Lead paragraph]</strong> Ocean Blue Corporation today announced [what], [the one detail that makes it matter]. Keep this under 40 words and make it able to stand alone.</p>" +
+      "<p><strong>[Lead paragraph]</strong> Oceanblue Solutions, Inc. today announced [what], [the one detail that makes it matter]. Keep this under 40 words and make it able to stand alone.</p>" +
       "<p>[Second paragraph] The context: why now, what it changes, and for whom.</p>" +
       "<p>[Third paragraph] The supporting detail, scope, scale, dates, or the standard being met.</p>" +
-      "<p>“[Quote from a named executive: what this means, in the voice of a person, not a brochure],” said [Name], [Title] at Ocean Blue Corporation. “[Second sentence, forward-looking].”</p>" +
+      "<p>“[Quote from a named executive: what this means, in the voice of a person, not a brochure],” said [Name], [Title] at Oceanblue Solutions, Inc. “[Second sentence, forward-looking].”</p>" +
       "<p>“[Optional partner or client quote, approved in writing by them],” said [Name], [Title] at [Company].</p>" +
       PRESS_BOILERPLATE +
       "<p>###</p>",

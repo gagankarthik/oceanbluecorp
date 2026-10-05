@@ -6,7 +6,7 @@ import { getLiveArticles, sectionMetadata } from "@/lib/articles-public";
 const COPY = {
   title: "Blog",
   description:
-    "Notes from Ocean Blue Corporation's engineers and recruiters on IT hiring, delivery, and enterprise platforms.",
+    "Notes from Oceanblue Solutions, Inc.'s engineers and recruiters on IT hiring, delivery, and enterprise platforms.",
 };
 
 // robots: index:false while the section is empty, lifted automatically by the

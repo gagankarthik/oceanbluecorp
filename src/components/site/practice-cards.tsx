@@ -44,7 +44,7 @@ function Shell({
         </span>
       </div>
       <div className="border-t border-line bg-paper py-2.5 text-center text-[11.5px] text-ink-subtle">
-        Delivered by <span className="font-semibold text-ink">Ocean Blue</span>
+        Delivered by <span className="font-semibold text-ink">Oceanblue</span>
       </div>
       {on && <Cursor />}
     </div>

@@ -5,7 +5,7 @@ import TeamPage from "./_content";
 export const metadata: Metadata = pageMetadata({
   path: "/team",
   title: "Leadership Team",
-  description: "Meet the leadership behind Ocean Blue Corporation, senior practitioners in IT staffing, enterprise solutions, and managed services.",
+  description: "Meet the leadership behind Oceanblue Solutions, Inc., senior practitioners in IT staffing, enterprise solutions, and managed services.",
 });
 
 export default function Team() {

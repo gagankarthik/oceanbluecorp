@@ -39,8 +39,8 @@ export function AuthShell({
         {/* A slow cobalt dot field, strongest behind the copy and fading to the edges. */}
         <DotsBackdrop color="rgb(29, 78, 216)" maxOpacity={0.24} mask="[mask-image:radial-gradient(90%_70%_at_40%_55%,black,transparent_80%)]" />
         <div className="flex items-center justify-between gap-6">
-          <Link href="/" aria-label="Ocean Blue Corporation, home">
-            <Image src="/logo.webp" alt="Ocean Blue Corporation" width={170} height={45} className="h-9 w-auto" priority />
+          <Link href="/" aria-label="Oceanblue Solutions, Inc., home">
+            <Image src="/logo.webp" alt="Oceanblue Solutions, Inc." width={170} height={45} className="h-9 w-auto" priority />
           </Link>
           <Link href="/" className="group inline-flex items-center gap-2 type-label font-medium text-ink-muted hover:text-ink">
             <IconArrowLeft size={16} className="transition-transform duration-150 group-hover:-translate-x-0.5" />
@@ -77,8 +77,8 @@ export function AuthShell({
       <div className="flex min-w-0 flex-1 flex-col lg:overflow-y-auto">
         {/* Phones and tablets: the brand, and the way back, in one bar. */}
         <div className="flex items-center justify-between border-b border-line px-5 py-4 lg:hidden">
-          <Link href="/" aria-label="Ocean Blue Corporation, home">
-            <Image src="/logo.webp" alt="Ocean Blue Corporation" width={150} height={40} className="h-8 w-auto" priority />
+          <Link href="/" aria-label="Oceanblue Solutions, Inc., home">
+            <Image src="/logo.webp" alt="Oceanblue Solutions, Inc." width={150} height={40} className="h-8 w-auto" priority />
           </Link>
           <Link href="/" className="inline-flex items-center gap-1.5 type-label font-medium text-ink-muted hover:text-ink">
             <IconArrowLeft size={16} />

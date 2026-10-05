@@ -27,6 +27,8 @@ const EXPERTISE = [
 /** Everything on the sheet that changes with the path. */
 const COPY: Record<ContactPath, {
   option: string;
+  /** Phone label, so the two-way switch stays on one line at 390px. */
+  short: string;
   lead: string;
   steps: string[];
   formTitle: string;
@@ -36,6 +38,7 @@ const COPY: Record<ContactPath, {
 }> = {
   hiring: {
     option: "I'm hiring",
+    short: "I'm hiring",
     lead: "Contract, contract-to-hire, direct hire or a managed team. Tell us who you need and by when.",
     steps: [
       "We reply within one business day.",
@@ -52,6 +55,7 @@ const COPY: Record<ContactPath, {
   },
   work: {
     option: "I'm looking for work",
+    short: "Looking for work",
     lead: "Tell our recruiters what you do and we'll keep you in mind for the searches that fit.",
     steps: [
       "A recruiter reads every submission.",
@@ -198,7 +202,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
     <div className="grid overflow-hidden rounded-[28px] border border-line bg-white lg:grid-cols-12">
       {/* ── Navy side, top: who are you ── */}
       <div className="bg-night px-6 pt-8 pb-8 text-white sm:px-10 sm:pt-12 lg:col-span-5 lg:row-start-1 lg:px-12 lg:pt-14 lg:pb-10">
-        <p className="type-label text-white/75">Contact Ocean Blue</p>
+        <p className="type-label text-white/75">Contact Oceanblue</p>
         <h1 className="mt-3 max-w-[14ch] type-headline-lg text-white">Hiring, or looking for work?</h1>
 
         {/* Native radios: arrow keys switch, Tab enters and leaves the group. */}
@@ -218,7 +222,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                 <label
                   key={p}
                   className={cn(
-                    "relative z-10 flex min-h-11 cursor-pointer items-center justify-center rounded-full px-3 text-center type-label transition-colors duration-150",
+                    "relative z-10 flex min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-3 text-center type-label transition-colors duration-150",
                     "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-white has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-night",
                     active ? "text-ink" : "text-white/85 hover:text-white",
                   )}
@@ -232,7 +236,8 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                     onChange={() => choose(p)}
                     className="sr-only"
                   />
-                  {COPY[p].option}
+                  <span className="sm:hidden">{COPY[p].short}</span>
+                  <span className="hidden sm:inline">{COPY[p].option}</span>
                 </label>
               );
             })}

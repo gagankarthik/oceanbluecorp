@@ -21,7 +21,7 @@ export const revalidate = 60;
 const HOME_DESCRIPTION =
   "IT and engineering staffing, enterprise solutions, managed services and training for enterprises and state agencies. Certified MBE/WBE in Powell, Ohio.";
 
-const HOME_TITLE = "Ocean Blue Corporation | IT Staffing & Enterprise Solutions";
+const HOME_TITLE = "Oceanblue Solutions, Inc. | IT Staffing & Enterprise Solutions";
 const homeBase = pageMetadata({ path: "/", title: "IT Staffing & Enterprise Solutions", description: HOME_DESCRIPTION });
 
 export const metadata: Metadata = {
@@ -52,7 +52,8 @@ const homeJsonLd = {
       "@type": "WebSite",
       "@id": "https://oceanbluecorp.com/#website",
       url: "https://oceanbluecorp.com",
-      name: "Ocean Blue Corporation",
+      name: "Oceanblue Solutions, Inc.",
+      alternateName: ["Oceanblue Solutions", "Oceanblue"],
       publisher: { "@id": "https://oceanbluecorp.com/#organization" },
       inLanguage: "en-US",
     },
@@ -146,9 +147,9 @@ export default async function Home() {
               key={ind.name}
               className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition-shadow hover:shadow-[var(--shadow-raised)]"
             >
-              <div className="relative isolate flex h-52 items-center justify-center overflow-hidden border-b border-line bg-paper">
+              <div className="relative isolate flex h-56 items-center justify-center overflow-hidden border-b border-line bg-cobalt-tint">
                 <LineGrid />
-                <ind.Art className="h-36 w-auto" />
+                <ind.Art className="h-44 w-auto" />
               </div>
               <div className="p-6 sm:p-7">
                 <h3 className="type-title-lg text-ink">{ind.name}</h3>

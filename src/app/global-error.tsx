@@ -36,7 +36,7 @@ export default function GlobalError({
   return (
     <html lang="en">
       <head>
-        <title>Something went wrong | Ocean Blue Corporation</title>
+        <title>Something went wrong | Oceanblue Solutions, Inc.</title>
         <meta name="robots" content="noindex" />
       </head>
       <body
@@ -56,7 +56,7 @@ export default function GlobalError({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
-            alt="Ocean Blue Corporation"
+            alt="Oceanblue Solutions, Inc."
             width={170}
             height={40}
             style={{ height: 32, width: "auto" }}

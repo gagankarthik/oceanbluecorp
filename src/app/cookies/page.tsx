@@ -9,7 +9,7 @@ import { IconShieldLock, IconSettings, IconExternal, IconMail, type Icon } from 
 export const metadata: Metadata = pageMetadata({
   path: "/cookies",
   title: "Cookie Policy",
-  description: "The cookies and browser storage Ocean Blue Corporation uses: essential sign-in and consent storage only, no analytics or ads, and how to change your choice.",
+  description: "The cookies and browser storage Oceanblue Solutions, Inc. uses: essential sign-in and consent storage only, no analytics or ads, and how to change your choice.",
 });
 
 const SECTIONS = [
@@ -57,9 +57,9 @@ function TypeTag({ type }: { type: string }) {
 }
 
 const COOKIE_TABLE = [
-  { name: "oidc.user:*", provider: "Ocean Blue", purpose: "Keeps staff signed in to the admin console (staff only)", duration: "Until sign out", type: "Security" },
-  { name: "cookieConsent, cookieConsentPrefs", provider: "Ocean Blue", purpose: "Stores your cookie choice so we do not ask again", duration: "Until cleared", type: "Functional" },
-  { name: "ob.announcement.dismissed:*", provider: "Ocean Blue", purpose: "Remembers that you closed an announcement", duration: "Until cleared (session only without consent)", type: "Preference" },
+  { name: "oidc.user:*", provider: "Oceanblue", purpose: "Keeps staff signed in to the admin console (staff only)", duration: "Until sign out", type: "Security" },
+  { name: "cookieConsent, cookieConsentPrefs", provider: "Oceanblue", purpose: "Stores your cookie choice so we do not ask again", duration: "Until cleared", type: "Functional" },
+  { name: "ob.announcement.dismissed:*", provider: "Oceanblue", purpose: "Remembers that you closed an announcement", duration: "Until cleared (session only without consent)", type: "Preference" },
 ];
 
 export default function CookiesPage() {
@@ -68,7 +68,7 @@ export default function CookiesPage() {
   return (
     <DocPage
       title="Cookie Policy"
-      lede={<>This Cookie Policy explains how Ocean Blue Corporation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold text-ink">oceanbluecorp.com</strong>.</>}
+      lede={<>This Cookie Policy explains how Oceanblue Solutions, Inc. (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold text-ink">oceanbluecorp.com</strong>.</>}
       meta={[{ label: "Effective date", value: EFFECTIVE }, { label: "Last updated", value: updated }]}
       toc={SECTIONS}
       history={history}
@@ -92,7 +92,7 @@ export default function CookiesPage() {
                   Cookies are small text files placed on your device (computer, tablet, or smartphone) when you visit a website. They are widely used to make websites work, improve user experience, and provide reporting information to website owners.
                 </P>
                 <P>
-                  Cookies set by the website owner (in this case, Ocean Blue Corporation) are called &ldquo;first-party cookies.&rdquo; Cookies set by parties other than the website owner are called &ldquo;third-party cookies.&rdquo; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics).
+                  Cookies set by the website owner (in this case, Oceanblue Solutions, Inc.) are called &ldquo;first-party cookies.&rdquo; Cookies set by parties other than the website owner are called &ldquo;third-party cookies.&rdquo; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics).
                 </P>
                 <P>
                   In addition to cookies, websites can use similar technologies such as local storage and session storage. Our website uses these for the purposes described below. We do not use analytics, advertising, or tracking technologies of any kind.

@@ -1,4 +1,4 @@
-# Ocean Blue site design language
+# Oceanblue site design language
 
 The public website's design system (`/`, `/solutions`, `/careers`, resources,
 legal). The admin console has its own, in `DESIGN_SYSTEM.md`, which also holds

@@ -151,14 +151,14 @@ function Sidebar({
       <div className={cn("flex h-[60px] flex-none items-center gap-2 px-4", rail && "lg:justify-center lg:px-0")}>
         <Link
           href="/admin"
-          aria-label="Ocean Blue, dashboard"
-          title="Ocean Blue"
+          aria-label="Oceanblue, dashboard"
+          title="Oceanblue"
           className="flex min-w-0 items-center rounded-[var(--adm-radius-control)] p-1 transition-opacity hover:opacity-80"
         >
           {/* Full wordmark when expanded (and in the mobile drawer); the mark alone in the rail. */}
           <Image
             src="/logo.webp"
-            alt="Ocean Blue"
+            alt="Oceanblue"
             width={256}
             height={70}
             priority
@@ -166,7 +166,7 @@ function Sidebar({
           />
           <Image
             src="/favicon.png"
-            alt="Ocean Blue"
+            alt="Oceanblue"
             width={80}
             height={76}
             className={cn("hidden h-8 w-auto object-contain", rail && "lg:block")}

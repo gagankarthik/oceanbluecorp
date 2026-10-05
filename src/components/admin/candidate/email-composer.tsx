@@ -10,7 +10,7 @@ import { IconCalendar, IconSend, IconWarning } from "@/components/admin/icons";
 import { EMAIL_TEMPLATES, fillTemplate, unfilledPlaceholders, type TemplateVars } from "@/lib/email-templates";
 import { cn } from "@/lib/utils";
 
-const COMPANY = "Ocean Blue";
+const COMPANY = "Oceanblue";
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
 /** "Tuesday, October 7, 2026 at 2:00 PM EDT" in the sender's zone. */

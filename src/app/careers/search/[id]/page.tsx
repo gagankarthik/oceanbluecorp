@@ -72,7 +72,7 @@ function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
     description: job.description,
     identifier: {
       "@type": "PropertyValue",
-      name: "Ocean Blue Corporation",
+      name: "Oceanblue Solutions, Inc.",
       value: job.postingId || id,
     },
     datePosted: publishedAt ?? job.createdAt,
@@ -80,7 +80,7 @@ function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "OTHER",
     hiringOrganization: {
       "@type": "Organization",
-      name: "Ocean Blue Corporation",
+      name: "Oceanblue Solutions, Inc.",
       sameAs: "https://oceanbluecorp.com",
       logo: "https://oceanbluecorp.com/Logo_400x400.png",
     },
@@ -150,7 +150,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : ogDescription;
     // A posting with a thin description still gets a full snippet.
     const metaDescription = capped.length < 110
-      ? `${capped.replace(/\.*$/, "")}. Apply online for the ${job.title} role at Ocean Blue Corporation.`
+      ? `${capped.replace(/\.*$/, "")}. Apply online for the ${job.title} role at Oceanblue Solutions, Inc.`
       : capped;
 
     return {
@@ -159,10 +159,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: metaDescription,
       openGraph: {
         images: OG_IMAGES,
-        title: `${job.title} - ${jobType} at Ocean Blue Corporation`,
+        title: `${job.title} - ${jobType} at Oceanblue Solutions, Inc.`,
         description: ogDescription,
         url,
-        siteName: "Ocean Blue Corporation",
+        siteName: "Oceanblue Solutions, Inc.",
         type: "article",
         locale: "en_US",
       },
@@ -175,7 +175,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         canonical: url,
       },
       other: {
-        "article:author": "Ocean Blue Corporation",
+        "article:author": "Oceanblue Solutions, Inc.",
         "article:section": "Careers",
         "article:tag": [job.department, jobType, job.location].join(", "),
       },
@@ -184,7 +184,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     console.error("Error generating metadata:", error);
     return {
       title: "Careers",
-      description: "Explore career opportunities at Ocean Blue Corporation.",
+      description: "Explore career opportunities at Oceanblue Solutions, Inc.",
     };
   }
 }

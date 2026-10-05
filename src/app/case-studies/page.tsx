@@ -6,7 +6,7 @@ import { getLiveArticles, sectionMetadata } from "@/lib/articles-public";
 const COPY = {
   title: "Case studies",
   description:
-    "How Ocean Blue Corporation solved real delivery and hiring problems: the challenge, the approach, and the measured results.",
+    "How Oceanblue Solutions, Inc. solved real delivery and hiring problems: the challenge, the approach, and the measured results.",
 };
 
 // robots: index:false while the section is empty, lifted automatically by the

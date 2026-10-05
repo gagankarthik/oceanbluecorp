@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { listResumeBankObjects } from "@/lib/aws";
 import {
+  cancelIndexJobState,
   getAllApplications,
   getBankResumeContacts,
   getIndexJobState,
-  putIndexJobState,
+  startIndexJobState,
 } from "@/lib/aws/dynamodb";
 import {
   indexChainBaseUrl,
@@ -12,19 +13,51 @@ import {
   processIndexHop,
   resumesIndexedChunked,
 } from "@/lib/aws/index-resumes";
+import { parseResumeBankKey } from "@/lib/aws/s3";
 import { requireStaff } from "@/lib/auth/verify";
 import { serverError } from "@/lib/api-errors";
+import { indexJobBusy, indexJobPhase } from "@/lib/index-job";
+import { findDuplicateGroups, keysToIndex } from "@/lib/resume-duplicates";
 
 // Gathering the worklist means an S3 listing, a table scan and chunked
 // indexed-status checks, give it room beyond the default.
 export const maxDuration = 120;
 
-// POST /api/resume-bank/index-all
-// Kick off cloud-side indexing of EVERYTHING that isn't searchable yet:
-// resume-bank files plus application/bench resumes. Responds immediately;
-// the work continues server-side as a self-chaining background job, so the
-// user can close the page. Idempotent, already-indexed items are skipped,
-// and re-clicking resumes a broken chain from wherever it stopped.
+// GET /api/resume-bank/index-all
+// Where the cloud run stands: phase, progress, and which files failed and why.
+export async function GET(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
+  const state = await getIndexJobState();
+  return NextResponse.json({
+    phase: indexJobPhase(state),
+    remaining: state?.remaining ?? 0,
+    total: state?.total ?? 0,
+    startedAt: state?.startedAt ?? null,
+    updatedAt: state?.updatedAt ?? null,
+    failed: state?.failed ?? [],
+  });
+}
+
+// DELETE /api/resume-bank/index-all
+// Stop the run. The next hop sees the flag and ends; files already indexed stay.
+export async function DELETE(request: NextRequest) {
+  const auth = await requireStaff(request);
+  if (!auth.ok) return auth.response;
+  const state = await getIndexJobState();
+  if (!indexJobBusy(indexJobPhase(state))) {
+    return NextResponse.json({ stopped: false, message: "Nothing is indexing right now." });
+  }
+  await cancelIndexJobState();
+  return NextResponse.json({ stopped: true });
+}
+
+// POST /api/resume-bank/index-all   body: { retryFailed?: boolean }
+// Kick off cloud-side indexing of everything that isn't searchable yet: bank
+// files plus application/bench resumes, or with `retryFailed` only the files
+// the last run failed on. Responds immediately; the work continues server-side
+// as a self-chaining background job, so the page can be closed. Idempotent:
+// indexed items are skipped, and a stalled chain is replaced.
 export async function POST(request: NextRequest) {
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
@@ -36,20 +69,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const body = await request.json().catch(() => ({}));
+  const retryFailed = body?.retryFailed === true;
+
   try {
-    // One chain at a time: a stale heartbeat (no hop in 5 minutes) counts as
-    // dead and may be replaced, so a crashed chain never blocks a restart.
+    // One chain at a time. A stalled chain (no heartbeat in 5 minutes) is
+    // presumed dead and may be replaced, so a crash never blocks a restart.
     const jobState = await getIndexJobState();
-    if (
-      jobState && jobState.remaining > 0 &&
-      Date.now() - new Date(jobState.updatedAt).getTime() < 5 * 60_000
-    ) {
+    if (indexJobBusy(indexJobPhase(jobState))) {
       return NextResponse.json({
         started: false,
         alreadyRunning: true,
-        remaining: jobState.remaining,
-        message: `Indexing is already running in the cloud (${jobState.remaining} resumes left).`,
+        remaining: jobState?.remaining ?? 0,
+        message: `Indexing is already running in the cloud (${jobState?.remaining ?? 0} resumes left).`,
       });
+    }
+
+    const selfUrl = `${indexChainBaseUrl(request.nextUrl.origin)}/api/resume-bank/index-run`;
+
+    if (retryFailed) {
+      const failed = [...new Set((jobState?.failed ?? []).map((f) => f.id))];
+      const bank = failed.filter((id) => id.startsWith("resume-bank/"));
+      const apps = failed.filter((id) => !id.startsWith("resume-bank/"));
+      if (bank.length + apps.length === 0) {
+        return NextResponse.json({ started: false, bank: 0, applications: 0, message: "No failed files to retry." });
+      }
+      await startIndexJobState(bank.length + apps.length);
+      after(() => processIndexHop({ bank, apps, depth: 0 }, selfUrl));
+      return NextResponse.json({ started: true, bank: bank.length, applications: apps.length }, { status: 202 });
     }
 
     const [bankList, appsResult] = await Promise.all([
@@ -57,38 +104,25 @@ export async function POST(request: NextRequest) {
       getAllApplications(),
     ]);
 
-    // Duplicate files (same name + size uploaded twice) are indexed ONCE, the
-    // extra copy would cost a parse and surface the same candidate twice in
-    // matches. The copies are reported so the UI can flag them for deletion;
-    // an already-indexed copy wins so we never re-parse a healthy group.
-    const groups = new Map<string, { key: string; size: number }[]>();
-    for (const o of bankList.objects || []) {
-      const fileName = o.key.split("--").pop() || o.key;
-      const g = `${fileName.toLowerCase()}|${o.size}`;
-      const list = groups.get(g) || [];
-      list.push({ key: o.key, size: o.size });
-      groups.set(g, list);
-    }
-
-    const bankKeys: string[] = [];
-    let duplicateCopies = 0;
-    // Peek at indexed status for everything first so the keeper of each
-    // duplicate group is the copy that's already searchable, if any.
-    const allBankKeys = (bankList.objects || []).map((o) => o.key);
     // Anything with a resume file or a stored analysis can be made searchable,
     // that includes bench profiles whose details were entered manually.
     const appIds = (appsResult.data || [])
       .filter((a) => a.resumeId || a.resumeAnalysis)
       .map((a) => a.id);
+    const objects = bankList.objects || [];
+    const indexedMap = await resumesIndexedChunked([...objects.map((o) => o.key), ...appIds]);
 
-    const indexedMap = await resumesIndexedChunked([...allBankKeys, ...appIds]);
-
-    // Keep one file per duplicate group (indexed copy preferred), count the rest.
-    for (const list of groups.values()) {
-      const keeper = list.find((f) => indexedMap[f.key]) || list[0];
-      bankKeys.push(keeper.key);
-      duplicateCopies += list.length - 1;
-    }
+    // Duplicate files are indexed once (same keeper rule as the bank page): an
+    // extra copy would cost a parse and show the same candidate twice.
+    const files = objects.map((o) => ({
+      key: o.key,
+      fileName: parseResumeBankKey(o.key).fileName,
+      size: o.size,
+      uploadedAt: o.lastModified.getTime(),
+      indexed: !!indexedMap[o.key],
+    }));
+    const bankKeys = keysToIndex(files);
+    const duplicateCopies = findDuplicateGroups(files).reduce((n, g) => n + g.extras.length, 0);
 
     // Re-index bank files that were embedded before contact cards existed,
     // they show as "Unnamed candidate" in matches until re-parsed.
@@ -109,8 +143,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await putIndexJobState(bank.length + apps.length);
-    const selfUrl = `${indexChainBaseUrl(request.nextUrl.origin)}/api/resume-bank/index-run`;
+    await startIndexJobState(bank.length + apps.length);
     after(() => processIndexHop({ bank, apps, depth: 0 }, selfUrl));
 
     return NextResponse.json(

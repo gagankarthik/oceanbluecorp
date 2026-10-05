@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Staff sign-in for the Ocean Blue Corporation console.",
+  description: "Staff sign-in for the Oceanblue Solutions, Inc. console.",
   // Never index these. The console is invite-only with no public sign-up, so a
   // sign-in screen in search results is noise that also advertises the door.
   // `nofollow` too: there is nothing beyond it a crawler should be reaching.

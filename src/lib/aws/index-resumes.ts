@@ -6,16 +6,16 @@
 // fires the first hop. Each hop (/api/resume-bank/index-run) responds 202
 // immediately, processes a small batch inside `after()` (so it fits one
 // serverless invocation), then POSTs the remaining worklist back to itself with
-// an internal key. Progress is stateless, the vector store itself is the
-// record of what's done, so a broken chain resumes exactly where it left off
-// the next time "Index all" is clicked.
+// an internal key. The vector store is the record of what's done, so a broken
+// chain resumes where it left off the next time "Index all" is clicked. The job
+// state item carries progress, per-file failures and the stop flag.
 //
 // Server-side only (it touches S3, DynamoDB and the matching engine secret).
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getResumeObject, parseResumeBankKey } from "./s3";
 import { parseResumeBuffer } from "./resume-parser";
 import { embedResume, resumesIndexed } from "./match-candidates";
-import { getApplication, putBankResumeContact, putIndexJobState } from "./dynamodb";
+import { getApplication, getIndexJobState, heartbeatIndexJobState, putBankResumeContact, type IndexJobFailure } from "./dynamodb";
 import { analyzeApplicationResume } from "./analyze-application";
 
 if (typeof window !== "undefined") {
@@ -153,33 +153,37 @@ export async function resumesIndexedChunked(ids: string[]): Promise<Record<strin
 
 /**
  * Process one hop of the indexing chain: a small batch in parallel, then hand
- * the remainder to the next hop. Failures are logged and dropped from the
- * worklist (never retried within the run) so one bad file can't wedge the chain.
+ * the remainder to the next hop. A failure is recorded on the job state and
+ * dropped from the worklist (never retried within the run) so one bad file
+ * can't wedge the chain. A stop request ends the run before the next batch.
  */
 export async function processIndexHop(payload: IndexJobPayload, selfUrl: string): Promise<void> {
+  const state = await getIndexJobState();
+  if (state?.cancelled) {
+    console.log(`[index-chain] stopped by request with ${payload.apps.length + payload.bank.length} items left`);
+    await heartbeatIndexJobState(0);
+    return;
+  }
+
   // Applications first: bench candidates with a stored analysis are the
   // cheapest wins and what recruiters are waiting to see in Lead Sourcing.
   const fromApps = payload.apps.slice(0, HOP_BATCH);
   const fromBank = fromApps.length < HOP_BATCH ? payload.bank.slice(0, HOP_BATCH - fromApps.length) : [];
 
-  await Promise.all([
-    ...fromApps.map(async (id) => {
-      try {
-        const r = await indexApplication(id);
-        if (!r.indexed) console.error(`[index-chain] application ${id}: ${r.error}`);
-      } catch (e) {
-        console.error(`[index-chain] application ${id}:`, e);
+  const failures: IndexJobFailure[] = [];
+  const run = async (id: string, index: (id: string) => Promise<{ indexed: boolean; error?: string }>) => {
+    try {
+      const r = await index(id);
+      if (!r.indexed) {
+        console.error(`[index-chain] ${id}: ${r.error}`);
+        failures.push({ id, error: r.error || "Indexing failed" });
       }
-    }),
-    ...fromBank.map(async (key) => {
-      try {
-        const r = await indexBankFile(key);
-        if (!r.indexed) console.error(`[index-chain] bank ${key}: ${r.error}`);
-      } catch (e) {
-        console.error(`[index-chain] bank ${key}:`, e);
-      }
-    }),
-  ]);
+    } catch (e) {
+      console.error(`[index-chain] ${id}:`, e);
+      failures.push({ id, error: e instanceof Error ? e.message : "Indexing failed" });
+    }
+  };
+  await Promise.all([...fromApps.map((id) => run(id, indexApplication)), ...fromBank.map((key) => run(key, indexBankFile))]);
 
   const rest: IndexJobPayload = {
     apps: payload.apps.slice(fromApps.length),
@@ -188,7 +192,7 @@ export async function processIndexHop(payload: IndexJobPayload, selfUrl: string)
   };
 
   // Heartbeat: keeps the run lock alive and gives the UI honest progress.
-  await putIndexJobState(rest.apps.length + rest.bank.length);
+  await heartbeatIndexJobState(rest.apps.length + rest.bank.length, failures);
 
   if (rest.apps.length + rest.bank.length === 0) {
     console.log(`[index-chain] complete after ${rest.depth} hops`);
@@ -196,7 +200,7 @@ export async function processIndexHop(payload: IndexJobPayload, selfUrl: string)
   }
   if (rest.depth >= MAX_DEPTH) {
     console.error(`[index-chain] depth cap ${MAX_DEPTH} hit with ${rest.apps.length + rest.bank.length} items left`);
-    await putIndexJobState(0);
+    await heartbeatIndexJobState(0);
     return;
   }
 

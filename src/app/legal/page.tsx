@@ -24,7 +24,7 @@ import { IconCookie, IconTrash, IconAccess } from "@/components/site/legal/doc";
 export const metadata: Metadata = pageMetadata({
   path: "/legal",
   title: "Legal & Privacy",
-  description: "Ocean Blue Corporation's legal documents: privacy policy, terms of service, cookie policy, data deletion, accessibility statement and security practices.",
+  description: "Oceanblue Solutions, Inc.'s legal documents: privacy policy, terms of service, cookie policy, data deletion, accessibility statement and security practices.",
 });
 
 const documents: { name: string; href: string; updated: string | null; desc: string; icon: Icon }[] = [

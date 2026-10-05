@@ -1,4 +1,4 @@
-# Ocean Blue Admin Design System
+# Oceanblue Admin Design System
 
 The single source of truth for how the admin app (`/admin/*`) looks, behaves, and grows.
 Anatomy follows the three-layer model from

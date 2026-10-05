@@ -163,7 +163,7 @@ export default function DevelopersContent() {
               Job Feed API
             </h1>
             <p className="rise mt-6 max-w-[58ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
-              Pull Ocean Blue Corporation&apos;s live job listings directly into your platform.
+              Pull Oceanblue Solutions, Inc.&apos;s live job listings directly into your platform.
               Real-time REST API, authenticated with API keys, versioned, and ready to integrate.
             </p>
             <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
@@ -244,7 +244,7 @@ export default function DevelopersContent() {
           {/* Overview */}
           <Section id="overview" title="Overview">
             <p className="mb-4 type-body text-ink-muted">
-              The Ocean Blue Corporation Job Feed API lets external platforms pull our live job listings.
+              The Oceanblue Solutions, Inc. Job Feed API lets external platforms pull our live job listings.
               It&apos;s a versioned REST API hosted at <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono text-cobalt">/api/v1</code> and returns JSON.
             </p>
             <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
@@ -310,7 +310,7 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
               Each key is issued at one of two access levels. A read-only key that calls a write
               endpoint gets a <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">403</code> naming
               the scope it is missing, in a <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">requiredScope</code> field.
-              Ask your Ocean Blue contact if you need a level changed; the key value itself does not change.
+              Ask your Oceanblue contact if you need a level changed; the key value itself does not change.
             </p>
             <div className="overflow-x-auto rounded-xl border border-line">
               <table className="w-full min-w-[560px] type-body-sm">

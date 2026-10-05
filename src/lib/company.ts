@@ -4,8 +4,8 @@
 /* Not interchangeable. BRAND_NAME is the operating brand, for sentences about
    the business people deal with. LEGAL_NAME is the entity, for of-record
    contexts: the legal footer, the colophon, structured data. */
-export const BRAND_NAME = "Ocean Blue Solutions";
-export const LEGAL_NAME = "Ocean Blue Corporation";
+export const BRAND_NAME = "Oceanblue Solutions, Inc.";
+export const LEGAL_NAME = "Oceanblue Solutions, Inc.";
 
 /** The one public phone line and inbox. */
 export const CONTACT_PHONE = { label: "+1 (614) 844-6925", href: "tel:+16148446925" };
@@ -22,7 +22,7 @@ export type Milestone = {
 };
 
 export const MILESTONES: Milestone[] = [
-  { year: "2013", title: "Company Founded", description: "Ocean Blue opened in Ohio with a vision to transform enterprise IT." },
+  { year: "2013", title: "Company Founded", description: "Oceanblue opened in Ohio with a vision to transform enterprise IT." },
   { year: "2015", title: "Breakthrough Engagement", description: "Signed our first Master Service Agreement with a prime vendor, establishing credibility as a delivery partner." },
   { year: "2021", title: "Enterprise Trust", description: "Secured an MSA with a Fortune 500 client, taking our teams into enterprise-scale programs." },
   { year: "2022", title: "Global Delivery", description: "Opened a delivery center in India with local operations, adding a second hub alongside the US." },

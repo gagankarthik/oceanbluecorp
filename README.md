@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="public/Logo_400x400.png" alt="Ocean Blue Solutions" width="200" />
+<img src="public/Logo_400x400.png" alt="Oceanblue Solutions, Inc." width="200" />
 
-# Ocean Blue Corporation
+# Oceanblue Solutions, Inc.
 
 **One accountable partner for talent, engineering, technology, and operations.**
 
@@ -22,7 +22,7 @@
 
 ## About us
 
-**Ocean Blue Corporation** (legally *Ocean Blue Solutions, Inc.*) is a certified minority- and women-owned enterprise technology partner, founded in **2013** and headquartered in **Powell, Ohio**. We help Fortune 500 enterprises and state government agencies across North America hire the right people, build and modernize their technology, and keep it all running, under a single accountable standard.
+**Oceanblue Solutions, Inc.** is a certified minority- and women-owned enterprise technology partner, founded in **2013** and headquartered in **Powell, Ohio**. We help Fortune 500 enterprises and state government agencies across North America hire the right people, build and modernize their technology, and keep it all running, under a single accountable standard.
 
 We are deliberately built to be **one partner you can hold to the outcome**, not a stack of vendors pointing fingers. From the first conversation to the quarterly review, one team owns the result.
 
@@ -56,7 +56,7 @@ Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Commu
 
 ---
 
-## Why Ocean Blue
+## Why Oceanblue
 
 - **One accountable partner**, a single point of ownership across talent, engineering, technology, and operations.
 - **A decade of delivery**, serving enterprises and government agencies since 2013, held to one standard.
@@ -95,12 +95,12 @@ Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Commu
 ---
 
 <div align="center">
-<sub>© Ocean Blue Corporation · Ocean Blue Solutions, Inc.. Powell, Ohio, USA</sub>
+<sub>© Oceanblue Solutions, Inc. · Powell, Ohio, USA</sub>
 </div>
 
 <!--
 ─────────────────────────────────────────────────────────────
-For developers: this repository holds the Ocean Blue Corporation
+For developers: this repository holds the Oceanblue Solutions, Inc.
 website and internal platform (Next.js 16, React 19, TypeScript,
 Tailwind CSS 4, AWS). Setup, architecture, and conventions live in
 CLAUDE.md and AWS.md.

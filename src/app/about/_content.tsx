@@ -17,10 +17,30 @@ import { MILESTONES, FOUNDED_YEAR } from "@/lib/company";
    from, and the certifications. Each of those gets one section, in that order. */
 
 const VALUES = [
-  { title: "People who own the outcome, not the ticket", href: "/careers" },
-  { title: "Senior practitioners on the work from day one", href: "/team" },
-  { title: "Security and compliance designed in, never retrofitted", href: "/solutions/cloud" },
-  { title: "One accountable team across talent and technology", href: "/solutions" },
+  {
+    title: "People who own the outcome, not the ticket",
+    body: "Our people are embedded with the client and measured on what changed, not on tickets closed.",
+    href: "/careers",
+    link: "How we work",
+  },
+  {
+    title: "Senior practitioners on the work from day one",
+    body: "Experienced engineers and consultants lead from the first week, not after a ramp-up.",
+    href: "/team",
+    link: "Meet the team",
+  },
+  {
+    title: "Security and compliance designed in, never retrofitted",
+    body: "Access, encryption and data handling are settled before the build starts, not bolted on after.",
+    href: "/security",
+    link: "Our security practices",
+  },
+  {
+    title: "One accountable team across talent and technology",
+    body: "Staffing, engineering and managed services under one contract and one point of contact.",
+    href: "/solutions",
+    link: "See our solutions",
+  },
 ];
 
 const STRENGTHS: { title: string; body: string; icon: Icon }[] = [
@@ -123,9 +143,13 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
         <ul className="grid gap-[3px] bg-paper-deep sm:grid-cols-2">
           {VALUES.map((v) => (
             <li key={v.title}>
-              <Link href={v.href} className="group flex h-full min-h-[150px] flex-col justify-between gap-8 bg-white p-8 transition-colors hover:bg-paper">
+              <Link href={v.href} className="group flex h-full flex-col bg-white p-8 transition-colors hover:bg-paper">
                 <span className="max-w-[30ch] type-title-lg text-ink">{v.title}</span>
-                <IconArrowRight size={18} className="text-ink-subtle transition-all group-hover:translate-x-1 group-hover:text-cobalt" />
+                <span className="mt-2 max-w-[48ch] type-body-sm text-ink-muted">{v.body}</span>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-6 type-label font-semibold text-ink transition-colors group-hover:text-cobalt">
+                  {v.link}
+                  <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </span>
               </Link>
             </li>
           ))}

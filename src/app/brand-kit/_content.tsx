@@ -30,7 +30,7 @@ const COLOR_GROUPS: { group: string; body: string; colors: Swatch[] }[] = [
   },
   {
     group: "Brand",
-    body: "The two blues of the Ocean Blue mark. The logo blue can carry text; aqua is for fills and marks only (2.7:1 on white).",
+    body: "The two blues of the Oceanblue mark. The logo blue can carry text; aqua is for fills and marks only (2.7:1 on white).",
     colors: [
       { name: "Brand blue", hex: "#0975c1", token: "brand", note: "Brand moments, illustration", dark: true },
       { name: "Aqua", hex: "#0cacCF", token: "aqua", note: "Fills and marks, never text", dark: true },
@@ -201,7 +201,7 @@ export default function BrandKitContent() {
               Brand kit and design system
             </h1>
             <p className="rise mt-6 max-w-[58ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
-              The logo, colour, type, icons and drawings behind Ocean Blue Corporation, the single source of truth for a consistent brand.
+              The logo, colour, type, icons and drawings behind Oceanblue Solutions, Inc., the single source of truth for a consistent brand.
             </p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "240ms" }}>
               <a href="/logo.png" download className={buttonClass("primary", "lg")}>
@@ -236,10 +236,10 @@ export default function BrandKitContent() {
           <KitSection id="logo" n="01" title="Logo" sub="Primary wordmark. Keep clear space around it and don't recolor or distort.">
             <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
               <div className="flex min-h-[220px] items-center justify-center bg-white p-10">
-                <Image src="/logo.png" alt="Ocean Blue Corporation logo on light" width={220} height={60} className="h-12 w-auto" />
+                <Image src="/logo.png" alt="Oceanblue Solutions, Inc. logo on light" width={220} height={60} className="h-12 w-auto" />
               </div>
               <div className="flex min-h-[220px] items-center justify-center bg-ink p-10">
-                <Image src="/logo.png" alt="Ocean Blue Corporation logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
+                <Image src="/logo.png" alt="Oceanblue Solutions, Inc. logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
               </div>
             </div>
             <a href="/logo.png" download className="mt-4 inline-flex min-h-10 items-center gap-2 type-label font-semibold text-cobalt hover:text-cobalt-deep">

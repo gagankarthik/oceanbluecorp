@@ -27,7 +27,7 @@ export const FAQS: Faq[] = [
   // ── Working with us ─────────────────────────────────────
   {
     topic: "Working with us",
-    q: "What does Ocean Blue actually do?",
+    q: "What does Oceanblue actually do?",
     a: "Five connected practices under one accountable team: IT staffing and talent, engineering talent and services, enterprise solutions such as cloud, ERP, Salesforce and AI, managed services, and training and upskilling. We serve enterprises and state government agencies across North America.",
     href: "/solutions",
   },
@@ -86,7 +86,7 @@ export const FAQS: Faq[] = [
   {
     topic: "Security and data",
     q: "Are you SOC 2 or ISO 27001 certified?",
-    a: "No. Ocean Blue is not SOC 2 audited and does not hold ISO 27001, and we have not commissioned a third-party penetration test. If your procurement process requires any of these, raise it early and we will tell you honestly whether we can meet the timeline.",
+    a: "No. Oceanblue is not SOC 2 audited and does not hold ISO 27001, and we have not commissioned a third-party penetration test. If your procurement process requires any of these, raise it early and we will tell you honestly whether we can meet the timeline.",
     href: "/security",
   },
   {

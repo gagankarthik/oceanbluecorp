@@ -24,7 +24,7 @@ const STORIES: Story[] = [
     logoCls: "h-7",
     whiteArtwork: true,
     quote:
-      "Ocean Blue operates as a true strategic partner. Their team brings deep expertise, a disciplined approach to execution, and a consistent commitment to quality.",
+      "Oceanblue operates as a true strategic partner. Their team brings deep expertise, a disciplined approach to execution, and a consistent commitment to quality.",
     author: "Brian K.",
     role: "Co-Founder",
   },
@@ -33,7 +33,7 @@ const STORIES: Story[] = [
     logo: "https://www.dieboldnixdorf.com/-/media/diebold/images/global/logo/dn-color-logo.svg",
     logoCls: "h-8",
     quote:
-      "OceanBlue's resources demonstrated high levels of skill and professionalism, delivering quality results that met our expectations and deadlines.",
+      "Oceanblue's resources demonstrated high levels of skill and professionalism, delivering quality results that met our expectations and deadlines.",
     author: "Damodar Buchi Reddy",
     role: "Project Director",
   },
@@ -43,7 +43,7 @@ const STORIES: Story[] = [
     logoCls: "h-6",
     whiteArtwork: true,
     quote:
-      "I have partnered with Ocean Blue for many years. They are trustworthy, honest, motivated, and bring a high degree of work ethic to everything they do.",
+      "I have partnered with Oceanblue for many years. They are trustworthy, honest, motivated, and bring a high degree of work ethic to everything they do.",
     author: "Ken H.",
     role: "Senior Account Executive",
   },

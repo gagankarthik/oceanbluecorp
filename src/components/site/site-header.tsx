@@ -13,7 +13,7 @@ import {
   IconMenu, IconX, IconChevronDown, IconArrowRight, IconTalent, IconHardHat, IconCloudUp, IconShieldLock,
   IconLayers, IconCrm, IconChip, IconServer, IconGraduation, IconTransform, IconCaseStudy, IconStory,
   IconPencil, IconNewspaper, IconDocsCode, IconPackage, IconSwatches, IconBuilding, IconTeam, IconBriefcase, IconMail,
-  IconUser, IconSettings, IconLogout, IconOverview, type Icon,
+  IconUser, IconSettings, IconLogout, IconOverview, IconKey, type Icon,
 } from "./icons";
 
 /** `external` opens in a new tab. */
@@ -95,12 +95,13 @@ const MENUS: Group[] = [
       { href: "/careers", label: "Careers", desc: "What the work is like, and how we hire", icon: IconBriefcase },
       { href: "/contact", label: "Contact us", desc: "Sales, partnerships and general enquiries", icon: IconMail },
       { href: "https://hr.oceanbluecorp.com", label: "HR platform", desc: "Leave, attendance, documents and the handbook", icon: IconUser, external: true },
+      { href: "/auth/signin", label: "Staff sign in", desc: "The recruiting and publishing console, for staff", icon: IconKey },
     ],
     feature: {
       title: "A certified diverse supplier",
       body: "NMSDC, Ohio MBE and WBE, and City of Columbus MBE certified.",
       href: "/about",
-      cta: "About Ocean Blue",
+      cta: "About Oceanblue",
       art: "lattice",
     },
   },
@@ -108,8 +109,8 @@ const MENUS: Group[] = [
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <Link href="/" aria-label="Ocean Blue Corporation, home" className={cn("flex items-center", className)}>
-      <Image src="/logo.webp" alt="Ocean Blue Corporation" width={150} height={40} priority className="h-8 w-auto" />
+    <Link href="/" aria-label="Oceanblue Solutions, Inc., home" className={cn("flex items-center", className)}>
+      <Image src="/logo.webp" alt="Oceanblue Solutions, Inc." width={150} height={40} priority className="h-8 w-auto" />
     </Link>
   );
 }
@@ -204,9 +205,9 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 justify-self-end md:flex lg:ml-0">
-          {isLoading ? (
-            <span className="h-8 w-16 animate-pulse rounded-full bg-paper" />
-          ) : isAuthenticated ? (
+          {/* Visitors cannot have accounts, so signed-out readers get no sign-in
+              here; staff use "Staff sign in" in the Company menu or the footer. */}
+          {!isLoading && isAuthenticated && (
             <div className="relative" ref={accountRef}>
               <button
                 type="button"
@@ -242,10 +243,6 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                 </div>
               )}
             </div>
-          ) : (
-            <Link href="/auth/signin" className="inline-flex h-10 items-center rounded-full px-3 text-[14.5px] font-medium text-ink-muted transition-colors hover:bg-paper hover:text-ink">
-              Sign in
-            </Link>
           )}
           {/* Candidates go straight to the job board; Careers sits in the Company menu. */}
           <LinkButton href="/careers/search" variant="outline" className="hidden lg:inline-flex">
@@ -364,17 +361,13 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
             <LinkButton href="/contact" variant="primary" size="lg">
               Talk to us
             </LinkButton>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={cn("grid gap-2", isAuthenticated && "grid-cols-2")}>
               <LinkButton href="/careers/search" variant="outline" size="lg">
                 Find a job
               </LinkButton>
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <LinkButton href={dashboard} variant="outline" size="lg">
                   Dashboard
-                </LinkButton>
-              ) : (
-                <LinkButton href="/auth/signin" variant="outline" size="lg">
-                  Sign in
                 </LinkButton>
               )}
             </div>

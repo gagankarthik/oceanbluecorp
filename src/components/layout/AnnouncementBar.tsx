@@ -33,25 +33,22 @@ export default function AnnouncementBar({
   } as const;
 
   /**
-   * The close control, pinned to the right end of the strip.
-   *
-   * Absolutely positioned rather than placed in the flow: the static mode
-   * centres its label in the full width, and the marquee mode runs a track
-   * across it, so a button taking part in either layout would shift the text
-   * off-centre or interrupt the loop. `pr-12` on the label keeps a long
-   * announcement from sliding under it.
+   * The close control. In the static mode it is pinned to the right end so the
+   * centred label stays centred (`pr-12` keeps a long label clear of it). In the
+   * marquee it takes its own slot, so the track never runs underneath it.
    */
-  const dismissButton = onDismiss ? (
-    <button
-      type="button"
-      onClick={onDismiss}
-      aria-label="Dismiss announcement"
-      title="Dismiss"
-      className="absolute right-2 top-1/2 z-[2] grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-[#0b1a33] text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-    >
-      <IconX size={16} />
-    </button>
-  ) : null;
+  const dismissButton = (pinned: boolean) =>
+    onDismiss ? (
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss announcement"
+        title="Dismiss"
+        className={`${pinned ? "absolute right-2 top-1/2 -translate-y-1/2" : "mx-1.5 flex-none"} z-[2] grid h-7 w-7 place-items-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60`}
+      >
+        <IconX size={16} />
+      </button>
+    ) : null;
 
   // ── Scrolling / marquee mode ──
   const marquee = (extra = "") => {
@@ -66,12 +63,14 @@ export default function AnnouncementBar({
     const track = <div className="hz-marquee flex w-max items-center">{[...half, ...half.map((_, i) => item(i + 4))]}</div>;
     return (
       <div className={`${barClass} flex ${extra}`} style={barStyle}>
-        {href ? (
-          <Link href={href} className="w-full transition-opacity hover:opacity-90">{track}</Link>
-        ) : (
-          track
-        )}
-        {dismissButton}
+        <div className="h-full min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-20px),transparent)]">
+          {href ? (
+            <Link href={href} className="flex h-full w-full items-center transition-opacity hover:opacity-90">{track}</Link>
+          ) : (
+            <div className="flex h-full items-center">{track}</div>
+          )}
+        </div>
+        {dismissButton(false)}
       </div>
     );
   };
@@ -93,7 +92,7 @@ export default function AnnouncementBar({
         ) : (
           label
         )}
-        {dismissButton}
+        {dismissButton(true)}
       </div>
     </>
   );

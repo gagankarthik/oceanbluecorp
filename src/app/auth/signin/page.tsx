@@ -515,7 +515,7 @@ export default function SignInPage() {
             {heading(
               "Complete your account",
               <>
-                Welcome to Ocean Blue. Confirm your details and choose a password for <span className="font-semibold text-ink">{email}</span>.
+                Welcome to Oceanblue. Confirm your details and choose a password for <span className="font-semibold text-ink">{email}</span>.
               </>,
               "Step 2 of 2",
             )}

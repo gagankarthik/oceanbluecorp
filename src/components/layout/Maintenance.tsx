@@ -37,7 +37,7 @@ export default function Maintenance({
       <div className="mx-auto w-full max-w-[var(--grid-max)] px-[var(--space-layout-gutter)] pt-6">
         <Image
           src="/logo.webp"
-          alt="Ocean Blue Corporation"
+          alt="Oceanblue Solutions, Inc."
           width={150}
           height={40}
           className="mx-auto h-8 w-auto lg:mx-0"
@@ -122,7 +122,7 @@ export default function Maintenance({
       </div>
 
       <p className="border-t border-line px-[var(--space-layout-gutter)] py-5 text-center type-caption text-ink-subtle">
-        © {new Date().getFullYear()} Ocean Blue Corporation
+        © {new Date().getFullYear()} Oceanblue Solutions, Inc.
       </p>
     </main>
   );

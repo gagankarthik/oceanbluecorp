@@ -11,7 +11,7 @@ export const CAREER_BENEFITS = [
 export const HR_EMAIL = "hr@oceanbluecorp.com";
 
 export const EEO_STATEMENT =
-  "Ocean Blue is an equal opportunity employer. We do not discriminate on the basis of race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.";
+  "Oceanblue is an equal opportunity employer. We do not discriminate on the basis of race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.";
 
 export type WorkMode = "Remote" | "Hybrid" | "On-site";
 
@@ -26,4 +26,18 @@ export function workMode(job: { title?: string; location?: string; type?: string
   if (job.type === "remote" || /\bremote\b/i.test(text)) return "Remote";
   if (/\bon-?site\b/i.test(text)) return "On-site";
   return null;
+}
+
+/**
+ * A posting title as the public pages print it. Titles are typed freehand in
+ * the console, so "PM- Systems Integration" and "Analyst - Hybrid" arrive with
+ * lopsided or plain hyphens; a dash with a space on either side becomes a
+ * spaced en dash. Hyphenated words ("Contract-to-hire") are left alone. Display
+ * only: never write the result back to the record.
+ */
+export function displayTitle(title: string): string {
+  return title
+    .replace(/\s*[-–—]+\s+|\s+[-–—]+\s*/g, " – ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }

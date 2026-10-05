@@ -6,7 +6,7 @@ import { IconCheck, IconMail } from "@/components/site/icons";
 export const metadata: Metadata = pageMetadata({
   path: "/accessibility",
   title: "Accessibility Statement",
-  description: "Ocean Blue Corporation is committed to digital accessibility for people with disabilities. Read our WCAG conformance and how to get help.",
+  description: "Oceanblue Solutions, Inc. is committed to digital accessibility for people with disabilities. Read our WCAG conformance and how to get help.",
 });
 
 const MEASURES = [
@@ -44,13 +44,13 @@ export default function AccessibilityPage() {
   return (
     <DocPage
       title="Accessibility"
-      lede="We want everyone, including people with disabilities, to be able to use the Ocean Blue Corporation website with confidence."
+      lede="We want everyone, including people with disabilities, to be able to use the Oceanblue Solutions, Inc. website with confidence."
       meta={[{ label: "Last updated", value: UPDATED }]}
       toc={SECTIONS}
     >
       <DocSection id="commitment" title="Our commitment">
         <p>
-          Ocean Blue Corporation is committed to ensuring digital accessibility for people with disabilities. We are
+          Oceanblue Solutions, Inc. is committed to ensuring digital accessibility for people with disabilities. We are
           continually improving the user experience for everyone and applying the relevant accessibility standards so
           that our website is perceivable, operable, understandable, and robust for all users, regardless of ability,
           assistive technology, or device.

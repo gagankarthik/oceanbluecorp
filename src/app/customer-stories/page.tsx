@@ -6,7 +6,7 @@ import { getLiveArticles, sectionMetadata } from "@/lib/articles-public";
 const COPY = {
   title: "Customer stories",
   description:
-    "Ocean Blue Corporation clients on what changed, how long it took, and what they would tell a peer.",
+    "Oceanblue Solutions, Inc. clients on what changed, how long it took, and what they would tell a peer.",
 };
 
 // robots: index:false while the section is empty, lifted automatically by the

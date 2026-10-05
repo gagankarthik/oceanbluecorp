@@ -65,7 +65,7 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
       "Enterprise Platforms",
       "Compliance",
       "Industry Analysis",
-      "Inside Ocean Blue",
+      "Inside Oceanblue",
     ],
   },
   "case-study": {

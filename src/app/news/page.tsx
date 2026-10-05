@@ -6,7 +6,7 @@ import { getLiveArticles, sectionMetadata } from "@/lib/articles-public";
 const COPY = {
   title: "News",
   description:
-    "Company announcements, awards, certifications, and updates from Ocean Blue Corporation.",
+    "Company announcements, awards, certifications, and updates from Oceanblue Solutions, Inc.",
 };
 
 // robots: index:false while the section is empty, lifted automatically by the

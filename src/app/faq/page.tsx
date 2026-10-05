@@ -6,7 +6,7 @@ import { FAQS } from "./questions";
 export const metadata: Metadata = pageMetadata({
   path: "/faq",
   title: "FAQ",
-  description: "How Ocean Blue Corporation engages, how fast we shortlist, how our engineers work with your team, our security position, and how to reach a person.",
+  description: "How Oceanblue Solutions, Inc. engages, how fast we shortlist, how our engineers work with your team, our security position, and how to reach a person.",
 });
 
 /* FAQPage structured data. Search engines surface these directly, which is

@@ -71,7 +71,7 @@ export function CustomerMarquee({ label }: { label: string }) {
           {Array.from({ length: CELLS }, (_, i) => (
             <li
               key={i}
-              className={`group relative h-24 overflow-hidden border-line [perspective:600px] transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : "sm:border-r"} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
+              className={`group relative h-24 overflow-hidden border-line [perspective:600px] transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : i < CELLS - 1 ? "sm:border-r" : ""} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
             >
               {set > 0 && (
                 <span

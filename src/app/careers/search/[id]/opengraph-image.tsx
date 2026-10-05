@@ -111,7 +111,7 @@ export default async function OGImage({
             fontWeight: "600",
             letterSpacing: "0.01em",
           }}>
-            Ocean Blue Corporation
+            Oceanblue Solutions, Inc.
           </span>
           <div style={{
             marginLeft: "auto",

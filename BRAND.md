@@ -9,7 +9,7 @@ sentence cannot be justified from this page, it does not ship.
 
 ### 1. Positioning: what we do
 
-**Ocean Blue is the single accountable partner for the people, engineering,
+**Oceanblue is the single accountable partner for the people, engineering,
 platforms and operations an enterprise runs on.**
 
 The category is not "IT staffing" and not "consulting". The real choice a buyer

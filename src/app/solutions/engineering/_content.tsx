@@ -13,7 +13,7 @@ import {
    the reader and the answer.
 
    The standards listed against each industry are market context, not
-   Ocean Blue certifications, and the page says so. */
+   Oceanblue certifications, and the page says so. */
 
 const disciplines = [
   { title: "Mechanical", roles: "Design & CAD, FEA/simulation, thermal & HVAC, product development" },
@@ -115,7 +115,7 @@ export default function EngineeringContent() {
           </table>
         </div>
         <p className="mx-auto mt-4 max-w-[880px] text-[13.5px] text-ink-subtle">
-          Standards are the ones our clients&apos; programs work to. They are market context, not Ocean Blue certifications.
+          Standards are the ones our clients&apos; programs work to. They are market context, not Oceanblue certifications.
         </p>
       </Section>
 
@@ -151,7 +151,7 @@ export default function EngineeringContent() {
         </ol>
       </Section>
 
-      <Section tone="white" title="Why teams bring engineering to Ocean Blue">
+      <Section tone="white" title="Why teams bring engineering to Oceanblue">
         <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
           {why.map((w) => (
             <li key={w.title} className="bg-white p-7">

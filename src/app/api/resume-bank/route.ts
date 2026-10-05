@@ -8,7 +8,8 @@ import {
 } from "@/lib/aws";
 import { requireStaff } from "@/lib/auth/verify";
 import { parseResumeBuffer } from "@/lib/aws/resume-parser";
-import { embedResume, resumesIndexed } from "@/lib/aws/match-candidates";
+import { embedResume } from "@/lib/aws/match-candidates";
+import { resumesIndexedChunked } from "@/lib/aws/index-resumes";
 import { putBankResumeContact } from "@/lib/aws/dynamodb";
 import { serverError } from "@/lib/api-errors";
 
@@ -47,7 +48,8 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
     // Best-effort index status per resume (empty map if the engine is unreachable).
-    const indexMap = await resumesIndexed(resumes.map((r) => r.fileKey));
+    // Chunked: one engine call per 200 keys, as the indexing job does.
+    const indexMap = await resumesIndexedChunked(resumes.map((r) => r.fileKey));
     const withStatus = resumes.map((r) => ({ ...r, indexed: !!indexMap[r.fileKey] }));
 
     return NextResponse.json({ success: true, resumes: withStatus });

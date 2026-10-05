@@ -8,7 +8,7 @@ import { ImageResponse } from "next/og";
    ============================================================ */
 
 export const alt =
-  "Ocean Blue Corporation. IT staffing, enterprise solutions, and managed services";
+  "Oceanblue Solutions, Inc. IT staffing, enterprise solutions, and managed services";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -50,7 +50,7 @@ export default function OpengraphImage() {
               display: "flex",
             }}
           >
-            Ocean Blue Corporation
+            Oceanblue Solutions, Inc.
           </div>
         </div>
 

@@ -16,7 +16,7 @@ import {
    reviewer will find them anyway and finding them here is far better than
    finding them after a claim has been made:
 
-     · Ocean Blue holds no SOC 2 or ISO 27001 certification.
+     · Oceanblue holds no SOC 2 or ISO 27001 certification.
      · No third-party penetration test has been carried out.
      · Delivery staff outside the United States can access client data.
 
@@ -228,7 +228,7 @@ export default function SecurityPage() {
             <div className="mt-8 rounded-r-xl border-l-2 border-cobalt bg-paper px-6 py-5">
               <p className="text-[15px] font-semibold text-ink">What we do not hold</p>
               <p className="mt-2 max-w-[58ch] type-body text-ink-muted">
-                Ocean Blue is not SOC 2 audited and does not hold ISO 27001. We
+                Oceanblue is not SOC 2 audited and does not hold ISO 27001. We
                 have not commissioned a third-party penetration test. If your
                 procurement process requires either, tell us early and we will
                 tell you honestly whether we can meet the timeline rather than

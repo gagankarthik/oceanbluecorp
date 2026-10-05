@@ -100,12 +100,12 @@ export function SiteFooter() {
         <div className="col-span-2 lg:col-span-1">
           <Link
             href="/"
-            aria-label="Ocean Blue Corporation, home"
+            aria-label="Oceanblue Solutions, Inc., home"
             className="inline-flex"
           >
             <Image
               src="/logo.webp"
-              alt="Ocean Blue Corporation"
+              alt="Oceanblue Solutions, Inc."
               width={225}
               height={60}
               className="h-12 w-auto"
@@ -167,7 +167,7 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="mx-auto grid max-w-[1240px] gap-3 px-4 py-6 text-center sm:px-6 lg:grid-cols-3 lg:items-center lg:text-left">
           <p className="text-[13px] text-ink-subtle">
-            © {new Date().getFullYear()} Ocean Blue Corporation. All rights
+            © {new Date().getFullYear()} Oceanblue Solutions, Inc. All rights
             reserved.
           </p>
           <div className="lg:text-center">

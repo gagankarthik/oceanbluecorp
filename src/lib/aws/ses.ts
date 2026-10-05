@@ -130,7 +130,7 @@ async function sendEmail(
 
   try {
     const result = await transporter.sendMail({
-      from: `"${(extra.fromName || "Ocean Blue Careers").replace(/["\r\n]/g, "")}" <${sender}>`,
+      from: `"${(extra.fromName || "Oceanblue Careers").replace(/["\r\n]/g, "")}" <${sender}>`,
       to,
       subject,
       text: textBody,
@@ -153,7 +153,7 @@ function getEmailHeader(): string {
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
         <div style="background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); padding: 30px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 600;">
-            Ocean Blue Corporation
+            Oceanblue Solutions, Inc.
           </h1>
         </div>
         <div style="padding: 40px 30px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
@@ -165,7 +165,7 @@ function getEmailFooter(): string {
         </div>
         <div style="background-color: #f1f5f9; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="margin: 0; color: #64748b; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            Ocean Blue Corporation | Enterprise IT Solutions
+            Oceanblue Solutions, Inc. | Enterprise IT Solutions
           </p>
           <p style="margin: 8px 0 0; color: #94a3b8; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             This is an automated message. Please do not reply directly to this email.
@@ -181,7 +181,7 @@ export async function sendApplicationConfirmation(
   data: ApplicationConfirmationEmail
 ): Promise<{ success: boolean; error?: string }> {
   const subject = `Application Received - ${data.jobTitle}`;
-  const companyName = data.companyName || "Ocean Blue Solutions Inc.";
+  const companyName = data.companyName || "Oceanblue Solutions, Inc.";
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -315,7 +315,7 @@ export async function sendNewApplicationNotification(
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Ocean Blue Recruiting System</strong>
+      <strong>Oceanblue Recruiting System</strong>
     </p>
     ${getEmailFooter()}
   `;
@@ -336,7 +336,7 @@ ${data.candidatePhone ? `- Phone: ${data.candidatePhone}` : ""}
 View the application at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/applications
 
 Best regards,
-Ocean Blue Recruiting System
+Oceanblue Recruiting System
   `;
 
   return sendEmail(data.recruiterEmail, subject, htmlBody, textBody);
@@ -578,7 +578,7 @@ export async function sendJobUpdatedNotification(
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Ocean Blue Recruiting System</strong>
+      <strong>Oceanblue Recruiting System</strong>
     </p>
     ${getEmailFooter()}
   `;
@@ -596,7 +596,7 @@ ${data.changes.length > 0 ? data.changes.map(c => `- ${c}`).join("\n") : "Genera
 View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}
 
 Best regards,
-Ocean Blue Recruiting System
+Oceanblue Recruiting System
   `;
 
   return sendEmail(data.recipientEmail, subject, htmlBody, textBody);
@@ -649,7 +649,7 @@ export async function sendInterviewInvite(
       Dear ${data.candidateName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      We are pleased to invite you for an interview for the <strong>${data.jobTitle}</strong> position at Ocean Blue Corporation.
+      We are pleased to invite you for an interview for the <strong>${data.jobTitle}</strong> position at Oceanblue Solutions, Inc.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
@@ -700,7 +700,7 @@ export async function sendInterviewInvite(
       Please confirm your availability by replying to this email.<br><br>
       Best regards,<br>
       <strong>The Recruiting Team</strong><br>
-      Ocean Blue Corporation
+      Oceanblue Solutions, Inc.
     </p>
     ${getEmailFooter()}
   `;
@@ -710,7 +710,7 @@ Interview Invitation
 
 Dear ${data.candidateName},
 
-We are pleased to invite you for an interview for the ${data.jobTitle} position at Ocean Blue Corporation.
+We are pleased to invite you for an interview for the ${data.jobTitle} position at Oceanblue Solutions, Inc.
 
 Interview Details:
 - Date: ${data.interviewDate}
@@ -726,7 +726,7 @@ Please confirm your availability by replying to this email.
 
 Best regards,
 The Recruiting Team
-Ocean Blue Corporation
+Oceanblue Solutions, Inc.
   `;
 
   return sendEmail(data.candidateEmail, subject, htmlBody, textBody);
@@ -766,7 +766,7 @@ export async function sendStatusUpdate(
       </p>
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
-      Thank you for your interest in Ocean Blue Corporation.<br><br>
+      Thank you for your interest in Oceanblue Solutions, Inc.<br><br>
       Best regards,<br>
       <strong>The Recruiting Team</strong>
     </p>
@@ -782,7 +782,7 @@ We wanted to update you regarding your application for the ${data.jobTitle} posi
 
 ${message}
 
-Thank you for your interest in Ocean Blue Corporation.
+Thank you for your interest in Oceanblue Solutions, Inc.
 
 Best regards,
 The Recruiting Team
@@ -805,7 +805,7 @@ export async function sendCustomEmail(
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Ocean Blue Corporation</strong>
+      <strong>Oceanblue Solutions, Inc.</strong>
     </p>
     ${getEmailFooter()}
   `;
@@ -816,7 +816,7 @@ Dear ${data.recipientName},
 ${data.body}
 
 Best regards,
-Ocean Blue Corporation
+Oceanblue Solutions, Inc.
   `;
 
   return sendEmail(data.recipientEmail, data.subject, htmlBody, textBody);
@@ -843,7 +843,7 @@ export async function sendCandidateEmail(data: {
   `;
   return sendEmail(data.to, data.subject.replace(/[\r\n]/g, " "), htmlBody, data.body, {
     replyTo: data.replyTo,
-    fromName: data.senderName ? `${data.senderName} · Ocean Blue` : undefined,
+    fromName: data.senderName ? `${data.senderName} · Oceanblue` : undefined,
     ics: data.ics,
   });
 }
@@ -985,7 +985,7 @@ export async function sendContactNotificationEmail(data: {
       New Contact Form Submission
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      A new inquiry has been submitted via the Ocean Blue Corporation website.
+      A new inquiry has been submitted via the Oceanblue Solutions, Inc. website.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">Contact Details</h3>

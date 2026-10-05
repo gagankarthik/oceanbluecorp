@@ -39,12 +39,15 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://oceanbluecorp.com"),
   title: {
-    default: "Ocean Blue Corporation | Enterprise IT Solutions",
-    template: "%s | Ocean Blue Corporation",
+    default: "Oceanblue Solutions, Inc. | Enterprise IT Solutions",
+    template: "%s | Oceanblue Solutions, Inc.",
   },
   description:
-    "Ocean Blue Corporation delivers IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for Fortune 500 enterprises and state government agencies across North America.",
+    "Oceanblue Solutions, Inc. delivers IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for Fortune 500 enterprises and state government agencies across North America.",
+  applicationName: "Oceanblue Solutions, Inc.",
   keywords: [
+    "Oceanblue Solutions, Inc.",
+    "Oceanblue Solutions",
     "enterprise IT solutions",
     "ERP implementation",
     "cloud services",
@@ -71,9 +74,9 @@ export const metadata: Metadata = {
     "machine learning",
     "IT consulting",
   ],
-  authors: [{ name: "Ocean Blue Corporation" }],
-  creator: "Ocean Blue Corporation",
-  publisher: "Ocean Blue Corporation",
+  authors: [{ name: "Oceanblue Solutions, Inc." }],
+  creator: "Oceanblue Solutions, Inc.",
+  publisher: "Oceanblue Solutions, Inc.",
   robots: {
     index: true,
     follow: true,
@@ -89,8 +92,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://oceanbluecorp.com",
-    siteName: "Ocean Blue Corporation",
-    title: "Ocean Blue Corporation | Enterprise IT Solutions",
+    siteName: "Oceanblue Solutions, Inc.",
+    title: "Oceanblue Solutions, Inc. | Enterprise IT Solutions",
     description:
       "IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for enterprises and government agencies.",
     // `images` is intentionally omitted: src/app/opengraph-image.tsx supplies a
@@ -103,7 +106,8 @@ export const metadata: Metadata = {
   // its own at the homepage.
   twitter: {
     card: "summary_large_image",
-    creator: "@oceanbluecorp",
+    site: "@OceanBlueSol",
+    creator: "@OceanBlueSol",
   },
   category: "technology",
   classification: "Business",
@@ -115,8 +119,10 @@ const jsonLd = {
   // Stable node id so page-level graphs (see src/app/page.tsx) can reference
   // this Organization instead of redeclaring it.
   "@id": "https://oceanbluecorp.com/#organization",
-  name: "Ocean Blue Corporation",
-  alternateName: "OceanBlueCorp",
+  name: "Oceanblue Solutions, Inc.",
+  legalName: "Oceanblue Solutions, Inc.",
+  // Former and short names, so searches for the old name still resolve here.
+  alternateName: ["Oceanblue Solutions", "Oceanblue", "Ocean Blue Corporation", "OceanBlueCorp"],
   url: "https://oceanbluecorp.com",
   logo: "https://oceanbluecorp.com/Logo_400x400.png",
   description:

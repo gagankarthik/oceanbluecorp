@@ -225,7 +225,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
       try {
         await navigator.share({
           title: job.title,
-          text: `Check out this job opening: ${job.title} at Ocean Blue Corporation`,
+          text: `Check out this job opening: ${job.title} at Oceanblue Solutions, Inc.`,
           url: window.location.href,
         });
       } catch (err) {
@@ -443,7 +443,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                   <div className="mt-6 flex flex-wrap gap-3">
                     <a
                       href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}&body=${encodeURIComponent(
-                        "Hello Ocean Blue team,\n\nThe role I'm looking for:\nPreferred location / work arrangement:\n\nMy resume is attached.\n\nThank you,\n",
+                        "Hello Oceanblue team,\n\nThe role I'm looking for:\nPreferred location / work arrangement:\n\nMy resume is attached.\n\nThank you,\n",
                       )}`}
                       className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15.5px] font-semibold text-ink hover:bg-cobalt-tint"
                     >
@@ -489,12 +489,12 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
             </div>
 
             <div className="rounded-2xl bg-paper p-6">
-              <p className="type-body font-semibold text-ink">Ocean Blue Solutions</p>
+              <p className="type-body font-semibold text-ink">Oceanblue Solutions, Inc.</p>
               <p className="mt-2 type-body-sm text-ink-muted">
                 IT staffing, engineering, enterprise solutions, managed services and training for enterprises and government agencies.
               </p>
               <Link href="/careers" className="mt-4 inline-flex items-center gap-1.5 type-label font-semibold text-ink hover:text-cobalt">
-                Life at Ocean Blue <IconArrowRight size={14} />
+                Life at Oceanblue <IconArrowRight size={14} />
               </Link>
             </div>
           </aside>

@@ -1,5 +1,5 @@
 /* ============================================================
-   Ocean Blue illustration set.
+   Oceanblue illustration set.
 
    Two rules, both from feedback:
 

@@ -46,7 +46,7 @@ export function buildIcs(e: IcsEvent): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Ocean Blue Corporation//Recruiting//EN",
+    "PRODID:-//Oceanblue Solutions\, Inc.//Recruiting//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:REQUEST",
     "BEGIN:VEVENT",

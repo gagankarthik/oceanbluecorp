@@ -90,7 +90,7 @@ export default function TeamPage() {
         title="Build your career with our team"
         sub="We hire for the same disciplines we place, and the people we hire carry real scope from the first week."
         primary={{ href: "/careers", label: "View open roles" }}
-        secondary={{ href: "/about", label: "About Ocean Blue" }}
+        secondary={{ href: "/about", label: "About Oceanblue" }}
       />
     </>
   );

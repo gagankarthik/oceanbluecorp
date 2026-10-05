@@ -2456,6 +2456,8 @@ export interface BankResumeContact {
   phone?: string;
   source: "resume-bank";
   updatedAt: string;
+  /** The file was deleted. The engine has no remove call, so matches drop it here. */
+  deleted?: boolean;
 }
 
 export async function putBankResumeContact(
@@ -2475,6 +2477,30 @@ export async function putBankResumeContact(
     console.error("Error saving bank resume contact:", error);
     return { success: false, error: error instanceof Error ? error.message : "Failed to save contact" };
   }
+}
+
+/**
+ * Mark deleted bank files on their contact cards (creating the card if the file
+ * was never parsed). The matching engine keeps the vector, so match results
+ * filter on this flag instead.
+ */
+export async function markBankResumesDeleted(keys: string[]): Promise<void> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available || keys.length === 0) return;
+  const now = new Date().toISOString();
+  await Promise.all(
+    keys.map((id) =>
+      dbCheck.client!.send(
+        new UpdateCommand({
+          TableName: getTables().candidates,
+          Key: { id },
+          UpdateExpression: "SET deleted = :t, #s = :src, updatedAt = :u",
+          ExpressionAttributeNames: { "#s": "source" },
+          ExpressionAttributeValues: { ":t": true, ":src": "resume-bank", ":u": now },
+        }),
+      ).catch((e) => console.error(`Error marking bank resume ${id} deleted:`, e)),
+    ),
+  );
 }
 
 /** Fetch contact cards for a set of bank file keys. Missing ids are simply absent. */
@@ -2506,24 +2532,75 @@ export async function getBankResumeContacts(ids: string[]): Promise<Record<strin
 // ===========================================
 // One small item in the counters table tracks the cloud indexing chain, so a
 // second "Index all" can't start a parallel chain (duplicate parses cost real
-// money) and the UI can tell whether a run is already in flight.
+// money) and the UI can show real progress, which files failed and why, and
+// whether the chain is still alive.
 
 const INDEX_JOB_ID = "resume-index-job";
+/** Failures kept on the item; well under the 400KB item limit. */
+const MAX_INDEX_FAILURES = 1000;
+
+export interface IndexJobFailure {
+  id: string;    // bank S3 key ("resume-bank/...") or application id
+  error: string;
+}
 
 export interface IndexJobState {
   id: string;
   updatedAt: string; // last hop heartbeat
-  remaining: number; // items left; 0 = finished
+  remaining: number; // items left; 0 = finished or stopped
+  total?: number;    // items queued when the run started
+  startedAt?: string;
+  failed?: IndexJobFailure[];
+  cancelled?: boolean;
 }
 
-export async function putIndexJobState(remaining: number): Promise<void> {
+/** A new run: resets progress, failures and the stop flag. */
+export async function startIndexJobState(total: number): Promise<void> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) return;
+  const now = new Date().toISOString();
   try {
     await dbCheck.client!.send(
       new PutCommand({
         TableName: getTables().counters,
-        Item: { id: INDEX_JOB_ID, updatedAt: new Date().toISOString(), remaining },
+        Item: { id: INDEX_JOB_ID, startedAt: now, updatedAt: now, remaining: total, total, failed: [], cancelled: false },
+      }),
+    );
+  } catch (error) {
+    console.error("Error writing index job state:", error);
+  }
+}
+
+/** Hop heartbeat: new remaining count, plus any failures from this hop. */
+export async function heartbeatIndexJobState(remaining: number, failures: IndexJobFailure[] = []): Promise<void> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return;
+  const trimmed = failures.map((f) => ({ id: f.id, error: f.error.slice(0, 200) }));
+  try {
+    await dbCheck.client!.send(
+      new UpdateCommand({
+        TableName: getTables().counters,
+        Key: { id: INDEX_JOB_ID },
+        UpdateExpression: "SET remaining = :r, updatedAt = :u, failed = list_append(if_not_exists(failed, :empty), :f)",
+        ExpressionAttributeValues: { ":r": remaining, ":u": new Date().toISOString(), ":f": trimmed, ":empty": [] },
+      }),
+    );
+  } catch (error) {
+    console.error("Error writing index job state:", error);
+  }
+}
+
+/** Ask the chain to stop. The next hop sees the flag and ends the run. */
+export async function cancelIndexJobState(): Promise<void> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return;
+  try {
+    await dbCheck.client!.send(
+      new UpdateCommand({
+        TableName: getTables().counters,
+        Key: { id: INDEX_JOB_ID },
+        UpdateExpression: "SET cancelled = :t, updatedAt = :u",
+        ExpressionAttributeValues: { ":t": true, ":u": new Date().toISOString() },
       }),
     );
   } catch (error) {
@@ -2538,7 +2615,9 @@ export async function getIndexJobState(): Promise<IndexJobState | null> {
     const result = await dbCheck.client!.send(
       new GetCommand({ TableName: getTables().counters, Key: { id: INDEX_JOB_ID } }),
     );
-    return (result.Item as IndexJobState) || null;
+    const item = result.Item as IndexJobState | undefined;
+    if (item?.failed && item.failed.length > MAX_INDEX_FAILURES) item.failed = item.failed.slice(-MAX_INDEX_FAILURES);
+    return item || null;
   } catch (error) {
     console.error("Error reading index job state:", error);
     return null;

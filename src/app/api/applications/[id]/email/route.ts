@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         uid: `${id}-${start.getTime()}@oceanbluecorp.com`,
         start,
         durationMinutes: minutes,
-        title: `Interview: ${app.data.jobTitle || "Ocean Blue"}`,
+        title: `Interview: ${app.data.jobTitle || "Oceanblue"}`,
         description: text,
         location: typeof body.interview.location === "string" ? body.interview.location.slice(0, 500) : undefined,
         organizer: auth.claims.email ? { name: actor.name, email: auth.claims.email } : undefined,

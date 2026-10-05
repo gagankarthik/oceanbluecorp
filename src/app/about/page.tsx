@@ -7,8 +7,8 @@ export const revalidate = 60;
 
 export const metadata: Metadata = pageMetadata({
   path: "/about",
-  title: "About Ocean Blue",
-  description: "Since 2013, Ocean Blue Corporation has supplied IT talent, enterprise solutions and managed services to enterprises and state agencies from Powell, Ohio.",
+  title: "About Oceanblue",
+  description: "Since 2013, Oceanblue Solutions, Inc. has supplied IT talent, enterprise solutions and managed services to enterprises and state agencies from Powell, Ohio.",
 });
 
 export default async function About() {

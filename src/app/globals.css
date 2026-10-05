@@ -169,7 +169,7 @@
   --breakpoint-lg: 64rem;
   --breakpoint-xl: 80rem;
 
-  /* Public site palette, drawn from the Ocean Blue mark (see the SITE block at
+  /* Public site palette, drawn from the Oceanblue mark (see the SITE block at
      the end of this file). Navy for type and dark surfaces, cobalt for action,
      the logo's blue and aqua for accents, and a cool blue-grey for grounds.
      Measured: navy on white 17.4:1, ink-muted 8.9:1, ink-subtle 6.1:1 (5.2:1
@@ -289,7 +289,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* Ocean Blue Premium Color Palette */
+  /* Oceanblue Premium Color Palette */
   --background: #ffffff;
   --foreground: #1e293b;
   --card: #ffffff;
@@ -743,7 +743,7 @@
    Later values override the :root block above.
    ============================================================ */
 :root {
-  /* Ocean Blue brand cobalt, matches the marketing site (--hz-cobalt). Green
+  /* Oceanblue brand cobalt, matches the marketing site (--hz-cobalt). Green
      is reserved for the "healthy/success" semantic only, so accent ≠ success. */
   --adm-accent:        var(--p-blue-700);        /* primary/brand */
   --adm-accent-strong: #1e40af;                  /* cobalt-800, hover/pressed */

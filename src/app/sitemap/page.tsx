@@ -27,7 +27,7 @@ const IconScale = ({ size = 16, ...rest }: IconProps) => (
 export const metadata: Metadata = pageMetadata({
   path: "/sitemap",
   title: "Site Map",
-  description: "Every page on the Ocean Blue Corporation website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
+  description: "Every page on the Oceanblue Solutions, Inc. website in one directory: solutions, careers, products, insights, developer resources and legal documents.",
 });
 
 type Group = {

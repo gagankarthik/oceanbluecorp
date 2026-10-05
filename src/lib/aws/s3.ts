@@ -82,16 +82,18 @@ export async function listResumeBankObjects(): Promise<{
   error?: string;
 }> {
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: s3Config.bucketName,
-      Prefix: "resume-bank/",
-    });
-    const response = await s3Client.send(command);
-    const objects = (response.Contents || []).map((obj) => ({
-      key: obj.Key!,
-      size: obj.Size || 0,
-      lastModified: obj.LastModified || new Date(),
-    }));
+    // S3 returns at most 1,000 keys per call; follow the continuation token.
+    const objects: Array<{ key: string; size: number; lastModified: Date }> = [];
+    let token: string | undefined;
+    do {
+      const response = await s3Client.send(
+        new ListObjectsV2Command({ Bucket: s3Config.bucketName, Prefix: "resume-bank/", ContinuationToken: token }),
+      );
+      for (const obj of response.Contents || []) {
+        objects.push({ key: obj.Key!, size: obj.Size || 0, lastModified: obj.LastModified || new Date() });
+      }
+      token = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (token);
     return { success: true, objects };
   } catch (error) {
     console.error("Error listing resume bank objects:", error);

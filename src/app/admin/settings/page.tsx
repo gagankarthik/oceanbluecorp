@@ -38,7 +38,7 @@ const ROLE_CHIP: Record<string, { label: string; tone: Tone }> = {
 const DEFAULT_ROLE_CHIP = { label: "User", tone: "slate" as Tone };
 
 const SITE_DETAILS = [
-  { label: "Site name",     value: "Ocean Blue Corporation", icon: IconBuilding },
+  { label: "Site name",     value: "Oceanblue Solutions, Inc.", icon: IconBuilding },
   { label: "Contact email", value: "hr@oceanbluecorp.com",   icon: IconMail },
   { label: "Phone number",  value: "+1 614-844-6925",        icon: IconPhone },
   { label: "Address",       value: "Powell, OH 43065",       icon: IconLocation },

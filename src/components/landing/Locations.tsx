@@ -77,9 +77,8 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
         />
 
         <div className="reveal relative mt-10 w-full sm:mt-12 overflow-hidden rounded-2xl border border-line bg-white">
-          {/* Hyderabad and Vizianagaram are about two percent apart on this
-              crop, so their cards are staggered: one on a long stalk leaning
-              left, the other on a short one leaning right. */}
+          {/* Hyderabad and Vizianagaram sit close together, so their cards
+              lean apart: Hyderabad's to the left, Vizianagaram's to the right. */}
           <OfficeMap
             activeIndex={active}
             onSelect={setActive}
@@ -91,20 +90,14 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
               address: o.address,
               phone: o.phone,
               hq: o.hq,
-              stalk: o.city === "Hyderabad" ? 116 : o.city === "Vizianagaram" ? 48 : 56,
-              align:
-                o.city === "Hyderabad"
-                  ? ("right" as const)
-                  : o.city === "Vizianagaram"
-                    ? ("left" as const)
-                    : ("center" as const),
+              align: o.city === "Hyderabad" ? ("right" as const) : o.city === "London" ? ("center" as const) : ("left" as const),
             }))}
           />
         </div>
 
-        {/* Phones only: the map's cards are hidden below `sm`, so the same
-            content appears here instead. */}
-        <ul className="mt-8 grid gap-3 sm:hidden">
+        {/* The map's cards are hidden below `lg`, so the same content appears
+            here instead. */}
+        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:hidden">
           {OFFICES.map((o) => (
             <li key={o.city} className="rounded-2xl border border-line bg-white p-5">
               <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">

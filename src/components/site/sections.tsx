@@ -64,7 +64,7 @@ export function SectionTitle({
   );
 }
 
-/** The "Explore ▸" text link a section header ends on. */
+/** The "Explore →" text link a section header ends on. */
 export function SectionLink({ href, children, className, dark }: { href: string; children: React.ReactNode; className?: string; dark?: boolean }) {
   return (
     <Link
@@ -76,9 +76,7 @@ export function SectionLink({ href, children, className, dark }: { href: string;
       )}
     >
       {children}
-      <svg aria-hidden viewBox="0 0 8 10" className="size-2 fill-current transition-transform group-hover:translate-x-0.5">
-        <path d="M0 0l8 5-8 5z" />
-      </svg>
+      <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
     </Link>
   );
 }

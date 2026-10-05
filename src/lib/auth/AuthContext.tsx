@@ -16,7 +16,7 @@ import { clearLegacyHrPortalCookies } from "./hrPortalSession";
  * portal credentials.
  */
 export const NOT_STAFF_ERROR =
-  "This account has no access to the staff site. The Ocean Blue HR portal is a separate sign-in at hr.oceanbluecorp.com, using the credentials HR issued you.";
+  "This account has no access to the staff site. The Oceanblue HR portal is a separate sign-in at hr.oceanbluecorp.com, using the credentials HR issued you.";
 
 interface AuthUser {
   id: string;

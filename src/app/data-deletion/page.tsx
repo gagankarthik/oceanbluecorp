@@ -8,13 +8,13 @@ import { RelatedLinks } from "@/components/site/legal/doc";
 export const metadata: Metadata = pageMetadata({
   path: "/data-deletion",
   title: "Data Deletion Request",
-  description: "Ask Ocean Blue Corporation to delete the personal data we hold about you, such as a job application or resume. Email hr@oceanbluecorp.com to make a request.",
+  description: "Ask Oceanblue Solutions, Inc. to delete the personal data we hold about you, such as a job application or resume. Email hr@oceanbluecorp.com to make a request.",
 });
 
 const DELETE_EMAIL = "hr@oceanbluecorp.com";
 const SUBJECT = encodeURIComponent("Data deletion request");
 const BODY = encodeURIComponent(
-  "Hello Ocean Blue team,\n\nI would like to request deletion of my personal data.\n\nFull name:\nEmail used:\nPhone (optional):\n\nThank you.",
+  "Hello Oceanblue team,\n\nI would like to request deletion of my personal data.\n\nFull name:\nEmail used:\nPhone (optional):\n\nThank you.",
 );
 
 export default function DataDeletionPage() {

@@ -12,7 +12,7 @@
    dead weight, and the failure mode was severe: when its chunk
    did not load, the section sat on a loading spinner forever.
 
-   What is left is eight <img> tags and some arithmetic. No
+   What is left is a dozen <img> tags and some arithmetic. No
    library, no canvas, no WebGL, no animation frames, nothing to
    initialise and nothing to fail. It renders on the server, it
    works with JavaScript disabled, and a tile that 404s leaves a
@@ -51,10 +51,11 @@ function project(lat: number, lng: number) {
   return { x, y };
 }
 
-/* The window onto the world, in world pixels. Chosen so the four offices sit
-   inside it with margin: they span x 276..749 and y 341..462 at this zoom.
-   The top is generous because every pin carries a card above it. */
-const CROP = { x0: 200, y0: 268, x1: 830, y1: 520 };
+/* The window onto the world, in world pixels. The offices span x 276..749 and
+   y 341..462 at this zoom; the margin above and to the right is what keeps the
+   London card and the Vizianagaram card (leaning right) inside the frame at the
+   narrowest width the cards show at (lg). */
+const CROP = { x0: 190, y0: 190, x1: 960, y1: 520 };
 const CROP_W = CROP.x1 - CROP.x0;
 const CROP_H = CROP.y1 - CROP.y0;
 
@@ -141,11 +142,9 @@ export default function OfficeMap({
         ))}
       </div>
 
-      {/* Below `sm` the map is about 350px wide and a 190px card cannot sit
-          beside its neighbour without leaving the frame, so on a phone the
-          cards come off and the map is dots only. Nothing is lost: the full
-          address list sits directly underneath, and on that width it is the
-          thing a reader will actually use. */}
+      {/* Cards are a fixed 210px while the map scales, so below `lg` they
+          would leave the frame. There the map is dots only and the address
+          list underneath carries the same content. */}
       {points.map((p, i) => {
         const pos = positionOf(p.lat, p.lng);
         const active = i === activeIndex;
@@ -171,7 +170,7 @@ export default function OfficeMap({
                 dot marks the coordinate, the card must never sit on it. */}
             <span
               aria-hidden
-              className={`absolute bottom-0 left-1/2 hidden w-px -translate-x-1/2 transition-colors duration-200 sm:block ${
+              className={`absolute bottom-0 left-1/2 hidden w-px -translate-x-1/2 transition-colors duration-200 lg:block ${
                 active ? "bg-cobalt" : "bg-cobalt/40"
               }`}
               style={{ height: stalk }}
@@ -182,7 +181,7 @@ export default function OfficeMap({
               type="button"
               onClick={() => onSelect(i)}
               aria-pressed={active}
-              className={`absolute ${lean} hidden w-[210px] cursor-pointer rounded-lg border bg-white px-3 py-2 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt sm:block ${
+              className={`absolute ${lean} hidden w-[210px] cursor-pointer rounded-lg border bg-white px-3 py-2 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt lg:block ${
                 active
                   ? "border-cobalt shadow-[var(--shadow-overlay)]"
                   : "border-line shadow-[var(--shadow-raised)] hover:border-cobalt/50"

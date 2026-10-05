@@ -37,41 +37,66 @@ export function ArtCapitol({ className }: ArtProps) {
   );
 }
 
-/** Healthcare: a heart with a pulse trace running through it, and a cross badge. */
+/** Healthcare: a hospital, two wings either side of a tower carrying the cross. */
 export function ArtHealth({ className }: ArtProps) {
+  const wingWindows = [50, 70, 158, 178];
   return (
     <Frame className={className}>
-      <path
-        d="M120 162C62 126 58 78 92 70c14-3 24 5 28 16 4-11 14-19 28-16 34 8 30 56-28 92z"
-        className="fill-cobalt-tint"
-      />
-      <path d="M26 116h54l10-22 12 44 12-62 12 50 8-10h80" />
-      <circle cx="184" cy="54" r="20" className="fill-cobalt stroke-cobalt" />
-      <path d="M184 44v20M174 54h20" className="stroke-white" strokeWidth="4" />
-      <circle cx="80" cy="116" r="3" className="fill-ink" />
-      <circle cx="136" cy="116" r="3" className="fill-ink" />
+      <rect x="40" y="108" width="52" height="58" className="fill-white" />
+      <rect x="148" y="108" width="52" height="58" className="fill-white" />
+      {wingWindows.map((x) => (
+        <g key={x}>
+          <rect x={x} y="120" width="12" height="12" />
+          <rect x={x} y="142" width="12" height="12" />
+        </g>
+      ))}
+      <rect x="88" y="62" width="64" height="104" className="fill-white" />
+      <rect x="84" y="56" width="72" height="6" className="fill-white" />
+      <rect x="104" y="70" width="32" height="32" rx="6" className="fill-cobalt stroke-cobalt" />
+      <path d="M120 77v18M111 86h18" className="stroke-white" strokeWidth="5" />
+      {[98, 114, 130].map((x) => <rect key={x} x={x} y="110" width="12" height="12" />)}
+      <rect x="100" y="132" width="40" height="6" className="fill-white" />
+      <rect x="108" y="138" width="24" height="28" className="fill-cobalt-tint" />
+      <line x1="120" y1="138" x2="120" y2="166" />
+      <line x1="24" y1="166" x2="216" y2="166" />
     </Frame>
   );
 }
 
-/** Financial services: a coin stack beside rising bars and a trend arrow. */
+/** Financial services: a vault with a cobalt dial, a coin stack beside it. */
 export function ArtFinance({ className }: ArtProps) {
   // Bottom coin first so each one above covers the one below.
-  const coins = [146, 136, 126, 116];
+  // Staggered so it reads as a pile of coins, not a database cylinder.
+  const coins = [{ y: 154, dx: 0 }, { y: 145, dx: 4 }, { y: 136, dx: -3 }, { y: 127, dx: 2 }];
+  const spokes = [-90, 30, 150].map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    return { x1: 104 + 6 * Math.cos(a), y1: 112 + 6 * Math.sin(a), x2: 104 + 17 * Math.cos(a), y2: 112 + 17 * Math.sin(a) };
+  });
   return (
     <Frame className={className}>
-      {coins.map((y, i) => (
-        <g key={y}>
-          <path d={`M38 ${y}v10a26 8 0 0 0 52 0v-10`} className="fill-white" />
-          <ellipse cx="64" cy={y} rx="26" ry="8" className={i === coins.length - 1 ? "fill-cobalt-tint" : "fill-white"} />
+      <rect x="62" y="158" width="14" height="8" className="fill-white" />
+      <rect x="132" y="158" width="14" height="8" className="fill-white" />
+      <rect x="48" y="58" width="112" height="100" rx="6" className="fill-white" />
+      <rect x="58" y="68" width="92" height="80" rx="3" />
+      <rect x="44" y="80" width="6" height="16" rx="2" className="fill-white" />
+      <rect x="44" y="120" width="6" height="16" rx="2" className="fill-white" />
+      <circle cx="104" cy="112" r="24" className="fill-cobalt stroke-cobalt" />
+      <circle cx="104" cy="112" r="17" className="stroke-white" strokeWidth="1.25" />
+      {spokes.map((s, i) => (
+        <g key={i} className="stroke-white" strokeWidth="2.5">
+          <line x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />
+          <circle cx={s.x2} cy={s.y2} r="2" className="fill-white" />
         </g>
       ))}
-      <ellipse cx="64" cy="116" rx="15" ry="4.5" className="stroke-cobalt" strokeWidth="1.25" />
-      <rect x="108" y="126" width="22" height="40" rx="2" className="fill-white" />
-      <rect x="140" y="104" width="22" height="62" rx="2" className="fill-white" />
-      <rect x="172" y="76" width="22" height="90" rx="2" className="fill-cobalt stroke-cobalt" />
-      <path d="M104 104l30-22 26 8 40-40" className="stroke-cobalt" strokeWidth="2.5" />
-      <path d="M186 50h14v14" className="stroke-cobalt" strokeWidth="2.5" />
+      <circle cx="104" cy="112" r="5" className="fill-white stroke-white" />
+      <rect x="138" y="96" width="6" height="32" rx="3" className="fill-white" />
+      {coins.map(({ y, dx }, i) => (
+        <g key={y}>
+          <path d={`M${174 + dx} ${y}v8a18 5.5 0 0 0 36 0v-8`} className="fill-white" />
+          <ellipse cx={192 + dx} cy={y} rx="18" ry="5.5" className={i === coins.length - 1 ? "fill-cobalt-tint" : "fill-white"} />
+        </g>
+      ))}
+      <ellipse cx="194" cy="127" rx="10" ry="3" className="stroke-cobalt" strokeWidth="1.25" />
       <line x1="24" y1="166" x2="216" y2="166" />
     </Frame>
   );

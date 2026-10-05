@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ocean Blue Corporation enterprise website built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4. Uses AWS services (Cognito, DynamoDB, S3) for authentication and data storage. Deployed on AWS Amplify.
+Oceanblue Solutions, Inc. enterprise website built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4. Uses AWS services (Cognito, DynamoDB, S3) for authentication and data storage. Deployed on AWS Amplify.
 
 ## Commands
 

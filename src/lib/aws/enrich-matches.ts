@@ -23,7 +23,9 @@ export interface MatchEnrichment {
  * Attach origin, identity and navigation data to each match. One batched read
  * covers the bank hits and one the application hits. A hit in a colleague's
  * private pool is dropped, as everywhere else. A failed lookup degrades to a
- * plain hit rather than failing the response.
+ * plain hit rather than failing the response. A bank file that was deleted
+ * is dropped too: the engine keeps its vector, the contact card records the
+ * deletion.
  */
 export async function enrichMatches<T extends { resume_id: string; candidate_name?: string | null }>(
   candidates: T[],
@@ -38,6 +40,7 @@ export async function enrichMatches<T extends { resume_id: string; candidate_nam
   const apps = new Map((appsResult.data || []).map((a) => [a.id, a]));
 
   const visible = candidates.filter((c) => {
+    if (contacts[c.resume_id]?.deleted) return false;
     const app = apps.get(c.resume_id);
     return !app || isVisibleApplication(app, viewer);
   });

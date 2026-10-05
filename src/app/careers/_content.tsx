@@ -108,7 +108,7 @@ export default function CareersPage() {
       <Section
         tone="paper"
         title="Find the team you belong on"
-        sub="Eight practices, all hiring. Pick the one that matches what you do and see what is open right now."
+        sub="Eight practices. Pick the one that matches what you do and see what is open in it right now."
         link={{ href: "/careers/search", label: "Browse every role" }}
       >
         <ul className="grid gap-[3px] sm:grid-cols-2 lg:grid-cols-4">
@@ -142,13 +142,13 @@ export default function CareersPage() {
         {/* A mosaic at three sizes, so the block reads as a place rather than a row of identical frames. */}
         <div className="grid gap-4 lg:grid-cols-12">
           <div className="relative aspect-[16/11] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-7 lg:row-span-2 lg:aspect-auto">
-            <Photo src={IMG.serviceTalent} alt="An Ocean Blue team working together" sizes="(min-width: 1024px) 700px, 100vw" />
+            <Photo src={IMG.serviceTalent} alt="An Oceanblue team working together" sizes="(min-width: 1024px) 700px, 100vw" />
           </div>
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-5">
             <Photo src={IMG.serviceEngineering} alt="An engineer at work on a test rig" sizes="(min-width: 1024px) 500px, 100vw" />
           </div>
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-paper-deep lg:col-span-5">
-            <Photo src={IMG.aboutTeam} alt="An Ocean Blue team meeting" sizes="(min-width: 1024px) 500px, 100vw" />
+            <Photo src={IMG.aboutTeam} alt="An Oceanblue team meeting" sizes="(min-width: 1024px) 500px, 100vw" />
           </div>
         </div>
 
@@ -168,7 +168,9 @@ export default function CareersPage() {
           <ul className="grid gap-[3px]">
             {BENEFITS.map((b) => (
               <li key={b.title} className="flex gap-5 bg-white p-7">
-                <b.icon size={24} className="mt-0.5 shrink-0 text-cobalt" />
+                <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-cobalt-tint text-cobalt">
+                  <b.icon size={34} />
+                </span>
                 <div>
                   <h3 className="type-title-lg font-semibold text-ink">{b.title}</h3>
                   <p className="mt-1.5 max-w-[52ch] type-body text-ink-muted">{b.desc}</p>

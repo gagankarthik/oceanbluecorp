@@ -118,30 +118,37 @@ export const IconInclusive = (p: IconProps) => (
   </Svg>
 );
 
-/** Health insurance: a heart with a pulse through it. */
+/** Health insurance: a shield with a medical cross, i.e. coverage. Tinted fill. */
 export const IconHealth = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20Z" />
-    <path d="M7.5 12.5h2.5l1.2-2 1.8 4 1.2-2h2.3" />
+    <path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6L12 3Z" fill="currentColor" fillOpacity={0.14} />
+    <path d="M12 8.5v7M8.5 12h7" strokeWidth={2} />
   </Svg>
 );
 
-/** Retirement plans: savings stacking up over time. */
+/** Retirement plans: a piggy bank with a coin going in. Tinted fill. */
 export const IconSavings = (p: IconProps) => (
   <Svg {...p}>
-    <ellipse cx="9" cy="17" rx="5" ry="2" />
-    <path d="M4 17v-3c0 1.1 2.2 2 5 2s5-.9 5-2v3M4 14v-3c0 1.1 2.2 2 5 2s5-.9 5-2v3" />
-    <ellipse cx="9" cy="11" rx="5" ry="2" />
-    <path d="M16 9.5 18.5 7l2.5 2.5M18.5 7v7.5" />
+    <path
+      d="M5 13c0-3.3 3.1-5.5 7-5.5 1.3 0 2.5.2 3.6.7L18 7v2.8c.9.8 1.5 1.8 1.7 2.9H21v3h-1.6c-.5 1-1.3 1.9-2.4 2.5V20.5h-2.5v-1.4c-.8.2-1.6.2-2.5.2s-1.7-.1-2.5-.3v1.5H7v-2.2C5.8 17 5 15.1 5 13Z"
+      fill="currentColor"
+      fillOpacity={0.14}
+    />
+    <path d="M10 10h3.5M5 13c-1.2 0-2-.8-2-1.8" />
+    <circle cx="11.75" cy="4" r="1.75" />
+    <circle cx="16.6" cy="11.6" r="0.6" fill="currentColor" stroke="none" />
   </Svg>
 );
 
-/** Paid time off: a calendar with a day held. */
+/** Paid time off: a beach umbrella over the sand. Tinted fill. */
 export const IconTimeOff = (p: IconProps) => (
   <Svg {...p}>
-    <rect x="4" y="5.5" width="16" height="14.5" rx="2" />
-    <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
-    <path d="m9.5 15 1.8 1.8 3.4-3.6" />
+    <path
+      d="M4 11a8 8 0 0 1 16 0c-1.3-1-2.7-1-4 0-1.3-1-2.7-1-4 0-1.3-1-2.7-1-4 0-1.3-1-2.7-1-4 0Z"
+      fill="currentColor"
+      fillOpacity={0.14}
+    />
+    <path d="M12 3c-2 2.2-3 4.9-3 8M12 3c2 2.2 3 4.9 3 8M12 11v9M4 20.5h16" />
   </Svg>
 );
 

@@ -4,34 +4,28 @@ import { CONTAINER, SECTION_Y, ChamferGround, SectionLink } from "./sections";
 import PixelCard from "@/components/PixelCard";
 
 /* Partners and certifications as one dark band, two columns of hairline
-   cells on a plain ground. Marks rest in one tone; pointed at, that cell alone
-   fills with cobalt pixels (react-bits PixelCard) and the mark comes up in its
-   own colours. Names are in the alt text only.
+   cells on a plain ground. Each mark sits on a white tile in its own colours,
+   with a short caption, because the badges are drawn for light grounds and
+   went faint when inverted onto navy. Pointed at, a cell fills with cobalt
+   pixels (react-bits PixelCard).
 
    `w`/`h` are intrinsic pixels so nothing reflows on decode; `cls` sets the
-   rendered height per mark, because the ratios run from 1:1 to 4.2:1.
-   `mono` picks the resting tone: `silhouette` for single-colour vector marks,
-   `invert` (greyscale, inverted) for badges with their own light fills. */
+   rendered height per mark, because the ratios run from 1:1 to 4.2:1. */
 
-type Mark = { name: string; src: string; w: number; h: number; cls: string; mono: "silhouette" | "invert" };
+type Mark = { name: string; caption: string; src: string; w: number; h: number; cls: string };
 
 const PARTNERS: Mark[] = [
-  { name: "AWS", src: "/logos/partners/aws-partner-trimmed.png", w: 492, h: 492, cls: "h-16 sm:h-20", mono: "invert" },
-  { name: "Snowflake", src: "/logos/partners/snowflake.svg", w: 146, h: 139, cls: "h-11 sm:h-14", mono: "silhouette" },
-  { name: "Databricks", src: "/logos/partners/databricks.svg", w: 300, h: 331, cls: "h-11 sm:h-14", mono: "silhouette" },
+  { name: "AWS Partner", caption: "AWS Partner", src: "/logos/partners/aws-partner-trimmed.png", w: 492, h: 492, cls: "h-14 sm:h-16" },
+  { name: "Snowflake", caption: "Snowflake", src: "/logos/partners/snowflake.svg", w: 146, h: 139, cls: "h-10 sm:h-12" },
+  { name: "Databricks", caption: "Databricks", src: "/logos/partners/databricks.svg", w: 300, h: 331, cls: "h-10 sm:h-12" },
 ];
 
 const CERTS: Mark[] = [
-  { name: "NMSDC certified MBE", src: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-14 sm:h-16", mono: "invert" },
-  { name: "State of Ohio certified WBE", src: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-7 sm:h-9", mono: "invert" },
-  { name: "State of Ohio certified MBE", src: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-7 sm:h-9", mono: "invert" },
-  { name: "City of Columbus certified MBE", src: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-10 sm:h-12", mono: "invert" },
+  { name: "NMSDC certified MBE", caption: "NMSDC MBE", src: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-12 sm:h-14" },
+  { name: "State of Ohio certified WBE", caption: "State of Ohio WBE", src: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-7 sm:h-8" },
+  { name: "State of Ohio certified MBE", caption: "State of Ohio MBE", src: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-7 sm:h-8" },
+  { name: "City of Columbus certified MBE", caption: "City of Columbus MBE", src: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9 sm:h-11" },
 ];
-
-const MONO = {
-  silhouette: "brightness-0 invert opacity-70",
-  invert: "grayscale invert opacity-80",
-};
 
 /** Column lines that run past the grid and fade out, as if the grid continues. */
 function Rails({ cols, className }: { cols: number; className?: string }) {
@@ -55,19 +49,11 @@ function MarkGrid({ marks, cols, cellClass }: { marks: Mark[]; cols: number; cel
         {marks.map((m) => (
           <li key={m.name} className={cn("border-r border-b border-white/10", cellClass)} style={{ ["--pixel-card-active-color" as string]: "rgb(29 78 216 / 0.35)" }}>
             <PixelCard noFocus gap={6} speed={30} clearCenter={0.5} colors="#1d4ed8,#3b82f6,#93c5fd" className="aspect-auto h-full w-full rounded-none border-0">
-              <div className="flex items-center justify-center px-4 py-3">
-                <Image
-                  src={m.src}
-                  alt={m.name}
-                  width={m.w}
-                  height={m.h}
-                  sizes="160px"
-                  className={cn(
-                    m.cls,
-                    "w-auto max-w-full object-contain transition-[filter,opacity] duration-300 ease-[var(--ease-standard)] group-hover:opacity-100 group-hover:filter-none",
-                    MONO[m.mono],
-                  )}
-                />
+              <div className="flex flex-col items-center justify-center gap-3 px-3 py-3">
+                <div className="flex h-20 w-[168px] max-w-full items-center justify-center rounded-xl bg-white px-4 shadow-[0_1px_2px_rgb(0_0_0/0.2)] sm:h-24">
+                  <Image src={m.src} alt={m.name} width={m.w} height={m.h} sizes="160px" className={cn(m.cls, "w-auto max-w-full object-contain")} />
+                </div>
+                <span aria-hidden className="text-center type-caption font-medium text-white/75">{m.caption}</span>
               </div>
             </PixelCard>
           </li>
@@ -115,7 +101,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
               link={{ href: "/solutions/cloud", label: "Explore cloud engineering" }}
             />
             <div className="reveal mt-4 sm:mt-6">
-              <MarkGrid marks={PARTNERS} cols={3} cellClass="h-44 sm:h-[320px]" />
+              <MarkGrid marks={PARTNERS} cols={3} cellClass="h-48 sm:h-[360px]" />
             </div>
           </div>
           <div>
@@ -124,10 +110,10 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
               kicker="Certifications"
               title="Certified minority and women owned"
               sub="Certified by the NMSDC, the State of Ohio and the City of Columbus, for agencies and enterprises with supplier-diversity programs."
-              link={{ href: "/about", label: "About Ocean Blue" }}
+              link={{ href: "/about", label: "About Oceanblue" }}
             />
             <div className="reveal mt-4 sm:mt-6">
-              <MarkGrid marks={CERTS} cols={2} cellClass="h-36 sm:h-40" />
+              <MarkGrid marks={CERTS} cols={2} cellClass="h-44 sm:h-[180px]" />
             </div>
           </div>
         </div>

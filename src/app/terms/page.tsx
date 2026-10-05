@@ -6,7 +6,7 @@ import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks
 export const metadata: Metadata = pageMetadata({
   path: "/terms",
   title: "Terms of Service",
-  description: "The Terms of Service governing your use of the Ocean Blue Corporation website, job applications and services, including acceptable use and limits of liability.",
+  description: "The Terms of Service governing your use of the Oceanblue Solutions, Inc. website, job applications and services, including acceptable use and limits of liability.",
 });
 
 const SECTIONS = [
@@ -33,7 +33,7 @@ export default function TermsPage() {
   return (
     <DocPage
       title="Terms of Service"
-      lede={<>These Terms of Service govern your access to and use of Ocean Blue Corporation&apos;s website, platform, and services. Please read them carefully before using our services.</>}
+      lede={<>These Terms of Service govern your access to and use of Oceanblue Solutions, Inc.&apos;s website, platform, and services. Please read them carefully before using our services.</>}
       meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Jurisdiction", value: "State of Ohio, USA" }]}
       history={history}
       toc={SECTIONS}
@@ -42,12 +42,12 @@ export default function TermsPage() {
             <DocSection id="acceptance" number="01" title="Acceptance of Terms">
               <P>
                 By accessing or using the website located at oceanbluecorp.com (the &quot;Site&quot;) or any services
-                provided by Ocean Blue Corporation (&quot;Ocean Blue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you
+                provided by Oceanblue Solutions, Inc. (&quot;Oceanblue,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you
                 agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to all of these
                 Terms, you may not access or use our Site or services.
               </P>
               <P>
-                These Terms constitute a legally binding agreement between you and Ocean Blue Corporation,
+                These Terms constitute a legally binding agreement between you and Oceanblue Solutions, Inc.,
                 a company incorporated in the State of Ohio. Your continued use of the Site or services
                 following any posted modifications constitutes acceptance of those modifications.
               </P>
@@ -60,7 +60,7 @@ export default function TermsPage() {
 
             <DocSection id="services" number="02" title="Description of Services">
               <P>
-                Ocean Blue Corporation provides a range of enterprise information technology solutions and
+                Oceanblue Solutions, Inc. provides a range of enterprise information technology solutions and
                 services, including but not limited to:
               </P>
               <UL items={[
@@ -75,7 +75,7 @@ export default function TermsPage() {
                 "Digital Transformation Consulting, strategic advisory services for organizational modernization",
               ]} />
               <P>
-                Ocean Blue reserves the right to modify, suspend, or discontinue any service at any time
+                Oceanblue reserves the right to modify, suspend, or discontinue any service at any time
                 with or without notice. We shall not be liable to you or any third party for any such
                 modification, suspension, or discontinuation.
               </P>
@@ -93,7 +93,7 @@ export default function TermsPage() {
                 "Tell us at hr@oceanbluecorp.com if something you sent us needs correcting",
               ]} />
               <P>
-                The staff console is for Ocean Blue employees. Accounts are created by invitation, and
+                The staff console is for Oceanblue employees. Accounts are created by invitation, and
                 there is no public registration. Staff must keep their password confidential and report
                 any unauthorized use of their account immediately.
               </P>
@@ -105,21 +105,21 @@ export default function TermsPage() {
 
             <DocSection id="staffing" number="04" title="Staffing and Recruitment Services">
               <P>
-                Ocean Blue provides recruitment and staffing services to connect qualified candidates with
+                Oceanblue provides recruitment and staffing services to connect qualified candidates with
                 client companies. The following terms apply specifically to these services:
               </P>
               <P><strong>For Candidates:</strong></P>
               <UL items={[
                 "You warrant that all information in your profile and resume is accurate, truthful, and not misleading",
                 "Submitting a profile does not guarantee placement in any position",
-                "You authorize Ocean Blue to present your information to potential client employers in connection with open roles",
-                "You agree not to directly contact client companies introduced through Ocean Blue to circumvent the placement process for a period of twelve (12) months from introduction",
-                "You must promptly inform Ocean Blue of any changes to your availability, employment status, or contact details",
+                "You authorize Oceanblue to present your information to potential client employers in connection with open roles",
+                "You agree not to directly contact client companies introduced through Oceanblue to circumvent the placement process for a period of twelve (12) months from introduction",
+                "You must promptly inform Oceanblue of any changes to your availability, employment status, or contact details",
                 "Contract placements are governed by a separate Staffing Agreement which will be provided before assignment commencement",
               ]} />
               <P><strong>For Client Companies:</strong></P>
               <UL items={[
-                "You may not directly hire any candidate introduced by Ocean Blue without Ocean Blue's written consent and applicable placement fees",
+                "You may not directly hire any candidate introduced by Oceanblue without Oceanblue's written consent and applicable placement fees",
                 "You agree to accurately describe position requirements and working conditions",
                 "You are responsible for background checks, drug screening, and other pre-employment requirements unless contracted otherwise",
                 "Fees for placement services are governed by your executed Master Services Agreement or Statement of Work",
@@ -128,35 +128,35 @@ export default function TermsPage() {
 
             <DocSection id="client" number="05" title="Client Obligations">
               <P>
-                Clients engaging Ocean Blue for consulting, managed services, or staffing acknowledge and
+                Clients engaging Oceanblue for consulting, managed services, or staffing acknowledge and
                 agree to the following obligations:
               </P>
               <UL items={[
-                "Provide Ocean Blue personnel with reasonable access to systems, data, and personnel necessary to perform contracted services",
-                "Designate a primary point of contact to coordinate with Ocean Blue's delivery team",
+                "Provide Oceanblue personnel with reasonable access to systems, data, and personnel necessary to perform contracted services",
+                "Designate a primary point of contact to coordinate with Oceanblue's delivery team",
                 "Review and provide timely feedback on deliverables within agreed review periods",
-                "Maintain a safe and non-discriminatory work environment for all Ocean Blue personnel on-site",
+                "Maintain a safe and non-discriminatory work environment for all Oceanblue personnel on-site",
                 "Comply with all applicable laws and regulations in your jurisdiction",
-                "Not solicit or hire Ocean Blue's employees, contractors, or subcontractors directly for a period of twelve (12) months following completion of services without payment of a conversion fee",
+                "Not solicit or hire Oceanblue's employees, contractors, or subcontractors directly for a period of twelve (12) months following completion of services without payment of a conversion fee",
                 "Pay all invoices in accordance with agreed payment terms",
               ]} />
               <P>
                 Failure to meet these obligations may result in delays in service delivery for which
-                Ocean Blue shall not be held responsible.
+                Oceanblue shall not be held responsible.
               </P>
             </DocSection>
 
             <DocSection id="ip" number="06" title="Intellectual Property">
               <P>
                 All content on this Site, including but not limited to text, graphics, logos, images,
-                data compilations, and software, is the property of Ocean Blue Corporation or its content
+                data compilations, and software, is the property of Oceanblue Solutions, Inc. or its content
                 suppliers and is protected by United States and international copyright, trademark, and
                 other intellectual property laws.
               </P>
               <P>
                 You may not reproduce, distribute, modify, create derivative works from, publicly display,
                 publicly perform, republish, download, store, or transmit any material from our Site
-                without the prior written consent of Ocean Blue Corporation, except:
+                without the prior written consent of Oceanblue Solutions, Inc., except:
               </P>
               <UL items={[
                 "Your computer may temporarily store copies in RAM incidental to your accessing the Site",
@@ -164,14 +164,14 @@ export default function TermsPage() {
                 "You may print one copy of a reasonable number of pages for your personal, non-commercial use",
               ]} />
               <P>
-                For custom software, systems, and deliverables developed by Ocean Blue under a client
+                For custom software, systems, and deliverables developed by Oceanblue under a client
                 engagement, intellectual property ownership is governed by the applicable Statement of
-                Work or Master Services Agreement. In the absence of a written agreement, Ocean Blue
+                Work or Master Services Agreement. In the absence of a written agreement, Oceanblue
                 retains all intellectual property rights in all work product.
               </P>
               <P>
-                &quot;Ocean Blue Corporation,&quot; &quot;Ocean Blue Solutions,&quot; and associated logos are registered
-                trademarks or trademarks of Ocean Blue Corporation. Nothing in these Terms grants you
+                &quot;Oceanblue Solutions, Inc.,&quot; &quot;Oceanblue,&quot; and associated logos are registered
+                trademarks or trademarks of Oceanblue Solutions, Inc. Nothing in these Terms grants you
                 any right to use our trademarks without prior written permission.
               </P>
             </DocSection>
@@ -203,14 +203,14 @@ export default function TermsPage() {
 
             <DocSection id="payment" number="08" title="Payment Terms">
               <P>
-                Payment terms for Ocean Blue&apos;s services are set forth in executed Statements of Work,
+                Payment terms for Oceanblue&apos;s services are set forth in executed Statements of Work,
                 Master Services Agreements, or staffing contracts. Unless otherwise agreed in writing:
               </P>
               <UL items={[
                 "Invoices are due and payable within thirty (30) days of the invoice date",
                 "Late payments accrue interest at 1.5% per month (18% per annum) or the maximum rate permitted by law, whichever is lower",
                 "Client is responsible for all reasonable costs of collection, including attorneys' fees, for overdue amounts",
-                "Ocean Blue reserves the right to suspend services for accounts more than thirty (30) days past due",
+                "Oceanblue reserves the right to suspend services for accounts more than thirty (30) days past due",
                 "All fees are exclusive of applicable taxes; client is responsible for all sales, use, value-added, or similar taxes",
                 "Disputed invoices must be raised in writing within fifteen (15) days of receipt; undisputed portions remain due",
               ]} />
@@ -223,7 +223,7 @@ export default function TermsPage() {
 
             <DocSection id="liability" number="09" title="Limitation of Liability">
               <P>
-                TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, OCEAN BLUE CORPORATION, ITS OFFICERS,
+                TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, OCEANBLUE SOLUTIONS, INC., ITS OFFICERS,
                 DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
                 SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS,
                 DATA, GOODWILL, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR IN CONNECTION WITH:
@@ -237,9 +237,9 @@ export default function TermsPage() {
                 "The conduct or performance of any candidate placed through our staffing services",
               ]} />
               <P>
-                IN NO EVENT SHALL OCEAN BLUE&apos;S AGGREGATE LIABILITY TO YOU FOR ALL CLAIMS ARISING OUT OF
+                IN NO EVENT SHALL OCEANBLUE&apos;S AGGREGATE LIABILITY TO YOU FOR ALL CLAIMS ARISING OUT OF
                 OR RELATED TO THESE TERMS OR OUR SERVICES EXCEED THE GREATER OF (A) ONE HUNDRED DOLLARS
-                ($100.00) OR (B) THE TOTAL AMOUNTS PAID BY YOU TO OCEAN BLUE IN THE THREE (3) MONTHS
+                ($100.00) OR (B) THE TOTAL AMOUNTS PAID BY YOU TO OCEANBLUE IN THE THREE (3) MONTHS
                 PRECEDING THE CLAIM.
               </P>
               <P>
@@ -251,7 +251,7 @@ export default function TermsPage() {
 
             <DocSection id="indemnification" number="10" title="Indemnification">
               <P>
-                You agree to defend, indemnify, and hold harmless Ocean Blue Corporation and its
+                You agree to defend, indemnify, and hold harmless Oceanblue Solutions, Inc. and its
                 affiliates, officers, directors, employees, and agents from and against any claims,
                 liabilities, damages, judgments, awards, losses, costs, expenses, or fees (including
                 reasonable attorneys&apos; fees) arising out of or relating to:
@@ -265,7 +265,7 @@ export default function TermsPage() {
                 "Any misrepresentation made by you in connection with our services",
               ]} />
               <P>
-                Ocean Blue reserves the right to assume the exclusive defense and control of any matter
+                Oceanblue reserves the right to assume the exclusive defense and control of any matter
                 subject to indemnification by you, in which case you agree to cooperate with our defense
                 of such claims.
               </P>
@@ -273,7 +273,7 @@ export default function TermsPage() {
 
             <DocSection id="termination" number="11" title="Termination">
               <P>
-                Ocean Blue may terminate or suspend your access to the Site and services immediately,
+                Oceanblue may terminate or suspend your access to the Site and services immediately,
                 without prior notice or liability, for any reason, including if you breach these Terms.
               </P>
               <P>
@@ -325,7 +325,7 @@ export default function TermsPage() {
                 pending arbitration.
               </P>
               <P>
-                YOU AND OCEAN BLUE AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR
+                YOU AND OCEANBLUE AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR
                 OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED
                 CLASS OR REPRESENTATIVE ACTION.
               </P>
@@ -333,7 +333,7 @@ export default function TermsPage() {
 
             <DocSection id="changes" number="14" title="Changes to Terms">
               <P>
-                Ocean Blue reserves the right to update or modify these Terms at any time. When we do,
+                Oceanblue reserves the right to update or modify these Terms at any time. When we do,
                 we will revise the &quot;Effective&quot; date at the top of this page. For material changes,
                 we will provide at least thirty (30) days&apos; notice by posting a prominent notice on our
                 Site or by emailing candidates and clients we are actively working with.
@@ -350,7 +350,7 @@ export default function TermsPage() {
                 If you have any questions about these Terms of Service, please contact our legal team:
               </P>
               <ContactCard
-                title="Ocean Blue Corporation, Legal Department"
+                title="Oceanblue Solutions, Inc., Legal Department"
                 email={{ href: "mailto:hr@oceanbluecorp.com", label: "hr@oceanbluecorp.com" }}
                 phone={{ href: "tel:+16148446925", label: "+1 (614) 844-6925" }}
                 address={HQ_ADDRESS}

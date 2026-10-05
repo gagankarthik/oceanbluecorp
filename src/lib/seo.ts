@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 
 export const SITE_URL = "https://oceanbluecorp.com";
-export const SITE_NAME = "Ocean Blue Corporation";
+export const SITE_NAME = "Oceanblue Solutions, Inc.";
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
@@ -19,14 +19,14 @@ export const OG_IMAGES = [
     url: "/opengraph-image",
     width: 1200,
     height: 630,
-    alt: "Ocean Blue Corporation. IT staffing, enterprise solutions, and managed services",
+    alt: "Oceanblue Solutions, Inc. IT staffing, enterprise solutions, and managed services",
   },
 ];
 
 /**
  * Metadata for a static public page: title, description, canonical, and a
  * matching Open Graph and Twitter card. `title` is the page part only; the root
- * template appends " | Ocean Blue Corporation". Keep it under ~35 characters
+ * template appends " | Oceanblue Solutions, Inc.". Keep it under ~35 characters
  * and the description between 120 and 160.
  */
 export function pageMetadata({

@@ -398,7 +398,7 @@ export default function HelpPage() {
     <div className="pb-10">
       <PageHeader
         title="Help"
-        info="Who to reach at Ocean Blue, and the quickest ways around the console."
+        info="Who to reach at Oceanblue, and the quickest ways around the console."
         actions={canEdit ? (
           <WorkspaceButton onClick={() => setEditing(true)}>
             <IconEdit className="h-4 w-4" /> Edit directory

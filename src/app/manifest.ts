@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Ocean Blue Corporation",
-    short_name: "Ocean Blue",
+    name: "Oceanblue Solutions, Inc.",
+    short_name: "Oceanblue",
     description: "IT staffing, enterprise solutions, and managed services.",
     start_url: "/",
     display: "standalone",

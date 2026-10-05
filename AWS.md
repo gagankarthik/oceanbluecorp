@@ -1,6 +1,6 @@
 # AWS services
 
-Canonical reference for every AWS service the Ocean Blue Solutions website uses, the
+Canonical reference for every AWS service the Oceanblue Solutions, Inc. website uses, the
 code that talks to each one, the DynamoDB tables, and the setup required to stand the
 backend up. All resources live in **us-east-2** and the app is hosted on **AWS Amplify**.
 

@@ -152,7 +152,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         title="Tell us what you are building"
         sub="We will put the right specialists on it and stand behind the result."
         primary={{ href: "/contact", label: "Talk to us" }}
-        secondary={{ href: "/about", label: "About Ocean Blue" }}
+        secondary={{ href: "/about", label: "About Oceanblue" }}
       />
     </>
   );

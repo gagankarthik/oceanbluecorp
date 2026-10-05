@@ -255,7 +255,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
         <div className={cn(CONTAINER, "pt-28 pb-12 sm:pt-32 sm:pb-14 lg:pt-36 lg:pb-16")}>
           <div className="mx-auto max-w-[860px] text-center">
             <h1 className="rise type-headline-lg font-semibold text-ink" style={{ animationDelay: "80ms" }}>
-              Find your next role at Ocean Blue
+              Find your next role at Oceanblue
             </h1>
             <p className="rise mx-auto mt-4 max-w-[56ch] type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
               IT, engineering and delivery roles across our practices and client teams.
@@ -505,11 +505,11 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
               {/* Closing strip: why work here, and the fine print. */}
               <div className="mt-12 flex flex-col gap-4 rounded-2xl border border-line bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
                 <div>
-                  <h2 className="type-title font-semibold text-ink">Working at Ocean Blue</h2>
+                  <h2 className="type-title font-semibold text-ink">Working at Oceanblue</h2>
                   <p className="mt-1 type-body-sm text-ink-muted">How we work, what we offer, and the teams you could join.</p>
                 </div>
                 <LinkButton href="/careers" variant="outline" className="shrink-0">
-                  Life at Ocean Blue <IconArrowRight size={14} />
+                  Life at Oceanblue <IconArrowRight size={14} />
                 </LinkButton>
               </div>
               <p className="mt-4 type-caption text-ink-subtle">
