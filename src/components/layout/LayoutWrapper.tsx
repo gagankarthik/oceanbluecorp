@@ -113,6 +113,9 @@ export default function LayoutWrapper({
           data table fights the person trying to find a row in it. */}
       <SmoothScroll />
 
+      {/* Target of the footer's back-to-top link; focus lands here, so the next Tab is the skip link. */}
+      <div id="top" />
+
       {/* Skip link (WCAG 2.4.1 Bypass Blocks) */}
       <a
         href="#main-content"

@@ -87,16 +87,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         e.preventDefault();
         setPaletteOpen(v => !v);
       }
-      // Alt+Shift+N (⌥⇧N): Ctrl/⌘+Shift+C is the browser's inspect-element chord.
-      // e.code, because Option on a Mac turns e.key into a dead/accented character.
-      if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && e.code === "KeyN") {
-        e.preventDefault();
-        openCandidateEditor();
-      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [openCandidateEditor]);
+  }, []);
 
   const value = React.useMemo<AdminContextValue>(
     () => ({ openCandidateEditor, openCommandPalette, pageCrumb, setPageCrumb, navSection, setNavSection }),

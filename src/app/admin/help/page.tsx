@@ -6,9 +6,9 @@ import { AdminDialog } from "@/components/admin/admin-dialog";
 import Link from "next/link";
 import { Check, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import {
-  IconContact, IconCopy, IconDocs, IconInfo, IconMail, IconPhone, IconEdit, IconSearch, IconTrash,
+  IconCopy, IconInfo, IconMail, IconPhone, IconEdit, IconTrash,
 } from "@/components/admin/icons";
-import { PageHeader } from "@/components/admin/page-header";
+import { ListHeader, ListTabs, ListToolbar } from "@/components/admin/list-shell";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Avatar } from "@/components/admin/avatar";
@@ -17,10 +17,9 @@ import { FormInput, FormSelect } from "@/components/admin/forms/primitives";
 import { FieldError, FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { check, collectErrors, email, isBlank, maxLen, phone, required } from "@/lib/form-validation";
-import { NotePanel, WorkspaceButton, WorkspaceSearch } from "@/components/admin/workspace";
-import { PeriodSwitcher } from "@/components/admin/charts";
+import { NotePanel, Workspace, WorkspaceButton, WorkspaceSearch } from "@/components/admin/workspace";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { useAuth, UserRole } from "@/lib/auth";
+import { useAuth, UserRole, JOB_EDIT_ROLES, RECRUITING_ROLES } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/company";
@@ -94,12 +93,10 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         }
       }}
       className={cn(
-        "grid h-7 w-7 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-[opacity,background-color,color] duration-150",
-        // Hover-revealed only where there is a hover; always visible on touch.
-        "pointer-fine:opacity-0 pointer-fine:focus-visible:opacity-100 pointer-fine:group-hover/row:opacity-100",
+        "grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150",
         copied
-          ? "text-[var(--adm-success-ink)] pointer-fine:opacity-100"
-          : "text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+          ? "text-[var(--adm-success-ink)]"
+          : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
       )}
     >
       {copied ? <Check className="h-4 w-4" /> : <IconCopy className="h-3.5 w-3.5" />}
@@ -336,7 +333,7 @@ type TeamFilter = Team | "all";
 
 export default function HelpPage() {
   const { openCommandPalette } = useAdmin();
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const canEdit = user?.role === UserRole.ADMIN || user?.role === UserRole.HR;
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -372,134 +369,147 @@ export default function HelpPage() {
     [q, members],
   );
 
-  const teamOptions = React.useMemo(
-    () => [
-      { value: "all" as TeamFilter, label: `All ${searched.length}` },
-      ...TEAM_ORDER.map((t) => ({
-        value: t.key as TeamFilter,
-        label: `${t.key} ${searched.filter((m) => m.team === t.key).length}`,
-      })),
-    ],
-    [searched],
-  );
-
   const groups = TEAM_ORDER
     .filter((t) => team === "all" || t.key === team)
     .map((t) => ({ ...t, people: searched.filter((m) => m.team === t.key) }))
     .filter((g) => g.people.length > 0);
 
-  const shortcuts: { keys: string[]; label: string }[] = [
-    { keys: ["Ctrl", "K"], label: "Search jobs, candidates and screens" },
-    { keys: ["Esc"], label: "Clear a search or close a menu" },
-  ];
+  // What people come to Help to do, each offered only to roles that can do it.
+  const tasks = [
+    { label: "Post a job", hint: "State or open role", href: "/admin/jobs/new?category=state", show: hasAnyRole(JOB_EDIT_ROLES) },
+    { label: "Add an applicant", hint: "Upload a resume or type it in", href: "/admin/applications/new", show: hasAnyRole(RECRUITING_ROLES) },
+    { label: "Change your password", hint: "Profile and security", href: "/admin/settings", show: true },
+    { label: "Developer docs", hint: "Routes and API reference", href: "/admin/docs", show: isAdmin },
+  ].filter((t) => t.show);
 
   return (
     <div className="pb-10">
-      <PageHeader
+      <ListHeader
         title="Help"
-        info="Who to reach at Oceanblue, and the quickest ways around the console."
+        meta="Who to reach at Oceanblue, and how to get things done in the console."
         actions={canEdit ? (
           <WorkspaceButton onClick={() => setEditing(true)}>
-            <IconEdit className="h-4 w-4" /> Edit directory
+            <IconEdit aria-hidden="true" />Edit directory
           </WorkspaceButton>
         ) : undefined}
       />
 
-      <ul className={cn("mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2", isAdmin ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
-        <li>
-          <a href={`mailto:${CONTACT_EMAIL}`} className={HELP_CARD}>
-            <HelpCardBody icon={IconContact} title="Email the team" description="HR routes it for you" />
-          </a>
-        </li>
-        <li>
-          <a href={CONTACT_PHONE.href} className={HELP_CARD}>
-            <HelpCardBody icon={IconPhone} title="Call the office" description={CONTACT_PHONE.label} />
-          </a>
-        </li>
-        <li>
-          <button type="button" onClick={openCommandPalette} className={cn(HELP_CARD, "w-full text-left")}>
-            <HelpCardBody icon={IconSearch} title="Search anything" description="Jobs, people, screens" />
-          </button>
-        </li>
-        {isAdmin && (
-          <li>
-            <Link href="/admin/docs" className={HELP_CARD}>
-              <HelpCardBody icon={IconDocs} title="Developer docs" description="Routes and API reference" />
-            </Link>
-          </li>
-        )}
-      </ul>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
-        {/* Directory */}
-        <div className="min-w-0 space-y-3">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:gap-5">
+        {/* Directory: the main thing people look up here. */}
+        <section aria-labelledby="directory-title" className="min-w-0 space-y-3">
           {loadFailed && (
             <NotePanel className="flex items-start gap-2.5">
-              <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
+              <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
               The saved directory could not be loaded, so this is the built-in list and may be out of date. Refresh to try again.
             </NotePanel>
           )}
-          <div className="flex flex-wrap items-center gap-2">
-            <WorkspaceSearch
-              value={query}
-              onChange={setQuery}
-              placeholder="Find a person, role or team"
+          <Workspace className="min-h-0">
+            <h2 id="directory-title" className="sr-only">Team directory</h2>
+            <ListToolbar
+              tabs={
+                <ListTabs
+                  label="Team"
+                  value={team}
+                  onChange={setTeam}
+                  tabs={[
+                    { key: "all" as TeamFilter, label: "All", count: searched.length },
+                    ...TEAM_ORDER.map((t) => ({
+                      key: t.key as TeamFilter,
+                      label: t.key,
+                      count: searched.filter((m) => m.team === t.key).length,
+                    })),
+                  ]}
+                />
+              }
+              search={<WorkspaceSearch value={query} onChange={setQuery} placeholder="Find a person, role or team" />}
             />
-            <div className="adm-scroll-hidden -mx-1 max-w-full overflow-x-auto px-1">
-              <PeriodSwitcher label="Team" options={teamOptions} value={team} onChange={setTeam} />
-            </div>
-          </div>
 
-          {groups.length === 0 ? (
-            <AdminCard>
+            {groups.length === 0 ? (
               <EmptyState
                 variant="filtered"
                 title={q ? `No one matches “${query}”` : "No one in this team yet"}
                 description={q ? "Try a name, a role, or a team like “recruiting”." : "Pick another team, or add people with Edit directory."}
                 action={
                   <WorkspaceButton onClick={() => { setQuery(""); setTeam("all"); }}>
-                    <X className="h-4 w-4" /> Show everyone
+                    <X aria-hidden="true" />Show everyone
                   </WorkspaceButton>
                 }
               />
-            </AdminCard>
-          ) : (
-            <AdminCard className="overflow-hidden">
-              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line-soft)] bg-[var(--adm-head)] px-4 py-2 text-adm-xs text-[var(--adm-head-ink)] md:grid">
-                <span>Person</span>
-                <span>Email</span>
-                <span>Phone</span>
+            ) : (
+              <div>
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line)] bg-[var(--adm-head)] px-4 py-2.5 text-adm-xs font-semibold uppercase tracking-[0.05em] text-[var(--adm-head-ink)] md:grid">
+                  <span>Person</span>
+                  <span>Email</span>
+                  <span>Phone</span>
+                </div>
+                {groups.map((group) => (
+                  <section key={group.key} aria-labelledby={`team-${group.key}`}>
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
+                      <h3 id={`team-${group.key}`} className="text-adm-xs font-semibold text-[var(--adm-ink)]">{group.key}</h3>
+                      <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{group.people.length}</span>
+                      <span className="text-adm-xs text-[var(--adm-ink-mute)]">· {group.blurb}</span>
+                    </div>
+                    <ul className="divide-y divide-[var(--adm-line-soft)] border-b border-[var(--adm-line-soft)] last:border-0">
+                      {group.people.map((member) => (
+                        <DirectoryRow key={member.email + member.name} member={member} />
+                      ))}
+                    </ul>
+                  </section>
+                ))}
               </div>
-              {groups.map((group) => (
-                <section key={group.key} aria-label={group.key}>
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
-                    <h2 className="text-adm-xs font-semibold text-[var(--adm-ink)]">{group.key}</h2>
-                    <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{group.people.length}</span>
-                    <span className="text-adm-xs text-[var(--adm-ink-subtle)]">· {group.blurb}</span>
-                  </div>
-                  <ul className="divide-y divide-[var(--adm-line-soft)] border-b border-[var(--adm-line-soft)] last:border-0">
-                    {group.people.map((member) => (
-                      <DirectoryRow key={member.email + member.name} member={member} />
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </AdminCard>
-          )}
-        </div>
+            )}
+          </Workspace>
+        </section>
 
-        <aside className="lg:sticky lg:top-0">
+        {/* Rail: how to reach the company, and the common jobs, beside the people. */}
+        <aside className="space-y-4 lg:sticky lg:top-0">
           <AdminCard className="overflow-hidden">
-            <AdminCardHeader title="Keyboard shortcuts" />
+            <AdminCardHeader title="Get in touch" />
             <ul className="divide-y divide-[var(--adm-line-soft)]">
-              {shortcuts.map((sc) => (
-                <li key={sc.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <span className="min-w-0 text-adm-xs text-[var(--adm-ink-mute)]">{sc.label}</span>
-                  <span className="flex flex-none items-center gap-1">
-                    {sc.keys.map((k) => <Kbd key={k}>{k}</Kbd>)}
+              <li>
+                <a href={`mailto:${CONTACT_EMAIL}`} className={RAIL_LINK}>
+                  <IconMail className="h-4 w-4 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-[var(--adm-ink)]">Email the team</span>
+                    <span className="block truncate text-adm-xs text-[var(--adm-ink-mute)]">{CONTACT_EMAIL}</span>
                   </span>
+                </a>
+              </li>
+              <li>
+                <a href={CONTACT_PHONE.href} className={RAIL_LINK}>
+                  <IconPhone className="h-4 w-4 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-[var(--adm-ink)]">Call the office</span>
+                    <span className="block text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{CONTACT_PHONE.label}</span>
+                  </span>
+                </a>
+              </li>
+            </ul>
+          </AdminCard>
+
+          <AdminCard className="overflow-hidden">
+            <AdminCardHeader title="Common tasks" />
+            <ul className="divide-y divide-[var(--adm-line-soft)]">
+              {tasks.map((t) => (
+                <li key={t.href}>
+                  <Link href={t.href} className={RAIL_LINK}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-[var(--adm-ink)]">{t.label}</span>
+                      <span className="block truncate text-adm-xs text-[var(--adm-ink-mute)]">{t.hint}</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
+                  </Link>
                 </li>
               ))}
+              <li>
+                <button type="button" onClick={openCommandPalette} className={cn(RAIL_LINK, "w-full text-left")}>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-[var(--adm-ink)]">Find anything</span>
+                    <span className="block text-adm-xs text-[var(--adm-ink-mute)]">Jobs, people and screens</span>
+                  </span>
+                  <span className="flex flex-none items-center gap-1"><Kbd>Ctrl</Kbd><Kbd>K</Kbd></span>
+                </button>
+              </li>
             </ul>
           </AdminCard>
         </aside>
@@ -516,26 +526,6 @@ export default function HelpPage() {
   );
 }
 
-const HELP_CARD =
-  "group flex h-full items-center gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5 shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]";
-
-function HelpCardBody({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}) {
-  return (
-    <>
-      <Icon className="h-5 w-5 flex-none text-[var(--adm-ink-mute)] transition-colors group-hover:text-[var(--adm-accent)]" />
-      <span className="min-w-0 flex-1">
-        <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">{title}</span>
-        <span className="block truncate text-adm-xs text-[var(--adm-ink-mute)]">{description}</span>
-      </span>
-      <ChevronRight className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-    </>
-  );
-}
+/** A full-width row link in a rail card: one 48px target per action. */
+const RAIL_LINK =
+  "flex min-h-12 items-center gap-3 px-4 py-2.5 text-adm-base transition-colors duration-150 hover:bg-[var(--adm-row-hover)]";

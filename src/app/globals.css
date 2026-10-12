@@ -195,6 +195,7 @@
   --color-paper-deep: var(--color-background-tertiary);
   --color-line: var(--color-border-default);
   --color-line-strong: var(--color-border-strong);
+  --color-line-input: #828b9c; /* form-control edge: 3.4:1 on white (WCAG 1.4.11); hairlines keep line / line-strong */
   --color-cobalt: var(--color-action-primary);
   --color-cobalt-deep: var(--color-action-primary-hover);
   --color-cobalt-tint: var(--color-background-selected);
@@ -822,6 +823,78 @@
     0 1px 2px 0 rgba(29, 78, 216, 0.24);
 }
 
+/* ============================================================
+   ENTERPRISE SPEC (Oct 2026), semantic tier. The owner's spec:
+   60% white/slate-tint surfaces, 30% slate structure, 10% ocean
+   accent. Ocean is #0369A1, not the spec's #0284C7: white on
+   #0284C7 is 4.1:1 and fails AA for button labels; #0369A1 is
+   5.9:1. Declared after the console block so the --adm-* tokens
+   below re-point here and every screen follows from one place.
+   ============================================================ */
+:root {
+  --surface-canvas:      #f8fafc;
+  --surface-card:        #ffffff;
+  --border-subtle:       #e2e8f0;
+  --text-primary:        #0f172a;
+  --text-secondary:      #334155;
+  --text-muted:          #5c6b80;  /* metadata text: the spec's #64748B is 4.3:1 on slate tints, this is 4.9+ */
+  --icon-rest:           #64748b;  /* resting icons (non-text, 3:1 rule) */
+  --accent-ocean:        #0369a1;
+  --accent-ocean-hover:  #075985;
+  --accent-ocean-bright: #0284c7;  /* charts and data marks only, never text on white */
+  --row-hover:           #f1f5f9;
+
+  /* 4/8 baseline. */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-6: 24px; --space-8: 32px;
+
+  /* Motion: micro-interactions linear and quick; panels ease out. */
+  --motion-micro: 120ms;
+  --motion-panel: 200ms;
+  --ease-panel:   cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Console tokens, re-pointed. */
+  --adm-accent:        var(--accent-ocean);
+  --adm-accent-strong: var(--accent-ocean-hover);
+  --adm-accent-soft:   rgba(3, 105, 161, 0.10);
+  --adm-accent-tint:   rgba(3, 105, 161, 0.06);
+  --adm-focus-ring:    rgba(3, 105, 161, 0.30);
+  --adm-data:          var(--accent-ocean-bright);
+  --adm-data-soft:     rgba(2, 132, 199, 0.12);
+
+  --adm-canvas:        var(--surface-canvas);
+  --adm-surface:       var(--surface-card);
+  --adm-surface-sunken: var(--surface-canvas);
+  --adm-line:          var(--border-subtle);
+  --adm-row-hover:     var(--row-hover);
+  --adm-head:          #f8fafc;
+  --adm-head-ink:      var(--text-secondary);
+
+  --adm-ink:           var(--text-primary);
+  --adm-ink-mute:      var(--text-secondary);
+  --adm-ink-subtle:    var(--text-muted);
+
+  --adm-nav-ink:         var(--text-primary);
+  --adm-nav-mute:        var(--text-secondary);
+  --adm-nav-subtle:      var(--text-muted);
+  --adm-nav-hover:       var(--row-hover);
+  --adm-nav-active:      #e0f2fe;
+  --adm-nav-active-ink:  var(--accent-ocean);
+  --adm-nav-active-icon: var(--accent-ocean);
+
+  /* Status tints from the spec; their text stays on the darker -ink tokens (AA). */
+  --adm-success-soft: #ecfdf5;
+  --adm-warning-soft: #fffbeb;
+  --adm-danger-soft:  #fff1f2;
+
+  /* Crisp borders with a faint resting lift, no blur. */
+  --adm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --adm-shadow-accent: 0 1px 2px rgba(3, 105, 161, 0.24);
+  --adm-duration-fast: var(--motion-micro);
+  --adm-duration-base: var(--motion-panel);
+  --adm-ease: var(--ease-panel);
+}
+
 .adm-scope {
   --input: var(--adm-line-control); /* shadcn checkbox edge, 3:1 like every console control */
   --skeleton-background: color-mix(in srgb, var(--adm-line-soft) 70%, transparent);
@@ -885,36 +958,26 @@
   font-feature-settings: "tnum" 1;
 }
 
-/* Sticky header band, stays put while a long ledger scrolls.
-
-   Sentence case at 12px, NOT 11px uppercase-tracked. The uppercase micro-label
-   was singled out as a main reason the dense pass read as cramped and shouty;
-   at workspace density it also costs more horizontal room per column than the
-   sentence-case equivalent, because tracking widens every heading. */
+/* Sticky header band, stays put while a long ledger scrolls. Enterprise spec
+   (Oct 2026): 12/16 semibold, uppercase, 0.05em tracking, slate-700 on the
+   slate tint (10.4:1). */
 .adm-grid thead th {
   position: sticky;
   top: 0;
   z-index: 2;
   background: var(--adm-head);
   color: var(--adm-head-ink);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   white-space: nowrap;
   border-bottom: 1px solid var(--adm-line);
 }
 .adm-grid thead th:last-child { box-shadow: none; }
 
-/* A cobalt-tinted header band ties the grid to the BrandBand above it and gives
-   the columns a clear top edge. Rows stay ruled on one axis only: column rules
-   were tried and read as graph paper. */
-.adm-scope .adm-grid thead th {
-  background: color-mix(in srgb, var(--adm-accent) 7%, var(--adm-surface));
-  color: var(--adm-ink);
-  font-weight: 600;
-  border-bottom: 1px solid color-mix(in srgb, var(--adm-accent) 22%, var(--adm-line));
-}
+/* Rows are ruled on one axis only: column rules read as graph paper. */
 
 /* Border on the CELLS, not the row: this table is `border-collapse: separate`,
    where `tr` borders are never painted, so the row divider must live on td. */
@@ -942,10 +1005,32 @@
   position: sticky;
   left: 0;
   z-index: 1;
-  background: inherit;
+  background: var(--adm-surface);
 }
 .adm-grid--pinned thead th:first-child { z-index: 3; background: var(--adm-head); }
-.adm-scope .adm-grid--pinned thead th:first-child { background: color-mix(in srgb, var(--adm-accent) 7%, var(--adm-surface)); }
+
+/* ── Pinned actions column: the row menu stays reachable while a wide grid
+   scrolls sideways, mirroring the pinned identity column on the left. */
+.adm-grid--actions thead th:last-child,
+.adm-grid--actions tbody td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--adm-surface);
+}
+/* Sticky cells are opaque so scrolled content never shows through; they
+   follow the row's hover and selected washes with solid equivalents. */
+.adm-grid--pinned tbody tr:hover > td:first-child,
+.adm-grid--actions tbody tr:hover > td:last-child { background: var(--adm-row-hover); }
+.adm-grid--pinned tbody tr[data-state="selected"] > td:first-child,
+.adm-grid--actions tbody tr[data-state="selected"] > td:last-child {
+  background: color-mix(in srgb, var(--adm-accent) 6%, var(--adm-surface));
+}
+.adm-grid--actions thead th:last-child { z-index: 3; background: var(--adm-head); }
+.adm-grid--actions.has-overflow-right thead th:last-child,
+.adm-grid--actions.has-overflow-right tbody td:last-child {
+  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgba(16, 24, 40, 0.1);
+}
 .adm-grid--pinned.is-scrolled thead th:first-child,
 .adm-grid--pinned.is-scrolled tbody td:first-child {
   box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgba(16, 24, 40, 0.1);
@@ -978,6 +1063,9 @@
 .adm-grid thead th button:not([role="checkbox"]) {
   height: 100%;
   min-height: 40px;
+  /* Preflight resets text-transform on buttons; sortable headings follow the band. */
+  text-transform: inherit;
+  letter-spacing: inherit;
 }
 
 /* Numeric columns align on the decimal, as a ledger should */
@@ -995,6 +1083,18 @@
    focus-visible (not :focus) so pointer users never see a ring, which is
    what lets a dense screen stay quiet while remaining operable. */
 .adm-scope :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--adm-accent);
+  outline-offset: 1px;
+}
+/* Menus, popovers and drawers portal into <body>, outside .adm-scope. While
+   the console is open the body carries .adm-portals so they keep the console's
+   font, ink, control edge and focus ring instead of the public site's. */
+.adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"], [role="dialog"]) {
+  --input: var(--adm-line-control);
+  font-family: var(--font-geist-sans), var(--font-inter), system-ui, sans-serif;
+  color: var(--adm-ink);
+}
+.adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"]) :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--adm-accent);
   outline-offset: 1px;
 }
@@ -1469,3 +1569,12 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   .skel, #adm-main > * { animation: none; }
 }
 
+
+/* Toasts (sonner richColors): its default text colours sit at 3.1-4.4:1 on
+   their tints. Darker inks keep the colour cue and reach AA. */
+html [data-sonner-toaster][data-sonner-theme="light"] {
+  --success-text: #15803d;
+  --info-text: #0369a1;
+  --warning-text: #a84d08;
+  --error-text: #be123c;
+}

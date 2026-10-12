@@ -55,7 +55,7 @@ function Switch({ on, onChange, label, disabled }: { on: boolean; onChange?: (v:
       onClick={() => onChange?.(!on)}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors duration-150",
-        on ? "bg-cobalt" : "bg-line-strong",
+        on ? "bg-cobalt" : "bg-line-input",
         disabled && "cursor-not-allowed opacity-60",
       )}
     >

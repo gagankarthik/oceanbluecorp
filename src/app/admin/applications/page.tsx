@@ -672,27 +672,29 @@ export default function ApplicationsPage() {
         <ListToolbar
           tabs={
             <ListTabs
-              label="Saved views"
+              label="Views"
               value={savedView}
               onChange={(k) => { setSavedView(k); setSelected([]); }}
               tabs={views}
+            />
+          }
+          views={
+            <SavedViewsMenu
+              items={savedList}
+              activeId={activeSavedId}
+              onApply={applySaved}
+              onSave={saveCurrent}
+              onDelete={deleteSaved}
             />
           }
           search={
             <WorkspaceSearch
               value={search}
               onChange={setSearch}
-              placeholder="Search name, email, position, or a resume skill…"
+              placeholder="Search applicants, emails or skills…"
             />
           }
         >
-          <SavedViewsMenu
-            items={savedList}
-            activeId={activeSavedId}
-            onApply={applySaved}
-            onSave={saveCurrent}
-            onDelete={deleteSaved}
-          />
 
           <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
             <FilterField label="Stage" htmlFor="filter-stage">

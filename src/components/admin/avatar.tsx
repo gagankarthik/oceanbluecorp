@@ -16,7 +16,7 @@ interface AvatarProps {
 
 // Flat fills, all >= 4.5:1 against white initials.
 const PALETTE = [
-  "bg-[#1d4ed8]",
+  "bg-[#0369a1]",
   "bg-[#6d28d9]",
   "bg-[#047857]",
   "bg-[#b45309]",

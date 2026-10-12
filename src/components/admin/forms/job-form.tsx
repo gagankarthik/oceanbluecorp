@@ -719,7 +719,7 @@ export function JobForm({
           steps={steps}
           active={activeStep}
           // The main pane is the scroller; keep the rail inside it.
-          className="sticky top-0 hidden max-h-[calc(100dvh-60px-48px)] lg:flex"
+          className="sticky top-0 hidden max-h-[calc(100dvh-56px-48px)] lg:flex"
           summary={
             <dl className="space-y-2 text-adm-xs">
               {summary.map((row) => (

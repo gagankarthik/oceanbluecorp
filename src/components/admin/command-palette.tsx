@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 // custom set is domain iconography and deliberately has no primitives for
 // these. Everything that names a thing in this product uses ours.
 import {
-  Search, ArrowRight, Plus, CornerDownLeft, CommandIcon,
+  Search, ArrowRight, Plus, CornerDownLeft,
 } from "lucide-react";
 import {
   IconOverview, IconJob, IconApplication, IconBench, IconContact,
@@ -184,19 +184,33 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
+  // aria-modal promises the page behind is out of reach, so Tab cycles inside.
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const trapTab = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab" || !dialogRef.current) return;
+    const items = dialogRef.current.querySelectorAll<HTMLElement>('input, button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])');
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+
   if (!open) return null;
 
   return (
     <>
-      {/* transparent click-away, keeps the rest of the screen visible */}
-      <div className="fixed inset-0 z-[90]" onClick={() => onOpenChange(false)} />
-      {/* Anchored under the top bar on the search side, not a centred modal. */}
+      {/* Dimmed backdrop: the palette is a layer above the page; a click outside closes it. */}
+      <div className="adm-dialog-scrim fixed inset-0 z-[90] bg-[var(--adm-scrim)]" aria-hidden="true" onClick={() => onOpenChange(false)} />
+      {/* Centred on every screen. A fixed height keeps it from jumping as results change. */}
+      <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        onClick={(e) => e.stopPropagation()}
-        className="fixed right-3 top-[68px] z-[100] w-[min(620px,calc(100vw-1.5rem))] origin-top overflow-hidden rounded-[var(--adm-radius-dialog)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)] duration-150 animate-in fade-in slide-in-from-top-2 zoom-in-95 lg:right-6"
+        onKeyDown={trapTab}
+        className="pointer-events-auto flex h-[min(520px,calc(100dvh-2rem))] w-full max-w-[620px] flex-col overflow-hidden rounded-[var(--adm-radius-dialog)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)] duration-200 animate-in fade-in zoom-in-95"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3">
@@ -221,11 +235,11 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
         </div>
 
         {/* Results */}
-        <div id={listId} role="listbox" aria-label="Results" className="max-h-[60vh] overflow-y-auto py-1.5">
+        <div id={listId} role="listbox" aria-label="Results" className="min-h-0 flex-1 overflow-y-auto py-1.5">
           {/* Quick actions */}
           {quickActions.length > 0 && (
             <Group title="Actions">
-              {quickActions.map((a, idx) => {
+              {quickActions.map((a) => {
                 const flatIdx = flatItems.findIndex((f) => f.key === a.id);
                 return (
                   <Item
@@ -237,7 +251,6 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
                     icon={<a.icon className="h-4 w-4 text-[var(--adm-accent)]" />}
                     title={a.label}
                     subtitle={a.hint}
-                    badge={idx === 0 ? <Kbd>Alt ⇧ N</Kbd> : null}
                   />
                 );
               })}
@@ -309,10 +322,9 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
             <span className="flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> navigate</span>
             <span className="flex items-center gap-1"><Kbd><CornerDownLeft className="h-2.5 w-2.5" /></Kbd> select</span>
           </div>
-          <div className="hidden items-center gap-1.5 text-adm-xs text-[var(--adm-ink-subtle)] sm:flex">
-            <CommandIcon className="h-3 w-3" /> Command palette
-          </div>
+          <span className="flex items-center gap-1 text-adm-xs text-[var(--adm-ink-subtle)]"><Kbd>Esc</Kbd> close</span>
         </div>
+      </div>
       </div>
     </>
   );

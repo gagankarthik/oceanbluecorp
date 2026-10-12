@@ -5,7 +5,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Plus, Loader2, MoreVertical, X,
+  Plus, X,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
@@ -17,6 +17,8 @@ import {
   Workspace, WorkspaceButton, WorkspaceSearch, FilterPill, FilterIcon, DisplayMenu, GridSelect, PipelineHeader, PipelineCells,
 } from "@/components/admin/workspace";
 import { FormInput } from "@/components/admin/forms/primitives";
+import { RowMenu } from "@/components/admin/table-cells";
+import { JobPreviewDrawer } from "@/components/admin/jobs/job-preview-drawer";
 import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterField, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -32,10 +34,6 @@ import {
 } from "@/components/admin/icons";
 import JobsLoading from "@/app/admin/jobs/loading";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 type JobWithVendor = Job & { vendorName?: string };
@@ -132,6 +130,8 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   // Shared summary list. The staff list endpoint closes past-deadline roles
   // itself, so the client no longer does.
   const jobsRes = useJobSummaries();
+  // Row click previews the requisition in a drawer; "Open job" goes to the full page.
+  const [preview, setPreview] = useState<Job | null>(null);
   const { setData: setAllJobs } = jobsRes;
   const jobs = useMemo(
     () => (jobsRes.jobs || []).filter((j) => jobCategory(j) === category),
@@ -323,19 +323,25 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
 
   // ── grid columns ──────────────────────────────────────────────────────────
 
+  // Delete destroys the applications on a job, so it follows the API's
+  // requireStaff (recruiting roles), not edit rights: media edits, never deletes.
   const rowMenu = useCallback((job: Job) => (
     <RowMenu
-      job={job}
-      canEdit={canEdit}
-      duplicating={duplicating === job.id}
-      onView={() => router.push(`/admin/jobs/${job.id}${copy.query}`)}
-      onEdit={() => router.push(`/admin/jobs/${job.id}/edit${copy.query}`)}
-      onDuplicate={() => handleDuplicate(job)}
-      onDelete={() => setShowDeleteConfirm(job.id)}
+      label={job.title}
+      busy={duplicating === job.id}
+      items={[
+        { label: "Preview", icon: IconEye, onSelect: () => setPreview(job) },
+        { label: "Open job page", icon: IconJob, href: `/admin/jobs/${job.id}${copy.query}` },
+        ...(canEdit ? [
+          { label: "Edit", icon: IconEdit, href: `/admin/jobs/${job.id}/edit${copy.query}` },
+          { label: "Duplicate", icon: IconCopy, onSelect: () => handleDuplicate(job), disabled: duplicating === job.id },
+        ] : []),
+        ...(canPrice ? [{ label: "Delete", icon: IconTrash, onSelect: () => setShowDeleteConfirm(job.id), danger: true, separated: true }] : []),
+      ]}
     />
   // handleDuplicate is stable enough for this call site; it only reads state setters.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [canEdit, duplicating, router]);
+  ), [canEdit, canPrice, duplicating, copy.query]);
 
   const idCol: DataTableColumn<Job> = {
     key: "postingId",
@@ -707,7 +713,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
             columns={columns}
             rows={filteredJobs}
             rowKey={(j) => j.id}
-            onRowClick={(j) => router.push(`/admin/jobs/${j.id}${copy.query}`)}
+            onRowClick={(j) => setPreview(j)}
             initialSort={{ key: "created", dir: "desc" }}
             pageSize={rows}
             onPageSizeChange={setRows}
@@ -724,6 +730,8 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
         </div>
       </Workspace>
 
+      <JobPreviewDrawer job={preview} query={copy.query} canEdit={canEdit} onClose={() => setPreview(null)} />
+
       <ConfirmDialog
         open={!!showDeleteConfirm}
         title="Delete this job?"
@@ -737,58 +745,3 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   );
 }
 
-// ── row action menu ──────────────────────────────────────────────────────────
-
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
-
-function RowMenu({
-  job, canEdit, duplicating, onView, onEdit, onDuplicate, onDelete,
-}: {
-  job: Job;
-  canEdit: boolean;
-  duplicating: boolean;
-  onView: () => void;
-  onEdit: () => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Actions for ${job.title}`}
-          className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
-        >
-          {duplicating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
-      >
-        <DropdownMenuItem onClick={onView} className={menuItemCls}>
-          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />View details
-        </DropdownMenuItem>
-        {canEdit && <>
-          <DropdownMenuItem onClick={onEdit} className={menuItemCls}>
-            <IconEdit className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate} disabled={duplicating} className={menuItemCls}>
-            {duplicating
-              ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--adm-ink-subtle)]" />
-              : <IconCopy className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />}Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-          <DropdownMenuItem
-            onClick={onDelete}
-            className={cn(menuItemCls, "text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]")}
-          >
-            <IconTrash className="mr-2 h-4 w-4" />Delete
-          </DropdownMenuItem>
-        </>}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}

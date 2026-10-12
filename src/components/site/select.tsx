@@ -80,7 +80,7 @@ export function Select({
           aria-describedby={describedBy}
           className={cn(
             "group inline-flex w-full items-center justify-between gap-2 border bg-white text-left text-ink transition-colors",
-            "border-line-strong hover:border-ink-subtle focus:outline-none focus-visible:border-cobalt focus-visible:ring-4 focus-visible:ring-cobalt/15",
+            "border-line-input hover:border-ink-subtle focus:outline-none focus-visible:border-cobalt focus-visible:ring-4 focus-visible:ring-cobalt/15",
             "data-[placeholder]:text-ink-subtle data-[state=open]:border-cobalt disabled:cursor-not-allowed disabled:opacity-50",
             "aria-[invalid=true]:border-danger aria-[invalid=true]:focus-visible:ring-danger/15",
             shape === "pill" ? "rounded-full" : "rounded-xl",

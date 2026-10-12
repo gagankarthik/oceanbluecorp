@@ -11,12 +11,13 @@ import {
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 import { HeaderSearch } from "@/components/admin/header-search";
+import { ListTabs } from "@/components/admin/list-shell";
 import { Avatar } from "@/components/admin/avatar";
 import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
   IconBell, IconHelp, IconSettings, IconDocs, IconMenu,
-  IconHome, IconHrPortal, IconLogout, IconShield, IconClock, IconTrash,
+  IconHrPortal, IconLogout, IconShield, IconClock, IconTrash,
   IconBlog, IconChart, IconQuote, IconNews, IconJob, IconStateRole,
 } from "@/components/admin/icons";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -141,13 +142,29 @@ function Sidebar({
   // The mobile drawer always renders expanded.
   const rail = collapsed;
 
+  // Below lg the drawer is off-canvas: closed, it leaves the tab order; open,
+  // focus moves in and Escape closes it.
+  const desktop = useMediaQuery("(min-width: 1024px)");
+  const asideRef = useRef<HTMLElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    if (!open || desktop) return;
+    asideRef.current?.querySelector<HTMLElement>("a[href], button")?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeRef.current(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, desktop]);
+
   return (
     <aside
+      ref={asideRef}
+      inert={!open && !desktop}
       className={cn(
         "adm-nav fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[var(--adm-nav-line)] bg-[var(--adm-nav-bg)] transition-[transform,width] duration-200 ease-[var(--adm-ease)] lg:translate-x-0",
         open ? "translate-x-0 shadow-[var(--adm-shadow-lg)] lg:shadow-none" : "-translate-x-full",
-        // Expanded: 15% of the screen, floored so labels never clip.
-        rail ? "lg:w-[64px]" : "lg:w-[max(15vw,200px)]",
+        // 240px expanded, the 64px rail below 1280px (enterprise spec).
+        rail ? "lg:w-[64px]" : "lg:w-[240px]",
       )}
       aria-label="Sidebar"
     >
@@ -158,12 +175,12 @@ function Sidebar({
         aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!rail}
         title={rail ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute -right-3 top-[30px] z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] lg:grid"
+        className="absolute -right-3 top-[28px] z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] lg:grid"
       >
         {rail ? <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />}
       </button>
 
-      <div className={cn("flex h-[60px] flex-none items-center gap-2 border-b border-[var(--adm-line)] px-4", rail && "lg:justify-center lg:px-0")}>
+      <div className={cn("flex h-[56px] flex-none items-center gap-2 border-b border-[var(--adm-line)] px-4", rail && "lg:justify-center lg:px-0")}>
         <Link
           href="/admin"
           aria-label="Oceanblue, dashboard"
@@ -318,11 +335,6 @@ function UserMenu({
                 <IconDocs className={icon} aria-hidden="true" /> Developer
               </Link>
             )}
-            <a href="/" target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close} className={item}>
-              <IconHome className={icon} aria-hidden="true" />
-              View website
-              <ExternalLink className={external} aria-hidden="true" />
-            </a>
           </div>
           <div className="border-t border-[var(--adm-line)] p-1.5" role="none">
             <button
@@ -341,20 +353,48 @@ function UserMenu({
 
 // ── Notifications ──────────────────────────────────────────────────────────────
 
+/** "Today" / "Yesterday" / "Earlier", for grouping the feed by day. */
+function dayGroup(iso: string): "Today" | "Yesterday" | "Earlier" {
+  const d = new Date(iso);
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  if (d.getTime() >= start) return "Today";
+  if (d.getTime() >= start - 86_400_000) return "Yesterday";
+  return "Earlier";
+}
+
 function NotificationsPanel() {
   const {
-    notifications, allNotifications, unreadCount, loading, open, setOpen,
+    allNotifications, unreadCount, loading, open, setOpen,
     panelRef, markAllAsRead, handleClick,
   } = useNotifications();
+  const [view, setView] = useState<"all" | "unread">("all");
+  const bellRef = useRef<HTMLButtonElement>(null);
+
+  // Escape closes and hands focus back to the bell.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setOpen(false); bellRef.current?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, setOpen]);
+
+  const list = (view === "unread" && unreadCount > 0 ? allNotifications.filter((n) => !n.isRead) : allNotifications).slice(0, 8);
+  const groups = (["Today", "Yesterday", "Earlier"] as const)
+    .map((g) => ({ g, items: list.filter((n) => dayGroup(n.createdAt) === g) }))
+    .filter((x) => x.items.length > 0);
 
   return (
     <div ref={panelRef} className="relative">
       <button
+        ref={bellRef}
         onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={cn(iconButton, "relative", open && "bg-[var(--adm-chrome-hover)] text-[var(--adm-ink)]")}
+        className={cn(iconButton, "relative", open && "bg-[var(--adm-surface-2)]")}
       >
         <IconBell className="h-[18px] w-[18px]" aria-hidden="true" />
         {unreadCount > 0 && (
@@ -374,35 +414,44 @@ function NotificationsPanel() {
           className={cn(
             "z-50 flex flex-col overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]",
             // Phones: a sheet under the top bar. From sm: a popover anchored to the bell.
-            "fixed inset-x-3 top-[64px] max-h-[calc(100dvh-80px)]",
-            "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[min(30rem,calc(100dvh-6rem))] sm:w-[22rem]",
+            "fixed inset-x-3 top-[60px] max-h-[calc(100dvh-76px)]",
+            "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[min(34rem,calc(100dvh-6rem))] sm:w-[24rem]",
           )}
         >
-          <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-3.5 py-2.5">
-            <div className="flex items-center gap-2">
-              <h3 className="text-adm-base font-semibold text-[var(--adm-ink)]">Notifications</h3>
+          <div className="flex-none border-b border-[var(--adm-line)] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-adm-md font-semibold text-[var(--adm-ink)]">Notifications</h2>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-[var(--adm-accent-soft)] px-1.5 py-px text-adm-micro font-semibold tabular-nums text-[var(--adm-accent)]">
-                  {unreadCount}
-                </span>
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="h-8 rounded-[var(--adm-radius-control)] px-2 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
+                >
+                  Mark all read
+                </button>
               )}
             </div>
             {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="rounded-[var(--adm-radius-control)] px-1.5 py-1 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
-              >
-                Mark all read
-              </button>
+            <div className="mt-2.5">
+              <ListTabs
+                label="Show"
+                value={view}
+                onChange={setView}
+                tabs={[
+                  { key: "all", label: "All", count: allNotifications.length },
+                  { key: "unread", label: "Unread", count: unreadCount },
+                ]}
+              />
+            </div>
             )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-            {loading && notifications.length === 0 ? (
-              <div className="space-y-3 p-3.5" aria-label="Loading notifications">
+            {loading && allNotifications.length === 0 ? (
+              <div className="space-y-4 p-4" aria-busy="true" aria-label="Loading notifications">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex gap-2.5">
-                    <div className="mt-0.5 skel h-4 w-4" />
+                  <div key={i} className="flex gap-3">
+                    <div className="skel mt-0.5 h-4 w-4" />
                     <div className="flex-1 space-y-1.5">
                       <div className="skel h-3 w-2/3" />
                       <div className="skel h-3 w-full" />
@@ -410,44 +459,54 @@ function NotificationsPanel() {
                   </div>
                 ))}
               </div>
-            ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <IconBell className="mx-auto h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-                <p className="mt-2 text-adm-xs font-medium text-[var(--adm-ink)]">You&apos;re up to date</p>
-                <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">New jobs, applications and enquiries appear here.</p>
+            ) : groups.length === 0 ? (
+              <div className="px-6 py-10 text-center">
+                <IconBell className="mx-auto h-6 w-6 text-[var(--adm-ink-mute)]" aria-hidden="true" />
+                <p className="mt-3 text-adm-base font-medium text-[var(--adm-ink)]">
+                  {view === "unread" ? "Nothing unread" : "You\u2019re up to date"}
+                </p>
+                <p className="mt-1 text-adm-xs text-[var(--adm-ink-mute)]">New jobs, applications and enquiries appear here.</p>
               </div>
             ) : (
-              <ul>
-                {notifications.slice(0, 6).map((n) => {
-                  const Icon = NOTIFICATION_ICONS[n.type];
-                  return (
-                    <li key={n.id} className="border-b border-[var(--adm-line-soft)] last:border-0">
-                      <button
-                        onClick={() => handleClick(n)}
-                        className={cn(
-                          "flex w-full items-start gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--adm-row-hover)]",
-                          !n.isRead && "bg-[var(--adm-accent-tint)]",
-                        )}
-                      >
-                        <Icon
-                          aria-hidden="true"
-                          className={cn("mt-0.5 h-4 w-4 flex-none", n.isRead ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-accent)]")}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-baseline justify-between gap-2">
-                            <span className={cn("truncate text-adm-xs", n.isRead ? "text-[var(--adm-ink-mute)]" : "font-semibold text-[var(--adm-ink)]")}>
-                              {n.title}
+              groups.map(({ g, items }) => (
+                <section key={g} aria-labelledby={`notif-${g}`}>
+                  <h3 id={`notif-${g}`} className="sticky top-0 z-[1] bg-[var(--adm-surface-sunken)] px-4 py-1.5 text-adm-micro font-semibold uppercase tracking-[0.05em] text-[var(--adm-ink-mute)]">
+                    {g}
+                  </h3>
+                  <ul>
+                    {items.map((n) => {
+                      const Icon = NOTIFICATION_ICONS[n.type];
+                      return (
+                        <li key={n.id} className="border-b border-[var(--adm-line-soft)] last:border-0">
+                          <button
+                            type="button"
+                            onClick={() => handleClick(n)}
+                            className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--adm-row-hover)]"
+                          >
+                            <Icon aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-mute)]" />
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-baseline justify-between gap-3">
+                                <span className={cn("min-w-0 truncate text-adm-base", n.isRead ? "text-[var(--adm-ink-mute)]" : "font-semibold text-[var(--adm-ink)]")}>
+                                  {n.title}
+                                </span>
+                                <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{formatTimeAgo(n.createdAt)}</span>
+                              </span>
+                              <span className="mt-0.5 line-clamp-2 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{n.message}</span>
                             </span>
-                            <span className="flex-none text-adm-micro tabular-nums text-[var(--adm-ink-subtle)]">{formatTimeAgo(n.createdAt)}</span>
-                          </span>
-                          <span className="mt-0.5 block truncate text-adm-xs text-[var(--adm-ink-subtle)]">{n.message}</span>
-                        </span>
-                        {!n.isRead && <span className="sr-only">Unread</span>}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                            {/* Unread: a dot, the bold title and the text below, never colour alone. */}
+                            {!n.isRead && (
+                              <>
+                                <span aria-hidden="true" className="mt-1.5 h-2 w-2 flex-none rounded-full bg-[var(--adm-accent)]" />
+                                <span className="sr-only">Unread</span>
+                              </>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))
             )}
           </div>
 
@@ -455,7 +514,7 @@ function NotificationsPanel() {
             <Link
               href="/admin/notifications"
               onClick={() => setOpen(false)}
-              className="flex flex-none items-center justify-center gap-1 border-t border-[var(--adm-line-soft)] px-3.5 py-2 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              className="flex h-11 flex-none items-center justify-center gap-1 border-t border-[var(--adm-line)] text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
             >
               View all notifications
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -498,9 +557,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   // null = never chosen, so it follows the viewport; an explicit toggle sticks.
   const [storedCollapsed, setStoredCollapsed] = useLocalStorage<boolean | null>("adminSidebarCollapsed", null);
-  const narrowViewport = useMediaQuery("(max-width: 1439.98px)");
+  const narrowViewport = useMediaQuery("(max-width: 1279.98px)");
   const sidebarCollapsed = storedCollapsed ?? narrowViewport;
   const { user, signOut, hasAnyRole } = useAuth();
+
+  // Portalled menus and drawers mount in <body>; this class lets them keep the console's styles.
+  useEffect(() => {
+    document.body.classList.add("adm-portals");
+    return () => document.body.classList.remove("adm-portals");
+  }, []);
   const { pageCrumb, navSection } = useAdmin();
   const section = currentSection(navSection ?? pathname);
 
@@ -528,6 +593,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   })();
 
   const title = pageCrumb ?? section.name;
+
+  // The layout is a client component, so route metadata can't title the tab; name it here.
+  useEffect(() => {
+    document.title = `${title} | Oceanblue Console`;
+  }, [title]);
 
   return (
     <div className="adm-scope min-h-screen bg-[var(--adm-canvas)]">
@@ -558,10 +628,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "transition-[padding] duration-200 ease-[var(--adm-ease)]",
-          sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-[max(15vw,200px)]",
+          sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]",
         )}
       >
-        <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-[56px] items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
           <div className="flex min-w-0 items-center gap-1">
             <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className={cn(iconButton, "lg:hidden")}>
               <IconMenu className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -586,7 +656,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           // `relative`: sr-only labels inside are position:absolute. Without a
           // positioned scroller they anchor to <body>, escape this overflow and
           // stretch the document, which shows as blank space under the page.
-          className="relative flex h-[calc(100dvh-60px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
+          className="relative flex h-[calc(100dvh-56px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
         >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>

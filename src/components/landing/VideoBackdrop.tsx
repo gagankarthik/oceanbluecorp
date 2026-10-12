@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/components/site/use-reduced-motion";
 
 /**
@@ -41,6 +42,14 @@ export default function VideoBackdrop({
   const reduce = useReducedMotion();
   const [armed, setArmed] = useState(false);
   const [playing, setPlaying] = useState(false);
+  // WCAG 2.2.2: a looping film needs a way to stop it.
+  const [paused, setPaused] = useState(false);
+  const togglePause = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (paused) { void v.play().catch(() => {}); setPaused(false); }
+    else { v.pause(); setPaused(true); }
+  };
 
   useEffect(() => {
     if (reduce) return;
@@ -65,6 +74,7 @@ export default function VideoBackdrop({
   }, [armed]);
 
   return (
+    <>
     <div aria-hidden className={`absolute inset-0 overflow-hidden ${className}`}>
       {/* Present from first paint, and the permanent state under reduced
           motion or when the browser declines to play. */}
@@ -104,5 +114,17 @@ export default function VideoBackdrop({
         />
       )}
     </div>
+    {/* Outside the aria-hidden backdrop so it stays operable. */}
+    {!reduce && playing && (
+      <button
+        type="button"
+        onClick={togglePause}
+        aria-label={paused ? "Play background video" : "Pause background video"}
+        className="absolute bottom-4 right-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-white/60 bg-black/40 text-white transition-colors hover:bg-black/60"
+      >
+        {paused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
+      </button>
+    )}
+    </>
   );
 }

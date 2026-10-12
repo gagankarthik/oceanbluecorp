@@ -6,7 +6,6 @@ import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
 import { EmptyState } from "@/components/admin/empty-state";
 import { WorkspaceButton } from "@/components/admin/workspace";
-import { Kbd } from "@/components/admin/kbd";
 import { IconMessageText } from "@/components/admin/icons";
 import { fmtDateTime } from "@/lib/format";
 
@@ -52,9 +51,7 @@ export function NotesTab({
               {value.length > 0 ? (
                 <span className="tabular-nums">{value.length} characters</span>
               ) : (
-                <>
-                  <Kbd>⌘</Kbd> <Kbd>↵</Kbd> to save · visible to your team
-                </>
+                "Visible to your team"
               )}
             </p>
             {/* Secondary: the record's filled action is "Edit profile" in the pinned header. */}

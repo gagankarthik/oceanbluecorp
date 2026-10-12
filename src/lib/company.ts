@@ -11,6 +11,9 @@ export const LEGAL_NAME = "Oceanblue Solutions, Inc.";
 export const CONTACT_PHONE = { label: "+1 (614) 844-6925", href: "tel:+16148446925" };
 export const CONTACT_EMAIL = "hr@oceanbluecorp.com";
 
+/** Headquarters, as printed in the footer and the locations map. */
+export const HQ_ADDRESS = "9775 Fairway Drive, Suite C, Powell, OH 43065";
+
 export const FOUNDED_YEAR = 2013;
 
 export const FOUNDED_LONG = "August 8, 2013";

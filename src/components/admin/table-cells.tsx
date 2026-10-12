@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { MoreVertical } from "lucide-react";
+import { Loader2, MoreVertical } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -48,6 +48,7 @@ export function RoleCountCell({ total = 0, open = 0 }: { total?: number; open?: 
 export interface RowMenuItem {
   label: string;
   icon?: IconComponent;
+  /** With `href`, runs alongside the navigation (e.g. mark as replied). */
   onSelect?: () => void;
   href?: string;
   /** Opens in a new tab (websites); mailto/tel links open in place. */
@@ -55,12 +56,14 @@ export interface RowMenuItem {
   danger?: boolean;
   /** Draws a rule above this item, e.g. before Delete. */
   separated?: boolean;
+  /** Locked while its own request runs, so a second click can't repeat it. */
+  disabled?: boolean;
 }
 
 const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
 
 /** The one actions control per row: a ⋮ button that opens a short menu. */
-export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
+export function RowMenu({ label, items, busy = false }: { label: string; items: RowMenuItem[]; busy?: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -70,7 +73,7 @@ export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] 
           onClick={(e) => e.stopPropagation()}
           className="grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
         >
-          <MoreVertical className="h-4 w-4" />
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <MoreVertical className="h-4 w-4" />}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -97,11 +100,11 @@ export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] 
               {item.href ? (
                 <DropdownMenuItem asChild className={cls}>
                   {item.external || /^(mailto|tel):/.test(item.href)
-                    ? <a href={item.href} {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{body}</a>
-                    : <Link href={item.href}>{body}</Link>}
+                    ? <a href={item.href} onClick={item.onSelect} {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{body}</a>
+                    : <Link href={item.href} onClick={item.onSelect}>{body}</Link>}
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={item.onSelect} className={cls}>{body}</DropdownMenuItem>
+                <DropdownMenuItem onClick={item.onSelect} disabled={item.disabled} className={cls}>{body}</DropdownMenuItem>
               )}
             </React.Fragment>
           );

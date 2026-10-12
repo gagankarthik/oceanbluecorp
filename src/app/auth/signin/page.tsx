@@ -56,7 +56,7 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
 ];
 
 const inputCls =
-  "h-12 w-full rounded-xl border border-line-strong bg-white px-4 type-body text-ink placeholder:text-ink-subtle transition-colors duration-150 hover:border-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none aria-[invalid=true]:border-danger";
+  "h-12 w-full rounded-xl border border-line-input bg-white px-4 type-body text-ink placeholder:text-ink-subtle transition-colors duration-150 hover:border-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none aria-[invalid=true]:border-danger";
 const labelCls = "mb-1.5 block type-label text-ink";
 const submitCls =
   "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep disabled:cursor-not-allowed disabled:opacity-60";

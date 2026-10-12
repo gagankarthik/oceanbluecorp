@@ -480,7 +480,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
     <div className="pb-10">
         <BackLink onClick={() => router.back()} />
         {/* Identity on the cobalt band, like every other record; the stage track and tabs stay on the canvas. */}
-        <div className="relative z-[21] rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white">
+        <div className="adm-on-band relative z-[21] rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white">
 
         <RecordBar
           candidate={candidate}

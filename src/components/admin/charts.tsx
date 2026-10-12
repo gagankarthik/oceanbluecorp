@@ -203,7 +203,8 @@ export interface FunnelStage {
  * its siblings recede, so the eye lands on one stage at a time.
  */
 // Light to deep cobalt; every step keeps white labels at 4.6:1 or better.
-const FUNNEL_RAMP = ["#2f6fe8", "#2563eb", "#2158d8", "#1d4ed8", "#1b47c4", "#1e40af"];
+// Every stop carries white labels at 4.5:1 or better (lightest #0277b6 is 4.9:1).
+const FUNNEL_RAMP = ["#0277b6", "#0369a1", "#075985", "#0b5079", "#0c4a6e", "#082f49"];
 const FUNNEL_FLOOR = 32; // keeps a near-zero stage wide enough to read its label
 
 export function FunnelChart({ stages, className }: { stages: FunnelStage[]; className?: string }) {
@@ -241,7 +242,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                 className={cn(
                   "relative origin-center transition-[transform,filter] duration-200 ease-[var(--adm-ease)]",
                   interactive &&
-                    "group-hover/band:z-10 group-hover/band:scale-[1.025] group-hover/band:[filter:drop-shadow(0_6px_12px_rgba(29,78,216,0.28))] group-has-[:focus-visible]/band:z-10 group-has-[:focus-visible]/band:scale-[1.025]",
+                    "group-hover/band:z-10 group-hover/band:scale-[1.025] group-has-[:focus-visible]/band:z-10 group-has-[:focus-visible]/band:scale-[1.025]",
                 )}
               >
                 <button
@@ -259,7 +260,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                   <span className="text-adm-xs font-semibold">{st.label}</span>
                   <span className="text-adm-base font-bold tabular-nums">{st.value.toLocaleString()}</span>
                   {st.meta && (
-                    <span className="text-adm-micro font-medium tabular-nums text-white/80">{st.meta}</span>
+                    <span className="text-adm-micro font-medium tabular-nums text-white">{st.meta}</span>
                   )}
                   {interactive && (
                     <ArrowRight

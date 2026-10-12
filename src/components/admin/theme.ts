@@ -257,7 +257,7 @@ export function hireTypeLabel(value?: string | null): string {
  * Recharts needs literal values, not CSS vars, for SVG fills in all browsers.
  */
 export const CHART_COLORS = [
-  "#1d4ed8", // cobalt , primary series
+  "#0369a1", // ocean, primary series
   "#ea580c", // orange
   "#0d9488", // teal
   "#a855f7", // violet
@@ -280,7 +280,7 @@ export const CHART_NEUTRAL = "#64748b";
  * 3:1 on white. Always paired with an icon or label, never colour alone.
  */
 export const SERIES = {
-  primary: "#1d4ed8", // volume / main metric
+  primary: "#0369a1", // volume / main metric
   success: "#059669", // hired, completed
   warning: "#d97706", // offered, at-risk
   danger:  "#e11d48", // rejected, failed

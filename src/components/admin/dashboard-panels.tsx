@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 
 /** Sequential blue ramp, ordered stages of one process. */
-export const STAGE_RAMP = ["#60a5fa", "#4b91f7", "#3b82f6", "#2f6fed", "#2563eb"];
+export const STAGE_RAMP = ["#0284c7", "#0277b6", "#0369a1", "#075985", "#0c4a6e"];
 
 export type BarItem = {
   label: string;

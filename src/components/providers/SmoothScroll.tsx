@@ -77,6 +77,11 @@ export default function SmoothScroll() {
       // Clear the fixed header (and the announcement bar when it is up) so the
       // section heading is not parked underneath it.
       lenis.scrollTo(target as HTMLElement, { offset: -96 });
+      // Native hash navigation also moves focus; preventDefault drops that, which
+      // broke the skip link (focus stayed on it, so Tab went back into the header).
+      const el = target as HTMLElement;
+      if (!el.matches("a[href], button, input, select, textarea, [tabindex]")) el.setAttribute("tabindex", "-1");
+      el.focus({ preventScroll: true });
       // Keep the URL honest, preventDefault would otherwise drop the hash.
       window.history.pushState(null, "", href);
     };

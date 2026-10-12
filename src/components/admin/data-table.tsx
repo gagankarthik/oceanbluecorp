@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "./empty-state";
 import type { Density } from "./workspace";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 // ui/Checkbox defaults to the navy --primary with a drop shadow + a fat 3px
 // focus ring. Flatten it and move it onto the admin accent: no shadow, a clean
@@ -224,14 +225,24 @@ export function DataTable<T>({
 
   // The pinned column only grows its seam once something has actually scrolled
   // under it; a permanent shadow on an unscrolled grid is just a stray line.
+  // Likewise the pinned actions column, while content remains to its left.
+  // Table from 1024px, cards below; only one is mounted so cells render once.
+  const narrow = useMediaQuery("(max-width: 1023.98px)");
+  const [overflowRight, setOverflowRight] = React.useState(false);
+  const hasActions = !!rowActions;
   React.useEffect(() => {
     const el = scrollRef.current;
-    if (!el || !pinFirstColumn) return;
-    const onScroll = () => setScrolled(el.scrollLeft > 0);
+    if (!el || (!pinFirstColumn && !hasActions)) return;
+    const onScroll = () => {
+      setScrolled(el.scrollLeft > 0);
+      setOverflowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    };
     onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [pinFirstColumn]);
+    const ro = new ResizeObserver(onScroll);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", onScroll); ro.disconnect(); };
+  }, [pinFirstColumn, hasActions, narrow]);
 
   const sorted = React.useMemo(() => {
     if (!sort) return rows;
@@ -297,6 +308,7 @@ export function DataTable<T>({
     // container itself, and every column class sits on a descendant, so the
     // two can share this element.
     <div className={cn("@container flex min-h-0 w-full min-w-0 flex-1 flex-col", className)}>
+      {!narrow && (
       <div
         ref={scrollRef}
         data-density={density}
@@ -310,6 +322,8 @@ export function DataTable<T>({
             "adm-grid text-adm-base",
             pinFirstColumn && "adm-grid--pinned",
             pinFirstColumn && scrolled && "is-scrolled",
+            rowActions && "adm-grid--actions",
+            rowActions && overflowRight && "has-overflow-right",
           )}
         >
           <thead>
@@ -397,10 +411,15 @@ export function DataTable<T>({
                 return (
                   <tr
                     key={id}
+                    data-state={isSelected ? "selected" : undefined}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    onKeyDown={onRowClick ? (e) => {
+                      if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onRowClick(row); }
+                    } : undefined}
                     className={cn(
-                      "group/row bg-[var(--adm-surface)] transition-colors duration-100",
-                      onRowClick && "cursor-pointer",
+                      "group/row bg-[var(--adm-surface)] transition-colors duration-150",
+                      onRowClick && "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--adm-accent)]",
                       // Selected rows keep an accent spine so the state is
                       // legible even where the hover wash also applies; hover
                       // draws a lighter one, so the pointer has a definite
@@ -438,7 +457,7 @@ export function DataTable<T>({
                     ))}
                     {rowActions && (
                       <td className="w-14 pl-2 pr-4" onClick={(e) => e.stopPropagation()}>
-                        <div className={cn("flex justify-end transition-opacity", !rowActionsAlways && "focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100")}>
+                        <div className={cn("flex justify-end transition-opacity", !rowActionsAlways && "focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-focus-visible/row:opacity-100")}>
                           {rowActions(row)}
                         </div>
                       </td>
@@ -450,6 +469,88 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
+      )}
+
+      {/* Below 1024px a grid of 6+ columns can't be read, so each row becomes
+          a card: the identifying column as its title, the row menu top-right,
+          the other visible columns as labelled pairs (at most six, Miller). */}
+      {narrow && (
+      <div className="min-h-0 flex-1 overflow-auto" style={maxHeight ? { maxHeight } : undefined}>
+        {loading ? (
+          <ul className="divide-y divide-[var(--adm-line-soft)]" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="space-y-2 px-4 py-3">
+                <div className="skel h-4 w-1/2" />
+                <div className="skel h-3 w-3/4" />
+              </li>
+            ))}
+          </ul>
+        ) : visible.length === 0 ? (
+          <EmptyState
+            icon={empty?.icon ?? IconInbox}
+            title={empty?.title ?? "Nothing here yet"}
+            description={empty?.description}
+            action={empty?.action}
+          />
+        ) : (
+          <ul className="divide-y divide-[var(--adm-line-soft)]">
+            {visible.map((row) => {
+              const id = rowKey(row);
+              const isSelected = selectable && selected!.includes(id);
+              const [lead, ...rest] = visibleColumns;
+              return (
+                <li
+                  key={id}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={onRowClick ? (e) => {
+                    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onRowClick(row); }
+                  } : undefined}
+                  className={cn(
+                    "flex gap-3 px-4 py-3 transition-colors",
+                    onRowClick && "cursor-pointer hover:bg-[var(--adm-row-hover)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--adm-accent)]",
+                    isSelected && "bg-[var(--adm-accent-tint)]",
+                  )}
+                >
+                  {selectable && (
+                    <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        className={checkboxCobalt}
+                        checked={!!isSelected}
+                        onCheckedChange={() => toggleRow(id)}
+                        aria-label="Select row"
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1 text-adm-base font-medium text-[var(--adm-ink)]">{lead?.cell(row)}</div>
+                      {rowActions && (
+                        <div className="-mr-1 -mt-1 flex-none" onClick={(e) => e.stopPropagation()}>
+                          {rowActions(row)}
+                        </div>
+                      )}
+                    </div>
+                    {rest.length > 0 && (
+                      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1.5 text-adm-xs sm:grid-cols-2">
+                        {rest.slice(0, 6).map((col) => (
+                          <div key={col.key} className="flex min-w-0 items-baseline gap-2">
+                            <dt className="w-24 flex-none text-[var(--adm-ink-mute)]">
+                              {col.label ?? (typeof col.header === "string" ? col.header : col.key)}
+                            </dt>
+                            <dd className="min-w-0 flex-1 truncate text-[var(--adm-ink)]">{col.cell(row)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      )}
 
       {/* Single status bar: what you are looking at, how much of it fits, and
           how to move. This replaces the separate WorkspaceFooter, which stated

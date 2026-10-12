@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Check, MoreVertical } from "lucide-react";
+import { Check } from "lucide-react";
 import type { Contact } from "@/lib/aws/dynamodb";
 import { Avatar } from "@/components/admin/avatar";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { IconEye, IconMailOpen, IconMessage, IconSend, IconTrash } from "@/components/admin/icons";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { RowMenu } from "@/components/admin/table-cells";
 import { fmtDateTime, fmtRelative } from "@/lib/format";
 import { isJobSeeker, seekerArea } from "@/lib/contact";
 import { cn } from "@/lib/utils";
@@ -26,7 +24,6 @@ function displayPhone(raw: string): string {
   return us.length === 10 ? `(${us.slice(0, 3)}) ${us.slice(3, 6)}-${us.slice(6)}` : raw;
 }
 
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
 
 const ENQUIRY_COLUMNS: DataTableColumn<Contact>[] = [
   {
@@ -154,7 +151,7 @@ const COLUMNS = [NAME_COLUMN, ...CONTACT_COLUMNS, ...ENQUIRY_COLUMNS, ...TRAILIN
 /** For the Display menu's column toggles. */
 export const CONTACT_COLUMN_OPTIONS = COLUMNS.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }));
 
-function RowMenu({
+function ContactMenu({
   contact,
   onOpen,
   onStatusChange,
@@ -165,53 +162,18 @@ function RowMenu({
   onStatusChange: (id: string, s: ContactStatus) => void;
   onDelete: (id: string) => void;
 }) {
-  const name = contactName(contact);
+  const markResponded = () => { if (contact.status !== "responded") onStatusChange(contact.id, "responded"); };
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Actions for ${name}`}
-          className="grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
-      >
-        <DropdownMenuItem onClick={() => onOpen(contact)} className={menuItemCls}>
-          <IconEye className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Open enquiry
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild className={menuItemCls}>
-          <a
-            href={replyHref(contact)}
-            onClick={() => { if (contact.status !== "responded") onStatusChange(contact.id, "responded"); }}
-          >
-            <IconSend className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Reply by email
-          </a>
-        </DropdownMenuItem>
-        {contact.status === "new" && (
-          <DropdownMenuItem onClick={() => onStatusChange(contact.id, "read")} className={menuItemCls}>
-            <IconMailOpen className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Mark as read
-          </DropdownMenuItem>
-        )}
-        {contact.status !== "responded" && (
-          <DropdownMenuItem onClick={() => onStatusChange(contact.id, "responded")} className={menuItemCls}>
-            <Check className="mr-2 h-4 w-4 text-[var(--adm-ink-subtle)]" />Mark as responded
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-        <DropdownMenuItem
-          onClick={() => onDelete(contact.id)}
-          className={cn(menuItemCls, "text-[var(--adm-danger-ink)] focus:bg-[var(--adm-danger-soft)] focus:text-[var(--adm-danger-ink)]")}
-        >
-          <IconTrash className="mr-2 h-4 w-4" />Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowMenu
+      label={contactName(contact)}
+      items={[
+        { label: "Open enquiry", icon: IconEye, onSelect: () => onOpen(contact) },
+        { label: "Reply by email", icon: IconSend, href: replyHref(contact), onSelect: markResponded },
+        ...(contact.status === "new" ? [{ label: "Mark as read", icon: IconMailOpen, onSelect: () => onStatusChange(contact.id, "read") }] : []),
+        ...(contact.status !== "responded" ? [{ label: "Mark as responded", icon: Check, onSelect: markResponded }] : []),
+        { label: "Delete", icon: IconTrash, onSelect: () => onDelete(contact.id), danger: true, separated: true },
+      ]}
+    />
   );
 }
 
@@ -247,7 +209,7 @@ export function ContactTable({
       onPageSizeChange={onPageSizeChange}
       hiddenColumns={hiddenColumns}
       pinFirstColumn
-      rowActions={(c) => <RowMenu contact={c} onOpen={onOpen} onStatusChange={onStatusChange} onDelete={onDelete} />}
+      rowActions={(c) => <ContactMenu contact={c} onOpen={onOpen} onStatusChange={onStatusChange} onDelete={onDelete} />}
       rowActionsAlways
       empty={{ icon: IconMessage, ...empty }}
     />

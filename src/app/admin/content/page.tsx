@@ -164,7 +164,7 @@ function ToggleRow({ id, label, on, onChange }: { id: string; label: string; on:
         onClick={() => onChange(!on)}
         className={cn(
           "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors duration-150",
-          on ? "bg-[var(--adm-accent)]" : "bg-[var(--adm-line-strong)]",
+          on ? "bg-[var(--adm-accent)]" : "bg-[var(--adm-line-control)]",
         )}
       >
         <span className={cn(

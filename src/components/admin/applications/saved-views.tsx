@@ -48,16 +48,18 @@ export function SavedViewsMenu<S>({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
+          aria-label="My views"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-adm-xs font-medium transition-colors",
+            // Same size and edge as Filters, so the toolbar's controls read as one set.
+            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-xs font-medium transition-colors sm:px-3",
             activeId
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+              : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)]",
           )}
         >
           <IconBookmark className="h-3.5 w-3.5" aria-hidden="true" />
-          <span className="hidden sm:inline">Saved views</span>
+          <span className="hidden sm:inline">My views</span>
           {items.length > 0 && (
             <span className="tabular-nums text-adm-xs text-[var(--adm-ink-subtle)]">{items.length}</span>
           )}
@@ -69,7 +71,7 @@ export function SavedViewsMenu<S>({
         className="w-[20rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
         <div className="border-b border-[var(--adm-line-soft)] px-4 py-2.5">
-          <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">Saved views</span>
+          <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">My views</span>
           <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">Search, filters and layout, saved in this browser.</p>
         </div>
 

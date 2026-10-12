@@ -4,6 +4,7 @@ import { useState } from "react";
 import OfficeMap from "./OfficeMap";
 import { SectionTitle, CONTAINER, SECTION_Y } from "@/components/site/sections";
 import { cn } from "@/lib/utils";
+import { HQ_ADDRESS } from "@/lib/company";
 
 /* ============================================================
    Where we are.
@@ -31,7 +32,7 @@ export const OFFICES: Office[] = [
   {
     city: "Powell",
     country: "United States",
-    address: "9775 Fairway Drive, Suite C, Powell, OH 43065",
+    address: HQ_ADDRESS,
     phone: "+1 (614) 844-6925",
     lat: 40.1573,
     lng: -83.0752,

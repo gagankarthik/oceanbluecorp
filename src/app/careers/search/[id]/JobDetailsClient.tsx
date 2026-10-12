@@ -331,7 +331,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   );
 
   const inputCls =
-    "h-12 w-full rounded-xl border border-line-strong bg-white px-4 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none";
+    "h-12 w-full rounded-xl border border-line-input bg-white px-4 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none";
   const labelCls = "mb-1.5 block type-body-sm font-medium text-ink";
 
   return (
@@ -653,7 +653,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                           }}
                           className={cn(
                             "flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors focus-within:border-cobalt hover:border-ink-subtle",
-                            dragging ? "border-cobalt bg-cobalt-tint" : resumeError ? "border-danger bg-paper" : "border-line-strong bg-paper",
+                            dragging ? "border-cobalt bg-cobalt-tint" : resumeError ? "border-danger bg-paper" : "border-line-input bg-paper",
                           )}
                         >
                           <IconUpload size={24} className="text-ink-subtle" />

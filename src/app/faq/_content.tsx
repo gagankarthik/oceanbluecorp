@@ -90,7 +90,7 @@ export default function FaqPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="shortlist, security, benefits…"
-                  className="h-12 w-full rounded-xl border border-line-strong bg-white pr-11 pl-10 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt-tint focus:outline-none"
+                  className="h-12 w-full rounded-xl border border-line-input bg-white pr-11 pl-10 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt-tint focus:outline-none"
                 />
                 {query && (
                   <button

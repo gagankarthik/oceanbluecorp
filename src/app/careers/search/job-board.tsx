@@ -335,7 +335,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                 </Facet>
 
                 <div className="flex items-center justify-between px-5 py-4">
-                  <span className="inline-flex items-center gap-2 type-body-sm font-medium text-ink">
+                  <span onClick={() => setRemoteOnly(!remoteOnly)} className="inline-flex cursor-pointer select-none items-center gap-2 type-body-sm font-medium text-ink">
                     <IconGlobe size={16} className="text-ink-subtle" /> Remote only
                   </span>
                   <Switch on={remoteOnly} onChange={setRemoteOnly} label="Remote only" />
@@ -579,7 +579,7 @@ function FacetOption({ label, count, on, onClick }: { label: string; count: numb
         aria-hidden
         className={cn(
           "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-          on ? "border-cobalt bg-cobalt" : "border-line-strong bg-white",
+          on ? "border-cobalt bg-cobalt" : "border-line-input bg-white",
         )}
       >
         {on && <span className="size-1.5 rounded-full bg-white" />}
@@ -598,9 +598,9 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", on ? "bg-cobalt" : "bg-line-strong")}
+      className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors duration-150", on ? "bg-cobalt" : "bg-line-input")}
     >
-      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform", on ? "translate-x-5" : "translate-x-1")} />
+      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-150", on ? "translate-x-6" : "translate-x-1")} />
     </button>
   );
 }

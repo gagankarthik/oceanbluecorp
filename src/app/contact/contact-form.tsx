@@ -87,7 +87,7 @@ const EMPTY = {
 type Field = keyof typeof EMPTY;
 
 const inputClass =
-  "w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-[15px] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-subtle hover:border-ink-subtle focus:border-cobalt focus:outline-none focus:ring-4 focus:ring-cobalt-tint aria-[invalid=true]:border-danger";
+  "w-full rounded-xl border border-line-input bg-white px-4 py-3 text-[15px] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-subtle hover:border-ink-subtle focus:border-cobalt focus:outline-none focus:ring-4 focus:ring-cobalt-tint aria-[invalid=true]:border-danger";
 const labelClass = "mb-1.5 block type-label text-ink";
 // Focus on navy needs a white ring; the site default is cobalt.
 const onNavyFocus = "outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-night";

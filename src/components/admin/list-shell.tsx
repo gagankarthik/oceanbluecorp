@@ -97,27 +97,44 @@ export function ListTabs<K extends string>({
 }
 
 /**
- * The band at the top of the panel: tabs and search on the left, Filters and
- * Display on the right. One line on a laptop; on a phone the two buttons wrap
- * under the search together.
+ * The band at the top of the panel, in two groups that never split:
+ *
+ *   views  — which list you are looking at (tabs, saved views)
+ *   query  — how it is narrowed and shown (search, Filters, Display)
+ *
+ * Both share one line when there is room. When there isn't, the query group
+ * moves under the views as a whole, search left and its controls right, so a
+ * search box is never left stranded on a line apart from its filters.
  */
 export function ListToolbar({
   tabs,
+  views,
   search,
   children,
   className,
 }: {
   tabs?: React.ReactNode;
+  /** View-level controls that sit with the tabs, e.g. a saved-views menu. */
+  views?: React.ReactNode;
   search?: React.ReactNode;
-  /** Filters and Display, right-aligned. */
+  /** Filters and Display, at the end of the query group. */
   children?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 border-b border-[var(--adm-line)] px-3 py-3 lg:px-4", className)}>
-      {tabs}
-      {search}
-      {children && <div className="ml-auto flex flex-none items-center gap-2">{children}</div>}
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--adm-line)] px-3 py-3 lg:px-4", className)}>
+      {(tabs || views) && (
+        <div className="flex min-w-0 max-w-full flex-none items-center gap-2">
+          {tabs}
+          {views}
+        </div>
+      )}
+      {(search || children) && (
+        <div className="flex min-w-[min(100%,24rem)] flex-1 items-center gap-2">
+          {search && <div className="min-w-0 flex-1">{search}</div>}
+          {children && <div className="ml-auto flex flex-none items-center gap-2">{children}</div>}
+        </div>
+      )}
     </div>
   );
 }

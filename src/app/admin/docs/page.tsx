@@ -499,7 +499,7 @@ export default function AdminDocsPage() {
             <SubSection title="Keyboard shortcuts">
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {[
-                  { keys: "⌘ K", desc: "Open global command palette / search" },
+                  { keys: "Ctrl K", desc: "Open the command palette (⌘ K on a Mac)" },
                   { keys: "Esc", desc: "Close modals, drawers, dropdowns" },
                   { keys: "Enter", desc: "Confirm selection in dropdowns" },
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
