@@ -310,7 +310,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         meta={
           !isNew ? (
             <>
-              <span className="min-w-0 break-all font-mono text-[12.5px]">{publicUrl}</span>
+              <span className="min-w-0 break-all font-mono text-adm-xs">{publicUrl}</span>
               {form.updatedAt && <span>Updated {fmtDateTime(form.updatedAt)}</span>}
               {form.updatedByName && <span>by {form.updatedByName}</span>}
             </>
@@ -431,7 +431,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <button
                   type="button"
                   onClick={() => set("excerpt", deriveExcerpt(form.body))}
-                  className="rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
+                  className="rounded-[6px] text-adm-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                 >
                   Start from the first lines of the body
                 </button>
@@ -622,10 +622,10 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                       className="adm-hit mt-0.5 h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
                     />
                     <span>
-                      <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">
+                      <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">
                         {form.clientName || "The client"} has approved this in writing
                       </span>
-                      <span className="block text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                      <span className="block text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                         {guide.signoff} Until this is ticked, the piece cannot be published.
                       </span>
                     </span>
@@ -732,7 +732,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
             description={guide.length}
             action={
               words > 0 ? (
-                <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                   {words.toLocaleString()} words · {minutes} min read
                 </span>
               ) : undefined
@@ -796,7 +796,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   onChange={(e) => set("featured", e.target.checked)}
                   className="adm-hit h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
                 />
-                <span className="text-[13.5px] font-medium text-[var(--adm-ink)]">
+                <span className="text-adm-base font-medium text-[var(--adm-ink)]">
                   Feature at the top of {config.label}
                 </span>
               </label>
@@ -809,12 +809,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   role={publishIntent ? "alert" : undefined}
                   className="rounded-[12px] border border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)] p-3"
                 >
-                  <p className="text-[12.5px] font-medium text-[var(--adm-warning-ink)]">
+                  <p className="text-adm-xs font-medium text-[var(--adm-warning-ink)]">
                     Before it can go out
                   </p>
                   <ul className="mt-2 space-y-1.5">
                     {blockers.map((b) => (
-                      <li key={b} className="flex gap-1.5 text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+                      <li key={b} className="flex gap-1.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                         <span aria-hidden className="mt-1.5 h-1 w-1 flex-none rounded-full bg-[var(--adm-warning)]" />
                         {b}
                       </li>
@@ -825,12 +825,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
               {warnings.length > 0 && (
                 <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
-                  <p className="text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
+                  <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                     Worth fixing
                   </p>
                   <ul className="mt-2 space-y-1.5">
                     {warnings.map((w) => (
-                      <li key={w} className="flex gap-1.5 text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+                      <li key={w} className="flex gap-1.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                         <span aria-hidden className="mt-1.5 h-1 w-1 flex-none rounded-full bg-[var(--adm-ink-subtle)]" />
                         {w}
                       </li>
@@ -840,7 +840,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               )}
 
               {blockers.length === 0 && warnings.length === 0 && (
-                <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-[12.5px] font-medium text-[var(--adm-success-ink)]">
+                <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
                   Nothing outstanding. Ready to publish.
                 </p>
               )}
@@ -972,7 +972,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   onChange={(e) => set("noIndex", e.target.checked)}
                   className="adm-hit mt-0.5 h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
                 />
-                <span className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                <span className="text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                   Keep out of search results. For a page that exists only to be linked to directly.
                 </span>
               </label>
@@ -1058,7 +1058,7 @@ function MetricRows({
   return (
     <div className="space-y-3">
       {metrics.length === 0 && (
-        <p className="rounded-[12px] border border-dashed border-[var(--adm-line-strong)] p-4 text-center text-[13px] text-[var(--adm-ink-subtle)]">
+        <p className="rounded-[12px] border border-dashed border-[var(--adm-line-strong)] p-4 text-center text-adm-xs text-[var(--adm-ink-subtle)]">
           No figures yet. A case study without them is a brochure.
         </p>
       )}

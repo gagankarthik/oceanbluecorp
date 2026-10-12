@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
-  IconDownload, IconEdit, IconTrash,
+  IconDownload, IconEdit, IconMail, IconTrash,
   IconUserRole,
 } from "@/components/admin/icons";
 import type { Vendor } from "@/lib/aws/dynamodb";
@@ -12,11 +12,13 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
+  Workspace, WorkspaceButton, WorkspaceSearch, DisplayMenu,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useResource } from "@/hooks/use-resource";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { Blank, RoleCountCell, RowMenu, StackCell } from "@/components/admin/table-cells";
 import { Avatar } from "@/components/admin/avatar";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminDialog } from "@/components/admin/admin-dialog";
@@ -92,9 +94,6 @@ function validateVendor(f: FormData) {
 }
 
 /** Empty cell. */
-function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]"></span>;
-}
 
 // ── page ─────────────────────────────────────────────────────────────────────
 
@@ -321,7 +320,7 @@ export default function VendorsPage() {
       width: "230px",
       sortValue: (v) => v.name,
       cell: (v) => (
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={v.name} size="sm" />
           <span className="truncate font-semibold text-[var(--adm-ink)]">{v.name}</span>
         </div>
@@ -331,111 +330,71 @@ export default function VendorsPage() {
       key: "contact",
       header: "Contact",
       label: "Contact",
-      width: "190px",
-      sortValue: (v) => v.contactPerson || "",
-      hideBelow: "md",
-      cell: (v) => v.contactPerson
-        ? <span className="block truncate text-[var(--adm-ink-mute)]">{v.contactPerson}</span>
-        : <Blank />,
-    },
-    {
-      key: "email",
-      header: "Email",
-      label: "Email",
       width: "230px",
-      sortValue: (v) => v.email || "",
-      hideBelow: "lg",
-      cell: (v) => v.email ? (
-        <a
-          href={`mailto:${v.email}`}
-          onClick={(e) => e.stopPropagation()}
-          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          {v.email}
-        </a>
-      ) : <Blank />,
+      sortValue: (v) => v.contactPerson || v.email || "",
+      hideBelow: "md",
+      cell: (v) => v.contactPerson || v.email
+        ? <StackCell primary={v.contactPerson || v.email} secondary={v.contactPerson ? v.email : undefined} title={[v.contactPerson, v.email].filter(Boolean).join(" · ")} />
+        : <span className="text-adm-xs text-[var(--adm-ink-subtle)]">No contact on file</span>,
     },
     {
       key: "location",
       header: "Location",
       label: "Location",
-      width: "160px",
+      width: "130px",
       sortValue: (v) => v.state || "",
-      hideBelow: "lg",
+      hideBelow: "xl",
       cell: (v) => {
-        const location = [v.state, v.zipCode].filter(Boolean).join(", ");
-        return location
-          ? <span className="block truncate text-[var(--adm-ink-mute)]">{location}</span>
-          : <Blank />;
+        const location = [v.state, v.zipCode].filter(Boolean).join(" ");
+        return location ? <span className="block truncate text-[var(--adm-ink-mute)]">{location}</span> : <Blank />;
       },
     },
     {
       key: "jobs",
-      header: "Jobs",
-      label: "Jobs posted",
+      header: "Roles",
+      label: "Roles",
       width: "120px",
-      align: "right",
-      sortValue: (r) => r.jobCount ?? 0,
-      cell: (r) => (r.jobCount
-        ? (
-          <span className="tabular-nums" title={`${r.jobCount} posted, ${r.openJobCount ?? 0} open`}>
-            <span className="font-medium text-[var(--adm-ink)]">{r.jobCount}</span>
-            {r.openJobCount ? <span className="text-[var(--adm-ink-subtle)]"> · {r.openJobCount} open</span> : null}
-          </span>
-        )
-        : <Blank />),
+      sortValue: (r) => (r.openJobCount ?? 0) * 10_000 + (r.jobCount ?? 0),
+      cell: (r) => <RoleCountCell total={r.jobCount} open={r.openJobCount} />,
     },
     {
       key: "lead",
       header: "Vendor lead",
       label: "Vendor lead",
-      width: "220px",
+      width: "190px",
       sortValue: (v) => v.vendorLeadName || "",
+      hideBelow: "lg",
       cell: (v) => {
         const meta = LEAD_META[v.vendorLeadRole] || LEAD_META.hr;
-        return (
-          <div className="flex items-center gap-2">
-            <StatusBadge tone={meta.tone} label={meta.label} size="md" />
-            {v.vendorLeadName
-              ? <span className="truncate text-[var(--adm-ink-mute)]">{v.vendorLeadName}</span>
-              : <Blank />}
+        return v.vendorLeadName ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <Avatar name={v.vendorLeadName} size="xs" />
+            <StackCell primary={v.vendorLeadName} secondary={meta.label} />
           </div>
-        );
+        ) : <Blank />;
       },
     },
     {
       key: "created",
-      header: "Created",
-      label: "Created",
-      width: "130px",
+      header: "Added",
+      label: "Added",
+      width: "120px",
       sortValue: (v) => new Date(v.createdAt).getTime(),
       hideBelow: "xl",
-      cell: (v) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(v.createdAt)}</span>,
+      cell: (v) => <span className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(v.createdAt)}</span>,
     },
   ];
 
   // Hover-revealed, not a permanent column of icon buttons down the grid.
   const rowActions = (v: Vendor) => (
-    <div className="flex items-center gap-0.5">
-      <button
-        type="button"
-        onClick={() => handleEdit(v)}
-        aria-label={`Edit ${v.name}`}
-        title="Edit"
-        className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-      >
-        <IconEdit className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setPendingDelete(v.id)}
-        aria-label={`Delete ${v.name}`}
-        title="Delete"
-        className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
-      >
-        <IconTrash className="h-4 w-4" aria-hidden="true" />
-      </button>
-    </div>
+    <RowMenu
+      label={v.name}
+      items={[
+        { label: "Edit vendor", icon: IconEdit, onSelect: () => handleEdit(v) },
+        ...(v.email ? [{ label: "Email contact", icon: IconMail, href: `mailto:${v.email}` }] : []),
+        { label: "Delete", icon: IconTrash, onSelect: () => setPendingDelete(v.id), danger: true, separated: true },
+      ]}
+    />
   );
 
   // ── states ────────────────────────────────────────────────────────────────
@@ -466,79 +425,51 @@ export default function VendorsPage() {
         onCancel={() => setPendingDelete(null)}
       />
 
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Vendors"
-        meta={`${vendors.length.toLocaleString()} vendor${vendors.length === 1 ? "" : "s"} on record`}
-        stats={[
-          { label: "HR-led", value: stats.hr, onClick: () => setVendorLeadFilter("hr"),
-          selected: vendorLeadFilter === "hr" },
-          { label: "Admin-led", value: stats.admin, onClick: () => setVendorLeadFilter("admin"),
-          selected: vendorLeadFilter === "admin" },
-          { label: "No contact on file", value: stats.noContact,
-            hint: stats.noContact > 0 ? "Cannot be called or emailed" : "All reachable" },
-        ]}
+        meta={<>
+          {vendors.length.toLocaleString()} vendor{vendors.length === 1 ? "" : "s"} on record
+          {stats.noContact ? <>, <MetaStrong>{stats.noContact} with no contact on file</MetaStrong></> : null}
+        </>}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredVendors.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton className={BAND_PRIMARY} onClick={openCreate}>
+            <WorkspaceButton variant="primary" onClick={openCreate}>
               <Plus className="h-4 w-4" />Add vendor
             </WorkspaceButton>
           </>
         }
       />
 
-      <WorkspaceToolbar
-          variant="canvas"
-          search={
-            <WorkspaceSearch
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Filter vendors by name, contact or location"
+      <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Vendor lead"
+              value={vendorLeadFilter}
+              onChange={setVendorLeadFilter}
+              tabs={[
+                { key: "all",   label: "All",                 count: stats.total },
+                { key: "hr",    label: LEAD_META.hr.label,    count: stats.hr },
+                { key: "admin", label: LEAD_META.admin.label, count: stats.admin },
+              ]}
             />
           }
-          trailing={
-            <>
-              <DisplayMenu
-                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                hidden={hiddenColumns}
-                onHiddenChange={setHiddenColumns}
-                rows={rows}
-                onRowsChange={setRows}
-                onReset={() => { setHiddenColumns([]); setRows(25); }}
-              />
-            </>
-          }
+          search={<WorkspaceSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search vendors…" />}
         >
-          <FilterPill
-            label="Lead"
-            icon={FilterIcon.person}
-            value={vendorLeadFilter}
-            onChange={setVendorLeadFilter}
-            options={[
-              { value: "all",   label: "All leads",           count: stats.total },
-              { value: "hr",    label: LEAD_META.hr.label,    count: stats.hr },
-              { value: "admin", label: LEAD_META.admin.label, count: stats.admin },
-            ]}
+          <DisplayMenu
+            columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+            hidden={hiddenColumns}
+            onHiddenChange={setHiddenColumns}
+            rows={rows}
+            onRowsChange={setRows}
+            onReset={() => { setHiddenColumns([]); setRows(25); }}
           />
-      </WorkspaceToolbar>
+        </ListToolbar>
 
-      <ActiveFilters
-          variant="canvas"
-          chips={vendorLeadFilter !== "all"
-            ? [{
-                label: `Lead: ${LEAD_META[vendorLeadFilter as LeadRole]?.label ?? vendorLeadFilter}`,
-                onClear: () => setVendorLeadFilter("all"),
-              }]
-            : []}
-          onClearAll={clearFilters}
-      />
-
-      <Workspace>
         <DataTable
           noun="vendors"
           storageKey="vendors"
@@ -550,6 +481,8 @@ export default function VendorsPage() {
           onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           rowActions={rowActions}
+          rowActionsAlways
+          onRowClick={handleEdit}
           empty={{
             icon: IconUserRole,
             title: vendors.length === 0 ? "No vendors yet" : "No vendors match your filters",
@@ -586,7 +519,7 @@ export default function VendorsPage() {
         <form id="vendor-form" onSubmit={handleSubmit} onBlur={revalidate} noValidate className="space-y-5">
           <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
           <section>
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Vendor</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Vendor</h3>
             <div className="grid grid-cols-1 gap-4">
               <Field label="Vendor name" required htmlFor={FIELD_IDS.name} error={formErrors.name}>
                 <FormInput
@@ -616,7 +549,7 @@ export default function VendorsPage() {
           </section>
 
           <section className="border-t border-[var(--adm-line-soft)] pt-5">
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Contact information</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Contact information</h3>
             <div className="grid grid-cols-1 gap-4">
               <Field label="Contact person" htmlFor={FIELD_IDS.contactPerson} error={formErrors.contactPerson}>
                 <FormInput
@@ -641,7 +574,7 @@ export default function VendorsPage() {
           </section>
 
           <section className="border-t border-[var(--adm-line-soft)] pt-5">
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Location</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Location</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="State" htmlFor={FIELD_IDS.state} error={formErrors.state}>
                 <FormInput id={FIELD_IDS.state} {...invalidProps("state")} value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />

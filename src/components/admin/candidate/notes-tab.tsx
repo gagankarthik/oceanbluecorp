@@ -31,8 +31,8 @@ export function NotesTab({
       <AdminCard className="overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[var(--adm-line-soft)] px-4 py-2.5">
           <Avatar name={authorName} size="xs" />
-          <span className="text-[13.5px] font-medium text-[var(--adm-ink)]">{authorName}</span>
-          <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">adding a note</span>
+          <span className="text-adm-base font-medium text-[var(--adm-ink)]">{authorName}</span>
+          <span className="text-adm-xs text-[var(--adm-ink-subtle)]">adding a note</span>
         </div>
         <div className="p-4">
           <textarea
@@ -45,10 +45,10 @@ export function NotesTab({
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSubmit();
             }}
             placeholder="Interview feedback, next steps, anything the team should know…"
-            className="w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
+            className="w-full resize-none border-0 bg-transparent p-0 text-adm-base leading-relaxed text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--adm-line-soft)] pt-3">
-            <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
+            <p className="text-adm-xs text-[var(--adm-ink-subtle)]">
               {value.length > 0 ? (
                 <span className="tabular-nums">{value.length} characters</span>
               ) : (
@@ -74,14 +74,14 @@ export function NotesTab({
               <li key={note.id} className="px-4 py-3">
                 <div className="flex items-center gap-2.5">
                   <Avatar name={note.addedByName} size="xs" />
-                  <span className="min-w-0 truncate text-[13.5px] font-medium text-[var(--adm-ink)]">
+                  <span className="min-w-0 truncate text-adm-base font-medium text-[var(--adm-ink)]">
                     {note.addedByName}
                   </span>
-                  <span className="ml-auto flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span className="ml-auto flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                     {fmtDateTime(note.addedAt)}
                   </span>
                 </div>
-                <p className="mt-1.5 whitespace-pre-line pl-[34px] text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                <p className="mt-1.5 whitespace-pre-line pl-[34px] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                   {note.text}
                 </p>
               </li>

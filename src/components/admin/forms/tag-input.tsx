@@ -72,7 +72,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] py-0.5 pl-2 pr-1 text-[12.5px] font-medium text-[var(--adm-accent)]"
+            className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] py-0.5 pl-2 pr-1 text-adm-xs font-medium text-[var(--adm-accent)]"
           >
             {tag}
             <button
@@ -112,7 +112,7 @@ export function TagInput({
               add(text);
             }
           }}
-          className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-[14px] text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)] disabled:cursor-not-allowed"
+          className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-adm-base text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)] disabled:cursor-not-allowed"
         />
       </div>
 
@@ -123,7 +123,7 @@ export function TagInput({
               key={s}
               type="button"
               onClick={() => add(s)}
-              className="rounded-[6px] border border-dashed border-[var(--adm-line-strong)] px-2 py-0.5 text-[12px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
+              className="rounded-[6px] border border-dashed border-[var(--adm-line-control)] px-2 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
             >
               + {s}
             </button>

@@ -91,7 +91,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       <div className="p-4">
         {/* The previous verdict belongs to a different requisition, so it is withheld. */}
         {staleForJobChange && !fit && !error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-warning-ink)]">
+          <div className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-warning-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>
               This candidate moved to a different job, so the previous fit score no longer
@@ -101,22 +101,22 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         )}
 
         {loadError && !fit && !error && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span className="min-w-0 flex-1">The saved fit score couldn&apos;t be loaded.</span>
-            <WorkspaceButton className="h-8 px-3 text-[13px]" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
+            <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
           </div>
         )}
 
         {error && (
-          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
 
         {!fit && !error && (
-          <p className="text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
             Score this candidate&apos;s resume against the job they applied for. Requires a parsed resume.
           </p>
         )}
@@ -126,15 +126,15 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <VerdictBadge verdict={fit.verdict} />
               <p className="tabular-nums">
-                <span className={cn("text-[24px] font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
+                <span className={cn("text-adm-2xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
                   {fit.fitScore}
                 </span>
-                <span className="ml-0.5 text-[13px] font-medium text-[var(--adm-ink-subtle)]">/100</span>
+                <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">/100</span>
               </p>
             </div>
 
             {fit.rationale && (
-              <p className="mt-3 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{fit.rationale}</p>
+              <p className="mt-3 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">{fit.rationale}</p>
             )}
 
             <div className="mt-4">

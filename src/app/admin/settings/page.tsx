@@ -62,11 +62,11 @@ function RecordRow({
 }) {
   return (
     <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-2.5 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
-      <span className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-mute)]">
+      <span className="flex items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
       </span>
-      <span className="truncate text-[13.5px] font-medium text-[var(--adm-ink)]">{value || "–"}</span>
+      <span className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{value || "–"}</span>
     </div>
   );
 }
@@ -379,7 +379,7 @@ export default function SettingsPage() {
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); profileCheck.reset(); passwordCheck.reset(); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-9 flex-none items-center gap-2.5 rounded-[8px] px-3 text-left text-[13.5px] transition-colors duration-150 lg:w-full",
+                    "flex h-9 flex-none items-center gap-2.5 rounded-[8px] px-3 text-left text-adm-base transition-colors duration-150 lg:w-full",
                     active
                       ? "bg-[var(--adm-accent-tint)] font-semibold text-[var(--adm-accent)]"
                       : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
                       aria-label="Change profile photo"
-                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)] disabled:opacity-60"
+                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] disabled:opacity-60"
                     >
                       {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconCamera className="h-3.5 w-3.5" />}
                     </button>
@@ -429,9 +429,9 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "–"}</p>
-                    <p className="truncate text-[13px] text-[var(--adm-ink-mute)]">{user?.email || "–"}</p>
-                    <p className="mt-1 text-[12.5px] text-[var(--adm-ink-subtle)]">JPG, PNG or WebP · max 2MB</p>
+                    <p className="truncate text-adm-md font-semibold text-[var(--adm-ink)]">{user?.name || user?.email || "–"}</p>
+                    <p className="truncate text-adm-xs text-[var(--adm-ink-mute)]">{user?.email || "–"}</p>
+                    <p className="mt-1 text-adm-xs text-[var(--adm-ink-subtle)]">JPG, PNG or WebP · max 2MB</p>
                   </div>
 
                   <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
@@ -559,7 +559,7 @@ export default function SettingsPage() {
                   }
                 />
                 <div className="space-y-4 p-4">
-                  <p className="max-w-[68ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+                  <p className="max-w-[68ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                     The admin console and sign-in stay reachable, so you can
                     always turn it back off from here.
                   </p>
@@ -586,7 +586,7 @@ export default function SettingsPage() {
                   </Field>
 
                   {maintError && (
-                    <p role="alert" className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-danger-ink)]">
+                    <p role="alert" className="flex items-center gap-1.5 text-adm-xs font-medium text-[var(--adm-danger-ink)]">
                       <IconAlert className="h-4 w-4 flex-none" />{maintError}
                     </p>
                   )}
@@ -624,7 +624,7 @@ export default function SettingsPage() {
                     </WorkspaceButton>
 
                     {maintSaved && (
-                      <span role="status" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-success-ink)]">
+                      <span role="status" className="inline-flex items-center gap-1.5 text-adm-xs font-medium text-[var(--adm-success-ink)]">
                         <Check className="h-4 w-4" />Saved
                       </span>
                     )}
@@ -671,7 +671,7 @@ export default function SettingsPage() {
           {activeTab !== "site" && (
             <div className="flex flex-wrap items-center justify-end gap-3">
               {showSaved && (
-                <span role="status" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--adm-success-ink)]">
+                <span role="status" className="inline-flex items-center gap-1.5 text-adm-xs font-medium text-[var(--adm-success-ink)]">
                   <Check className="h-4 w-4" />All changes saved
                 </span>
               )}

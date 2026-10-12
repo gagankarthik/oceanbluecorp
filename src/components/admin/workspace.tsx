@@ -3,13 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { Slot } from "radix-ui";
-import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Plus, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
 import { IconBookmark, IconJob, IconLocation, IconShield, IconUser } from "./icons";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Kbd } from "./kbd";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "./info-tip";
 
@@ -110,12 +109,12 @@ export function WorkspaceTitle({
     <div className={cn("mb-4 flex flex-none flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
-          <h1 className="truncate text-[21px] font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+          <h1 className="truncate text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
             {title}
           </h1>
           {info && <InfoTip label={title}>{info}</InfoTip>}
         </div>
-        {meta && <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{meta}</p>}
+        {meta && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{meta}</p>}
       </div>
       {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -158,14 +157,14 @@ export function WorkspaceButton({
       {...props}
       className={cn(
         "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
-        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-[13px]" : "h-9 rounded-[var(--adm-radius-control)] px-3.5 text-[13.5px]",
+        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-xs" : "h-9 rounded-[var(--adm-radius-control)] px-3.5 text-adm-base",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
         variant === "primary" && (onBand
           ? "bg-white text-[var(--adm-accent)] hover:bg-white/90"
           : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]"),
         variant === "secondary" &&
-          "border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+          "border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
         variant === "danger" && "bg-[var(--adm-danger)] text-white hover:bg-[var(--adm-danger-ink)]",
         variant === "ghost" && (onBand
           ? "text-white/85 hover:bg-white/10 hover:text-white"
@@ -189,6 +188,38 @@ export function WorkspaceButton({
  * no white fill, no bottom rule and no icon tile, just the back link, the name,
  * its status, and the actions.
  */
+/**
+ * The way back from a record or form. One placement everywhere: top-left on
+ * the canvas, above the page's header, in AA ink with a full-size target.
+ */
+export function BackLink({
+  label = "Back",
+  href,
+  onClick,
+  className,
+}: {
+  label?: string;
+  href?: string;
+  onClick?: () => void;
+  className?: string;
+}) {
+  const cls = cn(
+    "-ml-2 mb-2 inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+    className,
+  );
+  const body = (
+    <>
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      {label}
+    </>
+  );
+  return (
+    <div>
+      {href ? <Link href={href} className={cls}>{body}</Link> : <button type="button" onClick={onClick} className={cls}>{body}</button>}
+    </div>
+  );
+}
+
 export function RecordHeader({
   back,
   title,
@@ -209,40 +240,27 @@ export function RecordHeader({
   actions?: React.ReactNode;
   className?: string;
 }) {
-  const backContent = back && (
-    <>
-      <ArrowLeft className="h-3.5 w-3.5" />
-      {back.label}
-    </>
-  );
   // On cobalt, like BrandBand. Facts and links are built on the ink tokens, so
   // the text rows re-point those tokens to white; the status chip keeps its own
   // colours on a white tab.
   const onCobalt = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.92)] [--adm-ink-subtle:rgba(255,255,255,0.85)]";
-  const backCls = "-ml-1 inline-flex items-center gap-1 rounded-[var(--adm-radius-control)] px-1 py-0.5 text-[13px] text-white/85 transition-colors hover:text-white";
   return (
+    <>
+    {/* The way back sits on the canvas, never inside the band, where it read as part of the title block. */}
+    {back && <BackLink label={back.label} href={back.href} onClick={back.onClick} />}
     <div className={cn("adm-on-band mb-5 flex-none rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] px-5 py-4 text-white", className)}>
-      {back && (
-        <div className="mb-1.5">
-          {back.href ? (
-            <Link href={back.href} className={backCls}>{backContent}</Link>
-          ) : (
-            <button type="button" onClick={back.onClick} className={backCls}>{backContent}</button>
-          )}
-        </div>
-      )}
 
       <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h1 className="min-w-0 break-words text-[21px] font-semibold leading-7 tracking-[-0.02em]">
+            <h1 className="min-w-0 break-words text-adm-xl font-semibold leading-7 tracking-[-0.02em]">
               {title}
             </h1>
             {status && <span className="inline-flex rounded-[var(--adm-radius-control)] bg-white p-0.5">{status}</span>}
           </div>
-          {subtitle && <p className="mt-0.5 text-[13.5px] text-white/90">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-adm-base text-white/90">{subtitle}</p>}
           {meta && (
-            <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]", onCobalt)}>
+            <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs", onCobalt)}>
               {meta}
             </div>
           )}
@@ -254,6 +272,7 @@ export function RecordHeader({
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -297,7 +316,7 @@ export function FormActionBar({
 }) {
   return (
     <div className="sticky -bottom-4 z-20 -mx-4 -mb-4 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-bottom-5 sm:-mx-5 sm:-mb-5 sm:px-5 lg:-bottom-6 lg:-mx-6 lg:-mb-6 lg:px-6">
-      <p className="text-[13px] text-[var(--adm-ink-mute)]">
+      <p className="text-adm-xs text-[var(--adm-ink-mute)]">
         {message ?? (dirty ? (
           <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
             <span className="h-2 w-2 rounded-full bg-[var(--adm-warning)]" />
@@ -344,8 +363,8 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
       {items.map((s, i) => {
         const body = (
           <>
-            <span className="text-[12.5px] text-[var(--adm-ink-mute)]">{s.label}</span>
-            <span className={cn("text-[13.5px] font-semibold tabular-nums", STAT_TONE[s.tone ?? "default"])}>
+            <span className="text-adm-xs text-[var(--adm-ink-mute)]">{s.label}</span>
+            <span className={cn("text-adm-base font-semibold tabular-nums", STAT_TONE[s.tone ?? "default"])}>
               {s.value}
             </span>
           </>
@@ -414,8 +433,8 @@ export function BrandBand({
     <section className={cn("adm-on-band @container flex-none overflow-hidden rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] text-white", className)}>
       <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
         <div className="min-w-0">
-          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] sm:text-[21px]">{title}</h1>
-          {meta && <div className="mt-0.5 text-[13px] text-white/90">{meta}</div>}
+          <h1 className="truncate text-adm-xl font-semibold leading-7 tracking-[-0.02em] sm:text-adm-xl">{title}</h1>
+          {meta && <div className="mt-0.5 text-adm-xs text-white/90">{meta}</div>}
         </div>
         {actions && (
           <BandContext.Provider value={true}>
@@ -442,16 +461,16 @@ export function BrandBand({
             );
             const body = (
               <>
-                <span className="block truncate text-[12.5px] text-white/90">{s.label}</span>
+                <span className="block truncate text-adm-xs text-white/90">{s.label}</span>
                 <span
                   className={cn(
                     "block font-semibold leading-none tracking-[-0.025em] tabular-nums",
-                    sm ? "mt-1.5 text-[20px]" : "mt-2 text-[24px] sm:text-[28px]",
+                    sm ? "mt-1.5 text-adm-xl" : "mt-2 text-adm-2xl sm:text-adm-4xl",
                   )}
                 >
                   {s.value}
                 </span>
-                {!sm && s.sub && <span className="mt-2 block truncate text-[12.5px] text-white/85">{s.sub}</span>}
+                {!sm && s.sub && <span className="mt-2 block truncate text-adm-xs text-white/85">{s.sub}</span>}
               </>
             );
             if (s.href) return <Link key={s.label} href={s.href} title={s.hint} aria-current={s.selected ? "true" : undefined} className={cls}>{body}</Link>;
@@ -547,7 +566,7 @@ export function StageStrip({
               aria-pressed={selected}
               onClick={() => onChange(s.key)}
               className={cn(
-                "relative inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3.5 text-[13px] transition-colors duration-150",
+                "relative inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3.5 text-adm-xs transition-colors duration-150",
                 i > 0 && "border-l border-[var(--adm-line-soft)]",
                 selected
                   ? "bg-[var(--adm-accent-tint)] font-medium text-[var(--adm-ink)]"
@@ -591,13 +610,13 @@ export function StageStrip({
           >
             <span
               className={cn(
-                "block text-[19px] font-semibold leading-6 tracking-[-0.02em] tabular-nums",
+                "block text-adm-lg font-semibold leading-6 tracking-[-0.02em] tabular-nums",
                 s.count === 0 ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-ink)]",
               )}
             >
               {s.count}
             </span>
-            <span className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-[var(--adm-ink-mute)]">
+            <span className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-adm-xs text-[var(--adm-ink-mute)]">
               {s.color && <span aria-hidden className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: s.color }} />}
               {s.label}
             </span>
@@ -643,7 +662,7 @@ export function Section({
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h2>
+            <h2 className="text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h2>
             {description && <InfoTip label={title}>{description}</InfoTip>}
           </div>
         </div>
@@ -665,7 +684,7 @@ export function NotePanel({ children, className }: { children: React.ReactNode; 
   return (
     <div
       className={cn(
-        "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]",
+        "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]",
         className,
       )}
     >
@@ -752,7 +771,7 @@ export function WorkspaceToolbar({
   );
 }
 
-/** Workspace search field. Compact, clearable, and slash-focusable. */
+/** Workspace search field. Compact and clearable. */
 export function WorkspaceSearch({
   value,
   onChange,
@@ -765,22 +784,6 @@ export function WorkspaceSearch({
   className?: string;
 }) {
   const ref = React.useRef<HTMLInputElement>(null);
-
-  // "/" focuses search, the convention in every keyboard-driven workspace.
-  // Ignored while the user is already typing somewhere, so it never steals a
-  // literal slash from a filter field or a text input.
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = document.activeElement;
-      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return;
-      if (el instanceof HTMLElement && el.isContentEditable) return;
-      e.preventDefault();
-      ref.current?.focus();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
 
   return (
     // Gives up width before the filters beside it have to wrap.
@@ -795,7 +798,7 @@ export function WorkspaceSearch({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") { onChange(""); ref.current?.blur(); } }}
-        className="h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] pl-9 pr-12 text-[13.5px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
+        className="h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
@@ -806,9 +809,7 @@ export function WorkspaceSearch({
         >
           <X className="h-4 w-4" />
         </button>
-      ) : (
-        <Kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">/</Kbd>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -853,14 +854,6 @@ export interface PillOption<V extends string> {
   color?: string;
 }
 
-/**
- * Compact filter control.
- *
- * Reads as one word plus its value ("Source: Career Portal") and takes the
- * accent only when it is actually narrowing something, a control resting at
- * "All" is not an active filter and must not look like one, or a toolbar of six
- * filters looks permanently engaged and you stop reading it.
- */
 /* ============================================================
    FilterMenu, every filter on a screen, behind one control.
 
@@ -901,19 +894,19 @@ export function FilterMenu({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-xs font-medium transition-colors sm:px-3",
             active
-              ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+              ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+              : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)]",
           )}
         >
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 5h18M7 12h10M11 19h2" />
           </svg>
-          Filters
+          <span className="hidden sm:inline">Filters</span>
           {active && (
-            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-[10px] font-bold tabular-nums text-white">
+            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-adm-micro font-bold tabular-nums text-white">
               {activeCount}
             </span>
           )}
@@ -924,15 +917,15 @@ export function FilterMenu({
         sideOffset={6}
         // Capped and scrollable: the field list grows per screen, and a menu
         // taller than the viewport puts its own footer out of reach.
-        className="max-h-[min(32rem,70vh)] w-[22rem] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
+        className="max-h-[min(30rem,70vh)] w-[min(17rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
-        <div className="flex items-center justify-between border-b border-[var(--adm-line-soft)] px-4 py-2.5">
-          <span className="text-[13px] font-semibold text-[var(--adm-ink)]">Filters</span>
+        <div className="flex items-center justify-between border-b border-[var(--adm-line-soft)] px-3 py-2">
+          <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">Filters</span>
           <button
             type="button"
             onClick={onClearAll}
             disabled={!active}
-            className="text-[12px] font-semibold text-[var(--adm-accent)] transition-opacity hover:underline disabled:pointer-events-none disabled:opacity-40"
+            className="text-adm-xs font-semibold text-[var(--adm-accent)] transition-opacity hover:underline disabled:pointer-events-none disabled:opacity-40"
           >
             Clear all
           </button>
@@ -942,7 +935,7 @@ export function FilterMenu({
             swallows the click and closes the menu, which makes setting two
             filters in a row impossible. */}
         <div
-          className="space-y-3 px-4 py-3.5"
+          className="space-y-2.5 p-3"
           // Radix menus treat typing as typeahead and steal the keystrokes;
           // without this a text input inside the panel cannot be typed into.
           onKeyDown={(e) => e.stopPropagation()}
@@ -954,9 +947,17 @@ export function FilterMenu({
   );
 }
 
+/**
+ * One filter: a select-like control that always reads "Label: Value".
+ *
+ * Takes the accent only while it narrows the list, and then grows an × that
+ * resets it, so what a list is filtered by is visible and undoable in place.
+ * Lists longer than SEARCH_AFTER options get a search box.
+ */
+const SEARCH_AFTER = 8;
+
 export function FilterPill<V extends string>({
   label,
-  icon: Icon,
   value,
   options,
   onChange,
@@ -964,14 +965,7 @@ export function FilterPill<V extends string>({
   className,
 }: {
   label: string;
-  /**
-   * Leading glyph identifying what this filter acts on.
-   *
-   * A row of five identically-shaped pills reading "Stage / Position / Source /
-   * Skill / Added by" is scanned word by word; with an icon each one is found
-   * by shape, which is how you reach for the same filter twice in a row without
-   * re-reading the toolbar.
-   */
+  /** Accepted from older call sites; the control is text-only now. */
   icon?: React.ComponentType<{ className?: string }>;
   value: V;
   options: readonly PillOption<V>[];
@@ -979,77 +973,100 @@ export function FilterPill<V extends string>({
   allValue?: V;
   className?: string;
 }) {
+  const [query, setQuery] = React.useState("");
   const current = options.find((o) => o.value === value);
   const active = value !== allValue;
+  const searchable = options.length > SEARCH_AFTER;
+  const q = query.trim().toLowerCase();
+  const shown = q ? options.filter((o) => o.value === allValue || o.label.toLowerCase().includes(q)) : options;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <div
+      className={cn(
+        "inline-flex h-9 max-w-[260px] flex-none items-stretch rounded-[var(--adm-radius-control)] border text-adm-xs transition-colors",
+        active
+          ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
+          : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:border-[var(--adm-ink-mute)]",
+        className,
+      )}
+    >
+      <DropdownMenu onOpenChange={(open) => { if (!open) setQuery(""); }}>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className={cn("inline-flex min-w-0 items-center gap-1.5 pl-3", active ? "pr-1.5" : "pr-2.5")}
+          >
+            <span className={active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]"}>{label}:</span>
+            {current?.color && active && (
+              <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: current.color }} />
+            )}
+            <span className="truncate font-semibold">{active ? current?.label : "All"}</span>
+            <ChevronDown className={cn("h-3.5 w-3.5 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          sideOffset={4}
+          className="w-[min(18rem,calc(100vw-2rem))] rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
+        >
+          {searchable && (
+            <div className="border-b border-[var(--adm-line-soft)] p-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  // Radix treats typing as typeahead; keep the keys in the field.
+                  onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation(); }}
+                  placeholder={`Search ${label.toLowerCase()}…`}
+                  aria-label={`Search ${label.toLowerCase()} options`}
+                  className="h-8 w-full rounded-[var(--adm-radius-xs)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-8 pr-2 text-adm-xs text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
+          <div className="max-h-[300px] overflow-y-auto p-1">
+            {shown.map((o) => {
+              const selected = o.value === value;
+              return (
+                <DropdownMenuItem
+                  key={o.value}
+                  onClick={() => onChange(o.value)}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs",
+                    selected && "font-semibold text-[var(--adm-accent)]",
+                  )}
+                >
+                  <Check className={cn("h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
+                  {o.color && <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}
+                  <span className="flex-1 truncate">{o.label}</span>
+                  {o.count !== undefined && (
+                    <span className={cn("text-adm-xs tabular-nums", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")}>
+                      {o.count}
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+            {shown.length === 0 && (
+              <p className="px-2 py-3 text-center text-adm-xs text-[var(--adm-ink-mute)]">No {label.toLowerCase()} matches</p>
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {active && (
         <button
           type="button"
-          className={cn(
-            // Dashed "+ Label" add-filter pill when idle; once a value is picked
-            // it fills solid with the accent tint and shows the chosen value.
-            // h-8: the toolbar is one slim line, search, filters and table
-            // controls together, so the grid starts as high as possible.
-            "inline-flex h-9 max-w-[240px] items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-[13.5px] font-medium transition-colors",
-            active
-              ? "border-solid border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-dashed border-[var(--adm-line-strong)] bg-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink)]",
-            "data-[state=open]:border-solid data-[state=open]:border-[var(--adm-accent)]",
-            className,
-          )}
+          onClick={() => onChange(allValue)}
+          aria-label={`Clear ${label} filter`}
+          title={`Clear ${label}`}
+          className="grid w-7 flex-none place-items-center rounded-r-[var(--adm-radius-control)] text-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]"
         >
-          {active ? (
-            <>
-              {current?.color ? (
-                <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: current.color }} />
-              ) : Icon ? (
-                <Icon className="h-3.5 w-3.5 flex-none opacity-80" />
-              ) : null}
-              <span className="opacity-70">{label}</span>
-              <span className="truncate font-semibold">{current?.label}</span>
-              <ChevronDown className="h-3.5 w-3.5 flex-none opacity-60" />
-            </>
-          ) : (
-            <>
-              <Plus className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
-              <span>{label}</span>
-            </>
-          )}
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={4}
-        className="max-h-[320px] min-w-[200px] overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
-      >
-        {options.map((o) => {
-          const selected = o.value === value;
-          return (
-            <DropdownMenuItem
-              key={o.value}
-              onClick={() => onChange(o.value)}
-              className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px]",
-                selected && "font-semibold text-[var(--adm-accent)]",
-              )}
-            >
-              <Check className={cn("h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
-              {o.color && (
-                <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />
-              )}
-              <span className="flex-1 truncate">{o.label}</span>
-              {o.count !== undefined && (
-                <span className={cn("tabular-nums text-[12px]", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")}>
-                  {o.count}
-                </span>
-              )}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+    </div>
   );
 }
 
@@ -1089,8 +1106,8 @@ export function MenuSelect<V extends string>({
           type="button"
           aria-label={`${label}: ${current?.label ?? ""}`}
           className={cn(
-            "group inline-flex h-9 flex-none items-center gap-2 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-2.5 text-[13.5px] font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
-            "transition-[background-color,border-color,box-shadow] duration-150 hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+            "group inline-flex h-9 flex-none items-center gap-2 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-2.5 text-adm-base font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
+            "transition-[background-color,border-color,box-shadow] duration-150 hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--adm-focus-ring)]",
             className,
           )}
@@ -1105,7 +1122,7 @@ export function MenuSelect<V extends string>({
         sideOffset={6}
         className="min-w-[200px] rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
-        <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+        <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
           {label}
         </DropdownMenuLabel>
         {options.map((o) => {
@@ -1115,13 +1132,13 @@ export function MenuSelect<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-control)] px-2 py-1.5 text-[13px]",
+                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-control)] px-2 py-1.5 text-adm-xs",
                 selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
               )}
             >
               <Check className={cn("h-3.5 w-3.5 flex-none text-[var(--adm-accent)]", selected ? "opacity-100" : "opacity-0")} />
               <span className="flex-1 truncate">{o.label}</span>
-              {o.hint && <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">{o.hint}</span>}
+              {o.hint && <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{o.hint}</span>}
             </DropdownMenuItem>
           );
         })}
@@ -1188,7 +1205,7 @@ export function GridSelect({
         // at runtime and Tailwind cannot compile an arbitrary class for it.
         style={dot ? { color: dot } : undefined}
         className={cn(
-          "h-9 w-full cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-transparent bg-transparent pr-7 text-[14px]",
+          "h-9 w-full cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-transparent bg-transparent pr-7 text-adm-base",
           "transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)]",
           "focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]",
           dot ? "pl-7 font-semibold" : "pl-2.5 font-medium text-[var(--adm-ink-mute)]",
@@ -1260,14 +1277,14 @@ export function DisplayMenu({
           title="Display settings"
           aria-label="Display settings"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3.5 text-[13px] font-medium transition-colors data-[state=open]:bg-[var(--adm-row-hover)]",
-            hidden.length > 0
-              ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+            // A view preference, not a filter: it stays neutral, a dot marks a customised view.
+            "relative grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
           )}
         >
-          <Settings2 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Display</span>
+          <Settings2 className="h-4 w-4" aria-hidden="true" />
+          {hidden.length > 0 && (
+            <span aria-label="Customised" className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--adm-accent)] ring-2 ring-[var(--adm-surface)]" />
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -1277,7 +1294,7 @@ export function DisplayMenu({
       >
         {hasView && (
           <>
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
               View
             </DropdownMenuLabel>
             <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
@@ -1288,10 +1305,10 @@ export function DisplayMenu({
                   onClick={() => onViewChange!(o.value)}
                   aria-pressed={o.value === view}
                   className={cn(
-                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-[12.5px] font-semibold transition-colors",
+                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-adm-xs font-semibold transition-colors",
                     o.value === view
                       ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-                      : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                      : "border-[var(--adm-line-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
                   {o.label}
@@ -1304,7 +1321,7 @@ export function DisplayMenu({
         {hasColumns && (
           <>
             {hasView && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
               Table columns
             </DropdownMenuLabel>
             {columns!.filter((c) => !c.locked).map((c) => {
@@ -1313,7 +1330,7 @@ export function DisplayMenu({
                 <DropdownMenuItem
                   key={c.key}
                   onSelect={(e) => { e.preventDefault(); toggle(c.key); }}
-                  className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px]"
+                  className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs"
                 >
                   <span className="flex-1 truncate">{c.label}</span>
                   {/* Mini switch, like the reference, reads as on/off at a glance. */}
@@ -1340,7 +1357,7 @@ export function DisplayMenu({
         {hasRows && (
           <>
             {(hasColumns || hasView) && <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />}
-            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+            <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
               Table rows
             </DropdownMenuLabel>
             <div className="flex gap-1 px-2 pb-1.5 pt-0.5">
@@ -1351,10 +1368,10 @@ export function DisplayMenu({
                   onClick={() => onRowsChange!(n)}
                   aria-pressed={n === rows}
                   className={cn(
-                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-[12.5px] font-semibold tabular-nums transition-colors",
+                    "flex-1 rounded-[var(--adm-radius-control)] border px-2 py-1 text-adm-xs font-semibold tabular-nums transition-colors",
                     n === rows
                       ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-                      : "border-[var(--adm-line)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                      : "border-[var(--adm-line-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
                   {n}
@@ -1369,7 +1386,7 @@ export function DisplayMenu({
             <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
             <DropdownMenuItem
               onClick={onReset}
-              className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-[13px] font-medium text-[var(--adm-ink-mute)]"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset to default
@@ -1415,7 +1432,7 @@ export function ActiveFilters({
       {chips.map((c) => (
         <span
           key={c.label}
-          className="inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-1 text-[12.5px] text-[var(--adm-ink)]"
+          className="inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-1 text-adm-xs text-[var(--adm-ink)]"
         >
           {c.label}
           <button
@@ -1431,7 +1448,7 @@ export function ActiveFilters({
       <button
         type="button"
         onClick={onClearAll}
-        className="ml-1 rounded-[var(--adm-radius-control)] px-1.5 py-0.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-danger-ink)]"
+        className="ml-1 rounded-[var(--adm-radius-control)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-danger-ink)]"
       >
         Clear all
       </button>
@@ -1455,7 +1472,7 @@ export function WorkspaceFooter({
 }) {
   return (
     <div className="mt-auto flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3">
-      <p role="status" className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+      <p role="status" className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
         <span className="font-medium text-[var(--adm-ink)]">{shown}</span>
         {shown !== total && <> of <span className="font-medium text-[var(--adm-ink)]">{total}</span></>} {noun}
       </p>
@@ -1487,7 +1504,7 @@ export function SelectionBar({
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
       <div className="pointer-events-auto flex items-center gap-2 rounded-[var(--adm-radius-dialog)] border border-[var(--adm-ink)] bg-[var(--adm-ink)] py-1.5 pl-3.5 pr-1.5 text-white shadow-[var(--adm-shadow-lg)]">
-        <span className="text-[13px] font-medium tabular-nums">
+        <span className="text-adm-xs font-medium tabular-nums">
           {count} selected
         </span>
         <span aria-hidden className="h-4 w-px bg-white/20" />

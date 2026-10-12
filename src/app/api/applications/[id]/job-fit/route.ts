@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApplication, getJob, updateApplication, type JobFitResult } from "@/lib/aws/dynamodb";
-import { scoreResume, jobToPayload, type JobFit } from "@/lib/aws/match-candidates";
+import { scoreResume, jobToPayload, matchFailureMessage, type JobFit } from "@/lib/aws/match-candidates";
 import { requireStaff } from "@/lib/auth/verify";
+
+export const maxDuration = 120;
 
 function toResult(fit: JobFit): JobFitResult {
   return {
@@ -86,7 +88,7 @@ export async function POST(
   });
   if (!scored.success || !scored.fit) {
     console.error(`[job-fit] application=${id}: ${scored.error}`);
-    return NextResponse.json({ error: "Unable to score this resume right now. Please try again." }, { status: 502 });
+    return NextResponse.json({ error: matchFailureMessage(scored.reason, "score this resume") }, { status: scored.reason === "timeout" ? 504 : 502 });
   }
 
   const jobFit = toResult(scored.fit);

@@ -39,7 +39,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
         value={value}
         onChange={(e) => onChange(e.target.value)}
         {...props}
-        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-8 text-[13.5px] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-8 text-adm-base transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
       />
       {value && (
         <button
@@ -97,10 +97,10 @@ export function FilterMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-2.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-2.5 text-adm-xs font-medium transition-colors",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
+              : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)]",
             className,
           )}
@@ -110,14 +110,14 @@ export function FilterMenu<V extends string>({
           {current?.count !== undefined && (
             <span
               className={cn(
-                "rounded-[6px] px-1 text-[11px] font-bold tabular-nums",
+                "rounded-[6px] px-1 text-adm-micro font-bold tabular-nums",
                 active ? "bg-[var(--adm-accent)]/12 text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
               )}
             >
               {current.count}
             </span>
           )}
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+          <ChevronDown className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
         </button>
       </DropdownMenuTrigger>
 
@@ -135,14 +135,14 @@ export function FilterMenu<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]",
+                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs",
                 selected && "font-semibold text-[var(--adm-accent)]",
               )}
             >
               <Check className={cn("h-3.5 w-3.5 flex-none", selected ? "opacity-100" : "opacity-0")} />
               <span className="flex-1 truncate">{o.label}</span>
               {o.count !== undefined && (
-                <span className={cn("tabular-nums text-[12px]", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")}>
+                <span className={cn("tabular-nums text-adm-xs", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")}>
                   {o.count}
                 </span>
               )}
@@ -182,7 +182,7 @@ export function ViewMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 text-[13.5px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
             className,
           )}
         >

@@ -41,14 +41,14 @@ export function StageTrack({
                   aria-current={isActive ? "step" : undefined}
                   title={isActive ? stage.label : `Move to ${stage.label}`}
                   className={cn(
-                    "relative flex h-8 w-full items-center justify-center gap-1.5 border px-2 text-[12.5px] font-medium transition-colors duration-150 disabled:cursor-default",
+                    "relative flex h-8 w-full items-center justify-center gap-1.5 border px-2 text-adm-xs font-medium transition-colors duration-150 disabled:cursor-default",
                     i === 0 && "rounded-l-[6px]",
                     i === PIPELINE_STAGES.length - 1 && "rounded-r-[6px]",
                     isActive
                       ? "z-10 border-[var(--adm-accent)] bg-[var(--adm-accent)] text-white"
                       : isPast
                         ? "border-[var(--adm-line)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)]"
-                        : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                        : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
                   {isPast && <Check className="h-3.5 w-3.5 flex-none" strokeWidth={2.5} aria-hidden="true" />}
@@ -62,14 +62,14 @@ export function StageTrack({
 
       <div className="flex flex-none flex-wrap items-center gap-2">
         {isRejected ? (
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-2.5 text-[12.5px] font-medium text-[var(--adm-danger-ink)]">
+          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-2.5 text-adm-xs font-medium text-[var(--adm-danger-ink)]">
             <IconError className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
             Rejected, pick a stage to reopen
           </span>
         ) : (
           <>
             {daysInStage !== null && (
-              <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+              <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                 {daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}
               </span>
             )}

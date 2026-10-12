@@ -119,10 +119,10 @@ export function EmailComposer({
       <SheetContent side="right" showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[600px]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
-            <SheetTitle className="truncate text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
+            <SheetTitle className="truncate text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
               Email {candidate.name || "candidate"}
             </SheetTitle>
-            <SheetDescription className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
+            <SheetDescription className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-mute)]">
               To {candidate.email || "no address on file"} · replies come to you
             </SheetDescription>
           </div>
@@ -160,7 +160,7 @@ export function EmailComposer({
           </Field>
 
           {unfilled.length > 0 && (
-            <div role="alert" className="flex gap-2.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-warning-ink)]">
+            <div role="alert" className="flex gap-2.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-2.5 text-adm-xs text-[var(--adm-warning-ink)]">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <p>
                 Fill in or remove {unfilled.map((p) => `{{${p}}}`).join(", ")} before sending.
@@ -178,7 +178,7 @@ export function EmailComposer({
                 className="h-4 w-4 accent-[var(--adm-accent)]"
               />
               <IconCalendar className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-              <span className="text-[14px] font-medium text-[var(--adm-ink)]">Attach interview invite</span>
+              <span className="text-adm-base font-medium text-[var(--adm-ink)]">Attach interview invite</span>
             </label>
             {invite && (
               <div className="grid grid-cols-1 gap-3 border-t border-[var(--adm-line-soft)] p-3 sm:grid-cols-[1fr_140px]">
@@ -202,7 +202,7 @@ export function EmailComposer({
           <a
             href={candidate.email ? `mailto:${candidate.email}` : undefined}
             className={cn(
-              "text-[13px] text-[var(--adm-ink-mute)] underline-offset-4 hover:text-[var(--adm-ink)] hover:underline",
+              "text-adm-xs text-[var(--adm-ink-mute)] underline-offset-4 hover:text-[var(--adm-ink)] hover:underline",
               !candidate.email && "pointer-events-none opacity-50",
             )}
           >

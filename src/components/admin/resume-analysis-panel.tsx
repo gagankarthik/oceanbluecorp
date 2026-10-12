@@ -25,7 +25,7 @@ function Chips({ items, tone = "cobalt" }: { items?: string[]; tone?: "cobalt" |
         <span
           key={`${it}-${i}`}
           className={cn(
-            "inline-flex items-center rounded-[6px] px-2 py-0.5 text-[12.5px] font-medium",
+            "inline-flex items-center rounded-[6px] px-2 py-0.5 text-adm-xs font-medium",
             tone === "cobalt"
               ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
@@ -43,14 +43,14 @@ function Stat({ label, value }: { label: string; value?: string | number | null 
   if (value === null || value === undefined || value === "") return null;
   return (
     <div className="min-w-0">
-      <dt className="text-[13px] text-[var(--adm-ink-mute)]">{label}</dt>
-      <dd className="mt-1 truncate text-[15px] font-semibold tabular-nums text-[var(--adm-ink)]">{value}</dd>
+      <dt className="text-adm-xs text-[var(--adm-ink-mute)]">{label}</dt>
+      <dd className="mt-1 truncate text-adm-md font-semibold tabular-nums text-[var(--adm-ink)]">{value}</dd>
     </div>
   );
 }
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 text-[13px] font-medium text-[var(--adm-ink-mute)]">{children}</p>;
+  return <p className="mb-2 text-adm-xs font-medium text-[var(--adm-ink-mute)]">{children}</p>;
 }
 
 const bullet =
@@ -88,8 +88,8 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       <span aria-hidden className="absolute -left-[4.5px] top-[7px] h-2 w-2 rounded-full bg-[var(--adm-accent)]" />
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
-          <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{w.job_title || "Role"}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{w.job_title || "Role"}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-xs text-[var(--adm-ink-mute)]">
             {w.company_name && (
               <span className="inline-flex items-center gap-1.5">
                 <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
@@ -104,12 +104,12 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
             )}
           </p>
         </div>
-        {range && <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
+        {range && <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
       </div>
       {!!(w.responsibilities && w.responsibilities.length) && (
         <ul className="mt-2.5 space-y-1">
           {w.responsibilities.map((r, i) => (
-            <li key={i} className={cn(bullet, "text-[13px] leading-relaxed text-[var(--adm-ink-mute)] before:bg-[var(--adm-line-strong)]")}>
+            <li key={i} className={cn(bullet, "text-adm-xs leading-relaxed text-[var(--adm-ink-mute)] before:bg-[var(--adm-line-strong)]")}>
               {r}
             </li>
           ))}
@@ -118,7 +118,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       {!!(w.achievements && w.achievements.length) && (
         <ul className="mt-2.5 space-y-1">
           {w.achievements.map((a, i) => (
-            <li key={i} className={cn(bullet, "text-[13px] leading-relaxed text-[var(--adm-ink)] before:bg-[var(--adm-success)]")}>
+            <li key={i} className={cn(bullet, "text-adm-xs leading-relaxed text-[var(--adm-ink)] before:bg-[var(--adm-success)]")}>
               {a}
             </li>
           ))}
@@ -137,15 +137,15 @@ function EduEntry({ e }: { e: ResumeEducation }) {
   return (
     <li className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{e.institution_name || "Institution"}</p>
-        {degree && <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{degree}</p>}
+        <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{e.institution_name || "Institution"}</p>
+        {degree && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{degree}</p>}
         {(e.gpa || e.grade || e.percentage) && (
-          <p className="mt-0.5 text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+          <p className="mt-0.5 text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
             {e.gpa ? `GPA ${e.gpa}` : e.percentage ? `${e.percentage}%` : e.grade}
           </p>
         )}
       </div>
-      {range && <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
+      {range && <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
     </li>
   );
 }
@@ -193,10 +193,10 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
           <AdminCardHeader title="Professional summary" />
           <div className="space-y-3 p-4">
             {analysis.professional_summary && (
-              <p className="whitespace-pre-line text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">{analysis.professional_summary}</p>
+              <p className="whitespace-pre-line text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">{analysis.professional_summary}</p>
             )}
             {analysis.objective && (
-              <p className="whitespace-pre-line text-[13px] italic leading-relaxed text-[var(--adm-ink-subtle)]">{analysis.objective}</p>
+              <p className="whitespace-pre-line text-adm-xs italic leading-relaxed text-[var(--adm-ink-subtle)]">{analysis.objective}</p>
             )}
           </div>
         </AdminCard>
@@ -258,11 +258,11 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
             {certs.map((c, i) => (
               <li key={i} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0">
-                  <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{c.name}</p>
-                  {c.issuing_organization && <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{c.issuing_organization}</p>}
+                  <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{c.name}</p>
+                  {c.issuing_organization && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{c.issuing_organization}</p>}
                 </div>
                 {(c.issue_date || c.expiry_date) && (
-                  <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                     {dateRange(c.issue_date, c.expiry_date)}
                   </span>
                 )}
@@ -281,14 +281,14 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               return (
                 <div key={i} className="space-y-2 py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{p.name}</p>
-                    {range && <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
+                    <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{p.name}</p>
+                    {range && <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
                   </div>
-                  {p.description && <p className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{p.description}</p>}
+                  {p.description && <p className="text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{p.description}</p>}
                   {!!(p.highlights && p.highlights.length) && (
                     <ul className="space-y-1">
                       {p.highlights.map((h, j) => (
-                        <li key={j} className={cn(bullet, "text-[13px] leading-relaxed text-[var(--adm-ink-mute)] before:bg-[var(--adm-line-strong)]")}>{h}</li>
+                        <li key={j} className={cn(bullet, "text-adm-xs leading-relaxed text-[var(--adm-ink-mute)] before:bg-[var(--adm-line-strong)]")}>{h}</li>
                       ))}
                     </ul>
                   )}
@@ -308,9 +308,9 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               <ul className="divide-y divide-[var(--adm-line-soft)] p-4">
                 {awards.map((aw, i) => (
                   <li key={i} className="py-3 first:pt-0 last:pb-0">
-                    <p className="text-[14px] font-semibold text-[var(--adm-ink)]">{aw.title}</p>
+                    <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{aw.title}</p>
                     {(aw.issuer || aw.date) && (
-                      <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>
+                      <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>
                     )}
                   </li>
                 ))}
@@ -324,7 +324,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
                 {langs.map((l, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-2.5 py-1 text-[13px]"
+                    className="inline-flex items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-2.5 py-1 text-adm-xs"
                   >
                     <span className="font-medium text-[var(--adm-ink)]">{l.language}</span>
                     {l.proficiency && <span className="text-[var(--adm-ink-subtle)]">{l.proficiency}</span>}

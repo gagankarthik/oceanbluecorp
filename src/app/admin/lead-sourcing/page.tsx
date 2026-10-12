@@ -212,7 +212,7 @@ export default function LeadSourcingPage() {
       {!loading && error && (
         <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
           <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
-          <p className="text-[13.5px] leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
+          <p className="text-adm-base leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
         </div>
       )}
 
@@ -246,17 +246,17 @@ export default function LeadSourcingPage() {
                     className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[var(--adm-row-hover)] sm:gap-4"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="w-6 flex-none text-right text-[13px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+                      <span className="w-6 flex-none text-right text-adm-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">
                         {i + 1}
                       </span>
                       <div className="min-w-0">
                         <p className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-[15px] font-semibold text-[var(--adm-ink)]">
+                          <span className="truncate text-adm-md font-semibold text-[var(--adm-ink)]">
                             {c.candidate_name || "Unnamed candidate"}
                           </span>
                           <OriginBadge origin={c.origin} className="flex-none" />
                         </p>
-                        <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
+                        <p className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-mute)]">
                           {[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}
                         </p>
                       </div>
@@ -264,10 +264,10 @@ export default function LeadSourcingPage() {
                     <div className="flex flex-none items-center gap-3 sm:gap-4">
                       <VerdictBadge verdict={c.verdict} className="hidden sm:inline" />
                       <span className="text-right">
-                        <span className={cn("text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
+                        <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
                           {c.fit_score}
                         </span>
-                        <span className="ml-0.5 text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">/100</span>
+                        <span className="ml-0.5 text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">/100</span>
                       </span>
                       <ChevronDown
                         aria-hidden="true"
@@ -281,10 +281,10 @@ export default function LeadSourcingPage() {
                       <VerdictBadge verdict={c.verdict} className="inline-block sm:hidden" />
                       {c.rationale && (
                         <div>
-                          <p className="mb-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
+                          <p className="mb-1 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                             Why {c.qualified ? "they fit" : "they may not fit"}
                           </p>
-                          <p className="max-w-[72ch] text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>
+                          <p className="max-w-[72ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>
                         </div>
                       )}
                       <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
@@ -292,7 +292,7 @@ export default function LeadSourcingPage() {
                       {c.profileId ? (
                         <Link
                           href={`/admin/candidates/${c.profileId}`}
-                          className="inline-flex items-center gap-1 rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
+                          className="inline-flex items-center gap-1 rounded-[6px] text-adm-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                         >
                           View full profile <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </Link>
@@ -300,7 +300,7 @@ export default function LeadSourcingPage() {
                         <button
                           type="button"
                           onClick={() => void openBankResume(c.bankId!)}
-                          className="inline-flex items-center gap-1 rounded-[6px] text-[13px] font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
+                          className="inline-flex items-center gap-1 rounded-[6px] text-adm-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                         >
                           Open resume <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>

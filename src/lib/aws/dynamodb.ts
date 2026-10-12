@@ -10,6 +10,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { ApiScope } from "@/lib/api-scopes";
+import type { Workplace } from "@/lib/workplace";
 import { PUBLIC_JOB_STATUSES, isPubliclyOpen, type JobCategory } from "@/lib/job-status";
 import { emailKeyOf, nameKeyOf } from "@/lib/application-input";
 
@@ -533,6 +534,21 @@ export interface JobCandidateMatch {
   rationale?: string | null;
 }
 
+export interface CandidateMatchesMeta {
+  /** Hash of the job fields the engine read; a mismatch means the job changed since. */
+  fingerprint: string;
+  by?: string;
+  topK: number;
+  durationMs: number;
+}
+
+export interface CandidateMatchRun {
+  state: "running" | "failed";
+  startedAt: string;
+  by?: string;
+  error?: string;
+}
+
 // Unified Application interface - supports both portal applications and HR-created applications
 export interface Application {
   id: string; // PK (UUID)
@@ -668,8 +684,12 @@ export interface Job {
   title: string;
   category?: JobCategory;
   department: string;
+  /** City; optional when the role is remote. */
   location: string;
+  /** "remote" is legacy: remote is now a `workplace`, read through `workplaceOf`. */
   type: "full-time" | "part-time" | "contract" | "contract-to-hire" | "direct-hire" | "managed-teams" | "remote";
+  /** Where the role is worked. Absent on records that predate the field. */
+  workplace?: Workplace;
   description: string;
   // Rich HTML (new records) or a legacy string[] of bullet items. Read via
   // renderListField / richTextToPlain (src/lib/rich-text) which handle both.
@@ -696,11 +716,14 @@ export interface Job {
   /** Applicants per pipeline stage. Derived per request for recruiting staff, never stored. */
   pipeline?: Record<string, number>;
 
-  // Cached "best candidates", the matching engine's ranking of the resume bank
-  // for this job. Recomputed on demand; stored so the panel loads instantly and
-  // resumes aren't re-vectorized per view.
+  // Saved "best candidates", the matching engine's ranking of the resume bank
+  // for this job. Run once, kept until someone re-runs it; the panel reads it
+  // instantly. Never sent with job lists (stripped in /api/jobs).
   candidateMatches?: JobCandidateMatch[];
   candidateMatchesAt?: string;
+  candidateMatchesMeta?: CandidateMatchesMeta;
+  /** Present while a ranking runs or after one fails; removed when one is saved. */
+  candidateMatchRun?: CandidateMatchRun;
 
   // Job Posting ID (auto-generated OB-YYYY-XXXX format)
   postingId?: string;
@@ -744,7 +767,7 @@ export interface Job {
 // served to anonymous visitors on the careers site.
 export type PublicJob = Pick<
   Job,
-  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type"
+  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type" | "workplace"
   | "description" | "requirements" | "responsibilities" | "salary" | "status"
   | "submissionDueDate" | "createdAt" | "updatedAt" | "applicationsCount" | "category"
 >;
@@ -758,6 +781,7 @@ export function toPublicJob(job: Job): PublicJob {
     location: job.location,
     state: job.state,
     type: job.type,
+    workplace: job.workplace,
     description: job.description,
     requirements: job.requirements,
     responsibilities: job.responsibilities,
@@ -780,7 +804,7 @@ export function toPublicJob(job: Job): PublicJob {
 // of this; the contract is published, so it gets one definition.
 export type FeedJob = Pick<
   Job,
-  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type"
+  | "id" | "postingId" | "title" | "department" | "location" | "state" | "type" | "workplace"
   | "description" | "requirements" | "responsibilities" | "salary" | "status"
   | "submissionDueDate" | "clientName" | "vendorName" | "postedByName"
   | "createdAt" | "updatedAt"
@@ -795,6 +819,7 @@ export function toFeedJob(job: Job): FeedJob {
     location: job.location,
     state: job.state,
     type: job.type,
+    workplace: job.workplace,
     description: job.description,
     requirements: job.requirements,
     responsibilities: job.responsibilities,
@@ -1256,6 +1281,33 @@ export async function replaceApplicationTasks(
   }
 }
 
+export type ApplicationSummary = Pick<
+  Application,
+  | "id" | "name" | "email" | "phone" | "skills" | "applicationId" | "jobId" | "status" | "appliedAt"
+  | "addToTalentBench" | "benchType" | "benchAddedBy" | "createdBy"
+>;
+
+/**
+ * Every application without its resume payload: what search, the dashboard
+ * and the bench visibility rule read. A full scan carries each parsed resume
+ * and made those screens take seconds.
+ */
+export async function getApplicationSummaries(): Promise<{ success: boolean; data?: ApplicationSummary[]; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  try {
+    const data = await scanAll<ApplicationSummary>(dbCheck.client!, {
+      TableName: getTables().applications,
+      ProjectionExpression: "id, #n, email, phone, skills, applicationId, jobId, #s, appliedAt, addToTalentBench, benchType, benchAddedBy, createdBy",
+      ExpressionAttributeNames: { "#n": "name", "#s": "status" },
+    });
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error reading application summaries:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to read applications" };
+  }
+}
+
 /** Applications that carry any tasks, with just what a task list needs. */
 export async function getApplicationsWithTasks(): Promise<{
   success: boolean;
@@ -1619,6 +1671,91 @@ export async function getAllJobs(status?: Job["status"]): Promise<{ success: boo
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error("Error getting jobs:", errorName, errorMessage, error);
     return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Claim the right to rank a job. Fails (claimed: false) while another run
+ * started under `staleAfterMs` ago is in flight, so two clicks or two
+ * recruiters don't pay for the same ranking twice. A run older than that is
+ * presumed dead and can be taken over.
+ */
+export async function claimCandidateMatchRun(
+  jobId: string,
+  by: string | undefined,
+  staleAfterMs: number,
+): Promise<{ claimed: boolean; running?: CandidateMatchRun; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { claimed: false, error: dbCheck.error };
+  const now = new Date();
+  const run: CandidateMatchRun = { state: "running", startedAt: now.toISOString(), ...(by ? { by } : {}) };
+  try {
+    await dbCheck.client!.send(new UpdateCommand({
+      TableName: getTables().jobs,
+      Key: { id: jobId },
+      UpdateExpression: "SET #run = :run",
+      ConditionExpression:
+        "attribute_exists(id) AND (attribute_not_exists(#run) OR #run.#state <> :running OR #run.#startedAt < :stale)",
+      ExpressionAttributeNames: { "#run": "candidateMatchRun", "#state": "state", "#startedAt": "startedAt" },
+      ExpressionAttributeValues: {
+        ":run": run,
+        ":running": "running",
+        ":stale": new Date(now.getTime() - staleAfterMs).toISOString(),
+      },
+    }));
+    return { claimed: true };
+  } catch (error) {
+    if (isConditionFailure(error)) {
+      const current = await getJob(jobId);
+      return { claimed: false, running: current.data?.candidateMatchRun };
+    }
+    console.error("Error claiming candidate match run:", error);
+    return { claimed: false, error: error instanceof Error ? error.message : "Failed to start ranking" };
+  }
+}
+
+/** Save a finished ranking and clear the run marker. Leaves the job's updatedAt alone. */
+export async function saveCandidateMatches(
+  jobId: string,
+  matches: JobCandidateMatch[],
+  meta: CandidateMatchesMeta,
+): Promise<{ success: boolean; matchedAt?: string; error?: string }> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return { success: false, error: dbCheck.error };
+  const matchedAt = new Date().toISOString();
+  try {
+    await dbCheck.client!.send(new UpdateCommand({
+      TableName: getTables().jobs,
+      Key: { id: jobId },
+      UpdateExpression: "SET #m = :m, #at = :at, #meta = :meta REMOVE #run",
+      ConditionExpression: "attribute_exists(id)",
+      ExpressionAttributeNames: {
+        "#m": "candidateMatches", "#at": "candidateMatchesAt", "#meta": "candidateMatchesMeta", "#run": "candidateMatchRun",
+      },
+      ExpressionAttributeValues: { ":m": matches, ":at": matchedAt, ":meta": meta },
+    }));
+    return { success: true, matchedAt };
+  } catch (error) {
+    console.error("Error saving candidate matches:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to save ranking" };
+  }
+}
+
+/** Record a failed run; the previous saved ranking, if any, is kept. */
+export async function failCandidateMatchRun(jobId: string, run: CandidateMatchRun): Promise<void> {
+  const dbCheck = checkDbAvailable();
+  if (!dbCheck.available) return;
+  try {
+    await dbCheck.client!.send(new UpdateCommand({
+      TableName: getTables().jobs,
+      Key: { id: jobId },
+      UpdateExpression: "SET #run = :run",
+      ConditionExpression: "attribute_exists(id)",
+      ExpressionAttributeNames: { "#run": "candidateMatchRun" },
+      ExpressionAttributeValues: { ":run": run },
+    }));
+  } catch (error) {
+    console.error("Error recording failed candidate match run:", error);
   }
 }
 

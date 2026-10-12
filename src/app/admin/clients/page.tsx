@@ -5,17 +5,19 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   IconBuilding, IconDownload, IconEdit,
-  IconGlobe, IconTrash,
+  IconGlobe, IconMail, IconTrash,
 } from "@/components/admin/icons";
 import type { Client } from "@/lib/aws/dynamodb";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
+  Workspace, WorkspaceButton, WorkspaceSearch, DisplayMenu,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { Blank, RoleCountCell, RowMenu, StackCell } from "@/components/admin/table-cells";
 import { Avatar } from "@/components/admin/avatar";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminDialog } from "@/components/admin/admin-dialog";
@@ -92,9 +94,8 @@ function validateClient(f: FormData) {
 }
 
 /** Empty cell. */
-function Blank() {
-  return <span className="text-[var(--adm-ink-subtle)]"></span>;
-}
+/** "https://www.acme.com/about" → "acme.com" */
+const domainOf = (url: string) => url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
 
 // ── page ─────────────────────────────────────────────────────────────────────
 
@@ -173,13 +174,6 @@ export default function ClientsPage() {
     () => clients.filter((c) => !c.email && !c.phone).length,
     [clients],
   );
-
-  const addedThisMonth = useMemo(() => {
-    const start = new Date();
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    return clients.filter((c) => new Date(c.createdAt).getTime() >= start.getTime()).length;
-  }, [clients]);
 
   const [rows, setRows] = useLocalStorage<number>("adm.clients.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.clients.hiddenCols", []);
@@ -302,25 +296,15 @@ export default function ClientsPage() {
       header: "Client",
       label: "Client",
       locked: true,
-      width: "260px",
+      width: "250px",
       sortValue: (c) => c.name,
       cell: (c) => (
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={c.name} size="sm" />
-          <span className="truncate font-semibold text-[var(--adm-ink)]">{c.name}</span>
-          {c.websiteUrl && (
-            <a
-              href={c.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              title={c.websiteUrl.replace(/^https?:\/\//, "")}
-              aria-label={`Open ${c.name} website`}
-              className="flex-none text-[var(--adm-ink-subtle)] transition-colors hover:text-[var(--adm-accent)]"
-            >
-              <IconGlobe className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          )}
+          <StackCell
+            primary={<span className="font-semibold">{c.name}</span>}
+            secondary={c.websiteUrl ? domainOf(c.websiteUrl) : undefined}
+          />
         </div>
       ),
     },
@@ -328,105 +312,63 @@ export default function ClientsPage() {
       key: "contact",
       header: "Contact",
       label: "Contact",
-      width: "240px",
-      sortValue: (c) => c.email || "",
+      width: "220px",
+      sortValue: (c) => c.email || c.phone || "",
       hideBelow: "md",
-      cell: (c) => c.email ? (
-        <a
-          href={`mailto:${c.email}`}
-          onClick={(e) => e.stopPropagation()}
-          className="block truncate text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          {c.email}
-        </a>
-      ) : <Blank />,
-    },
-    {
-      key: "phone",
-      header: "Phone",
-      label: "Phone",
-      width: "160px",
-      sortValue: (c) => c.phone || "",
-      hideBelow: "xl",
-      cell: (c) => c.phone ? (
-        <a
-          href={`tel:${c.phone}`}
-          onClick={(e) => e.stopPropagation()}
-          className="tabular-nums text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
-        >
-          {c.phone}
-        </a>
-      ) : <Blank />,
+      cell: (c) => c.email || c.phone
+        ? <StackCell primary={c.email || c.phone} secondary={c.email ? c.phone : undefined} title={[c.email, c.phone].filter(Boolean).join(" · ")} />
+        : <span className="text-adm-xs text-[var(--adm-ink-subtle)]">No contact on file</span>,
     },
     {
       key: "location",
       header: "Location",
       label: "Location",
-      width: "180px",
-      sortValue: (c) => c.state || "",
+      width: "150px",
+      sortValue: (c) => [c.city, c.state].filter(Boolean).join(", "),
       hideBelow: "lg",
       cell: (c) => {
         const location = [c.city, c.state].filter(Boolean).join(", ");
-        return location ? <span className="text-[var(--adm-ink-mute)]">{location}</span> : <Blank />;
+        return location ? <span className="block truncate text-[var(--adm-ink-mute)]">{location}</span> : <Blank />;
       },
     },
     {
       key: "jobs",
-      header: "Jobs",
-      label: "Jobs posted",
+      header: "Roles",
+      label: "Roles",
       width: "120px",
-      align: "right",
-      sortValue: (r) => r.jobCount ?? 0,
-      cell: (r) => (r.jobCount
-        ? (
-          <span className="tabular-nums" title={`${r.jobCount} posted, ${r.openJobCount ?? 0} open`}>
-            <span className="font-medium text-[var(--adm-ink)]">{r.jobCount}</span>
-            {r.openJobCount ? <span className="text-[var(--adm-ink-subtle)]"> · {r.openJobCount} open</span> : null}
-          </span>
-        )
-        : <Blank />),
+      sortValue: (r) => (r.openJobCount ?? 0) * 10_000 + (r.jobCount ?? 0),
+      cell: (r) => <RoleCountCell total={r.jobCount} open={r.openJobCount} />,
     },
     {
       key: "status",
       header: "Status",
       label: "Status",
-      width: "130px",
+      width: "110px",
       sortValue: (c) => c.status,
       cell: (c) => <StatusBadge status={c.status} size="md" />,
     },
     {
       key: "created",
-      header: "Created",
-      label: "Created",
-      width: "130px",
+      header: "Added",
+      label: "Added",
+      width: "120px",
       sortValue: (c) => new Date(c.createdAt).getTime(),
       hideBelow: "xl",
-      cell: (c) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(c.createdAt)}</span>,
+      cell: (c) => <span className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(c.createdAt)}</span>,
     },
   ];
 
   // Hover-revealed, not a permanent column of icon buttons down the grid.
   const rowActions = (c: Client) => (
-    <div className="flex items-center gap-0.5">
-      <button
-        type="button"
-        onClick={() => handleEdit(c)}
-        aria-label={`Edit ${c.name}`}
-        title="Edit"
-        className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
-      >
-        <IconEdit className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setPendingDelete(c.id)}
-        aria-label={`Delete ${c.name}`}
-        title="Delete"
-        className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
-      >
-        <IconTrash className="h-4 w-4" aria-hidden="true" />
-      </button>
-    </div>
+    <RowMenu
+      label={c.name}
+      items={[
+        { label: "Edit client", icon: IconEdit, onSelect: () => handleEdit(c) },
+        ...(c.websiteUrl ? [{ label: "Open website", icon: IconGlobe, href: c.websiteUrl, external: true }] : []),
+        ...(c.email ? [{ label: "Email", icon: IconMail, href: `mailto:${c.email}` }] : []),
+        { label: "Delete", icon: IconTrash, onSelect: () => setPendingDelete(c.id), danger: true, separated: true },
+      ]}
+    />
   );
 
   // ── states ────────────────────────────────────────────────────────────────
@@ -448,79 +390,47 @@ export default function ClientsPage() {
 
   return (
     <>
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Clients"
-        meta={`${clients.length.toLocaleString()} client${clients.length === 1 ? "" : "s"} on record`}
-        stats={[
-          { label: "Active clients", value: statusCounts.active,
-            onClick: () => setStatusFilter("active"),
-          selected: statusFilter === "active" },
-          { label: "Inactive", value: statusCounts.inactive,
-            onClick: () => setStatusFilter("inactive"),
-          selected: statusFilter === "inactive" },
-          { label: "Missing contact details", value: noContactCount,
-            hint: noContactCount > 0 ? "No email or phone on file" : "All reachable" },
-          { label: "Added this month", value: addedThisMonth },
-        ]}
+        meta={<>
+          {clients.length.toLocaleString()} client{clients.length === 1 ? "" : "s"} on record
+          {noContactCount ? <>, <MetaStrong>{noContactCount} missing contact details</MetaStrong></> : null}
+        </>}
         actions={
           <>
             <WorkspaceButton onClick={handleExportCSV} disabled={filteredClients.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton className={BAND_PRIMARY} onClick={openCreate}>
+            <WorkspaceButton variant="primary" onClick={openCreate}>
               <Plus className="h-4 w-4" />Add client
             </WorkspaceButton>
           </>
         }
       />
 
-      <WorkspaceToolbar
-          variant="canvas"
-          search={
-            <WorkspaceSearch
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Filter clients by name, contact or location"
+      <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              tabs={STATUS_TABS.map((t) => ({ key: t.key, label: t.label, count: statusCounts[t.key] || 0 }))}
             />
           }
-          trailing={
-            <>
-              <DisplayMenu
-                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                hidden={hiddenColumns}
-                onHiddenChange={setHiddenColumns}
-                rows={rows}
-                onRowsChange={setRows}
-                onReset={() => { setHiddenColumns([]); setRows(25); }}
-              />
-            </>
-          }
+          search={<WorkspaceSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search clients…" />}
         >
-          <FilterPill
-            label="Status"
-            icon={FilterIcon.status}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_TABS.map((t) => ({
-              value: t.key,
-              label: t.label,
-              count: statusCounts[t.key] || 0,
-            }))}
+          <DisplayMenu
+            columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+            hidden={hiddenColumns}
+            onHiddenChange={setHiddenColumns}
+            rows={rows}
+            onRowsChange={setRows}
+            onReset={() => { setHiddenColumns([]); setRows(25); }}
           />
-      </WorkspaceToolbar>
+        </ListToolbar>
 
-      <ActiveFilters
-          variant="canvas"
-          chips={statusFilter !== "all"
-            ? [{ label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
-            : []}
-          onClearAll={clearFilters}
-      />
-
-      <Workspace>
         <DataTable
           noun="clients"
           storageKey="clients"
@@ -532,6 +442,8 @@ export default function ClientsPage() {
           onPageSizeChange={setRows}
           hiddenColumns={hiddenColumns}
           rowActions={rowActions}
+          rowActionsAlways
+          onRowClick={handleEdit}
           empty={{
             icon: IconBuilding,
             title: clients.length === 0 ? "No clients yet" : "No clients match your filters",
@@ -577,7 +489,7 @@ export default function ClientsPage() {
         <form id="client-form" onSubmit={handleSubmit} onBlur={revalidate} noValidate className="space-y-5">
           <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
           <section>
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Account</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Account</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Client name" required htmlFor={FIELD_IDS.name} error={formErrors.name}>
                 <FormInput
@@ -614,7 +526,7 @@ export default function ClientsPage() {
           </section>
 
           <section className="border-t border-[var(--adm-line-soft)] pt-5">
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Contact information</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Contact information</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Email" htmlFor={FIELD_IDS.email} error={formErrors.email}>
                 <FormInput
@@ -640,7 +552,7 @@ export default function ClientsPage() {
           </section>
 
           <section className="border-t border-[var(--adm-line-soft)] pt-5">
-            <h3 className="mb-3 text-[14px] font-semibold text-[var(--adm-ink)]">Address</h3>
+            <h3 className="mb-3 text-adm-base font-semibold text-[var(--adm-ink)]">Address</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field label="Street address" fullWidth htmlFor={FIELD_IDS.address} error={formErrors.address}>
                 <FormInput

@@ -17,7 +17,7 @@ export function StatusBadge({ status, tone, label, withIcon = false, size = "sm"
   const t = tones[resolvedTone];
   const Icon = withIcon && meta?.icon ? meta.icon : null;
   const text = label || meta?.label || status || "–";
-  const sizing = size === "md" ? "h-6 px-2.5 text-[12.5px]" : "h-[22px] px-2 text-[12px]";
+  const sizing = size === "md" ? "h-6 px-2.5 text-adm-xs" : "h-[22px] px-2 text-adm-xs";
   return (
     <span
       className={cn(

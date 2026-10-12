@@ -118,6 +118,8 @@ interface DataTableProps<T> {
    * permanent column of dot-menus down the whole grid.
    */
   rowActions?: (row: T) => React.ReactNode;
+  /** Keep row actions on screen, for a single menu button rather than a row of icons. */
+  rowActionsAlways?: boolean;
   /**
    * Optional hard cap on the scroll region.
    *
@@ -145,6 +147,21 @@ const HIDE = {
 
 const ALIGN = { left: "text-left", right: "text-right", center: "text-center" } as const;
 
+const PAGER_BTN =
+  "inline-flex h-8 items-center rounded-[6px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40";
+
+/** Zero-based pages to show: both ends, the current page and its neighbours; null is a gap. */
+function pageList(current: number, count: number): (number | null)[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  const keep = new Set([0, 1, count - 2, count - 1, current - 1, current, current + 1]);
+  const out: (number | null)[] = [];
+  for (let i = 0; i < count; i++) {
+    if (keep.has(i)) out.push(i);
+    else if (out[out.length - 1] !== null) out.push(null);
+  }
+  return out;
+}
+
 export function DataTable<T>({
   columns,
   rows,
@@ -165,6 +182,7 @@ export function DataTable<T>({
   hiddenColumns,
   pinFirstColumn = false,
   rowActions,
+  rowActionsAlways = false,
   maxHeight,
   className,
 }: DataTableProps<T>) {
@@ -289,7 +307,7 @@ export function DataTable<T>({
       >
         <table
           className={cn(
-            "adm-grid text-[14px]",
+            "adm-grid text-adm-base",
             pinFirstColumn && "adm-grid--pinned",
             pinFirstColumn && scrolled && "is-scrolled",
           )}
@@ -420,7 +438,7 @@ export function DataTable<T>({
                     ))}
                     {rowActions && (
                       <td className="w-14 pl-2 pr-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end transition-opacity focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100">
+                        <div className={cn("flex justify-end transition-opacity", !rowActionsAlways && "focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100")}>
                           {rowActions(row)}
                         </div>
                       </td>
@@ -438,12 +456,14 @@ export function DataTable<T>({
           the record count a second time directly underneath. It renders even
           on one page, the rows-per-page control is how you get OFF one page. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2.5">
-        <p className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+        <p className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {sorted.length === 0 ? (
             <>No {noun}</>
           ) : (
             <>
-              <span className="font-semibold text-[var(--adm-ink-mute)]">{firstRow}&ndash;{lastRow}</span>
+              Showing <span className="font-semibold text-[var(--adm-ink-mute)]">{firstRow}</span>
+              {" to "}
+              <span className="font-semibold text-[var(--adm-ink-mute)]">{lastRow}</span>
               {" of "}
               <span className="font-semibold text-[var(--adm-ink-mute)]">{sorted.length.toLocaleString()}</span>
               {" "}{noun}
@@ -455,14 +475,14 @@ export function DataTable<T>({
           {footerExtra}
 
           {!controlled && (
-          <label className="flex items-center gap-2 text-[13px] text-[var(--adm-ink-subtle)]">
+          <label className="flex items-center gap-2 text-adm-xs text-[var(--adm-ink-subtle)]">
             <span className="hidden sm:inline">Rows</span>
             <span className="relative inline-flex items-center">
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 aria-label="Rows per page"
-                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
               >
                 {pageSizeOptions.map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -480,29 +500,52 @@ export function DataTable<T>({
           )}
 
           {pageCount > 1 && (
-            <div className="flex items-center gap-1">
+            <nav aria-label="Pagination" className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={safePage === 0}
-                aria-label="Previous page"
-                className="grid h-9 w-9 place-items-center rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                className={cn(PAGER_BTN, "gap-1.5 px-2.5")}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Previous</span>
+                <span className="sr-only sm:hidden">Previous page</span>
               </button>
-              <span className="min-w-[68px] text-center text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+              <span className="hidden items-center gap-0.5 sm:flex">
+                {pageList(safePage, pageCount).map((n, i) => n === null ? (
+                  <span key={`gap-${i}`} aria-hidden="true" className="w-6 text-center text-adm-xs text-[var(--adm-ink-subtle)]">&hellip;</span>
+                ) : (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPage(n)}
+                    aria-label={`Page ${n + 1}`}
+                    aria-current={n === safePage ? "page" : undefined}
+                    className={cn(
+                      "h-8 min-w-8 rounded-[6px] px-2 text-adm-xs font-medium tabular-nums transition-colors",
+                      n === safePage
+                        ? "bg-[var(--adm-accent)] text-white"
+                        : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+                    )}
+                  >
+                    {n + 1}
+                  </button>
+                ))}
+              </span>
+              <span className="min-w-[56px] text-center text-adm-xs tabular-nums text-[var(--adm-ink-subtle)] sm:hidden">
                 <span className="font-semibold text-[var(--adm-ink-mute)]">{safePage + 1}</span> of {pageCount}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
                 disabled={safePage >= pageCount - 1}
-                aria-label="Next page"
-                className="grid h-9 w-9 place-items-center rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                className={cn(PAGER_BTN, "gap-1.5 px-2.5")}
               >
-                <ChevronRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Next</span>
+                <span className="sr-only sm:hidden">Next page</span>
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
-            </div>
+            </nav>
           )}
         </div>
       </div>

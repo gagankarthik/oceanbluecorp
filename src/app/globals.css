@@ -163,6 +163,19 @@
 }
 
 @theme inline {
+  /* Console type scale: one ratio (1.125, major second) from a 14px body,
+     rounded to the half pixel. F(n+1) = F(n) × 1.125. Font size only; line
+     height comes from the surrounding block so rows keep their rhythm. */
+  --text-adm-micro: 11px;
+  --text-adm-xs:    12.5px;
+  --text-adm-base:  14px;
+  --text-adm-md:    16px;
+  --text-adm-lg:    18px;
+  --text-adm-xl:    20px;
+  --text-adm-2xl:   22.5px;
+  --text-adm-3xl:   25px;
+  --text-adm-4xl:   28px;
+
   /* Breakpoints, named once and shared with design. */
   --breakpoint-sm: 40rem;
   --breakpoint-md: 48rem;
@@ -689,6 +702,7 @@
 
   /* Motion (one easing, three speeds) */
   --adm-ease:        cubic-bezier(0.22, 1, 0.36, 1);
+  --adm-ease-in:     cubic-bezier(0.4, 0, 1, 1);   /* exits: quiet start, quick finish */
   --adm-duration-fast:   150ms;   /* hovers, toggles */
   --adm-duration-base:   300ms;   /* lifts, reveals */
   --adm-duration-slow:   700ms;   /* progress bars, chart draws */
@@ -764,6 +778,7 @@
   --adm-line-soft:     var(--p-gray-150);
   --adm-line-strong:   var(--p-gray-300);
   --adm-line-input:    #828b9c;  /* form control edge, 3.4:1 on white (1.4.11) */
+  --adm-line-control:  #828b9c;  /* edge of any control (button, pill, toggle, checkbox): 3:1 on white and canvas */
   --adm-row-hover:     #f7f9fc;
   --adm-head:          var(--p-gray-50);
   --adm-head-ink:      var(--p-gray-500);
@@ -808,6 +823,7 @@
 }
 
 .adm-scope {
+  --input: var(--adm-line-control); /* shadcn checkbox edge, 3:1 like every console control */
   --skeleton-background: color-mix(in srgb, var(--adm-line-soft) 70%, transparent);
   background: var(--adm-canvas);
   color: var(--adm-ink);
@@ -994,6 +1010,20 @@
 @keyframes adm-dialog-in { from { opacity: 0; transform: translateY(6px); } }
 .adm-dialog-scrim[data-state="open"] { animation: adm-fade-in 150ms var(--adm-ease); }
 .adm-dialog[data-state="open"] { animation: adm-dialog-in 180ms var(--adm-ease); }
+@keyframes adm-fade-out { to { opacity: 0; } }
+@keyframes adm-dialog-out { to { opacity: 0; transform: translateY(4px); } }
+.adm-dialog-scrim[data-state="closed"] { animation: adm-fade-out 120ms var(--adm-ease-in); }
+.adm-dialog[data-state="closed"] { animation: adm-dialog-out 120ms var(--adm-ease-in); }
+
+/* Success mark: ring draws, tick draws, one pulse, then the copy rises in. */
+@keyframes adm-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes adm-pulse-once { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes adm-rise-in { from { opacity: 0; transform: translateY(6px); } }
+.adm-success-ring { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 520ms var(--adm-ease) 120ms forwards; }
+.adm-success-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 320ms var(--adm-ease) 560ms forwards; }
+.adm-success-pulse { opacity: 0; animation: adm-pulse-once 700ms ease-out 760ms; }
+.adm-success-text { animation: adm-rise-in 320ms var(--adm-ease) 420ms backwards; }
+.adm-step-tick { animation: adm-fade-in 200ms var(--adm-ease); }
 
 /* ── "Use Transition": one duration, one curve, and only on properties the
    compositor can animate. Anything longer reads as lag in a tool people use

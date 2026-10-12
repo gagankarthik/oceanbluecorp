@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Plus, SearchX } from "lucide-react";
+import { Loader2, Plus, SearchX } from "lucide-react";
 import type { IconComponent } from "@/components/admin/icons";
 import type { Application, BenchType, Job, NoteEntry } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -13,7 +13,7 @@ import { ResumeAnalysisEditDrawer } from "@/components/admin/resume-analysis-edi
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { JobFitCard } from "@/components/admin/job-fit-card";
 import { PipelinePanel } from "@/components/admin/pipeline-panel";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { WorkspaceButton, BackLink } from "@/components/admin/workspace";
 import { EmptyState } from "@/components/admin/empty-state";
 import { RecordBar } from "@/components/admin/candidate/record-bar";
 import { StageTrack } from "@/components/admin/candidate/stage-track";
@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/format";
 import { TERMINAL } from "@/lib/pipeline";
 import { undoable } from "@/lib/undo";
+import { jobLocationLabel } from "@/lib/workplace";
 
 /** Loader2 as an EmptyState icon, for the in-progress analysis state. */
 const SpinnerIcon: IconComponent = ({ className, strokeWidth }) => (
@@ -126,7 +127,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           ...p,
           jobTitle:      p.jobTitle || jd.job?.title,
           jobDepartment: jd.job?.department,
-          jobLocation:   jd.job?.location,
+          jobLocation:   jd.job ? jobLocationLabel(jd.job) : undefined,
           jobType:       jd.job?.type,
         } : p));
       } catch { /* non-fatal, job details are supplementary */ }
@@ -477,9 +478,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="pb-10">
+        <BackLink onClick={() => router.back()} />
         {/* Identity on the cobalt band, like every other record; the stage track and tabs stay on the canvas. */}
         <div className="relative z-[21] rounded-[8px] bg-[var(--adm-accent)] px-5 py-4 text-white">
-        <BackLink onClick={() => router.back()} />
 
         <RecordBar
           candidate={candidate}
@@ -521,7 +522,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 aria-selected={active}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "inline-flex h-10 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
+                  "inline-flex h-10 flex-none items-center gap-2 border-b-2 px-3 text-adm-base font-medium transition-colors duration-150",
                   active
                     ? "border-[var(--adm-accent)] text-[var(--adm-ink)]"
                     : "border-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]",
@@ -533,7 +534,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-px text-[12px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                  <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]">
                     {tab.count}
                   </span>
                 )}
@@ -543,13 +544,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      {/* The fit verdict leads only while the decision is open; on a hired or
-          rejected candidate it is history and moves into Overview. */}
-      {!isTerminal && hasAnalysis && (
-        <div className="mt-4">
-          <JobFitCard applicationId={id} />
-        </div>
-      )}
 
       <div
         className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_288px] xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5"
@@ -558,13 +552,16 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         <div className="min-w-0 space-y-4">
           {activeTab === "overview" && (
             <div className="space-y-4">
+              {/* The fit verdict leads Overview while the decision is open; once
+                  hired or rejected it is history and drops below the details. */}
+              {!isTerminal && hasAnalysis && <JobFitCard applicationId={id} />}
               <ApplicantDetails candidate={candidate} onEdit={() => openCandidateEditor({ candidate })} />
 
               {/* Manual experience, superseded by the parsed history when analysis exists */}
               {!hasAnalysis && candidate.experience && (
                 <AdminCard className="overflow-hidden">
                   <AdminCardHeader icon={IconFile} title="Experience" />
-                  <p className="whitespace-pre-line p-4 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                  <p className="whitespace-pre-line p-4 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                     {candidate.experience}
                   </p>
                 </AdminCard>
@@ -573,7 +570,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               {candidate.coverLetter && (
                 <AdminCard className="overflow-hidden">
                   <AdminCardHeader icon={IconFile} title="Cover letter" />
-                  <p className="whitespace-pre-line p-4 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+                  <p className="whitespace-pre-line p-4 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                     {candidate.coverLetter}
                   </p>
                 </AdminCard>
@@ -591,9 +588,9 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                     <div className="min-w-0">
-                      <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Resume analysis</h2>
+                      <h2 className="text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Resume analysis</h2>
                       {candidate.resumeAnalyzedAt && (
-                        <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+                        <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
                           Last analyzed <span className="tabular-nums">{fmtDateTime(candidate.resumeAnalyzedAt)}</span>
                         </p>
                       )}
@@ -690,22 +687,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
         application={candidate}
         onSaved={(app) => setCandidate((p) => (p ? { ...p, ...(app as CandidateDetail) } : p))}
       />
-    </div>
-  );
-}
-
-/** Same geometry as RecordHeader's back link. */
-function BackLink({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="mb-1.5">
-      <button
-        type="button"
-        onClick={onClick}
-        className="-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-white/75 transition-colors hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-        Back
-      </button>
     </div>
   );
 }

@@ -22,7 +22,7 @@ export function fitScoreColor(score: number): string {
 export function VerdictBadge({ verdict, className }: { verdict: Verdict; className?: string }) {
   const m = VERDICT_META[verdict] ?? VERDICT_META.weak;
   return (
-    <span className={cn("whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-medium leading-none", m.cls, className)}>
+    <span className={cn("whitespace-nowrap rounded-full px-2.5 py-1 text-adm-xs font-medium leading-none", m.cls, className)}>
       {m.label}
     </span>
   );
@@ -41,20 +41,25 @@ export function OriginBadge({ origin, className }: { origin?: MatchOrigin; class
   if (!origin) return null;
   const m = ORIGIN_META[origin];
   return (
-    <span className={cn("whitespace-nowrap rounded-[6px] px-1.5 py-0.5 text-[12px] font-medium", m.cls, className)}>
+    <span className={cn("whitespace-nowrap rounded-[6px] px-1.5 py-0.5 text-adm-xs font-medium", m.cls, className)}>
       {m.label}
     </span>
   );
 }
 
-export function SkillChips({ matched, missing }: { matched: string[]; missing: string[] }) {
+/** Phrases the model sometimes puts in a skills list instead of leaving it empty. */
+const NO_SKILL = /^(none|n\/?a|nil|nothing|-+|none (significant|identified|missing|noted)|no (major |significant )?(gaps?|missing skills?))\.?$/i;
+
+export function SkillChips({ matched: rawMatched, missing: rawMissing }: { matched: string[]; missing: string[] }) {
+  const matched = rawMatched.filter((s) => !NO_SKILL.test(s.trim()));
+  const missing = rawMissing.filter((s) => !NO_SKILL.test(s.trim()));
   if (matched.length === 0 && missing.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1.5">
       {matched.map((s) => (
         <span
           key={`m-${s}`}
-          className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-success-soft)] px-2 py-0.5 text-[12px] font-medium text-[var(--adm-success-ink)]"
+          className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-success-soft)] px-2 py-0.5 text-adm-xs font-medium text-[var(--adm-success-ink)]"
         >
           <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
           {s}
@@ -63,7 +68,7 @@ export function SkillChips({ matched, missing }: { matched: string[]; missing: s
       {missing.map((s) => (
         <span
           key={`x-${s}`}
-          className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium text-[var(--adm-ink-mute)]"
+          className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
         >
           <X className="h-3 w-3 text-[var(--adm-ink-subtle)]" strokeWidth={2.5} aria-hidden="true" />
           {s}

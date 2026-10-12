@@ -123,7 +123,7 @@ function ContactRow({
 }) {
   if (!value) {
     return (
-      <div className="flex h-9 items-center gap-2.5 text-[13px]">
+      <div className="flex h-9 items-center gap-2.5 text-adm-xs">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="select-none text-[var(--adm-ink-subtle)]">Not on record</span>
       </div>
@@ -136,7 +136,7 @@ function ContactRow({
         href={href}
         title={value}
         className={cn(
-          "min-w-0 flex-1 truncate text-[13px] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:text-[var(--adm-accent)]",
+          "min-w-0 flex-1 truncate text-adm-xs text-[var(--adm-ink-mute)] transition-colors duration-150 hover:text-[var(--adm-accent)]",
           numeric && "tabular-nums",
         )}
       >
@@ -154,8 +154,8 @@ function DirectoryRow({ member }: { member: TeamMember }) {
       <div className="flex min-w-0 items-center gap-3">
         <Avatar name={member.name} size="md" />
         <div className="min-w-0">
-          <p className="truncate text-[13.5px] font-semibold text-[var(--adm-ink)]">{member.name}</p>
-          <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{member.designation || "No title on record"}</p>
+          <p className="truncate text-adm-base font-semibold text-[var(--adm-ink)]">{member.name}</p>
+          <p className="truncate text-adm-xs text-[var(--adm-ink-subtle)]">{member.designation || "No title on record"}</p>
         </div>
       </div>
       <div className="min-w-0 pl-11 md:pl-0">
@@ -390,7 +390,6 @@ export default function HelpPage() {
 
   const shortcuts: { keys: string[]; label: string }[] = [
     { keys: ["Ctrl", "K"], label: "Search jobs, candidates and screens" },
-    { keys: ["/"], label: "Focus the search on a list page" },
     { keys: ["Esc"], label: "Clear a search or close a menu" },
   ];
 
@@ -466,7 +465,7 @@ export default function HelpPage() {
             </AdminCard>
           ) : (
             <AdminCard className="overflow-hidden">
-              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line-soft)] bg-[var(--adm-head)] px-4 py-2 text-[12.5px] text-[var(--adm-head-ink)] md:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line-soft)] bg-[var(--adm-head)] px-4 py-2 text-adm-xs text-[var(--adm-head-ink)] md:grid">
                 <span>Person</span>
                 <span>Email</span>
                 <span>Phone</span>
@@ -474,9 +473,9 @@ export default function HelpPage() {
               {groups.map((group) => (
                 <section key={group.key} aria-label={group.key}>
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
-                    <h2 className="text-[13px] font-semibold text-[var(--adm-ink)]">{group.key}</h2>
-                    <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{group.people.length}</span>
-                    <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">· {group.blurb}</span>
+                    <h2 className="text-adm-xs font-semibold text-[var(--adm-ink)]">{group.key}</h2>
+                    <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{group.people.length}</span>
+                    <span className="text-adm-xs text-[var(--adm-ink-subtle)]">· {group.blurb}</span>
                   </div>
                   <ul className="divide-y divide-[var(--adm-line-soft)] border-b border-[var(--adm-line-soft)] last:border-0">
                     {group.people.map((member) => (
@@ -495,7 +494,7 @@ export default function HelpPage() {
             <ul className="divide-y divide-[var(--adm-line-soft)]">
               {shortcuts.map((sc) => (
                 <li key={sc.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <span className="min-w-0 text-[13px] text-[var(--adm-ink-mute)]">{sc.label}</span>
+                  <span className="min-w-0 text-adm-xs text-[var(--adm-ink-mute)]">{sc.label}</span>
                   <span className="flex flex-none items-center gap-1">
                     {sc.keys.map((k) => <Kbd key={k}>{k}</Kbd>)}
                   </span>
@@ -533,8 +532,8 @@ function HelpCardBody({
     <>
       <Icon className="h-5 w-5 flex-none text-[var(--adm-ink-mute)] transition-colors group-hover:text-[var(--adm-accent)]" />
       <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold text-[var(--adm-ink)]">{title}</span>
-        <span className="block truncate text-[12.5px] text-[var(--adm-ink-mute)]">{description}</span>
+        <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">{title}</span>
+        <span className="block truncate text-adm-xs text-[var(--adm-ink-mute)]">{description}</span>
       </span>
       <ChevronRight className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
     </>

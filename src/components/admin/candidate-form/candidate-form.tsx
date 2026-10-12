@@ -26,7 +26,7 @@ import { useUserDirectory } from "@/hooks/use-console-data";
 import { cn } from "@/lib/utils";
 
 const wellCls = "rounded-[12px] border px-4 py-3";
-const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--adm-danger-ink)]";
+const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-danger-ink)]";
 const iconBtnCls = "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 const iconBtnDangerCls = "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]";
 const dropzoneCls = "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-[var(--adm-line-strong)] bg-[var(--adm-surface-sunken)] p-5 transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]";
@@ -134,7 +134,7 @@ export function CandidateForm({
         </Field>
         {form.duplicates.length > 0 && (
           <div role="status" className={cn(wellCls, "col-span-full space-y-1.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] py-2.5")}>
-            <p className="flex items-center gap-2 text-[13px] font-medium text-[var(--adm-warning-ink)]">
+            <p className="flex items-center gap-2 text-adm-xs font-medium text-[var(--adm-warning-ink)]">
               <IconWarning className="h-4 w-4 flex-none" aria-hidden="true" />
               {form.duplicates.some((d) => d.matchedOn.includes("email"))
                 ? "This candidate already exists."
@@ -142,7 +142,7 @@ export function CandidateForm({
             </p>
             <ul className="space-y-1 pl-6">
               {form.duplicates.map((d) => (
-                <li key={d.id} className="flex flex-wrap items-baseline gap-x-2 text-[13px] text-[var(--adm-ink)]">
+                <li key={d.id} className="flex flex-wrap items-baseline gap-x-2 text-adm-xs text-[var(--adm-ink)]">
                   <Link href={`/admin/candidates/${d.id}`} className="font-medium text-[var(--adm-accent)] hover:underline">
                     {d.name || d.email}
                   </Link>
@@ -216,8 +216,8 @@ export function CandidateForm({
           <div className={cn(wellCls, "flex flex-wrap items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]")}>
             <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{form.resumeFile.name}</p>
-              <p className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+              <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{form.resumeFile.name}</p>
+              <p className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                 {(form.resumeFile.size / 1024).toFixed(0)} KB · {existing ? "replaces the current resume on save" : "attached on save"}
               </p>
             </div>
@@ -232,8 +232,8 @@ export function CandidateForm({
           <div className={cn(wellCls, "flex items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]")}>
             <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-[var(--adm-ink)]">{existing.fileName}</p>
-              <p className="text-[12.5px] text-[var(--adm-ink-subtle)]">
+              <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{existing.fileName}</p>
+              <p className="text-adm-xs text-[var(--adm-ink-subtle)]">
                 {existing.origin === "bench" ? "From the bench profile" : "Current resume on file"}
               </p>
             </div>
@@ -255,8 +255,8 @@ export function CandidateForm({
             <input type="file" accept={RESUME_ACCEPT} onChange={pickResume} className="sr-only" />
             <IconUpload className="h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <span className="text-center">
-              <span className="block text-[14px] font-medium text-[var(--adm-ink)]">{existing ? "Upload a replacement" : "Upload resume"}</span>
-              <span className="mt-0.5 block text-[12.5px] text-[var(--adm-ink-subtle)]">PDF or Word, up to 5 MB. Parsed automatically once saved.</span>
+              <span className="block text-adm-base font-medium text-[var(--adm-ink)]">{existing ? "Upload a replacement" : "Upload resume"}</span>
+              <span className="mt-0.5 block text-adm-xs text-[var(--adm-ink-subtle)]">PDF or Word, up to 5 MB. Parsed automatically once saved.</span>
             </span>
           </label>
         )}
@@ -337,8 +337,8 @@ export function CandidateForm({
             className={cn("mt-0.5", checkboxCls)}
           />
           <span className="min-w-0">
-            <span className="block text-[14px] font-medium text-[var(--adm-ink)]">Add to talent bench</span>
-            <span className="mt-0.5 block text-[12.5px] text-[var(--adm-ink-subtle)]">Keep this candidate available for future requisitions.</span>
+            <span className="block text-adm-base font-medium text-[var(--adm-ink)]">Add to talent bench</span>
+            <span className="mt-0.5 block text-adm-xs text-[var(--adm-ink-subtle)]">Keep this candidate available for future requisitions.</span>
           </span>
         </label>
 
@@ -387,13 +387,13 @@ export function CandidateForm({
             onCheckedChange={(c) => set("visaSponsorshipRequired", c === true)}
             className={checkboxCls}
           />
-          <span className="text-[14px] text-[var(--adm-ink-mute)]">Requires sponsorship</span>
+          <span className="text-adm-base text-[var(--adm-ink-mute)]">Requires sponsorship</span>
         </label>
 
         {v.workAuthorization && (
           <p className={cn(
             wellCls,
-            "py-2.5 text-[13px] leading-relaxed",
+            "py-2.5 text-adm-xs leading-relaxed",
             isPermanent
               ? "border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
               : "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
@@ -418,7 +418,7 @@ export function CandidateForm({
         <Field label="Rating">
           <div className="flex items-center gap-2 py-1">
             <StarRating rating={v.rating} onRate={(n) => set("rating", n === v.rating ? 0 : n)} size="lg" />
-            <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{v.rating > 0 ? `${v.rating}/5` : "–"}</span>
+            <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{v.rating > 0 ? `${v.rating}/5` : "–"}</span>
           </div>
         </Field>
         <Field label="Notes" htmlFor={IDS.notes} helper="Visible to staff only" error={errors.notes}>

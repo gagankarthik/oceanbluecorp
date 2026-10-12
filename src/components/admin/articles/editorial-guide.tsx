@@ -48,10 +48,10 @@ export function EditorialGuide({
       >
         <IconBook className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
         <span className="min-w-0 flex-1">
-          <span className="block text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
+          <span className="block text-adm-base font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
             How we write a {config.noun}
           </span>
-          <span className="mt-0.5 block truncate text-[13px] text-[var(--adm-ink-subtle)]">
+          <span className="mt-0.5 block truncate text-adm-xs text-[var(--adm-ink-subtle)]">
             {guide.length}
           </span>
         </span>
@@ -66,44 +66,44 @@ export function EditorialGuide({
 
       {open && (
         <div className="space-y-5 border-t border-[var(--adm-line-soft)] p-4">
-          <p className="text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">{guide.premise}</p>
+          <p className="text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">{guide.premise}</p>
 
           {/* Headline shapes. The single most useful thing in a style guide is
               a right answer beside a wrong one, an abstract rule about
               "specificity" changes nobody's draft. */}
           <div className="space-y-2">
-            <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">
+            <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               Headline
             </p>
-            <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] px-3 py-2 text-[13px] font-medium text-[var(--adm-ink)]">
+            <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-ink)]">
               {guide.headline.good}
             </p>
-            <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 text-[13px] text-[var(--adm-ink-subtle)] line-through decoration-[var(--adm-danger)]/50">
+            <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs text-[var(--adm-ink-subtle)] line-through decoration-[var(--adm-danger)]/50">
               {guide.headline.bad}
             </p>
-            <p className="text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
+            <p className="text-adm-xs leading-relaxed text-[var(--adm-ink-subtle)]">
               {guide.headline.why}
             </p>
           </div>
 
           {/* Structure */}
           <div className="space-y-2.5">
-            <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">
+            <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               The shape of a finished one
             </p>
             <ol className="space-y-2.5">
               {guide.structure.map((step, i) => (
                 <li key={step.name} className="flex gap-2.5">
-                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-[11.5px] font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
                     {i + 1}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[13px] font-semibold text-[var(--adm-ink)]">{step.name}</span>
-                    <span className="block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+                    <span className="block text-adm-xs font-semibold text-[var(--adm-ink)]">{step.name}</span>
+                    <span className="block text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                       {step.purpose}
                     </span>
                     {step.rule && (
-                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-subtle)]">
+                      <span className="mt-0.5 block text-adm-xs leading-relaxed text-[var(--adm-ink-subtle)]">
                         {step.rule}
                       </span>
                     )}
@@ -115,12 +115,12 @@ export function EditorialGuide({
 
           {/* Rules */}
           <div className="space-y-2">
-            <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">
+            <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               House rules
             </p>
             <ul className="space-y-1.5">
               {guide.rules.map((rule) => (
-                <li key={rule} className="flex gap-2 text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+                <li key={rule} className="flex gap-2 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                   <Check className="mt-0.5 h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                   <span>{rule}</span>
                 </li>
@@ -128,7 +128,7 @@ export function EditorialGuide({
             </ul>
           </div>
 
-          <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5 text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             <strong className="font-semibold text-[var(--adm-ink)]">Sign-off. </strong>
             {guide.signoff}
           </p>

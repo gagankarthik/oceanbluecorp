@@ -2,18 +2,17 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { AdminDialog } from "@/components/admin/admin-dialog";
-import { IconBuilding, IconCalendar, IconClock, IconEye, IconFile, IconHash, IconJob, IconLocation, IconMoney, IconSave, IconTruck, IconUserCheck } from "../icons";
+import { IconClock, IconEye, IconHash, IconJob, IconLocation, IconSave } from "../icons";
 import type { Job, Client, Vendor, SalaryPeriod } from "@/lib/aws/dynamodb";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { US_STATES, normalizeState, SALARY_PERIODS } from "@/components/admin/theme";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { PageHeader } from "@/components/admin/page-header";
-import { WorkspaceButton } from "@/components/admin/workspace";
-import { Field, FormInput, MoneyInput, FormSelect, AssigneePicker, AssigneeUser } from "./primitives";
+import { WorkspaceButton, BackLink } from "@/components/admin/workspace";
+import { Field, FormInput, MoneyInput, FormSelect, AssigneePicker, AssigneeUser, PersonPicker, SegmentedChoice } from "./primitives";
+import { WORKPLACES, WORKPLACE_LABEL, jobLocationLabel, workplaceOf, type Workplace } from "@/lib/workplace";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { renderRichText, renderListField } from "@/lib/rich-text";
 import { useAuth, canSeeJobCommercials } from "@/lib/auth";
@@ -23,7 +22,8 @@ import {
   LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
   payOverBillWarning, phone, rangeInverted, required, website,
 } from "@/lib/form-validation";
-import { FieldError, FieldWarning, FormErrorBanner } from "./form-alert";
+import { FieldWarning, FormErrorBanner } from "./form-alert";
+import { StepCard, StepRail, useActiveStep, type StepInfo, type StepState } from "./form-steps";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +39,15 @@ export const JOB_TYPES: { value: Job["type"]; label: string }[] = [
   { value: "contract-to-hire",label: "Contract-to-hire" },
   { value: "direct-hire",     label: "Direct hire" },
   { value: "managed-teams",   label: "Managed teams" },
-  { value: "remote",          label: "Remote" },
+];
+
+const WORKPLACE_OPTIONS = WORKPLACES.map((value) => ({ value, label: WORKPLACE_LABEL[value] }));
+
+/** Hourly roles carry bill and pay rates and an hourly range; annual roles a yearly salary. */
+type PayBasis = "hour" | "year";
+const PAY_BASIS_OPTIONS: { value: PayBasis; label: string }[] = [
+  { value: "hour", label: "Hourly" },
+  { value: "year", label: "Annual" },
 ];
 
 export const JOB_CATEGORIES: { value: JobCategory; label: string }[] = [
@@ -63,7 +71,9 @@ export interface JobFormData {
   status: Job["status"];
   category: JobCategory;
   department: string;
-  type: Job["type"];
+  /** "" only for a legacy remote record, whose real type has to be chosen. */
+  type: Job["type"] | "";
+  workplace: Workplace;
   location: string;
   state: string;
   clientId: string;
@@ -90,7 +100,7 @@ export interface JobFormData {
 
 export const DEFAULT_JOB_FORM: JobFormData = {
   title: "", status: "draft", category: "state", department: DEPARTMENTS[0], type: "full-time",
-  location: "", state: "", clientId: "", clientName: "", clientNotes: "",
+  workplace: "on-site", location: "", state: "", clientId: "", clientName: "", clientNotes: "",
   vendorId: "", vendorName: "", submissionDueDate: "",
   clientBillRate: "", payRate: "", salaryMin: "", salaryMax: "", salaryPeriod: "year",
   recruitmentManagerId: "", recruitmentManagerName: "", recruitmentManagerEmail: "",
@@ -112,11 +122,13 @@ export function jobToFormData(job: Job): JobFormData {
     status: job.status || "draft",
     category: jobCategory(job),
     department: job.department || DEPARTMENTS[0],
-    type: job.type || "full-time",
+    // Remote used to be a type; it now lives in workplace and the type is asked for.
+    type: job.type === "remote" ? "" : job.type || "full-time",
+    workplace: workplaceOf(job) || "on-site",
     location: job.location || "",
     // Legacy records store the full name ("California"); the canonical stored
     // value is now the 2-letter code, so coerce on read or the picker blanks.
-    // A legacy `state: "Remote"` normalises to "". Remote is a job *type*.
+    // A legacy `state: "Remote"` normalises to "". Remote is a workplace.
     state: normalizeState(job.state),
     clientId: job.clientId || "",
     clientName: job.clientName || "",
@@ -153,16 +165,19 @@ export function formDataToPayload(data: JobFormData) {
     location: data.location,
     state: data.state || undefined,
     type: data.type,
+    workplace: data.workplace,
     description: data.description,
     // Rich HTML now (server sanitizes on save). Empty editors send undefined so
     // an empty <ul></ul> or stray <br> isn't stored.
     requirements: data.requirements?.trim() ? data.requirements : undefined,
     responsibilities: data.responsibilities?.trim() ? data.responsibilities : undefined,
+    // null, not undefined, so clearing the range clears it on the record.
     salary: data.salaryMin && data.salaryMax
       ? { min: parseFloat(data.salaryMin), max: parseFloat(data.salaryMax), currency: "$", period: data.salaryPeriod }
-      : undefined,
-    clientBillRate: data.clientBillRate ? parseFloat(data.clientBillRate) : undefined,
-    payRate: data.payRate ? parseFloat(data.payRate) : undefined,
+      : null,
+    // Bill and pay rates are hourly; an annual role leaves the stored ones alone.
+    clientBillRate: data.salaryPeriod === "hour" && data.clientBillRate ? parseFloat(data.clientBillRate) : undefined,
+    payRate: data.salaryPeriod === "hour" && data.payRate ? parseFloat(data.payRate) : undefined,
     status: data.status,
     submissionDueDate: data.submissionDueDate || undefined,
     clientId: data.clientId || undefined,
@@ -171,12 +186,13 @@ export function formDataToPayload(data: JobFormData) {
     // Empty string, not undefined: JSON drops undefined, so "No vendor" could never clear one.
     vendorId: data.vendorId || "",
     vendorName: data.vendorName || "",
-    recruitmentManagerId: data.recruitmentManagerId || undefined,
-    recruitmentManagerName: data.recruitmentManagerName || undefined,
-    recruitmentManagerEmail: data.recruitmentManagerEmail || undefined,
-    assignedToIds: data.assignedToIds.length ? data.assignedToIds : undefined,
-    assignedToNames: data.assignedToNames.length ? data.assignedToNames : undefined,
-    assignedToEmails: data.assignedToEmails.length ? data.assignedToEmails : undefined,
+    // "" and [] rather than undefined, so removing the manager or the last assignee saves.
+    recruitmentManagerId: data.recruitmentManagerId,
+    recruitmentManagerName: data.recruitmentManagerName,
+    recruitmentManagerEmail: data.recruitmentManagerEmail,
+    assignedToIds: data.assignedToIds,
+    assignedToNames: data.assignedToNames,
+    assignedToEmails: data.assignedToEmails,
   };
 }
 
@@ -211,11 +227,6 @@ export async function createVendorFromForm(vendorData: NewVendorInput): Promise<
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "The vendor could not be added. Try again in a moment.");
   return json.vendor;
-}
-
-/** Lead-in line for a panel. */
-function PanelNote({ children }: { children: React.ReactNode }) {
-  return <p className="mb-4 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{children}</p>;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -273,12 +284,33 @@ export function JobForm({
     set("vendorName", vendor?.name || "");
   };
 
-  const handleManagerSelect = (userId: string) => {
-    if (!userId) { set("recruitmentManagerId", ""); set("recruitmentManagerName", ""); set("recruitmentManagerEmail", ""); return; }
-    const u = hrUsers.find((u) => u.id === userId);
-    set("recruitmentManagerId", userId);
-    set("recruitmentManagerName", u?.name || u?.email || "");
-    set("recruitmentManagerEmail", u?.email || "");
+  const handleManagerSelect = (u: AssigneeUser | null) => {
+    // The manager is notified as manager, so they leave the assignee list.
+    setData((prev) => {
+      const idx = u ? prev.assignedToIds.indexOf(u.id) : -1;
+      const drop = <T,>(list: T[]) => (idx >= 0 ? list.filter((_, i) => i !== idx) : list);
+      return {
+        ...prev,
+        recruitmentManagerId: u?.id || "",
+        recruitmentManagerName: u ? u.name || u.email : "",
+        recruitmentManagerEmail: u?.email || "",
+        assignedToIds: drop(prev.assignedToIds),
+        assignedToNames: drop(prev.assignedToNames),
+        assignedToEmails: drop(prev.assignedToEmails),
+      };
+    });
+  };
+
+  // A figure typed for one basis is wrong by orders of magnitude on the other,
+  // so switching parks the range and restores it on the way back.
+  const parkedRange = React.useRef<Partial<Record<SalaryPeriod, { min: string; max: string }>>>({});
+  const setPayBasis = (basis: SalaryPeriod) => {
+    setData((prev) => {
+      if (basis === prev.salaryPeriod) return prev;
+      parkedRange.current[prev.salaryPeriod] = { min: prev.salaryMin, max: prev.salaryMax };
+      const back = parkedRange.current[basis];
+      return { ...prev, salaryPeriod: basis, salaryMin: back?.min ?? "", salaryMax: back?.max ?? "" };
+    });
   };
 
   const toggleAssignee = (u: AssigneeUser) => {
@@ -307,7 +339,8 @@ export function JobForm({
       const salaryHalf = !isBlank(data.salaryMin) !== !isBlank(data.salaryMax);
       return collectErrors({
         title: check(data.title, required("Enter a job title, like Senior Software Engineer."), maxLen(LIMITS.title)),
-        location: data.type === "remote"
+        type: data.type ? undefined : "Choose the job type. Remote is now set under Workplace.",
+        location: data.workplace === "remote"
           ? check(data.location, maxLen(LIMITS.title))
           : check(data.location, required("Enter the city or location, like Columbus."), maxLen(LIMITS.title)),
         clientNotes: check(data.clientNotes, maxLen(LIMITS.notes)),
@@ -326,7 +359,7 @@ export function JobForm({
       });
     },
     {
-      title: "job-title", location: "job-location", clientNotes: "job-client-notes",
+      title: "job-title", type: "job-type", location: "job-location", clientNotes: "job-client-notes",
       clientBillRate: "job-bill-rate", payRate: "job-pay-rate", salaryMin: "job-salary-min",
       salaryMax: "job-salary-max", description: "job-description",
     },
@@ -350,106 +383,141 @@ export function JobForm({
     "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-danger-ink)]",
   };
 
-  const isRemote = data.type === "remote";
+  const isRemote = data.workplace === "remote";
+  const hourly = data.salaryPeriod === "hour";
+  // Older records may hold a day, week or month range; keep it until someone picks a basis.
+  const legacyPeriod = hourly || data.salaryPeriod === "year" ? null : data.salaryPeriod;
+  const periodUnit = `$${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`;
   const typeLabel = JOB_TYPES.find((t) => t.value === data.type)?.label || data.type;
+
+  const descText = htmlText(data.description);
+  const hasPay = (!isBlank(data.salaryMin) && !isBlank(data.salaryMax)) || (hourly && canPrice && !!(data.clientBillRate || data.payRate));
+  const steps: StepInfo[] = [
+    { id: "step-role", title: "Role", required: true, state: data.title.trim() && data.type ? "done" : "todo" },
+    { id: "step-location", title: "Location", required: true, state: isRemote || data.location.trim() ? "done" : "todo" },
+    { id: "step-description", title: "Description", required: true, state: descText ? "done" : "todo" },
+    { id: "step-pay", title: "Compensation", state: hasPay ? "done" : "optional" },
+    {
+      id: "step-client",
+      title: canPrice ? "Client and deadline" : "Deadline",
+      state: data.clientId || data.vendorId || data.submissionDueDate ? "done" : "optional",
+    },
+    ...(canPrice
+      ? [{ id: "step-team", title: "Team", state: (data.recruitmentManagerId || data.assignedToIds.length ? "done" : "optional") as StepState }]
+      : []),
+  ];
+  const stepState = (id: string) => steps.find((s) => s.id === id)!.state;
+  const activeStep = useActiveStep(steps.map((s) => s.id));
+  const requiredLeft = steps.filter((s) => s.required && s.state !== "done").length;
+
+  const payLine = !isBlank(data.salaryMin) && !isBlank(data.salaryMax)
+    ? `$${Number(data.salaryMin).toLocaleString()} – $${Number(data.salaryMax).toLocaleString()}${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`
+    : "";
+  const summary: { k: string; v: string }[] = [
+    { k: "Title", v: data.title.trim() },
+    { k: "Type", v: [typeLabel, WORKPLACE_LABEL[data.workplace]].filter(Boolean).join(" · ") },
+    { k: "Location", v: jobLocationLabel(data) },
+    { k: "Pay", v: payLine },
+    { k: "Status", v: JOB_STATUSES.find((s) => s.value === data.status)?.label ?? data.status },
+  ];
+  const submitLabel = mode === "create" ? "Create job" : "Save changes";
 
   return (
     <>
-      {/* Back leads the page, as on every record screen, instead of competing with Save. */}
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="-ml-1 mb-2 inline-flex items-center gap-1 rounded-[var(--adm-radius-control)] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
-      </button>
+      <BackLink onClick={() => router.back()} />
 
-      {/* Owned by the form, which knows the mode, posting id and submit state. */}
-      <PageHeader
-        className="mb-5"
-        title={`${mode === "create" ? "New" : "Edit"} ${data.category === "open" ? "open" : "state"} role`}
-        info={mode === "create" ? "Fill in the details to create a new job listing." : undefined}
-        subtitle={mode === "create" ? undefined : `Editing ${job?.title || "–"}`}
-        meta={mode === "edit" && job?.postingId ? (
-          <span className="inline-flex items-center gap-1 rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-[12px] font-medium text-[var(--adm-ink-mute)]">
-            <IconHash className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-            {job.postingId}
-          </span>
-        ) : undefined}
-        actions={
-          <>
-            <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
-              <IconEye aria-hidden="true" />Preview
-            </WorkspaceButton>
-            {/* The primary sits in the header and reaches the form below through form=. */}
-            <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
-              {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
-              {mode === "create" ? "Create job" : "Save changes"}
-            </WorkspaceButton>
-          </>
-        }
-      />
+      <header className="mx-auto mb-5 flex max-w-6xl flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+            {mode === "create" ? "New" : "Edit"} {data.category === "open" ? "open" : "state"} role
+          </h1>
+          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
+            {mode === "create" ? "Three required steps, the rest when you have them." : `Editing ${job?.title || "–"}`}
+            {mode === "edit" && job?.postingId && (
+              <span className="inline-flex items-center gap-1 rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-2 py-0.5 font-mono text-adm-xs font-medium text-[var(--adm-ink-mute)]">
+                <IconHash className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+                {job.postingId}
+              </span>
+            )}
+          </p>
+        </div>
+        <WorkspaceButton type="button" onClick={() => setShowPreview(true)}>
+          <IconEye aria-hidden="true" />Preview
+        </WorkspaceButton>
+      </header>
 
-      {/* @container: field grids size off the form column, not the window, which
-          sits inside a pane already narrowed by the sidebar. */}
-      <form id={formId} noValidate onSubmit={handleSubmit} onBlur={revalidate} className="@container mx-auto max-w-5xl space-y-4 lg:space-y-5">
-        <FormErrorBanner message={serverError} onDismiss={onDismissError} />
-        <AdminCard>
-          <AdminCardHeader icon={IconJob} title="Job details" />
-          <div className="p-4">
-            <PanelNote>The role title, category, and where it&rsquo;s based.</PanelNote>
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+        {/* @container: field grids size off the form column, not the window. */}
+        <form id={formId} noValidate onSubmit={handleSubmit} onBlur={revalidate} className="@container min-w-0 space-y-4">
+          <FormErrorBanner message={serverError} onDismiss={onDismissError} />
+
+          <StepCard id="step-role" step={1} title="Role" description="What the job is called and where it is listed." state={stepState("step-role")}>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-4">
-                <div className="@2xl:col-span-2">
-                  <Field label="Job title" required htmlFor="job-title" error={errors.title}>
-                    <FormInput
-                      id="job-title"
-                      required
-                      {...invalidProps("title")}
-                      value={data.title}
-                      onChange={(e) => set("title", e.target.value)}
-                      placeholder="e.g. Senior Software Engineer"
-                    />
-                  </Field>
-                </div>
+              <Field label="Job title" required htmlFor="job-title" error={errors.title}>
+                <FormInput
+                  id="job-title"
+                  required
+                  {...invalidProps("title")}
+                  value={data.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  placeholder="e.g. Senior Software Engineer"
+                  className="h-10 text-adm-md"
+                />
+              </Field>
+              <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+                <Field label="Department" required htmlFor="job-department">
+                  <FormSelect id="job-department" required value={data.department} onChange={(e) => set("department", e.target.value)}>
+                    {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </FormSelect>
+                </Field>
+                <Field label="Job type" required htmlFor="job-type" error={errors.type}>
+                  <FormSelect id="job-type" required {...invalidProps("type")} value={data.type} onChange={(e) => set("type", e.target.value as Job["type"])}>
+                    {!data.type && <option value="">Select job type…</option>}
+                    {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </FormSelect>
+                </Field>
                 <Field label="Listed under" htmlFor="job-category">
-                  <FormSelect
-                    id="job-category"
-                    value={data.category}
-                    onChange={(e) => set("category", e.target.value as JobCategory)}
-                  >
+                  <FormSelect id="job-category" value={data.category} onChange={(e) => set("category", e.target.value as JobCategory)}>
                     {JOB_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </FormSelect>
                 </Field>
-                <Field label="Status" htmlFor="job-status">
+                <Field label="Status" htmlFor="job-status" helper={data.status === "draft" ? "Drafts stay off the careers page." : undefined}>
                   <FormSelect
                     id="job-status"
                     value={data.status}
                     onChange={(e) => set("status", e.target.value as Job["status"])}
                     className={statusColor[data.status]}
                   >
-                    {JOB_STATUSES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
+                    {JOB_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </FormSelect>
                 </Field>
               </div>
+            </div>
+          </StepCard>
 
-              <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
-                <Field label="Department" required htmlFor="job-department">
-                  <FormSelect id="job-department" required value={data.department} onChange={(e) => set("department", e.target.value)}>
-                    {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                  </FormSelect>
+          <StepCard
+            id="step-location"
+            step={2}
+            title="Location"
+            description={isRemote ? "Remote roles can leave the city and state blank." : "Where the work happens."}
+            state={stepState("step-location")}
+          >
+            <div className="space-y-4">
+              <Field label="Workplace" htmlFor="job-workplace">
+                <SegmentedChoice
+                  id="job-workplace"
+                  label="Workplace"
+                  value={data.workplace}
+                  options={WORKPLACE_OPTIONS}
+                  onChange={(v) => set("workplace", v)}
+                  className="@xl:max-w-sm"
+                />
+              </Field>
+              <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+                <Field label="City" required={!isRemote} hint={isRemote ? "Optional" : undefined} htmlFor="job-location" error={errors.location}>
+                  <FormInput id="job-location" required={!isRemote} {...invalidProps("location")} value={data.location} onChange={(e) => set("location", e.target.value)} placeholder={isRemote ? "Leave blank if anywhere" : "e.g. Columbus"} />
                 </Field>
-                <Field label="Job type" required htmlFor="job-type">
-                  <FormSelect id="job-type" required value={data.type} onChange={(e) => set("type", e.target.value as Job["type"])}>
-                    {JOB_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </FormSelect>
-                </Field>
-                <Field label="City or location" required={!isRemote} htmlFor="job-location" error={errors.location}>
-                  <FormInput id="job-location" required={!isRemote} {...invalidProps("location")} value={data.location} onChange={(e) => set("location", e.target.value)} placeholder={isRemote ? "Optional for remote roles" : "e.g. Columbus"} />
-                </Field>
-                <Field label="State" htmlFor="job-state">
+                <Field label="State" hint={isRemote ? "Optional" : undefined} htmlFor="job-state">
                   {/* Stores the 2-letter code, shared with Applications and the bench. */}
                   <FormSelect id="job-state" value={data.state} onChange={(e) => set("state", e.target.value)}>
                     <option value="">Select state…</option>
@@ -458,139 +526,15 @@ export function JobForm({
                 </Field>
               </div>
             </div>
-          </div>
-        </AdminCard>
+          </StepCard>
 
-        {/* Three cards for a recruiter, one for media: the deadline is public and
-            stays, client and vendor are commercial and go. */}
-        <div className={cn("grid grid-cols-1 gap-4", canPrice && "@2xl:grid-cols-3")}>
-          {canPrice && (
-          <AdminCard>
-            <AdminCardHeader icon={IconBuilding} title="Client" />
-            <div className="space-y-2 p-4">
-              <FormSelect aria-label="Client" value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
-                <option value="">Select client</option>
-                <option value="add-new">+ Add new client</option>
-                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </FormSelect>
-              {data.clientId && data.clientId !== "add-new" && (
-                <>
-                  <FormInput
-                    id="job-client-notes"
-                    aria-label="Client notes"
-                    {...invalidProps("clientNotes")}
-                    value={data.clientNotes}
-                    onChange={(e) => set("clientNotes", e.target.value)}
-                    placeholder="Client notes…"
-                  />
-                  <FieldError id="job-client-notes-error">{errors.clientNotes}</FieldError>
-                </>
-              )}
-            </div>
-          </AdminCard>
-          )}
-
-          {canPrice && (
-          <AdminCard>
-            <AdminCardHeader icon={IconTruck} title="Vendor" />
-            <div className="p-4">
-              <FormSelect aria-label="Vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
-                <option value="none">No vendor</option>
-                <option value="add-new">+ Add new vendor</option>
-                {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-              </FormSelect>
-            </div>
-          </AdminCard>
-          )}
-
-          <AdminCard>
-            <AdminCardHeader icon={IconCalendar} title="Submission deadline" />
-            <div className="p-4">
-              <FormInput
-                id="job-deadline"
-                aria-label="Submission deadline"
-                type="date"
-                value={data.submissionDueDate}
-                onChange={(e) => set("submissionDueDate", e.target.value)}
-              />
-              <FieldWarning>{deadlineWarning}</FieldWarning>
-            </div>
-          </AdminCard>
-        </div>
-
-        <AdminCard>
-          <AdminCardHeader icon={IconMoney} title="Compensation" />
-          <div className="p-4">
-            <PanelNote>
-              {canPrice
-                ? "Optional rate and salary details. Leave blank if not applicable."
-                : "The salary range candidates see on the posting. Leave blank if not disclosed."}
-            </PanelNote>
-            {/* Bill and pay rate are the placement margin; the salary range is
-                public. Different audiences, so only the first pair is gated. */}
-            <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-2", canPrice && "@3xl:grid-cols-4")}>
-              {canPrice && (
-              <Field label="Bill rate ($/hr)" htmlFor="job-bill-rate" error={errors.clientBillRate}>
-                <MoneyInput id="job-bill-rate" {...invalidProps("clientBillRate")} value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
-              </Field>
-              )}
-              {canPrice && (
-              <Field label="Pay rate ($/hr)" htmlFor="job-pay-rate" error={errors.payRate}>
-                <MoneyInput id="job-pay-rate" {...invalidProps("payRate")} value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
-                {!errors.payRate && <FieldWarning>{payWarning}</FieldWarning>}
-              </Field>
-              )}
-            </div>
-            <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_10rem]", canPrice && "mt-4")}>
-              <Field label="Min pay" htmlFor="job-salary-min" error={errors.salaryMin}>
-                <MoneyInput id="job-salary-min" {...invalidProps("salaryMin")} value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder={data.salaryPeriod === "year" ? "80,000" : ""} />
-              </Field>
-              <Field label="Max pay" htmlFor="job-salary-max" error={errors.salaryMax}>
-                <MoneyInput id="job-salary-max" {...invalidProps("salaryMax")} value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder={data.salaryPeriod === "year" ? "120,000" : ""} />
-              </Field>
-              <Field label="Pay period" htmlFor="job-salary-period">
-                <FormSelect id="job-salary-period" value={data.salaryPeriod} onChange={(e) => set("salaryPeriod", e.target.value as SalaryPeriod)}>
-                  {SALARY_PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                </FormSelect>
-              </Field>
-            </div>
-          </div>
-        </AdminCard>
-
-        {canPrice && (
-        <AdminCard>
-          <AdminCardHeader icon={IconUserCheck} title="Team assignments" count={data.assignedToIds.length} />
-          <div className="p-4">
-            <PanelNote>Assign team members to receive notifications for this job posting.</PanelNote>
-            <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
-              <Field label="Recruitment manager" htmlFor="job-manager">
-                <FormSelect id="job-manager" value={data.recruitmentManagerId} onChange={(e) => handleManagerSelect(e.target.value)}>
-                  <option value="">Select manager</option>
-                  {hrUsers.map((u) => (
-                    <option key={u.id} value={u.id}>{u.name || u.email} ({u.role})</option>
-                  ))}
-                </FormSelect>
-              </Field>
-              <Field label="Additional assignees">
-                <AssigneePicker
-                  users={hrUsers}
-                  selectedIds={data.assignedToIds}
-                  selectedNames={data.assignedToNames}
-                  selectedEmails={data.assignedToEmails}
-                  onToggle={toggleAssignee}
-                />
-              </Field>
-            </div>
-          </div>
-        </AdminCard>
-        )}
-
-        <AdminCard>
-          <AdminCardHeader icon={IconFile} title="Job description" />
-          <div className="p-4">
-            <PanelNote>
-              What candidates see. Describe the role, then list requirements and responsibilities.
-            </PanelNote>
+          <StepCard
+            id="step-description"
+            step={3}
+            title="Description"
+            description="What candidates read. Describe the role, then list requirements and responsibilities."
+            state={stepState("step-description")}
+          >
             <div className="space-y-4">
               <Field label="Description" required htmlFor="job-description" error={errors.description}>
                 <RichTextEditor
@@ -619,26 +563,203 @@ export function JobForm({
                 />
               </Field>
             </div>
-          </div>
-        </AdminCard>
+          </StepCard>
 
-        {mode === "edit" && job && (
-          <dl className="flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-[13px]">
-            <div className="inline-flex items-center gap-1.5">
-              <dt className="text-[var(--adm-ink-subtle)]">Created</dt>
-              <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.createdAt)}</dd>
+          <StepCard
+            id="step-pay"
+            step={4}
+            title="Compensation"
+            description={hourly
+              ? canPrice ? "Bill and pay rates, and the hourly range candidates see." : "The hourly range candidates see. Leave blank if not disclosed."
+              : "The yearly salary range candidates see. Leave blank if not disclosed."}
+            state={stepState("step-pay")}
+          >
+            <SegmentedChoice
+              label="Pay basis"
+              value={data.salaryPeriod}
+              options={[
+                ...PAY_BASIS_OPTIONS,
+                ...(legacyPeriod ? [{ value: legacyPeriod, label: SALARY_PERIODS.find((p) => p.value === legacyPeriod)!.label }] : []),
+              ]}
+              onChange={setPayBasis}
+              className="mb-4 @xl:max-w-[16rem]"
+            />
+            {/* Bill and pay rate are the placement margin; the range is public.
+                Different audiences, so only the rates are gated. */}
+            <div className={cn("grid grid-cols-1 gap-4 @xl:grid-cols-2", hourly && canPrice && "@3xl:grid-cols-4")}>
+              {hourly && canPrice && (
+              <Field label="Bill rate ($/hr)" htmlFor="job-bill-rate" error={errors.clientBillRate}>
+                <MoneyInput id="job-bill-rate" {...invalidProps("clientBillRate")} value={data.clientBillRate} onChange={(e) => set("clientBillRate", e.target.value)} placeholder="75.00" />
+              </Field>
+              )}
+              {hourly && canPrice && (
+              <Field label="Pay rate ($/hr)" htmlFor="job-pay-rate" error={errors.payRate}>
+                <MoneyInput id="job-pay-rate" {...invalidProps("payRate")} value={data.payRate} onChange={(e) => set("payRate", e.target.value)} placeholder="55.00" />
+                {!errors.payRate && <FieldWarning>{payWarning}</FieldWarning>}
+              </Field>
+              )}
+              <Field label={hourly ? "Min rate ($/hr)" : `Min salary (${periodUnit})`} htmlFor="job-salary-min" error={errors.salaryMin}>
+                <MoneyInput id="job-salary-min" {...invalidProps("salaryMin")} value={data.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} placeholder={hourly ? "45" : data.salaryPeriod === "year" ? "80000" : ""} />
+              </Field>
+              <Field label={hourly ? "Max rate ($/hr)" : `Max salary (${periodUnit})`} htmlFor="job-salary-max" error={errors.salaryMax}>
+                <MoneyInput id="job-salary-max" {...invalidProps("salaryMax")} value={data.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} placeholder={hourly ? "65" : data.salaryPeriod === "year" ? "120000" : ""} />
+              </Field>
             </div>
-            <div className="inline-flex items-center gap-1.5">
-              <dt className="text-[var(--adm-ink-subtle)]">Updated</dt>
-              <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.updatedAt)}</dd>
+          </StepCard>
+
+          {/* Client and vendor are commercial, so media sees only the deadline. */}
+          <StepCard
+            id="step-client"
+            step={5}
+            title={canPrice ? "Client and deadline" : "Deadline"}
+            description={canPrice ? "Who the role is for, and when submissions close." : "When submissions close."}
+            state={stepState("step-client")}
+          >
+            <div className={cn("grid grid-cols-1 gap-4", canPrice && "@xl:grid-cols-2 @3xl:grid-cols-3")}>
+              {canPrice && (
+                <Field label="Client" htmlFor="job-client">
+                  <FormSelect id="job-client" value={data.clientId} onChange={(e) => handleClientSelect(e.target.value)}>
+                    <option value="">Select client</option>
+                    <option value="add-new">+ Add new client</option>
+                    {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </FormSelect>
+                </Field>
+              )}
+              {canPrice && (
+                <Field label="Vendor" htmlFor="job-vendor">
+                  <FormSelect id="job-vendor" value={data.vendorId || "none"} onChange={(e) => handleVendorSelect(e.target.value)}>
+                    <option value="none">No vendor</option>
+                    <option value="add-new">+ Add new vendor</option>
+                    {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  </FormSelect>
+                </Field>
+              )}
+              <Field label="Submission deadline" htmlFor="job-deadline">
+                <FormInput
+                  id="job-deadline"
+                  type="date"
+                  value={data.submissionDueDate}
+                  onChange={(e) => set("submissionDueDate", e.target.value)}
+                />
+                <FieldWarning>{deadlineWarning}</FieldWarning>
+              </Field>
             </div>
-            <div className="inline-flex items-center gap-1.5">
-              <dt className="text-[var(--adm-ink-subtle)]">Posted by</dt>
-              <dd className="text-[var(--adm-ink-mute)]">{job.postedByName || "–"}</dd>
-            </div>
-          </dl>
-        )}
-      </form>
+            {canPrice && data.clientId && data.clientId !== "add-new" && (
+              <Field label="Client notes" htmlFor="job-client-notes" error={errors.clientNotes} className="mt-4">
+                <FormInput
+                  id="job-client-notes"
+                  {...invalidProps("clientNotes")}
+                  value={data.clientNotes}
+                  onChange={(e) => set("clientNotes", e.target.value)}
+                  placeholder="Anything the desk should know about this client"
+                />
+              </Field>
+            )}
+          </StepCard>
+
+          {canPrice && (
+            <StepCard
+              id="step-team"
+              step={6}
+              title="Team"
+              description="Who owns the requisition and who is working it. Each gets the job's notifications."
+              state={stepState("step-team")}
+            >
+              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-2">
+                <Field label="Recruitment manager" htmlFor="job-manager">
+                  <PersonPicker
+                    id="job-manager"
+                    users={hrUsers}
+                    selectedId={data.recruitmentManagerId}
+                    selectedName={data.recruitmentManagerName}
+                    selectedEmail={data.recruitmentManagerEmail}
+                    placeholder="Search for a manager…"
+                    onChange={handleManagerSelect}
+                  />
+                </Field>
+                <Field
+                  label="Assignees"
+                  hint={data.assignedToIds.length ? `${data.assignedToIds.length} assigned` : undefined}
+                  htmlFor="job-assignees"
+                >
+                  <AssigneePicker
+                    id="job-assignees"
+                    users={hrUsers}
+                    selectedIds={data.assignedToIds}
+                    selectedNames={data.assignedToNames}
+                    selectedEmails={data.assignedToEmails}
+                    exclude={data.recruitmentManagerId ? [data.recruitmentManagerId] : []}
+                    onToggle={toggleAssignee}
+                  />
+                </Field>
+              </div>
+            </StepCard>
+          )}
+
+          {mode === "edit" && job && (
+            <dl className="flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-adm-xs">
+              <div className="inline-flex items-center gap-1.5">
+                <dt className="text-[var(--adm-ink-subtle)]">Created</dt>
+                <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.createdAt)}</dd>
+              </div>
+              <div className="inline-flex items-center gap-1.5">
+                <dt className="text-[var(--adm-ink-subtle)]">Updated</dt>
+                <dd className="tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(job.updatedAt)}</dd>
+              </div>
+              <div className="inline-flex items-center gap-1.5">
+                <dt className="text-[var(--adm-ink-subtle)]">Posted by</dt>
+                <dd className="text-[var(--adm-ink-mute)]">{job.postedByName || "–"}</dd>
+              </div>
+            </dl>
+          )}
+        </form>
+
+        {/* Wide screens: progress, a live summary and the one primary action. */}
+        <StepRail
+          steps={steps}
+          active={activeStep}
+          // The main pane is the scroller; keep the rail inside it.
+          className="sticky top-0 hidden max-h-[calc(100dvh-60px-48px)] lg:flex"
+          summary={
+            <dl className="space-y-2 text-adm-xs">
+              {summary.map((row) => (
+                <div key={row.k} className="flex gap-3">
+                  <dt className="w-16 flex-none text-[var(--adm-ink-subtle)]">{row.k}</dt>
+                  <dd className={cn("min-w-0 flex-1 truncate", row.v ? "text-[var(--adm-ink)]" : "text-[var(--adm-ink-subtle)]")} title={row.v || undefined}>
+                    {row.v || "Not set"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          }
+          footer={
+            <>
+              <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting} className="w-full">
+                {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+                {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
+              </WorkspaceButton>
+              {requiredLeft > 0 && (
+                <p className="mt-2 text-center text-adm-xs text-[var(--adm-ink-subtle)]">
+                  {requiredLeft} required step{requiredLeft === 1 ? "" : "s"} left
+                </p>
+              )}
+            </>
+          }
+        />
+      </div>
+
+      {/* Narrow screens: the primary action stays in reach at the bottom. */}
+      <div className="sticky -bottom-4 z-20 -mx-4 -mb-4 mt-4 flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:-bottom-5 sm:-mx-5 sm:-mb-5 lg:hidden">
+        <p className="min-w-0 text-adm-xs text-[var(--adm-ink-mute)]">
+          {requiredLeft > 0
+            ? <>{requiredLeft} required step{requiredLeft === 1 ? "" : "s"} left</>
+            : <span className="font-medium text-[var(--adm-success-ink)]">Ready to save</span>}
+        </p>
+        <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
+          {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+          {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
+        </WorkspaceButton>
+      </div>
 
       {showAddClient && (
         <AddClientModal
@@ -841,7 +962,7 @@ function AddVendorModal({
 // ── Preview Modal ──────────────────────────────────────────────────────────────
 
 const PREVIEW_PROSE =
-  "text-[14px] leading-relaxed text-[var(--adm-ink-mute)] [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5";
+  "text-adm-base leading-relaxed text-[var(--adm-ink-mute)] [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5";
 
 function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLabel: string; onClose: () => void }) {
   return (
@@ -854,14 +975,14 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
       bodyClassName="space-y-4 bg-[var(--adm-surface-sunken)] sm:p-4"
     >
       <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-        <h1 className="mb-3 text-[24px] font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+        <h1 className="mb-3 text-adm-2xl font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
           <span className="inline-flex items-center gap-1.5">
             <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{typeLabel}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-            {data.location || (data.type === "remote" ? "Remote" : "–")}{data.state ? `, ${data.state}` : ""}
+            {jobLocationLabel(data) || "–"}
           </span>
           {data.submissionDueDate && (
             <span className="inline-flex items-center gap-1.5">
@@ -871,9 +992,9 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
           )}
         </div>
         {data.salaryMin && data.salaryMax && (
-          <p className="text-[18px] font-semibold tabular-nums text-[var(--adm-ink)]">
+          <p className="text-adm-lg font-semibold tabular-nums text-[var(--adm-ink)]">
             ${Number(data.salaryMin).toLocaleString()} – ${Number(data.salaryMax).toLocaleString()}
-            <span className="ml-1 text-[13px] font-medium text-[var(--adm-ink-mute)]">
+            <span className="ml-1 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               {SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}
             </span>
           </p>
@@ -882,30 +1003,30 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
 
       {data.description && (
         <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-          <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">About this role</h2>
+          <h2 className="mb-3 text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">About this role</h2>
           <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.description)} />
         </div>
       )}
       {data.responsibilities && (
         <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-          <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Responsibilities</h2>
+          <h2 className="mb-3 text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Responsibilities</h2>
           <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.responsibilities)} />
         </div>
       )}
       {data.requirements && (
         <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-          <h2 className="mb-3 text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Requirements</h2>
+          <h2 className="mb-3 text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Requirements</h2>
           <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(data.requirements)} />
         </div>
       )}
 
       <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 text-center">
-        <h3 className="text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Ready to apply?</h3>
-        <p className="mt-1 text-[14px] text-[var(--adm-ink-mute)]">Join our team and help shape the future of enterprise IT.</p>
+        <h3 className="text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">Ready to apply?</h3>
+        <p className="mt-1 text-adm-base text-[var(--adm-ink-mute)]">Join our team and help shape the future of enterprise IT.</p>
         {/* Inert stand-in for the public page's apply button. */}
         <span
           aria-hidden="true"
-          className="mt-4 inline-flex h-9 cursor-default items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-5 text-[13.5px] font-semibold text-white"
+          className="mt-4 inline-flex h-9 cursor-default items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-5 text-adm-base font-semibold text-white"
         >
           Apply for this position
         </span>

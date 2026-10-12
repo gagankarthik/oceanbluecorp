@@ -98,11 +98,11 @@ export function EmptyState({
         className={cn(resolvedTone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text, sm ? "h-5 w-5" : "h-6 w-6")}
         strokeWidth={1.5}
       />
-      <p className={cn("mt-2.5 font-medium text-[var(--adm-ink)]", sm ? "text-[13px]" : "text-[14px]")}>
+      <p className={cn("mt-2.5 font-medium text-[var(--adm-ink)]", sm ? "text-adm-xs" : "text-adm-base")}>
         {resolvedTitle}
       </p>
       {resolvedDescription && (
-        <p className="mt-1 max-w-sm text-balance text-[13px] text-[var(--adm-ink-mute)]">{resolvedDescription}</p>
+        <p className="mt-1 max-w-sm text-balance text-adm-xs text-[var(--adm-ink-mute)]">{resolvedDescription}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>

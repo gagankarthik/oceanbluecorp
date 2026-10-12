@@ -92,7 +92,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
   if (error) {
     return (
       <div className="p-4">
-        <p role="alert" className="flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+        <p role="alert" className="flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
           <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
           {error}
         </p>
@@ -112,7 +112,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="adm-grid w-full text-[14px]">
+      <table className="adm-grid w-full text-adm-base">
         <thead>
           <tr>
             <th className="px-4 py-2.5 text-left">Candidate</th>
@@ -143,7 +143,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                     <span className="text-[var(--adm-ink-subtle)]"> via {s.vendorName}</span>
                   )}
                   {s.submittedTo && (
-                    <span className="block text-[12.5px] text-[var(--adm-ink-subtle)]">{s.submittedTo}</span>
+                    <span className="block text-adm-xs text-[var(--adm-ink-subtle)]">{s.submittedTo}</span>
                   )}
                 </td>
                 <td className="hidden px-3 py-3 text-right tabular-nums text-[var(--adm-ink-mute)] sm:table-cell">
@@ -153,7 +153,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                 <td className="px-3 py-3">
                   <StatusBadge tone={submissionTone(s.status)} label={SUBMISSION_STATUS_LABELS[s.status]} />
                 </td>
-                <td className="hidden px-4 py-3 text-[13px] text-[var(--adm-ink-mute)] lg:table-cell">
+                <td className="hidden px-4 py-3 text-adm-xs text-[var(--adm-ink-mute)] lg:table-cell">
                   {ivCount === 0 ? (
                     <span className="text-[var(--adm-ink-subtle)]">–</span>
                   ) : (
@@ -161,7 +161,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
                       <IconInterview className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                       {ivCount}
                       {nextIv && (
-                        <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">
+                        <span className="text-adm-xs text-[var(--adm-ink-subtle)]">
                           · R{nextIv.round} {INTERVIEW_STATUS_LABELS[nextIv.status].toLowerCase()} {fmtDate(nextIv.scheduledAt)}
                         </span>
                       )}

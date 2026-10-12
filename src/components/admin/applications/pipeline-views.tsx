@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { X, Plus, MoreHorizontal } from "lucide-react";
+import { X, Plus, MoreVertical } from "lucide-react";
 import { IconEye, IconTrash, IconEdit, IconGroup } from "@/components/admin/icons";
 import type { Application } from "@/lib/aws/dynamodb";
 import {
@@ -30,7 +30,7 @@ export interface SharedProps extends RowActions {
 
 const menuCls =
   "w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-[13px]";
+const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
 
 /** View / edit / move / delete, shared by the grid, the board and the list. */
 export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, className }: {
@@ -53,7 +53,7 @@ export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, 
             className,
           )}
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreVertical className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4} className={menuCls}>
@@ -65,13 +65,13 @@ export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, 
         </DropdownMenuItem>
         <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
         <div className="px-1 py-1">
-          <p className="px-1 pb-1 text-[12px] font-medium text-[var(--adm-ink-subtle)]">Move to</p>
+          <p className="px-1 pb-1 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">Move to</p>
           {KANBAN_COLS.filter((c) => c !== app.status).map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => onStatusChange(app.id, c as Application["status"])}
-              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-adm-xs text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
             >
               <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(c) }} />
               {sLabel(c)}
@@ -97,12 +97,12 @@ function SkillChips({ skills, max }: { skills?: string[]; max: number }) {
   return (
     <div className="flex flex-wrap gap-1">
       {all.slice(0, max).map((s) => (
-        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-ink-mute)]">
+        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-ink-mute)]">
           {s}
         </span>
       ))}
       {all.length > max && (
-        <span className="px-1 py-0.5 text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+        <span className="px-1 py-0.5 text-adm-micro font-medium tabular-nums text-[var(--adm-ink-subtle)]">
           +{all.length - max}
         </span>
       )}
@@ -120,7 +120,7 @@ function ShowMore({ hidden, onClick, className }: { hidden: number; onClick: () 
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-[8px] px-2 py-1.5 text-[12.5px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface)] hover:text-[var(--adm-ink)]",
+        "w-full rounded-[8px] px-2 py-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface)] hover:text-[var(--adm-ink)]",
         className,
       )}
     >
@@ -175,8 +175,8 @@ export function KanbanView({ apps, onView, onEdit, onDelete, onStatusChange, onR
           >
             <header className="flex items-center gap-2 px-3 pb-2 pt-3">
               <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(col) }} />
-              <h3 className="text-[13px] font-semibold text-[var(--adm-ink)]">{sLabel(col)}</h3>
-              <span className="ml-auto text-[12.5px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+              <h3 className="text-adm-xs font-semibold text-[var(--adm-ink)]">{sLabel(col)}</h3>
+              <span className="ml-auto text-adm-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">
                 {list.length}
               </span>
             </header>
@@ -184,7 +184,7 @@ export function KanbanView({ apps, onView, onEdit, onDelete, onStatusChange, onR
             <div className="flex-1 space-y-2 px-2 pb-2">
               {list.length === 0 ? (
                 <div className={cn(
-                  "grid h-20 place-items-center rounded-[10px] border border-dashed text-[12.5px] transition-colors",
+                  "grid h-20 place-items-center rounded-[10px] border border-dashed text-adm-xs transition-colors",
                   isOver
                     ? "border-[var(--adm-accent)] font-medium text-[var(--adm-accent)]"
                     : "border-[var(--adm-line-strong)] text-[var(--adm-ink-subtle)]",
@@ -210,7 +210,7 @@ export function KanbanView({ apps, onView, onEdit, onDelete, onStatusChange, onR
                 onClick={() => setShown((s) => ({ ...s, [col]: limit + PAGE }))}
               />
               {list.length > 0 && isOver && (
-                <div className="grid h-14 place-items-center rounded-[10px] border border-dashed border-[var(--adm-accent)] text-[12.5px] font-medium text-[var(--adm-accent)]">
+                <div className="grid h-14 place-items-center rounded-[10px] border border-dashed border-[var(--adm-accent)] text-adm-xs font-medium text-[var(--adm-accent)]">
                   Drop here
                 </div>
               )}
@@ -244,11 +244,11 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
           <button
             type="button"
             onClick={() => onView(app.id)}
-            className="block w-full truncate text-left text-[13.5px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+            className="block w-full truncate text-left text-adm-base font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
           >
             {app.name || app.email}
           </button>
-          {app.jobTitle && <p className="mt-0.5 truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{app.jobTitle}</p>}
+          {app.jobTitle && <p className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-subtle)]">{app.jobTitle}</p>}
         </div>
         <RowActionsMenu
           app={app}
@@ -268,7 +268,7 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
 
       <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-2.5">
         <StarRating rating={app.rating || 0} onRate={(r) => onRating(app.id, r === app.rating ? 0 : r)} />
-        <span className="text-[12px] tabular-nums text-[var(--adm-ink-subtle)]">
+        <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </span>
       </div>
@@ -339,11 +339,11 @@ const ListRow = React.memo(function ListRow({ app, ...shared }: RowActions & { a
           <button
             type="button"
             onClick={() => shared.onView(app.id)}
-            className="block max-w-full truncate text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+            className="block max-w-full truncate text-left text-adm-base font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
           >
             {app.name || app.email}
           </button>
-          <p className="truncate text-[13px] text-[var(--adm-ink-subtle)]">{app.email}</p>
+          <p className="truncate text-adm-xs text-[var(--adm-ink-subtle)]">{app.email}</p>
           {(app.skills || []).length > 0 && (
             <div className="mt-2">
               <SkillChips skills={app.skills} max={4} />
@@ -351,8 +351,8 @@ const ListRow = React.memo(function ListRow({ app, ...shared }: RowActions & { a
           )}
         </div>
 
-        <div className="min-w-0 space-y-0.5 text-[13px] text-[var(--adm-ink-subtle)]">
-          <p className="truncate text-[13.5px] text-[var(--adm-ink-mute)]">
+        <div className="min-w-0 space-y-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">
+          <p className="truncate text-adm-base text-[var(--adm-ink-mute)]">
             {app.jobTitle || <span className="text-[var(--adm-ink-subtle)]">No position</span>}
           </p>
           {loc && <p className="truncate">{loc}</p>}
@@ -363,7 +363,7 @@ const ListRow = React.memo(function ListRow({ app, ...shared }: RowActions & { a
         <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-1.5">
           <StatusBadge status={app.status} />
           <StarRating rating={app.rating || 0} onRate={(r) => shared.onRating(app.id, r === app.rating ? 0 : r)} />
-          <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(app.appliedAt)}</span>
+          <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(app.appliedAt)}</span>
           {app.addToTalentBench && <StatusBadge tone="emerald" label="Bench" />}
         </div>
       </div>

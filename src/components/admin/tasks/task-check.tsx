@@ -24,7 +24,7 @@ export function TaskCheck({
         "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center rounded-[4px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] disabled:opacity-60",
         done
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent)] text-white"
-          : "border-[var(--adm-line-strong)] bg-[var(--adm-surface)] hover:border-[var(--adm-accent)]",
+          : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] hover:border-[var(--adm-accent)]",
       )}
     >
       {busy ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : done && <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />}

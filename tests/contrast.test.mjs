@@ -186,6 +186,28 @@ describe("form controls (1.4.11)", () => {
     }
   });
 
+  test("every control edge (buttons, pills, toggles, checkboxes) reaches 3:1", () => {
+    const edge = token("adm-line-control");
+    for (const [sName, surf] of [["surface", SURFACE], ["canvas", CANVAS], ["sunken", SURFACE_SUNKEN], ["surface-2", SURFACE_2]]) {
+      const r = ratioOn(edge, surf);
+      assert.ok(r >= NEED.nonText, `--adm-line-control on ${sName} is ${r.toFixed(2)}:1, needs ${NEED.nonText}`);
+    }
+  });
+
+  test("grid headers and the sidebar read at AA", () => {
+    const pairs = [
+      ["head-ink on head", token("adm-head-ink"), token("adm-head")],
+      ["nav-mute on nav", token("adm-nav-mute"), token("adm-nav-bg")],
+      ["nav-subtle on nav", token("adm-nav-subtle"), token("adm-nav-bg")],
+      ["nav-mute on nav hover", token("adm-nav-mute"), token("adm-nav-hover")],
+      ["nav-active-ink on nav-active", token("adm-nav-active-ink"), token("adm-nav-active")],
+    ];
+    for (const [name, fg, bg] of pairs) {
+      const r = ratioOn(fg, bg);
+      assert.ok(r >= NEED.text, `${name} is ${r.toFixed(2)}:1, needs ${NEED.text}`);
+    }
+  });
+
   test("white on the danger button", () => {
     const r = ratioOn("#ffffff", DANGER);
     assert.ok(r >= NEED.text, `white on --adm-danger is ${r.toFixed(2)}:1, needs ${NEED.text}`);

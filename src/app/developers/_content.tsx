@@ -346,7 +346,7 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
               params={[
                 { name: "status", type: "string", required: false, description: "Filter by status: active (default), open, paused, closed" },
                 { name: "department", type: "string", required: false, description: "Filter by department name (case-insensitive)" },
-                { name: "type", type: "string", required: false, description: "Filter by employment type: full-time, part-time, contract, contract-to-hire, direct-hire, managed-teams, remote" },
+                { name: "type", type: "string", required: false, description: "Filter by employment type: full-time, part-time, contract, contract-to-hire, direct-hire, managed-teams" },
                 { name: "page", type: "integer", required: false, description: "Page number (default: 1)" },
                 { name: "limit", type: "integer", required: false, description: "Results per page, 1–100 (default: 20)" },
               ]}
@@ -420,8 +420,9 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
               params={[
                 { name: "title", type: "string", required: true, description: "Job title, up to 200 characters" },
                 { name: "department", type: "string", required: true, description: "Business unit / practice area" },
-                { name: "location", type: "string", required: true, description: "City and state, e.g. Columbus, OH" },
-                { name: "type", type: "string", required: true, description: "full-time | part-time | contract | contract-to-hire | direct-hire | managed-teams | remote" },
+                { name: "location", type: "string", required: false, description: "City and state, e.g. Columbus, OH. Required unless workplace is remote" },
+                { name: "workplace", type: "string", required: false, description: "on-site | hybrid | remote" },
+                { name: "type", type: "string", required: true, description: "full-time | part-time | contract | contract-to-hire | direct-hire | managed-teams" },
                 { name: "description", type: "string", required: true, description: "Job description. Basic HTML is accepted and sanitized on save" },
                 { name: "state", type: "string", required: false, description: "Two-letter state code" },
                 { name: "requirements", type: "string", required: false, description: "Requirements, as HTML or plain text" },
@@ -493,7 +494,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
                   <tr>
                     <td className="py-3 px-4 font-mono text-xs">type</td>
                     <td className="py-3 px-4 text-xs">
-                      <code className="bg-paper px-1 rounded">full-time</code> · <code className="bg-paper px-1 rounded">part-time</code> · <code className="bg-paper px-1 rounded">contract</code> · <code className="bg-paper px-1 rounded">contract-to-hire</code> · <code className="bg-paper px-1 rounded">direct-hire</code> · <code className="bg-paper px-1 rounded">managed-teams</code> · <code className="bg-paper px-1 rounded">remote</code>
+                      <code className="bg-paper px-1 rounded">full-time</code> · <code className="bg-paper px-1 rounded">part-time</code> · <code className="bg-paper px-1 rounded">contract</code> · <code className="bg-paper px-1 rounded">contract-to-hire</code> · <code className="bg-paper px-1 rounded">direct-hire</code> · <code className="bg-paper px-1 rounded">managed-teams</code>
                     </td>
                   </tr>
                   <tr>
@@ -525,7 +526,8 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
                     ["postingId", "string | null", "Human-readable ID, e.g. OB-2025-0042"],
                     ["title", "string", "Job title"],
                     ["department", "string", "Business unit / practice area"],
-                    ["location", "string", "City and state, e.g. Columbus, OH"],
+                    ["location", "string", "City and state, e.g. Columbus, OH. Empty for a remote role with no base"],
+                    ["workplace", "string", "on-site, hybrid or remote. Absent on older postings"],
                     ["state", "string | null", "Two-letter state code"],
                     ["type", "string", "Employment type, see filtering table above"],
                     ["description", "string", "Full job description text"],

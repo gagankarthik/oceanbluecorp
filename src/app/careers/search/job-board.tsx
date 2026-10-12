@@ -12,6 +12,7 @@ import {
 import { IconFilter, IconMoney, IconCheckCircle } from "@/components/site/careers/careers-icons";
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
+import { jobPlace } from "@/lib/workplace";
 import type { PublicJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { formatSalary } from "@/lib/salary";
@@ -24,7 +25,7 @@ const ALL_DEPTS = "All Departments";
 const ALL_TYPES = "All Types";
 const ALL_LOCS = "All Locations";
 
-const jobTypes = [ALL_TYPES, "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams", "remote"];
+const jobTypes = [ALL_TYPES, "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams"];
 
 const TYPE_LABEL: Record<string, string> = {
   "full-time": "Full-time",
@@ -61,7 +62,7 @@ const dueLabel = (dueDate?: string): { text: string; urgent: boolean } | null =>
   return { text: `Closes ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`, urgent: false };
 };
 
-const isRemote = (job: BoardJob) => job.type === "remote" || (job.location || "").toLowerCase().includes("remote");
+const isRemote = (job: BoardJob) => workMode(job) === "Remote";
 
 const scrollToResults = () => document.getElementById("openings")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -628,7 +629,7 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
           <li>{job.department}</li>
           <li className="inline-flex items-center gap-1.5">
             <IconPin size={14} className="text-ink-subtle" />
-            {job.location}
+            {jobPlace(job)}
           </li>
           <li>{formatJobType(job.type)}</li>
           {salary && (

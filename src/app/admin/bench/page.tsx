@@ -11,9 +11,9 @@ import BenchLoading from "./loading";
 
 import { Field, FormSelect } from "@/components/admin/forms/primitives";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterMenu, ActiveFilters, DisplayMenu,
-  GridSelect,
+  Workspace, WorkspaceButton, WorkspaceSearch, FilterMenu, DisplayMenu, GridSelect,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterField } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { AdminCard } from "@/components/admin/admin-card";
 import { ViewMenu } from "@/components/admin/toolbar";
@@ -74,29 +74,17 @@ const STATUS_TABS = [
  *   Talent Bench (internal)  our own consultants, the whole team sees them
  *   My Pool      (external)  candidates you sourced, private to you
  *
- * The tabs sit above the KPI strip because every number below them is scoped
- * to the selected pool. The strip itself lives in components/admin/
- * candidate-tabs.tsx, because Lead Sourcing renders the same row.
+ * The pool tabs scope every count and row below them.
  */
 type PoolKey = "all" | BenchType;
 
-/**
- * The location filter keys on STATE, not on the city string.
- *
- * A bench is searched by market, not by spelling: "Austin", "austin" and
- * "Austin Metro" are one answer to "who can work in Texas?", and a city-keyed
- * menu would list all three as separate options while a consultant in Round
- * Rock matched none of them. Cities stay searchable through the search box.
- */
-function locationLabelOf(value: string): string {
-  return value === "__none" ? "No location" : STATE_NAME.get(value) || value;
-}
+// Location filters on state, not city spelling; cities stay searchable.
 
 const skillChip =
-  "inline-flex h-[22px] items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-accent)]";
+  "inline-flex h-[22px] items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-accent)]";
 
 const countChip =
-  "inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium tabular-nums text-[var(--adm-ink-mute)]";
+  "inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]";
 
 /** How long a record has been sitting on the bench, in whole days. */
 function daysOnBench(app: Application): number | null {
@@ -119,7 +107,7 @@ function PoolBadge({ pool }: { pool: BenchType }) {
     <span
       title={POOL_META[pool].hint}
       className={cn(
-        "inline-flex h-[22px] items-center whitespace-nowrap rounded-[6px] px-1.5 text-[12px] font-medium",
+        "inline-flex h-[22px] items-center whitespace-nowrap rounded-[6px] px-1.5 text-adm-xs font-medium",
         shared
           ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
@@ -337,15 +325,6 @@ export default function TalentBenchPage() {
     [pooledApplications],
   );
 
-  const kpis = useMemo(() => {
-    return {
-      total: pooledApplications.length,
-      available: pooledApplications.filter((a) => a.status === "active" || a.status === "pending").length,
-      inProcess: pooledApplications.filter((a) => ["reviewing", "submitted", "interview"].includes(a.status)).length,
-      placed: pooledApplications.filter((a) => a.status === "hired").length,
-    };
-  }, [pooledApplications]);
-
   const [rows, setRows] = useLocalStorage<number>("adm.bench.rows", 25);
   const [hiddenColumns, setHiddenColumns] = useLocalStorage<string[]>("adm.bench.hiddenCols", []);
 
@@ -484,11 +463,12 @@ export default function TalentBenchPage() {
   const candidateCol: DataTableColumn<ApplicationWithJob> = {
     key: "candidate",
     header: "Candidate",
+    width: "200px",
     sortValue: (a) => a.name || a.email,
     cell: (a) => (
-      <span className="inline-flex max-w-full items-center gap-2.5 align-middle">
+      <span className="inline-flex max-w-[176px] items-center gap-2.5 align-middle">
         <Avatar name={a.name} email={a.email} size="sm" />
-        <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]">{a.name || "Unknown"}</span>
+        <span title={a.name || undefined} className="min-w-0 truncate font-semibold text-[var(--adm-ink)]">{a.name || "Unknown"}</span>
       </span>
     ),
   };
@@ -497,13 +477,14 @@ export default function TalentBenchPage() {
     key: "addedBy",
     header: "Added by",
     hideBelow: "xl",
+    width: "150px",
     sortValue: (a) => resolveAdder(a).name,
     cell: (a) => {
       const adder = resolveAdder(a);
       return (
         <span className="inline-flex max-w-full items-center gap-2 align-middle">
           <Avatar name={adder.name} size="xs" />
-          <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink-mute)]">{adder.name}</span>
+          <span className="block min-w-0 max-w-[110px] truncate text-adm-xs text-[var(--adm-ink-mute)]">{adder.name}</span>
         </span>
       );
     },
@@ -512,21 +493,23 @@ export default function TalentBenchPage() {
   const emailCol: DataTableColumn<ApplicationWithJob> = {
     key: "email",
     header: "Email",
-    hideBelow: "lg",
+    hideBelow: "xl",
+    width: "180px",
     sortValue: (a) => a.email,
-    cell: (a) => <span className="text-[13px] text-[var(--adm-ink-mute)]">{a.email}</span>,
+    cell: (a) => <span title={a.email} className="block max-w-[160px] truncate text-adm-xs text-[var(--adm-ink-mute)]">{a.email}</span>,
   };
 
   const skillsCol: DataTableColumn<ApplicationWithJob> = {
     key: "skills",
     header: "Skills",
     hideBelow: "md",
+    width: "200px",
     sortValue: (a) => a.skills?.length || 0,
     cell: (a) => {
       const skills = a.skills || [];
       if (skills.length === 0) return <BlankCell />;
       return (
-        <span className="inline-flex max-w-full items-center gap-1 align-middle">
+        <span title={skills.join(", ")} className="inline-flex max-w-[176px] items-center gap-1 align-middle">
           {skills.slice(0, 2).map((skill) => (
             <span key={skill} className={cn(skillChip, "min-w-0 truncate")}>{skill}</span>
           ))}
@@ -541,6 +524,7 @@ export default function TalentBenchPage() {
     header: "On bench",
     align: "right",
     hideBelow: "xl",
+    width: "90px",
     sortValue: (a) => daysOnBench(a) ?? -1,
     cell: (a) => {
       const d = daysOnBench(a);
@@ -557,6 +541,7 @@ export default function TalentBenchPage() {
     key: "rating",
     header: "Rating",
     hideBelow: "sm",
+    width: "110px",
     sortValue: (a) => a.rating || 0,
     cell: (a) => (
       <div onClick={(e) => e.stopPropagation()}>
@@ -568,7 +553,8 @@ export default function TalentBenchPage() {
   const poolCol: DataTableColumn<ApplicationWithJob> = {
     key: "pool",
     header: "Pool",
-    hideBelow: "lg",
+    hideBelow: "xl",
+    width: "110px",
     sortValue: (a) => poolOf(a),
     cell: (a) => <PoolBadge pool={poolOf(a)} />,
   };
@@ -577,10 +563,11 @@ export default function TalentBenchPage() {
     key: "location",
     header: "Location",
     hideBelow: "lg",
+    width: "140px",
     sortValue: (a) => [a.city, stateOf(a.state)].filter(Boolean).join(", "),
     cell: (a) => {
       const loc = [a.city?.trim(), stateOf(a.state)].filter(Boolean).join(", ");
-      return loc ? <span className="text-[13px] text-[var(--adm-ink-mute)]">{loc}</span> : <BlankCell />;
+      return loc ? <span title={loc} className="block max-w-[120px] truncate text-adm-xs text-[var(--adm-ink-mute)]">{loc}</span> : <BlankCell />;
     },
   };
 
@@ -588,6 +575,7 @@ export default function TalentBenchPage() {
     key: "hireType",
     header: "Hire type",
     hideBelow: "xl",
+    width: "110px",
     sortValue: (a) => a.hireType || "",
     cell: (a) => a.hireType
       ? (
@@ -599,6 +587,7 @@ export default function TalentBenchPage() {
   const statusCol: DataTableColumn<ApplicationWithJob> = {
     key: "status",
     header: "Stage",
+    width: "150px",
     sortValue: (a) => a.status,
     cell: (a) => (
       <GridSelect
@@ -618,6 +607,7 @@ export default function TalentBenchPage() {
     key: "actions",
     header: "",
     align: "right",
+    width: "120px",
     cell: (a) => (
       <div onClick={(e) => e.stopPropagation()} className="-my-1 flex items-center justify-end gap-0.5">
         <RowAction label="Edit profile" onClick={() => handleEditApplication(a)}>
@@ -698,25 +688,12 @@ export default function TalentBenchPage() {
 
   return (
     <div className="flex flex-col pb-6">
-      {/* Pools re-scope everything below them, so they lead the band; the figures follow the pool. */}
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Talent bench"
-        meta={`${poolCounts.all.toLocaleString()} profile${poolCounts.all === 1 ? "" : "s"} ready for future roles`}
-        stats={[
-          { label: "All candidates", value: poolCounts.all, selected: poolFilter === "all", onClick: () => setPoolFilter("all") },
-          ...POOL_ORDER.map((pool) => ({
-            label: POOL_META[pool].label,
-            value: poolCounts[pool],
-            selected: poolFilter === pool,
-            onClick: () => setPoolFilter(pool),
-          })),
-          { label: "Available now", value: kpis.available },
-          { label: "In process", value: kpis.inProcess },
-          { label: "Placed", value: kpis.placed },
-          { label: "Idle 30+ days", value: staleBench },
-        ]}
+        meta={<>
+          {poolCounts.all.toLocaleString()} profile{poolCounts.all === 1 ? "" : "s"} ready for future roles
+          {staleBench ? <>, <MetaStrong>{staleBench} idle 30+ days</MetaStrong></> : null}
+        </>}
         actions={
           <>
             <WorkspaceButton asChild>
@@ -724,105 +701,100 @@ export default function TalentBenchPage() {
                 <IconSource aria-hidden="true" /><span className="hidden md:inline">Lead sourcing</span>
               </Link>
             </WorkspaceButton>
-            <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0}>
+            <WorkspaceButton onClick={handleExportCSV} disabled={filteredApplications.length === 0} aria-label="Export CSV">
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton className={BAND_PRIMARY} onClick={handleCreateNew}>
+            <WorkspaceButton variant="primary" onClick={handleCreateNew}>
               <Plus className="h-4 w-4" />Add profile
             </WorkspaceButton>
           </>
         }
       />
 
-      <WorkspaceToolbar
-          variant="canvas"
+      <Workspace>
+        {/* Pools re-scope everything below them, counts included. */}
+        <ListToolbar
+          tabs={
+            <ListTabs<PoolKey>
+              label="Pool"
+              value={poolFilter}
+              onChange={setPoolFilter}
+              tabs={[
+                { key: "all", label: "All", count: poolCounts.all },
+                ...POOL_ORDER.map((pool) => ({ key: pool, label: POOL_META[pool].label, count: poolCounts[pool] })),
+              ]}
+            />
+          }
           search={
             <WorkspaceSearch
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Filter bench by name, email or skill"
+              placeholder="Search name, email or skill…"
             />
           }
-          trailing={
-            <>
-              <FilterMenu activeCount={activeFilterCount} onClearAll={clearFilters}>
-                <Field label="Stage" htmlFor="bench-filter-stage">
-                  <FormSelect id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                    {STATUS_TABS.map((t) => (
-                      <option key={t.key} value={t.key}>{t.label} ({statusCounts[t.key] || 0})</option>
-                    ))}
-                  </FormSelect>
-                </Field>
-                <Field label="Skill" htmlFor="bench-filter-skill">
-                  <FormSelect id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
-                    <option value="all">All skills</option>
-                    {allSkills.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
-                  </FormSelect>
-                </Field>
-                <Field label="Work authorization" htmlFor="bench-filter-auth">
-                  <FormSelect id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
-                    <option value="all">All</option>
-                    {workAuthorizations.map((auth) => <option key={auth} value={auth}>{auth}</option>)}
-                  </FormSelect>
-                </Field>
-                <Field label="Hire type" htmlFor="bench-filter-hire">
-                  <FormSelect id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
-                    <option value="all">All hire types</option>
-                    {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
-                  </FormSelect>
-                </Field>
-                <Field label="Location" htmlFor="bench-filter-location">
-                  <FormSelect id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-                    <option value="all">All locations ({pooledApplications.length})</option>
-                    {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
-                  </FormSelect>
-                </Field>
-                {canFilterByAdder && (
-                  <Field label="Added by" htmlFor="bench-filter-owner">
-                    <FormSelect id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
-                      <option value="all">Everyone</option>
-                      {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
-                    </FormSelect>
-                  </Field>
-                )}
-              </FilterMenu>
-              <ViewMenu
-                options={[
-                  { value: "table", label: "Table", icon: LayoutList },
-                  { value: "cards", label: "Cards", icon: LayoutGrid },
-                ]}
-                value={viewMode}
-                onChange={setViewMode}
-              />
-              {viewMode === "table" && (
-                <DisplayMenu
-                  columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                  hidden={hiddenColumns}
-                  onHiddenChange={setHiddenColumns}
-                  rows={rows}
-                  onRowsChange={setRows}
-                  onReset={() => { setHiddenColumns([]); setRows(25); }}
-                />
-              )}
-            </>
-          }
-        />
+        >
+          <FilterMenu activeCount={activeFilterCount} onClearAll={clearFilters}>
+            <FilterField label="Stage" htmlFor="bench-filter-stage">
+              <FormSelect className="h-8 text-adm-xs" id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                {STATUS_TABS.map((t) => (
+                  <option key={t.key} value={t.key}>{t.label} ({statusCounts[t.key] || 0})</option>
+                ))}
+              </FormSelect>
+            </FilterField>
+            <FilterField label="Skill" htmlFor="bench-filter-skill">
+              <FormSelect className="h-8 text-adm-xs" id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
+                <option value="all">All skills</option>
+                {allSkills.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
+              </FormSelect>
+            </FilterField>
+            <FilterField label="Work authorization" htmlFor="bench-filter-auth">
+              <FormSelect className="h-8 text-adm-xs" id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+                <option value="all">All</option>
+                {workAuthorizations.map((auth) => <option key={auth} value={auth}>{auth}</option>)}
+              </FormSelect>
+            </FilterField>
+            <FilterField label="Hire type" htmlFor="bench-filter-hire">
+              <FormSelect className="h-8 text-adm-xs" id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+                <option value="all">All hire types</option>
+                {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
+              </FormSelect>
+            </FilterField>
+            <FilterField label="Location" htmlFor="bench-filter-location">
+              <FormSelect className="h-8 text-adm-xs" id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                <option value="all">All locations ({pooledApplications.length})</option>
+                {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
+              </FormSelect>
+            </FilterField>
+            {canFilterByAdder && (
+              <FilterField label="Added by" htmlFor="bench-filter-owner">
+                <FormSelect className="h-8 text-adm-xs" id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
+                  <option value="all">Everyone</option>
+                  {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                </FormSelect>
+              </FilterField>
+            )}
+          </FilterMenu>
+          <ViewMenu
+            options={[
+              { value: "table", label: "Table", icon: LayoutList },
+              { value: "cards", label: "Cards", icon: LayoutGrid },
+            ]}
+            value={viewMode}
+            onChange={setViewMode}
+          />
+          {viewMode === "table" && (
+            <DisplayMenu
+              columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+              hidden={hiddenColumns}
+              onHiddenChange={setHiddenColumns}
+              rows={rows}
+              onRowsChange={setRows}
+              onReset={() => { setHiddenColumns([]); setRows(25); }}
+            />
+          )}
+        </ListToolbar>
 
-      <ActiveFilters
-        variant="canvas"
-        chips={[
-          ...(statusFilter !== "all" ? [{ label: `Stage: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
-          ...(skillFilter !== "all" ? [{ label: `Skill: ${skillFilter}`, onClear: () => setSkillFilter("all") }] : []),
-          ...(authFilter !== "all" ? [{ label: `Work auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
-          ...(hireFilter !== "all" ? [{ label: `Hire type: ${hireTypeLabel(hireFilter)}`, onClear: () => setHireFilter("all") }] : []),
-          ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabelOf(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
-          ...(activeOwner !== "all" ? [{ label: `Added by: ${activeOwner}`, onClear: () => setOwnerFilter("all") }] : []),
-        ]}
-        onClearAll={clearFilters}
-      />
-
-      {viewMode === "table" ? (
-        <Workspace>
+        {viewMode === "table" ? (
           <DataTable
             noun="candidates"
             storageKey="bench"
@@ -835,9 +807,7 @@ export default function TalentBenchPage() {
             hiddenColumns={hiddenColumns}
             empty={{ icon: IconBoxes, title: emptyTitle, description: emptyDescription, action: emptyAction }}
           />
-        </Workspace>
-      ) : filteredApplications.length === 0 ? (
-        <AdminCard>
+        ) : filteredApplications.length === 0 ? (
           <EmptyState
             icon={IconBoxes}
             variant={emptyFresh ? "fresh" : "filtered"}
@@ -845,10 +815,9 @@ export default function TalentBenchPage() {
             description={emptyDescription}
             action={emptyAction}
           />
-        </AdminCard>
-      ) : (
-        // Cards sit on the canvas; inside the table panel they read as cards-in-a-card.
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        ) : (
+        // Sunken well, so the cards don't read as cards-in-a-card.
+        <div className="grid grid-cols-1 gap-4 bg-[var(--adm-surface-sunken)] p-3 md:grid-cols-2 lg:p-4 2xl:grid-cols-3">
           {filteredApplications.map((app) => {
             const adder = canFilterByAdder ? resolveAdder(app) : null;
             const age = daysOnBench(app);
@@ -861,11 +830,11 @@ export default function TalentBenchPage() {
                       <button
                         type="button"
                         onClick={() => handleViewApplication(app)}
-                        className="block max-w-full truncate rounded-[6px] text-left text-[15px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                        className="block max-w-full truncate rounded-[6px] text-left text-adm-md font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                       >
                         {app.name || "Unknown"}
                       </button>
-                      <p className="truncate font-mono text-[12px] text-[var(--adm-ink-subtle)]">
+                      <p className="truncate font-mono text-adm-xs text-[var(--adm-ink-subtle)]">
                         {app.applicationId || app.id.slice(0, 8)}
                       </p>
                     </div>
@@ -877,7 +846,7 @@ export default function TalentBenchPage() {
                 </div>
 
                 <div className="flex-1">
-                <dl className="mt-4 space-y-2 text-[13px] text-[var(--adm-ink-mute)]">
+                <dl className="mt-4 space-y-2 text-adm-xs text-[var(--adm-ink-mute)]">
                   <CardFact icon={IconMail} label="Email"><span className="truncate">{app.email}</span></CardFact>
                   <CardFact icon={IconPhone} label="Phone"><span className="tabular-nums">{app.phone || <BlankCell />}</span></CardFact>
                   <CardFact icon={IconShield} label="Work authorization"><span className="truncate">{app.workAuthorization || <BlankCell />}</span></CardFact>
@@ -904,7 +873,7 @@ export default function TalentBenchPage() {
                 )}
 
                 {adder && (
-                  <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4 text-[13px]">
+                  <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4 text-adm-xs">
                     <Avatar name={adder.name} size="xs" />
                     <span className="flex-none text-[var(--adm-ink-subtle)]">Added by</span>
                     <span className="truncate font-medium text-[var(--adm-ink-mute)]">{adder.name}</span>
@@ -917,7 +886,7 @@ export default function TalentBenchPage() {
                   <div className="flex items-center gap-2.5">
                     <StarRating rating={app.rating || 0} onRate={(n) => void handleRatingChange(app.id, n)} />
                     {age !== null && (
-                      <span className="text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]" title="Days on bench">{age}d</span>
+                      <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]" title="Days on bench">{age}d</span>
                     )}
                   </div>
                   <div className="-mr-1.5 flex items-center gap-0.5">
@@ -943,7 +912,8 @@ export default function TalentBenchPage() {
             );
           })}
         </div>
-      )}
+        )}
+      </Workspace>
     </div>
   );
 }

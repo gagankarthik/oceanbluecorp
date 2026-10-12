@@ -58,10 +58,10 @@ export function CandidateEditDrawer({
         onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }} showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[560px]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
-            <SheetTitle className="truncate text-[16px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
+            <SheetTitle className="truncate text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
               {mode === "create" ? "Add applicant" : "Edit applicant"}
             </SheetTitle>
-            <SheetDescription className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
+            <SheetDescription className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-mute)]">
               {mode === "create" ? "Enter the applicant's details below." : "Update this applicant's information."}
             </SheetDescription>
           </div>

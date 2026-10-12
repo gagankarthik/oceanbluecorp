@@ -72,7 +72,7 @@ export function AccountState({
 
       <span
         className={cn(
-          "text-[13px] font-medium",
+          "text-adm-xs font-medium",
           on ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-danger-ink)]",
         )}
       >

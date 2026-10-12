@@ -155,14 +155,17 @@ on the same beat.
 |---|---|---|
 | Charts | `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
 | Elevation | `--adm-shadow-sm/md/lg/pop` | Card → popover → modal |
-| Motion | `--adm-ease`, `--adm-duration-fast/base` | One easing curve everywhere |
+| Motion | `--adm-ease` (ease-out, entrances), `--adm-ease-in` (exits), `--adm-duration-fast/base/slow` 150/300/700 | Duration follows distance: hovers and toggles `fast`, panels and dialogs `base`, progress fills and chart draws `slow`. Loops only for live background work (indexing, saving) |
 | Radius | `--adm-radius-xs` 4 · `-control` 6 · `-chip` 6 · `-input` 8 · `-card` 8 · `-dialog` 12 | Hairline affordances · buttons, nav rows, menu items · badges and tags · fields · cards, panels, popovers, the BrandBand · modals and the command palette |
 | Loading | `--skeleton-background/radius/duration`, `--content-enter-duration` | See "Loading" under §4 |
 
-Type ramp (Geist Sans, set on `.adm-scope`): page title 21px semibold · headline
-figures 22–26px semibold, tight tracking · card title 14.5px semibold · body 13.5–14px ·
-labels/hints 12–12.5px. **Sentence case everywhere, no uppercase tracked
-micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
+Type scale (Geist Sans, set on `.adm-scope`): one ratio, **1.125 from a 14px
+body**, rounded to the half pixel, as Tailwind utilities from `@theme`:
+`text-adm-micro` 11 · `-xs` 12.5 · `-base` 14 · `-md` 16 · `-lg` 18 · `-xl` 20 ·
+`-2xl` 22.5 · `-3xl` 25 · `-4xl` 28. Page title `xl` semibold · card and step titles
+`base` semibold · body `base` · secondary text, labels and hints `xs` · counts and
+badges `micro`. **No `text-[Npx]` in the console**; a size off the scale is a bug.
+**Sentence case everywhere, no uppercase tracked micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
 36px (`h-9`). Radius comes from the `--adm-radius-*` scale above, never a literal;
 status badges are pills.
 
@@ -184,6 +187,33 @@ top-right, no breadcrumbs. Content sits flush on the canvas (`p-4 sm:p-5 lg:p-6`
 **Not generic:** no tinted icon squares on KPI cards or list rows, no gradients or
 glows. Figures lead; hierarchy comes from type scale and hairlines. Density lives
 in the shared atoms so tightening is a one-place change, not a per-page edit.
+
+### 2.7 Rulebook (owner's rules, Oct 2026)
+
+The product owner's UI/UX rules, each mapped to what enforces it here.
+
+| Rule | How it holds in the console |
+|---|---|
+| Spatial grid, S(n) = n × 4px | Tailwind's base-4 scale only; no off-grid `px` spacing |
+| Internal padding < container margin | Cards pad 16 (`p-4`), the canvas gap is 16–24 and sections 24+ |
+| Type scale, F(n+1) = F(n) × R | `text-adm-*`, R = 1.125 (above) |
+| Body line height | 1.57 on the console body, tighter (1.3) only on titles |
+| Fluid layout | Sidebar `max(15vw, 200px)`; panels size off container queries (`@container`) |
+| 60-30-10 colour | Canvas and surfaces neutral, hairlines and ink structure, cobalt only on actions, active state and focus |
+| WCAG AA | Text 4.5:1, large text 3:1, control edges 3:1 (`--adm-line-control`); `tests/contrast.test.mjs` |
+| Semantic tokens | `--adm-*` intent names (surface, line, ink, accent, danger, warning, success); never a raw hue in a component |
+| Icons | One set (`icons.tsx`, 24 viewBox, round caps); row actions are always ⋮ (`RowMenu`); icon-only buttons carry `aria-label` + `title` |
+| Motion | Above (§2.6) |
+| Anti-generic | No gradients, glows, tinted icon squares, dashed "+ filter" chips or hollow cards |
+| F/Z scanning | Title and identity top-left, primary action top-right (`ListHeader`), Create/Save at the end of the reading path (form rail) |
+| Hick, Fitts | §8; the primary action is the largest target in its region |
+| Proximity | Filters live in the panel they filter (`ListToolbar` inside `Workspace`) |
+| Progressive disclosure | Long forms are numbered steps (`StepCard`), optional steps marked so |
+| State feedback | Buttons show busy text ("Creating…"), skeletons mirror the layout, success has its own confirmation |
+| Destructive friction | Delete sits last in a menu behind a rule, styled danger, and confirms (`ConfirmDialog`) |
+| Inline validation | `useFormErrors`, field-level messages on blur; toasts only for background failures |
+| Empty states | Every table has an explanatory empty state with the next action |
+| No dead ends | Back link on every record and form; success dialogs offer next steps |
 
 ---
 
@@ -350,7 +380,7 @@ Audited 2026-08-07 against the admin app.
 | **Doherty Threshold** | No interaction waits on us past 400ms without saying so. Search debounce is 250ms (lists) / 200ms (global). Anything slower gets a skeleton that mirrors the final layout, never a spinner in a void. | `useDebouncedValue` default ≤ 250; long fetches render `skeletons.tsx` |
 | **Fitts's Law** | A control used while reading a long record is pinned, not parked at the top. The candidate record scrolls ~4,100px, so identity, stage and the primary action ride in a sticky header. | No primary action may require a scroll round-trip to reach |
 | **Miller's Law** | Max ~7 peer items in one view. The candidate record was 10 stacked cards under one tab; it is now 5 labelled tabs. Sidebar is 22 links in 3 named sections, never a flat list. | Count peers per view; if > 7, chunk or tab |
-| **Hick's Law** | One control per decision, not one per dimension. The applications toolbar was 4 filter pills + an "Advanced" drawer of 4 more; it is now a single `FilterMenu`. | Count filter controls in a toolbar: 1 |
+| **Hick's Law** | Few visible choices. List toolbars (`ListToolbar`) show at most **4** filter selects inline (`FilterPill`, always "Label: Value"); a screen with more puts them all in one `FilterMenu`. Status tabs (`ListTabs`) hide empty views unless selected. | Count inline filter controls per toolbar: ≤ 4 |
 | **Von Restorff** | **Filled = action. Outlined or tinted = state.** Exactly one filled control per surface. This is what stops semantic colour (red "Unclaimed", green owner, stage tints) from cancelling the primary action out, they are different *kinds* of thing, not competing buttons. | One `variant="primary"` per view |
 | **Postel's Law** | Be liberal inbound: ownership matches on email *or* id, case-insensitively (`isOwnRecord`). Conservative outbound: `validate.ts` declares accepted fields; undeclared ones cannot reach a record. | New routes declare a schema |
 | **Tesler's Law** | Irreducible complexity belongs to the system, not the user. Resume parsing extracts name, contact, location, skills and experience so nobody retypes a document we can read. | Prefer a parse/derive over a field |

@@ -26,8 +26,9 @@ function apiKey(): string {
   return (process.env.RESUME_MATCH_API_KEY || "").trim();
 }
 
-// Match/score involve an LLM call, allow a generous timeout. /embed is quick.
-const MATCH_TIMEOUT_MS = Number(process.env.RESUME_MATCH_TIMEOUT_MS || 45_000);
+// Match/score embed, search and LLM re-rank: 25–35s warm, more on a cold start.
+// Stays under the routes' 120s maxDuration with room for one retry.
+const MATCH_TIMEOUT_MS = Number(process.env.RESUME_MATCH_TIMEOUT_MS || 90_000);
 const EMBED_TIMEOUT_MS = Number(process.env.RESUME_EMBED_TIMEOUT_MS || 30_000);
 // Status checks run on page loads, keep them snappy so a slow engine can't hang the UI.
 const STATUS_TIMEOUT_MS = Number(process.env.RESUME_STATUS_TIMEOUT_MS || 12_000);
@@ -81,10 +82,26 @@ export function jobToPayload(job: Job): JobPayload {
   };
 }
 
-async function call<T>(path: string, body: unknown, timeoutMs: number): Promise<{ ok: true; data: T } | { ok: false; error: string; status?: number }> {
+type Failure = { ok: false; error: string; status?: number; reason: FailureReason };
+export type FailureReason = "config" | "auth" | "timeout" | "unavailable";
+
+/** One engine call, retried once on a 5xx or dropped connection if the clock allows. */
+async function call<T>(path: string, body: unknown, timeoutMs: number): Promise<{ ok: true; data: T } | Failure> {
+  const started = Date.now();
+  const first = await callOnce<T>(path, body, timeoutMs);
+  // Only server-side failures are worth a second try; a 4xx will fail the same way.
+  if (first.ok || first.reason !== "unavailable" || (first.status !== undefined && first.status < 500)) return first;
+  const left = timeoutMs - (Date.now() - started);
+  if (left < timeoutMs / 2) return first;
+  console.warn(`[match-engine] ${path} failed (${first.error}); retrying once`);
+  await new Promise((r) => setTimeout(r, 800));
+  return callOnce<T>(path, body, left);
+}
+
+async function callOnce<T>(path: string, body: unknown, timeoutMs: number): Promise<{ ok: true; data: T } | Failure> {
   const key = apiKey();
   if (!key) {
-    return { ok: false, error: "RESUME_MATCH_API_KEY is not configured on the server." };
+    return { ok: false, error: "RESUME_MATCH_API_KEY is not configured on the server.", reason: "config" };
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -104,17 +121,29 @@ async function call<T>(path: string, body: unknown, timeoutMs: number): Promise<
       } catch {
         /* non-JSON body */
       }
-      return { ok: false, error: detail, status: res.status };
+      const reason: FailureReason = res.status === 401 || res.status === 403 ? "auth" : res.status === 504 ? "timeout" : "unavailable";
+      return { ok: false, error: detail, status: res.status, reason };
     }
     return { ok: true, data: (await res.json()) as T };
   } catch (err) {
     const aborted = err instanceof Error && err.name === "AbortError";
     return {
       ok: false,
-      error: aborted ? "Matching request timed out. Try again." : err instanceof Error ? err.message : "Failed to reach the matching service.",
+      error: aborted ? `Matching request timed out after ${Math.round(timeoutMs / 1000)}s.` : err instanceof Error ? err.message : "Failed to reach the matching service.",
+      reason: aborted ? "timeout" : "unavailable",
     };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/** What the person sees when the engine fails; the raw error goes to the log. */
+export function matchFailureMessage(reason: FailureReason | undefined, action = "find candidates"): string {
+  switch (reason) {
+    case "config": return `Candidate matching isn't set up on this server, so we can't ${action}. Ask an admin to add the matching service key.`;
+    case "auth": return "The matching service rejected our key. Ask an admin to check the matching service settings.";
+    case "timeout": return `The matching service took too long to ${action}. It is often slow on the first run of the day; try again.`;
+    default: return `The matching service couldn't ${action} just now. Try again in a moment.`;
   }
 }
 
@@ -123,13 +152,13 @@ export async function matchCandidates(opts: {
   job?: JobPayload;
   jobText?: string;
   topK?: number;
-}): Promise<{ success: boolean; candidates: MatchCandidate[]; error?: string }> {
+}): Promise<{ success: boolean; candidates: MatchCandidate[]; error?: string; reason?: FailureReason }> {
   const result = await call<{ candidates: MatchCandidate[] }>(
     "/match",
     { job: opts.job, job_text: opts.jobText, top_k: opts.topK },
     MATCH_TIMEOUT_MS,
   );
-  if (!result.ok) return { success: false, candidates: [], error: result.error };
+  if (!result.ok) return { success: false, candidates: [], error: result.error, reason: result.reason };
   return { success: true, candidates: result.data.candidates || [] };
 }
 
@@ -140,7 +169,7 @@ export async function scoreResume(opts: {
   resumeId?: string;
   analysis?: ResumeAnalysis;
   candidateName?: string;
-}): Promise<{ success: boolean; fit?: JobFit; error?: string }> {
+}): Promise<{ success: boolean; fit?: JobFit; error?: string; reason?: FailureReason }> {
   const result = await call<JobFit>(
     "/score",
     {
@@ -152,7 +181,7 @@ export async function scoreResume(opts: {
     },
     MATCH_TIMEOUT_MS,
   );
-  if (!result.ok) return { success: false, error: result.error };
+  if (!result.ok) return { success: false, error: result.error, reason: result.reason };
   return { success: true, fit: result.data };
 }
 

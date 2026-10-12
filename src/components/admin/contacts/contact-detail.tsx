@@ -34,7 +34,7 @@ export function ContactDetail({
       <AdminCard>
         <AdminCardHeader title="Message" meta={`${contact.inquiryType} enquiry`} />
         <div className="p-4 sm:p-5">
-          <p className="max-w-[70ch] whitespace-pre-wrap break-words text-[14px] leading-[1.7] text-[var(--adm-ink)]">
+          <p className="max-w-[70ch] whitespace-pre-wrap break-words text-adm-base leading-[1.7] text-[var(--adm-ink)]">
             {contact.message}
           </p>
         </div>
@@ -58,7 +58,7 @@ export function ContactDetail({
               </WorkspaceButton>
             )}
             <div className="flex items-center justify-between gap-3 pt-2">
-              <span className="text-[13px] text-[var(--adm-ink-mute)]">Status</span>
+              <span className="text-adm-xs text-[var(--adm-ink-mute)]">Status</span>
               <MenuSelect
                 label="Status"
                 value={contact.status}
@@ -83,8 +83,8 @@ export function ContactDetail({
           <dl className="divide-y divide-[var(--adm-line-soft)]">
             {facts.map(({ label, value, href, numeric }) => (
               <div key={label} className="flex min-w-0 items-baseline justify-between gap-4 px-4 py-2.5">
-                <dt className="flex-none text-[13px] text-[var(--adm-ink-subtle)]">{label}</dt>
-                <dd className={cn("min-w-0 truncate text-right text-[13.5px] text-[var(--adm-ink)]", numeric && "tabular-nums")}>
+                <dt className="flex-none text-adm-xs text-[var(--adm-ink-subtle)]">{label}</dt>
+                <dd className={cn("min-w-0 truncate text-right text-adm-base text-[var(--adm-ink)]", numeric && "tabular-nums")}>
                   {!value ? (
                     <span className="text-[var(--adm-ink-subtle)]">&mdash;</span>
                   ) : href ? (

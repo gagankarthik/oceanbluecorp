@@ -19,7 +19,7 @@ export type BarItem = {
 };
 
 const linkCls =
-  "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-1 text-[12.5px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]";
+  "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-1 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]";
 
 export function PanelLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -42,10 +42,10 @@ export function RankedBars({ items, emptyMessage }: { items: BarItem[]; emptyMes
         const row = (
           <>
             <span className="flex items-center justify-between gap-3">
-              <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink)]">{it.label}</span>
+              <span className="min-w-0 truncate text-adm-xs text-[var(--adm-ink)]">{it.label}</span>
               <span className="flex flex-none items-baseline gap-2">
-                {it.meta && <span className="hidden max-w-[10rem] truncate text-[12px] text-[var(--adm-ink-subtle)] sm:inline">{it.meta}</span>}
-                <span className="w-8 text-right text-[13px] font-semibold tabular-nums text-[var(--adm-ink)]">{it.value.toLocaleString()}</span>
+                {it.meta && <span className="hidden max-w-[10rem] truncate text-adm-xs text-[var(--adm-ink-subtle)] sm:inline">{it.meta}</span>}
+                <span className="w-8 text-right text-adm-xs font-semibold tabular-nums text-[var(--adm-ink)]">{it.value.toLocaleString()}</span>
               </span>
             </span>
             <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
@@ -98,7 +98,7 @@ export function LineChart({
   if (!hasData) {
     return (
       <div style={{ height }}
-        className="flex items-center justify-center rounded-[8px] border border-dashed border-[var(--adm-line)] text-[12.5px] text-[var(--adm-ink-subtle)]">
+        className="flex items-center justify-center rounded-[8px] border border-dashed border-[var(--adm-line)] text-adm-xs text-[var(--adm-ink-subtle)]">
         No data in this period
       </div>
     );
@@ -176,14 +176,14 @@ export function LineChart({
               )}
               style={{ left: `${pctX(active)}%` }}
             >
-              <p className="text-[11.5px] text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-micro text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label ?? dataKey}
                 <span className="ml-auto pl-3 font-semibold tabular-nums text-[var(--adm-ink)]">{vals[active]}</span>
               </p>
               {dataKey2 && (
-                <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+                <p className="mt-0.5 flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color2 }} />
                   {label2 ?? dataKey2}
                   <span className="ml-auto pl-3 font-semibold tabular-nums text-[var(--adm-ink)]">{vals2[active]}</span>
@@ -193,7 +193,7 @@ export function LineChart({
           </>
         )}
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-[var(--adm-ink-subtle)]">
+      <div className="mt-1.5 flex justify-between text-adm-micro tabular-nums text-[var(--adm-ink-subtle)]">
         {ticks.map((ti, i) => <span key={i}>{xFmt(String(data[ti]?.[xKey] ?? ""))}</span>)}
       </div>
     </div>
@@ -213,7 +213,7 @@ export function DeltaChip({ delta }: { delta: Delta }) {
     <span
       title={`Compared with the ${delta.against}`}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums",
+        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-adm-xs font-semibold tabular-nums",
         flat
           ? "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]"
           : up
@@ -242,14 +242,14 @@ export function TrendPanel({
     <AdminCard className="flex flex-col p-4">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <h3 className="text-[13px] font-medium text-[var(--adm-ink-mute)]">{title}</h3>
+          <h3 className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{title}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+            <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
               {value.toLocaleString()}
             </span>
             <DeltaChip delta={delta} />
           </div>
-          <p className="mt-1.5 text-[12.5px] text-[var(--adm-ink-subtle)]">{caption}</p>
+          <p className="mt-1.5 text-adm-xs text-[var(--adm-ink-subtle)]">{caption}</p>
         </div>
         {legend}
       </div>
@@ -260,7 +260,7 @@ export function TrendPanel({
 
 export function LegendKey({ color, label, value, dashed }: { color: string; label: string; value: number; dashed?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--adm-ink-mute)]">
+    <span className="inline-flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
       <span aria-hidden className={cn("h-0 w-3.5 border-t-2", dashed && "border-dashed")} style={{ borderColor: color }} />
       {label}
       <span className="font-semibold tabular-nums text-[var(--adm-ink)]">{value.toLocaleString()}</span>
@@ -300,13 +300,13 @@ export function AttentionPanel({
       <div className="px-4 pb-3.5 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Needs attention</h3>
-            <p className="mt-0.5 text-[13px] text-[var(--adm-ink-subtle)]">
+            <h3 className="text-adm-base font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Needs attention</h3>
+            <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">
               {healthy ? "Every check is clear for this range." : `${openItems} of ${items.length} checks flagged in this range.`}
             </p>
           </div>
           <span className={cn(
-            "text-[26px] font-semibold leading-none tracking-[-0.025em] tabular-nums",
+            "text-adm-3xl font-semibold leading-none tracking-[-0.025em] tabular-nums",
             healthy ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-ink)]",
           )}>
             {total.toLocaleString()}
@@ -341,12 +341,12 @@ export function AttentionPanel({
                   tone.edge,
                 )}
               >
-                <span className={cn("text-[19px] font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
+                <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
                   {it.value.toLocaleString()}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-[13px] font-medium text-[var(--adm-ink)]">{it.label}</span>
-                  <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{it.hint}</span>
+                  <span className="block truncate text-adm-xs font-medium text-[var(--adm-ink)]">{it.label}</span>
+                  <span className="block truncate text-adm-xs text-[var(--adm-ink-subtle)]">{it.hint}</span>
                 </span>
                 <ChevronRight
                   aria-hidden="true"
@@ -359,7 +359,7 @@ export function AttentionPanel({
       </ul>
 
       <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
-        <span className="text-[13px] text-[var(--adm-ink-mute)]">
+        <span className="text-adm-xs text-[var(--adm-ink-mute)]">
           <span className="font-semibold tabular-nums text-[var(--adm-ink)]">{inPlay}</span> candidates in play
         </span>
         <PanelLink href="/admin/applications">Open pipeline</PanelLink>

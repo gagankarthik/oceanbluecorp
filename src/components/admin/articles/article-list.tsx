@@ -32,9 +32,9 @@ import {
   IconBook, IconEdit, IconEye, IconStar, IconTrash, IconWarning,
 } from "@/components/admin/icons";
 import {
-  ActiveFilters, BrandBand, DisplayMenu, FilterIcon, FilterPill,
-  Workspace, WorkspaceButton, WorkspaceSearch, WorkspaceToolbar,
+  DisplayMenu, FilterIcon, FilterPill, Workspace, WorkspaceButton, WorkspaceSearch,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 
 /**
  * The index screen for one content section.
@@ -133,14 +133,8 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
     return counts;
   }, [articles]);
 
-  /**
-   * Counts worth a strip: what a reader can see now, what is queued, what is
-   * waiting on a person, and, where it applies, how many finished pieces are
-   * held up by a signature nobody has chased. That last one is the reason this
-   * strip exists, it is invisible in the grid and it is what stalls a section.
-   */
-  const liveCount = useMemo(() => articles.filter((a) => isLive(a)).length, [articles]);
-  const queuedCount = useMemo(() => articles.filter((a) => isPending(a)).length, [articles]);
+  // Finished pieces held up by a client signature nobody has chased: invisible
+  // in the grid, and what stalls a section.
   const awaitingApproval = useMemo(
     () =>
       namesAClient(kind)
@@ -183,7 +177,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
       header: "Title",
       label: "Title",
       locked: true,
-      width: "340px",
+      width: "300px",
       sortValue: (a) => a.title,
       cell: (a) => (
         <div className="flex min-w-0 items-center gap-2">
@@ -193,7 +187,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
               aria-label="Featured"
             />
           )}
-          <span className="truncate font-semibold text-[var(--adm-ink)]">{a.title}</span>
+          <span className="block max-w-[300px] truncate font-semibold text-[var(--adm-ink)]" title={a.title}>{a.title}</span>
         </div>
       ),
     },
@@ -201,7 +195,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
       key: "status",
       header: "Status",
       label: "Status",
-      width: "130px",
+      width: "120px",
       sortValue: (a) => a.status,
       cell: (a) => (
         <StatusBadge tone={articleStatusTone(a.status)} label={articleStatusLabel(a.status)} size="md" />
@@ -213,7 +207,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
             key: "category",
             header: "Category",
             label: "Category",
-            width: "170px",
+            width: "160px",
             hideBelow: "lg",
             sortValue: (a: Article) => a.category || "",
             cell: (a: Article) =>
@@ -273,7 +267,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
             sortValue: (a: Article) => a.datelineCity || "",
             cell: (a: Article) =>
               a.datelineCity ? (
-                <span className="truncate text-[var(--adm-ink-mute)]">{a.datelineCity}</span>
+                <span className="block max-w-[160px] truncate text-[var(--adm-ink-mute)]" title={a.datelineCity}>{a.datelineCity}</span>
               ) : (
                 <Blank />
               ),
@@ -286,12 +280,12 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
             key: "client",
             header: "Client",
             label: "Client",
-            width: "180px",
+            width: "160px",
             hideBelow: "md",
             sortValue: (a: Article) => a.clientName || "",
             cell: (a: Article) =>
               a.clientName ? (
-                <span className="truncate font-medium text-[var(--adm-ink-mute)]">{a.clientName}</span>
+                <span className="block max-w-[160px] truncate font-medium text-[var(--adm-ink-mute)]" title={a.clientName}>{a.clientName}</span>
               ) : (
                 <span className="text-[var(--adm-ink-subtle)]">Anonymised</span>
               ),
@@ -312,7 +306,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
             key: "approval",
             header: "Approval",
             label: "Client approval",
-            width: "140px",
+            width: "130px",
             sortValue: (a: Article) => (a.approvalOnFile ? 1 : 0),
             cell: (a: Article) =>
               a.approvalOnFile ? (
@@ -327,7 +321,7 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
       key: "published",
       header: "Published",
       label: "Published",
-      width: "150px",
+      width: "120px",
       sortValue: (a) => new Date(a.publishedAt || 0).getTime(),
       cell: (a) => {
         if (!a.publishedAt) return <Blank />;
@@ -411,35 +405,27 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
     );
   }
 
+  const listFilters: ListFilter[] = [
+    ...(facetValues.length > 0 ? [{ key: "facet", label: facet.label, value: facetFilter, onChange: setFacetFilter, options: [
+                { value: "all", label: `All ${facet.label.toLowerCase()}` },
+                ...facetValues.map((v) => ({
+                  value: v,
+                  label: facet.labelOf(v),
+                  count: articles.filter((a) => facet.valueOf(a) === v).length,
+                })),
+              ] }] : []),
+  ];
+
   return (
     <>
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title={config.label}
-        meta={config.purpose}
-        stats={[
-          { label: "Live", value: liveCount, hint: "Visible on the site right now" },
-          {
-            label: "Scheduled",
-            value: queuedCount,
-            hint: "Approved, waiting for its publish date",
-            onClick: () => setStatusFilter("scheduled"), selected: statusFilter === "scheduled",
-          },
-          {
-            label: "In review",
-            value: statusCounts["in-review"] || 0,
-            hint: "Written, waiting on a second reader",
-            onClick: () => setStatusFilter("in-review"), selected: statusFilter === "in-review",
-          },
-          ...(namesAClient(kind)
-            ? [{
-                label: "Awaiting sign-off",
-                value: awaitingApproval,
-                hint: "Finished, but the client has not approved it yet",
-              }]
-            : [{ label: "Drafts", value: statusCounts.draft || 0, onClick: () => setStatusFilter("draft"), selected: statusFilter === "draft" }]),
-        ]}
+        meta={<>
+          {articles.length.toLocaleString()} {articles.length === 1 ? config.noun : config.plural}
+          {namesAClient(kind)
+            ? awaitingApproval ? <>, <MetaStrong>{awaitingApproval} awaiting client sign-off</MetaStrong></> : null
+            : statusCounts["in-review"] ? <>, <MetaStrong>{statusCounts["in-review"]} in review</MetaStrong></> : null}
+        </>}
         actions={
           <WorkspaceButton variant="primary" onClick={() => router.push(`${config.adminPath}/new`)}>
             <Plus className="h-4 w-4" />
@@ -448,16 +434,28 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
         }
       />
 
-      <WorkspaceToolbar
-        variant="canvas"
-        search={
-          <WorkspaceSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={`Filter ${config.plural} by title, client or tag`}
-          />
-        }
-        trailing={
+      <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              tabs={[
+                { key: "all", label: "All", count: statusCounts.all },
+                ...ARTICLE_STATUSES.map((s) => ({ key: s.key as string, label: s.label, count: statusCounts[s.key] || 0 })),
+              ]}
+            />
+          }
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={`Search ${config.plural}…`}
+            />
+          }
+        >
+          <FilterSet filters={listFilters} />
           <DisplayMenu
             columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
             hidden={hiddenColumns}
@@ -466,54 +464,9 @@ export function ArticleList({ kind }: { kind: ArticleKind }) {
             onRowsChange={setRows}
             onReset={() => { setHiddenColumns([]); setRows(25); }}
           />
-        }
-      >
-        <FilterPill
-          label="Status"
-          icon={FilterIcon.status}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={[
-            { value: "all", label: "All" },
-            ...ARTICLE_STATUSES.map((s) => ({
-              value: s.key as string,
-              label: s.label,
-              count: statusCounts[s.key] || 0,
-            })),
-          ]}
-        />
-        {facetValues.length > 0 && (
-          <FilterPill
-            label={facet.label}
-            icon={facet.icon}
-            value={facetFilter}
-            onChange={setFacetFilter}
-            options={[
-              { value: "all", label: `All ${facet.label.toLowerCase()}` },
-              ...facetValues.map((v) => ({
-                value: v,
-                label: facet.labelOf(v),
-                count: articles.filter((a) => facet.valueOf(a) === v).length,
-              })),
-            ]}
-          />
-        )}
-      </WorkspaceToolbar>
+        </ListToolbar>
+        <FilterChips filters={listFilters} />
 
-      <ActiveFilters
-        variant="canvas"
-        chips={[
-          ...(statusFilter !== "all"
-            ? [{ label: `Status: ${articleStatusLabel(statusFilter)}`, onClear: () => setStatusFilter("all") }]
-            : []),
-          ...(facetFilter !== "all"
-            ? [{ label: `${facet.label}: ${facet.labelOf(facetFilter)}`, onClear: () => setFacetFilter("all") }]
-            : []),
-        ]}
-        onClearAll={clearFilters}
-      />
-
-      <Workspace>
         <DataTable
           noun={config.plural}
           storageKey={`articles-${kind}`}

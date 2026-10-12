@@ -9,11 +9,11 @@ import { validate, validationMessage, type Schema } from "@/lib/validate";
 import { v4 as uuidv4 } from "uuid";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen } from "@/lib/job-status";
+import { JOB_TYPES, jobInputError, splitLegacyRemote } from "@/lib/job-input";
+import { WORKPLACES, jobLocationLabel } from "@/lib/workplace";
 
-const JOB_TYPES = [
-  "full-time", "part-time", "contract", "contract-to-hire",
-  "direct-hire", "managed-teams", "remote",
-] as const;
+// "remote" stays accepted for integrations written before it became a workplace.
+const ACCEPTED_TYPES = [...JOB_TYPES, "remote"] as const;
 
 // Statuses a partner may file a posting under. Deliberately excludes the
 // recruiting-only lifecycle states (paused, closed, on-hold): a partner
@@ -31,9 +31,11 @@ const CREATABLE_STATUSES = ["draft", "active", "open"] as const;
 const CREATE_JOB_SCHEMA: Schema = {
   title:             { kind: "string", required: true, maxLength: 200 },
   department:        { kind: "string", required: true, maxLength: 120 },
-  location:          { kind: "string", required: true, maxLength: 160 },
+  // Required unless workplace is remote; checked after the schema.
+  location:          { kind: "string", maxLength: 160 },
+  workplace:         { kind: "string", oneOf: WORKPLACES },
   state:             { kind: "string", maxLength: 40 },
-  type:              { kind: "string", required: true, oneOf: JOB_TYPES },
+  type:              { kind: "string", required: true, oneOf: ACCEPTED_TYPES },
   description:       { kind: "string", required: true, maxLength: 20000 },
   requirements:      { kind: "string", maxLength: 20000 },
   responsibilities:  { kind: "string", maxLength: 20000 },
@@ -44,7 +46,8 @@ const CREATE_JOB_SCHEMA: Schema = {
 type CreateJobBody = {
   title: string;
   department: string;
-  location: string;
+  location?: string;
+  workplace?: Job["workplace"];
   state?: string;
   type: Job["type"];
   description: string;
@@ -126,7 +129,9 @@ export async function POST(request: NextRequest) {
     if (!checked.ok) {
       return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
     }
-    const body = checked.value;
+    const body = splitLegacyRemote(checked.value);
+    const placeError = jobInputError({ location: body.location ?? "", workplace: body.workplace }, { partial: true });
+    if (placeError) return NextResponse.json({ error: placeError }, { status: 400 });
 
     const salary = readSalary((raw as Record<string, unknown> | null)?.salary);
 
@@ -138,7 +143,8 @@ export async function POST(request: NextRequest) {
       id: uuidv4(),
       title: body.title,
       department: body.department,
-      location: body.location,
+      location: body.location?.trim() || "",
+      workplace: body.workplace,
       state: body.state,
       type: body.type,
       // Authored HTML is sanitized at save time (STANDARDS §5.6); renderRichText
@@ -175,7 +181,7 @@ export async function POST(request: NextRequest) {
             id: uuidv4(),
             type: "job_posted",
             title: "New Job Posted via API",
-            message: `${job.title} in ${job.department} — ${job.location} (via ${auth.key.name})`,
+            message: `${job.title} in ${job.department} — ${jobLocationLabel(job) || "location not set"} (via ${auth.key.name})`,
             link: "/admin/state-roles",
             relatedId: job.id,
             isRead: false,

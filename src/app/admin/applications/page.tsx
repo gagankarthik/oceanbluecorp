@@ -17,10 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch,
-  FilterMenu, ActiveFilters,
-  DisplayMenu, SelectionBar, BrandBand, BAND_PRIMARY,
+  Workspace, WorkspaceButton, WorkspaceSearch, FilterMenu, DisplayMenu, SelectionBar,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterField } from "@/components/admin/list-shell";
 import { Field, FormSelect } from "@/components/admin/forms/primitives";
 import { Avatar } from "@/components/admin/avatar";
 import { StarRating } from "@/components/admin/star-rating";
@@ -129,7 +128,7 @@ function StageSelect({ app, onChange }: {
         autoComplete="off"
         aria-label={`Stage for ${app.name || app.email}`}
         onChange={(e) => onChange(app.id, e.target.value as Application["status"])}
-        className="h-9 w-full cursor-pointer appearance-none rounded-[8px] border border-transparent bg-transparent pl-7 pr-7 text-[14px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        className="h-9 w-full cursor-pointer appearance-none rounded-[8px] border border-transparent bg-transparent pl-7 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
       >
         {ALL_STATUSES.map((s) => <option key={s} value={s}>{sLabel(s)}</option>)}
       </select>
@@ -153,7 +152,7 @@ function AgeCell({ app }: { app: App }) {
     <span
       title={`${d} day${d === 1 ? "" : "s"} in ${sLabel(app.status)}`}
       className={cn(
-        "inline-flex items-center gap-1.5 text-[14px] tabular-nums",
+        "inline-flex items-center gap-1.5 text-adm-base tabular-nums",
         stale ? "font-semibold text-[var(--adm-warning-ink)]" : "text-[var(--adm-ink-subtle)]",
       )}
     >
@@ -306,13 +305,13 @@ export default function ApplicationsPage() {
   }, [applications, viewCtx]);
 
   const views: { key: ViewKey; label: string; count: number }[] = [
-    { key: "all",          label: "All applicants", count: viewCounts.all },
-    { key: "mine",         label: "My queue",       count: viewCounts.mine },
-    { key: "review",       label: "Awaiting review", count: viewCounts.review },
-    { key: "interviewing", label: "Interviewing",   count: viewCounts.interviewing },
-    { key: "offers",       label: "Offers extended", count: viewCounts.offers },
-    { key: "stale",        label: "Stalled 7+ days", count: viewCounts.stale },
-    { key: "hired",        label: "Hired",          count: viewCounts.hired },
+    { key: "all",          label: "All",          count: viewCounts.all },
+    { key: "mine",         label: "My queue",     count: viewCounts.mine },
+    { key: "review",       label: "To review",    count: viewCounts.review },
+    { key: "interviewing", label: "Interviewing", count: viewCounts.interviewing },
+    { key: "offers",       label: "Offers",       count: viewCounts.offers },
+    { key: "stale",        label: "Stalled",      count: viewCounts.stale },
+    { key: "hired",        label: "Hired",        count: viewCounts.hired },
   ];
 
   /* The badge on the single Filters control. Counts every dimension it owns, the old split counted only the four that lived behind the drawer, because
@@ -524,19 +523,6 @@ export default function ApplicationsPage() {
     setSourceFilter("all"); setAuthFilter("all"); setHireFilter("all"); setMinRating(0);
   };
 
-  const locationLabel = (v: string) =>
-    v === "__none" ? "No location" : STATE_NAME.get(v) || v;
-
-  const filterChips: { label: string; onClear: () => void }[] = [
-    ...(statusFilter !== "all" ? [{ label: `Stage: ${sLabel(statusFilter)}`, onClear: () => setStatusFilter("all") }] : []),
-    ...(posFilter !== "all"    ? [{ label: `Position: ${posFilter}`, onClear: () => setPosFilter("all") }] : []),
-    ...(locationFilter !== "all" ? [{ label: `Location: ${locationLabel(locationFilter)}`, onClear: () => setLocationFilter("all") }] : []),
-    ...(sourceFilter !== "all" ? [{ label: `Source: ${sourceFilter}`, onClear: () => setSourceFilter("all") }] : []),
-    ...(authFilter !== "all"   ? [{ label: `Auth: ${authFilter}`, onClear: () => setAuthFilter("all") }] : []),
-    ...(hireFilter !== "all"   ? [{ label: `Hire: ${hireTypeLabel(hireFilter)}`, onClear: () => setHireFilter("all") }] : []),
-    ...(minRating > 0          ? [{ label: `${minRating}+ stars`, onClear: () => setMinRating(0) }] : []),
-  ];
-
   // Stable, so the memoised board and list rows skip unrelated renders.
   const onView = useCallback((id: string) => router.push(`/admin/candidates/${id}`), [router]);
   const onEdit = useCallback((app: App) => openCandidateEditor({ candidate: app, mode: "edit" }), [openCandidateEditor]);
@@ -549,7 +535,7 @@ export default function ApplicationsPage() {
 
   const columns: DataTableColumn<App>[] = [
     {
-      key: "name", header: "Applicant", label: "Applicant", locked: true, width: "230px",
+      key: "name", header: "Applicant", label: "Applicant", locked: true, width: "200px",
       sortValue: (a) => a.name || a.email,
       // Name only. This briefly stacked the email underneath as a second line
       // while the Email column was also being rendered, so every row printed
@@ -557,21 +543,23 @@ export default function ApplicationsPage() {
       cell: (a) => (
         <span className="inline-flex max-w-full items-center gap-3 align-middle">
           <Avatar name={a.name} email={a.email} size="md" />
-          <span className="truncate text-[14px] font-semibold text-[var(--adm-ink)]">
+          <span className="truncate text-adm-base font-semibold text-[var(--adm-ink)]">
             {a.name || a.email}
           </span>
         </span>
       ),
     },
     {
-      key: "email", header: "Email", label: "Email", hideBelow: "lg", width: "192px",
+      key: "email", header: "Email", label: "Email", hideBelow: "xl", width: "180px",
       sortValue: (a) => a.email,
-      cell: (a) => <span className="text-[14px] text-[var(--adm-ink-subtle)]">{a.email}</span>,
+      cell: (a) => <span title={a.email} className="block max-w-[160px] truncate text-adm-base text-[var(--adm-ink-subtle)]">{a.email}</span>,
     },
     {
-      key: "jobTitle", header: "Position", label: "Position", hideBelow: "md", width: "192px",
+      key: "jobTitle", header: "Position", label: "Position", hideBelow: "md", width: "180px",
       sortValue: (a) => a.jobTitle || "",
-      cell: (a) => a.jobTitle ? <span className="text-[14px] text-[var(--adm-ink-mute)]">{a.jobTitle}</span> : <Blank />,
+      cell: (a) => a.jobTitle
+        ? <span title={a.jobTitle} className="block max-w-[160px] truncate text-adm-base text-[var(--adm-ink-mute)]">{a.jobTitle}</span>
+        : <Blank />,
     },
     {
       key: "status", header: "Stage", label: "Stage", locked: true, width: "150px",
@@ -579,16 +567,16 @@ export default function ApplicationsPage() {
       cell: (a) => <StageSelect app={a} onChange={patchStatus} />,
     },
     {
-      key: "age", header: "In stage", label: "In stage", hideBelow: "lg", width: "95px",
+      key: "age", header: "In stage", label: "In stage", hideBelow: "xl", width: "88px",
       sortValue: (a) => (TERMINAL.has(a.status) ? -1 : daysInStage(a)),
       cell: (a) => <AgeCell app={a} />,
     },
     {
-      key: "location", header: "Location", label: "Location", hideBelow: "lg", width: "150px",
+      key: "location", header: "Location", label: "Location", hideBelow: "xl", width: "140px",
       sortValue: (a) => locationOf(a),
       cell: (a) => {
         const loc = locationOf(a);
-        return loc ? <span className="text-[14px] text-[var(--adm-ink-mute)]">{loc}</span> : <Blank />;
+        return loc ? <span title={loc} className="block max-w-[120px] truncate text-adm-base text-[var(--adm-ink-mute)]">{loc}</span> : <Blank />;
       },
     },
     {
@@ -596,7 +584,7 @@ export default function ApplicationsPage() {
       sortValue: (a) => a.hireType || "",
       cell: (a) => a.hireType
         ? (
-          <span className="inline-flex items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
+          <span className="inline-flex items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
             {a.hireType}
           </span>
         )
@@ -609,22 +597,22 @@ export default function ApplicationsPage() {
         ? (
           <span className="inline-flex max-w-full items-center gap-2 align-middle">
             <Avatar name={a.ownershipName} size="sm" />
-            <span className="min-w-0 truncate text-[14px] text-[var(--adm-ink-mute)]">{a.ownershipName}</span>
+            <span className="min-w-0 truncate text-adm-base text-[var(--adm-ink-mute)]">{a.ownershipName}</span>
           </span>
         )
-        : <span className="text-[14px] italic text-[var(--adm-ink-subtle)]">Unassigned</span>,
+        : <span className="text-adm-base italic text-[var(--adm-ink-subtle)]">Unassigned</span>,
     },
     {
       key: "source", header: "Source", label: "Source", hideBelow: "xl", width: "140px",
       sortValue: (a) => a.source || "",
       cell: (a) => a.source
-        ? <span className="text-[14px] text-[var(--adm-ink-mute)]">{a.source}</span>
+        ? <span className="text-adm-base text-[var(--adm-ink-mute)]">{a.source}</span>
         : <Blank />,
     },
     {
-      key: "appliedAt", header: "Applied", label: "Applied", hideBelow: "lg", width: "110px",
+      key: "appliedAt", header: "Applied", label: "Applied", hideBelow: "lg", width: "104px",
       sortValue: (a) => new Date(a.appliedAt).getTime(),
-      cell: (a) => <span className="text-[14px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(a.appliedAt)}</span>,
+      cell: (a) => <span className="text-adm-base tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(a.appliedAt)}</span>,
     },
     {
       key: "rating", header: "Rating", label: "Rating", hideBelow: "sm", width: "108px",
@@ -662,146 +650,142 @@ export default function ApplicationsPage() {
     // Full-height column so the table scrolls inside the panel, not the page.
     // `min-h-0` is load-bearing: without it the column grows to the table's height.
     <div className="flex h-full min-h-0 flex-col">
-      {/* The saved views are the band's figures: pick one to scope the grid. */}
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Applications"
-        meta={`${applications.length.toLocaleString()} applicant${applications.length === 1 ? "" : "s"} across ${positions.length} position${positions.length === 1 ? "" : "s"}`}
-        stats={views.map((v) => ({
-          label: v.label,
-          value: v.count,
-          selected: v.key === savedView,
-          onClick: () => { setSavedView(v.key); setSelected([]); },
-        }))}
+        meta={<>
+          {applications.length.toLocaleString()} applicant{applications.length === 1 ? "" : "s"} across {positions.length} position{positions.length === 1 ? "" : "s"}
+          {viewCounts.review ? <>, <MetaStrong>{viewCounts.review} awaiting review</MetaStrong></> : null}
+        </>}
         actions={
           <>
-            <WorkspaceButton onClick={exportCSV}>
+            <WorkspaceButton onClick={exportCSV} aria-label="Export CSV">
               <IconDownload /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton className={BAND_PRIMARY} onClick={() => openCandidateEditor({ mode: "create" })}>
+            <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ mode: "create" })}>
               <Plus />Add applicant
             </WorkspaceButton>
           </>
         }
       />
 
-      <WorkspaceToolbar
-        variant="canvas"
-        search={
-          <WorkspaceSearch
-            value={search}
-            onChange={setSearch}
-            placeholder="Search name, email, position, or a skill from their resume"
-          />
-        }
-        trailing={
-          <>
-            <SavedViewsMenu
-              items={savedList}
-              activeId={activeSavedId}
-              onApply={applySaved}
-              onSave={saveCurrent}
-              onDelete={deleteSaved}
-            />
-
-            <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
-              <Field label="Stage" htmlFor="filter-stage">
-                <FormSelect id="filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                  <option value="all">All stages ({inView.length})</option>
-                  {ALL_STATUSES.map((st) => (
-                    <option key={st} value={st}>{sLabel(st)} ({statusCounts[st] || 0})</option>
-                  ))}
-                </FormSelect>
-              </Field>
-
-              <Field label="Position" htmlFor="filter-position">
-                <FormSelect id="filter-position" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
-                  <option value="all">All positions</option>
-                  {positions.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
-                </FormSelect>
-              </Field>
-
-              <Field label="Location" htmlFor="filter-location">
-                <FormSelect id="filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-                  <option value="all">All locations ({inView.length})</option>
-                  {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
-                </FormSelect>
-              </Field>
-
-              <Field label="Source" htmlFor="filter-source">
-                <FormSelect id="filter-source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-                  <option value="all">All sources</option>
-                  {SOURCE_OPTIONS.map((src) => <option key={src} value={src}>{src}</option>)}
-                </FormSelect>
-              </Field>
-
-              <Field label="Type of hire" htmlFor="filter-hire">
-                <FormSelect id="filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
-                  <option value="all">All hire types</option>
-                  {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
-                </FormSelect>
-              </Field>
-
-              <Field label="Work authorization" htmlFor="filter-auth">
-                <FormSelect id="filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
-                  <option value="all">All</option>
-                  {WORK_AUTH_GROUPS.map((g) => (
-                    <optgroup key={g.label} label={g.label}>
-                      {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </optgroup>
-                  ))}
-                </FormSelect>
-              </Field>
-
-              <Field label="Minimum rating">
-                <div className="flex h-10 items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      aria-label={`Minimum ${n} stars`}
-                      aria-pressed={n <= minRating}
-                      onClick={() => setMinRating(n === minRating ? 0 : n)}
-                      className="group/star rounded-[6px] p-1 transition-colors hover:bg-[var(--adm-surface-2)]"
-                    >
-                      <IconStar
-                        aria-hidden
-                        className={cn(
-                          "h-[18px] w-[18px] transition-colors",
-                          n <= minRating
-                            ? "fill-[var(--adm-warning)] text-[var(--adm-warning)]"
-                            : "text-[var(--adm-ink-subtle)] group-hover/star:text-[var(--adm-warning)]",
-                        )}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </Field>
-            </FilterMenu>
-
-            <DisplayMenu
-              view={view}
-              viewOptions={[
-                { value: "table",  label: "Table" },
-                { value: "kanban", label: "Kanban" },
-                { value: "list",   label: "List" },
-              ]}
-              onViewChange={(v) => setView(v as ViewMode)}
-              columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-              hidden={hiddenColumns}
-              onHiddenChange={setHiddenColumns}
-              rows={rows}
-              onRowsChange={setRows}
-              onReset={() => { setHiddenColumns(["source"]); setRows(25); setView("table"); }}
-            />
-          </>
-        }
-      />
-
-      <ActiveFilters variant="canvas" chips={filterChips} onClearAll={clearFilters} />
-
       <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Saved views"
+              value={savedView}
+              onChange={(k) => { setSavedView(k); setSelected([]); }}
+              tabs={views}
+            />
+          }
+          search={
+            <WorkspaceSearch
+              value={search}
+              onChange={setSearch}
+              placeholder="Search name, email, position, or a resume skill…"
+            />
+          }
+        >
+          <SavedViewsMenu
+            items={savedList}
+            activeId={activeSavedId}
+            onApply={applySaved}
+            onSave={saveCurrent}
+            onDelete={deleteSaved}
+          />
+
+          <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
+            <FilterField label="Stage" htmlFor="filter-stage">
+              <FormSelect id="filter-stage" className="h-8 text-adm-xs" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">All stages ({inView.length})</option>
+                {ALL_STATUSES.map((st) => (
+                  <option key={st} value={st}>{sLabel(st)} ({statusCounts[st] || 0})</option>
+                ))}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Position" htmlFor="filter-position">
+              <FormSelect id="filter-position" className="h-8 text-adm-xs" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
+                <option value="all">All positions</option>
+                {positions.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Location" htmlFor="filter-location">
+              <FormSelect id="filter-location" className="h-8 text-adm-xs" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                <option value="all">All locations ({inView.length})</option>
+                {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Source" htmlFor="filter-source">
+              <FormSelect id="filter-source" className="h-8 text-adm-xs" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+                <option value="all">All sources</option>
+                {SOURCE_OPTIONS.map((src) => <option key={src} value={src}>{src}</option>)}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Type of hire" htmlFor="filter-hire">
+              <FormSelect id="filter-hire" className="h-8 text-adm-xs" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+                <option value="all">All hire types</option>
+                {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Work authorization" htmlFor="filter-auth">
+              <FormSelect id="filter-auth" className="h-8 text-adm-xs" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+                <option value="all">All</option>
+                {WORK_AUTH_GROUPS.map((g) => (
+                  <optgroup key={g.label} label={g.label}>
+                    {g.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </optgroup>
+                ))}
+              </FormSelect>
+            </FilterField>
+
+            <FilterField label="Minimum rating">
+              <div className="flex h-10 items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={`Minimum ${n} stars`}
+                    aria-pressed={n <= minRating}
+                    onClick={() => setMinRating(n === minRating ? 0 : n)}
+                    className="group/star rounded-[6px] p-1 transition-colors hover:bg-[var(--adm-surface-2)]"
+                  >
+                    <IconStar
+                      aria-hidden
+                      className={cn(
+                        "h-[18px] w-[18px] transition-colors",
+                        n <= minRating
+                          ? "fill-[var(--adm-warning)] text-[var(--adm-warning)]"
+                          : "text-[var(--adm-ink-subtle)] group-hover/star:text-[var(--adm-warning)]",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+            </FilterField>
+          </FilterMenu>
+
+          <DisplayMenu
+            view={view}
+            viewOptions={[
+              { value: "table",  label: "Table" },
+              { value: "kanban", label: "Kanban" },
+              { value: "list",   label: "List" },
+            ]}
+            onViewChange={(v) => setView(v as ViewMode)}
+            columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+            hidden={hiddenColumns}
+            onHiddenChange={setHiddenColumns}
+            rows={rows}
+            onRowsChange={setRows}
+            onReset={() => { setHiddenColumns(["source"]); setRows(25); setView("table"); }}
+          />
+        </ListToolbar>
+
         {isGrid && (
           <DataTable
             noun="applications"
@@ -859,7 +843,7 @@ export default function ApplicationsPage() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[13px] font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-xs font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
               >
                 Move to stage
               </button>
@@ -872,7 +856,7 @@ export default function ApplicationsPage() {
                 <DropdownMenuItem
                   key={s}
                   onClick={() => bulkStage(s as Application["status"])}
-                  className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px]"
+                  className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs"
                 >
                   <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(s) }} />
                   {sLabel(s)}
@@ -883,7 +867,7 @@ export default function ApplicationsPage() {
           <button
             type="button"
             onClick={() => setBulkDeleteOpen(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[13px] font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-xs font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
           >
             <IconTrash className="h-3.5 w-3.5" />Delete
           </button>

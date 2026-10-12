@@ -313,9 +313,9 @@ export const COMMON_SKILLS = [
  * the code; `normalizeState` converts legacy full-name records on read, so
  * existing rows keep working without a migration.
  *
- * "Remote" is deliberately absent, it is a job *type*, and JOB_TYPES in
- * job-form.tsx already carries it. Putting it in the state list made "Remote"
- * and "Texas" mutually exclusive, which they are not.
+ * "Remote" is deliberately absent: it is a job's workplace (src/lib/workplace.ts).
+ * Putting it in the state list made "Remote" and "Texas" mutually exclusive,
+ * which they are not.
  */
 export const US_STATES: { code: string; name: string }[] = [
   { code: "AL", name: "Alabama" },        { code: "AK", name: "Alaska" },

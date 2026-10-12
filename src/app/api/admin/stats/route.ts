@@ -1,5 +1,6 @@
+import { jobLocationLabel } from "@/lib/workplace";
 import { NextRequest, NextResponse } from "next/server";
-import { getAllJobs, getAllApplications } from "@/lib/aws/dynamodb";
+import { getAllJobs, getApplicationSummaries, type Application } from "@/lib/aws/dynamodb";
 import { requireStaff, viewerOf } from "@/lib/auth/verify";
 import { isVisibleApplication } from "@/lib/bench";
 import { isPubliclyOpen } from "@/lib/job-status";
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Fetch all data in parallel
     const [jobsResult, applicationsResult] = await Promise.all([
       getAllJobs(),
-      getAllApplications(),
+      getApplicationSummaries(),
     ]);
 
     if (!jobsResult.success || !applicationsResult.success) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const jobs = jobsResult.data || [];
     const viewer = viewerOf(auth.claims);
-    const applications = (applicationsResult.data || []).filter((a) => isVisibleApplication(a, viewer));
+    const applications = (applicationsResult.data || []).filter((a) => isVisibleApplication(a as Application, viewer));
 
     // Calculate stats
     const stats = {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
           id: job.id,
           title: job.title,
           department: job.department,
-          location: job.location,
+          location: jobLocationLabel(job),
           applicants: applications.filter((a) => a.jobId === job.id).length,
           status: job.status,
         })),

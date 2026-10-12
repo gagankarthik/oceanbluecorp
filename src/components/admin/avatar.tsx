@@ -45,9 +45,9 @@ export function Avatar({ name, email, size = "md", className, src, onLoad, onErr
     .toUpperCase() || "?";
   const fill = PALETTE[hash(display) % PALETTE.length];
   const sz = {
-    xs: "w-6 h-6 text-[10.5px]",
-    sm: "w-7 h-7 text-[11.5px]",
-    md: "w-8 h-8 text-[11.5px]",
+    xs: "w-6 h-6 text-adm-micro",
+    sm: "w-7 h-7 text-adm-micro",
+    md: "w-8 h-8 text-adm-micro",
     lg: "w-11 h-11 text-sm",
     xl: "w-16 h-16 text-lg",
   }[size];

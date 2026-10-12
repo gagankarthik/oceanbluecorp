@@ -34,32 +34,30 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
  * when data lands: title row → inline stat strip → slim canvas toolbar
  * (search left, filter pills + Display right) → table panel with footer.
  */
-export function AdminListSkeleton({ stats = 0, rows = 8, tabs = 0, label = "Loading list" }: { stats?: number; rows?: number; tabs?: number; label?: string }) {
+/** List page: ListHeader, then the panel. `stats` and `tabs` are accepted from older call sites and ignored. */
+export function AdminListSkeleton({ rows = 8, label = "Loading list" }: { stats?: number; rows?: number; tabs?: number; label?: string }) {
   return (
     <div className="pb-10" {...busy(label)}>
-      <BrandBandSkeleton size="sm" stats={Math.max(stats, 1)} className="mb-3" />
-
-      {/* segmented tabs (e.g. bench pools) */}
-      {tabs > 0 && (
-        <div className="mb-4 inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] p-0.5">
-          {Array.from({ length: tabs }).map((_, i) => (
-            <Skel key={i} className="h-7 w-28 rounded-[6px]" />
-          ))}
+      {/* ListHeader: title and meta line, actions right */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="space-y-2">
+          <Skel className="h-6 w-40" />
+          <Skel className="h-3 w-56" />
         </div>
-      )}
-
-      {/* canvas toolbar: search left, filter pills + Display right */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Skel className="h-9 w-full sm:w-[260px]" />
-        <div className="ml-auto flex items-center gap-2">
-          <Skel className="hidden h-9 w-24 sm:block" />
-          <Skel className="hidden h-9 w-24 md:block" />
-          <Skel className="h-9 w-20" />
-        </div>
+        <Skel className="h-9 w-24" />
       </div>
 
       {/* table panel */}
       <div className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
+        {/* ListToolbar: tabs and search left, filters and Display right */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--adm-line)] px-3 py-3 lg:px-4">
+          <Skel className="h-9 w-64 max-w-full" />
+          <Skel className="h-9 w-full sm:w-[260px]" />
+          <div className="ml-auto flex items-center gap-2">
+            <Skel className="hidden h-9 w-24 sm:block" />
+            <Skel className="h-9 w-20" />
+          </div>
+        </div>
         <div className="flex items-center gap-4 border-b border-[var(--adm-line-soft)] px-6 py-4">
           <Skel className="h-3 w-32 max-w-[40%] flex-1" />
           <Skel className="hidden h-3 w-24 sm:block" />

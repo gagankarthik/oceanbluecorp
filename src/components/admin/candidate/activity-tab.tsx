@@ -71,7 +71,7 @@ export function ActivityTab({ history, activity }: { history: HistoryEntry[]; ac
 }
 
 function When({ at }: { at: string }) {
-  return <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDateTime(at)}</span>;
+  return <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDateTime(at)}</span>;
 }
 
 function StageRow({ entry }: { entry: HistoryEntry }) {
@@ -85,7 +85,7 @@ function StageRow({ entry }: { entry: HistoryEntry }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[14px] text-[var(--adm-ink-mute)]">
+          <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-adm-base text-[var(--adm-ink-mute)]">
             Moved to
             <StatusBadge status={entry.status} />
             {entry.changedByName && (
@@ -97,7 +97,7 @@ function StageRow({ entry }: { entry: HistoryEntry }) {
           <When at={entry.changedAt} />
         </div>
         {entry.notes && (
-          <p className="mt-2 rounded-[6px] bg-[var(--adm-surface-sunken)] px-3 py-2 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="mt-2 rounded-[6px] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             {entry.notes}
           </p>
         )}
@@ -115,7 +115,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-          <p className="min-w-0 text-[14px] text-[var(--adm-ink-mute)]">
+          <p className="min-w-0 text-adm-base text-[var(--adm-ink-mute)]">
             <span className="text-[var(--adm-ink)]">{entry.summary}</span>
             {entry.byName && (
               <span>
@@ -126,7 +126,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
           <When at={entry.at} />
         </div>
         {entry.kind === "edit" && entry.fields && entry.fields.length > 0 && (
-          <p className="mt-1 text-[12.5px] text-[var(--adm-ink-subtle)]">
+          <p className="mt-1 text-adm-xs text-[var(--adm-ink-subtle)]">
             Changed: {entry.fields.map(fieldLabel).join(", ")}
           </p>
         )}

@@ -1,8 +1,9 @@
 "use client";
 
+import { jobLocationLabel } from "@/lib/workplace";
 import { useState, use, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Check, MoreHorizontal, Plus, SearchX, X } from "lucide-react";
+import { Check, MoreVertical, Plus, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials, RECRUITING_ROLES } from "@/lib/auth";
@@ -57,7 +58,7 @@ function Blank() {
 
 // Reading measure and paragraph rhythm: a posting is prose, not a data cell.
 const PROSE =
-  "max-w-[72ch] text-[14px] leading-relaxed text-[var(--adm-ink-mute)] [&_p+p]:mt-3 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_li]:marker:text-[var(--adm-ink-subtle)] [&_strong]:font-semibold [&_strong]:text-[var(--adm-ink)]";
+  "max-w-[72ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)] [&_p+p]:mt-3 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_li]:marker:text-[var(--adm-ink-subtle)] [&_strong]:font-semibold [&_strong]:text-[var(--adm-ink)]";
 
 export default function JobDetailPage({
   params,
@@ -211,7 +212,7 @@ export default function JobDetailPage({
           <Avatar name={a.name} email={a.email} size="sm" />
           <div className="min-w-0 max-w-[220px]">
             <span className="block truncate font-medium text-[var(--adm-ink)]">{a.name || "–"}</span>
-            <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{a.email}</span>
+            <span className="block truncate text-adm-xs text-[var(--adm-ink-subtle)]">{a.email}</span>
           </div>
         </div>
       ),
@@ -228,7 +229,7 @@ export default function JobDetailPage({
     {
       key: "source", header: "Source", sortValue: (a) => a.source || "", hideBelow: "xl",
       cell: (a) => a.source
-        ? <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">{a.source}</span>
+        ? <span className="rounded-[6px] bg-[var(--adm-surface-2)] px-2 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">{a.source}</span>
         : <Blank />,
     },
     {
@@ -239,12 +240,12 @@ export default function JobDetailPage({
         return (
           <div className="flex max-w-[200px] flex-wrap items-center gap-1">
             {skills.slice(0, 2).map((s) => (
-              <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-ink-mute)]">
+              <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-ink-mute)]">
                 {s}
               </span>
             ))}
             {skills.length > 2 && (
-              <span className="px-1 text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+              <span className="px-1 text-adm-micro font-medium tabular-nums text-[var(--adm-ink-subtle)]">
                 +{skills.length - 2}
               </span>
             )}
@@ -268,7 +269,7 @@ export default function JobDetailPage({
     },
     {
       key: "appliedAt", header: "Applied", sortValue: (a) => new Date(a.appliedAt).getTime(), hideBelow: "md",
-      cell: (a) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(a.appliedAt)}</span>,
+      cell: (a) => <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(a.appliedAt)}</span>,
     },
     {
       key: "actions", header: "", align: "right",
@@ -281,7 +282,7 @@ export default function JobDetailPage({
                 aria-label={`Actions for ${a.name || a.email}`}
                 className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
               >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                <MoreVertical className="h-4 w-4" aria-hidden="true" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -289,21 +290,21 @@ export default function JobDetailPage({
               sideOffset={6}
               className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
             >
-              <DropdownMenuItem onClick={() => router.push(`/admin/candidates/${a.id}`)} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+              <DropdownMenuItem onClick={() => router.push(`/admin/candidates/${a.id}`)} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
                 <IconEye className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />View profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setEditingApp(a); setDrawerOpen(true); }} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+              <DropdownMenuItem onClick={() => { setEditingApp(a); setDrawerOpen(true); }} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
                 <IconEdit className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />Edit applicant
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
-              <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-[var(--adm-ink-subtle)]">
+              <DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
                 Move to
               </DropdownMenuLabel>
               {APP_STATUSES.filter((s) => s.value !== a.status).map((s) => (
                 <DropdownMenuItem
                   key={s.value}
                   onClick={() => handleStatusChange(a.id, s.value)}
-                  className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink-mute)]"
+                  className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink-mute)]"
                 >
                   <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: statusColor(s.value) }} />
                   {s.label}
@@ -358,12 +359,12 @@ export default function JobDetailPage({
           <>
             {job.postingId && (
               <RecordFact icon={IconHash}>
-                <span className="font-mono text-[12.5px]">{job.postingId}</span>
+                <span className="font-mono text-adm-xs">{job.postingId}</span>
               </RecordFact>
             )}
             {job.department && <RecordFact icon={IconRequisition}>{job.department}</RecordFact>}
             <RecordFact icon={IconLocation}>
-              {job.location}{job.state ? `, ${job.state}` : ""}
+              {jobLocationLabel(job) || "Location not set"}
             </RecordFact>
             {canPrice && job.clientName && <RecordFact icon={IconBuilding}>{job.clientName}</RecordFact>}
             {canPrice && job.vendorName && <RecordFact icon={IconTruck}>{job.vendorName}</RecordFact>}
@@ -379,7 +380,7 @@ export default function JobDetailPage({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <WorkspaceButton aria-label="More actions" className="px-2.5">
-                  <MoreHorizontal aria-hidden="true" />
+                  <MoreVertical aria-hidden="true" />
                 </WorkspaceButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -389,7 +390,7 @@ export default function JobDetailPage({
               >
                 {isPubliclyOpen(job.status) ? (
                   <>
-                    <DropdownMenuItem onClick={shareLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+                    <DropdownMenuItem onClick={shareLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
                       {copied
                         ? <Check className="h-4 w-4 text-[var(--adm-success-ink)]" aria-hidden="true" />
                         : <IconLink className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />}
@@ -397,7 +398,7 @@ export default function JobDetailPage({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => window.open(publicUrl(), "_blank", "noopener")}
-                      className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]"
+                      className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]"
                     >
                       <IconEye className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                       View public posting
@@ -405,13 +406,13 @@ export default function JobDetailPage({
                   </>
                 ) : (
                   // A draft, on-hold or closed posting has no public page to share.
-                  <DropdownMenuItem disabled className="gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink-subtle)]">
+                  <DropdownMenuItem disabled className="gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink-subtle)]">
                     <IconLink className="h-4 w-4" aria-hidden="true" />
                     Share link (set the role to Active first)
                   </DropdownMenuItem>
                 )}
                 {canManageApplicants && filteredApps.length > 0 && (
-                  <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[var(--adm-ink)]">
+                  <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
                     <IconDownload className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                     Export {filteredApps.length} applicant{filteredApps.length === 1 ? "" : "s"}
                   </DropdownMenuItem>
@@ -454,13 +455,13 @@ export default function JobDetailPage({
           <dl aria-label="Role details" className="flex flex-wrap gap-x-10 gap-y-4 px-5 py-4">
             {details.filter((d) => d.value).map((d) => (
               <div key={d.label} className="min-w-0">
-                <dt className="text-[12.5px] text-[var(--adm-ink-subtle)]">{d.label}</dt>
-                <dd className="mt-1 break-words text-[14.5px] font-semibold text-[var(--adm-ink)]">{d.value}</dd>
+                <dt className="text-adm-xs text-[var(--adm-ink-subtle)]">{d.label}</dt>
+                <dd className="mt-1 break-words text-adm-base font-semibold text-[var(--adm-ink)]">{d.value}</dd>
               </div>
             ))}
           </dl>
           {missingDetails.length > 0 && (
-            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-2.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-2.5 text-adm-xs text-[var(--adm-ink-subtle)]">
               Not recorded: {missingDetails.join(", ").toLowerCase()}.
               {canEdit && (
                 <>
@@ -490,7 +491,7 @@ export default function JobDetailPage({
                   aria-selected={isActive}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "inline-flex h-11 flex-none items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium transition-colors duration-150",
+                    "inline-flex h-11 flex-none items-center gap-2 border-b-2 px-3 text-adm-base font-medium transition-colors duration-150",
                     isActive
                       ? "border-[var(--adm-accent)] text-[var(--adm-ink)]"
                       : "border-transparent text-[var(--adm-ink-mute)] hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]",
@@ -502,7 +503,7 @@ export default function JobDetailPage({
                   />
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className="rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                    <span className="rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-micro font-medium tabular-nums text-[var(--adm-ink-mute)]">
                       {tab.count}
                     </span>
                   )}
@@ -520,28 +521,28 @@ export default function JobDetailPage({
               <div className="space-y-6 p-5">
                 {job.description ? (
                   <section>
-                    <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Description</h3>
+                    <h3 className="mb-2 text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Description</h3>
                     <div className={PROSE} dangerouslySetInnerHTML={renderRichText(job.description)} />
                   </section>
                 ) : null}
 
                 {hasRequirements && (
                   <section>
-                    <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Requirements</h3>
+                    <h3 className="mb-2 text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Requirements</h3>
                     <div className={PROSE} dangerouslySetInnerHTML={renderListField(job.requirements)} />
                   </section>
                 )}
 
                 {hasResponsibilities && (
                   <section>
-                    <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Responsibilities</h3>
+                    <h3 className="mb-2 text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Responsibilities</h3>
                     <div className={PROSE} dangerouslySetInnerHTML={renderListField(job.responsibilities)} />
                   </section>
                 )}
 
                 {job.clientNotes && (
                   <section>
-                    <h3 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Client notes</h3>
+                    <h3 className="mb-2 text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Client notes</h3>
                     <p className={cn(PROSE, "whitespace-pre-wrap")}>{job.clientNotes}</p>
                   </section>
                 )}
@@ -570,7 +571,7 @@ export default function JobDetailPage({
                     {APP_STATUSES.find((s) => s.value === statusFilter)?.label ?? "Stage"} only
                   </WorkspaceButton>
                 )}
-                <span className="ml-auto flex-none text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+                <span className="ml-auto flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                   <span className="font-medium text-[var(--adm-ink-mute)]">{filteredApps.length}</span> of {applications.length}
                 </span>
               </div>

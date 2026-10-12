@@ -120,10 +120,10 @@ const ROUTE_ROWS = Object.entries(routeAccess)
 // ── Primitives ─────────────────────────────────────────────────────────────────
 
 /** Key caps in prose sit a size up from the toolbar default. */
-const KBD = "h-6 px-1.5 text-[11.5px]";
+const KBD = "h-6 px-1.5 text-adm-micro";
 
 /** Inline code span. */
-const CODE = "rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]";
+const CODE = "rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-adm-xs text-[var(--adm-ink-mute)]";
 
 /** Title that opens a documentation chapter. */
 function SectionHeader({
@@ -141,9 +141,9 @@ function SectionHeader({
     <div id={id} className="scroll-mt-6 border-b border-[var(--adm-line)] pb-4">
       <div className="flex items-center gap-2">
         <Icon className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
-        <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">{title}</h2>
+        <h2 className="text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">{title}</h2>
       </div>
-      {description && <p className="mt-1 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">{description}</p>}
+      {description && <p className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{description}</p>}
     </div>
   );
 }
@@ -172,7 +172,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
   const icons = { info: IconInfo, warning: IconAlert, tip: IconSuccess };
   const Icon = icons[variant];
   return (
-    <div className={cn("flex items-start gap-2.5 rounded-[12px] border p-3.5 text-[13px] leading-relaxed", styles[variant])}>
+    <div className={cn("flex items-start gap-2.5 rounded-[12px] border p-3.5 text-adm-xs leading-relaxed", styles[variant])}>
       <Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", iconInk[variant])} />
       <div className="min-w-0 [&_code]:break-words">{children}</div>
     </div>
@@ -193,7 +193,7 @@ function DocTable({
 }) {
   return (
     <div className="max-w-full overflow-x-auto rounded-[12px] border border-[var(--adm-line)]">
-      <table className="adm-grid min-w-[520px] text-[13.5px]">
+      <table className="adm-grid min-w-[520px] text-adm-base">
         <thead>
           <tr>
             {headers.map((h, i) => (
@@ -222,13 +222,13 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
   return (
     <div className="min-w-0 overflow-hidden rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-1.5">
-        <span className="truncate font-mono text-[12px] text-[var(--adm-ink-subtle)]">{label}</span>
+        <span className="truncate font-mono text-adm-xs text-[var(--adm-ink-subtle)]">{label}</span>
         <button
           type="button"
           onClick={() => { void navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           aria-label={copied ? "Copied" : "Copy code"}
           className={cn(
-            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-[12.5px] font-medium transition-colors duration-150",
+            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-adm-xs font-medium transition-colors duration-150",
             copied
               ? "text-[var(--adm-success-ink)]"
               : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -239,7 +239,7 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
         </button>
       </div>
       {/* Scrolls sideways inside itself; long env lines never widen the page. */}
-      <pre className="max-w-full overflow-x-auto whitespace-pre p-4 font-mono text-[12.5px] leading-relaxed text-[var(--adm-ink)]">{children}</pre>
+      <pre className="max-w-full overflow-x-auto whitespace-pre p-4 font-mono text-adm-xs leading-relaxed text-[var(--adm-ink)]">{children}</pre>
     </div>
   );
 }
@@ -253,7 +253,7 @@ function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PA
     PATCH:  "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
   };
   return (
-    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-[11.5px] font-semibold", colors[method])}>
+    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-adm-micro font-semibold", colors[method])}>
       {method}
     </span>
   );
@@ -282,8 +282,8 @@ function No() {
 function Well({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] p-4">
-      <p className="mb-1 text-[13px] font-medium text-[var(--adm-ink)]">{title}</p>
-      <p className="text-[13.5px] text-[var(--adm-ink-mute)]">{children}</p>
+      <p className="mb-1 text-adm-xs font-medium text-[var(--adm-ink)]">{title}</p>
+      <p className="text-adm-base text-[var(--adm-ink-mute)]">{children}</p>
     </div>
   );
 }
@@ -329,7 +329,7 @@ export default function AdminDocsPage() {
     <nav aria-label="Documentation contents" className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-2 lg:grid-cols-1">
       {CATEGORIES.map((cat) => (
         <div key={cat.id}>
-          <p className="mb-1 px-2.5 text-[13px] font-medium text-[var(--adm-ink-subtle)]">
+          <p className="mb-1 px-2.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
             {cat.label}
           </p>
           <div className="space-y-px">
@@ -343,7 +343,7 @@ export default function AdminDocsPage() {
                   onClick={() => scrollTo(item.id)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-[13px] transition-colors duration-150 lg:py-1.5",
+                    "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-adm-xs transition-colors duration-150 lg:py-1.5",
                     isActive
                       ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -393,7 +393,7 @@ export default function AdminDocsPage() {
               aria-controls="docs-contents"
               className="flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)] lg:pointer-events-none lg:border-b lg:border-[var(--adm-line-soft)]"
             >
-              <span className="inline-flex min-w-0 items-center gap-2 text-[13px] font-medium text-[var(--adm-ink-mute)]">
+              <span className="inline-flex min-w-0 items-center gap-2 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                 <ListTree className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
                 Contents
                 {activeLabel && (
@@ -439,16 +439,16 @@ export default function AdminDocsPage() {
                 <div key={f.label} className="bg-[var(--adm-surface)] p-4">
                   <div className="mb-1 flex items-center gap-2">
                     <f.icon className="h-[18px] w-[18px] text-[var(--adm-ink-mute)]" />
-                    <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{f.label}</span>
+                    <span className="text-adm-base font-semibold text-[var(--adm-ink)]">{f.label}</span>
                   </div>
-                  <p className="text-[13px] text-[var(--adm-ink-mute)]">{f.desc}</p>
+                  <p className="text-adm-xs text-[var(--adm-ink-mute)]">{f.desc}</p>
                 </div>
               ))}
             </div>
             </AdminCard>
 
             <SubSection title="Admin panel URL structure">
-              <p className="text-[13px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-xs text-[var(--adm-ink-mute)]">
                 Read from <code className={CODE}>routeAccess</code> in <code className={CODE}>src/lib/auth/config.ts</code>, the same map the layout enforces.
               </p>
               <DocTable
@@ -468,7 +468,7 @@ export default function AdminDocsPage() {
 
             <SubSection title="Authentication">
               <div className="space-y-3">
-                <p className="text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+                <p className="text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                   The console is <strong>staff-only and invite-based</strong>; there is no public sign-up. A forgotten password is reset from the same page with an emailed code. Sign in with your email and password directly on <code className={CODE}>/auth/signin</code>; the form posts to <code className={CODE}>/api/auth/signin</code>, which authenticates against Cognito and returns your tokens. There is no Cognito Hosted UI redirect.
                 </p>
                 <InfoCard variant="info">
@@ -500,7 +500,6 @@ export default function AdminDocsPage() {
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {[
                   { keys: "⌘ K", desc: "Open global command palette / search" },
-                  { keys: "/", desc: "Focus the search field on a list page" },
                   { keys: "Esc", desc: "Close modals, drawers, dropdowns" },
                   { keys: "Enter", desc: "Confirm selection in dropdowns" },
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
@@ -508,7 +507,7 @@ export default function AdminDocsPage() {
                 ].map((s) => (
                   <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
                     <Kbd className={KBD}>{s.keys}</Kbd>
-                    <span className="text-[14px] text-[var(--adm-ink-mute)]">{s.desc}</span>
+                    <span className="text-adm-base text-[var(--adm-ink-mute)]">{s.desc}</span>
                   </div>
                 ))}
               </div>
@@ -524,7 +523,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Creating a job">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>Postings live in two lists: <strong>State roles</strong> (<strong>/admin/state-roles</strong>) and <strong>Open roles</strong> (<strong>/admin/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
                 <ol className="list-decimal list-outside space-y-1 ml-5">
                   <li><strong>Basic Info</strong>, Title, department, type (full-time / contract / etc.), location</li>
@@ -578,13 +577,13 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Duplicate a job">
-              <p className="text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <p className="text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 In the jobs table, click the <strong>⋯ menu</strong> on any row and select <strong>Duplicate</strong>. A copy is created with a new Posting ID and status reset to <em>Draft</em>. Useful for recurring roles or similar positions.
               </p>
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-[14px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 The <strong>Export</strong> button on the jobs page downloads a CSV with columns: Job ID, Title, Client, Location, Status, Pay Rate, Bill Rate, Manager, Created, Deadline. Applies your current filter/search state.
               </p>
             </SubSection>
@@ -610,7 +609,7 @@ export default function AdminDocsPage() {
                 ] as const).map(([status, label, desc]) => (
                   <div key={status} className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
                     <span className="sm:w-32 sm:flex-none"><StatusBadge status={status} label={label} size="md" /></span>
-                    <p className="text-[14px] text-[var(--adm-ink-mute)]">{desc}</p>
+                    <p className="text-adm-base text-[var(--adm-ink-mute)]">{desc}</p>
                   </div>
                 ))}
               </div>
@@ -660,7 +659,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-[14px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 Use the <strong>Export CSV</strong> button on the applications page to download all filtered results with columns: Name, Email, Phone, Status, Applied, Source, Work Auth.
               </p>
             </SubSection>
@@ -675,7 +674,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="Adding to the bench">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>Toggle <strong>Add to Talent Bench</strong> when creating or editing an application. The candidate is then visible in <strong>/admin/bench</strong> regardless of job status.</p>
                 <InfoCard variant="tip">
                   Bench candidates retain all their application data (skills, visa status, notes, rating). Use the bench to quickly match top candidates when new roles open.
@@ -684,7 +683,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Resume bank">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>The <strong>/admin/resumes</strong> page shows all uploaded resumes stored in S3. Each resume entry has:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>File name and size</li>
@@ -715,7 +714,7 @@ export default function AdminDocsPage() {
                   ["Notes", "Internal notes about the client relationship"],
                 ]}
               />
-              <p className="text-[13px] text-[var(--adm-ink-mute)]">Clients are linked to jobs via the <em>Client Name</em> field. When a job is created, you can search existing clients or enter a new one.</p>
+              <p className="text-adm-xs text-[var(--adm-ink-mute)]">Clients are linked to jobs via the <em>Client Name</em> field. When a job is created, you can search existing clients or enter a new one.</p>
             </SubSection>
 
             <SubSection title="Vendors">
@@ -753,7 +752,7 @@ export default function AdminDocsPage() {
                   </Fragment>
                 ))}
               </div>
-              <p className="text-[14px] text-[var(--adm-ink-mute)]">All contact submissions arrive as <strong>New</strong>. Mark as <em>Replied</em> after responding, or <em>Archived</em> to hide from active view.</p>
+              <p className="text-adm-base text-[var(--adm-ink-mute)]">All contact submissions arrive as <strong>New</strong>. Mark as <em>Replied</em> after responding, or <em>Archived</em> to hide from active view.</p>
             </SubSection>
 
             <SubSection title="Contact fields">
@@ -779,7 +778,7 @@ export default function AdminDocsPage() {
             />
 
             <SubSection title="User management">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>Navigate to <strong>/admin/users</strong> to see all Cognito users. You can:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>View all registered users with their email, status, and role</li>
@@ -810,7 +809,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Inviting a team member">
-              <ol className="text-[14px] text-[var(--adm-ink-mute)] space-y-1.5 list-decimal list-outside ml-5 leading-relaxed">
+              <ol className="text-adm-base text-[var(--adm-ink-mute)] space-y-1.5 list-decimal list-outside ml-5 leading-relaxed">
                 <li>Go to <strong>/admin/users</strong> → click <strong>Invite User</strong></li>
                 <li>Enter the email address and select the role: <code className={CODE}>admin</code>, <code className={CODE}>hr</code>, <code className={CODE}>recruiter</code>, <code className={CODE}>sales</code>, or <code className={CODE}>media</code></li>
                 <li>Cognito emails the invite with a temporary password</li>
@@ -828,7 +827,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             />
 
             <SubSection title="Global command palette">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)]">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)]">
                 <p>Press <Kbd className={KBD}>⌘ K</Kbd> (Mac) or <Kbd className={KBD}>Ctrl K</Kbd> (Windows) from anywhere in the admin panel to open the command palette.</p>
                 <DocTable
                   headers={["Search scope", "Examples"]}
@@ -843,7 +842,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="In-app notifications">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p>The bell icon in the admin header shows unread notification count. Notifications are created automatically for:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>New application received</li>
@@ -878,7 +877,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             />
 
             <SubSection title="Content management">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <p><strong>/admin/content</strong> lets you update website content blocks without deploying code. Sections available:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>Homepage hero text, CTA labels</li>
@@ -893,7 +892,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Maintenance mode">
-              <div className="space-y-2 text-[14px] leading-relaxed text-[var(--adm-ink-mute)]">
+              <div className="space-y-2 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                 <p><strong>Settings → System</strong> replaces the public site with the maintenance screen. Set <em>Expected back</em> for planned work; left empty, the screen reads as an unexpected outage. <strong>Preview what visitors will see</strong> opens <code className={CODE}>/maintenance</code>.</p>
                 <InfoCard variant="info">
                   While it is on, public pages answer <strong>503</strong> with <code>Retry-After</code>, so search engines keep the indexed pages. The console, sign-in, the API, <code>/status</code>, <code>robots.txt</code> and <code>sitemap.xml</code> stay up. The status code follows the switch within 30 seconds.
@@ -1149,7 +1148,7 @@ RESUME_MATCH_API_KEY=your_key`}</CodeBlock>
             />
 
             <SubSection title="Authentication flow">
-              <div className="space-y-2 text-[14px] text-[var(--adm-ink-mute)] leading-relaxed">
+              <div className="space-y-2 text-adm-base text-[var(--adm-ink-mute)] leading-relaxed">
                 <ol className="list-decimal list-outside space-y-2 ml-5">
                   <li>User enters email + password on <code className={CODE}>/auth/signin</code> and submits to <code className={CODE}>/api/auth/signin</code></li>
                   <li>The route runs Cognito <code className={CODE}>USER_PASSWORD_AUTH</code> and returns ID + access + refresh tokens</li>

@@ -214,7 +214,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search jobs, applications, candidates, or jump to a page…"
-            className="min-w-0 flex-1 bg-transparent text-[14px] text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
+            className="min-w-0 flex-1 bg-transparent text-adm-base text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
           />
           {loading && <div className="h-3.5 w-3.5 flex-none animate-spin rounded-full border-2 border-[var(--adm-line)] border-t-[var(--adm-accent)]" aria-hidden="true" />}
           <Kbd className="hidden sm:inline-flex">Esc</Kbd>
@@ -305,11 +305,11 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
 
         {/* Footer */}
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2">
-          <div className="flex items-center gap-3 text-[12px] text-[var(--adm-ink-subtle)]">
+          <div className="flex items-center gap-3 text-adm-xs text-[var(--adm-ink-subtle)]">
             <span className="flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> navigate</span>
             <span className="flex items-center gap-1"><Kbd><CornerDownLeft className="h-2.5 w-2.5" /></Kbd> select</span>
           </div>
-          <div className="hidden items-center gap-1.5 text-[12px] text-[var(--adm-ink-subtle)] sm:flex">
+          <div className="hidden items-center gap-1.5 text-adm-xs text-[var(--adm-ink-subtle)] sm:flex">
             <CommandIcon className="h-3 w-3" /> Command palette
           </div>
         </div>
@@ -322,7 +322,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   const id = React.useId();
   return (
     <div role="group" aria-labelledby={id} className="px-1.5 py-1">
-      <p id={id} className="px-2.5 pb-1 pt-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)]">{title}</p>
+      <p id={id} className="px-2.5 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">{title}</p>
       {children}
     </div>
   );
@@ -357,8 +357,8 @@ function Item({
       {/* Fixed slot so icons and avatars share one text edge. */}
       {icon && <span className="grid w-7 flex-none place-items-center" aria-hidden="true">{icon}</span>}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13.5px] font-medium text-[var(--adm-ink)]">{title}</p>
-        {subtitle && <p className="truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{subtitle}</p>}
+        <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{title}</p>
+        {subtitle && <p className="truncate text-adm-xs text-[var(--adm-ink-subtle)]">{subtitle}</p>}
       </div>
       {badge && <span className="hidden flex-none sm:inline-flex">{badge}</span>}
       {active && <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--adm-accent)]" aria-hidden="true" />}

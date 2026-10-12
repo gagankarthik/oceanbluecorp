@@ -5,7 +5,7 @@ import { hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess } from "@
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen } from "@/lib/job-status";
-import { jobInputError, parseSalary, publishedAtFor } from "@/lib/job-input";
+import { jobInputError, parseSalary, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 
 /**
  * GET /api/jobs/[id]
@@ -95,8 +95,9 @@ export async function PUT(
       );
     }
 
-    const invalid = jobInputError(body, { partial: true, currentType: existingJob.data.type });
+    const invalid = jobInputError(body, { partial: true, current: existingJob.data });
     if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+    const place = splitLegacyRemote(body);
 
     // Prepare updates (exclude id, createdAt, createdBy, postingId)
     const updates: Partial<Omit<Job, "id" | "createdAt" | "createdBy" | "postingId">> = {};
@@ -104,13 +105,15 @@ export async function PUT(
     if (body.title !== undefined) updates.title = body.title;
     if (body.department !== undefined) updates.department = body.department;
     if (body.location !== undefined) updates.location = typeof body.location === "string" ? body.location.trim() : "";
-    if (body.type !== undefined) updates.type = body.type;
+    if (place.type !== undefined) updates.type = place.type;
+    if (place.workplace !== undefined) updates.workplace = place.workplace;
     if (body.description !== undefined) updates.description = sanitizeRichText(body.description);
     if (body.requirements !== undefined) updates.requirements = typeof body.requirements === "string" ? sanitizeRichText(body.requirements) : body.requirements;
     if (body.responsibilities !== undefined) updates.responsibilities = typeof body.responsibilities === "string" ? sanitizeRichText(body.responsibilities) : body.responsibilities;
     if (body.salary !== undefined) {
       const salary = parseSalary(body.salary);
-      if (salary.ok) updates.salary = salary.value ?? undefined;
+      // null is stored, so a cleared range actually clears.
+      if (salary.ok) updates.salary = salary.value as Job["salary"];
     }
     if (body.status !== undefined) {
       updates.status = body.status;

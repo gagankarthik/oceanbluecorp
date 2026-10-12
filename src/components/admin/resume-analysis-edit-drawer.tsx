@@ -64,7 +64,7 @@ function Entry({ label, onRemove, children }: { label: string; onRemove: () => v
   return (
     <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3.5">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-[13px] font-medium text-[var(--adm-ink-mute)]">{label}</p>
+        <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{label}</p>
         <button
           type="button"
           onClick={onRemove}
@@ -80,7 +80,7 @@ function Entry({ label, onRemove, children }: { label: string; onRemove: () => v
 }
 
 function NoEntries({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] text-[var(--adm-ink-subtle)]">{children}</p>;
+  return <p className="text-adm-xs text-[var(--adm-ink-subtle)]">{children}</p>;
 }
 
 // ── drawer ───────────────────────────────────────────────────────────────────
@@ -193,10 +193,10 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
       >
         <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5">
           <div className="min-w-0">
-            <SheetTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
+            <SheetTitle className="text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
               Edit resume analysis
             </SheetTitle>
-            <SheetDescription className="mt-0.5 text-[13px] leading-snug text-[var(--adm-ink-mute)]">
+            <SheetDescription className="mt-0.5 text-adm-xs leading-snug text-[var(--adm-ink-mute)]">
               Correct anything the parser got wrong. Contact details are not changed here.
             </SheetDescription>
           </div>
@@ -214,7 +214,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
           {error && (
             <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
-              <p className="text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
+              <p className="text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
             </div>
           )}
 

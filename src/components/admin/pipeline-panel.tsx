@@ -196,7 +196,7 @@ export function PipelinePanel({
             ))}
           </div>
         ) : error ? (
-          <p role="alert" className="m-4 flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] text-[var(--adm-danger-ink)]">
+          <p role="alert" className="m-4 flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-adm-xs text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             {error}
           </p>
@@ -232,7 +232,7 @@ export function PipelinePanel({
 
             {unattached.length > 0 && (
               <div className="px-4 py-3">
-                <p className="mb-2 text-[12.5px] font-medium text-[var(--adm-ink-mute)]">
+                <p className="mb-2 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                   Not tied to a submission
                 </p>
                 <div className="space-y-2">
@@ -321,7 +321,7 @@ function downloadInterviewIcs(interview: Interview) {
 }
 
 const addLinkCls =
-  "inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-control)] px-1.5 text-[12.5px] font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
+  "inline-flex h-7 items-center gap-1 rounded-[var(--adm-radius-control)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-accent-tint)] hover:text-[var(--adm-accent)]";
 
 /* ── Rows ────────────────────────────────────────────────────────────────── */
 
@@ -329,7 +329,7 @@ function PanelAction({
   icon: Icon, label, onClick,
 }: { icon: typeof IconSend; label: string; onClick: () => void }) {
   return (
-    <WorkspaceButton onClick={onClick} className="h-8 gap-1.5 px-2.5 text-[13px] font-medium [&_svg]:h-3.5 [&_svg]:w-3.5">
+    <WorkspaceButton onClick={onClick} className="h-8 gap-1.5 px-2.5 text-adm-xs font-medium [&_svg]:h-3.5 [&_svg]:w-3.5">
       <Icon aria-hidden="true" />
       {label}
     </WorkspaceButton>
@@ -348,7 +348,7 @@ function RowActions({
       <button
         type="button"
         onClick={() => onEdit(record)}
-        className="h-8 rounded-[var(--adm-radius-control)] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        className="h-8 rounded-[var(--adm-radius-control)] px-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         Edit
       </button>
@@ -386,10 +386,10 @@ function SubmissionRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="min-w-0 truncate text-[14px] font-semibold text-[var(--adm-ink)]">{target}</p>
+            <p className="min-w-0 truncate text-adm-base font-semibold text-[var(--adm-ink)]">{target}</p>
             <StatusBadge tone={submissionTone(submission.status)} label={SUBMISSION_STATUS_LABELS[submission.status]} />
           </div>
-          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-[var(--adm-ink-subtle)]">
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-xs text-[var(--adm-ink-subtle)]">
             <span className="inline-flex items-center gap-1">
               <IconCalendar className="h-3.5 w-3.5" aria-hidden="true" /> Sent {fmtDate(submission.occurredAt)}
             </span>
@@ -408,12 +408,12 @@ function SubmissionRow({
             {submission.jobTitle && <span>for {submission.jobTitle}</span>}
           </p>
           {submission.rejectionReason && (
-            <p className="mt-1.5 text-[12.5px] text-[var(--adm-danger-ink)]">
+            <p className="mt-1.5 text-adm-xs text-[var(--adm-danger-ink)]">
               Rejected: {submission.rejectionReason}
             </p>
           )}
           {submission.notes && (
-            <p className="mt-1.5 whitespace-pre-line text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+            <p className="mt-1.5 whitespace-pre-line text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
               {submission.notes}
             </p>
           )}
@@ -456,7 +456,7 @@ function InterviewLine({
       <IconInterview className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[13px] font-semibold text-[var(--adm-ink)]">
+          <p className="text-adm-xs font-semibold text-[var(--adm-ink)]">
             Round {interview.round} · {INTERVIEW_MODE_LABELS[interview.mode]}
           </p>
           <StatusBadge
@@ -468,14 +468,14 @@ function InterviewLine({
             }
           />
         </div>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12.5px] text-[var(--adm-ink-subtle)]">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-adm-xs text-[var(--adm-ink-subtle)]">
           <span className="tabular-nums">{fmtDateTime(interview.scheduledAt)}</span>
           {interview.durationMinutes ? <span>{interview.durationMinutes} min</span> : null}
           {interview.location && <span className="truncate">{interview.location}</span>}
           {interview.panel?.length ? <span>with {interview.panel.join(", ")}</span> : null}
         </p>
         {interview.feedback && (
-          <p className="mt-1 whitespace-pre-line text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="mt-1 whitespace-pre-line text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             {interview.feedback}
           </p>
         )}
@@ -511,10 +511,10 @@ function PlacementLine({
       <IconPlacement className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[13px] font-semibold text-[var(--adm-ink)]">Placement</p>
+          <p className="text-adm-xs font-semibold text-[var(--adm-ink)]">Placement</p>
           <StatusBadge tone={placementTone(placement.status)} label={PLACEMENT_STATUS_LABELS[placement.status]} />
         </div>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           <span>{fmtDate(placement.startAt)} → {placement.endAt ? fmtDate(placement.endAt) : "open ended"}</span>
           {typeof placement.billRate === "number" && (
             <span>Bill {formatRate(placement.billRate, placement.rateUnit, placement.currency)}</span>
@@ -773,10 +773,10 @@ function PipelineRecordDrawer({
           <div className="flex min-w-0 items-start gap-2.5">
             <meta.icon className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <div className="min-w-0">
-              <SheetTitle className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
+              <SheetTitle className="text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
                 {isEdit ? `Edit ${meta.label.toLowerCase()}` : `Record ${meta.label.toLowerCase()}`}
               </SheetTitle>
-              <SheetDescription className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-subtle)]">
+              <SheetDescription className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-subtle)]">
                 {parentSubmission
                   ? `Under ${parentSubmission.clientName || parentSubmission.vendorName || "the submission"}`
                   : meta.blurb}
@@ -791,7 +791,7 @@ function PipelineRecordDrawer({
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
             {error && (
-              <p role="alert" className="flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] leading-relaxed text-[var(--adm-danger-ink)]">
+              <p role="alert" className="flex items-start gap-2 rounded-[var(--adm-radius-card)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
                 <IconWarning className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 {error}
               </p>
@@ -933,7 +933,7 @@ function PipelineRecordDrawer({
                     is worth doing should not wait until after saving. */}
                 {livePreview && (
                   <p className={cn(
-                    "rounded-[var(--adm-radius-card)] px-3 py-2.5 text-[13px] font-medium tabular-nums",
+                    "rounded-[var(--adm-radius-card)] px-3 py-2.5 text-adm-xs font-medium tabular-nums",
                     livePreview.pct >= 0
                       ? "bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
                       : "bg-[var(--adm-danger-soft)] text-[var(--adm-danger-ink)]",

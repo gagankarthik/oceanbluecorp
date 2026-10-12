@@ -18,26 +18,29 @@ interface Hit {
 }
 
 /**
- * Regular top-bar search, a plain input with an inline results dropdown
- * (NOT a command-palette overlay). Type and matching jobs/candidates/contacts
- * appear right below; click or Enter to open. The ⌘K command palette still
- * exists for keyboard power users (registered in admin-provider), this just
- * gives the visible header a familiar, conventional search field.
+ * Top-bar search: an icon that opens into a field with an inline results
+ * dropdown. On phones the open field covers the top bar.
  */
-export function HeaderSearch() {
+export function HeaderSearch({ className }: { className?: string }) {
   const router = useRouter();
   const [q, setQ] = React.useState("");
   const [hits, setHits] = React.useState<Hit[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
+  const [expanded, setExpanded] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const expand = () => setExpanded(true);
+  const collapse = () => { setExpanded(false); setOpen(false); setQ(""); setHits([]); };
   const listId = React.useId();
   const optId = (i: number) => `${listId}-opt-${i}`;
 
   // Debounced; aborts the superseded request so a slow reply can't overwrite a newer one.
   React.useEffect(() => {
-    if (!q.trim()) { setHits([]); return; }
+    // The server ignores one character; don't spend a round trip on it.
+    if (q.trim().length < 2) { setHits([]); setLoading(false); return; }
     const ctrl = new AbortController();
     const h = setTimeout(async () => {
       try {
@@ -50,7 +53,7 @@ export function HeaderSearch() {
       } finally {
         if (!ctrl.signal.aborted) setLoading(false);
       }
-    }, 200);
+    }, 300);
     return () => { clearTimeout(h); ctrl.abort(); };
   }, [q]);
 
@@ -58,7 +61,11 @@ export function HeaderSearch() {
 
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        // An empty field folds back to the icon; a typed query stays put.
+        if (!inputRef.current?.value) setExpanded(false);
+      }
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -68,9 +75,9 @@ export function HeaderSearch() {
     if (open) document.getElementById(optId(active))?.scrollIntoView({ block: "nearest" });
   }, [active, open]);
 
-  const go = (h: Hit) => { setOpen(false); setQ(""); setHits([]); router.push(h.link); };
+  const go = (h: Hit) => { collapse(); router.push(h.link); };
 
-  const showDropdown = open && q.trim().length > 0;
+  const showDropdown = open && q.trim().length > 1;
   const listOpen = showDropdown && hits.length > 0;
 
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -85,14 +92,43 @@ export function HeaderSearch() {
     else if (e.key === "End" && listOpen) { e.preventDefault(); setActive(hits.length - 1); }
     else if (e.key === "Enter") { if (listOpen && hits[active]) { e.preventDefault(); go(hits[active]); } }
     else if (e.key === "Escape") {
-      if (open) { e.preventDefault(); setOpen(false); } else if (q) setQ("");
+      e.preventDefault();
+      if (open && q) setOpen(false);
+      else collapse();
     }
   };
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={expand}
+        aria-label="Search jobs, candidates and contacts"
+        title="Search"
+        className={cn(
+          "inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink)] hover:bg-[var(--adm-surface-2)] [&_svg]:stroke-2",
+          className,
+        )}
+      >
+        <IconSearch className="h-[18px] w-[18px]" aria-hidden="true" />
+      </button>
+    );
+  }
+
   return (
-    <div ref={ref} className="relative hidden w-[min(22rem,34vw)] md:block lg:w-[26rem] xl:w-[32rem]">
-      <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+    <div
+      ref={ref}
+      className={cn(
+        // Phones: the open field covers the top bar. Wider: it opens leftward from the icon.
+        "adm-search-open absolute inset-x-2 top-1/2 z-40 -translate-y-1/2 md:relative md:inset-auto md:top-auto md:w-[min(22rem,40vw)] md:translate-y-0",
+        className,
+      )}
+    >
+      <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--adm-ink-mute)]" aria-hidden="true" />
       <input
+        ref={inputRef}
+        // Mounts on open, so focus lands before the next keystroke.
+        autoFocus
         type="text"
         role="combobox"
         aria-expanded={listOpen}
@@ -106,21 +142,19 @@ export function HeaderSearch() {
         onKeyDown={onKey}
         placeholder="Search jobs, candidates…"
         aria-label="Search jobs, candidates and contacts"
-        className="h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface-sunken)] pl-9 pr-8 text-[13.5px] text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        className="h-9 w-full rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-ink-mute)] focus:!outline-none focus-visible:!outline-none"
       />
-      {q && (
-        <button
-          type="button"
-          onClick={() => { setQ(""); setHits([]); }}
-          aria-label="Clear search"
-          className="absolute right-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-[var(--adm-radius-xs)] text-[var(--adm-ink-subtle)] hover:text-[var(--adm-ink-mute)]"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={collapse}
+        aria-label={q ? "Clear and close search" : "Close search"}
+        className="absolute right-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
 
       {showDropdown && (
-        <div className="absolute inset-x-0 top-full z-[100] mt-2 overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
+        <div className="absolute right-0 top-full z-[100] mt-2 w-full overflow-hidden md:w-[max(100%,24rem)] rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
           <div
             id={listId}
             role="listbox"
@@ -152,7 +186,7 @@ export function HeaderSearch() {
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{h.title}</p>
+                    <p className="truncate text-adm-xs font-semibold text-[var(--adm-ink)]">{h.title}</p>
                     <p className="truncate text-xs text-[var(--adm-ink-subtle)]">{h.subtitle}</p>
                   </div>
                   {h.status && <StatusBadge status={h.status} />}

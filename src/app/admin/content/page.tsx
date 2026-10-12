@@ -155,7 +155,7 @@ function ContentSkeleton() {
 function ToggleRow({ id, label, on, onChange }: { id: string; label: string; on: boolean; onChange: (next: boolean) => void }) {
   return (
     <div className="col-span-full flex items-center justify-between gap-4 rounded-[10px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-3.5 py-2.5">
-      <label htmlFor={id} className="text-[14px] font-medium text-[var(--adm-ink)]">{label}</label>
+      <label htmlFor={id} className="text-adm-base font-medium text-[var(--adm-ink)]">{label}</label>
       <button
         id={id}
         type="button"

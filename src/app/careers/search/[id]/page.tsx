@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { breadcrumbJsonLd, jsonLdString, OG_IMAGES } from "@/lib/seo";
 import { workMode } from "@/lib/careers";
+import { jobLocationLabel } from "@/lib/workplace";
 import { currencyCode, salaryUnitText } from "@/lib/salary";
 import { notFound } from "next/navigation";
 import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
@@ -140,7 +141,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     // Richer copy for Open Graph… (plain text: the description is stored as HTML,
     // and raw tags were landing in share cards and the search snippet)
-    const fullDescription = `${jobType} position in ${job.location}. ${richTextToPlain(job.description)}`;
+    const where = jobLocationLabel(job);
+    const fullDescription = `${jobType} position${where === "Remote" ? ", remote" : where ? ` in ${where}` : ""}. ${richTextToPlain(job.description)}`;
     const ogDescription = fullDescription.length > 300
       ? fullDescription.substring(0, 297).trimEnd() + "..."
       : fullDescription;
@@ -177,7 +179,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       other: {
         "article:author": "Oceanblue Solutions, Inc.",
         "article:section": "Careers",
-        "article:tag": [job.department, jobType, job.location].join(", "),
+        "article:tag": [job.department, jobType, where].filter(Boolean).join(", "),
       },
     };
   } catch (error) {

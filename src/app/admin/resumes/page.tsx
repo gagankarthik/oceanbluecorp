@@ -14,8 +14,9 @@ import { findDuplicateGroups, type DuplicateGroup } from "@/lib/resume-duplicate
 import type { IndexJobPhase } from "@/lib/index-job";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
+  Workspace, WorkspaceButton, WorkspaceSearch, FilterPill, FilterIcon, DisplayMenu,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -27,6 +28,7 @@ import { AdminDialog } from "@/components/admin/admin-dialog";
 import { AdminRowsSkeleton } from "@/components/admin/skeletons";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { Empty as Blank } from "@/components/admin/list-panel";
+import { ResumePreviewDialog } from "@/components/admin/resume-preview-dialog";
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +99,7 @@ function fmtSize(bytes: number) {
 /** Format mark: a small text chip, not a tinted tile. */
 function FileTypeTag({ type }: { type: string }) {
   return (
-    <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-[12px] font-medium text-[var(--adm-ink-mute)]">
+    <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
       {formatLabel(type)}
     </span>
   );
@@ -439,17 +441,6 @@ export default function ResumeBankPage() {
     ]),
   );
 
-  const { monthCount, unnamedCount, storageUsed } = useMemo(() => {
-    const start = new Date();
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    return {
-      monthCount:  resumes.filter((r) => new Date(r.uploadedAt).getTime() >= start.getTime()).length,
-      unnamedCount: resumes.filter((r) => !r.candidateName?.trim()).length,
-      storageUsed: fmtSize(resumes.reduce((s, r) => s + (r.fileSize || 0), 0)),
-    };
-  }, [resumes]);
-
   const [rows, setRows] = useLocalStorage<number>("adm.resumes.rows", 25);
 
   const hasActiveFilters = typeFilter !== "all" || uploaderFilter !== "all" || search.trim() !== "" || statusFilter !== "all";
@@ -558,28 +549,28 @@ export default function ResumeBankPage() {
     {
       key: "fileName", header: "File", sortValue: (r) => r.fileName,
       cell: (r) => (
-        <span className="inline-flex max-w-full items-center gap-2 align-middle">
+        <span className="inline-flex max-w-[240px] items-center gap-2 align-middle">
           <span className="min-w-0 truncate font-semibold text-[var(--adm-ink)]" title={r.fileName}>{r.fileName}</span>
           <DupChip role={dupRole.get(r.fileKey)} />
         </span>
       ),
     },
     {
-      key: "type", header: "Type", sortValue: (r) => formatLabel(r.fileType), hideBelow: "md",
+      key: "type", header: "Type", sortValue: (r) => formatLabel(r.fileType), hideBelow: "xl",
       cell: (r) => <FileTypeTag type={r.fileType} />,
     },
     {
       key: "candidate", header: "Candidate", sortValue: (r) => r.candidateName || "", hideBelow: "md",
       cell: (r) => r.candidateName
-        ? <span className="font-medium text-[var(--adm-ink)]">{r.candidateName}</span>
+        ? <span className="block max-w-[160px] truncate font-medium text-[var(--adm-ink)]" title={r.candidateName}>{r.candidateName}</span>
         : <Blank />,
     },
     {
-      key: "uploader", header: "Uploaded by", sortValue: (r) => r.uploaderEmail, hideBelow: "lg",
+      key: "uploader", header: "Uploaded by", sortValue: (r) => r.uploaderEmail, hideBelow: "xl",
       cell: (r) => (
-        <span className="inline-flex max-w-full items-center gap-2 align-middle">
+        <span className="inline-flex max-w-[200px] items-center gap-2 align-middle">
           <Avatar email={r.uploaderEmail} size="xs" />
-          <span className="min-w-0 truncate text-[13px] text-[var(--adm-ink-mute)]">{r.uploaderEmail}</span>
+          <span className="min-w-0 truncate text-adm-xs text-[var(--adm-ink-mute)]" title={r.uploaderEmail}>{r.uploaderEmail}</span>
         </span>
       ),
     },
@@ -589,32 +580,32 @@ export default function ResumeBankPage() {
     },
     {
       key: "uploadedAt", header: "Uploaded", sortValue: (r) => new Date(r.uploadedAt).getTime(), hideBelow: "sm",
-      cell: (r) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(r.uploadedAt)}</span>,
+      cell: (r) => <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(r.uploadedAt)}</span>,
     },
     {
       key: "indexed", header: "Indexed", hideBelow: "sm",
       sortValue: (r) => (r.indexed ? 3 : isExtra(r) ? 2 : isFailed(r) ? 0 : 1),
       cell: (r) =>
         r.indexing ? (
-          <span className="inline-flex items-center gap-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <span className="inline-flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Indexing…
           </span>
         ) : r.indexed ? (
           <StatusBadge tone="emerald" label="Indexed" />
         ) : isExtra(r) ? (
-          <span className="text-[13px] text-[var(--adm-ink-subtle)]" title="Another copy of this file is kept and indexed">Skipped, extra copy</span>
+          <span className="text-adm-xs text-[var(--adm-ink-subtle)]" title="Another copy of this file is kept and indexed">Skipped, extra copy</span>
         ) : isFailed(r) ? (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); void indexKeys([r]); }}
             disabled={bulkRunning || jobBusy}
             title={serverFailures.get(r.fileKey) || "The last attempt failed"}
-            className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-[12px] font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
+            className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
           >
             Failed · Retry
           </button>
         ) : (
-          <span className="text-[13px] text-[var(--adm-ink-subtle)]">Not indexed</span>
+          <span className="text-adm-xs text-[var(--adm-ink-subtle)]">Not indexed</span>
         ),
     },
     {
@@ -626,6 +617,7 @@ export default function ResumeBankPage() {
   // ── render ────────────────────────────────────────────────────────────────
 
   const emptyFresh = resumes.length === 0;
+  const gridMode = !loading && !error && view === "grid" && filtered.length > 0;
   const emptyProps = {
     icon: IconFile,
     title: emptyFresh ? "No resumes yet" : "No files match your filters",
@@ -637,6 +629,18 @@ export default function ResumeBankPage() {
       ? <WorkspaceButton onClick={() => fileInputRef.current?.click()}><IconUpload className="h-4 w-4" />Choose files</WorkspaceButton>
       : <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>,
   };
+
+  const listFilters: ListFilter[] = [
+    { key: "type", label: "Type", value: typeFilter, onChange: (v) => setTypeFilter(v as FileTypeFilter), options: TYPE_TABS.map((t) => ({ value: t.key, label: t.label, count: typeCounts[t.key] })) },
+    { key: "uploaded-by", label: "Uploaded by", value: uploaderFilter, onChange: setUploaderFilter, options: [
+              { value: "all", label: "All recruiters", count: resumes.length },
+              ...uploaders.map((u) => ({
+                value: u,
+                label: u,
+                count: resumes.filter((r) => r.uploaderEmail === u).length,
+              })),
+            ] },
+  ];
 
   return (
     <div
@@ -655,33 +659,24 @@ export default function ResumeBankPage() {
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[var(--adm-scrim)] p-4">
           <div className="w-full max-w-sm rounded-[var(--adm-radius-card)] border border-dashed border-[var(--adm-accent)] bg-[var(--adm-surface)] px-6 py-10 text-center shadow-[var(--adm-shadow-lg)]">
             <IconUpload className="mx-auto mb-3 h-6 w-6 text-[var(--adm-accent)]" strokeWidth={1.75} />
-            <p className="text-[16px] font-semibold text-[var(--adm-ink)]">Drop resumes to upload</p>
-            <p className="mt-1 text-[13px] text-[var(--adm-ink-mute)]">PDF or Word &middot; up to 5MB each</p>
+            <p className="text-adm-md font-semibold text-[var(--adm-ink)]">Drop resumes to upload</p>
+            <p className="mt-1 text-adm-xs text-[var(--adm-ink-mute)]">PDF or Word &middot; up to 5MB each</p>
           </div>
         </div>
       )}
 
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Resume bank"
-        meta={`${resumes.length.toLocaleString()} resume${resumes.length === 1 ? "" : "s"} on file`}
-        stats={[
-          { label: "Resumes", value: resumes.length },
-          { label: "Indexed", value: `${resumes.filter((r) => r.indexed).length}/${resumes.length - extraCount}`,
-            hint: "Searchable in Lead Sourcing / Best candidates. Extra copies of duplicates are not indexed." },
-          { label: "This month", value: monthCount },
-          { label: "No candidate name", value: unnamedCount,
-            hint: "No candidate name recorded" },
-          { label: "Storage", value: storageUsed },
-        ]}
+        meta={<>
+          {resumes.length.toLocaleString()} resume{resumes.length === 1 ? "" : "s"} on file
+          {pendingIndex.length ? <>, <MetaStrong>{pendingIndex.length.toLocaleString()} not indexed</MetaStrong></> : null}
+        </>}
         actions={
           <>
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            {/* Yields the filled style to the queue's commit button while files wait. */}
-            <WorkspaceButton className={BAND_PRIMARY} onClick={() => fileInputRef.current?.click()}>
+            <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}>
               <IconUpload className="h-4 w-4" />Upload
             </WorkspaceButton>
           </>
@@ -718,8 +713,8 @@ export default function ResumeBankPage() {
                 <FileTypeTag type={item.file.type} />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
-                    <p className="min-w-0 truncate text-[14px] font-medium text-[var(--adm-ink)]">{item.file.name}</p>
-                    <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtSize(item.file.size)}</span>
+                    <p className="min-w-0 truncate text-adm-base font-medium text-[var(--adm-ink)]">{item.file.name}</p>
+                    <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtSize(item.file.size)}</span>
                     {item.status === "done"      && <IconSuccess className="h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-label="Uploaded" />}
                     {item.status === "uploading" && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-label="Uploading" />}
                     {item.status === "error"     && <IconWarning className="h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-label="Failed" />}
@@ -731,7 +726,7 @@ export default function ResumeBankPage() {
                       placeholder="Candidate name (optional)"
                       value={item.candidateName}
                       onChange={e => updateQueueItem(item.id, { candidateName: e.target.value })}
-                      className="mt-2 h-9 text-[13.5px]"
+                      className="mt-2 h-9 text-adm-base"
                     />
                   )}
 
@@ -741,8 +736,8 @@ export default function ResumeBankPage() {
                     </div>
                   )}
 
-                  {item.status === "error" && <p className="mt-1 text-[12.5px] text-[var(--adm-danger-ink)]">{item.error}</p>}
-                  {item.status === "done"  && <p className="mt-1 text-[12.5px] font-medium text-[var(--adm-success-ink)]">Uploaded</p>}
+                  {item.status === "error" && <p className="mt-1 text-adm-xs text-[var(--adm-danger-ink)]">{item.error}</p>}
+                  {item.status === "done"  && <p className="mt-1 text-adm-xs font-medium text-[var(--adm-success-ink)]">Uploaded</p>}
                 </div>
 
                 {item.status !== "uploading" && item.status !== "done" && (
@@ -756,7 +751,7 @@ export default function ResumeBankPage() {
 
           {(pendingCount > 0 || anyUploading) && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-[16px] border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
-              <p className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">
+              <p className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                 {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
               </p>
               <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
@@ -767,75 +762,6 @@ export default function ResumeBankPage() {
           )}
         </AdminCard>
       )}
-
-      <WorkspaceToolbar
-          variant="canvas"
-          search={
-            <WorkspaceSearch
-              value={search}
-              onChange={setSearch}
-              placeholder="Filter resumes by file name or candidate"
-            />
-          }
-          trailing={
-            <DisplayMenu
-              view={view}
-              viewOptions={[
-                { value: "list", label: "List" },
-                { value: "grid", label: "Grid" },
-              ]}
-              onViewChange={(v) => setView(v as ViewMode)}
-              rows={rows}
-              onRowsChange={setRows}
-              onReset={() => { setRows(25); setView("list"); }}
-            />
-          }
-        >
-          <FilterPill
-            label="Type"
-            icon={FilterIcon.type}
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={TYPE_TABS.map((t) => ({ value: t.key, label: t.label, count: typeCounts[t.key] }))}
-          />
-          <FilterPill
-            label="Uploaded by"
-            icon={FilterIcon.person}
-            value={uploaderFilter}
-            onChange={setUploaderFilter}
-            options={[
-              { value: "all", label: "All recruiters", count: resumes.length },
-              ...uploaders.map((u) => ({
-                value: u,
-                label: u,
-                count: resumes.filter((r) => r.uploaderEmail === u).length,
-              })),
-            ]}
-          />
-          <FilterPill
-            label="Status"
-            icon={FilterIcon.status}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_OPTIONS.map((o) => ({ value: o.key, label: o.label, count: resumes.filter((r) => matchesStatus(r, o.key)).length }))}
-          />
-      </WorkspaceToolbar>
-
-      <ActiveFilters
-        variant="canvas"
-        chips={[
-          ...(typeFilter !== "all"
-            ? [{ label: `Type: ${TYPE_TABS.find((t) => t.key === typeFilter)?.label ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
-            : []),
-          ...(uploaderFilter !== "all"
-            ? [{ label: `Uploaded by: ${uploaderFilter}`, onClear: () => setUploaderFilter("all") }]
-            : []),
-          ...(statusFilter !== "all"
-            ? [{ label: `Status: ${STATUS_OPTIONS.find((o) => o.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }]
-            : []),
-        ]}
-        onClearAll={clearFilters}
-      />
 
       {/* ── indexing notices ── */}
       {!loading && !error && job && jobBusy && (
@@ -852,7 +778,7 @@ export default function ResumeBankPage() {
               : <>Indexing in the cloud: <span className="tabular-nums">{Math.max(0, job.total - job.remaining).toLocaleString()}</span> of <span className="tabular-nums">{job.total.toLocaleString()}</span> done</>}
           </p>
           <Progress value={job.total ? (job.total - job.remaining) / job.total : 0} />
-          <p className="mt-1.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="mt-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
             <span className="tabular-nums">{job.remaining.toLocaleString()}</span> left
             {job.updatedAt && <> · last activity {fmtRelative(job.updatedAt)}</>}
             {job.failed.length > 0 && <> · <span className="text-[var(--adm-danger-ink)]">{job.failed.length} failed so far</span></>}
@@ -874,7 +800,7 @@ export default function ResumeBankPage() {
             Indexing stopped responding with <span className="tabular-nums">{job.remaining.toLocaleString()}</span> of{" "}
             <span className="tabular-nums">{job.total.toLocaleString()}</span> left.
           </p>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
             No activity {job.updatedAt ? `since ${fmtRelative(job.updatedAt)}` : "for a while"}. Resume picks up where it stopped; files already indexed are skipped.
           </p>
         </Notice>
@@ -908,7 +834,7 @@ export default function ResumeBankPage() {
             {failedRows.length === 1 ? "resume" : "resumes"} couldn’t be indexed
             {appFailureCount > 0 && <>, plus <span className="tabular-nums">{appFailureCount}</span> bench and applicant {appFailureCount === 1 ? "resume" : "resumes"}</>}.
           </p>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
             Usually a scanned PDF with no readable text, or a damaged file. Hover <span className="font-medium">Failed</span> in the Indexed column to see why.
           </p>
         </Notice>
@@ -926,7 +852,7 @@ export default function ResumeBankPage() {
             <span className="font-semibold tabular-nums">{pendingNotFailed}</span>{" "}
             {pendingNotFailed === 1 ? "resume isn’t" : "resumes aren’t"} searchable yet.
           </p>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
             Index them to include them in Lead Sourcing and Best candidates. It runs in the cloud; indexed files and extra copies are skipped.
           </p>
         </Notice>
@@ -950,27 +876,49 @@ export default function ResumeBankPage() {
             {dupGroups.length === 1 ? "resume was" : "resumes were"} uploaded more than once:{" "}
             <span className="font-semibold tabular-nums">{extraCount}</span> extra {extraCount === 1 ? "copy" : "copies"}.
           </p>
-          <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+          <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
             Matched on file name and size. One copy of each is kept and indexed; delete the extras so a candidate never appears twice in matches.
           </p>
         </Notice>
       )}
 
-      {loading ? (
-        <Workspace>
+      <Workspace className={gridMode ? "min-h-0 flex-none" : undefined}>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              tabs={STATUS_OPTIONS.map((o) => ({ key: o.key, label: o.label, count: resumes.filter((r) => matchesStatus(r, o.key)).length }))}
+            />
+          }
+          search={<WorkspaceSearch value={search} onChange={setSearch} placeholder="Search resumes…" />}
+        >
+          <FilterSet filters={listFilters} />
+          <DisplayMenu
+            view={view}
+            viewOptions={[
+              { value: "list", label: "List" },
+              { value: "grid", label: "Grid" },
+            ]}
+            onViewChange={(v) => setView(v as ViewMode)}
+            rows={rows}
+            onRowsChange={setRows}
+            onReset={() => { setRows(25); setView("list"); }}
+          />
+        </ListToolbar>
+        <FilterChips filters={listFilters} />
+
+        {loading ? (
           <AdminRowsSkeleton rows={6} />
-        </Workspace>
-      ) : error ? (
-        <Workspace>
+        ) : error ? (
           <EmptyState
             variant="error"
             title="Couldn't load the resume bank"
             description={error}
             action={<WorkspaceButton onClick={load}>Try again</WorkspaceButton>}
           />
-        </Workspace>
-      ) : view === "list" ? (
-        <Workspace>
+        ) : view === "list" ? (
           <DataTable
             noun="resumes"
             storageKey="resumes"
@@ -983,14 +931,14 @@ export default function ResumeBankPage() {
             initialSort={{ key: "uploadedAt", dir: "desc" }}
             empty={emptyProps}
           />
-        </Workspace>
-      ) : filtered.length === 0 ? (
-        <AdminCard>
+        ) : filtered.length === 0 ? (
           <EmptyState variant={emptyFresh ? "fresh" : "filtered"} {...emptyProps} />
-        </AdminCard>
-      ) : (
-        // Grid view sits on the canvas: cards inside the table panel read as cards-in-a-card.
-        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        ) : null}
+      </Workspace>
+
+      {/* Grid view sits on the canvas: cards inside the table panel read as cards-in-a-card. */}
+      {gridMode && (
+        <div className="mt-4 grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filtered.map(r => (
             <AdminCard key={r.id} hover className="group flex min-w-0 flex-col p-4">
               <div className="flex items-center justify-between gap-2">
@@ -1007,22 +955,22 @@ export default function ResumeBankPage() {
                 <button
                   type="button"
                   onClick={() => handlePreview(r)}
-                  className="block w-full truncate rounded-[var(--adm-radius-control)] text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                  className="block w-full truncate rounded-[var(--adm-radius-control)] text-left text-adm-base font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                   title={r.fileName}
                 >
                   {r.fileName}
                 </button>
-                <p className="mt-0.5 truncate text-[13px] text-[var(--adm-ink-mute)]">
+                <p className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-mute)]">
                   {r.candidateName || <span className="text-[var(--adm-ink-subtle)]">No candidate name</span>}
                 </p>
               </div>
 
               <div className="mt-4 space-y-2 border-t border-[var(--adm-line-soft)] pt-3">
-                <div className="flex min-w-0 items-center gap-2 text-[12.5px] text-[var(--adm-ink-mute)]">
+                <div className="flex min-w-0 items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
                   <Avatar email={r.uploaderEmail} size="xs" />
                   <span className="truncate">{r.uploaderEmail}</span>
                 </div>
-                <div className="flex items-center justify-between text-[12.5px] tabular-nums text-[var(--adm-ink-subtle)]">
+                <div className="flex items-center justify-between text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
                   <span>{fmtDate(r.uploadedAt)}</span>
                   <span>{fmtSize(r.fileSize || 0)}</span>
                 </div>
@@ -1050,23 +998,11 @@ export default function ResumeBankPage() {
         onDelete={deleteKeys}
       />
 
-      <AdminDialog
-        open={!!previewUrl}
-        onOpenChange={(next) => { if (!next) { setPreviewUrl(null); setPreviewName(null); } }}
-        title={<span className="block truncate">{previewName || "Resume preview"}</span>}
-        size="xl"
-        className="h-[calc(100dvh-2rem)] max-w-[min(1200px,calc(100vw-2rem))] sm:h-[calc(100dvh-3rem)]"
-        bodyClassName="flex p-0 sm:p-0 overflow-hidden"
-        actions={previewUrl && (
-          <WorkspaceButton asChild>
-            <a href={previewUrl} download={previewName || "resume"}>
-              <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Download</span>
-            </a>
-          </WorkspaceButton>
-        )}
-      >
-        {previewUrl && <iframe src={previewUrl} className="h-full w-full flex-1 border-0" title={previewName || "Resume preview"} />}
-      </AdminDialog>
+      <ResumePreviewDialog
+        url={previewUrl}
+        name={previewName}
+        onClose={() => { setPreviewUrl(null); setPreviewName(null); }}
+      />
     </div>
   );
 }
@@ -1085,14 +1021,14 @@ function DupChip({ role }: { role?: "keeper" | "extra" }) {
   return role === "extra" ? (
     <span
       title="Same file name and size as a kept copy. Safe to delete."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-[12px] font-medium text-[var(--adm-warning-ink)]"
+      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-warning-ink)]"
     >
       Extra copy
     </span>
   ) : (
     <span
       title="Other copies of this file exist. This is the one kept and indexed."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-[12px] font-medium text-[var(--adm-ink-mute)]"
+      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
     >
       Kept copy
     </span>
@@ -1158,7 +1094,7 @@ function DuplicatesDialog({
       footer={
         confirming ? (
           <>
-            <p className="mr-auto text-[13px] text-[var(--adm-ink-mute)]">
+            <p className="mr-auto text-adm-xs text-[var(--adm-ink-mute)]">
               This permanently deletes <span className="font-semibold tabular-nums">{toDelete.length}</span> {toDelete.length === 1 ? "file" : "files"}. It can’t be undone.
             </p>
             <WorkspaceButton variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>Back</WorkspaceButton>
@@ -1184,8 +1120,8 @@ function DuplicatesDialog({
           return (
             <li key={g.groupKey} className="overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)]">
               <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-2)] px-4 py-2.5">
-                <p className="min-w-0 truncate text-[14px] font-semibold text-[var(--adm-ink)]" title={g.keeper.fileName}>{g.keeper.fileName}</p>
-                <span className="flex-none text-[12.5px] tabular-nums text-[var(--adm-ink-mute)]">
+                <p className="min-w-0 truncate text-adm-base font-semibold text-[var(--adm-ink)]" title={g.keeper.fileName}>{g.keeper.fileName}</p>
+                <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                   {fmtSize(g.keeper.size)} · {g.files.length} copies
                 </span>
               </div>
@@ -1204,18 +1140,18 @@ function DuplicatesDialog({
                           aria-label={`Keep the copy uploaded by ${f.row.uploaderEmail} on ${fmtDateTime(f.row.uploadedAt)}`}
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13.5px] text-[var(--adm-ink)]">
+                          <span className="block truncate text-adm-base text-[var(--adm-ink)]">
                             {f.row.candidateName || f.row.uploaderEmail}
                           </span>
-                          <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">
+                          <span className="block truncate text-adm-xs text-[var(--adm-ink-subtle)]">
                             {f.row.candidateName ? `${f.row.uploaderEmail} · ` : ""}Uploaded {fmtDateTime(f.row.uploadedAt)}
                           </span>
                         </span>
                       </label>
                       <span className="hidden flex-none sm:block">
-                        {f.indexed ? <StatusBadge tone="emerald" label="Indexed" /> : <span className="text-[12.5px] text-[var(--adm-ink-subtle)]">Not indexed</span>}
+                        {f.indexed ? <StatusBadge tone="emerald" label="Indexed" /> : <span className="text-adm-xs text-[var(--adm-ink-subtle)]">Not indexed</span>}
                       </span>
-                      <span className={cn("w-14 flex-none text-right text-[12.5px] font-semibold", isKept ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-danger-ink)]")}>
+                      <span className={cn("w-14 flex-none text-right text-adm-xs font-semibold", isKept ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-danger-ink)]")}>
                         {isKept ? "Keep" : "Delete"}
                       </span>
                       <IconAction label={`Preview ${f.fileName}`} onClick={() => onPreview(f.row)}>
@@ -1226,7 +1162,7 @@ function DuplicatesDialog({
                 })}
               </ul>
               {losesIndexed && (
-                <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-warning-soft)] px-4 py-2 text-[12.5px] text-[var(--adm-warning-ink)]">
+                <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-warning-soft)] px-4 py-2 text-adm-xs text-[var(--adm-warning-ink)]">
                   The indexed copy will be deleted. Run Index all afterwards so this resume stays searchable.
                 </p>
               )}
@@ -1253,7 +1189,7 @@ function Notice({
   return (
     <div
       className={cn(
-        "mb-3 flex flex-col gap-3 rounded-[var(--adm-radius-card)] border px-4 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between",
+        "mb-3 flex flex-col gap-3 rounded-[var(--adm-radius-card)] border px-4 py-3 text-adm-base sm:flex-row sm:items-center sm:justify-between",
         tone === "accent" && "border-[var(--adm-line)] bg-[var(--adm-accent-tint)]",
         tone === "warning" && "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]",
         tone === "neutral" && "border-[var(--adm-line)] bg-[var(--adm-surface)]",

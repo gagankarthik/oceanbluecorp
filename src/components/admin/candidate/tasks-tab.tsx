@@ -136,7 +136,7 @@ export function TasksTab({
               ))}
             </ul>
           ) : (
-            <p className="px-4 py-3 text-[13px] text-[var(--adm-ink-mute)]">All tasks are done.</p>
+            <p className="px-4 py-3 text-adm-xs text-[var(--adm-ink-mute)]">All tasks are done.</p>
           )}
 
           {done.length > 0 && (
@@ -145,7 +145,7 @@ export function TasksTab({
                 type="button"
                 onClick={() => setShowDone((v) => !v)}
                 aria-expanded={showDone}
-                className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+                className="w-full px-4 py-2.5 text-left text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
               >
                 {showDone ? "Hide" : "Show"} completed ({done.length})
               </button>
@@ -187,12 +187,12 @@ function TaskRow({
       <TaskCheck done={task.done} busy={busy} label={task.text} onToggle={onToggle} />
       <div className="min-w-0 flex-1">
         <p className={cn(
-          "break-words text-[14px]",
+          "break-words text-adm-base",
           task.done ? "text-[var(--adm-ink-subtle)] line-through" : "text-[var(--adm-ink)]",
         )}>
           {task.text}
         </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12.5px] text-[var(--adm-ink-subtle)]">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">
           {task.dueAt && (
             <span className={cn("inline-flex items-center gap-1 tabular-nums", DUE_TEXT[state], state === "overdue" && "font-medium")}>
               <IconCalendar className="h-3.5 w-3.5" aria-hidden="true" />

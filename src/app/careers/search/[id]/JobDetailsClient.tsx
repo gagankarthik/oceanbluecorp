@@ -12,6 +12,7 @@ import { useStaffSession } from "@/components/site/use-staff-session";
 import { renderRichText } from "@/lib/rich-text";
 import { SideSheet } from "@/components/site/side-sheet";
 import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
+import { jobPlace } from "@/lib/workplace";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { formatSalary } from "@/lib/salary";
 import { normalizeWebsite, website } from "@/lib/form-validation";
@@ -247,7 +248,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   const mode = workMode(job);
   const facts = [
     { k: "Employment type", v: formatJobType(job.type) },
-    { k: "Location", v: job.location },
+    { k: "Location", v: jobPlace(job) },
     mode ? { k: "Work arrangement", v: mode } : null,
     salary ? { k: "Compensation", v: salary } : null,
     { k: "Posted", v: postedDate },
@@ -471,7 +472,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               <p className="type-caption font-semibold text-cobalt">{job.department}</p>
               <p className="mt-1.5 type-title-lg font-semibold break-words text-ink">{job.title}</p>
               <p className="mt-2 type-body-sm text-ink-muted">
-                {[formatJobType(job.type), mode, job.location].filter(Boolean).join(" · ")}
+                {[formatJobType(job.type), mode, jobPlace(job)].filter((v, i, all) => v && all.indexOf(v) === i).join(" · ")}
               </p>
               {due && (
                 <p className={cn("mt-4 rounded-xl px-4 py-3 type-body-sm font-medium", due.urgent ? "bg-warning-container text-warning" : "bg-paper text-ink-muted")}>
@@ -531,7 +532,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
           if (!o) setApplicationSubmitted(false);
         }}
         title={applicationSubmitted ? "Application sent" : "Apply for this role"}
-        description={`${job.title} · ${job.location}`}
+        description={[job.title, jobPlace(job)].filter(Boolean).join(" · ")}
         footer={
           applicationSubmitted ? undefined : (
             <div className="space-y-3">
@@ -581,7 +582,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                   <div className="rounded-2xl bg-paper p-4">
                     <p className="type-caption font-semibold text-cobalt">{job.department}</p>
                     <p className="mt-1 text-[15.5px] leading-snug font-semibold text-ink">{job.title}</p>
-                    <p className="mt-1 type-body-sm text-ink-muted">{[formatJobType(job.type), mode, job.location].filter(Boolean).join(" · ")}</p>
+                    <p className="mt-1 type-body-sm text-ink-muted">{[formatJobType(job.type), mode, jobPlace(job)].filter((v, i, all) => v && all.indexOf(v) === i).join(" · ")}</p>
                   </div>
                   <fieldset className="space-y-4">
                     <legend className="mb-3 type-caption font-semibold text-ink-subtle">Your details</legend>

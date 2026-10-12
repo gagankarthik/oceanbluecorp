@@ -10,8 +10,9 @@ import {
 import { IconBell, IconSuccess, IconTrash, IconAlert, IconEyeOff } from "@/components/admin/icons";
 import { fmtDateTime, fmtRelative } from "@/lib/format";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, FilterPill, FilterIcon, ActiveFilters, ToolbarDivider, DisplayMenu,
+  Workspace, WorkspaceButton, FilterPill, FilterIcon, DisplayMenu,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { notificationActions, useNotificationFeed } from "@/hooks/use-notifications";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -117,15 +118,6 @@ export default function NotificationsPage() {
 
   const hasActiveFilters = filter !== "all" || typeFilter !== "all";
 
-  const { todayCount, weekCount } = useMemo(() => {
-    const now = Date.now();
-    const at = (n: Notification) => new Date(n.createdAt).getTime();
-    return {
-      todayCount: notifications.filter((n) => at(n) >= now - 86_400_000).length,
-      weekCount:  notifications.filter((n) => at(n) >= now - 7 * 86_400_000).length,
-    };
-  }, [notifications]);
-
   const [rows, setRows] = useLocalStorage<number>("adm.notifications.rows", 25);
   const clearFilters = () => { setFilter("all"); setTypeFilter("all"); };
 
@@ -169,7 +161,7 @@ export default function NotificationsPage() {
       hideBelow: "sm",
       sortValue: (n) => new Date(n.createdAt).getTime(),
       cell: (n) => (
-        <time dateTime={n.createdAt} title={fmtDateTime(n.createdAt)} className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">
+        <time dateTime={n.createdAt} title={fmtDateTime(n.createdAt)} className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {fmtRelative(n.createdAt)}
         </time>
       ),
@@ -226,24 +218,28 @@ export default function NotificationsPage() {
 
   if (loading) return <AdminListSkeleton stats={4} rows={6} label="Loading notifications" />;
 
+  const listFilters: ListFilter[] = [
+    { key: "type", label: "Type", value: typeFilter, onChange: setTypeFilter, options: [
+              { value: "all", label: "All types", count: notifications.length },
+              ...typeOptions.map((t) => ({
+                value: t.key as string,
+                label: t.short,
+                count: typeCounts[t.key] ?? 0,
+              })),
+            ] },
+  ];
+
   return (
     <>
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Notifications"
-        meta={"Activity for your role, newest first"}
-        stats={[
-          { label: "Unread", value: unreadCount,
-            hint: unreadCount === 0 ? "All caught up" : undefined,
-            onClick: () => setFilter("unread"),
-          selected: filter === "unread" },
-          { label: "Arrived today", value: todayCount },
-          { label: "This week", value: weekCount },
-        ]}
+        meta={<>
+          Activity for your role, newest first
+          {unreadCount ? <>, <MetaStrong>{unreadCount} unread</MetaStrong></> : null}
+        </>}
         actions={
           unreadCount > 0 ? (
-            <WorkspaceButton className={BAND_PRIMARY} onClick={handleMarkAllAsRead} disabled={markingAllRead}>
+            <WorkspaceButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
               {markingAllRead ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSuccess className="h-4 w-4" />}
               Mark all as read
             </WorkspaceButton>
@@ -251,50 +247,27 @@ export default function NotificationsPage() {
         }
       />
 
-      <WorkspaceToolbar
-          variant="canvas"
-          trailing={<DisplayMenu rows={rows} onRowsChange={setRows} onReset={() => setRows(25)} />}
-        >
-          <FilterPill
-            label="Type"
-            icon={FilterIcon.type}
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={[
-              { value: "all", label: "All types", count: notifications.length },
-              ...typeOptions.map((t) => ({
-                value: t.key as string,
-                label: t.short,
-                count: typeCounts[t.key] ?? 0,
-              })),
-            ]}
-          />
-          <FilterPill
-            label="State"
-            icon={FilterIcon.status}
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "all",    label: "All",    count: notifications.length },
-              { value: "unread", label: "Unread", count: unreadCount },
-            ]}
-          />
-      </WorkspaceToolbar>
-
-      <ActiveFilters
-          variant="canvas"
-          chips={[
-            ...(typeFilter !== "all"
-              ? [{ label: `Type: ${NOTIFICATION_TYPES.find((t) => t.key === typeFilter)?.short ?? typeFilter}`, onClear: () => setTypeFilter("all") }]
-              : []),
-            ...(filter !== "all" ? [{ label: "Unread only", onClear: () => setFilter("all") }] : []),
-          ]}
-          onClearAll={clearFilters}
-      />
-
       <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="State"
+              value={filter}
+              onChange={setFilter}
+              tabs={[
+                { key: "all",    label: "All",    count: notifications.length },
+                { key: "unread", label: "Unread", count: unreadCount },
+              ]}
+            />
+          }
+        >
+          <FilterSet filters={listFilters} />
+          <DisplayMenu rows={rows} onRowsChange={setRows} onReset={() => setRows(25)} />
+        </ListToolbar>
+        <FilterChips filters={listFilters} />
+
         {error && (
-          <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-danger-soft)] px-4 py-3 text-[13px] text-[var(--adm-danger-ink)]">
+          <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs text-[var(--adm-danger-ink)]">
             <IconAlert className="h-4 w-4 flex-shrink-0" />
             <p className="min-w-0 flex-1">{error}</p>
             <WorkspaceButton onClick={fetchNotifications}>Try again</WorkspaceButton>

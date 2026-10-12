@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, SearchX } from "lucide-react";
+import { Loader2, SearchX } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { IconSave } from "@/components/admin/icons";
 import type { Job } from "@/lib/aws/dynamodb";
 import { PageHeader } from "@/components/admin/page-header";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { WorkspaceButton, BackLink } from "@/components/admin/workspace";
 import { AdminCard } from "@/components/admin/admin-card";
 import { Skel } from "@/components/admin/skeletons";
 import { FormErrorBanner } from "@/components/admin/forms/form-alert";
@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 /** Ties the action-bar submit button to the form it sits outside of. */
 const FORM_ID = "applicant-edit-form";
 
-const backLinkCls = "-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]";
 /** Bleeds to the edges of main's `p-4 sm:p-5 lg:p-6` so it spans the pane. */
 const actionBarCls = "sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:px-5 lg:-mx-6 lg:-mb-6 lg:px-6";
 
@@ -66,9 +65,7 @@ function EditApplicationInner() {
   if (missing) {
     return (
       <div className="space-y-4 lg:space-y-5">
-        <button type="button" onClick={() => router.back()} className={backLinkCls}>
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />Back
-        </button>
+        <BackLink onClick={() => router.back()} />
         <AdminCard>
           <EmptyState
             icon={SearchX}
@@ -86,9 +83,7 @@ function EditApplicationInner() {
   return (
     <div className="space-y-4 lg:space-y-5">
       <div>
-        <button type="button" onClick={() => router.back()} className={backLinkCls}>
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />Back
-        </button>
+        <BackLink onClick={() => router.back()} />
         <PageHeader
           className="mb-0 mt-2"
           title={recordName || "Edit applicant"}
@@ -101,7 +96,7 @@ function EditApplicationInner() {
       <CandidateForm form={form} jobs={jobs} id={FORM_ID} onSubmit={handleSubmit} autoFocus />
 
       <div className={actionBarCls}>
-        <p className="min-w-0 text-[13px] font-medium text-[var(--adm-danger-ink)]">
+        <p className="min-w-0 text-adm-xs font-medium text-[var(--adm-danger-ink)]">
           {Object.keys(form.errors).length > 0 ? "Fix the highlighted fields to save." : form.error}
         </p>
         <div className="flex flex-wrap items-center gap-2">

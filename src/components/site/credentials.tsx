@@ -4,27 +4,26 @@ import { CONTAINER, SECTION_Y, ChamferGround, SectionLink } from "./sections";
 import PixelCard from "@/components/PixelCard";
 
 /* Partners and certifications as one dark band, two columns of hairline
-   cells on a plain ground. Each mark sits on a white tile in its own colours,
-   with a short caption, because the badges are drawn for light grounds and
-   went faint when inverted onto navy. Pointed at, a cell fills with cobalt
-   pixels (react-bits PixelCard).
+   cells on a plain ground. Marks sit straight on the navy, scaled to fill a
+   fixed box so wide and square badges carry the same weight. Pointed at, a
+   cell fills with cobalt pixels (react-bits PixelCard).
 
-   `w`/`h` are intrinsic pixels so nothing reflows on decode; `cls` sets the
-   rendered height per mark, because the ratios run from 1:1 to 4.2:1. */
+   `w`/`h` are intrinsic pixels so nothing reflows on decode. `onDark` turns a
+   mark white where its own ink is navy and would vanish on the band. */
 
-type Mark = { name: string; caption: string; src: string; w: number; h: number; cls: string };
+type Mark = { name: string; src: string; w: number; h: number; onDark?: boolean };
 
 const PARTNERS: Mark[] = [
-  { name: "AWS Partner", caption: "AWS Partner", src: "/logos/partners/aws-partner-trimmed.png", w: 492, h: 492, cls: "h-14 sm:h-16" },
-  { name: "Snowflake", caption: "Snowflake", src: "/logos/partners/snowflake.svg", w: 146, h: 139, cls: "h-10 sm:h-12" },
-  { name: "Databricks", caption: "Databricks", src: "/logos/partners/databricks.svg", w: 300, h: 331, cls: "h-10 sm:h-12" },
+  { name: "AWS Partner, Advanced Tier Services", src: "/logos/partners/aws-partner-trimmed.png", w: 492, h: 492 },
+  { name: "Snowflake", src: "/logos/partners/snowflake.svg", w: 146, h: 139 },
+  { name: "Databricks", src: "/logos/partners/databricks.svg", w: 300, h: 331 },
 ];
 
 const CERTS: Mark[] = [
-  { name: "NMSDC certified MBE", caption: "NMSDC MBE", src: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-12 sm:h-14" },
-  { name: "State of Ohio certified WBE", caption: "State of Ohio WBE", src: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-7 sm:h-8" },
-  { name: "State of Ohio certified MBE", caption: "State of Ohio MBE", src: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-7 sm:h-8" },
-  { name: "City of Columbus certified MBE", caption: "City of Columbus MBE", src: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-9 sm:h-11" },
+  { name: "NMSDC certified MBE", src: "/logos/certifications/NMSDC.png", w: 340, h: 340 },
+  { name: "State of Ohio certified WBE", src: "/logos/certifications/wbe.png", w: 845, h: 202, onDark: true },
+  { name: "State of Ohio certified MBE", src: "/logos/certifications/ohiombe.png", w: 734, h: 202, onDark: true },
+  { name: "City of Columbus certified MBE", src: "/logos/certifications/mbe.png", w: 707, h: 353 },
 ];
 
 /** Column lines that run past the grid and fade out, as if the grid continues. */
@@ -38,7 +37,7 @@ function Rails({ cols, className }: { cols: number; className?: string }) {
   );
 }
 
-function MarkGrid({ marks, cols, cellClass }: { marks: Mark[]; cols: number; cellClass: string }) {
+function MarkGrid({ marks, cols, cellClass, boxClass }: { marks: Mark[]; cols: number; cellClass: string; boxClass: string }) {
   return (
     <div>
       <Rails cols={cols} className="[mask-image:linear-gradient(to_top,black,transparent)]" />
@@ -49,11 +48,16 @@ function MarkGrid({ marks, cols, cellClass }: { marks: Mark[]; cols: number; cel
         {marks.map((m) => (
           <li key={m.name} className={cn("border-r border-b border-white/10", cellClass)} style={{ ["--pixel-card-active-color" as string]: "rgb(29 78 216 / 0.35)" }}>
             <PixelCard noFocus gap={6} speed={30} clearCenter={0.5} colors="#1d4ed8,#3b82f6,#93c5fd" className="aspect-auto h-full w-full rounded-none border-0">
-              <div className="flex flex-col items-center justify-center gap-3 px-3 py-3">
-                <div className="flex h-20 w-[168px] max-w-full items-center justify-center rounded-xl bg-white px-4 shadow-[0_1px_2px_rgb(0_0_0/0.2)] sm:h-24">
-                  <Image src={m.src} alt={m.name} width={m.w} height={m.h} sizes="160px" className={cn(m.cls, "w-auto max-w-full object-contain")} />
+              <div className="flex items-center justify-center px-4 py-4">
+                <div className={cn("relative max-w-full", boxClass)}>
+                  <Image
+                    src={m.src}
+                    alt={m.name}
+                    fill
+                    sizes="220px"
+                    className={cn("object-contain", m.onDark && "brightness-0 invert")}
+                  />
                 </div>
-                <span aria-hidden className="text-center type-caption font-medium text-white/75">{m.caption}</span>
               </div>
             </PixelCard>
           </li>
@@ -81,7 +85,7 @@ function ColumnHead({ id, kicker, title, sub, link }: { id: string; kicker: stri
 
 /**
  * Technology partners beside certifications, on a dark chamfered band. The
- * two grids share a height: one tall row of partners, two rows of badges.
+ * two grids share a height: one row of partners, two rows of badges.
  */
 export function CredentialsBand({ ground = "paper", below }: { ground?: "white" | "paper"; below?: "white" | "paper" | "none" }) {
   return (
@@ -101,7 +105,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
               link={{ href: "/solutions/cloud", label: "Explore cloud engineering" }}
             />
             <div className="reveal mt-4 sm:mt-6">
-              <MarkGrid marks={PARTNERS} cols={3} cellClass="h-48 sm:h-[360px]" />
+              <MarkGrid marks={PARTNERS} cols={3} cellClass="h-36 sm:h-[240px]" boxClass="h-12 w-[80px] sm:h-14 sm:w-[96px]" />
             </div>
           </div>
           <div>
@@ -113,7 +117,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
               link={{ href: "/about", label: "About Oceanblue" }}
             />
             <div className="reveal mt-4 sm:mt-6">
-              <MarkGrid marks={CERTS} cols={2} cellClass="h-44 sm:h-[180px]" />
+              <MarkGrid marks={CERTS} cols={2} cellClass="h-32 sm:h-[120px]" boxClass="h-12 w-[132px] sm:h-14 sm:w-[150px]" />
             </div>
           </div>
         </div>

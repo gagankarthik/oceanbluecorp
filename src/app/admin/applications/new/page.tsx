@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import {
   IconJob, IconWarning, IconSave, IconSparkles, IconEdit, IconGroup,
 } from "@/components/admin/icons";
@@ -12,7 +12,7 @@ import { POOL_LABEL, poolOf } from "@/lib/bench";
 import { EmptyState } from "@/components/admin/empty-state";
 import { SearchInput } from "@/components/admin/toolbar";
 import { PageHeader } from "@/components/admin/page-header";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { WorkspaceButton, BackLink } from "@/components/admin/workspace";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { CandidateForm, returnPath } from "@/components/admin/candidate-form/candidate-form";
@@ -28,10 +28,9 @@ import { useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-da
 /** Ties the action-bar submit button to the form it sits outside of. */
 const FORM_ID = "applicant-form";
 
-const backLinkCls = "-ml-1 inline-flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-ink)]";
 const wellCls = "rounded-[12px] border px-4 py-3";
 const choiceCls = "group flex cursor-pointer flex-col rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 transition-[border-color,box-shadow] duration-150 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]";
-const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--adm-danger-ink)]";
+const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-danger-ink)]";
 /** Bleeds to the edges of main's `p-4 sm:p-5 lg:p-6` so it spans the pane. */
 const actionBarCls = "sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:px-5 lg:-mx-6 lg:-mb-6 lg:px-6";
 
@@ -220,15 +219,13 @@ function NewApplicationInner() {
   return (
     <div className="space-y-4 lg:space-y-5">
       <div>
-        <button type="button" onClick={() => router.back()} className={backLinkCls}>
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />Back
-        </button>
+        <BackLink onClick={() => router.back()} />
         <PageHeader
           className="mb-0 mt-2"
           title={forBench ? "Add bench profile" : "New applicant"}
           info={forBench ? "Add a candidate to the talent bench" : "Create a candidate record and place it on the pipeline"}
           meta={values.jobId && jobTitle ? (
-            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[var(--adm-ink-mute)]">
+            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-adm-xs text-[var(--adm-ink-mute)]">
               <IconJob className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
               <span className="min-w-0 truncate">
                 Applying for <span className="font-medium text-[var(--adm-ink)]">{jobTitle}</span>
@@ -253,11 +250,11 @@ function NewApplicationInner() {
             <label className={choiceCls}>
               <input type="file" accept={RESUME_ACCEPT} onChange={handleStartFromResume} className="sr-only" />
               <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
-              <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Upload a resume</span>
-              <span className="mt-1 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+              <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Upload a resume</span>
+              <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                 Name, contact, location, skills and experience are read from the document and filled in for you to check.
               </span>
-              <span className="mt-2 text-[12.5px] text-[var(--adm-ink-subtle)]">PDF or Word, up to 5 MB</span>
+              <span className="mt-2 text-adm-xs text-[var(--adm-ink-subtle)]">PDF or Word, up to 5 MB</span>
             </label>
 
             <button
@@ -266,8 +263,8 @@ function NewApplicationInner() {
               className={cn(choiceCls, "text-left")}
             >
               <IconEdit className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
-              <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Enter details manually</span>
-              <span className="mt-1 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+              <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Enter details manually</span>
+              <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                 Fill the form in yourself. A resume can still be attached at the end, and read at any point.
               </span>
             </button>
@@ -275,8 +272,8 @@ function NewApplicationInner() {
             {!forBench && (
               <button type="button" onClick={openBench} className={cn(choiceCls, "text-left")}>
                 <IconGroup className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
-                <span className="mt-3 text-[14px] font-semibold text-[var(--adm-ink)]">Pick from talent bench</span>
-                <span className="mt-1 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Pick from talent bench</span>
+                <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                   Choose someone already on the bench. Their details and resume are carried over for you to check.
                 </span>
               </button>
@@ -299,7 +296,7 @@ function NewApplicationInner() {
           {benchError ? (
             <EmptyState variant="error" title="Couldn't load the talent bench" description={benchError} />
           ) : !benchList ? (
-            <div className="flex items-center justify-center gap-2 px-5 py-12 text-[13.5px] text-[var(--adm-ink-mute)]" role="status">
+            <div className="flex items-center justify-center gap-2 px-5 py-12 text-adm-base text-[var(--adm-ink-mute)]" role="status">
               <Loader2 className="h-4 w-4 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />Loading the bench…
             </div>
           ) : benchMatches.length === 0 ? (
@@ -318,12 +315,12 @@ function NewApplicationInner() {
                     className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-60"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium text-[var(--adm-ink)]">{a.name || a.email}</span>
-                      <span className="block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">
+                      <span className="block truncate text-adm-base font-medium text-[var(--adm-ink)]">{a.name || a.email}</span>
+                      <span className="block truncate text-adm-xs text-[var(--adm-ink-subtle)]">
                         {[a.email, a.jobTitle, (a.skills || []).slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
                       </span>
                     </span>
-                    <span className="flex-none text-[12.5px] text-[var(--adm-ink-mute)]">{POOL_LABEL[poolOf(a)]}</span>
+                    <span className="flex-none text-adm-xs text-[var(--adm-ink-mute)]">{POOL_LABEL[poolOf(a)]}</span>
                     {benchPicking === a.id && <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />}
                   </button>
                 </li>
@@ -335,10 +332,10 @@ function NewApplicationInner() {
         <AdminCard>
           <div className="flex flex-col items-center px-5 py-12 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
-            <p className="mt-4 text-[15px] font-semibold text-[var(--adm-ink)]" role="status" aria-live="polite">
+            <p className="mt-4 text-adm-md font-semibold text-[var(--adm-ink)]" role="status" aria-live="polite">
               Reading {form.resumeFile?.name ?? "the resume"}…
             </p>
-            <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+            <p className="mt-1.5 max-w-md text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
               Pulling out name, contact details, location, skills and experience. This usually takes a few
               seconds and can take up to a minute. The form opens filled in, ready for you to check.
             </p>
@@ -352,7 +349,7 @@ function NewApplicationInner() {
           {parsing && (
             <div className={cn(wellCls, "flex items-center gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
-              <p className="text-[13.5px] text-[var(--adm-ink-mute)]" role="status" aria-live="polite">
+              <p className="text-adm-base text-[var(--adm-ink-mute)]" role="status" aria-live="polite">
                 Still reading {form.resumeFile?.name ?? "the resume"}; empty fields may fill in shortly.
                 Anything you type stays as you typed it.
               </p>
@@ -362,7 +359,7 @@ function NewApplicationInner() {
           {benchFrom && (
             <div className={cn(wellCls, "flex items-start gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <IconGroup className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
-              <p className="text-[13.5px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 Filled from <span className="font-medium text-[var(--adm-ink)]">{benchFrom}</span>&apos;s bench profile.
                 Check the values before saving; they stay on the bench.
               </p>
@@ -372,7 +369,7 @@ function NewApplicationInner() {
           {!parsing && prefillFrom && (
             <div className={cn(wellCls, "flex items-start gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <IconSparkles className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
-              <p className="text-[13.5px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 Filled from <span className="font-medium text-[var(--adm-ink)]">{prefillFrom}</span>: {prefillFields.join(", ")}.
                 Check the values before saving; the file will be attached to the record.
               </p>
@@ -383,11 +380,11 @@ function NewApplicationInner() {
           {!parsing && parseError && (
             <div role="alert" className={cn(wellCls, "flex flex-wrap items-start gap-2.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]")}>
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-warning-ink)]" aria-hidden="true" />
-              <p className="min-w-0 flex-1 text-[13.5px] text-[var(--adm-warning-ink)]">
+              <p className="min-w-0 flex-1 text-adm-base text-[var(--adm-warning-ink)]">
                 Couldn&apos;t read the resume, enter the details below instead. {parseError}
               </p>
               {form.resumeFile && (
-                <WorkspaceButton className="h-8 px-3 text-[13px]" onClick={() => void parseResumeFile(form.resumeFile!)}>
+                <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => void parseResumeFile(form.resumeFile!)}>
                   Try again
                 </WorkspaceButton>
               )}
@@ -406,7 +403,7 @@ function NewApplicationInner() {
         onResumeFileChange={(file) => (file ? setParseError(null) : forgetPrefill())}
         resumeFileActions={form.resumeFile && parsedFile.current !== form.resumeFile ? (
           // A resume attached late in a manual entry can still fill the blanks.
-          <WorkspaceButton className="h-8 px-3 text-[13px]" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
+          <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
             {parsing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
             {parsing ? "Reading…" : "Fill form from resume"}
           </WorkspaceButton>
@@ -414,7 +411,7 @@ function NewApplicationInner() {
       />
 
       <div className={cn(actionBarCls, mode !== "form" && "hidden")}>
-        <p className="min-w-0 text-[13px] font-medium text-[var(--adm-danger-ink)]">
+        <p className="min-w-0 text-adm-xs font-medium text-[var(--adm-danger-ink)]">
           {Object.keys(form.errors).length > 0 ? "Fix the highlighted fields to add this candidate." : form.error}
         </p>
         <div className="flex flex-wrap items-center gap-2">

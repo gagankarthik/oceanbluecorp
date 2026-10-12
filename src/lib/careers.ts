@@ -13,14 +13,18 @@ export const HR_EMAIL = "hr@oceanbluecorp.com";
 export const EEO_STATEMENT =
   "Oceanblue is an equal opportunity employer. We do not discriminate on the basis of race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.";
 
+import { WORKPLACE_LABEL, workplaceOf } from "./workplace";
+
 export type WorkMode = "Remote" | "Hybrid" | "On-site";
 
 /**
- * Work arrangement, read from how postings already state it: a "Remote",
- * "Hybrid" or "Onsite" marker in the title or location, or the remote job
- * type. Null when the posting does not say, rather than a guess.
+ * Work arrangement: the posting's workplace, else a "Remote", "Hybrid" or
+ * "Onsite" marker in the title or location of an older posting. Null when the
+ * posting does not say, rather than a guess.
  */
-export function workMode(job: { title?: string; location?: string; type?: string }): WorkMode | null {
+export function workMode(job: { title?: string; location?: string; type?: string; workplace?: string }): WorkMode | null {
+  const wp = workplaceOf(job);
+  if (wp) return WORKPLACE_LABEL[wp] as WorkMode;
   const text = `${job.title ?? ""} ${job.location ?? ""}`;
   if (/\bhybrid\b/i.test(text)) return "Hybrid";
   if (job.type === "remote" || /\bremote\b/i.test(text)) return "Remote";

@@ -1,11 +1,13 @@
+import { jobLocationLabel } from "@/lib/workplace";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAllJobs,
-  getAllApplications,
+  getApplicationSummaries,
   getAllContacts,
   Job,
   Application,
   Contact,
+  type ApplicationSummary,
 } from "@/lib/aws/dynamodb";
 import { requireStaff, viewerOf } from "@/lib/auth/verify";
 import { isVisibleApplication } from "@/lib/bench";
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     const canSeeContacts = roles.includes(UserRole.ADMIN) || roles.includes(UserRole.HR);
     const [jobsResult, applicationsResult, contactsResult] = await Promise.all([
       getAllJobs(),
-      getAllApplications(),
+      getApplicationSummaries(),
       // Enquiries are Admin/HR only, like /admin/contacts itself.
       canSeeContacts ? getAllContacts() : Promise.resolve({ success: true, data: [] as Contact[] }),
     ]);
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
       const matchingJobs = jobsResult.data.filter((job: Job) =>
         has(job.title, query) ||
         has(job.department, query) ||
-        has(job.location, query) ||
+        has(jobLocationLabel(job), query) ||
         has(job.description, query)
       );
 
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
           type: "job",
           id: job.id,
           title: job.title,
-          subtitle: `${job.department} - ${job.location}`,
+          subtitle: [job.department, jobLocationLabel(job)].filter(Boolean).join(" - "),
           link: `/admin/jobs/${job.id}`,
           status: job.status,
         });
@@ -72,8 +74,8 @@ export async function GET(request: NextRequest) {
     // Search applications
     if (applicationsResult.success && applicationsResult.data) {
       const viewer = viewerOf(auth.claims);
-      const matchingApps = applicationsResult.data.filter((app: Application) =>
-        isVisibleApplication(app, viewer) && (
+      const matchingApps = applicationsResult.data.filter((app: ApplicationSummary) =>
+        isVisibleApplication(app as Application, viewer) && (
           has(app.name, query) ||
           has(app.email, query) ||
           has(app.phone, query) ||
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest) {
         )
       );
 
-      matchingApps.slice(0, 5).forEach((app: Application) => {
+      matchingApps.slice(0, 5).forEach((app: ApplicationSummary) => {
         results.push({
           type: "application",
           id: app.id,

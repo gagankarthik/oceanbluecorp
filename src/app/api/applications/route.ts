@@ -1,3 +1,4 @@
+import { jobLocationLabel } from "@/lib/workplace";
 import { NextRequest, NextResponse, after } from "next/server";
 import {
   getAllApplications,
@@ -419,7 +420,7 @@ export async function POST(request: NextRequest) {
           candidateEmail: body.email,
           jobTitle: job.title,
           jobDepartment: job.department,
-          jobLocation: job.location,
+          jobLocation: jobLocationLabel(job),
         }).then(() => {}).catch(() => {})
       );
 

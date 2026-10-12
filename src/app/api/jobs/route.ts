@@ -9,7 +9,8 @@ import {
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isPastDeadline, isAcceptingApplications } from "@/lib/job-status";
-import { jobInputError, parseSalary, publishedAtFor } from "@/lib/job-input";
+import { jobLocationLabel } from "@/lib/workplace";
+import { jobInputError, parseSalary, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -82,9 +83,15 @@ export async function GET(request: NextRequest) {
             .filter((j) => isAcceptingApplications(j))
             .map(toPublicJob);
 
+    // Saved rankings belong to the job page, not the list: ten scored
+    // candidates per job made every list response heavy for no reader.
+    const lean = payload.map((j) => {
+      const { candidateMatches: _m, candidateMatchesMeta: _mm, candidateMatchRun: _mr, ...rest } = j as Job;
+      return rest;
+    });
     const body = summary
-      ? payload.map(({ description: _d, responsibilities: _r, requirements: _q, ...rest }) => rest)
-      : payload;
+      ? lean.map(({ description: _d, responsibilities: _r, requirements: _q, ...rest }) => rest)
+      : lean;
     return NextResponse.json({ jobs: body });
   } catch (error) {
     return serverError("API /api/jobs GET - exception", error, "Couldn't load jobs. Please try again.");
@@ -112,6 +119,7 @@ export async function POST(request: NextRequest) {
     }
     const invalid = jobInputError(body);
     if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+    const { type, workplace } = splitLegacyRemote(body);
     const salary = parseSalary(body.salary ?? null);
 
     // Every posting carries an OB-ID; one without it can't be referenced by staff or partners.
@@ -126,7 +134,8 @@ export async function POST(request: NextRequest) {
       title: body.title,
       department: body.department,
       location: typeof body.location === "string" ? body.location.trim() : "",
-      type: body.type,
+      type,
+      workplace: workplace || undefined,
       description: sanitizeRichText(body.description),
       requirements: typeof body.requirements === "string" ? sanitizeRichText(body.requirements) : (body.requirements || []),
       responsibilities: typeof body.responsibilities === "string" ? sanitizeRichText(body.responsibilities) : (body.responsibilities || []),
@@ -183,7 +192,7 @@ export async function POST(request: NextRequest) {
             id: uuidv4(),
             type: "job_posted",
             title: "New Job Posted",
-            message: `${job.title} in ${job.department} - ${job.location}`,
+            message: `${job.title} in ${job.department} - ${jobLocationLabel(job) || "location not set"}`,
             link: `/admin/state-roles`,
             relatedId: job.id,
             isRead: false,
@@ -257,7 +266,7 @@ export async function POST(request: NextRequest) {
               recipientEmail: recipient.email,
               jobTitle: job.title,
               jobDepartment: job.department,
-              jobLocation: job.location,
+              jobLocation: jobLocationLabel(job),
               jobType: job.type,
               postedByName: job.postedByName || "Admin",
               jobId: job.id,

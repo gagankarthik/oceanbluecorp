@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { X, ChevronRight, ExternalLink } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useAuth, UserRole, routeAccess, PUBLISHING_ROLES, RECRUITING_ROLES, landingRouteFor,
@@ -15,7 +15,7 @@ import { Avatar } from "@/components/admin/avatar";
 import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
-  IconBell, IconHelp, IconSettings, IconDocs, IconMenu, IconSearch, IconSidebar,
+  IconBell, IconHelp, IconSettings, IconDocs, IconMenu,
   IconHome, IconHrPortal, IconLogout, IconShield, IconClock, IconTrash,
   IconBlog, IconChart, IconQuote, IconNews, IconJob, IconStateRole,
 } from "@/components/admin/icons";
@@ -119,7 +119,7 @@ function useDismiss(open: boolean, ref: React.RefObject<HTMLElement | null>, clo
 }
 
 const iconButton =
-  "inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+  "inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-surface-2)] [&_svg]:stroke-2";
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
@@ -127,12 +127,14 @@ function Sidebar({
   open,
   collapsed,
   onClose,
+  onToggleCollapse,
   pathname,
   hasAnyRole,
 }: {
   open: boolean;
   collapsed: boolean;
   onClose: () => void;
+  onToggleCollapse: () => void;
   pathname: string;
   hasAnyRole: (roles: UserRole[]) => boolean;
 }) {
@@ -144,11 +146,24 @@ function Sidebar({
       className={cn(
         "adm-nav fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[var(--adm-nav-line)] bg-[var(--adm-nav-bg)] transition-[transform,width] duration-200 ease-[var(--adm-ease)] lg:translate-x-0",
         open ? "translate-x-0 shadow-[var(--adm-shadow-lg)] lg:shadow-none" : "-translate-x-full",
-        rail ? "lg:w-[64px]" : "lg:w-[240px]",
+        // Expanded: 15% of the screen, floored so labels never clip.
+        rail ? "lg:w-[64px]" : "lg:w-[max(15vw,200px)]",
       )}
       aria-label="Sidebar"
     >
-      <div className={cn("flex h-[60px] flex-none items-center gap-2 px-4", rail && "lg:justify-center lg:px-0")}>
+      {/* On the sidebar edge, level with the logo. */}
+      <button
+        type="button"
+        onClick={onToggleCollapse}
+        aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!rail}
+        title={rail ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute -right-3 top-[30px] z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] lg:grid"
+      >
+        {rail ? <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />}
+      </button>
+
+      <div className={cn("flex h-[60px] flex-none items-center gap-2 border-b border-[var(--adm-line)] px-4", rail && "lg:justify-center lg:px-0")}>
         <Link
           href="/admin"
           aria-label="Oceanblue, dashboard"
@@ -183,7 +198,7 @@ function Sidebar({
           if (items.length === 0) return null;
           return (
             <div key={section} className={cn(groupIdx > 0 && "mt-5")}>
-              <p className={cn("px-3 pb-1.5 text-[12px] font-medium text-[var(--adm-nav-subtle)]", rail && "lg:hidden")}>
+              <p className={cn("px-3 pb-1.5 text-adm-xs font-medium text-[var(--adm-nav-subtle)]", rail && "lg:hidden")}>
                 {section}
               </p>
               {rail && groupIdx > 0 && <div className="mx-3 mb-3 hidden border-t border-[var(--adm-nav-line)] lg:block" />}
@@ -199,7 +214,7 @@ function Sidebar({
                         onClick={onClose}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex h-9 items-center gap-2.5 rounded-[var(--adm-radius-control)] px-3 text-[13.5px] transition-colors",
+                          "group relative flex h-9 items-center gap-2.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base transition-colors",
                           rail && "lg:justify-center lg:px-0",
                           active
                             ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-1.5 before:-left-2.5 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
@@ -251,7 +266,7 @@ function UserMenu({
   );
 
   // Rows share the top bar's 36px height and 18px icons.
-  const row = "flex h-9 w-full items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 text-[13.5px] transition-colors";
+  const row = "flex h-9 w-full items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 text-adm-base transition-colors";
   const item = cn(row, "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]");
   const icon = "h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]";
   const external = "ml-auto h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]";
@@ -280,10 +295,10 @@ function UserMenu({
           <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
             {avatar("md")}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-[var(--adm-ink)]">{user?.name}</p>
-              <p className="truncate text-[12px] text-[var(--adm-ink-subtle)]">{user?.email}</p>
+              <p className="truncate text-adm-xs font-semibold text-[var(--adm-ink)]">{user?.name}</p>
+              <p className="truncate text-adm-xs text-[var(--adm-ink-subtle)]">{user?.email}</p>
             </div>
-            <span className="flex-none rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-[11.5px] font-medium text-[var(--adm-accent)]">
+            <span className="flex-none rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-accent)]">
               {role}
             </span>
           </div>
@@ -345,7 +360,7 @@ function NotificationsPanel() {
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--adm-danger)] px-1 text-[10.5px] font-semibold tabular-nums text-white ring-2 ring-[var(--adm-surface)]"
+            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--adm-danger)] px-1 text-adm-micro font-semibold tabular-nums text-white ring-2 ring-[var(--adm-surface)]"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
@@ -365,9 +380,9 @@ function NotificationsPanel() {
         >
           <div className="flex flex-none items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-3.5 py-2.5">
             <div className="flex items-center gap-2">
-              <h3 className="text-[13.5px] font-semibold text-[var(--adm-ink)]">Notifications</h3>
+              <h3 className="text-adm-base font-semibold text-[var(--adm-ink)]">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-[var(--adm-accent-soft)] px-1.5 py-px text-[11.5px] font-semibold tabular-nums text-[var(--adm-accent)]">
+                <span className="rounded-full bg-[var(--adm-accent-soft)] px-1.5 py-px text-adm-micro font-semibold tabular-nums text-[var(--adm-accent)]">
                   {unreadCount}
                 </span>
               )}
@@ -375,7 +390,7 @@ function NotificationsPanel() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="rounded-[var(--adm-radius-control)] px-1.5 py-1 text-[12px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
+                className="rounded-[var(--adm-radius-control)] px-1.5 py-1 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
               >
                 Mark all read
               </button>
@@ -398,8 +413,8 @@ function NotificationsPanel() {
             ) : notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <IconBell className="mx-auto h-5 w-5 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
-                <p className="mt-2 text-[13px] font-medium text-[var(--adm-ink)]">You&apos;re up to date</p>
-                <p className="mt-0.5 text-[12px] text-[var(--adm-ink-subtle)]">New jobs, applications and enquiries appear here.</p>
+                <p className="mt-2 text-adm-xs font-medium text-[var(--adm-ink)]">You&apos;re up to date</p>
+                <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">New jobs, applications and enquiries appear here.</p>
               </div>
             ) : (
               <ul>
@@ -420,12 +435,12 @@ function NotificationsPanel() {
                         />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-baseline justify-between gap-2">
-                            <span className={cn("truncate text-[13px]", n.isRead ? "text-[var(--adm-ink-mute)]" : "font-semibold text-[var(--adm-ink)]")}>
+                            <span className={cn("truncate text-adm-xs", n.isRead ? "text-[var(--adm-ink-mute)]" : "font-semibold text-[var(--adm-ink)]")}>
                               {n.title}
                             </span>
-                            <span className="flex-none text-[11.5px] tabular-nums text-[var(--adm-ink-subtle)]">{formatTimeAgo(n.createdAt)}</span>
+                            <span className="flex-none text-adm-micro tabular-nums text-[var(--adm-ink-subtle)]">{formatTimeAgo(n.createdAt)}</span>
                           </span>
-                          <span className="mt-0.5 block truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{n.message}</span>
+                          <span className="mt-0.5 block truncate text-adm-xs text-[var(--adm-ink-subtle)]">{n.message}</span>
                         </span>
                         {!n.isRead && <span className="sr-only">Unread</span>}
                       </button>
@@ -440,7 +455,7 @@ function NotificationsPanel() {
             <Link
               href="/admin/notifications"
               onClick={() => setOpen(false)}
-              className="flex flex-none items-center justify-center gap-1 border-t border-[var(--adm-line-soft)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              className="flex flex-none items-center justify-center gap-1 border-t border-[var(--adm-line-soft)] px-3.5 py-2 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
             >
               View all notifications
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -459,13 +474,13 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="max-w-sm text-center">
         <IconShield className="mx-auto h-6 w-6 text-[var(--adm-danger-ink)]" aria-hidden="true" />
-        <p className="mt-3 text-[15px] font-semibold text-[var(--adm-ink)]">Access restricted</p>
-        <p className="mt-1 text-[13.5px] text-[var(--adm-ink-mute)]">
+        <p className="mt-3 text-adm-md font-semibold text-[var(--adm-ink)]">Access restricted</p>
+        <p className="mt-1 text-adm-base text-[var(--adm-ink-mute)]">
           Your role ({userRole ?? "none"}) can&apos;t open this page. Ask an administrator if you need access.
         </p>
         <Link
           href={home}
-          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
+          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-adm-xs font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
           {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
         </Link>
@@ -486,7 +501,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const narrowViewport = useMediaQuery("(max-width: 1439.98px)");
   const sidebarCollapsed = storedCollapsed ?? narrowViewport;
   const { user, signOut, hasAnyRole } = useAuth();
-  const { openCommandPalette, pageCrumb, navSection } = useAdmin();
+  const { pageCrumb, navSection } = useAdmin();
   const section = currentSection(navSection ?? pathname);
 
   // Media has no dashboard; bounce only the bare /admin landing.
@@ -518,7 +533,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     <div className="adm-scope min-h-screen bg-[var(--adm-canvas)]">
       <a
         href="#adm-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-[var(--adm-radius-control)] focus:bg-[var(--adm-accent)] focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-[var(--adm-radius-control)] focus:bg-[var(--adm-accent)] focus:px-3 focus:py-2 focus:text-adm-xs focus:font-medium focus:text-white"
       >
         Skip to content
       </a>
@@ -535,6 +550,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         open={sidebarOpen}
         collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={toggleSidebarCollapse}
         pathname={navSection ?? pathname}
         hasAnyRole={hasAnyRole}
       />
@@ -542,36 +558,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "transition-[padding] duration-200 ease-[var(--adm-ease)]",
-          sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]",
+          sidebarCollapsed ? "lg:pl-[64px]" : "lg:pl-[max(15vw,200px)]",
         )}
       >
-        {/* Three columns so the search sits on the true centre of the pane. */}
-        <header className="sticky top-0 z-30 grid h-[60px] grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
           <div className="flex min-w-0 items-center gap-1">
             <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className={cn(iconButton, "lg:hidden")}>
               <IconMenu className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
-            <button
-              onClick={toggleSidebarCollapse}
-              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className={cn(iconButton, "hidden lg:inline-flex")}
-            >
-              <IconSidebar className="h-[18px] w-[18px]" aria-hidden="true" />
-            </button>
-            <h1 className="ml-1 truncate text-[14px] font-semibold text-[var(--adm-ink)] md:hidden">{title}</h1>
+            <h1 className="ml-1 truncate text-adm-base font-semibold text-[var(--adm-ink)] md:hidden">{title}</h1>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex items-center justify-end gap-1.5">
             {canSearch && <HeaderSearch />}
-          </div>
-
-          <div className="flex items-center justify-end gap-2">
-            {canSearch && (
-              <button type="button" onClick={openCommandPalette} aria-label="Open search" className={cn(iconButton, "md:hidden")}>
-                <IconSearch className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
-            )}
             <NotificationsPanel />
             <Link href="/admin/help" title="Help and team" aria-label="Help and team directory" className={iconButton}>
               <IconHelp className="h-[18px] w-[18px]" aria-hidden="true" />

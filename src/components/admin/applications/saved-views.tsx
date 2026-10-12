@@ -49,17 +49,17 @@ export function SavedViewsMenu<S>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3.5 text-adm-xs font-medium transition-colors",
             activeId
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
-              : "border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
+              : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
             "data-[state=open]:border-[var(--adm-accent)]",
           )}
         >
           <IconBookmark className="h-3.5 w-3.5" aria-hidden="true" />
           <span className="hidden sm:inline">Saved views</span>
           {items.length > 0 && (
-            <span className="tabular-nums text-[12px] text-[var(--adm-ink-subtle)]">{items.length}</span>
+            <span className="tabular-nums text-adm-xs text-[var(--adm-ink-subtle)]">{items.length}</span>
           )}
         </button>
       </DropdownMenuTrigger>
@@ -69,8 +69,8 @@ export function SavedViewsMenu<S>({
         className="w-[20rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
         <div className="border-b border-[var(--adm-line-soft)] px-4 py-2.5">
-          <span className="text-[13px] font-semibold text-[var(--adm-ink)]">Saved views</span>
-          <p className="mt-0.5 text-[12px] text-[var(--adm-ink-subtle)]">Search, filters and layout, saved in this browser.</p>
+          <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">Saved views</span>
+          <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">Search, filters and layout, saved in this browser.</p>
         </div>
 
         {items.length > 0 ? (
@@ -81,7 +81,7 @@ export function SavedViewsMenu<S>({
                   type="button"
                   onClick={() => { onApply(item); setOpen(false); }}
                   className={cn(
-                    "min-w-0 flex-1 truncate px-4 py-2 text-left text-[13px] transition-colors hover:bg-[var(--adm-row-hover)]",
+                    "min-w-0 flex-1 truncate px-4 py-2 text-left text-adm-xs transition-colors hover:bg-[var(--adm-row-hover)]",
                     item.id === activeId ? "font-medium text-[var(--adm-accent)]" : "text-[var(--adm-ink)]",
                   )}
                 >
@@ -100,7 +100,7 @@ export function SavedViewsMenu<S>({
             ))}
           </ul>
         ) : (
-          <p className="px-4 py-3 text-[12.5px] text-[var(--adm-ink-mute)]">No saved views yet.</p>
+          <p className="px-4 py-3 text-adm-xs text-[var(--adm-ink-mute)]">No saved views yet.</p>
         )}
 
         {/* Plain form, not menu items: Radix typeahead would swallow the keystrokes. */}
@@ -116,7 +116,7 @@ export function SavedViewsMenu<S>({
             onChange={(e) => setName(e.target.value)}
             placeholder={full ? `Limit of ${MAX_SAVED} reached` : "Name the current view"}
             disabled={full}
-            className="h-8 text-[13px]"
+            className="h-8 text-adm-xs"
           />
           <WorkspaceButton type="submit" size="sm" disabled={!trimmed || full}>Save</WorkspaceButton>
         </form>

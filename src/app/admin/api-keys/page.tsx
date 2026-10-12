@@ -17,9 +17,9 @@ import {
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { fmtDate, fmtRelative } from "@/lib/format";
-import { PageHeader } from "@/components/admin/page-header";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { WorkspaceButton, StatStrip } from "@/components/admin/workspace";
+import { Workspace, WorkspaceButton } from "@/components/admin/workspace";
+import { ListHeader, MetaStrong } from "@/components/admin/list-shell";
 import { Field, FormInput } from "@/components/admin/forms/primitives";
 import { FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { useFormErrors } from "@/hooks/use-form-errors";
@@ -71,7 +71,7 @@ function AccessLevelChoice({
               "flex cursor-pointer items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 transition-colors duration-150",
               selected
                 ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+                : "border-[var(--adm-line-control)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
               disabled && "cursor-not-allowed opacity-60",
             )}
           >
@@ -85,8 +85,8 @@ function AccessLevelChoice({
               className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
             />
             <span className="min-w-0">
-              <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">{level.label}</span>
-              <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--adm-ink-mute)]">
+              <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">{level.label}</span>
+              <span className="mt-0.5 block text-adm-xs leading-snug text-[var(--adm-ink-mute)]">
                 {level.description}
               </span>
             </span>
@@ -263,22 +263,11 @@ export default function ApiKeysPage() {
 
   // ── derived ───────────────────────────────────────────────────────────────
 
-  const stats = useMemo(() => {
-    const used = keys
-      .map((k) => k.lastUsedAt)
-      .filter((d): d is string => !!d)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-    return {
-      total:    keys.length,
-      active:   keys.filter((k) => k.isActive).length,
-      disabled: keys.filter((k) => !k.isActive).length,
-      lastUsed: used.length > 0 ? fmtRelative(used[0]) : "Never",
-    };
-  }, [keys]);
+  const disabledCount = useMemo(() => keys.filter((k) => !k.isActive).length, [keys]);
 
   // ── grid columns ──────────────────────────────────────────────────────────
 
-  const codeChip = "rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--adm-ink-mute)]";
+  const codeChip = "rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-adm-xs text-[var(--adm-ink-mute)]";
 
   const columns: DataTableColumn<ApiKeyRecord>[] = [
     {
@@ -286,9 +275,9 @@ export default function ApiKeysPage() {
       header: "Platform",
       sortValue: (k) => k.name,
       cell: (k) => (
-        <div className="min-w-0 max-w-[240px]">
-          <span className="block truncate font-semibold text-[var(--adm-ink)]">{k.name}</span>
-          <span className="mt-0.5 block truncate text-[13px] text-[var(--adm-ink-subtle)]">
+        <div className="min-w-0 max-w-[200px]">
+          <span className="block truncate font-semibold text-[var(--adm-ink)]" title={k.name}>{k.name}</span>
+          <span className="mt-0.5 block truncate text-adm-xs text-[var(--adm-ink-subtle)]" title={k.description}>
             {k.description || "–"}
           </span>
         </div>
@@ -313,7 +302,7 @@ export default function ApiKeysPage() {
             disabled={scopingId === k.id}
             onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
             onClick={(e) => e.stopPropagation()}
-            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-[13px] font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-xs font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
           >
             {API_ACCESS_LEVELS.map((level) => (
               <option key={level.id} value={level.id}>{level.label}</option>
@@ -347,16 +336,16 @@ export default function ApiKeysPage() {
       cell: (k) => k.createdByName ? (
         <div className="flex min-w-0 items-center gap-2">
           <Avatar name={k.createdByName} size="xs" />
-          <span className="max-w-[140px] truncate text-[13px] text-[var(--adm-ink-mute)]">{k.createdByName}</span>
+          <span className="max-w-[140px] truncate text-adm-xs text-[var(--adm-ink-mute)]">{k.createdByName}</span>
         </div>
       ) : <Blank />,
     },
     {
       key: "created",
       header: "Created",
-      hideBelow: "lg",
+      hideBelow: "xl",
       sortValue: (k) => new Date(k.createdAt).getTime(),
-      cell: (k) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(k.createdAt)}</span>,
+      cell: (k) => <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(k.createdAt)}</span>,
     },
     {
       key: "lastUsed",
@@ -364,8 +353,8 @@ export default function ApiKeysPage() {
       hideBelow: "lg",
       sortValue: (k) => (k.lastUsedAt ? new Date(k.lastUsedAt).getTime() : 0),
       cell: (k) => k.lastUsedAt
-        ? <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtRelative(k.lastUsedAt)}</span>
-        : <span className="text-[13px] text-[var(--adm-ink-subtle)]">Never used</span>,
+        ? <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{fmtRelative(k.lastUsedAt)}</span>
+        : <span className="text-adm-xs text-[var(--adm-ink-subtle)]">Never used</span>,
     },
     {
       key: "actions",
@@ -378,7 +367,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-[13px] font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -410,27 +399,19 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-4 pb-10 lg:space-y-5">
-      <PageHeader
+      <ListHeader
+        className="mb-0"
         title="API keys"
-        info="Keys partner platforms use to pull your job listings via the public job feed API."
+        meta={<>
+          {keys.length} {keys.length === 1 ? "key" : "keys"} partner platforms use to pull your job listings
+          {disabledCount ? <>, <MetaStrong>{disabledCount} disabled</MetaStrong></> : null}
+        </>}
         actions={
           <WorkspaceButton variant="primary" onClick={openCreate}>
             <Plus className="h-4 w-4" />New API key
           </WorkspaceButton>
         }
       />
-
-      <div className="flex flex-col">
-        <StatStrip
-          className="mb-0"
-          items={[
-            { label: "Total keys", value: stats.total },
-            { label: "Active", value: stats.active },
-            { label: "Disabled", value: stats.disabled },
-            { label: "Last used", value: stats.lastUsed, hint: "Most recent call across all keys" },
-          ]}
-        />
-      </div>
 
       {newKey && (
         <div
@@ -440,13 +421,13 @@ export default function ApiKeysPage() {
           <div className="flex items-start gap-3">
             <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-warning-ink)]" />
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold text-[var(--adm-warning-ink)]">Copy your API key now, it won&apos;t be shown again</p>
-              <p className="mt-0.5 text-[13px] text-[var(--adm-ink-mute)]">
+              <p className="text-adm-base font-semibold text-[var(--adm-warning-ink)]">Copy your API key now, it won&apos;t be shown again</p>
+              <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
                 Platform: <span className="font-medium text-[var(--adm-ink)]">{newKey.name}</span> · Access:{" "}
                 <span className="font-medium text-[var(--adm-ink)]">{accessLevelMeta(newKey.accessLevel).label}</span>
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-[13px] text-[var(--adm-ink)]">
+                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-adm-xs text-[var(--adm-ink)]">
                   <span className="truncate">
                     {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
                   </span>
@@ -457,7 +438,7 @@ export default function ApiKeysPage() {
                     onClick={() => setShowKey((v) => !v)}
                     aria-label={showKey ? "Hide key" : "Show key"}
                     title={showKey ? "Hide" : "Reveal"}
-                    className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:border-[var(--adm-line-strong)] hover:text-[var(--adm-ink)]"
+                    className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]"
                   >
                     {showKey ? <IconEyeOff className="h-4 w-4" aria-hidden="true" /> : <IconEye className="h-4 w-4" aria-hidden="true" />}
                   </button>
@@ -483,7 +464,7 @@ export default function ApiKeysPage() {
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-[13.5px] text-[var(--adm-danger-ink)]"
+          className="flex items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-adm-base text-[var(--adm-danger-ink)]"
         >
           <IconError className="h-4 w-4 flex-none" />
           <span className="min-w-0 flex-1">{error}</span>
@@ -498,8 +479,8 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      <AdminCard className="overflow-hidden">
-        <AdminCardHeader title="Issued keys" subtitle="Disable to pause a partner, revoke to remove for good" count={keys.length} />
+      {/* min-h-0: a handful of keys shouldn't stretch the panel over the API reference. */}
+      <Workspace className="min-h-0">
         <DataTable
           columns={columns}
           rows={keys}
@@ -518,12 +499,12 @@ export default function ApiKeysPage() {
             ),
           }}
         />
-      </AdminCard>
+      </Workspace>
 
       <AdminCard>
         <AdminCardHeader title="Job feed API" subtitle="What a partner calls with its key" />
         <div className="space-y-4 p-4">
-          <p className="text-[13.5px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
             Partner platforms authenticate with an{" "}
             <code className={codeChip}>X-API-Key: &lt;key&gt;</code>{" "}
             header.
@@ -535,17 +516,17 @@ export default function ApiKeysPage() {
               { route: "POST /api/v1/jobs", scope: "jobs:write" },
             ].map(({ route, scope }) => (
               <li key={route} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
-                <span className="min-w-0 break-all font-mono text-[13px] text-[var(--adm-ink)]">{route}</span>
+                <span className="min-w-0 break-all font-mono text-adm-xs text-[var(--adm-ink)]">{route}</span>
                 <span className={codeChip}>{scope}</span>
               </li>
             ))}
           </ul>
-          <p className="text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             A <span className="font-medium text-[var(--adm-ink)]">View jobs</span> key holds <code className={codeChip}>jobs:read</code> only;
             calling the write endpoint with one returns 403. Postings filed over the API land as
             drafts unless the request asks for <code className={codeChip}>status</code>.
           </p>
-          <p className="text-[13px] leading-loose text-[var(--adm-ink-mute)]">
+          <p className="text-adm-xs leading-loose text-[var(--adm-ink-mute)]">
             Query params:{" "}
             {["status", "department", "type", "page", "limit"].map((p, i) => (
               <span key={p}>
@@ -599,7 +580,7 @@ export default function ApiKeysPage() {
             />
           </Field>
           <div>
-            <p id="apikey-access-label" className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Access</p>
+            <p id="apikey-access-label" className="mb-2 text-adm-base font-medium text-[var(--adm-ink-mute)]">Access</p>
             <AccessLevelChoice value={formAccess} onChange={setFormAccess} disabled={creating} />
           </div>
         </form>

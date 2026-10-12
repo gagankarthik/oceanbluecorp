@@ -62,15 +62,15 @@ export function AdminCardHeader({
         {Icon && <Icon className={cn("h-4 w-4 flex-none", tone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text)} strokeWidth={1.75} />}
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-            <h3 className="truncate text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h3>
+            <h3 className="truncate text-adm-base font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h3>
             {subtitle && <InfoTip label={title}>{subtitle}</InfoTip>}
             {count !== undefined && count > 0 && (
-              <span className="flex-none rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-[11.5px] font-medium tabular-nums text-[var(--adm-ink-mute)]">
+              <span className="flex-none rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-micro font-medium tabular-nums text-[var(--adm-ink-mute)]">
                 {count}
               </span>
             )}
           </div>
-          {meta && <p className="mt-0.5 truncate text-[12.5px] text-[var(--adm-ink-subtle)]">{meta}</p>}
+          {meta && <p className="mt-0.5 truncate text-adm-xs text-[var(--adm-ink-subtle)]">{meta}</p>}
         </div>
       </div>
       {action && <div className="flex flex-none items-center gap-1">{action}</div>}

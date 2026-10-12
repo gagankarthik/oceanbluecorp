@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { jobLocationLabel } from "@/lib/workplace";
 import { loadJob } from "./job";
 
 export const runtime = "nodejs";
@@ -32,7 +33,7 @@ export default async function OGImage({
     if (result.success && result.data) {
       const job = result.data;
       jobTitle = job.title || "Open Position";
-      jobLocation = job.location || "United States";
+      jobLocation = jobLocationLabel(job) || "United States";
       jobType = JOB_TYPE_MAP[job.type] || job.type || "Full-time";
       jobDepartment = job.department || "";
     }

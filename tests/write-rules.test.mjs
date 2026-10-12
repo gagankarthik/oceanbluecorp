@@ -4,7 +4,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { load } from "./load.mjs";
 
-const { jobInputError, parseSalary, publishedAtFor, jobTeamRecipients, locationRequired } = load("src/lib/job-input.ts");
+const { jobInputError, parseSalary, publishedAtFor, jobTeamRecipients, locationRequired, splitLegacyRemote } = load("src/lib/job-input.ts");
+const { jobPlace, jobLocationLabel } = load("src/lib/workplace.ts");
+const { workMode } = load("src/lib/careers.ts");
 const { applicationInputError } = load("src/lib/application-input.ts");
 const { isAcceptingApplications } = load("src/lib/job-status.ts");
 const { isVisibleApplication } = load("src/lib/bench.ts");
@@ -16,12 +18,36 @@ const job = { title: "Dev", department: "IT", type: "full-time", description: "x
 test("a job needs a location unless it is remote", () => {
   assert.equal(jobInputError(job), null);
   assert.match(jobInputError({ ...job, location: "" }), /location/);
+  assert.equal(jobInputError({ ...job, workplace: "remote", location: "" }), null);
+  assert.match(jobInputError({ ...job, workplace: "hybrid", location: "" }), /location/);
+  assert.match(jobInputError({ ...job, workplace: "anywhere" }), /workplace/);
+  assert.equal(locationRequired({ workplace: "remote" }), false);
+  // A legacy remote type still counts as remote.
+  assert.equal(locationRequired({ type: "remote" }), false);
   assert.equal(jobInputError({ ...job, type: "remote", location: "" }), null);
-  assert.equal(locationRequired("remote"), false);
   // An update leaves an absent location alone, but can't blank it on an office role.
-  assert.equal(jobInputError({ title: "New" }, { partial: true, currentType: "full-time" }), null);
-  assert.match(jobInputError({ location: " " }, { partial: true, currentType: "contract" }), /location/);
-  assert.equal(jobInputError({ location: "" }, { partial: true, currentType: "remote" }), null);
+  assert.equal(jobInputError({ title: "New" }, { partial: true, current: { type: "full-time" } }), null);
+  assert.match(jobInputError({ location: " " }, { partial: true, current: { type: "contract" } }), /location/);
+  assert.equal(jobInputError({ location: "" }, { partial: true, current: { workplace: "remote" } }), null);
+  assert.equal(jobInputError({ location: "" }, { partial: true, current: { type: "remote" } }), null);
+  // Moving a remote role with no city on-site needs one.
+  assert.match(jobInputError({ workplace: "on-site" }, { partial: true, current: { workplace: "remote", location: "" } }), /location/);
+  assert.equal(jobInputError({ workplace: "on-site" }, { partial: true, current: { workplace: "remote", location: "Dayton" } }), null);
+});
+
+test("a legacy remote type splits into a type and a workplace", () => {
+  assert.deepEqual(splitLegacyRemote({ type: "remote" }), { type: "full-time", workplace: "remote" });
+  assert.deepEqual(splitLegacyRemote({ type: "contract", workplace: "hybrid" }), { type: "contract", workplace: "hybrid" });
+});
+
+test("job locations read the same everywhere", () => {
+  assert.equal(jobPlace({ location: "Columbus", state: "OH" }), "Columbus, OH");
+  assert.equal(jobPlace({ location: "", workplace: "remote" }), "Remote");
+  assert.equal(jobLocationLabel({ location: "Columbus", state: "OH", workplace: "hybrid" }), "Columbus, OH (Hybrid)");
+  assert.equal(jobLocationLabel({ location: "Columbus", workplace: "on-site" }), "Columbus");
+  assert.equal(jobLocationLabel({ location: "", type: "remote" }), "Remote");
+  assert.equal(workMode({ title: "Dev", workplace: "hybrid" }), "Hybrid");
+  assert.equal(workMode({ title: "Dev - Remote" }), "Remote");
 });
 
 test("job status and type are closed sets", () => {

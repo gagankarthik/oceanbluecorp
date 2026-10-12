@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { matchCandidates } from "@/lib/aws/match-candidates";
+import { matchCandidates, matchFailureMessage } from "@/lib/aws/match-candidates";
 import { enrichMatches } from "@/lib/aws/enrich-matches";
 import { requireStaff, viewerOf } from "@/lib/auth/verify";
+
+export const maxDuration = 120;
 
 // POST /api/match, find candidates for a pasted job description.
 // Body: { jobText?: string, job?: {...}, topK?: number }
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
   const result = await matchCandidates({ jobText, job: job as never, topK });
   if (!result.success) {
     console.error(`[match] ${result.error}`);
-    return NextResponse.json({ error: "Unable to find candidates right now. Please try again." }, { status: 502 });
+    return NextResponse.json({ error: matchFailureMessage(result.reason) }, { status: result.reason === "timeout" ? 504 : 502 });
   }
 
   // Resolve each hit to its origin (resume bank / talent bench / applicant)

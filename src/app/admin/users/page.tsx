@@ -14,8 +14,9 @@ import {
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  Workspace, BrandBand, BAND_PRIMARY, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu,
+  Workspace, WorkspaceButton, WorkspaceSearch, FilterPill, FilterIcon, DisplayMenu,
 } from "@/components/admin/workspace";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Avatar } from "@/components/admin/avatar";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -275,7 +276,6 @@ export default function UsersPage() {
     active:   users.filter(u => u.status === "active").length,
     pending:  users.filter(u => u.status === "pending").length,
     inactive: users.filter(u => u.status === "inactive").length,
-    admins:   users.filter(u => u.role === "admin").length,
   }), [users]);
 
   const roleCounts = useMemo(() => ROLE_TABS.reduce((acc, tab) => {
@@ -386,7 +386,7 @@ export default function UsersPage() {
       hideBelow: "xl",
       sortValue: u => new Date(u.createdAt).getTime(),
       cell: u => u.createdAt
-        ? <span className="text-[13px] tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(u.createdAt)}</span>
+        ? <span className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">{fmtDate(u.createdAt)}</span>
         : <Blank />,
     },
     {
@@ -424,28 +424,22 @@ export default function UsersPage() {
     </div>
   );
 
+  const listFilters: ListFilter[] = [
+    { key: "role", label: "Role", value: selectedRole, onChange: setSelectedRole, options: ROLE_TABS.map(tab => ({
+              value: tab.key,
+              label: tab.label,
+              count: roleCounts[tab.key] || 0,
+            })) },
+  ];
+
   return (
     <>
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title="Users & access"
-        meta={`${users.length.toLocaleString()} staff account${users.length === 1 ? "" : "s"}`}
-        stats={[
-          { label: "Active staff", value: stats.active,
-            onClick: () => setSelectedStatus("active"),
-          selected: selectedStatus === "active" },
-          { label: "Invites pending", value: stats.pending,
-            hint: stats.pending > 0 ? "Not yet signed in" : undefined,
-            onClick: () => setSelectedStatus("pending"),
-          selected: selectedStatus === "pending" },
-          { label: "Admins", value: stats.admins,
-            hint: "Full access to every screen",
-            onClick: () => setSelectedRole("admin"),
-          selected: selectedRole === "admin" },
-          { label: "Without a role", value: noRoleCount,
-            hint: noRoleCount > 0 ? "Signed in but no access" : undefined },
-        ]}
+        meta={<>
+          {users.length.toLocaleString()} staff account{users.length === 1 ? "" : "s"}
+          {noRoleCount ? <>, <MetaStrong>{noRoleCount} without a role</MetaStrong></> : null}
+        </>}
         actions={
           <>
             <WorkspaceButton asChild>
@@ -453,74 +447,42 @@ export default function UsersPage() {
                 <IconShield className="h-4 w-4" />Roles
               </Link>
             </WorkspaceButton>
-            <WorkspaceButton className={BAND_PRIMARY} onClick={openInvite}>
+            <WorkspaceButton variant="primary" onClick={openInvite}>
               <IconUserPlus className="h-4 w-4" />Invite user
             </WorkspaceButton>
           </>
         }
       />
 
-      <WorkspaceToolbar
-          variant="canvas"
-          search={
-            <WorkspaceSearch
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Filter staff by name or email"
+      <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Status"
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              tabs={[
+                { key: "all",      label: "All",                      count: stats.total },
+                { key: "active",   label: STATUS_META.active.label,   count: stats.active },
+                { key: "pending",  label: STATUS_META.pending.label,  count: stats.pending },
+                { key: "inactive", label: STATUS_META.inactive.label, count: stats.inactive },
+              ]}
             />
           }
-          trailing={
-            <>
-              <DisplayMenu
-                columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
-                hidden={hiddenColumns}
-                onHiddenChange={setHiddenColumns}
-                rows={rows}
-                onRowsChange={setRows}
-                onReset={() => { setHiddenColumns([]); setRows(25); }}
-              />
-            </>
-          }
+          search={<WorkspaceSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search staff…" />}
         >
-          <FilterPill
-            label="Role"
-            icon={FilterIcon.role}
-            value={selectedRole}
-            onChange={setSelectedRole}
-            options={ROLE_TABS.map(tab => ({
-              value: tab.key,
-              label: tab.label,
-              count: roleCounts[tab.key] || 0,
-            }))}
+          <FilterSet filters={listFilters} />
+          <DisplayMenu
+            columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
+            hidden={hiddenColumns}
+            onHiddenChange={setHiddenColumns}
+            rows={rows}
+            onRowsChange={setRows}
+            onReset={() => { setHiddenColumns([]); setRows(25); }}
           />
-          <FilterPill
-            label="Status"
-            icon={FilterIcon.status}
-            value={selectedStatus}
-            onChange={setSelectedStatus}
-            options={[
-              { value: "all",      label: "All",                      count: stats.total },
-              { value: "active",   label: STATUS_META.active.label,   count: stats.active },
-              { value: "inactive", label: STATUS_META.inactive.label, count: stats.inactive },
-              { value: "pending",  label: STATUS_META.pending.label,  count: stats.pending },
-            ]}
-          />
-      </WorkspaceToolbar>
+        </ListToolbar>
+        <FilterChips filters={listFilters} />
 
-      <ActiveFilters
-          variant="canvas"
-          chips={[
-            ...(selectedRole !== "all"
-              ? [{ label: `Role: ${ROLE_TABS.find(t => t.key === selectedRole)?.label ?? selectedRole}`, onClear: () => setSelectedRole("all") }]
-              : []),
-            ...(selectedStatus !== "all"
-              ? [{ label: `Status: ${STATUS_META[selectedStatus as keyof typeof STATUS_META]?.label ?? selectedStatus}`, onClear: () => setSelectedStatus("all") }]
-              : []),
-          ]}
-          onClearAll={clearFilters}
-      />
-
-      <Workspace>
         <DataTable
           noun="staff"
           storageKey="users"
@@ -585,7 +547,7 @@ export default function UsersPage() {
           </Field>
 
           <fieldset>
-            <legend className="mb-2 text-[14px] font-medium text-[var(--adm-ink-mute)]">Role</legend>
+            <legend className="mb-2 text-adm-base font-medium text-[var(--adm-ink-mute)]">Role</legend>
             <div className="space-y-2">
               {ROLE_ORDER.map(role => {
                 const meta = ROLE_META[role];
@@ -597,7 +559,7 @@ export default function UsersPage() {
                       "flex cursor-pointer items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 transition-colors duration-150",
                       selected
                         ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                        : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+                        : "border-[var(--adm-line-control)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
                     )}
                   >
                     <input
@@ -606,8 +568,8 @@ export default function UsersPage() {
                       className="mt-0.5 h-4 w-4 flex-none accent-[var(--adm-accent)]"
                     />
                     <span className="min-w-0">
-                      <span className="block text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
-                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
+                      <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                      <span className="mt-0.5 block text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
                     </span>
                   </label>
                 );
@@ -659,16 +621,16 @@ export default function UsersPage() {
                     "flex w-full items-start gap-3 rounded-[var(--adm-radius-card)] border p-3 text-left transition-colors duration-150",
                     selected
                       ? "border-[var(--adm-accent)] bg-[var(--adm-accent-tint)]"
-                      : "border-[var(--adm-line)] hover:border-[var(--adm-line-strong)] hover:bg-[var(--adm-row-hover)]",
+                      : "border-[var(--adm-line-control)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
                   )}
                 >
                   <Icon className={cn("mt-0.5 h-4 w-4 flex-none", selected ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-subtle)]")} />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-[14px] font-semibold text-[var(--adm-ink)]">{meta.label}</span>
+                      <span className="text-adm-base font-semibold text-[var(--adm-ink)]">{meta.label}</span>
                       {current && <StatusBadge tone="slate" label="Current" />}
                     </span>
-                    <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
+                    <span className="mt-0.5 block text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{meta.desc}</span>
                   </span>
                   <span className={cn(
                     "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 transition-colors",

@@ -1,10 +1,11 @@
 "use client";
 
+import { jobLocationLabel } from "@/lib/workplace";
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Plus, Loader2, MoreHorizontal, X,
+  Plus, Loader2, MoreVertical, X,
 } from "lucide-react";
 import type { Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
@@ -13,8 +14,10 @@ import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-c
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import {
-  Workspace, WorkspaceTitle, WorkspaceButton, WorkspaceToolbar, WorkspaceSearch, FilterPill, FilterIcon, ActiveFilters, DisplayMenu, GridSelect, BrandBand, BAND_PRIMARY, PipelineHeader, PipelineCells,
+  Workspace, WorkspaceButton, WorkspaceSearch, FilterPill, FilterIcon, DisplayMenu, GridSelect, PipelineHeader, PipelineCells,
 } from "@/components/admin/workspace";
+import { FormInput } from "@/components/admin/forms/primitives";
+import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterField, FilterSet, type ListFilter } from "@/components/admin/list-shell";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Avatar } from "@/components/admin/avatar";
@@ -83,13 +86,12 @@ function Blank() {
 /** Posting ID, set in mono so a column of them scans by character. */
 function PostingId({ id }: { id: string }) {
   return (
-    <span className="inline-flex rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-[12px] font-medium text-[var(--adm-ink-mute)]">
+    <span className="inline-flex rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-adm-xs font-medium text-[var(--adm-ink-mute)]">
       {id}
     </span>
   );
 }
 
-const DATE_INPUT = "h-9 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 text-[13.5px] tabular-nums text-[var(--adm-ink)] transition-colors focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]";
 
 const CATEGORY_COPY: Record<JobCategory, { title: string; noun: string; post: string; newHref: string; query: string }> = {
   state: { title: "State roles", noun: "state role", post: "Post a state role", newHref: "/admin/jobs/new", query: "" },
@@ -280,36 +282,10 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     return acc;
   }, {} as Record<string, number>), [jobs]);
 
-  const stats = useMemo(() => {
-    const now = Date.now();
-    return {
-      total:  jobs.length,
-      active: jobs.filter((j) => j.status === "active" || j.status === "open").length,
-      draft:  jobs.filter((j) => j.status === "draft").length,
-      closingSoon: jobs.filter((j) => {
-        if (!j.submissionDueDate || j.status === "closed") return false;
-        const diff = new Date(j.submissionDueDate).getTime() - now;
-        return diff >= 0 && diff <= 7 * 86400000;
-      }).length,
-      applicants: jobs.reduce((s, j) => s + (j.applicationsCount || 0), 0),
-    };
-  }, [jobs]);
+  const applicantTotal = useMemo(() => jobs.reduce((s, j) => s + (j.applicationsCount || 0), 0), [jobs]);
 
-
-
-  const postedLabel = postedFilter === "custom"
-    ? [postedFrom && `from ${fmtDate(postedFrom)}`, postedTo && `to ${fmtDate(postedTo)}`].filter(Boolean).join(" ") || "Custom range"
-    : POSTED_OPTIONS.find((o) => o.value === postedFilter)?.label ?? "";
-
-  const filterChips = [
-    ...(statusFilter !== "all" ? [{ label: `Status: ${STATUS_TABS.find((t) => t.key === statusFilter)?.label ?? statusFilter}`, onClear: () => setStatusFilter("all") }] : []),
-    ...(assigneeFilter !== "all" ? [{ label: `Assigned: ${assigneeFilter === "__none" ? "Unassigned" : assigneeFilter}`, onClear: () => setAssigneeFilter("all") }] : []),
-    ...(postedFilter !== "all" ? [{ label: `Posted: ${postedLabel}`, onClear: () => { setPostedFilter("all"); setPostedFrom(""); setPostedTo(""); } }] : []),
-    ...(clientFilter !== "all" ? [{ label: `Client: ${clientFilter === "__none" ? "No client" : clientFilter}`, onClear: () => setClientFilter("all") }] : []),
-    ...(typeFilter !== "all" ? [{ label: `Type: ${typeFilter.replace(/-/g, " ")}`, onClear: () => setTypeFilter("all") }] : []),
-  ];
-
-  const hasActiveFilters = filterChips.length > 0 || debouncedSearch.trim() !== "";
+  const hasActiveFilters = [statusFilter, assigneeFilter, postedFilter, clientFilter, typeFilter].some((f) => f !== "all")
+    || debouncedSearch.trim() !== "";
   const clearFilters = () => {
     setStatusFilter("all"); setAssigneeFilter("all"); setClientFilter("all"); setTypeFilter("all");
     setPostedFilter("all"); setPostedFrom(""); setPostedTo(""); setSearchQuery("");
@@ -326,7 +302,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
           job.postingId || "",
           job.title,
           job.clientName || "",
-          `${job.location}${job.state ? `, ${job.state}` : ""}`,
+          jobLocationLabel(job),
           job.status,
           job.payRate        ? `$${job.payRate}/hr`        : "",
           job.clientBillRate ? `$${job.clientBillRate}/hr` : "",
@@ -338,7 +314,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
           job.postingId || "",
           job.title,
           job.department || "",
-          `${job.location}${job.state ? `, ${job.state}` : ""}`,
+          jobLocationLabel(job),
           job.status,
           fmtDate(job.createdAt),
           job.submissionDueDate ? fmtDate(job.submissionDueDate) : "",
@@ -364,6 +340,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const idCol: DataTableColumn<Job> = {
     key: "postingId",
     header: "Job ID",
+    width: "96px",
     sortValue: (j) => j.postingId || "",
     cell: (j) => j.postingId ? <PostingId id={j.postingId} /> : <Blank />,
   };
@@ -371,27 +348,30 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const titleCol: DataTableColumn<Job> = {
     key: "title",
     header: "Title",
+    width: "220px",
     sortValue: (j) => j.title,
-    cell: (j) => <span className="font-semibold text-[var(--adm-ink)]">{j.title}</span>,
+    cell: (j) => <span title={j.title} className="block max-w-[200px] truncate font-semibold text-[var(--adm-ink)]">{j.title}</span>,
   };
 
   const departmentCol: DataTableColumn<Job> = {
     key: "department",
     header: "Department",
+    width: "140px",
     sortValue: (j) => j.department || "",
     hideBelow: "xl",
     cell: (j) => j.department
-      ? <span className="capitalize text-[var(--adm-ink-mute)]">{j.department}</span>
+      ? <span title={j.department} className="block max-w-[120px] truncate capitalize text-[var(--adm-ink-mute)]">{j.department}</span>
       : <Blank />,
   };
 
   const clientCol: DataTableColumn<Job> = {
     key: "client",
     header: "Client",
+    width: "140px",
     sortValue: (j) => j.clientName || "",
     hideBelow: "lg",
     cell: (j) => j.clientName ? (
-      <span className="inline-flex max-w-full items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+      <span title={j.clientName} className="inline-flex max-w-[120px] items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
         <IconBuilding className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="min-w-0 truncate">{j.clientName}</span>
       </span>
@@ -401,12 +381,14 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const locationCol: DataTableColumn<Job> = {
     key: "location",
     header: "Location",
-    sortValue: (j) => j.location || "",
-    hideBelow: "lg",
+    width: "150px",
+    sortValue: (j) => jobLocationLabel(j),
+    // Hidden only when the table holds no pricing columns to make room for.
+    hideBelow: canPrice ? "xl" : "lg",
     cell: (j) => (
-      <span className="inline-flex max-w-full items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+      <span title={jobLocationLabel(j) || undefined} className="inline-flex max-w-[130px] items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
         <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
-        <span className="min-w-0 truncate">{j.location}{j.state ? `, ${j.state}` : ""}</span>
+        <span className="min-w-0 truncate">{jobLocationLabel(j) || "–"}</span>
       </span>
     ),
   };
@@ -415,7 +397,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     key: "status",
     header: "Status",
     label: "Status",
-    width: "160px",
+    width: "150px",
     sortValue: (j) => j.status,
     // Was a bare <select>, so Windows drew its own grey bevel inside an
     // otherwise designed grid and the cell resized as the label changed.
@@ -440,7 +422,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     key: "assignees",
     header: "Assignees",
     label: "Assignees",
-    width: "190px",
+    width: "160px",
     sortValue: (j) => assigneesOf(j).join(", "),
     cell: (j) => {
       const names = assigneesOf(j);
@@ -450,7 +432,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
           <span className="flex flex-none -space-x-1.5">
             {names.slice(0, 3).map((n) => <Avatar key={n} name={n} size="sm" className="ring-2 ring-[var(--adm-surface)]" />)}
           </span>
-          <span className="min-w-0 truncate text-[var(--adm-ink-mute)]">
+          <span className="block min-w-0 max-w-[80px] truncate text-[var(--adm-ink-mute)]">
             {names.length === 1 ? names[0] : `${names[0].split(" ")[0]} +${names.length - 1}`}
           </span>
         </span>
@@ -462,6 +444,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     key: "applicants",
     header: "Applicants",
     align: "right",
+    width: "104px",
     sortValue: (j) => j.applicationsCount || 0,
     cell: (j) => (
       <span className="inline-flex items-center gap-1.5 tabular-nums text-[var(--adm-ink-mute)]">
@@ -477,6 +460,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     header: <PipelineHeader stages={PIPELINE_STAGES} />,
     label: "Pipeline by stage",
     align: "right",
+    hideBelow: "xl",
     width: `${PIPELINE_STAGES.length * 58 + 24}px`,
     cell: (j) => <PipelineCells stages={PIPELINE_STAGES} counts={j.pipeline} />,
   };
@@ -484,15 +468,17 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   const createdCol: DataTableColumn<Job> = {
     key: "created",
     header: "Created",
+    width: "110px",
     sortValue: (j) => new Date(j.createdAt).getTime(),
     hideBelow: "xl",
-    cell: (j) => <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(j.createdAt)}</span>,
+    cell: (j) => <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{fmtDate(j.createdAt)}</span>,
   };
 
   const actionsCol: DataTableColumn<Job> = {
     key: "actions",
     header: "",
     align: "right",
+    width: "56px",
     cell: (j) => <div onClick={(e) => e.stopPropagation()}>{rowMenu(j)}</div>,
   };
 
@@ -540,28 +526,29 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
     : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton> : undefined);
 
+  const listFilters: ListFilter[] = [
+    ...(canPrice ? [{ key: "assigned-to", label: "Assigned to", value: assigneeFilter, onChange: setAssigneeFilter, options: filterOptions.assignees }] : []),
+    { key: "posted", label: "Posted", value: postedFilter, onChange: (v) => { setPostedFilter(v as PostedKey); if (v !== "custom") { setPostedFrom(""); setPostedTo(""); } }, options: POSTED_OPTIONS },
+    ...(canPrice ? [{ key: "client", label: "Client", value: clientFilter, onChange: setClientFilter, options: filterOptions.clients }] : []),
+    { key: "type", label: "Type", value: typeFilter, onChange: setTypeFilter, options: filterOptions.types },
+  ];
+
   return (
     // Full-height column: the grid (or the row list below xl) scrolls inside the panel.
     <div className="flex h-full min-h-0 flex-col">
-      <BrandBand
-        size="sm"
-        className="mb-3"
+      <ListHeader
         title={copy.title}
-        meta={`${stats.total.toLocaleString()} ${copy.noun}${stats.total === 1 ? "" : "s"} · ${stats.applicants.toLocaleString()} applicant${stats.applicants === 1 ? "" : "s"}`}
-        stats={[
-          { label: "All roles", value: stats.total, selected: statusFilter === "all", onClick: () => setStatusFilter("all") },
-          { label: "Active", value: stats.active, selected: statusFilter === "active", onClick: () => setStatusFilter("active") },
-          { label: "Drafts", value: stats.draft, selected: statusFilter === "draft", onClick: () => setStatusFilter("draft") },
-          { label: "Closing in 7 days", value: stats.closingSoon },
-          { label: "No applicants yet", value: starvedRoles },
-        ]}
+        meta={<>
+          {jobs.length.toLocaleString()} {copy.noun}{jobs.length === 1 ? "" : "s"}, {applicantTotal.toLocaleString()} applicant{applicantTotal === 1 ? "" : "s"}
+          {starvedRoles ? <>, <MetaStrong>{starvedRoles} live with no applicants yet</MetaStrong></> : null}
+        </>}
         actions={
           <>
-            <WorkspaceButton onClick={exportCSV}>
+            <WorkspaceButton onClick={exportCSV} aria-label="Export CSV">
               <IconDownload /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
             {canEdit && (
-              <WorkspaceButton className={BAND_PRIMARY} onClick={() => router.push(copy.newHref)}>
+              <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}>
                 <Plus />{copy.post}
               </WorkspaceButton>
             )}
@@ -569,16 +556,51 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
         }
       />
 
-      <WorkspaceToolbar
-        variant="canvas"
-        search={
-          <WorkspaceSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Filter jobs by title, client, location or ID"
-          />
-        }
-        trailing={
+      <Workspace>
+        <ListToolbar
+          tabs={
+            <ListTabs
+              label="Status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              tabs={STATUS_TABS.map((t) => ({ key: t.key, label: t.label, count: statusCounts[t.key] || 0 }))}
+            />
+          }
+          search={
+            <WorkspaceSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search title, client, location or ID…"
+            />
+          }
+        >
+          <FilterSet filters={listFilters}>
+            {postedFilter === "custom" && (
+              <div className="grid grid-cols-2 gap-2">
+                <FilterField label="Posted from" htmlFor="filter-posted-from">
+                  <FormInput
+                    id="filter-posted-from"
+                    type="date"
+                    value={postedFrom}
+                    max={postedTo || undefined}
+                    onChange={(e) => setPostedFrom(e.target.value)}
+                    className="h-8 px-2 text-adm-xs"
+                  />
+                </FilterField>
+                <FilterField label="To" htmlFor="filter-posted-to">
+                  <FormInput
+                    id="filter-posted-to"
+                    type="date"
+                    value={postedTo}
+                    min={postedFrom || undefined}
+                    onChange={(e) => setPostedTo(e.target.value)}
+                    className="h-8 px-2 text-adm-xs"
+                  />
+                </FilterField>
+              </div>
+            )}
+          </FilterSet>
+          {/* The grid, and so its Display settings, only shows from xl. */}
           <div className="hidden xl:contents">
             <DisplayMenu
               columns={columns.map((c) => ({ key: c.key, label: c.label ?? c.key, locked: c.locked }))}
@@ -589,81 +611,9 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
               onReset={() => { setHiddenColumns(["department", "payRate", "billRate"]); setRows(25); }}
             />
           </div>
-        }
-      >
-        <FilterPill
-          label="Status"
-          icon={FilterIcon.status}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={STATUS_TABS.map((t) => ({
-            value: t.key,
-            label: t.label,
-            count: statusCounts[t.key] || 0,
-          }))}
-        />
-        {canPrice && (
-          <FilterPill
-            label="Assigned to"
-            icon={FilterIcon.person}
-            value={assigneeFilter}
-            onChange={setAssigneeFilter}
-            options={filterOptions.assignees}
-          />
-        )}
-        <FilterPill
-          label="Posted"
-          icon={IconCalendar}
-          value={postedFilter}
-          onChange={(v) => { setPostedFilter(v); if (v !== "custom") { setPostedFrom(""); setPostedTo(""); } }}
-          options={POSTED_OPTIONS}
-        />
-        {postedFilter === "custom" && (
-          <span className="inline-flex items-center gap-1.5">
-            <input
-              type="date"
-              aria-label="Posted from"
-              value={postedFrom}
-              max={postedTo || undefined}
-              onChange={(e) => setPostedFrom(e.target.value)}
-              className={DATE_INPUT}
-            />
-            <span className="text-[13px] text-[var(--adm-ink-subtle)]">to</span>
-            <input
-              type="date"
-              aria-label="Posted to"
-              value={postedTo}
-              min={postedFrom || undefined}
-              onChange={(e) => setPostedTo(e.target.value)}
-              className={DATE_INPUT}
-            />
-          </span>
-        )}
-        {canPrice && (
-          <FilterPill
-            label="Client"
-            icon={IconBuilding}
-            value={clientFilter}
-            onChange={setClientFilter}
-            options={filterOptions.clients}
-          />
-        )}
-        <FilterPill
-          label="Type"
-          icon={FilterIcon.type}
-          value={typeFilter}
-          onChange={setTypeFilter}
-          options={filterOptions.types}
-        />
-      </WorkspaceToolbar>
+        </ListToolbar>
+        <FilterChips filters={listFilters} />
 
-      <ActiveFilters
-        variant="canvas"
-        chips={filterChips}
-        onClearAll={clearFilters}
-      />
-
-      <Workspace>
         {/* Below xl: a row list, the grid takes over where it has room. */}
         <div className="min-h-0 flex-1 overflow-auto xl:hidden">
           {filteredJobs.length > 0 ? (
@@ -678,15 +628,15 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                         <button
                           type="button"
                           onClick={() => router.push(`/admin/jobs/${job.id}${copy.query}`)}
-                          className="min-w-0 max-w-full truncate text-left text-[14px] font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                          className="min-w-0 max-w-full truncate text-left text-adm-base font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                         >
                           {job.title}
                         </button>
                         {job.postingId && <PostingId id={job.postingId} />}
                       </div>
-                      {kind && <p className="mt-0.5 truncate text-[13px] capitalize text-[var(--adm-ink-mute)]">{kind}</p>}
+                      {kind && <p className="mt-0.5 truncate text-adm-xs capitalize text-[var(--adm-ink-mute)]">{kind}</p>}
 
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-[var(--adm-ink-subtle)]">
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-adm-xs text-[var(--adm-ink-subtle)]">
                         {canPrice && job.clientName && (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
                             <IconBuilding className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
@@ -701,7 +651,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                         )}
                         <span className="inline-flex min-w-0 items-center gap-1.5">
                           <IconLocation className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
-                          <span className="truncate">{job.location}{job.state ? `, ${job.state}` : ""}</span>
+                          <span className="truncate">{jobLocationLabel(job) || "–"}</span>
                         </span>
                         {job.payRate && (
                           <span className="inline-flex items-center gap-1.5 tabular-nums">
@@ -789,7 +739,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
 
 // ── row action menu ──────────────────────────────────────────────────────────
 
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-[13px]";
+const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
 
 function RowMenu({
   job, canEdit, duplicating, onView, onEdit, onDuplicate, onDelete,
@@ -810,7 +760,7 @@ function RowMenu({
           aria-label={`Actions for ${job.title}`}
           className="grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
         >
-          {duplicating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+          {duplicating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

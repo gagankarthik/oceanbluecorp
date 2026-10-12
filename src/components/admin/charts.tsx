@@ -44,7 +44,7 @@ export function PeriodSwitcher<P extends string>({
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
           className={cn(
-            "flex h-full items-center whitespace-nowrap rounded-[7px] px-2.5 text-[12.5px] font-medium transition-colors",
+            "flex h-full items-center whitespace-nowrap rounded-[7px] px-2.5 text-adm-xs font-medium transition-colors",
             value === o.value
               ? "bg-[var(--adm-seg-active)] text-[var(--adm-ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08),0_0_0_1px_var(--adm-line)]"
               : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",
@@ -138,10 +138,10 @@ export function DonutChart({
           })()}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[24px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+          <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
             {(active ? active.value : total).toLocaleString()}
           </span>
-          <span className="mt-1 max-w-[7rem] truncate text-[12px] text-[var(--adm-ink-subtle)]">
+          <span className="mt-1 max-w-[7rem] truncate text-adm-xs text-[var(--adm-ink-subtle)]">
             {active ? active.label : centerCaption}
           </span>
         </div>
@@ -154,8 +154,8 @@ export function DonutChart({
           const Inner = (
             <>
               <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: color }} />
-              <span className="truncate text-[12.5px] text-[var(--adm-ink-mute)]">{seg.label}</span>
-              <span className="ml-auto text-[12.5px] font-semibold tabular-nums text-[var(--adm-ink)]">{seg.value}</span>
+              <span className="truncate text-adm-xs text-[var(--adm-ink-mute)]">{seg.label}</span>
+              <span className="ml-auto text-adm-xs font-semibold tabular-nums text-[var(--adm-ink)]">{seg.value}</span>
             </>
           );
           return seg.onClick ? (
@@ -227,7 +227,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                 <div className="pointer-events-none relative z-20 -my-1 flex justify-center">
                   <span
                     className={cn(
-                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-[11px] font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
+                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
                       "transition-colors duration-200",
                       interactive && "group-hover/band:bg-[var(--adm-accent)] group-hover/band:text-white group-hover/band:ring-[var(--adm-accent)]",
                     )}
@@ -256,10 +256,10 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                   )}
                   style={{ clipPath: clip, background: FUNNEL_RAMP[Math.min(i, FUNNEL_RAMP.length - 1)] }}
                 >
-                  <span className="text-[12.5px] font-semibold">{st.label}</span>
-                  <span className="text-[14px] font-bold tabular-nums">{st.value.toLocaleString()}</span>
+                  <span className="text-adm-xs font-semibold">{st.label}</span>
+                  <span className="text-adm-base font-bold tabular-nums">{st.value.toLocaleString()}</span>
                   {st.meta && (
-                    <span className="text-[11.5px] font-medium tabular-nums text-white/80">{st.meta}</span>
+                    <span className="text-adm-micro font-medium tabular-nums text-white/80">{st.meta}</span>
                   )}
                   {interactive && (
                     <ArrowRight

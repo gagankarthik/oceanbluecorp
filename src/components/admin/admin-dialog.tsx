@@ -100,11 +100,11 @@ export function AdminDialog({
             >
               {icon && <span className="mt-0.5 flex-none" aria-hidden="true">{icon}</span>}
               <div className="min-w-0 flex-1">
-                <D.Title className="text-[15px] font-semibold leading-6 tracking-[-0.015em] text-[var(--adm-ink)]">
+                <D.Title className="text-adm-md font-semibold leading-6 tracking-[-0.015em] text-[var(--adm-ink)]">
                   {title}
                 </D.Title>
                 {description && (
-                  <D.Description className="mt-0.5 text-[13px] leading-relaxed text-[var(--adm-ink-mute)]">
+                  <D.Description className="mt-0.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                     {description}
                   </D.Description>
                 )}

@@ -20,7 +20,7 @@ export function FormErrorBanner({
     <div
       role="alert"
       className={cn(
-        "flex items-start gap-2.5 rounded-[10px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-[13px] leading-snug text-[var(--adm-danger-ink)]",
+        "flex items-start gap-2.5 rounded-[10px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-adm-xs leading-snug text-[var(--adm-danger-ink)]",
         className,
       )}
     >
@@ -47,7 +47,7 @@ export function FieldError({ id, children, className }: { id?: string; children?
     <p
       id={id}
       role="alert"
-      className={cn("mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--adm-danger-ink)]", className)}
+      className={cn("mt-2 flex items-center gap-1.5 text-adm-xs font-medium text-[var(--adm-danger-ink)]", className)}
     >
       <IconAlert className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
       {children}
@@ -59,7 +59,7 @@ export function FieldError({ id, children, className }: { id?: string; children?
 export function FieldWarning({ children, className }: { children?: React.ReactNode; className?: string }) {
   if (!children) return null;
   return (
-    <p className={cn("mt-2 flex items-start gap-1.5 text-[12.5px] font-medium leading-snug text-[var(--adm-warning-ink)]", className)}>
+    <p className={cn("mt-2 flex items-start gap-1.5 text-adm-xs font-medium leading-snug text-[var(--adm-warning-ink)]", className)}>
       <IconWarning className="mt-px h-3.5 w-3.5 flex-none" aria-hidden="true" />
       <span>{children}</span>
     </p>

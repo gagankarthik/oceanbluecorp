@@ -211,7 +211,7 @@ export function JobTeamCard({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search staff…"
-                    className="h-8 w-full bg-transparent pl-8 pr-2 text-[13px] text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
+                    className="h-8 w-full bg-transparent pl-8 pr-2 text-adm-xs text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
                   />
                 </div>
 
@@ -255,11 +255,11 @@ export function JobTeamCard({
           <div className="overflow-hidden">
             <div className="max-h-64 overflow-y-auto bg-[var(--adm-surface-sunken)]">
               {loadingStaff ? (
-                <p className="px-4 py-3 text-center text-[13px] text-[var(--adm-ink-subtle)]">
+                <p className="px-4 py-3 text-center text-adm-xs text-[var(--adm-ink-subtle)]">
                   Loading the team…
                 </p>
               ) : visible.length === 0 ? (
-                <p className="px-4 py-3 text-center text-[13px] text-[var(--adm-ink-subtle)]">
+                <p className="px-4 py-3 text-center text-adm-xs text-[var(--adm-ink-subtle)]">
                   {staff.length === 0 ? "No staff accounts to assign." : `Nobody matches “${search}”.`}
                 </p>
               ) : (
@@ -281,10 +281,10 @@ export function JobTeamCard({
                     >
                       <Avatar name={u.name} email={u.email} size="sm" />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13.5px] font-medium text-[var(--adm-ink)]">
+                        <span className="block truncate text-adm-base font-medium text-[var(--adm-ink)]">
                           {u.name || u.email}
                         </span>
-                        <span className="block truncate text-[12px] text-[var(--adm-ink-subtle)]">
+                        <span className="block truncate text-adm-xs text-[var(--adm-ink-subtle)]">
                           {u.email}
                         </span>
                       </span>
@@ -293,7 +293,7 @@ export function JobTeamCard({
                       ) : assigned ? (
                         <Check className="h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-hidden="true" />
                       ) : (
-                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-[11.5px] font-medium capitalize text-[var(--adm-ink-mute)]">
+                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium capitalize text-[var(--adm-ink-mute)]">
                           {u.role}
                         </span>
                       )}
@@ -308,7 +308,7 @@ export function JobTeamCard({
         {/* People as chips, not rows: a team of six stays two or three lines
             tall instead of stretching the card past the role details beside it. */}
         {memberCount === 0 ? (
-          <p className="px-4 py-3 text-[13px] text-[var(--adm-ink-subtle)]">
+          <p className="px-4 py-3 text-adm-xs text-[var(--adm-ink-subtle)]">
             {canEdit
               ? "Nobody is assigned yet. Use + to add a recruiter."
               : "Nobody is assigned to this job yet."}
@@ -321,8 +321,8 @@ export function JobTeamCard({
                 title={`${job.recruitmentManagerName}, recruitment manager`}
               >
                 <Avatar name={job.recruitmentManagerName} size="xs" />
-                <span className="min-w-0 truncate text-[13px] font-medium text-[var(--adm-ink)]">{job.recruitmentManagerName}</span>
-                <span className="flex-none text-[12px] text-[var(--adm-ink-subtle)]">Manager</span>
+                <span className="min-w-0 truncate text-adm-xs font-medium text-[var(--adm-ink)]">{job.recruitmentManagerName}</span>
+                <span className="flex-none text-adm-xs text-[var(--adm-ink-subtle)]">Manager</span>
               </li>
             )}
 
@@ -336,7 +336,7 @@ export function JobTeamCard({
                 title={`${name}, assignee`}
               >
                 <Avatar name={name} size="xs" />
-                <span className="min-w-0 truncate text-[13px] font-medium text-[var(--adm-ink)]">{name}</span>
+                <span className="min-w-0 truncate text-adm-xs font-medium text-[var(--adm-ink)]">{name}</span>
                 {canEdit && (
                   <button
                     type="button"

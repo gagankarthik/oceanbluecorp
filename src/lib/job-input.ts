@@ -2,15 +2,26 @@
 
 import { isPubliclyOpen } from "./job-status";
 import { currencyCode } from "./salary";
+import { WORKPLACES, isRemoteJob } from "./workplace";
 
 export const JOB_STATUSES = ["active", "paused", "closed", "draft", "open", "on-hold"] as const;
 export const JOB_TYPES = [
-  "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams", "remote",
+  "full-time", "part-time", "contract", "contract-to-hire", "direct-hire", "managed-teams",
 ] as const;
 export const SALARY_PERIODS = ["year", "month", "week", "day", "hour"] as const;
 
 /** Remote roles have no office, so a location is optional for them only. */
-export const locationRequired = (type: unknown): boolean => type !== "remote";
+export const locationRequired = (job: { type?: string; workplace?: string }): boolean => !isRemoteJob(job);
+
+/**
+ * Remote was once a job type. A body that still sends `type: "remote"` (older
+ * partner integrations) is split into a full-time role worked remotely, so the
+ * legacy value is never written again.
+ */
+export function splitLegacyRemote<T extends { type?: unknown; workplace?: unknown }>(body: T): T {
+  if (body.type !== "remote") return body;
+  return { ...body, type: "full-time", workplace: body.workplace ?? "remote" };
+}
 
 const TEXT_LIMITS: Record<string, number> = {
   title: 200,
@@ -48,15 +59,18 @@ export function parseSalary(raw: unknown): { ok: true; value: Salary | null } | 
   return { ok: true, value: { min, max, currency, ...(period && { period }) } };
 }
 
+type StoredPlace = { type?: string; workplace?: string; location?: string };
+
 /**
  * First problem with a job body, or null. `partial` is an update: absent
- * fields are left alone, and `currentType` is the stored type for the
+ * fields are left alone, and `current` is the stored record for the
  * location rule.
  */
 export function jobInputError(
-  body: Record<string, unknown>,
-  { partial = false, currentType }: { partial?: boolean; currentType?: string } = {},
+  rawBody: Record<string, unknown>,
+  { partial = false, current }: { partial?: boolean; current?: StoredPlace } = {},
 ): string | null {
+  const body = splitLegacyRemote(rawBody);
   if (!partial) {
     for (const field of ["title", "department", "type", "description"]) {
       if (typeof body[field] !== "string" || !(body[field] as string).trim()) return `Missing required field: ${field}`;
@@ -68,15 +82,24 @@ export function jobInputError(
   if (body.type !== undefined && !(JOB_TYPES as readonly unknown[]).includes(body.type)) {
     return `type must be one of: ${JOB_TYPES.join(", ")}`;
   }
+  if (body.workplace !== undefined && !(WORKPLACES as readonly unknown[]).includes(body.workplace)) {
+    return `workplace must be one of: ${WORKPLACES.join(", ")}`;
+  }
   for (const [field, max] of Object.entries(TEXT_LIMITS)) {
     const v = body[field];
     if (v === undefined || v === null || Array.isArray(v)) continue;
     if (typeof v !== "string") return `${field} must be text`;
     if (v.length > max) return `${field} must be ${max.toLocaleString("en-US")} characters or fewer`;
   }
-  const type = body.type ?? currentType;
-  const location = typeof body.location === "string" ? body.location.trim() : body.location;
-  if (locationRequired(type) && (partial ? body.location !== undefined && !location : !location)) {
+  // A partial update is held to the rule only when it touches where the role is.
+  const touchesPlace = !partial || body.location !== undefined || body.workplace !== undefined || body.type !== undefined;
+  const workplace = body.workplace !== undefined
+    ? { workplace: body.workplace as string }
+    : { type: (body.type as string | undefined) ?? current?.type, workplace: current?.workplace };
+  const location = body.location !== undefined
+    ? (typeof body.location === "string" ? body.location.trim() : body.location)
+    : current?.location?.trim();
+  if (touchesPlace && locationRequired(workplace) && !location) {
     return "Missing required field: location";
   }
   if (body.salary !== undefined) {

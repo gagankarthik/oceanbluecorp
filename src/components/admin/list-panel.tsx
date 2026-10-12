@@ -58,7 +58,7 @@ export function ListToolbar({
                   type="button"
                   onClick={() => onSegmentChange?.(s.key)}
                   className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-medium transition-colors duration-150",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-xs font-medium transition-colors duration-150",
                     active
                       ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -67,7 +67,7 @@ export function ListToolbar({
                   {s.label}
                   <span
                     className={cn(
-                      "rounded-full px-1.5 text-[11.5px] font-medium tabular-nums",
+                      "rounded-full px-1.5 text-adm-micro font-medium tabular-nums",
                       active ? "bg-[var(--adm-surface)] text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
                     )}
                   >
@@ -102,7 +102,7 @@ export function ListFooter({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
-      <p className="text-[13px] text-[var(--adm-ink-subtle)]">
+      <p className="text-adm-xs text-[var(--adm-ink-subtle)]">
         Showing <span className="font-semibold tabular-nums text-[var(--adm-ink-mute)]">{shown}</span>
         {shown !== total && (
           <>
@@ -122,7 +122,7 @@ export function ListFooter({
 export function ListTable({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div className="overflow-x-auto">
-      <table className={cn("w-full text-[14px]", className)}>{children}</table>
+      <table className={cn("w-full text-adm-base", className)}>{children}</table>
     </div>
   );
 }
@@ -151,7 +151,7 @@ export function Th({
     <th
       style={width ? { width } : undefined}
       className={cn(
-        "whitespace-nowrap px-4 py-2.5 text-[12.5px] font-medium text-[var(--adm-ink-mute)]",
+        "whitespace-nowrap px-4 py-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]",
         align === "right" && "text-right",
         align === "center" && "text-center",
         align === "left" && "text-left",
@@ -249,7 +249,7 @@ export function InlineSelect({
         autoComplete="off"
         aria-label={ariaLabel}
         className={cn(
-          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-[12.5px] font-medium",
+          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-adm-xs font-medium",
           "transition-colors duration-150",
           className,
         )}
@@ -259,7 +259,7 @@ export function InlineSelect({
       <svg
         aria-hidden
         viewBox="0 0 24 24"
-        className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 opacity-60"
+        className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--adm-ink-subtle)]"
         fill="none"
         stroke="currentColor"
         strokeWidth={2.5}

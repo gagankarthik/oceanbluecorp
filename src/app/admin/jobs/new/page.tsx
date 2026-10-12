@@ -4,11 +4,12 @@ import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
-import type { Client, Vendor } from "@/lib/aws/dynamodb";
+import type { Client, Job, Vendor } from "@/lib/aws/dynamodb";
 import {
   JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload, createVendorFromForm,
 } from "@/components/admin/forms/job-form";
 import type { AssigneeUser } from "@/components/admin/forms/primitives";
+import { JobCreatedDialog } from "@/components/admin/forms/job-created";
 import { AdminFormSkeleton } from "@/components/admin/skeletons";
 import { jobCategory, JOB_LIST_HREF as LIST_HREF } from "@/lib/job-status";
 import { useNavSection } from "@/components/admin/admin-provider";
@@ -25,7 +26,10 @@ export default function NewJobPage({
   const router = useRouter();
   // Stable identity: JobForm re-seeds from initialData whenever it changes, so a
   // new object per render wiped the form each time a client or vendor was added.
+  // Bumped by "Create another" so the form re-seeds empty.
+  const [formKey, setFormKey] = useState(0);
   const initialData = useMemo(() => ({ ...DEFAULT_JOB_FORM, category }), [category]);
+  const [created, setCreated] = useState<Job | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -84,7 +88,7 @@ export default function NewJobPage({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Couldn't create the job. Try again.");
       void refreshJobs();
-      router.push(LIST_HREF[data.category]);
+      setCreated(json.job);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Couldn't create the job. Try again.");
     } finally {
@@ -113,6 +117,7 @@ export default function NewJobPage({
   return (
     <div className="pb-10">
       <JobForm
+        key={formKey}
         mode="create"
         initialData={initialData}
         clients={clients}
@@ -127,6 +132,15 @@ export default function NewJobPage({
           const vendor = await createVendorFromForm(vendorData);
           setVendors((prev) => [vendor, ...prev]);
           return vendor;
+        }}
+      />
+      <JobCreatedDialog
+        job={created}
+        listHref={LIST_HREF[created?.category === "open" ? "open" : category]}
+        onCreateAnother={() => {
+          setCreated(null);
+          setFormKey((k) => k + 1);
+          document.getElementById("adm-main")?.scrollTo({ top: 0 });
         }}
       />
     </div>

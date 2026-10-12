@@ -7,9 +7,9 @@ import {
   IconSettings, IconOverview, IconBoxes, IconUserStar, IconRadar,
 } from "@/components/admin/icons";
 import { UserRole, routeAccess, roleHierarchy } from "@/lib/auth/config";
-import { PageHeader } from "@/components/admin/page-header";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { AdminCard } from "@/components/admin/admin-card";
+import { Workspace, WorkspaceButton } from "@/components/admin/workspace";
+import { ListHeader } from "@/components/admin/list-shell";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 
 interface RoleConfig {
@@ -138,9 +138,10 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-4 pb-10 lg:space-y-5">
-      <PageHeader
+      <ListHeader
+        className="mb-0"
         title="Roles & permissions"
-        info="Which screens each role can open. Change a teammate's role from the Users page."
+        meta="Which screens each role can open. Change a teammate's role from the Users page."
         actions={
           <WorkspaceButton asChild>
             <Link href="/admin/users">
@@ -158,16 +159,16 @@ export default function RolesPage() {
           return (
             <AdminCard key={role} className="flex flex-col gap-2.5 p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-[13px] font-medium text-[var(--adm-ink-mute)]">{c.name}</span>
+                <span className="truncate text-adm-xs font-medium text-[var(--adm-ink-mute)]">{c.name}</span>
                 <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[24px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
+                <span className="text-adm-2xl font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
                   {grantedCount(role)}
                 </span>
-                <span className="text-[13px] tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} screens</span>
+                <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} screens</span>
               </div>
-              <p className="text-[12.5px] leading-snug text-[var(--adm-ink-subtle)]">
+              <p className="text-adm-xs leading-snug text-[var(--adm-ink-subtle)]">
                 {c.description}
               </p>
             </AdminCard>
@@ -175,8 +176,7 @@ export default function RolesPage() {
         })}
       </div>
 
-      <AdminCard className="overflow-hidden">
-        <AdminCardHeader title="Screen access" subtitle="Screens down, roles across" count={routes.length} />
+      <Workspace className="min-h-0">
         <DataTable
           columns={columns}
           rows={routes}
@@ -184,7 +184,7 @@ export default function RolesPage() {
           initialSort={{ key: "route", dir: "asc" }}
           empty={{ icon: IconShield, title: "No screens defined" }}
         />
-      </AdminCard>
+      </Workspace>
     </div>
   );
 }

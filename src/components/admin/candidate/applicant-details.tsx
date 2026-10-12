@@ -18,8 +18,8 @@ type Field = { label: string; value?: React.ReactNode };
 function Cell({ label, value }: Field) {
   return (
     <div className="min-w-0">
-      <dt className="text-[12.5px] text-[var(--adm-ink-subtle)]">{label}</dt>
-      <dd className="mt-1 break-words text-[14px] text-[var(--adm-ink)]">
+      <dt className="text-adm-xs text-[var(--adm-ink-subtle)]">{label}</dt>
+      <dd className="mt-1 break-words text-adm-base text-[var(--adm-ink)]">
         {value ?? <span className="text-[var(--adm-ink-subtle)]">Not recorded</span>}
       </dd>
     </div>
@@ -68,7 +68,7 @@ export function ApplicantDetails({
         title="Applicant details"
         count={filled.length}
         action={
-          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-[13px]">
+          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-adm-xs">
             <IconEdit aria-hidden="true" /> Edit
           </WorkspaceButton>
         }
@@ -88,7 +88,7 @@ export function ApplicantDetails({
             type="button"
             onClick={() => setShowEmpty((v) => !v)}
             aria-expanded={showEmpty}
-            className="rounded-[6px] text-[13px] text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
+            className="rounded-[6px] text-adm-xs text-[var(--adm-ink-mute)] transition-colors hover:text-[var(--adm-accent)]"
           >
             {showEmpty
               ? "Hide empty fields"
