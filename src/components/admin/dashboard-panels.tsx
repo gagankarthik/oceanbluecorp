@@ -7,8 +7,8 @@ import { AdminCard } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 
-/** Sequential blue ramp, ordered stages of one process. */
-export const STAGE_RAMP = ["#0284c7", "#0277b6", "#0369a1", "#075985", "#0c4a6e"];
+/** Sequential cobalt ramp (--p-cobalt-500 … --p-blue-900), ordered stages of one process. */
+export const STAGE_RAMP = ["#4174ec", "#295ee3", "#1d4ed8", "#1740ad", "#12348c"];
 
 export type BarItem = {
   label: string;

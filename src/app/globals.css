@@ -575,6 +575,15 @@
   --adm-data:          var(--p-blue-700);
   --adm-data-soft:     var(--p-cobalt-100);
 
+  /* Sequential accent ramp, light to deep: pipeline stages, categorical marks,
+     avatars. Meaning never rides on the step alone; a label or icon goes with it. */
+  --adm-seq-1: var(--p-cobalt-300);
+  --adm-seq-2: var(--p-cobalt-500);
+  --adm-seq-3: var(--p-blue-700);
+  --adm-seq-4: var(--p-blue-800);
+  --adm-seq-5: var(--p-blue-900);
+  --adm-mark-neutral: var(--p-navy-400);       /* resting dot, unstarted state */
+
   /* Surfaces */
   --adm-canvas:         var(--p-navy-50);        /* surface-canvas */
   --adm-surface:        var(--p-neutral-0);      /* surface-container */

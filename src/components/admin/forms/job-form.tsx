@@ -380,7 +380,7 @@ export function JobForm({
 
   const statusColor: Record<string, string> = {
     draft: "text-[var(--adm-ink-mute)]", open: "text-[var(--adm-success-ink)]", active: "text-[var(--adm-accent)]",
-    "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-danger-ink)]",
+    "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-ink-mute)]",
   };
 
   const isRemote = data.workplace === "remote";

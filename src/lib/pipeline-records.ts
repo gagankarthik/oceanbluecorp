@@ -82,18 +82,20 @@ export const PLACEMENT_STATUS_ORDER: PlacementStatus[] = [
 
 /* ── Tones (map onto the admin design system's Tone union) ────────────────── */
 
-export function submissionTone(status: SubmissionStatus): "blue" | "emerald" | "amber" | "rose" | "slate" {
+export function submissionTone(status: SubmissionStatus): "sky" | "blue" | "indigo" | "violet" | "emerald" | "amber" | "rose" | "slate" {
   switch (status) {
     case "placed": return "emerald";
-    case "offered": case "shortlisted": return "blue";
-    case "interviewing": case "under-review": return "amber";
+    case "offered": return "violet";
+    case "shortlisted": return "blue";
+    case "interviewing": return "indigo";
+    case "under-review": return "sky";
     case "rejected": return "rose";
     case "withdrawn": return "slate";
     default: return "slate";
   }
 }
 
-export function interviewTone(status: InterviewStatus, outcome?: InterviewOutcome): "blue" | "emerald" | "amber" | "rose" | "slate" {
+export function interviewTone(status: InterviewStatus, outcome?: InterviewOutcome): "sky" | "blue" | "indigo" | "violet" | "emerald" | "amber" | "rose" | "slate" {
   if (status === "cancelled" || status === "no-show") return "rose";
   if (status === "completed") {
     if (outcome === "pass") return "emerald";
@@ -103,7 +105,7 @@ export function interviewTone(status: InterviewStatus, outcome?: InterviewOutcom
   return "blue";
 }
 
-export function placementTone(status: PlacementStatus): "blue" | "emerald" | "amber" | "rose" | "slate" {
+export function placementTone(status: PlacementStatus): "sky" | "blue" | "indigo" | "violet" | "emerald" | "amber" | "rose" | "slate" {
   switch (status) {
     case "active": case "extended": return "emerald";
     case "completed": return "slate";

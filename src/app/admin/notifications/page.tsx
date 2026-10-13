@@ -35,7 +35,7 @@ const NOTIFICATION_TYPES: {
   tone: Tone;
 }[] = [
   { key: "job_posted",           label: "Job posted",       short: "Jobs",         tone: "blue"    },
-  { key: "application_received", label: "New application",  short: "Applications", tone: "emerald" },
+  { key: "application_received", label: "New application",  short: "Applications", tone: "sky"     },
   { key: "contact_received",     label: "Contact received", short: "Contacts",     tone: "violet"  },
 ];
 

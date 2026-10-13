@@ -17,18 +17,19 @@ export function StatusBadge({ status, tone, label, withIcon = false, size = "sm"
   const t = tones[resolvedTone];
   const Icon = withIcon && meta?.icon ? meta.icon : null;
   const text = label || meta?.label || status || "–";
-  const sizing = size === "md" ? "h-6 px-2.5 text-adm-xs" : "h-[22px] px-2 text-adm-xs";
+  const sizing = size === "md" ? "h-7 px-3 text-adm-xs" : "h-6 px-2 text-adm-xs";
   return (
     <span
       className={cn(
-        "inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full font-medium leading-none",
+        "inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full border font-medium leading-none",
         t.bg,
+        t.line,
         t.text,
         sizing,
         className,
       )}
     >
-      {Icon ? <Icon className="h-3 w-3" /> : <span className={cn("h-1.5 w-1.5 rounded-full", t.dot)} />}
+      {Icon ? <Icon aria-hidden className="size-3" /> : <span aria-hidden className={cn("size-1.5 rounded-full", t.dot)} />}
       <span>{text}</span>
     </span>
   );

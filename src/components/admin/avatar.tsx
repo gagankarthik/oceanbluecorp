@@ -14,15 +14,14 @@ interface AvatarProps {
   onError?: () => void;
 }
 
-// Flat fills, all >= 4.5:1 against white initials.
+// Identity, not status: cobalt and navy steps only, all >= 5.5:1 under white initials.
 const PALETTE = [
-  "bg-[#0369a1]",
-  "bg-[#6d28d9]",
-  "bg-[#047857]",
-  "bg-[#b45309]",
-  "bg-[#be123c]",
-  "bg-[#0e7490]",
-  "bg-[#475569]",
+  "bg-[var(--adm-seq-3)]",
+  "bg-[var(--adm-seq-4)]",
+  "bg-[var(--adm-seq-5)]",
+  "bg-[var(--adm-ink-subtle)]",
+  "bg-[var(--adm-ink-mute)]",
+  "bg-[var(--adm-ink)]",
 ];
 
 function hash(str: string): number {

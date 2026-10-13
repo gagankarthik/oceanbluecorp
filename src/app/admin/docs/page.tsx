@@ -109,7 +109,7 @@ const ROLE_ORDER = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SA
 
 function accessBadge(roles: UserRole[]): { label: string; tone: Tone } {
   if (roles.length === ROLE_ORDER.length) return { label: "All roles", tone: "blue" };
-  if (roles.length === 1) return { label: `${ROLE_SHORT[roles[0]]} only`, tone: "rose" };
+  if (roles.length === 1) return { label: `${ROLE_SHORT[roles[0]]} only`, tone: "indigo" };
   return { label: ROLE_ORDER.filter((r) => roles.includes(r)).map((r) => ROLE_SHORT[r]).join(" · "), tone: "slate" };
 }
 

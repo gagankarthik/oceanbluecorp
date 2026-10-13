@@ -202,9 +202,8 @@ export interface FunnelStage {
  * bands. Feed cohort counts, not occupancy. The hovered band zooms forward and
  * its siblings recede, so the eye lands on one stage at a time.
  */
-// Light to deep cobalt; every step keeps white labels at 4.6:1 or better.
-// Every stop carries white labels at 4.5:1 or better (lightest #0277b6 is 4.9:1).
-const FUNNEL_RAMP = ["#0277b6", "#0369a1", "#075985", "#0b5079", "#0c4a6e", "#082f49"];
+// Light to deep cobalt (--p-cobalt-600 … oklch 0.26); white labels clear 5.5:1 on every stop.
+const FUNNEL_RAMP = ["#295ee3", "#1d4ed8", "#1740ad", "#12348c", "#112c6f", "#0c204f"];
 const FUNNEL_FLOOR = 32; // keeps a near-zero stage wide enough to read its label
 
 export function FunnelChart({ stages, className }: { stages: FunnelStage[]; className?: string }) {

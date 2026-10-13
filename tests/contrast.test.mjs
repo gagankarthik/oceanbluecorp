@@ -253,3 +253,46 @@ describe("the cobalt BrandBand", () => {
     assert.ok(r >= NEED.nonText, `white ring on accent is ${r.toFixed(2)}:1`);
   });
 });
+
+describe("the feedback quartet", () => {
+  // Each status has a surface, a border and a text token; the text must read on
+  // its own surface and on plain white.
+  test("ink reads on its own surface and on white", () => {
+    const failures = [];
+    for (const k of ["info", "success", "warning", "danger"]) {
+      const ink = token(`adm-${k}-ink`);
+      for (const [sName, surf] of [["soft", token(`adm-${k}-soft`)], ["surface", SURFACE], ["canvas", CANVAS]]) {
+        const r = ratioOn(ink, surf);
+        if (r < NEED.text) failures.push(`--adm-${k}-ink on ${sName} = ${r.toFixed(2)}:1`);
+      }
+    }
+    assert.deepEqual(failures, [], `feedback ink below ${NEED.text}:1`);
+  });
+});
+
+describe("the accent ramp", () => {
+  test("action text and the deep steps read on white, soft and tint", () => {
+    const failures = [];
+    for (const name of ["accent", "accent-strong", "accent-press", "nav-active-ink"]) {
+      for (const [sName, surf] of [["surface", SURFACE], ["soft", ACCENT_SOFT], ["tint", token("adm-accent-tint")]]) {
+        const r = ratioOn(token(`adm-${name}`), surf);
+        if (r < NEED.text) failures.push(`--adm-${name} on ${sName} = ${r.toFixed(2)}:1`);
+      }
+    }
+    assert.deepEqual(failures, [], `accent text below ${NEED.text}:1`);
+  });
+
+  test("white labels read on every filled step from seq-3 down", () => {
+    for (const k of [3, 4, 5]) {
+      const r = ratioOn("#ffffff", token(`adm-seq-${k}`));
+      assert.ok(r >= NEED.text, `white on --adm-seq-${k} is ${r.toFixed(2)}:1`);
+    }
+  });
+
+  test("the focus ring reads on canvas and surface", () => {
+    for (const [sName, surf] of [["surface", SURFACE], ["canvas", CANVAS], ["surface-2", SURFACE_2]]) {
+      const r = ratioOn(token("adm-focus"), surf);
+      assert.ok(r >= NEED.nonText, `--adm-focus on ${sName} is ${r.toFixed(2)}:1`);
+    }
+  });
+});

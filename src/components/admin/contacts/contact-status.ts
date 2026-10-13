@@ -6,7 +6,7 @@ export type ContactStatus = Contact["status"];
 /** Enquiry states, in handling order. */
 export const CONTACT_STATUSES: { key: ContactStatus; label: string; tone: Tone }[] = [
   { key: "new",       label: "New",       tone: "blue" },
-  { key: "read",      label: "Read",      tone: "amber" },
+  { key: "read",      label: "Read",      tone: "sky" },
   { key: "responded", label: "Responded", tone: "emerald" },
   { key: "archived",  label: "Archived",  tone: "slate" },
 ];
