@@ -1,3 +1,4 @@
+import { isPhone } from "@/lib/form-validation";
 import { NextRequest, NextResponse, after } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { sendContactNotificationEmail } from "@/lib/aws/ses";
@@ -52,7 +53,6 @@ const LIMITS: Record<string, number> = {
 
 const NAME_RE    = /^[\p{L}][\p{L}\p{M} .'-]{0,59}$/u;   // letters + space . ' - ; must start with a letter
 const EMAIL_RE   = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;       // local@domain.tld
-const PHONE_RE   = /^\+?[\d\s().-]{7,20}$/;               // digits + common separators
 const INQUIRY_RE = /^[A-Za-z0-9 &/+.-]{2,60}$/;           // short label only
 
 function validateContact(b: Record<string, unknown>): string | null {
@@ -66,7 +66,8 @@ function validateContact(b: Record<string, unknown>): string | null {
   if (!NAME_RE.test(str(b.firstName))) return "Please enter a valid first name.";
   if (!NAME_RE.test(str(b.lastName)))  return "Please enter a valid last name.";
   if (!EMAIL_RE.test(str(b.email)))    return "Please enter a valid email address.";
-  if (str(b.phone) && !PHONE_RE.test(str(b.phone))) return "Please enter a valid phone number.";
+  // Same rule as the form, extensions included (Postel).
+  if (str(b.phone) && !isPhone(str(b.phone))) return "Please enter a valid phone number.";
   if (!str(b.company) && !isJobSeeker(b.inquiryType)) return "Company is required.";
   if (str(b.linkedinUrl) && !isUrl(normalizeWebsite(str(b.linkedinUrl)))) return "Please enter a valid LinkedIn address.";
   if (!INQUIRY_RE.test(str(b.inquiryType))) return "Please choose a valid inquiry type.";

@@ -18,8 +18,29 @@ describe("predicates", () => {
     assert.equal(fv.isPhone("(614) 555-0100"), true);
     assert.equal(fv.isPhone("+1 614.555.0100"), true);
     assert.equal(fv.isPhone("555-01"), false);
-    assert.equal(fv.isPhone("614-555-0100 ext 4"), false);
+    // Extensions are accepted in the forms people actually type (Postel).
+    assert.equal(fv.isPhone("614-555-0100 ext 4"), true);
+    assert.equal(fv.isPhone("614-555-0100 ext. 12"), true);
+    assert.equal(fv.isPhone("(614) 555-0100 x1234"), true);
+    assert.equal(fv.isPhone("614 555 0100 #7"), true);
+    assert.equal(fv.isPhone("call me maybe"), false);
+    assert.equal(fv.isPhone("555 x12"), false);
     assert.equal(fv.isPhone("1".repeat(21)), false);
+  });
+
+  test("toNumber and isNumber tolerate how people write amounts", () => {
+    assert.equal(fv.toNumber("$75"), 75);
+    assert.equal(fv.toNumber("1,200"), 1200);
+    assert.equal(fv.toNumber(" 80 000 "), 80000);
+    assert.equal(fv.toNumber("$55.50/hr"), 55.5);
+    assert.equal(fv.toNumber(12), 12);
+    assert.ok(Number.isNaN(fv.toNumber("")));
+    assert.ok(Number.isNaN(fv.toNumber("seventy")));
+    assert.equal(fv.isNumber("$1,200"), true);
+    assert.equal(fv.isNumber("abc"), false);
+    assert.equal(fv.nonNegative()("$75"), undefined);
+    assert.equal(typeof fv.nonNegative()("-$5"), "string");
+    assert.equal(fv.rangeInverted("$100", "$90"), true);
   });
 
   test("website accepts an address with or without https://", () => {

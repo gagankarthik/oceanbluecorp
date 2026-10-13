@@ -20,11 +20,13 @@ export const htmlText = (html: string | null | undefined): string =>
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const isEmail = (v: string): boolean => EMAIL_RE.test(v.trim());
 
-// Lenient on purpose: people paste "+1 (614) 555-0100 ext" variants. Only the
-// characters and the digit count are checked.
+// Lenient on purpose (Postel): people paste "+1 (614) 555-0100 ext. 12" variants.
+// A trailing extension is set aside, then only the characters and the digit
+// count of the number itself are checked.
 const PHONE_CHARS_RE = /^[\d\s+().-]+$/;
+const PHONE_EXT_RE = /\s*(?:,|;)?\s*(?:ext\.?|extension|x|#)\s*\d{1,6}\s*$/i;
 export function isPhone(v: string): boolean {
-  const s = v.trim();
+  const s = v.trim().replace(PHONE_EXT_RE, "");
   if (!PHONE_CHARS_RE.test(s)) return false;
   const digits = s.replace(/\D/g, "").length;
   return digits >= 7 && digits <= 20;
@@ -39,10 +41,21 @@ export function isUrl(v: string): boolean {
   }
 }
 
-/** Finite number, blank excluded. */
+/**
+ * A typed amount as a number. Tolerant of how people write money (Postel):
+ * "$75", "1,200", " 80 000 ", "55/hr" all parse; anything else is NaN.
+ */
+export function toNumber(v: string | number | null | undefined): number {
+  if (typeof v === "number") return v;
+  if (v == null) return NaN;
+  const s = v.trim().replace(/^\$\s*/, "").replace(/\s*\/\s*(?:hr|hour|h)\.?$/i, "").replace(/[,\s]/g, "");
+  return s === "" ? NaN : Number(s);
+}
+
+/** Finite number, blank excluded. Accepts the forms `toNumber` does. */
 export function isNumber(v: string): boolean {
   if (isBlank(v)) return false;
-  return Number.isFinite(Number(v.trim()));
+  return Number.isFinite(toNumber(v));
 }
 
 /** "YYYY-MM-DD" (a date input's value) in the viewer's local calendar. */
@@ -90,7 +103,7 @@ export const url = (message = "Enter a full web address starting with https://, 
   isBlank(v) || isUrl(v) ? undefined : message;
 
 export const nonNegative = (message = "Enter a number of zero or more."): Rule => (v) =>
-  isBlank(v) || (isNumber(v) && Number(v) >= 0) ? undefined : message;
+  isBlank(v) || (isNumber(v) && toNumber(v) >= 0) ? undefined : message;
 
 export const minLen = (min: number, message?: string): Rule => (v) =>
   isBlank(v) || v.trim().length >= min ? undefined : message ?? `Use at least ${min} characters.`;
@@ -143,7 +156,7 @@ export const hasErrors = (errors: FieldErrors): boolean => Object.keys(errors).l
 /** Pay above bill means the placement loses money; worth saying, not stopping. */
 export function payOverBillWarning(pay: string, bill: string): string | undefined {
   if (!isNumber(pay) || !isNumber(bill)) return undefined;
-  return Number(pay) > Number(bill)
+  return toNumber(pay) > toNumber(bill)
     ? "Pay rate is higher than the bill rate, so this placement would run at a loss."
     : undefined;
 }
@@ -161,7 +174,7 @@ export function endBeforeStart(start: string, end: string): boolean {
 
 /** Max below min, both numeric. */
 export function rangeInverted(min: string, max: string): boolean {
-  return isNumber(min) && isNumber(max) && Number(max) < Number(min);
+  return isNumber(min) && isNumber(max) && toNumber(max) < toNumber(min);
 }
 
 // ── Shared limits ─────────────────────────────────────────────────────────────

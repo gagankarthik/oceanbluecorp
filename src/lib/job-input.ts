@@ -1,5 +1,6 @@
 // Server-side checks on a job write. Pure, so the rules are tested in isolation.
 
+import { toNumber } from "./form-validation";
 import { isPubliclyOpen } from "./job-status";
 import { currencyCode } from "./salary";
 import { WORKPLACES, isRemoteJob } from "./workplace";
@@ -42,8 +43,9 @@ export function parseSalary(raw: unknown): { ok: true; value: Salary | null } | 
   if (raw === null || raw === "") return { ok: true, value: null };
   if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "salary must be an object" };
   const s = raw as Record<string, unknown>;
-  const min = Number(s.min);
-  const max = Number(s.max);
+  // Same tolerance as the form (Postel): "$80,000" is 80000.
+  const min = toNumber(s.min as string | number);
+  const max = toNumber(s.max as string | number);
   if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0) {
     return { ok: false, error: "salary min and max must be numbers of zero or more" };
   }
