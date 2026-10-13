@@ -61,25 +61,28 @@ Body text must be ≥ 4.5:1; large text and UI outlines ≥ 3:1.
 
 ## 2. Type
 
-IBM Plex Sans. Use a **role**, not a size. Roles are fluid (375 → 1280px), so no
+IBM Plex Sans (self-hosted variable file, used at 400/500/600 only) plus Geist Mono
+for figures and kickers. Use a **role**, not a size: there are no `text-[Npx]`
+values on the site. Sizes come from one scale with a **1.2 ratio** (`--p-text-*`):
+11, 13, 16, 19, 23, 28, 34, 40, 48, 56px. Roles are fluid (375 → 1280px), so no
 breakpoint variants are needed.
 
 | Role | Class | Range | Use |
 |---|---|---|---|
-| Display | `type-display` | 42 → 80px | Home hero only |
-| Headline large | `type-headline-lg` | 36 → 56px | Page title (h1) on interior pages |
-| Headline | `type-headline` | 30 → 48px | Section title (h2) |
-| Headline small | `type-headline-sm` | 24 → 32px | Sub-section title, CTA panel title |
-| Title large | `type-title-lg` | 20 → 24px | Card title (h3) |
-| Title | `type-title` | 17px | List item title, small card title |
-| Body large | `type-body-lg` | 17 → 19px | Lead paragraph under a title |
+| Display | `type-display` | 40 → 56px | Home hero only |
+| Headline large | `type-headline-lg` | 34 → 48px | Page title (h1) on interior pages |
+| Headline | `type-headline` | 28 → 40px | Section title (h2) |
+| Headline small | `type-headline-sm` | 23 → 28px | Sub-section title, CTA panel title |
+| Title large | `type-title-lg` | 19 → 23px | Card title (h3) |
+| Title | `type-title` | 19px | List item title, small card title |
+| Body large | `type-body-lg` | 16 → 19px | Lead paragraph under a title |
 | Body | `type-body` | 16px | Running text |
-| Body small | `type-body-sm` | 14.5px | Card body, secondary text |
-| Label | `type-label` | 14px semibold | Buttons, kickers, form labels |
-| Caption | `type-caption` | 13px | Meta, timestamps, footnotes |
+| Body small / label / caption | `type-body-sm`, `type-label`, `type-caption` | 13px | One size; weight and leading tell them apart |
+| Overline | `type-overline` | 11px | Mono kickers, badges |
 
-Measure: body copy 60–75 characters (`max-w-[62ch]`). Headings balance; paragraphs
-use `text-wrap: pretty` (both set globally).
+Leading falls as size rises: display 1.1, headlines 1.15, titles 1.25, body 1.55,
+small 1.45. Measure: running text is capped at 65ch (`--measure-prose`, the
+`measure` utility). Headings balance; paragraphs use `text-wrap: pretty`.
 
 ## 3. Space
 
@@ -113,15 +116,31 @@ Elevation is navy-tinted, one light source above: **flat** (border only, the def
 
 ## 5. Motion
 
-After Material 3. Durations: `--dur-short` 150ms (state change: hover, press, toggle),
-`--dur-medium` 250ms (small movement: menus, chips), `--dur-long` 400ms (entering the
-page: sheets, reveals). Curves: `--ease-standard` for most things,
-`--ease-emphasized-in` for arrivals, `--ease-emphasized-out` for exits (exits are faster
-than entrances).
+Durations: `--dur-short` 150ms (state change: hover, press, toggle), `--dur-medium`
+250ms (menus, chips), `--dur-long` 300ms (sheets: 280ms in, 200ms out). Functional
+transitions stay within 150–300ms, ease-out to enter and ease-in to exit. Page-load
+reveals (`.rise`, `.word`) take 400ms.
 
-Load: headings rise 12px. Scroll: sections reveal 16px. Everything animates transform and
-opacity only, and **every animation is removed under `prefers-reduced-motion`**. Motion
-explains (where a sheet came from, what changed); it never decorates.
+Nothing loops. Decorative motion runs once and settles inside five seconds: the
+hero film plays 4.8s and holds, the client logos and practice showcase change once,
+the grid beams cross once, illustrations stop after one pass. Because nothing runs
+past five seconds there are **no pause or play controls** (WCAG 2.2.2 is met by
+ending, not by a button). Loading skeletons and spinners may repeat: they report
+state. Everything animates transform and opacity only, and **every animation is
+removed under `prefers-reduced-motion`**.
+
+## 5a. Controls
+
+- One input style: `src/components/site/input.tsx` (Input, Textarea, FieldError),
+  48px tall, `--color-border-control` edge (3.4:1), 2px cobalt focus ring with offset,
+  danger edge on `aria-invalid`.
+- One button: `buttonClass` / `Button` / `LinkButton` in `src/components/site/button.tsx`,
+  sizes sm 40 (44 on touch), md 48, lg 56. `loading` shows a spinner, sets
+  `aria-busy` and disables the button. Disabled is `--opacity-disabled` (0.45) with a
+  not-allowed cursor.
+- One filled (primary) button per view. The header's "Talk to us" is outline and
+  "Find a job" is ghost, so the page's own primary action stands alone.
+- Targets: 40px minimum on desktop, 44px on touch (`--size-control-touch`).
 
 ## 6. Layout and placement
 
