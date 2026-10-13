@@ -1189,8 +1189,8 @@ function Notice({
     <div
       className={cn(
         "mb-3 flex flex-col gap-3 rounded-[var(--adm-radius-card)] border px-4 py-3 text-adm-base sm:flex-row sm:items-center sm:justify-between",
-        tone === "accent" && "border-[var(--adm-line)] bg-[var(--adm-accent-tint)]",
-        tone === "warning" && "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]",
+        tone === "accent" && "border-[var(--adm-info-line)] bg-[var(--adm-info-soft)]",
+        tone === "warning" && "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]",
         tone === "neutral" && "border-[var(--adm-line)] bg-[var(--adm-surface)]",
       )}
     >

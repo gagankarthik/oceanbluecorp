@@ -133,7 +133,7 @@ export function CandidateForm({
           <FormInput id={IDS.phone} type="tel" className="tabular-nums" {...invalidProps("phone")} value={v.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 (555) 000-0000" />
         </Field>
         {form.duplicates.length > 0 && (
-          <div role="status" className={cn(wellCls, "col-span-full space-y-1.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] py-3")}>
+          <div role="status" className={cn(wellCls, "col-span-full space-y-1.5 border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] py-3")}>
             <p className="flex items-center gap-2 text-adm-xs font-medium text-[var(--adm-warning-ink)]">
               <IconWarning className="h-4 w-4 flex-none" aria-hidden="true" />
               {form.duplicates.some((d) => d.matchedOn.includes("email"))
@@ -395,8 +395,8 @@ export function CandidateForm({
             wellCls,
             "py-3 text-adm-xs leading-relaxed",
             isPermanent
-              ? "border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
-              : "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
+              ? "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
+              : "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
           )}>
             {isPermanent
               ? "Permanent US work authorization."

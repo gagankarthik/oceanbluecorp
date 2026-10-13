@@ -378,7 +378,7 @@ function NewApplicationInner() {
 
           {/* A failed read is not a failed record: the form still works and the file is still attached. */}
           {!parsing && parseError && (
-            <div role="alert" className={cn(wellCls, "flex flex-wrap items-start gap-3 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]")}>
+            <div role="alert" className={cn(wellCls, "flex flex-wrap items-start gap-3 border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]")}>
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-warning-ink)]" aria-hidden="true" />
               <p className="min-w-0 flex-1 text-adm-base text-[var(--adm-warning-ink)]">
                 Couldn&apos;t read the resume, enter the details below instead. {parseError}

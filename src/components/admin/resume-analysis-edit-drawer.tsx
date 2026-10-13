@@ -211,7 +211,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {error && (
-            <div role="alert" className="flex items-start gap-3 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+            <div role="alert" className="flex items-start gap-3 rounded-[12px] border border-[var(--adm-danger-line)] bg-[var(--adm-danger-soft)] px-4 py-3">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
               <p className="text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
             </div>

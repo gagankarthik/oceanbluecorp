@@ -75,7 +75,7 @@ export function EditorialGuide({
             <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               Headline
             </p>
-            <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-ink)]">
+            <p className="rounded-[12px] border border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-ink)]">
               {guide.headline.good}
             </p>
             <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs text-[var(--adm-ink-subtle)] line-through decoration-[var(--adm-danger)]/50">

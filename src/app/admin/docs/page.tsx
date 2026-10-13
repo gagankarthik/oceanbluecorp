@@ -161,8 +161,8 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 function InfoCard({ children, variant = "info" }: { children: React.ReactNode; variant?: "info" | "warning" | "tip" }) {
   const styles = {
     info:    "border-[var(--adm-line)] bg-[var(--adm-accent-tint)] text-[var(--adm-ink-mute)] [&_strong]:text-[var(--adm-ink)]",
-    warning: "border-[var(--adm-warning)]/30 bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
-    tip:     "border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
+    warning: "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
+    tip:     "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
   };
   const iconInk = {
     info:    "text-[var(--adm-accent)]",

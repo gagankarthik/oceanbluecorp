@@ -160,7 +160,7 @@ export function EmailComposer({
           </Field>
 
           {unfilled.length > 0 && (
-            <div role="alert" className="flex gap-3 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
+            <div role="alert" className="flex gap-3 rounded-[6px] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] px-3 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <p>
                 Fill in or remove {unfilled.map((p) => `{{${p}}}`).join(", ")} before sending.

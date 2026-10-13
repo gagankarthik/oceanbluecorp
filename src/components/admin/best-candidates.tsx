@@ -169,7 +169,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
       )}
 
       {!busy && stale && candidates.length > 0 && (
-        <div role="status" className="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
+        <div role="status" className="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
           <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
           <span className="min-w-0 flex-1">
             This job was edited after the ranking{matchedAt ? ` on ${fmtDate(matchedAt)}` : ""}. Re-run for a shortlist that matches the current posting.

@@ -610,8 +610,8 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   className={cn(
                     "rounded-[12px] border p-4",
                     form.approvalOnFile
-                      ? "border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)]"
-                      : "border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)]",
+                      ? "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)]"
+                      : "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]",
                   )}
                 >
                   <label className="flex items-start gap-3">
@@ -807,7 +807,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               {blockers.length > 0 && (
                 <div
                   role={publishIntent ? "alert" : undefined}
-                  className="rounded-[12px] border border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)] p-3"
+                  className="rounded-[12px] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] p-3"
                 >
                   <p className="text-adm-xs font-medium text-[var(--adm-warning-ink)]">
                     Before it can go out
@@ -840,7 +840,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               )}
 
               {blockers.length === 0 && warnings.length === 0 && (
-                <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
+                <p className="rounded-[12px] border border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
                   Nothing outstanding. Ready to publish.
                 </p>
               )}
