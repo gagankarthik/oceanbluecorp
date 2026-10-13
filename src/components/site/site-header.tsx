@@ -270,12 +270,12 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
               )}
             </div>
           )}
-          {/* Candidates go straight to the job board; Careers sits in the Company menu. */}
-          {/* Outline, so the page's own hero action is the one filled button in view. */}
-          <LinkButton href="/careers/search" variant="ghost" className="hidden lg:inline-flex">
+          {/* One primary and one secondary: "Talk to us" is the header's action,
+              "Find a job" the outlined alternative for candidates. */}
+          <LinkButton href="/careers/search" variant="outline" className="hidden lg:inline-flex">
             Find a job
           </LinkButton>
-          <LinkButton href="/contact" variant="outline">
+          <LinkButton href="/contact" variant="primary">
             Talk to us
           </LinkButton>
         </div>

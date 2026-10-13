@@ -138,8 +138,9 @@ removed under `prefers-reduced-motion`**.
   sizes sm 40 (44 on touch), md 48, lg 56. `loading` shows a spinner, sets
   `aria-busy` and disables the button. Disabled is `--opacity-disabled` (0.45) with a
   not-allowed cursor.
-- One filled (primary) button per view. The header's "Talk to us" is outline and
-  "Find a job" is ghost, so the page's own primary action stands alone.
+- Every button group is one primary (filled) and at most one secondary (outline).
+  The header: "Talk to us" primary, "Find a job" secondary. Heroes and CTA panels
+  follow the same pair.
 - Targets: 40px minimum on desktop, 44px on touch (`--size-control-touch`).
 
 ## 6. Layout and placement
