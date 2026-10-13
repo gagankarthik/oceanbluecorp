@@ -500,7 +500,7 @@ export default function UsersPage() {
               ? "Invite a teammate to give them access to the console."
               : "Try adjusting your search, role, or status filter.",
             action: users.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={openInvite}>
+              <WorkspaceButton onClick={openInvite}>
                 <IconUserPlus className="h-4 w-4" />Invite user
               </WorkspaceButton>
             ) : hasActiveFilters ? (

@@ -490,7 +490,7 @@ export default function VendorsPage() {
               ? "Add your first vendor to start tracking partners."
               : "Try adjusting your search or lead filter.",
             action: vendors.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={openCreate}><Plus className="h-4 w-4" />Add vendor</WorkspaceButton>
+              <WorkspaceButton onClick={openCreate}><Plus className="h-4 w-4" />Add vendor</WorkspaceButton>
             ) : hasActiveFilters ? (
               <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
             ) : undefined,

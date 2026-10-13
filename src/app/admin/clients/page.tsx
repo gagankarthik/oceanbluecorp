@@ -451,7 +451,7 @@ export default function ClientsPage() {
               ? "Add your first client to start tracking accounts."
               : "Try adjusting your search or status filter.",
             action: clients.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={openCreate}><Plus className="h-4 w-4" />Add client</WorkspaceButton>
+              <WorkspaceButton onClick={openCreate}><Plus className="h-4 w-4" />Add client</WorkspaceButton>
             ) : hasActiveFilters ? (
               <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
             ) : undefined,

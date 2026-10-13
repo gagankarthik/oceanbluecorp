@@ -291,7 +291,7 @@ export function ListView({ apps, empty, onAdd, onClear, ...shared }: SharedProps
         icon={IconGroup}
         title="No applicants yet"
         description="Add your first candidate to start tracking the pipeline."
-        action={<WorkspaceButton variant="primary" onClick={onAdd}><Plus />Add applicant</WorkspaceButton>}
+        action={<WorkspaceButton onClick={onAdd}><Plus />Add applicant</WorkspaceButton>}
       />
     ) : (
       <EmptyState

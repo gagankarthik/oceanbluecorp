@@ -814,7 +814,7 @@ export default function ApplicationsPage() {
                 ? "Try a different search, or clear the filters."
                 : "This view is clear.",
               action: applications.length === 0
-                ? <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ mode: "create" })}><Plus />Add applicant</WorkspaceButton>
+                ? <WorkspaceButton onClick={() => openCandidateEditor({ mode: "create" })}><Plus />Add applicant</WorkspaceButton>
                 : hasActiveFilters
                 ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton>
                 : undefined,

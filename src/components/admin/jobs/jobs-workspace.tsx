@@ -529,7 +529,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   );
 
   const emptyAction = jobs.length === 0
-    ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
+    ? (canEdit ? <WorkspaceButton onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
     : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton> : undefined);
 
   const listFilters: ListFilter[] = [

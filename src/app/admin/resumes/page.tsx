@@ -676,7 +676,7 @@ export default function ResumeBankPage() {
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+            <WorkspaceButton variant={pendingCount > 0 ? "secondary" : "primary"} onClick={() => fileInputRef.current?.click()}>
               <IconUpload className="h-4 w-4" />Upload
             </WorkspaceButton>
           </>
