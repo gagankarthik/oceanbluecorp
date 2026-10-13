@@ -103,6 +103,6 @@ Automotive · Aerospace & Defense · Manufacturing · Power & Utilities · Commu
 For developers: this repository holds the Oceanblue Solutions, Inc.
 website and internal platform (Next.js 16, React 19, TypeScript,
 Tailwind CSS 4, AWS). Setup, architecture, and conventions live in
-CLAUDE.md and AWS.md.
+CLAUDE.md and docs/AWS.md.
 ─────────────────────────────────────────────────────────────
 -->

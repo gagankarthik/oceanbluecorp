@@ -34,6 +34,9 @@ export default function SmoothScroll() {
     // someone who has asked the OS to stop animating things.
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reduce.matches) return;
+    // Phones scroll natively (syncTouch is off below anyway); skipping Lenis
+    // there also skips a requestAnimationFrame loop on every frame.
+    if (window.matchMedia("(pointer: coarse)").matches) return;
 
     const lenis = new Lenis({
       duration: 1.05,

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Companion documents
 
-- **`STANDARDS.md`**, structure, naming, reuse (which shared helper to use instead
+- **`docs/STANDARDS.md`**, structure, naming, reuse (which shared helper to use instead
   of writing another), the client/server boundary rule, security rules, and the
   pre-ship checks. Read before adding a route, a component, or a table.
-- **`DESIGN_SYSTEM.md`**, visual language and the admin component inventory. §2 is
+- **`docs/DESIGN_SYSTEM.md`**, visual language and the admin component inventory. §2 is
   the token system for the whole app: tiers, naming, spacing, grid, breakpoints,
   density, and how a token gets added.
-- **`SITE_DESIGN_LANGUAGE.md`**, the public website's design language: colour roles
+- **`docs/SITE_DESIGN_LANGUAGE.md`**, the public website's design language: colour roles
   (60-30-10), type roles, spacing, shape, elevation, motion, layout. Components in
   `src/components/site/`. Read before touching any public page.
 

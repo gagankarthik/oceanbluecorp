@@ -250,6 +250,27 @@ export const CloudShader = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Creating the WebGL context and compiling the shaders is the costliest
+    // thing on the page (about a second on a GPU-less renderer, which is what
+    // PageSpeed uses), and this sky sits in the closing band. Nothing is set
+    // up until the band is about to scroll into view.
+    let teardown: (() => void) | undefined;
+    const near = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        near.disconnect();
+        teardown = setup(canvas);
+      },
+      { rootMargin: "300px 0px" },
+    );
+    near.observe(canvas);
+    return () => {
+      near.disconnect();
+      teardown?.();
+    };
+  }, []);
+
+  function setup(canvas: HTMLCanvasElement): (() => void) | undefined {
     const gl = canvas.getContext("webgl", {
       alpha: false,
       antialias: false,
@@ -355,7 +376,7 @@ export const CloudShader = ({
       gl.deleteShader(vert);
       gl.deleteShader(frag);
     };
-  }, []);
+  }
 
   return (
     <div

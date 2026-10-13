@@ -56,8 +56,8 @@ export const POOL_ORDER: BenchType[] = ["internal", "external"];
 /**
  * A record's pool, with the legacy fallback: rows written before benchType
  * existed count as internal when hired (they became one of our consultants)
- * and external otherwise, the same rule scripts/backfill-bench-type.mjs
- * applies, so pages read correctly before and after the backfill runs.
+ * and external otherwise. Every stored row is tagged now (the one-time
+ * backfill ran); the fallback stays for safety.
  */
 export function poolOf(app: Pick<Application, "benchType" | "status">): BenchType {
   return app.benchType || (app.status === "hired" ? "internal" : "external");

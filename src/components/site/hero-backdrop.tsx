@@ -1,3 +1,4 @@
+import { preload } from "react-dom";
 import VideoBackdrop from "@/components/landing/VideoBackdrop";
 
 /* Home hero ground: a looping film of a team at work under a navy tint.
@@ -6,6 +7,9 @@ import VideoBackdrop from "@/components/landing/VideoBackdrop";
    poster only. Source: Pexels 3251737 (fauxels), 960x540, 2.3MB. */
 
 export function HeroBackdrop() {
+  // The poster is the page's largest paint. As a CSS background it is found
+  // only after the stylesheet; preloading it puts the request in the head.
+  preload("/videos/hero-team-poster.webp", { as: "image", fetchPriority: "high" });
   return (
     <>
       <VideoBackdrop src="/videos/hero-team.mp4" poster="/videos/hero-team-poster.webp" className="-z-20" />
