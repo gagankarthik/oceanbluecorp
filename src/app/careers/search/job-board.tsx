@@ -9,13 +9,12 @@ import { LineGrid } from "@/components/site/line-grid";
 import {
   IconArrowRight, IconChevronDown, IconX, IconPin, IconSearch, IconCalendar, IconRefresh, IconMail, IconGlobe,
 } from "@/components/site/icons";
-import { IconFilter, IconMoney, IconCheckCircle } from "@/components/site/careers/careers-icons";
+import { IconFilter, IconCheckCircle } from "@/components/site/careers/careers-icons";
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
 import type { PublicJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
-import { formatSalary } from "@/lib/salary";
 import { SideSheet } from "@/components/site/side-sheet";
 import { toBoardJob, type BoardJob } from "./board-job";
 import { useStaffSession } from "@/components/site/use-staff-session";
@@ -621,7 +620,6 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
   const due = dueLabel(job.submissionDueDate);
   const mode = workMode(job);
-  const salary = formatSalary(job.salary);
   return (
     <Link
       href={`/careers/search/${job.id}`}
@@ -645,12 +643,6 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
             {jobPlace(job)}
           </li>
           <li>{formatJobType(job.type)}</li>
-          {salary && (
-            <li className="inline-flex items-center gap-1.5">
-              <IconMoney size={14} className="text-ink-subtle" />
-              {salary}
-            </li>
-          )}
         </ul>
       </div>
 

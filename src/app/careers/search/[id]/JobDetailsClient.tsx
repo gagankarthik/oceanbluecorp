@@ -16,7 +16,6 @@ import { FieldError, Input, LABEL, Textarea } from "@/components/site/input";
 import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
 import { isAcceptingApplications } from "@/lib/job-status";
-import { formatSalary } from "@/lib/salary";
 import { normalizeWebsite, website } from "@/lib/form-validation";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -249,14 +248,12 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   const postedAt = publishedAt ?? job.createdAt;
   const postedDate = new Date(postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const statusLabel = applicationStatus ? applicationStatus.replace("-", " ") : null;
-  const salary = formatSalary(job.salary);
 
   const mode = workMode(job);
   const facts = [
     { k: "Employment type", v: formatJobType(job.type) },
     { k: "Location", v: jobPlace(job) },
     mode ? { k: "Work arrangement", v: mode } : null,
-    salary ? { k: "Compensation", v: salary } : null,
     { k: "Posted", v: postedDate },
     due ? { k: "Applications close", v: due.text, urgent: due.urgent } : null,
   ].filter(Boolean) as { k: string; v: string; urgent?: boolean }[];
