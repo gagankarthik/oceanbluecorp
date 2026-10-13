@@ -94,15 +94,15 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
         <span
           aria-hidden
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold",
+            "flex size-11 shrink-0 items-center justify-center rounded-full type-label",
             featured ? "bg-cobalt text-white" : "bg-cobalt-tint text-cobalt",
           )}
         >
           {initials(s.author)}
         </span>
         <span>
-          <span className="block text-[15.5px] font-semibold">{s.author}</span>
-          <span className={cn("block text-[14px]", featured ? "text-white/85" : "text-ink-subtle")}>
+          <span className="block type-body font-semibold">{s.author}</span>
+          <span className={cn("block type-body-sm", featured ? "text-white/85" : "text-ink-subtle")}>
             {s.role}, {s.company}
           </span>
         </span>

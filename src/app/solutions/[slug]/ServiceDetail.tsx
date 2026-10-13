@@ -49,10 +49,10 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           </div>
           {data.tags && (
             <div className="self-start rounded-2xl border border-line bg-paper p-7">
-              <p className="text-[14px] font-semibold text-ink">Ways to engage</p>
+              <p className="type-label text-ink">Ways to engage</p>
               <ul className="mt-4 divide-y divide-line">
                 {data.tags.map((t) => (
-                  <li key={t} className="flex items-center gap-3 py-3 text-[15px] text-ink-muted">
+                  <li key={t} className="flex items-center gap-3 py-3 type-body text-ink-muted">
                     <IconCheck size={16} className="flex-none text-cobalt" />
                     {t}
                   </li>
@@ -95,7 +95,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           <span aria-hidden className="absolute top-5 right-[12.5%] left-[12.5%] hidden h-px bg-line-strong md:block" />
           {data.approach.map((st, i) => (
             <li key={st.title} className="relative flex gap-4 md:flex-col md:items-center md:text-center">
-              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white text-[14px] font-semibold text-ink tabular-nums">
+              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white type-label text-ink tabular-nums">
                 {i + 1}
               </span>
               <div>
@@ -114,7 +114,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           <ul className="mt-5 grid gap-x-8 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
             {relatedLinks(data.slug).map((r) => (
               <li key={r.href}>
-                <Link href={r.href} className="group flex items-center justify-between gap-4 border-b border-line py-3.5 text-[15px] font-medium text-ink-muted transition-colors hover:text-cobalt">
+                <Link href={r.href} className="group flex items-center justify-between gap-4 border-b border-line py-3.5 type-body font-medium text-ink-muted transition-colors hover:text-cobalt">
                   {r.title}
                   <IconArrowRight size={15} className="flex-none text-ink-subtle transition-all group-hover:translate-x-1 group-hover:text-cobalt" />
                 </Link>

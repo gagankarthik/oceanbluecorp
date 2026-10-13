@@ -79,7 +79,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
               modernize the systems they already run, strengthen the teams around them, and adopt what actually changes how the
               business performs.
             </p>
-            <p className="text-[16.5px] leading-relaxed text-ink-muted">
+            <p className="type-body text-ink-muted">
               {years} years of doing that has left us with a bias toward clarity and very little patience for complexity that
               serves the vendor rather than the client. We exist to give organizations the technology, talent and support to
               operate faster and more securely, with deep technical expertise and a genuine commitment to service behind it.
@@ -128,7 +128,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
                     cardLeft ? "lg:col-start-1 lg:text-right" : "lg:col-start-3"
                   }`}
                 >
-                  <span className="text-[13px] font-semibold text-cobalt tabular-nums lg:hidden">{m.year}</span>
+                  <span className="type-label text-cobalt tabular-nums lg:hidden">{m.year}</span>
                   <h3 className="type-title-lg text-ink">{m.title}</h3>
                   <p className="mt-2 type-body-sm text-ink-muted">{m.description}</p>
                 </div>
@@ -191,14 +191,14 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
               <IconPin size={22} className="text-cobalt" />
               <p className="mt-5 flex items-center gap-2 type-title text-ink">
                 {o.city}
-                {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 text-[11.5px] font-semibold text-cobalt">Headquarters</span>}
+                {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 type-overline font-semibold text-cobalt">Headquarters</span>}
               </p>
-              <p className="mt-1 text-[15px] text-ink-muted">{o.country}</p>
+              <p className="mt-1 type-body text-ink-muted">{o.country}</p>
             </li>
           ))}
         </ul>
         <div className="mt-10 text-center">
-          <Link href="/contact#locations" className="group inline-flex items-center gap-2 text-[15px] font-semibold text-ink hover:text-cobalt">
+          <Link href="/contact#locations" className="group inline-flex items-center gap-2 type-body font-semibold text-ink hover:text-cobalt">
             Addresses and phone numbers <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </div>

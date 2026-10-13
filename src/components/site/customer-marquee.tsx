@@ -63,7 +63,7 @@ export function CustomerMarquee({ label }: { label: string }) {
     <div data-tone="white" className="border-b border-line bg-white">
       <div className="mx-auto flex max-w-[1240px] flex-col sm:px-6 lg:flex-row">
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-5 sm:px-0 lg:w-[250px] lg:shrink-0 lg:border-r lg:border-b-0 lg:pr-6">
-          <p className="text-[15px] leading-snug text-ink">{label}</p>
+          <p className="type-body leading-snug text-ink">{label}</p>
           <button
             type="button"
             onClick={() => setPaused((p) => !p)}

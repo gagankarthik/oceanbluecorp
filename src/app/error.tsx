@@ -67,7 +67,7 @@ export default function Error({
             </Link>
             {error.digest && (
               <>
-                {" "}and quote <span className="font-mono text-[13px] break-all text-ink">{error.digest}</span>
+                {" "}and quote <span className="font-mono type-caption break-all text-ink">{error.digest}</span>
               </>
             )}
             .

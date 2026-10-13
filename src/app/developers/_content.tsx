@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IconCheck, IconChevronRight, IconArrowRight, IconLock, IconMail, IconKey, IconTerminal, IconClock } from "@/components/site/icons";
 import { IconCopy, IconGlobe, IconBracesDoc, IconAlert } from "@/components/site/resources/icons";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
 import { GeoStack } from "@/components/site/geo-art";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 
@@ -19,7 +19,7 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
-          <span className="ml-2 font-mono text-[11.5px] text-white/70">{lang}</span>
+          <span className="ml-2 font-mono type-overline text-white/70">{lang}</span>
         </span>
         <button
           type="button"
@@ -34,14 +34,14 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="max-w-full overflow-x-auto p-4 font-mono text-[13px] leading-relaxed whitespace-pre text-white/90">{children}</pre>
+      <pre className="max-w-full overflow-x-auto p-4 font-mono type-body-sm whitespace-pre text-white/90">{children}</pre>
     </div>
   );
 }
 
 function Badge({ label, color }: { label: string; color: string }) {
   return (
-    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold ${color}`}>
+    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono type-overline font-semibold ${color}`}>
       {label}
     </span>
   );
@@ -84,10 +84,10 @@ function EndpointCard({
         aria-expanded={open}
         className="flex min-h-14 w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper sm:px-5"
       >
-        <span className={`flex-none rounded-md border px-2 py-0.5 font-mono text-[12px] font-semibold ${methodColors[method]}`}>
+        <span className={`flex-none rounded-md border px-2 py-0.5 font-mono type-label ${methodColors[method]}`}>
           {method}
         </span>
-        <code className="min-w-0 flex-1 font-mono text-[14px] break-all text-ink">{path}</code>
+        <code className="min-w-0 flex-1 font-mono type-body-sm break-all text-ink">{path}</code>
         <span className="hidden max-w-[22rem] truncate type-body-sm text-ink-subtle md:block">{description}</span>
         <IconChevronRight size={16} className={`flex-shrink-0 text-ink-subtle transition-transform ${open ? "rotate-90" : ""}`} />
       </button>
@@ -229,11 +229,11 @@ export default function DevelopersContent() {
 
         {/* Content */}
         <div className="min-w-0 max-w-3xl flex-1">
-          <nav aria-label="On this page" className="-mx-4 mb-12 overflow-x-auto px-4 lg:hidden">
-            <ul className="flex w-max gap-2">
+          <nav aria-label="On this page" className="scrollbar-none -mx-4 mb-12 overflow-x-auto px-4 [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)] lg:hidden">
+            <ul className="flex w-max gap-2 pr-12">
               {NAV.map((item) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="inline-flex h-11 items-center rounded-full border border-line-strong bg-white px-4 type-body-sm font-medium whitespace-nowrap text-ink">
+                  <a href={`#${item.id}`} className="inline-flex h-11 items-center rounded-full border border-line-input bg-white px-4 type-body-sm font-medium whitespace-nowrap text-ink transition-colors duration-[var(--dur-short)] hover:border-cobalt hover:text-cobalt">
                     {item.label}
                   </a>
                 </li>
@@ -260,7 +260,7 @@ export default function DevelopersContent() {
                   </span>
                   <div className="min-w-0">
                     <p className="type-label font-semibold text-ink-subtle">{item.title}</p>
-                    <p className="mt-0.5 font-mono text-[13.5px] break-all text-ink">{item.desc}</p>
+                    <p className="mt-0.5 font-mono type-caption break-all text-ink">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -651,7 +651,7 @@ def get_job(job_id: str):
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <a
                     href="mailto:hr@oceanbluecorp.com?subject=Job Feed API Access Request"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-cobalt bg-cobalt px-6 text-[15px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+                    className={buttonClass("primary", "md")}
                   >
                     <IconMail size={16} />
                     Request API access

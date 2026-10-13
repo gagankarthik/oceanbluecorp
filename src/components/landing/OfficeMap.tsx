@@ -191,22 +191,22 @@ export default function OfficeMap({
               {/* No flag emoji. Windows has no colour flag glyphs, so every
                   one of these rendered as the bare country code, "US", "IN",
                   "GB", which reads as a typo rather than a flag. */}
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+              <span className="flex items-center gap-1.5 type-label text-ink">
                 {p.city}
                 {p.hq && (
-                  <span className="rounded-full bg-cobalt-tint px-1.5 text-[10px] font-semibold text-cobalt">
+                  <span className="rounded-full bg-cobalt-tint px-1.5 type-overline font-semibold text-cobalt">
                     HQ
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block text-[11.5px] text-ink-subtle">
+              <span className="mt-0.5 block type-overline text-ink-subtle">
                 {p.country}
               </span>
-              <span className="mt-1.5 block text-[11.5px] leading-snug text-ink-muted">
+              <span className="mt-1.5 block type-overline leading-snug text-ink-muted">
                 {p.address}
               </span>
               {p.phone && (
-                <span className="mt-1.5 block text-[11.5px] font-medium text-cobalt">
+                <span className="mt-1.5 block type-overline font-medium text-cobalt">
                   {p.phone}
                 </span>
               )}
@@ -230,7 +230,7 @@ export default function OfficeMap({
         href="https://www.openstreetmap.org/copyright"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute bottom-1.5 right-2 z-40 rounded bg-white/75 px-1.5 py-0.5 text-[10.5px] text-ink-subtle transition-colors hover:text-ink-muted"
+        className="absolute bottom-1.5 right-2 z-40 rounded bg-white/75 px-1.5 py-0.5 type-overline text-ink-subtle transition-colors hover:text-ink-muted"
       >
         © OpenStreetMap contributors
       </a>

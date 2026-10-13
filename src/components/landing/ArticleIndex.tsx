@@ -5,6 +5,7 @@ import ArticleBanner from "./ArticleBanner";
 import Photo from "./Photo";
 import { IconArrowRight } from "@/components/site/icons";
 import { CONTAINER, SECTION_Y } from "@/components/site/sections";
+import { buttonClass } from "@/components/site/button";
 
 /**
  * The index for one public content section, in the site system.
@@ -32,7 +33,7 @@ const hrefFor = (kind: ArticleKind, slug: string) => `${ARTICLE_KIND_CONFIG[kind
 /** The one "read on" control, the same everywhere in Resources. */
 function ReadLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="group inline-flex items-center gap-2 text-[15px] font-semibold text-ink transition-colors hover:text-cobalt">
+    <Link href={href} className="group inline-flex items-center gap-2 type-body font-semibold text-ink transition-colors hover:text-cobalt">
       {label}
       <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
     </Link>
@@ -118,7 +119,7 @@ function BlogLayout({ articles, subtitle }: { articles: Article[]; subtitle: str
           <ul className="mt-2 divide-y divide-line">
             {articles.slice(0, 5).map((a) => (
               <li key={a.id} className="py-3">
-                <Link href={hrefFor("blog", a.slug)} className="text-[15px] leading-snug font-semibold text-ink transition-colors hover:text-cobalt">
+                <Link href={hrefFor("blog", a.slug)} className="type-body leading-snug font-semibold text-ink transition-colors hover:text-cobalt">
                   {a.title}
                 </Link>
               </li>
@@ -144,7 +145,7 @@ function NewsLayout({ articles }: { articles: Article[] }) {
         </div>
         <Link
           href="/contact"
-          className="inline-flex h-11 flex-none items-center rounded-full border border-line-strong bg-white px-5 type-label font-semibold text-ink transition-colors hover:border-cobalt"
+          className={buttonClass("outline", "sm", "flex-none px-5")}
         >
           Get in touch
         </Link>

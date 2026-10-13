@@ -99,7 +99,7 @@ export default function EngineeringContent() {
         <div className="mx-auto max-w-[880px] overflow-hidden rounded-2xl border border-line bg-white">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-line bg-paper text-[13.5px] text-ink-subtle">
+              <tr className="border-b border-line bg-paper type-caption text-ink-subtle">
                 <th scope="col" className="px-6 py-3.5 font-medium">Industry</th>
                 <th scope="col" className="px-6 py-3.5 font-medium">Standards</th>
               </tr>
@@ -107,14 +107,14 @@ export default function EngineeringContent() {
             <tbody>
               {industries.map((i) => (
                 <tr key={i.name} className="border-b border-line last:border-b-0">
-                  <th scope="row" className="px-6 py-4 text-[15.5px] font-semibold text-ink">{i.name}</th>
-                  <td className="px-6 py-4 text-[15px] text-ink-muted">{i.standards}</td>
+                  <th scope="row" className="px-6 py-4 type-body font-semibold text-ink">{i.name}</th>
+                  <td className="px-6 py-4 type-body text-ink-muted">{i.standards}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="mx-auto mt-4 max-w-[880px] text-[13.5px] text-ink-subtle">
+        <p className="mx-auto mt-4 max-w-[880px] type-caption text-ink-subtle">
           Standards are the ones our clients&apos; programs work to. They are market context, not Oceanblue certifications.
         </p>
       </Section>
@@ -128,7 +128,7 @@ export default function EngineeringContent() {
               </span>
               <h3 className="mt-6 type-title text-ink">{m.title}</h3>
               <p className="mt-2 type-body-sm text-ink-muted">{m.desc}</p>
-              <p className="mt-auto pt-5 text-[13.5px] font-semibold text-cobalt">Best for {m.best.toLowerCase()}</p>
+              <p className="mt-auto pt-5 type-label text-cobalt">Best for {m.best.toLowerCase()}</p>
             </li>
           ))}
         </ul>
@@ -139,7 +139,7 @@ export default function EngineeringContent() {
           <span aria-hidden className="absolute top-5 right-[12.5%] left-[12.5%] hidden h-px bg-line-strong md:block" />
           {steps.map((st, i) => (
             <li key={st.title} className="relative flex gap-4 md:flex-col md:items-center md:text-center">
-              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white text-[14px] font-semibold text-ink tabular-nums">
+              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white type-label text-ink tabular-nums">
                 {i + 1}
               </span>
               <div>

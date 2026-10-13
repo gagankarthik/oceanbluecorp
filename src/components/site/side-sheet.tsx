@@ -62,7 +62,7 @@ export function SideSheet({
             <div className="min-w-0">
               <D.Title className="type-title-lg text-ink">{title}</D.Title>
               {description ? (
-                <D.Description className="mt-1 text-[14.5px] text-ink-subtle">{description}</D.Description>
+                <D.Description className="mt-1 type-body-sm text-ink-subtle">{description}</D.Description>
               ) : (
                 <D.Description className="sr-only">{typeof title === "string" ? title : "Dialog"}</D.Description>
               )}

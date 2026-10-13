@@ -125,7 +125,7 @@ function CopyChip({ value }: { value: string }) {
           })
           .catch(() => {});
       }}
-      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono text-[12px] text-ink-muted transition-colors hover:border-ink hover:text-ink"
+      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono type-caption text-ink-muted transition-colors hover:border-ink hover:text-ink"
       title={`Copy ${value}`}
       aria-label={`${value}, copy`}
     >
@@ -169,7 +169,7 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ size?: n
       <span ref={ref} className="text-ink">
         <Icon size={24} />
       </span>
-      <span className="w-full truncate text-center font-mono text-[11px] text-ink-subtle">{name.replace(/^Icon/, "")}</span>
+      <span className="w-full truncate text-center font-mono type-overline text-ink-subtle">{name.replace(/^Icon/, "")}</span>
       <span aria-hidden className={cn("absolute top-2 right-2", copied ? "text-success" : "text-line-strong group-hover:text-ink-subtle")}>
         {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
       </span>
@@ -184,7 +184,7 @@ function KitSection({ id, n, title, sub, children }: { id: string; n: string; ti
       <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-28">
-            <p className="font-mono text-[13px] font-medium text-cobalt">{n}</p>
+            <p className="font-mono type-caption font-medium text-cobalt">{n}</p>
             <h2 className="mt-2 type-headline font-semibold text-ink">{title}</h2>
             <p className="mt-3 max-w-[40ch] type-body text-ink-muted">{sub}</p>
           </div>
@@ -224,7 +224,7 @@ export default function BrandKitContent() {
                 <li key={s.id}>
                   <a href={`#${s.id}`} className="group flex min-h-14 items-center justify-between gap-2 bg-white px-4 py-3 type-body-sm font-medium text-ink hover:bg-paper">
                     <span>
-                      <span className="mr-2 font-mono text-[12px] text-ink-subtle">0{i + 1}</span>
+                      <span className="mr-2 font-mono type-caption text-ink-subtle">0{i + 1}</span>
                       {s.label}
                     </span>
                     <IconArrowRight size={14} className="text-ink-subtle transition-transform group-hover:translate-x-0.5" />
@@ -266,7 +266,7 @@ export default function BrandKitContent() {
             <div className="space-y-10">
               {COLOR_GROUPS.map((g) => (
                 <div key={g.group}>
-                  <p className="text-[16px] font-semibold text-ink">{g.group}</p>
+                  <p className="type-body font-semibold text-ink">{g.group}</p>
                   <p className="mt-1 max-w-[60ch] type-body-sm text-ink-muted">{g.body}</p>
                   <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
                     {g.colors.map((c) => (
@@ -275,7 +275,7 @@ export default function BrandKitContent() {
                           <span className={cn("type-caption font-medium", c.dark ? "text-white" : "text-ink")}>Aa</span>
                         </div>
                         <div className="p-4">
-                          <p className="text-[15px] font-semibold text-ink">{c.name}</p>
+                          <p className="type-body font-semibold text-ink">{c.name}</p>
                           <p className="mt-0.5 type-body-sm text-ink-muted">{c.note}</p>
                           <div className="mt-3 flex flex-wrap items-center gap-1.5">
                             <CopyChip value={c.hex} />
@@ -326,7 +326,7 @@ export default function BrandKitContent() {
                   <span className="rounded-full bg-paper px-3 py-1 type-caption text-ink-muted">Paper</span>
                 </div>
                 <div className="mt-4 rounded-2xl border border-line p-5">
-                  <p className="text-[16px] font-semibold text-ink">Card title</p>
+                  <p className="type-body font-semibold text-ink">Card title</p>
                   <p className="mt-1 type-body-sm text-ink-muted">rounded-2xl, 1px line border, no shadow at rest.</p>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function BrandKitContent() {
               {DRAWINGS.map(([name, Art]) => (
                 <figure key={name} className="flex flex-col items-center gap-3 bg-paper px-4 pt-6 pb-4">
                   <Art className="h-28 w-auto" />
-                  <figcaption className="font-mono text-[11.5px] text-ink-subtle">{name}</figcaption>
+                  <figcaption className="font-mono type-overline text-ink-subtle">{name}</figcaption>
                 </figure>
               ))}
             </div>

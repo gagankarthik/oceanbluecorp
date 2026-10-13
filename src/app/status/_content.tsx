@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/site/button";
 import {
   IconServer, IconLayers, IconShieldLock, IconMail, IconCloudUp, IconClock, IconChevronDown, type IconProps,
 } from "@/components/site/icons";
@@ -150,7 +151,7 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
           <Icon size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15.5px] font-semibold text-ink">{svc.label}</p>
+          <p className="truncate type-body font-semibold text-ink">{svc.label}</p>
           <p className="mt-0.5 type-caption text-ink-subtle">{svc.category} · US East (Ohio)</p>
         </div>
         <Dot status={svc.status} pulse />
@@ -208,7 +209,7 @@ function IncidentCard({ inc }: { inc: Incident }) {
             <StatusBadge status={inc.status} />
             <span className="type-caption text-ink-subtle">{inc.regionName} · {inc.serviceName}</span>
           </div>
-          <p className="text-[15px] font-semibold text-ink">{inc.summary}</p>
+          <p className="type-body font-semibold text-ink">{inc.summary}</p>
           <p className="mt-1 flex items-center gap-1 type-caption text-ink-subtle">
             <IconClock size={13} /> Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
           </p>
@@ -338,7 +339,7 @@ export default function StatusContent() {
                 type="button"
                 onClick={() => void load(true)}
                 disabled={refreshing}
-                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 font-semibold text-ink transition-colors hover:border-cobalt disabled:opacity-50"
+                className={buttonClass("outline", "sm", "pointer-coarse:h-11")}
               >
                 <IconRefresh size={14} className={refreshing ? "animate-spin motion-reduce:animate-none" : undefined} />
                 Refresh
@@ -366,7 +367,7 @@ export default function StatusContent() {
                 ) : !data?.ok ? (
                   <div className="rounded-2xl border border-line bg-paper p-8 text-center">
                     <IconStop size={30} className="mx-auto text-danger" />
-                    <p className="mt-3 text-[16px] font-semibold text-ink">Could not load status data</p>
+                    <p className="mt-3 type-body font-semibold text-ink">Could not load status data</p>
                     <p className="mt-1 type-body-sm text-ink-muted">The status feed may be temporarily unavailable.</p>
                     <button type="button" onClick={() => void load(true)} className="mt-4 min-h-11 type-label font-semibold text-cobalt underline underline-offset-4">
                       Try again
@@ -403,7 +404,7 @@ export default function StatusContent() {
                   <IconOk size={20} />
                 </span>
                 <div>
-                  <p className="text-[15px] font-semibold text-ink">No active incidents</p>
+                  <p className="type-body font-semibold text-ink">No active incidents</p>
                   <p className="mt-0.5 type-body-sm text-ink-muted">No active events reported for the US East (Ohio) region.</p>
                 </div>
               </div>

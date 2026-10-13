@@ -24,7 +24,7 @@ export default function AnnouncementBar({
   onDismiss?: () => void;
 }) {
   const barClass =
-    "horizon relative h-10 w-full items-center overflow-hidden text-[13px] font-medium text-white";
+    "horizon relative h-10 w-full items-center overflow-hidden type-caption font-medium text-white";
   const barStyle = {
     // Ink navy, not cobalt: the strip sits above a blue hero, and blue on blue
     // read as one smeared band. Dark bar, white header, blue hero instead.

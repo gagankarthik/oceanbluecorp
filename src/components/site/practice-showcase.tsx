@@ -152,7 +152,7 @@ export function PracticeShowcase() {
                         on ? "border-cobalt bg-cobalt" : "border-line-strong bg-transparent",
                       )}
                     />
-                    <span className={cn("flex-1 text-[14px] font-semibold tracking-[0.08em] uppercase transition-colors", on ? "text-ink" : "text-ink-muted")}>
+                    <span className={cn("flex-1 type-label tracking-[0.08em] uppercase transition-colors", on ? "text-ink" : "text-ink-muted")}>
                       {p.name}
                     </span>
                     <IconChevronDown size={16} className={cn("text-ink-subtle transition-transform duration-300", on && "rotate-180")} />
@@ -181,7 +181,7 @@ export function PracticeShowcase() {
                                   setPos({ active: i, offer: j });
                                 }}
                                 className={cn(
-                                  "py-1.5 text-left text-[14.5px] font-medium transition-colors",
+                                  "py-1.5 text-left type-body-sm font-medium transition-colors",
                                   on && j === offer ? "text-cobalt" : "text-ink hover:text-cobalt",
                                 )}
                               >
@@ -204,7 +204,7 @@ export function PracticeShowcase() {
             type="button"
             onClick={() => setAuto((a) => !a)}
             aria-pressed={!auto}
-            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-4 type-caption font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
           >
             {auto ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
             {auto ? "Pause rotation" : "Resume rotation"}
@@ -263,12 +263,12 @@ export function PracticeShowcase() {
                 <p className="mt-3 type-body-sm text-ink-muted">{p.body}</p>
                 <ul className="mt-5 flex flex-wrap gap-1.5">
                   {p.offers.map((o) => (
-                    <li key={o} className="rounded-full bg-paper px-3 py-1 text-[12.5px] text-ink-muted">
+                    <li key={o} className="rounded-full bg-paper px-3 py-1 type-caption text-ink-muted">
                       {o}
                     </li>
                   ))}
                 </ul>
-                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[15px] font-semibold text-ink group-hover:text-cobalt">
+                <span className="mt-auto inline-flex items-center gap-2 pt-6 type-body font-semibold text-ink group-hover:text-cobalt">
                   Learn more
                   <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </span>

@@ -19,7 +19,7 @@ export function Eyebrow({
   className?: string;
 }) {
   return (
-    <span className={`block text-[14px] font-semibold ${tone === "dark" ? "text-cobalt-light" : "text-cobalt"} ${className}`}>
+    <span className={`block type-label ${tone === "dark" ? "text-cobalt-light" : "text-cobalt"} ${className}`}>
       {children}
     </span>
   );

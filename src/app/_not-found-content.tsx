@@ -26,7 +26,7 @@ export default function NotFoundContent() {
           <MissingPage id="nf" className="rise mx-auto h-auto w-full max-w-[420px] lg:order-2 lg:max-w-none" />
 
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <p className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 font-mono text-[13px] font-medium text-cobalt" style={{ animationDelay: "200ms" }}>
+            <p className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 font-mono type-caption font-medium text-cobalt" style={{ animationDelay: "200ms" }}>
               <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
               Error 404
             </p>
@@ -54,10 +54,10 @@ export default function NotFoundContent() {
             {destinations.map((d) => (
               <li key={d.href} className="bg-white">
                 <Link href={d.href} className="group flex h-full flex-col p-6 transition-colors hover:bg-paper">
-                  <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+                  <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
                     <d.icon size={18} />
                   </span>
-                  <span className="mt-4 flex items-center gap-1.5 text-[16px] font-semibold text-ink">
+                  <span className="mt-4 flex items-center gap-1.5 type-body font-semibold text-ink">
                     {d.title}
                     <IconArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
                   </span>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/site/button";
 import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
 
 /**
@@ -53,13 +54,19 @@ function Switch({ on, onChange, label, disabled }: { on: boolean; onChange?: (v:
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange?.(!on)}
-      className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full transition-colors duration-150",
-        on ? "bg-cobalt" : "bg-line-input",
-        disabled && "cursor-not-allowed opacity-60",
-      )}
+      className={cn("relative -my-2.5 grid h-11 w-14 shrink-0 place-items-center rounded-full", disabled && "cursor-not-allowed")}
     >
-      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-150", on ? "translate-x-6" : "translate-x-1")} />
+      {/* The 24px track sits inside a 44px hit area. */}
+      <span
+        aria-hidden
+        className={cn(
+          "relative h-6 w-11 rounded-full transition-colors duration-[var(--dur-short)]",
+          on ? "bg-cobalt" : "bg-line-input",
+          disabled && "opacity-[var(--opacity-disabled)]",
+        )}
+      >
+        <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-[var(--dur-short)] ease-out", on ? "translate-x-6" : "translate-x-1")} />
+      </span>
     </button>
   );
 }
@@ -110,9 +117,8 @@ export default function CookieConsent() {
 
   if (!visible) return null;
 
-  const btn = "inline-flex h-11 items-center justify-center rounded-full px-6 type-label whitespace-nowrap transition-colors duration-150";
-  const secondary = cn(btn, "border border-line-strong bg-white text-ink hover:border-cobalt hover:text-cobalt");
-  const primary = cn(btn, "bg-cobalt text-white hover:bg-cobalt-deep");
+  const secondary = buttonClass("outline", "sm", "h-11 px-6");
+  const primary = buttonClass("primary", "sm", "h-11 px-6");
 
   return (
     <div
@@ -141,7 +147,7 @@ export default function CookieConsent() {
               </p>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center lg:shrink-0">
-              <button type="button" onClick={() => setManage(true)} className={cn(btn, "text-ink-muted hover:bg-paper hover:text-ink")}>
+              <button type="button" onClick={() => setManage(true)} className={buttonClass("ghost", "sm", "h-11 px-6")}>
                 Manage choices
               </button>
               <button type="button" onClick={() => save("essential", { preferences: false })} className={cn(secondary, "sm:flex-1 lg:flex-none")}>

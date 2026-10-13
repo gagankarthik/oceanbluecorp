@@ -2,7 +2,7 @@ import Image from "next/image";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { Band, SectionTitle, ClosingCta, CONTAINER, SECTION_Y } from "@/components/site/sections";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
 import { IconArrowRight, IconExternal } from "@/components/site/icons";
 import { GeoStack } from "@/components/site/geo-art";
 import { cn } from "@/lib/utils";
@@ -144,7 +144,7 @@ function ProductBlock({ p, index }: { p: Product; index: number }) {
                 href={p.site}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-cobalt bg-cobalt px-6 text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+                className={buttonClass("primary", "md")}
               >
                 Visit {p.name}
                 <IconExternal size={16} />
@@ -175,7 +175,7 @@ export default function ProductsPage() {
               <a
                 key={p.id}
                 href={`#${p.id}`}
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong bg-white px-4 type-label font-semibold text-ink transition-colors hover:border-cobalt"
+                className={buttonClass("outline", "sm", "pointer-coarse:h-11")}
               >
                 {p.name}
                 <IconArrowRight size={14} className="rotate-90" />

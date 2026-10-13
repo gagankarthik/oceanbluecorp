@@ -70,7 +70,7 @@ export function SectionLink({ href, children, className, dark }: { href: string;
     <Link
       href={href}
       className={cn(
-        "group inline-flex items-center gap-1.5 text-[15px] font-semibold transition-colors",
+        "group inline-flex items-center gap-1.5 type-body font-semibold transition-colors",
         dark ? "text-white hover:text-cobalt-light" : "text-ink hover:text-cobalt",
         className,
       )}
@@ -165,7 +165,7 @@ export function PageIntro({
     <section data-opener className="relative isolate overflow-hidden border-b border-line bg-white">
       <LineGrid />
       <div className={cn(CONTAINER, OPENER_Y)}>
-        {kicker && <p className="rise text-[14px] font-semibold text-cobalt">{kicker}</p>}
+        {kicker && <p className="rise type-label text-cobalt">{kicker}</p>}
         <h1 className="rise mt-3 max-w-[900px] type-headline-lg text-ink" style={{ animationDelay: "80ms" }}>
           {title}
         </h1>
@@ -305,7 +305,7 @@ export function DocHero({ title, lede, updated }: { title: string; lede?: string
             </p>
           )}
           {updated && (
-            <p className="rise mt-6 text-[14px] text-ink-subtle" style={{ animationDelay: "180ms" }}>
+            <p className="rise mt-6 type-body-sm text-ink-subtle" style={{ animationDelay: "180ms" }}>
               Last updated {updated}
             </p>
           )}
@@ -320,11 +320,11 @@ export function PolicyBody({ sections }: { sections: { id: string; h: string; bo
   return (
     <div className={cn(CONTAINER, SECTION_Y, "grid gap-12 lg:grid-cols-[240px_minmax(0,1fr)]")}>
       <nav aria-label="On this page" className="lg:sticky lg:top-28 lg:self-start">
-        <p className="text-[13.5px] font-semibold text-ink">On this page</p>
+        <p className="type-label text-ink">On this page</p>
         <ul className="mt-3 space-y-2 border-l border-line">
           {sections.map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="-ml-px block border-l border-transparent pl-4 text-[14px] text-ink-muted hover:border-ink hover:text-ink">
+              <a href={`#${s.id}`} className="-ml-px block border-l border-transparent pl-4 type-body-sm text-ink-muted hover:border-ink hover:text-ink">
                 {s.h}
               </a>
             </li>

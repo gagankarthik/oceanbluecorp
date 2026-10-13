@@ -135,7 +135,7 @@ export function DocPage({
 export function DocSection({ id, number, title, children }: { id: string; number?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-28 border-t border-line py-10 first:border-t-0 first:pt-0">
-      {number && <p className="font-mono text-[13px] font-medium text-ink-subtle">{number}</p>}
+      {number && <p className="font-mono type-caption font-medium text-ink-subtle">{number}</p>}
       <h2 className={cn("type-title-lg font-semibold text-ink", number && "mt-1.5")}>{title}</h2>
       <div className={cn("mt-4", PROSE)}>{children}</div>
     </section>
@@ -187,7 +187,7 @@ export function ContactCard({
 }) {
   return (
     <div className="rounded-2xl border border-line bg-white p-6">
-      <p className="text-[15px] font-semibold text-ink">{title}</p>
+      <p className="type-body font-semibold text-ink">{title}</p>
       <ul className="mt-4 space-y-3 type-body text-ink-muted">
         {email && (
           <li>
@@ -222,7 +222,7 @@ export function RelatedLinks({ links }: { links: { href: string; label: string }
         <Link
           key={l.href}
           href={l.href}
-          className="plain group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 text-[15px] font-semibold text-ink transition-colors hover:border-ink"
+          className="plain group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 type-body font-semibold text-ink transition-colors hover:border-ink"
         >
           {l.label}
           <IconArrowRight size={16} className="text-ink-subtle transition-transform group-hover:translate-x-1 group-hover:text-ink" />

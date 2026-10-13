@@ -25,8 +25,8 @@ export type SelectOption = {
 type Size = "md" | "lg";
 
 const triggerSize: Record<Size, string> = {
-  md: "h-10 pl-4 pr-3 text-[14px]",
-  lg: "h-12 pl-4 pr-3.5 text-[15px]",
+  md: "h-10 pointer-coarse:h-11 pl-4 pr-3 type-body-sm",
+  lg: "h-[var(--input-height)] pl-4 pr-3.5 type-body",
 };
 
 export function Select({
@@ -68,7 +68,7 @@ export function Select({
 }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className={hideLabel ? "sr-only" : "mb-1.5 block text-[14px] font-medium text-ink"}>
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "mb-2 block type-label text-ink"}>
         {label}
         {required && !hideLabel && <span className="text-danger"> *</span>}
       </label>
@@ -79,10 +79,10 @@ export function Select({
           aria-invalid={invalid || undefined}
           aria-describedby={describedBy}
           className={cn(
-            "group inline-flex w-full items-center justify-between gap-2 border bg-white text-left text-ink transition-colors",
-            "border-line-input hover:border-ink-subtle focus:outline-none focus-visible:border-cobalt focus-visible:ring-4 focus-visible:ring-cobalt/15",
-            "data-[placeholder]:text-ink-subtle data-[state=open]:border-cobalt disabled:cursor-not-allowed disabled:opacity-50",
-            "aria-[invalid=true]:border-danger aria-[invalid=true]:focus-visible:ring-danger/15",
+            "group inline-flex w-full items-center justify-between gap-2 border bg-white text-left text-ink transition-colors duration-[var(--dur-short)] ease-out",
+            "border-[var(--input-border)] hover:border-[var(--input-border-hover)] focus-visible:border-[var(--input-border-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-border-focus)]",
+            "data-[placeholder]:text-ink-subtle data-[state=open]:border-cobalt disabled:cursor-not-allowed disabled:opacity-[var(--opacity-disabled)]",
+            "aria-[invalid=true]:border-[var(--input-border-invalid)]",
             shape === "pill" ? "rounded-full" : "rounded-xl",
             triggerSize[size],
             triggerClassName,
@@ -107,7 +107,7 @@ export function Select({
               "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
             )}
           >
-            <S.ScrollUpButton className="flex h-7 items-center justify-center text-ink-subtle">
+            <S.ScrollUpButton className="flex h-8 pointer-coarse:h-11 items-center justify-center text-ink-subtle">
               <IconChevronDown size={14} className="rotate-180" />
             </S.ScrollUpButton>
             <S.Viewport className="p-1.5">
@@ -117,19 +117,19 @@ export function Select({
                   value={o.value}
                   disabled={o.disabled}
                   className={cn(
-                    "relative flex cursor-pointer items-center justify-between gap-4 rounded-xl py-2.5 pr-9 pl-3 text-[14.5px] text-ink outline-none! select-none",
-                    "data-[highlighted]:bg-paper data-[state=checked]:font-semibold data-[disabled]:cursor-default data-[disabled]:opacity-40",
+                    "relative flex min-h-10 pointer-coarse:min-h-11 cursor-pointer items-center justify-between gap-4 rounded-xl py-2 pr-9 pl-3 type-body text-ink outline-none! select-none",
+                    "data-[highlighted]:bg-paper data-[state=checked]:font-semibold data-[disabled]:cursor-not-allowed data-[disabled]:opacity-[var(--opacity-disabled)]",
                   )}
                 >
                   <S.ItemText>{o.label}</S.ItemText>
-                  {o.hint != null && <span className="text-[13.5px] font-normal text-ink-subtle tabular-nums">{o.hint}</span>}
+                  {o.hint != null && <span className="type-caption font-normal text-ink-subtle tabular-nums">{o.hint}</span>}
                   <S.ItemIndicator className="absolute right-3 inline-flex">
                     <IconCheck size={16} className="text-cobalt" />
                   </S.ItemIndicator>
                 </S.Item>
               ))}
             </S.Viewport>
-            <S.ScrollDownButton className="flex h-7 items-center justify-center text-ink-subtle">
+            <S.ScrollDownButton className="flex h-8 pointer-coarse:h-11 items-center justify-center text-ink-subtle">
               <IconChevronDown size={14} />
             </S.ScrollDownButton>
           </S.Content>

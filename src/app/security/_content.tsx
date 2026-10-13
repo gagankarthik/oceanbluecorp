@@ -226,7 +226,7 @@ export default function SecurityPage() {
 
             {/* The absences, stated rather than omitted. */}
             <div className="mt-8 rounded-r-xl border-l-2 border-cobalt bg-paper px-6 py-5">
-              <p className="text-[15px] font-semibold text-ink">What we do not hold</p>
+              <p className="type-body font-semibold text-ink">What we do not hold</p>
               <p className="mt-2 max-w-[58ch] type-body text-ink-muted">
                 Oceanblue is not SOC 2 audited and does not hold ISO 27001. We
                 have not commissioned a third-party penetration test. If your

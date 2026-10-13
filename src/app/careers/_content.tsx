@@ -118,7 +118,7 @@ export default function CareersPage() {
                 href={d.q ? `/careers/search?q=${encodeURIComponent(d.q)}` : "/careers/search"}
                 className="group flex h-full min-h-[210px] flex-col bg-white p-7 transition-colors hover:bg-paper-deep/40"
               >
-                <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+                <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
                   <d.icon size={18} />
                 </span>
                 <h3 className="mt-5 type-title-lg font-semibold text-ink">{d.name}</h3>
@@ -186,7 +186,7 @@ export default function CareersPage() {
               <ul className="mt-5 divide-y divide-line border-y border-line">
                 {OFFICES.map((o) => (
                   <li key={o.city} className="flex items-center justify-between gap-4 py-3">
-                    <span className="flex items-center gap-2.5 text-[15px] font-semibold text-ink">
+                    <span className="flex items-center gap-2.5 type-body font-semibold text-ink">
                       <IconPin size={16} className="text-ink-subtle" />
                       {o.city}
                     </span>

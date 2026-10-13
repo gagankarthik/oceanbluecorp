@@ -27,13 +27,13 @@ function Shell({
     <div className="relative overflow-hidden border border-line bg-white">
       <div className="px-5 pt-5 text-center">
         <p className="type-title text-ink">{title}</p>
-        <p className="mt-1 text-[12.5px] text-ink-subtle">{sub}</p>
+        <p className="mt-1 type-caption text-ink-subtle">{sub}</p>
       </div>
       <div className="px-5 pt-4">{children}</div>
       <div className="px-5 pt-4 pb-5">
         <span
           className={cn(
-            "flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-ink text-[13px] font-semibold text-white",
+            "flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-ink type-label text-white",
             on && "demo-press",
           )}
         >
@@ -43,7 +43,7 @@ function Shell({
           </svg>
         </span>
       </div>
-      <div className="border-t border-line bg-paper py-2.5 text-center text-[11.5px] text-ink-subtle">
+      <div className="border-t border-line bg-paper py-2.5 text-center type-overline text-ink-subtle">
         Delivered by <span className="font-semibold text-ink">Oceanblue</span>
       </div>
       {on && <Cursor />}
@@ -63,7 +63,7 @@ function Cursor() {
 function Bar({ on, label, value, tone = "bg-cobalt" }: { on: boolean; label: string; value: number; tone?: string }) {
   return (
     <div>
-      <div className="flex justify-between text-[12px] text-ink-muted">
+      <div className="flex justify-between type-caption text-ink-muted">
         <span>{label}</span>
         <span className="tabular-nums">{value}%</span>
       </div>
@@ -76,10 +76,10 @@ function Bar({ on, label, value, tone = "bg-cobalt" }: { on: boolean; label: str
 
 function Row({ icon: I = IconCheck, children, right, tone = "text-success" }: { icon?: Icon; children: React.ReactNode; right?: React.ReactNode; tone?: string }) {
   return (
-    <li className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 text-[12.5px] text-ink">
+    <li className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 type-caption text-ink">
       <I size={14} className={cn("shrink-0", tone)} />
       <span className="min-w-0 flex-1 truncate">{children}</span>
-      {right && <span className="shrink-0 text-[11.5px] text-ink-subtle">{right}</span>}
+      {right && <span className="shrink-0 type-overline text-ink-subtle">{right}</span>}
     </li>
   );
 }
@@ -88,7 +88,7 @@ function Chips({ items }: { items: string[] }) {
   return (
     <div className="flex flex-wrap justify-center gap-1.5">
       {items.map((c) => (
-        <span key={c} className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[11.5px] text-ink-muted">
+        <span key={c} className="rounded-full border border-line bg-paper px-2.5 py-0.5 type-overline text-ink-muted">
           {c}
         </span>
       ))}
@@ -99,8 +99,8 @@ function Chips({ items }: { items: string[] }) {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11.5px] font-medium text-ink">{label}</p>
-      <p className="mt-1 rounded-lg border border-line-strong px-3 py-1.5 text-[12.5px] text-ink-muted">{value}</p>
+      <p className="type-overline font-medium text-ink">{label}</p>
+      <p className="mt-1 rounded-lg border border-line-strong px-3 py-1.5 type-caption text-ink-muted">{value}</p>
     </div>
   );
 }
@@ -128,10 +128,10 @@ function Shortlist({ on }: CardProps) {
           <li key={r} className="flex items-center gap-2.5 rounded-lg border border-line px-2.5 py-2">
             <Avatar />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[12.5px] font-medium text-ink">{r}</span>
-              <span className="block text-[11.5px] text-ink-subtle">{s}</span>
+              <span className="block truncate type-caption font-medium text-ink">{r}</span>
+              <span className="block type-overline text-ink-subtle">{s}</span>
             </span>
-            <span className="rounded-full bg-success-container px-2 py-0.5 text-[11px] font-semibold text-success tabular-nums">{m}%</span>
+            <span className="rounded-full bg-success-container px-2 py-0.5 type-overline font-semibold text-success tabular-nums">{m}%</span>
           </li>
         ))}
       </ul>
@@ -180,7 +180,7 @@ function PmOnboard({ on }: CardProps) {
       <ol className="relative space-y-3 pl-5">
         <span aria-hidden className="absolute top-1.5 bottom-1.5 left-[5px] w-px bg-line-strong" />
         {steps.map(([t, w, done]) => (
-          <li key={t} className="relative text-[12.5px]">
+          <li key={t} className="relative type-caption">
             <span className={cn("absolute top-1 -left-5 size-2.5 rounded-full border-2", done ? "border-cobalt bg-cobalt" : "border-line-strong bg-white")} />
             <span className="text-ink">{t}</span>
             <span className="ml-2 text-ink-subtle">{w}</span>
@@ -256,10 +256,10 @@ function Controls({ on }: CardProps) {
     <Shell on={on} title="Plant controls" sub="Controls & automation" cta="Open commissioning">
       <ul className="space-y-1.5">
         {lines.map(([l, s, d]) => (
-          <li key={l} className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 text-[12.5px]">
+          <li key={l} className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 type-caption">
             <span className={cn("size-2 rounded-full", d, on && "demo-pulse")} />
             <span className="flex-1 text-ink">{l}</span>
-            <span className="text-[11.5px] text-ink-subtle">{s}</span>
+            <span className="type-overline text-ink-subtle">{s}</span>
           </li>
         ))}
       </ul>
@@ -302,7 +302,7 @@ function Security({ on }: CardProps) {
             className={cn(on && "demo-ring")}
           />
         </svg>
-        <ul className="flex-1 space-y-1.5 text-[12px]">
+        <ul className="flex-1 space-y-1.5 type-caption">
           <li className="flex justify-between text-ink-muted">
             Critical <span className="font-semibold text-ink">0</span>
           </li>
@@ -321,7 +321,7 @@ function Security({ on }: CardProps) {
 function ErpSync({ on }: CardProps) {
   return (
     <Shell on={on} title="ERP ↔ CRM sync" sub="Orders, accounts and invoices" cta="Run sync">
-      <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-paper px-3 py-3 text-[12px] font-semibold text-ink">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-paper px-3 py-3 type-label text-ink">
         <span className="rounded-md bg-white px-2 py-1 shadow-sm">ERP</span>
         <span className="relative h-px flex-1 bg-line-strong">
           <span className={cn("absolute -top-1 left-0 size-2 rounded-full bg-cobalt", on && "demo-flow")} />
@@ -353,12 +353,12 @@ function ProductionAi({ on }: CardProps) {
       </svg>
       <div className="mt-2 grid grid-cols-2 gap-2 text-center">
         <div className="rounded-lg border border-line py-1.5">
-          <p className="text-[11px] text-ink-subtle">Accuracy</p>
-          <p className="text-[13px] font-semibold text-ink">94%</p>
+          <p className="type-overline text-ink-subtle">Accuracy</p>
+          <p className="type-label text-ink">94%</p>
         </div>
         <div className="rounded-lg border border-line py-1.5">
-          <p className="text-[11px] text-ink-subtle">Latency</p>
-          <p className="text-[13px] font-semibold text-ink">180 ms</p>
+          <p className="type-overline text-ink-subtle">Latency</p>
+          <p className="type-label text-ink">180 ms</p>
         </div>
       </div>
     </Shell>
@@ -428,7 +428,7 @@ function Qbr({ on }: CardProps) {
           />
         ))}
       </div>
-      <p className="mt-2 text-center text-[11.5px] text-ink-subtle">Tickets resolved within target, by month</p>
+      <p className="mt-2 text-center type-overline text-ink-subtle">Tickets resolved within target, by month</p>
     </Shell>
   );
 }
@@ -455,7 +455,7 @@ function DevOpsCourse({ on }: CardProps) {
 function DataLab({ on }: CardProps) {
   return (
     <Shell on={on} title="Hands-on lab" sub="Data, analytics & AI" cta="Run lab">
-      <pre className="overflow-hidden rounded-lg bg-night px-3 py-2.5 font-mono text-[11.5px] leading-relaxed text-white/80">
+      <pre className="overflow-hidden rounded-lg bg-night px-3 py-2.5 font-mono type-overline leading-relaxed text-white/80">
         <span className="text-cobalt-light">$</span> dbt run --select sales{"\n"}
         <span className="text-success">✓</span> 12 models built{"\n"}
         <span className={cn("text-cobalt-light", on && "demo-caret")}>$</span>
@@ -470,13 +470,13 @@ function ErpSessions({ on }: CardProps) {
     <Shell on={on} title="Enablement schedule" sub="ERP & Salesforce, for your admins" cta="Book a seat">
       <div className="grid grid-cols-5 gap-1.5 text-center">
         {days.map((d, i) => (
-          <div key={d} className={cn("rounded-lg border py-2 text-[11.5px]", i === 1 || i === 3 ? "border-cobalt bg-cobalt-tint text-cobalt" : "border-line text-ink-subtle")}>
+          <div key={d} className={cn("rounded-lg border py-2 type-overline", i === 1 || i === 3 ? "border-cobalt bg-cobalt-tint text-cobalt" : "border-line text-ink-subtle")}>
             <p className="font-semibold">{d}</p>
             <p className="mt-0.5">{i === 1 || i === 3 ? "10:00" : "—"}</p>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-center text-[11.5px] text-ink-subtle">On-site or virtual, with hands-on labs</p>
+      <p className="mt-3 text-center type-overline text-ink-subtle">On-site or virtual, with hands-on labs</p>
     </Shell>
   );
 }

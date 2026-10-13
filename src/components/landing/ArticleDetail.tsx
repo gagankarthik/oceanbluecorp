@@ -56,7 +56,7 @@ function Metrics({ article }: { article: Article }) {
       {article.metrics.map((m) => (
         <div key={`${m.label}-${m.value}`} className="bg-white p-6">
           <p className="type-headline font-semibold text-cobalt">{m.value}</p>
-          <p className="mt-3 text-[15px] font-semibold text-ink">{m.label}</p>
+          <p className="mt-3 type-body font-semibold text-ink">{m.label}</p>
           {m.note && <p className="mt-1 type-body-sm text-ink-muted">{m.note}</p>}
         </div>
       ))}
@@ -99,7 +99,7 @@ function Byline({ name, role, date, iso }: { name?: string; role?: string; date?
   return (
     <div className="flex items-center gap-3.5 border-t border-line pt-6">
       {name && (
-        <span aria-hidden className="grid size-12 flex-none place-items-center rounded-full bg-cobalt-tint text-[15px] font-semibold text-cobalt">
+        <span aria-hidden className="grid size-12 flex-none place-items-center rounded-full bg-cobalt-tint type-body font-semibold text-cobalt">
           {initials}
         </span>
       )}
@@ -192,7 +192,7 @@ export default function ArticleDetail({ article, related }: { article: Article; 
 
             <Metrics article={article} />
 
-            {dateline && <p className="text-[15px] font-semibold text-ink">{dateline}</p>}
+            {dateline && <p className="type-body font-semibold text-ink">{dateline}</p>}
 
             {kind === "case-study" ? (
               <>
@@ -225,7 +225,7 @@ export default function ArticleDetail({ article, related }: { article: Article; 
             {/* Coverage we did not write: link out rather than restate it. */}
             {article.externalUrl && (
               <p className="border-t border-line pt-8">
-                <a href={article.externalUrl} target="_blank" rel="noopener noreferrer" className="text-[16px] font-semibold text-cobalt underline underline-offset-4">
+                <a href={article.externalUrl} target="_blank" rel="noopener noreferrer" className="type-body font-semibold text-cobalt underline underline-offset-4">
                   Read the full story at the source →
                 </a>
               </p>
