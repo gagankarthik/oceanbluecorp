@@ -15,9 +15,11 @@ it needs to keep ~25 admin screens consistent.
 
 1. **Calm density.** Recruiters live in these screens all day. Prefer compact rows,
    tabular numbers, and generous whitespace *between* groups over decoration *within* them.
-2. **One neutral, one accent.** Slate is the only neutral family; cobalt
-   (`--adm-accent`, #1d4ed8) is the only brand accent. Other hues appear solely as
-   *status/categorical* tones from `theme.ts`.
+2. **One neutral, one accent.** One navy-tinted neutral ramp (`--p-navy-50…950`,
+   OKLCH, hue 255) is the only neutral family; cobalt (`--adm-accent`, #1d4ed8) is the
+   only brand accent. Green, amber and red appear solely as success, warning and
+   danger (each with `-soft`, `-line` and `-ink` tokens); categories use cobalt steps
+   (`--adm-seq-1…5`) or neutral, always with a label. See `docs/DESIGN_LAWS.md`.
 3. **Components over classes.** Pages compose components; components consume tokens;
    tokens alias the brand. A page that hand-writes `border-slate-200/80 rounded-2xl …`
    is a bug to be migrated.
@@ -155,16 +157,16 @@ on the same beat.
 |---|---|---|
 | Charts | `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
 | Elevation | `--adm-shadow-sm/md/lg/pop` | Card → popover → modal |
-| Motion | `--adm-ease` (ease-out, entrances), `--adm-ease-in` (exits), `--adm-duration-fast/base/slow` 150/300/700 | Duration follows distance: hovers and toggles `fast`, panels and dialogs `base`, progress fills and chart draws `slow`. Loops only for live background work (indexing, saving) |
+| Motion | `--adm-ease` (ease-out, entrances), `--adm-ease-in` (exits), `--adm-duration-fast/base/slow` 150/240/300 | Hovers and toggles `fast`; sheets 240ms ease-out in, 160ms ease-in out; nothing functional over 300ms. Loops only for live background work (indexing, saving) |
 | Radius | `--adm-radius-xs` 4 · `-control` 6 · `-chip` 6 · `-input` 8 · `-card` 8 · `-dialog` 12 | Hairline affordances · buttons, nav rows, menu items · badges and tags · fields · cards, panels, popovers, the BrandBand · modals and the command palette |
 | Loading | `--skeleton-background/radius/duration`, `--content-enter-duration` | See "Loading" under §4 |
 
-Type scale (Geist Sans, set on `.adm-scope`): one ratio, **1.125 from a 14px
-body**, rounded to the half pixel, as Tailwind utilities from `@theme`:
-`text-adm-micro` 11 · `-xs` 12.5 · `-base` 14 · `-md` 16 · `-lg` 18 · `-xl` 20 ·
-`-2xl` 22.5 · `-3xl` 25 · `-4xl` 28. Page title `xl` semibold · card and step titles
-`base` semibold · body `base` · secondary text, labels and hints `xs` · counts and
-badges `micro`. **No `text-[Npx]` in the console**; a size off the scale is a bug.
+Type scale (Geist Sans, set on `.adm-scope`): one ratio, **1.2 from a 14px body**,
+six steps as Tailwind utilities from `@theme`: `text-adm-xs` 11.5 · `-base` 14 ·
+`-md` 17 · `-lg` 20 · `-xl` 24 · `-2xl` 29 (line heights 1.45 / 1.5 / 1.4 / 1.25 /
+1.2 / 1.15). Weights 400/500/600 only. Page title `xl` semibold · card and step
+titles `base` semibold · body and control text `base` · secondary text, meta, counts
+and badges `xs`. **No `text-[Npx]` in the console**; a size off the scale is a bug.
 **Sentence case everywhere, no uppercase tracked micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
 36px (`h-9`). Radius comes from the `--adm-radius-*` scale above, never a literal;
 status badges are pills.
@@ -196,7 +198,7 @@ The product owner's UI/UX rules, each mapped to what enforces it here.
 |---|---|
 | Spatial grid, S(n) = n × 4px | Tailwind's base-4 scale only; no off-grid `px` spacing |
 | Internal padding < container margin | Cards pad 16 (`p-4`), the canvas gap is 16–24 and sections 24+ |
-| Type scale, F(n+1) = F(n) × R | `text-adm-*`, R = 1.125 (above) |
+| Type scale, F(n+1) = F(n) × R | `text-adm-*`, R = 1.2 (above) |
 | Body line height | 1.57 on the console body, tighter (1.3) only on titles |
 | Fluid layout | Sidebar `max(15vw, 200px)`; panels size off container queries (`@container`) |
 | 60-30-10 colour | Canvas and surfaces neutral, hairlines and ink structure, cobalt only on actions, active state and focus |
@@ -232,7 +234,7 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/admi
 | DropdownMenu / Sheet / Tooltip | `ui/*` | Use these; don't recreate. Inputs and selects are the form primitives below; cards are `AdminCard`. |
 | `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
-| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones per lifecycle: New sky, Screening cobalt, Submitted indigo, Interview violet, Offered amber, Hired emerald, Rejected rose; job Draft sky, Active emerald, On hold amber, Closed slate (ended, not rejected). |
+| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones: stages in progress use neutral or cobalt steps; success only for good outcomes (Hired, Active), danger for Rejected, warning only where action is needed; Closed is neutral (ended, not rejected). |
 | `PeriodSwitcher` | `admin/charts.tsx` | The segmented control (date ranges, small view toggles). |
 | `StarRating` | `admin/star-rating.tsx` | , |
 | Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
@@ -311,12 +313,13 @@ Strategy for dashboards (implemented in `/admin`):
    merge the tail into "Other"); stage conversion → funnel with explicit % between stages (hovered band zooms, siblings recede);
    ranking → horizontal bars; tiny trend in a card/cell → `Sparkline`. No 3D, no dual axes,
    no pie with >7 slices.
-3. **Color discipline.** Series 1 is always cobalt (`SERIES.primary`); emerald is reserved
-   for success/hired, rose for rejected/failure, amber for at-risk, slate for "other".
+3. **Color discipline.** Series 1 is always cobalt (`SERIES.primary`), further series
+   step through `--adm-seq-*`; success, danger and warning hues only where the data
+   means that, neutral for "other".
    Categorical palettes come from `CHART_COLORS` **in order**, never invent hex values
    in a page.
 4. **Annotation over legend-hunting.** Put numbers on the chart (funnel counts, conversion
-   pills); axis labels 10px slate-400; gridlines horizontal-only, slate-100.
+   pills); axis labels `text-adm-xs` in ink-subtle; gridlines horizontal-only, hairline.
 5. **Performance.** Every chart is hand-rolled SVG (`charts.tsx`); there is no charting
    dependency in the bundle. Aggregate in `useMemo` off one fetched dataset rather
    than re-fetching per widget. Respect `prefers-reduced-motion` (`useReducedMotion`)
