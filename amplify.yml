@@ -31,6 +31,11 @@ frontend:
         # Resume Matching Engine (server-side only; set both in Amplify env vars)
         - echo "RESUME_MATCH_API_URL=$RESUME_MATCH_API_URL" >> .env.production
         - echo "RESUME_MATCH_API_KEY=$RESUME_MATCH_API_KEY" >> .env.production
+        # Google Indexing API for job postings (src/lib/google-indexing.ts).
+        # Store the private key on one line with literal 
+ between PEM lines.
+        - echo "GOOGLE_INDEXING_CLIENT_EMAIL=$GOOGLE_INDEXING_CLIENT_EMAIL" >> .env.production
+        - echo "GOOGLE_INDEXING_PRIVATE_KEY=\"$GOOGLE_INDEXING_PRIVATE_KEY\"" >> .env.production
         # Resume extraction engine. POST /extract needs an X-Extraction-Token
         # ticket, signed per request with the secret below — it must match
         # EXTRACTION_SHARED_SECRET on the engine, or every analysis fails 401

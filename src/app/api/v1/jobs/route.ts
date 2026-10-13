@@ -8,7 +8,8 @@ import { sanitizeRichText } from "@/lib/sanitize-server";
 import { validate, validationMessage, type Schema } from "@/lib/validate";
 import { v4 as uuidv4 } from "uuid";
 import { serverError } from "@/lib/api-errors";
-import { isPubliclyOpen } from "@/lib/job-status";
+import { isPubliclyOpen, isAcceptingApplications } from "@/lib/job-status";
+import { notifyJobIndexing } from "@/lib/google-indexing";
 import { JOB_TYPES, jobInputError, splitLegacyRemote } from "@/lib/job-input";
 import { WORKPLACES, jobLocationLabel } from "@/lib/workplace";
 
@@ -170,6 +171,8 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return serverError("v1/jobs POST create failed", result.error, "Couldn't create the job. Please try again.");
     }
+
+    if (isAcceptingApplications(job)) after(() => notifyJobIndexing(job.id, true));
 
     // Tell the desk a posting arrived from outside. Deferred with `after` for
     // the reason the internal route documents: on Lambda an unawaited promise

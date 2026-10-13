@@ -126,9 +126,12 @@ const nextConfig: NextConfig = {
       { source: "/solution-3", destination: "/solutions", permanent: true },
       { source: "/our-process", destination: "/solutions", permanent: true },
 
-      // The WordPress-era job board → the live one
-      { source: "/jobs/:path*", destination: "/careers/search", permanent: true },
-      { source: "/job/:path*", destination: "/careers/search", permanent: true },
+      // The WordPress-era job board → the live one. Only the bare index
+      // redirects: an individual old posting answers 410 Gone
+      // (src/app/jobs/[...slug]/route.ts), because Google files a dead job
+      // page that redirects to a listing as a soft 404.
+      { source: "/jobs", destination: "/careers/search", permanent: true },
+      { source: "/job", destination: "/careers/search", permanent: true },
 
       // WordPress taxonomy and content archives → the sections that replaced them
       { source: "/category/:slug*", destination: "/blog", permanent: true },
@@ -189,6 +192,12 @@ const nextConfig: NextConfig = {
       {
         source: "/auth/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      // Generated icons are files, not pages; Google was listing /apple-icon
+      // as "Crawled - currently not indexed".
+      {
+        source: "/:icon(apple-icon|icon)",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
       },
       // Additional headers for API routes
       {

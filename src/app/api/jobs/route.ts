@@ -11,6 +11,7 @@ import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isPastDeadline, isAcceptingApplications } from "@/lib/job-status";
 import { jobLocationLabel } from "@/lib/workplace";
 import { jobInputError, parseSalary, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
+import { notifyJobIndexing } from "@/lib/google-indexing";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -44,7 +45,9 @@ export async function GET(request: NextRequest) {
       for (const j of expired) j.status = "closed";
       if (expired.length) {
         after(() => Promise.all(expired.map((j) =>
-          updateJob(j.id, { status: "closed" }).catch((err) => console.error(`Auto-close of ${j.id} failed:`, err)),
+          updateJob(j.id, { status: "closed" })
+            .then(() => notifyJobIndexing(j.id, false))
+            .catch((err) => console.error(`Auto-close of ${j.id} failed:`, err)),
         )));
       }
     }
@@ -180,6 +183,8 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return serverError("Creating job", result.error, "Couldn't create the job. Please try again.");
     }
+
+    if (isAcceptingApplications(job)) after(() => notifyJobIndexing(job.id, true));
 
     /* In-app notification, after the response and awaited inside it.
        Fired unawaited this was a promise nobody held: on Lambda the invocation
