@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, MoreVertical } from "lucide-react";
+import { Check, MoreVertical } from "lucide-react";
 import type { Application, BenchType } from "@/lib/aws/dynamodb";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -130,8 +130,8 @@ export function RecordBar({
           </WorkspaceButton>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <WorkspaceButton aria-label="More actions" title="More actions" className="max-sm:flex-none">
-                {benchSaving || ownerSaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <MoreVertical aria-hidden="true" />}
+              <WorkspaceButton loading={benchSaving || ownerSaving} aria-label="More actions" title="More actions" className="max-sm:flex-none">
+                <MoreVertical aria-hidden="true" />
               </WorkspaceButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className={cn("w-64", MENU)}>

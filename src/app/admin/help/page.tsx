@@ -4,7 +4,7 @@ import * as React from "react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminDialog } from "@/components/admin/admin-dialog";
 import Link from "next/link";
-import { Check, ChevronRight, X, Plus, Loader2 } from "lucide-react";
+import { Check, ChevronRight, X, Plus } from "lucide-react";
 import {
   IconCopy, IconInfo, IconMail, IconPhone, IconEdit, IconTrash,
 } from "@/components/admin/icons";
@@ -93,7 +93,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         }
       }}
       className={cn(
-        "grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150",
+        "adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150",
         copied
           ? "text-[var(--adm-success-ink)]"
           : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -256,8 +256,8 @@ function DirectoryEditor({
         footer={
           <>
             <WorkspaceButton onClick={requestClose}>Cancel</WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
+            <WorkspaceButton loading={saving} variant="primary" onClick={save} disabled={saving}>
+              <Check className="h-4 w-4" /> Save directory
             </WorkspaceButton>
           </>
         }
@@ -302,7 +302,7 @@ function DirectoryEditor({
                 type="button"
                 onClick={() => remove(i)}
                 aria-label={`Remove ${m.name || "person"}`}
-                className="grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
               >
                 <IconTrash className="h-4 w-4" />
               </button>

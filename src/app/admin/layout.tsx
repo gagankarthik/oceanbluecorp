@@ -13,6 +13,7 @@ import { AdminProvider, useAdmin } from "@/components/admin/admin-provider";
 import { HeaderSearch } from "@/components/admin/header-search";
 import { ListTabs } from "@/components/admin/list-shell";
 import { Avatar } from "@/components/admin/avatar";
+import { WorkspaceButton } from "@/components/admin/workspace";
 import {
   IconOverview, IconRequisition, IconApplication, IconBench, IconResume,
   IconContact, IconClient, IconVendor, IconContent, IconStaff,
@@ -175,7 +176,7 @@ function Sidebar({
         aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!rail}
         title={rail ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute -right-3 top-[28px] z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] lg:grid"
+        className="adm-hit absolute -right-3 top-[28px] z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] lg:grid"
       >
         {rail ? <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />}
       </button>
@@ -537,12 +538,9 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
         <p className="mt-1 text-adm-base text-[var(--adm-ink-mute)]">
           Your role ({userRole ?? "none"}) can&apos;t open this page. Ask an administrator if you need access.
         </p>
-        <Link
-          href={home}
-          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-adm-base font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
-        >
-          {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
-        </Link>
+        <WorkspaceButton asChild variant="primary" className="mt-5">
+          <Link href={home}>{home === "/admin" ? "Back to dashboard" : "Go to your workspace"}</Link>
+        </WorkspaceButton>
       </div>
     </div>
   );

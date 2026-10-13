@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
@@ -131,7 +131,7 @@ export function EmailComposer({
             onClick={() => onOpenChange(false)}
             disabled={sending}
             aria-label="Close"
-            className="grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+            className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -210,8 +210,8 @@ export function EmailComposer({
           </a>
           <div className="flex items-center gap-2">
             <WorkspaceButton variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>Cancel</WorkspaceButton>
-            <WorkspaceButton type="submit" form="email-composer" variant="primary" disabled={!canSend}>
-              {sending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSend aria-hidden="true" />}
+            <WorkspaceButton loading={sending} type="submit" form="email-composer" variant="primary" disabled={!canSend}>
+              <IconSend aria-hidden="true" />
               {sending ? "Sending…" : "Send"}
             </WorkspaceButton>
           </div>

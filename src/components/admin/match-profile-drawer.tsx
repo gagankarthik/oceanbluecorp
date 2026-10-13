@@ -81,7 +81,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
                 type="button"
                 onClick={onClose}
                 aria-label="Close profile"
-                className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>

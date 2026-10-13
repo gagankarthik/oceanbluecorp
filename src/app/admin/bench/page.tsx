@@ -939,7 +939,7 @@ function RowAction({
   children: React.ReactNode;
 }) {
   const cls = cn(
-    "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors",
+    "adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-input)] text-[var(--adm-ink-subtle)] transition-colors",
     danger
       ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",

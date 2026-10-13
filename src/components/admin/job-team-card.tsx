@@ -226,7 +226,7 @@ export function JobTeamCard({
                   aria-expanded={open}
                   title={open ? "Close" : "Add a recruiter"}
                   className={cn(
-                    "grid h-8 w-8 flex-none place-items-center rounded-[8px] transition-colors",
+                    "adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-input)] transition-colors",
                     MOTION,
                     open
                       ? "bg-[var(--adm-surface-2)] text-[var(--adm-ink)]"
@@ -275,7 +275,7 @@ export function JobTeamCard({
                       aria-pressed={assigned}
                       className={cn(
                         "flex w-full items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 text-left transition-colors last:border-0",
-                        "hover:bg-[var(--adm-row-hover)] disabled:opacity-60",
+                        "hover:bg-[var(--adm-row-hover)] disabled:opacity-[var(--adm-opacity-disabled)]",
                         assigned && "bg-[var(--adm-surface)]",
                       )}
                     >
@@ -344,7 +344,7 @@ export function JobTeamCard({
                     disabled={!!savingId}
                     aria-label={`Remove ${name} from the team`}
                     title="Remove from the team"
-                    className="grid h-6 w-6 flex-none place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:pointer-events-none"
+                    className="adm-hit grid h-6 w-6 flex-none place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:cursor-not-allowed"
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>

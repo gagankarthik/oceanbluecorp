@@ -280,7 +280,7 @@ export default function JobDetailPage({
               <button
                 type="button"
                 aria-label={`Actions for ${a.name || a.email}`}
-                className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
               >
                 <MoreVertical className="h-4 w-4" aria-hidden="true" />
               </button>

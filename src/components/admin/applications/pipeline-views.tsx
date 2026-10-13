@@ -256,7 +256,7 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
           onEdit={onEdit}
           onDelete={onDelete}
           onStatusChange={onStatusChange}
-          className="-mr-1.5 -mt-1.5 lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
+          className="-mr-1.5 -mt-1.5 lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 lg:data-[state=open]:opacity-100"
         />
       </div>
 
@@ -374,7 +374,7 @@ const ListRow = React.memo(function ListRow({ app, ...shared }: RowActions & { a
         onEdit={shared.onEdit}
         onDelete={shared.onDelete}
         onStatusChange={shared.onStatusChange}
-        className="lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
+        className="lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 lg:data-[state=open]:opacity-100"
       />
     </li>
   );

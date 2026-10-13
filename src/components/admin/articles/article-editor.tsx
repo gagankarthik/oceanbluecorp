@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, SearchX, X } from "lucide-react";
+import { Plus, SearchX, X } from "lucide-react";
 import type { Article, ArticleKind, ArticleMetric } from "@/lib/aws/dynamodb";
 import {
   ARTICLE_KIND_CONFIG,
@@ -1001,12 +1001,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         }
       >
         <WorkspaceButton onClick={() => (dirty ? setConfirmLeave(true) : router.push(config.adminPath))}>Cancel</WorkspaceButton>
-        <WorkspaceButton
+        <WorkspaceButton loading={saving}
           variant="primary"
           onClick={save}
           disabled={saving || blockedFromPublishing}
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           {isNew ? `Create ${config.noun}` : publishIntent ? "Save and publish" : "Save"}
         </WorkspaceButton>
       </FormActionBar>

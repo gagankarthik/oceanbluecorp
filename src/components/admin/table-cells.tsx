@@ -71,7 +71,7 @@ export function RowMenu({ label, items, busy = false }: { label: string; items: 
           type="button"
           aria-label={`Actions for ${label}`}
           onClick={(e) => e.stopPropagation()}
-          className="grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
+          className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <MoreVertical className="h-4 w-4" />}
         </button>

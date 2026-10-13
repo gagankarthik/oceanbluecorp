@@ -94,7 +94,7 @@ export function JobPreviewDrawer({
                 type="button"
                 onClick={onClose}
                 aria-label="Close preview"
-                className="grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>

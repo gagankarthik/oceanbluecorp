@@ -94,7 +94,7 @@ export function SavedViewsMenu<S>({
                   onClick={() => onDelete(item.id)}
                   aria-label={`Delete saved view ${item.name}`}
                   title="Delete"
-                  className="grid h-7 w-7 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+                  className="adm-hit grid h-7 w-7 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>

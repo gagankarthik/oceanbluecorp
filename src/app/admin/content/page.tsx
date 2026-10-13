@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { IconSave, IconEye, IconAlert } from "@/components/admin/icons";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
@@ -342,8 +341,8 @@ export default function ContentPage() {
         }
       >
         <WorkspaceButton onClick={discard} disabled={!dirty || saving}>Discard</WorkspaceButton>
-        <WorkspaceButton variant="primary" onClick={savePage} disabled={!dirty || saving || loadFailed}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconSave className="h-4 w-4" />}
+        <WorkspaceButton loading={saving} variant="primary" onClick={savePage} disabled={!dirty || saving || loadFailed}>
+          <IconSave className="h-4 w-4" />
           {saving ? "Saving…" : `Save ${page.name.toLowerCase()}`}
         </WorkspaceButton>
       </FormActionBar>

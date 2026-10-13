@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, X, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { IconTrash, IconWarning } from "./icons";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type {
@@ -69,7 +69,7 @@ function Entry({ label, onRemove, children }: { label: string; onRemove: () => v
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${label.toLowerCase()}`}
-          className="-my-1 grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+          className="-my-1 adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
         >
           <IconTrash className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -204,7 +204,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="-mr-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+            className="-mr-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -327,8 +327,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
         <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
           <WorkspaceButton onClick={() => onOpenChange(false)}>Cancel</WorkspaceButton>
-          <WorkspaceButton variant="primary" onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
+          <WorkspaceButton loading={saving} variant="primary" onClick={handleSave} disabled={saving}>
             Save changes
           </WorkspaceButton>
         </div>

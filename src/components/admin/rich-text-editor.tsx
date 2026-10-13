@@ -110,7 +110,7 @@ export function RichTextEditor({
             // Keep the selection in the editor when the button is pressed.
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => exec(c.command)}
-            className="grid h-8 w-8 place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+            className="adm-hit grid h-8 w-8 place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
           >
             <c.icon className="h-4 w-4" aria-hidden="true" />
           </button>

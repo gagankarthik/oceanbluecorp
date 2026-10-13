@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Slot } from "radix-ui";
-import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Loader2, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
 import { IconBookmark, IconJob, IconLocation, IconShield, IconUser } from "./icons";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -138,6 +138,8 @@ export function WorkspaceButton({
   variant = "secondary",
   size = "md",
   asChild = false,
+  loading = false,
+  disabled,
   className,
   children,
   ...props
@@ -147,6 +149,8 @@ export function WorkspaceButton({
   /** "sm" (32px) fits card-header action slots. */
   size?: "sm" | "md";
   asChild?: boolean;
+  /** Busy: spinner in place of the leading icon, disabled, aria-busy. */
+  loading?: boolean;
 }) {
   const Comp = asChild ? Slot.Root : "button";
   // On the cobalt BrandBand a filled or ghost button would vanish, so it inverts.
@@ -155,24 +159,32 @@ export function WorkspaceButton({
     <Comp
       {...(asChild ? {} : { type: "button" as const })}
       {...props}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={cn(
         "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
         size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-base" : "h-9 rounded-[var(--adm-radius-control)] px-4 text-adm-base",
-        "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
-        "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
+        "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] not-disabled:active:scale-[0.98]",
+        "disabled:cursor-not-allowed disabled:opacity-[var(--adm-opacity-disabled)] [&_svg]:size-4 [&_svg]:flex-none",
+        loading && "[&>svg:not([data-spinner])]:hidden",
         variant === "primary" && (onBand
-          ? "bg-white text-[var(--adm-accent)] hover:bg-white/90"
-          : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] hover:bg-[var(--adm-accent-strong)]"),
+          ? "bg-white text-[var(--adm-accent)] not-disabled:hover:bg-white/90 not-disabled:active:bg-white/80"
+          : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] not-disabled:hover:bg-[var(--adm-accent-strong)] not-disabled:active:bg-[var(--adm-accent-press)]"),
         variant === "secondary" &&
-          "border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
-        variant === "danger" && "bg-[var(--adm-danger)] text-white hover:bg-[var(--adm-danger-ink)]",
+          "border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] not-disabled:hover:border-[var(--adm-ink-mute)] not-disabled:hover:bg-[var(--adm-row-hover)] not-disabled:active:bg-[var(--adm-row-press)]",
+        variant === "danger" && "bg-[var(--adm-danger)] text-white not-disabled:hover:bg-[var(--adm-danger-ink)] not-disabled:active:bg-[var(--adm-danger-ink)]",
         variant === "ghost" && (onBand
-          ? "text-white/85 hover:bg-white/10 hover:text-white"
-          : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"),
+          ? "text-white/85 not-disabled:hover:bg-white/10 not-disabled:hover:text-white not-disabled:active:bg-white/20"
+          : "text-[var(--adm-ink-mute)] not-disabled:hover:bg-[var(--adm-surface-2)] not-disabled:hover:text-[var(--adm-ink)] not-disabled:active:bg-[var(--adm-row-press)]"),
         className,
       )}
     >
-      {children}
+      {asChild ? children : (
+        <>
+          {loading && <Loader2 data-spinner aria-hidden className="animate-spin" />}
+          {children}
+        </>
+      )}
     </Comp>
   );
 }
@@ -925,7 +937,7 @@ export function FilterMenu({
             type="button"
             onClick={onClearAll}
             disabled={!active}
-            className="text-adm-xs font-semibold text-[var(--adm-accent)] transition-opacity hover:underline disabled:pointer-events-none disabled:opacity-40"
+            className="text-adm-xs font-semibold text-[var(--adm-accent)] transition-opacity hover:underline disabled:cursor-not-allowed disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             Clear all
           </button>

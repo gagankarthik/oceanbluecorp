@@ -840,17 +840,26 @@
    The fix extends the CLICKABLE area without changing the visual size: a
    transparent ::after is stretched to a comfortable target over the control
    that is drawn. Nothing looks bigger; everything is easier to hit. */
-.adm-hit {
-  position: relative;
+/* In the components layer so an `absolute` utility on the same element wins. */
+@layer components {
+  .adm-hit {
+    position: relative;
+  }
+  .adm-hit::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 40px);
+    height: max(100%, 40px);
+    transform: translate(-50%, -50%);
+  }
 }
-.adm-hit::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(100%, 40px);
-  height: max(100%, 40px);
-  transform: translate(-50%, -50%);
+
+/* Disabled reads as disabled to the pointer too; opacity comes from --adm-opacity-disabled. */
+.adm-scope :is(button, input, select, textarea):disabled,
+.adm-portals :is(button, input, select, textarea):disabled {
+  cursor: not-allowed;
 }
 
 /* Column headers: the whole cell sorts, not just the label's text box.

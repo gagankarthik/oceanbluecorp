@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { AdminDialog } from "@/components/admin/admin-dialog";
 import { IconClock, IconEye, IconHash, IconJob, IconLocation, IconSave } from "../icons";
 import type { Job, Client, Vendor, SalaryPeriod } from "@/lib/aws/dynamodb";
@@ -734,8 +733,8 @@ export function JobForm({
           }
           footer={
             <>
-              <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting} className="w-full">
-                {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+              <WorkspaceButton loading={submitting} type="submit" form={formId} variant="primary" disabled={submitting} className="w-full">
+                <IconSave aria-hidden="true" />
                 {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
               </WorkspaceButton>
               {requiredLeft > 0 && (
@@ -755,8 +754,8 @@ export function JobForm({
             ? <>{requiredLeft} required step{requiredLeft === 1 ? "" : "s"} left</>
             : <span className="font-medium text-[var(--adm-success-ink)]">Ready to save</span>}
         </p>
-        <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
-          {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+        <WorkspaceButton loading={submitting} type="submit" form={formId} variant="primary" disabled={submitting}>
+          <IconSave aria-hidden="true" />
           {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
         </WorkspaceButton>
       </div>
@@ -839,8 +838,8 @@ function AddClientModal({
       footer={
         <>
           <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
-          <WorkspaceButton type="submit" form="add-client-form" variant="primary" disabled={submitting}>
-            {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add client
+          <WorkspaceButton loading={submitting} type="submit" form="add-client-form" variant="primary" disabled={submitting}>
+            Add client
           </WorkspaceButton>
         </>
       }
@@ -929,8 +928,8 @@ function AddVendorModal({
       footer={
         <>
           <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
-          <WorkspaceButton type="submit" form="add-vendor-form" variant="primary" disabled={submitting}>
-            {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add vendor
+          <WorkspaceButton loading={submitting} type="submit" form="add-vendor-form" variant="primary" disabled={submitting}>
+            Add vendor
           </WorkspaceButton>
         </>
       }

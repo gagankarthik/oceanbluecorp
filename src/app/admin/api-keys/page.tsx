@@ -302,7 +302,7 @@ export default function ApiKeysPage() {
             disabled={scopingId === k.id}
             onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
             onClick={(e) => e.stopPropagation()}
-            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-base font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-base font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {API_ACCESS_LEVELS.map((level) => (
               <option key={level.id} value={level.id}>{level.label}</option>
@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -384,7 +384,7 @@ export default function ApiKeysPage() {
             disabled={deletingId === k.id}
             aria-label={`Revoke ${k.name}`}
             title="Revoke key permanently"
-            className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-50"
+            className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {deletingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -549,8 +549,8 @@ export default function ApiKeysPage() {
             <WorkspaceButton onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
               Cancel
             </WorkspaceButton>
-            <WorkspaceButton type="submit" form="apikey-form" variant="primary" disabled={creating} className="w-full sm:w-auto">
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconKey className="h-4 w-4" aria-hidden="true" />}
+            <WorkspaceButton loading={creating} type="submit" form="apikey-form" variant="primary" disabled={creating} className="w-full sm:w-auto">
+              <IconKey className="h-4 w-4" aria-hidden="true" />
               {creating ? "Generating…" : "Generate key"}
             </WorkspaceButton>
           </>

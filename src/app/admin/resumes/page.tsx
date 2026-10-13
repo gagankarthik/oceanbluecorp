@@ -124,7 +124,7 @@ function IconAction({
       title={label}
       aria-label={label}
       className={cn(
-        "grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors",
+        "adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors",
         danger
           ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -600,7 +600,7 @@ export default function ResumeBankPage() {
             onClick={(e) => { e.stopPropagation(); void indexKeys([r]); }}
             disabled={bulkRunning || jobBusy}
             title={serverFailures.get(r.fileKey) || "The last attempt failed"}
-            className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
+            className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             Failed · Retry
           </button>
@@ -699,7 +699,7 @@ export default function ResumeBankPage() {
                   type="button"
                   onClick={() => setPanelOpen(false)}
                   aria-label="Close upload queue"
-                  className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                  className="adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -754,8 +754,7 @@ export default function ResumeBankPage() {
               <p className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                 {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
               </p>
-              <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
-                {anyUploading && <Loader2 className="animate-spin" aria-hidden="true" />}
+              <WorkspaceButton loading={anyUploading} variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
                 {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
               </WorkspaceButton>
             </div>
@@ -791,8 +790,8 @@ export default function ResumeBankPage() {
           tone="warning"
           icon={<IconWarning className="h-4 w-4 text-[var(--adm-warning-ink)]" aria-hidden="true" />}
           action={
-            <WorkspaceButton onClick={() => startIndexing()} disabled={jobAction !== null}>
-              {jobAction === "start" && <Loader2 className="animate-spin" aria-hidden="true" />}Resume indexing
+            <WorkspaceButton loading={jobAction === "start"} onClick={() => startIndexing()} disabled={jobAction !== null}>
+              Resume indexing
             </WorkspaceButton>
           }
         >
@@ -822,8 +821,8 @@ export default function ResumeBankPage() {
                 <WorkspaceButton variant="ghost" onClick={() => setStatusFilter("failed")}>Show failed</WorkspaceButton>
               )}
               {(job?.failed.length ?? 0) > 0 && (
-                <WorkspaceButton onClick={() => startIndexing(true)} disabled={jobAction !== null}>
-                  {jobAction === "retry" && <Loader2 className="animate-spin" aria-hidden="true" />}Retry failed
+                <WorkspaceButton loading={jobAction === "retry"} onClick={() => startIndexing(true)} disabled={jobAction !== null}>
+                  Retry failed
                 </WorkspaceButton>
               )}
             </>
@@ -843,8 +842,8 @@ export default function ResumeBankPage() {
         <Notice
           tone="accent"
           action={
-            <WorkspaceButton onClick={() => startIndexing()} disabled={jobAction !== null}>
-              {jobAction === "start" && <Loader2 className="animate-spin" aria-hidden="true" />}Index all
+            <WorkspaceButton loading={jobAction === "start"} onClick={() => startIndexing()} disabled={jobAction !== null}>
+              Index all
             </WorkspaceButton>
           }
         >
@@ -1098,8 +1097,8 @@ function DuplicatesDialog({
               This permanently deletes <span className="font-semibold tabular-nums">{toDelete.length}</span> {toDelete.length === 1 ? "file" : "files"}. It can’t be undone.
             </p>
             <WorkspaceButton variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>Back</WorkspaceButton>
-            <WorkspaceButton variant="danger" onClick={run} disabled={busy}>
-              {busy && <Loader2 className="animate-spin" aria-hidden="true" />}Delete {toDelete.length} {toDelete.length === 1 ? "file" : "files"}
+            <WorkspaceButton loading={busy} variant="danger" onClick={run} disabled={busy}>
+              Delete {toDelete.length} {toDelete.length === 1 ? "file" : "files"}
             </WorkspaceButton>
           </>
         ) : (

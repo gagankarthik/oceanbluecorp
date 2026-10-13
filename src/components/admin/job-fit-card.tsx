@@ -3,7 +3,6 @@
 // "Job fit" card for an application detail screen. Reads the cached verdict from
 // /api/applications/[id]/job-fit (GET) and lets staff (re)score on demand (POST).
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconConversion, IconRefresh, IconWarning } from "@/components/admin/icons";
@@ -81,8 +80,8 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         subtitle={at && fit ? `Scored ${fmtDate(at)}` : undefined}
         action={
           // Secondary: the record's one filled action is "Edit profile" in the pinned header.
-          <WorkspaceButton onClick={score} disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
+          <WorkspaceButton loading={loading} onClick={score} disabled={loading}>
+            <IconRefresh aria-hidden="true" />
             {loading ? "Scoring…" : fit ? "Re-score" : "Score fit"}
           </WorkspaceButton>
         }

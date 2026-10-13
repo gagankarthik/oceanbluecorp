@@ -312,7 +312,7 @@ function NewApplicationInner() {
                     type="button"
                     disabled={!!benchPicking}
                     onClick={() => void pickFromBench(a)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-60"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--adm-surface-2)] disabled:opacity-[var(--adm-opacity-disabled)]"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-adm-base font-medium text-[var(--adm-ink)]">{a.name || a.email}</span>
@@ -403,8 +403,8 @@ function NewApplicationInner() {
         onResumeFileChange={(file) => (file ? setParseError(null) : forgetPrefill())}
         resumeFileActions={form.resumeFile && parsedFile.current !== form.resumeFile ? (
           // A resume attached late in a manual entry can still fill the blanks.
-          <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
-            {parsing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
+          <WorkspaceButton loading={parsing} className="h-8 px-3 text-adm-base" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
+            <IconSparkles aria-hidden="true" />
             {parsing ? "Reading…" : "Fill form from resume"}
           </WorkspaceButton>
         ) : undefined}
@@ -418,8 +418,8 @@ function NewApplicationInner() {
           <WorkspaceButton onClick={() => router.push(returnTo ?? "/admin/applications")}>
             Cancel
           </WorkspaceButton>
-          <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <IconSave />}
+          <WorkspaceButton loading={busy} type="submit" form={FORM_ID} variant="primary" disabled={busy}>
+            <IconSave />
             {parsing ? "Reading resume…" : form.uploading ? "Uploading…" : forBench ? "Add to bench" : "Add applicant"}
           </WorkspaceButton>
         </div>

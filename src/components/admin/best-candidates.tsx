@@ -154,8 +154,8 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
 
   // Secondary: the job page's one filled action is "Add applicant" in its header.
   const actionButton = (
-    <WorkspaceButton onClick={run} disabled={busy || loadingSaved}>
-      {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSource aria-hidden="true" />}
+    <WorkspaceButton loading={busy} onClick={run} disabled={busy || loadingSaved}>
+      <IconSource aria-hidden="true" />
       {busy ? "Ranking…" : ran ? "Re-run" : "Find candidates"}
     </WorkspaceButton>
   );

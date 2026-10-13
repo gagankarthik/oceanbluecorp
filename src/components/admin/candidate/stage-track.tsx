@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import type { Application } from "@/lib/aws/dynamodb";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconError } from "@/components/admin/icons";
@@ -84,8 +84,7 @@ export function StageTrack({
             </WorkspaceButton>
             {/* The record's one filled action. */}
             {next && (
-              <WorkspaceButton size="sm" variant="primary" onClick={() => onStage(next.key)} disabled={saving}>
-                {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              <WorkspaceButton loading={saving} size="sm" variant="primary" onClick={() => onStage(next.key)} disabled={saving}>
                 Move to {next.label}
                 <ArrowRight aria-hidden="true" />
               </WorkspaceButton>

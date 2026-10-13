@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Application } from "@/lib/aws/dynamodb";
 import { AdminCard } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
@@ -93,25 +93,25 @@ export function RecordSidebar({
               </div>
             </div>
             {isOwner && (
-              <WorkspaceButton
+              <WorkspaceButton loading={ownerSaving}
                 variant="ghost"
                 size="sm"
                 onClick={onRelease}
                 disabled={ownerSaving}
                 className="text-[var(--adm-ink-mute)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
               >
-                {ownerSaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconUserX aria-hidden="true" />}
+                <IconUserX aria-hidden="true" />
                 Release
               </WorkspaceButton>
             )}
           </div>
         ) : (
-          <WorkspaceButton
+          <WorkspaceButton loading={ownerSaving}
             onClick={onClaim}
             disabled={ownerSaving}
             className="mt-2 w-full border-[var(--adm-danger)] text-[var(--adm-danger-ink)] shadow-none hover:border-[var(--adm-danger)] hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           >
-            {ownerSaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconUserCheck aria-hidden="true" />}
+            <IconUserCheck aria-hidden="true" />
             Unclaimed, claim this candidate
           </WorkspaceButton>
         )}

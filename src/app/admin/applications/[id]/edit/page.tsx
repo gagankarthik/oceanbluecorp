@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { Loader2, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { IconSave } from "@/components/admin/icons";
 import type { Job } from "@/lib/aws/dynamodb";
@@ -103,8 +103,8 @@ function EditApplicationInner() {
           <WorkspaceButton onClick={() => router.push(returnTo ?? `/admin/candidates/${id}`)}>
             Cancel
           </WorkspaceButton>
-          <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={form.busy}>
-            {form.busy ? <Loader2 className="animate-spin" /> : <IconSave />}
+          <WorkspaceButton loading={form.busy} type="submit" form={FORM_ID} variant="primary" disabled={form.busy}>
+            <IconSave />
             {form.uploading ? "Uploading resume…" : "Save changes"}
           </WorkspaceButton>
         </div>

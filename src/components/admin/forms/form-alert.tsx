@@ -31,7 +31,7 @@ export function FormErrorBanner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss error"
-          className="-my-0.5 grid h-6 w-6 flex-none place-items-center rounded-[6px] transition-colors hover:bg-[var(--adm-surface)]"
+          className="-my-0.5 adm-hit grid h-6 w-6 flex-none place-items-center rounded-[6px] transition-colors hover:bg-[var(--adm-surface)]"
         >
           <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>

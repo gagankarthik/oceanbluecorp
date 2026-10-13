@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { NoteEntry } from "@/lib/aws/dynamodb";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { Avatar } from "@/components/admin/avatar";
@@ -55,8 +55,8 @@ export function NotesTab({
               )}
             </p>
             {/* Secondary: the record's filled action is "Edit profile" in the pinned header. */}
-            <WorkspaceButton onClick={onSubmit} disabled={!value.trim() || saving}>
-              {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+            <WorkspaceButton loading={saving} onClick={onSubmit} disabled={!value.trim() || saving}>
+              <Plus aria-hidden="true" />
               Post note
             </WorkspaceButton>
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { Loader2 } from "lucide-react";
 import { IconWarning, IconTrash } from "./icons";
 import { AdminDialog } from "./admin-dialog";
 import { WorkspaceButton } from "./workspace";
@@ -57,8 +56,7 @@ export function ConfirmDialog({
           <WorkspaceButton ref={cancelRef} onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </WorkspaceButton>
-          <WorkspaceButton variant={danger ? "danger" : "primary"} onClick={onConfirm} disabled={busy}>
-            {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+          <WorkspaceButton loading={busy} variant={danger ? "danger" : "primary"} onClick={onConfirm} disabled={busy}>
             {confirmLabel}
           </WorkspaceButton>
         </>

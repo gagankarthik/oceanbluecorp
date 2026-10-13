@@ -453,8 +453,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."
           }
           action={
-            <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
-              {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
+            <WorkspaceButton loading={analyzing} onClick={() => void handleAnalyze()} disabled={analyzing}>
+              <IconSparkles aria-hidden="true" />
               {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
             </WorkspaceButton>
           }
@@ -599,8 +599,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                       <WorkspaceButton onClick={() => setAnalysisEditOpen(true)}>
                         <IconEdit aria-hidden="true" /> Edit
                       </WorkspaceButton>
-                      <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
-                        {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
+                      <WorkspaceButton loading={analyzing} onClick={() => void handleAnalyze()} disabled={analyzing}>
+                        <IconRefresh aria-hidden="true" />
                         Re-analyze
                       </WorkspaceButton>
                     </div>

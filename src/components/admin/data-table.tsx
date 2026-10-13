@@ -149,7 +149,7 @@ const HIDE = {
 const ALIGN = { left: "text-left", right: "text-right", center: "text-center" } as const;
 
 const PAGER_BTN =
-  "inline-flex h-8 items-center rounded-[6px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-8 items-center rounded-[6px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-[var(--adm-opacity-disabled)]";
 
 /** Zero-based pages to show: both ends, the current page and its neighbours; null is a gap. */
 function pageList(current: number, count: number): (number | null)[] {
@@ -419,7 +419,7 @@ export function DataTable<T>({
                     } : undefined}
                     className={cn(
                       "group/row bg-[var(--adm-surface)] transition-colors duration-150",
-                      onRowClick && "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--adm-accent)]",
+                      onRowClick && "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--adm-focus)] active:bg-[var(--adm-row-press)]",
                       // Selected rows keep an accent spine so the state is
                       // legible even where the hover wash also applies; hover
                       // draws a lighter one, so the pointer has a definite
@@ -457,7 +457,7 @@ export function DataTable<T>({
                     ))}
                     {rowActions && (
                       <td className="w-14 pl-2 pr-4" onClick={(e) => e.stopPropagation()}>
-                        <div className={cn("flex justify-end transition-opacity", !rowActionsAlways && "focus-within:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-focus-visible/row:opacity-100")}>
+                        <div className={cn("flex justify-end transition-opacity", !rowActionsAlways && "lg:opacity-0 lg:focus-within:opacity-100 lg:group-hover/row:opacity-100 lg:group-focus-within/row:opacity-100")}>
                           {rowActions(row)}
                         </div>
                       </td>
@@ -623,7 +623,7 @@ export function DataTable<T>({
                     aria-label={`Page ${n + 1}`}
                     aria-current={n === safePage ? "page" : undefined}
                     className={cn(
-                      "h-8 min-w-8 rounded-[6px] px-2 text-adm-base font-medium tabular-nums transition-colors",
+                      "adm-hit h-8 min-w-8 rounded-[var(--adm-radius-control)] px-2 text-adm-base font-medium tabular-nums transition-colors",
                       n === safePage
                         ? "bg-[var(--adm-accent)] text-white"
                         : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",

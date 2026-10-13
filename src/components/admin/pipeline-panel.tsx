@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   IconPipeline, IconSend, IconInterview, IconPlacement, IconMoney,
   IconCalendar, IconTrash, IconWarning, IconBuilding, IconPercent, IconUser, IconDownload,
@@ -357,7 +357,7 @@ function RowActions({
         onClick={() => onDelete(record)}
         aria-label={`Delete ${KIND_META[record.kind].label.toLowerCase()}`}
         title="Delete"
-        className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+        className="adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -486,7 +486,7 @@ function InterviewLine({
           onClick={() => downloadInterviewIcs(interview)}
           aria-label="Download invite (.ics)"
           title="Download invite (.ics)"
-          className="-my-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+          className="-my-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
         >
           <IconDownload className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -783,7 +783,7 @@ function PipelineRecordDrawer({
               </SheetDescription>
             </div>
           </div>
-          <button type="button" onClick={requestClose} aria-label="Close" className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]">
+          <button type="button" onClick={requestClose} aria-label="Close" className="-mr-1.5 -mt-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -965,8 +965,7 @@ function PipelineRecordDrawer({
 
           <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:px-5">
             <WorkspaceButton onClick={requestClose}>Cancel</WorkspaceButton>
-            <WorkspaceButton type="submit" variant="primary" disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : null}
+            <WorkspaceButton loading={saving} type="submit" variant="primary" disabled={saving}>
               {isEdit ? "Save changes" : `Record ${meta.label.toLowerCase()}`}
             </WorkspaceButton>
           </div>

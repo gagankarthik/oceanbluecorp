@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   IconBuilding, IconDownload, IconEdit,
   IconGlobe, IconMail, IconTrash,
@@ -479,8 +479,7 @@ export default function ClientsPage() {
             <WorkspaceButton type="button" onClick={requestClose} className="w-full sm:w-auto">
               Cancel
             </WorkspaceButton>
-            <WorkspaceButton type="submit" form="client-form" variant="primary" disabled={submitting} className="w-full sm:w-auto">
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            <WorkspaceButton loading={submitting} type="submit" form="client-form" variant="primary" disabled={submitting} className="w-full sm:w-auto">
               {editingClient ? "Update client" : "Add client"}
             </WorkspaceButton>
           </>

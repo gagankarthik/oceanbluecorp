@@ -114,7 +114,7 @@ export function AdminDialog({
                 <D.Close
                   disabled={busy}
                   aria-label="Close"
-                  className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+                  className="-mr-1.5 -mt-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
                 >
                   <X className="size-5" aria-hidden="true" />
                 </D.Close>

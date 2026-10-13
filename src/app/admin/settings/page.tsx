@@ -415,7 +415,7 @@ export default function SettingsPage() {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
                       aria-label="Change profile photo"
-                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] disabled:opacity-60"
+                      className="absolute -bottom-1 -right-1 adm-hit grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
                     >
                       {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconCamera className="h-3.5 w-3.5" />}
                     </button>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                           type="button"
                           onClick={field.toggle}
                           aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
-                          className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                          className="absolute right-1 top-1/2 adm-hit grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                         >
                           {field.show
                             ? <IconEyeOff className="h-4 w-4" aria-hidden="true" />
@@ -593,21 +593,21 @@ export default function SettingsPage() {
 
                   <div className="flex flex-wrap items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4">
                     {maint.enabled ? (
-                      <WorkspaceButton
+                      <WorkspaceButton loading={maintSaving}
                         variant="primary"
                         disabled={!maintLoaded || maintSaving}
                         onClick={() => void saveMaintenance({ ...maint, enabled: false })}
                       >
-                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><Check />Bring the site back online</>}
+                        {maintSaving ? "Saving…" : <><Check />Bring the site back online</>}
                       </WorkspaceButton>
                     ) : (
                       // Taking the site down is confirmed; bringing it back is not.
-                      <WorkspaceButton
+                      <WorkspaceButton loading={maintSaving}
                         disabled={!maintLoaded || maintSaving}
                         onClick={() => setConfirmOffline(true)}
                         className="border-transparent bg-[var(--adm-danger)] text-white hover:border-transparent hover:bg-[var(--adm-danger-ink)]"
                       >
-                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><IconAlert />Take the site offline</>}
+                        {maintSaving ? "Saving…" : <><IconAlert />Take the site offline</>}
                       </WorkspaceButton>
                     )}
 
