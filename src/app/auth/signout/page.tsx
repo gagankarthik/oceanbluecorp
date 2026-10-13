@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { buttonClass } from "@/components/site/button";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { IconAlert, IconLogout } from "@/components/site/icons";
 import { AuthShell, StatusMark } from "../auth-shell";
@@ -83,7 +84,7 @@ export default function SignOutPage() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep"
+                className={buttonClass("primary", "md", "w-full")}
               >
                 <IconLogout size={18} />
                 Sign out
@@ -91,7 +92,7 @@ export default function SignOutPage() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-line-strong bg-white px-6 type-label text-ink transition-colors duration-150 hover:border-cobalt hover:text-cobalt"
+                className={buttonClass("outline", "md", "w-full")}
               >
                 Stay signed in
               </button>

@@ -209,11 +209,11 @@ export default function BrandKitContent() {
               The logo, colour, type, icons and drawings behind Oceanblue Solutions, Inc., the single source of truth for a consistent brand.
             </p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "240ms" }}>
-              <a href="/brand/oceanblue-logo.svg" download className={buttonClass("primary", "lg")}>
+              <a href="/brand/oceanblue-logo.svg" download className={buttonClass("primary", "md")}>
                 <IconDownload size={16} />
                 Download logo
               </a>
-              <LinkButton href="/contact" variant="outline" size="lg">
+              <LinkButton href="/contact" variant="outline" size="md">
                 Press and partnership requests
               </LinkButton>
             </div>
@@ -309,13 +309,13 @@ export default function BrandKitContent() {
               <div className="bg-white p-6">
                 <p className="type-label font-semibold text-ink">Buttons</p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <span className={buttonClass("primary", "md")}>Primary</span>
-                  <span className={buttonClass("outline", "md")}>Outline</span>
-                  <span className={buttonClass("dark", "md")}>Dark</span>
+                  <span className={buttonClass("primary", "sm")}>Primary</span>
+                  <span className={buttonClass("outline", "sm")}>Outline</span>
+                  <span className={buttonClass("dark", "sm")}>Dark</span>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-ink p-4">
-                  <span className={buttonClass("inverse", "md")}>Inverse</span>
-                  <span className={buttonClass("outline-dark", "md")}>Outline on dark</span>
+                  <span className={buttonClass("inverse", "sm")}>Inverse</span>
+                  <span className={buttonClass("outline-dark", "sm")}>Outline on dark</span>
                 </div>
               </div>
               <div className="bg-white p-6">

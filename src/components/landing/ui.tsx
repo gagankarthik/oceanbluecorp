@@ -40,7 +40,7 @@ export function Cta({
   className?: string;
 }) {
   const map = { primary: "primary", ghostLight: "outline", ghostDark: "outline-dark" } as const;
-  const cls = buttonClass(map[variant], "lg", `group ${className}`);
+  const cls = buttonClass(map[variant], "md", `group ${className}`);
   const inner = (
     <>
       {children}

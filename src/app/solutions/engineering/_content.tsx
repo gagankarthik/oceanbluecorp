@@ -69,10 +69,10 @@ export default function EngineeringContent() {
         image={IMG.serviceEngineering}
         actions={
           <>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
-            <LinkButton href="#disciplines" variant="outline" size="lg">
+            <LinkButton href="#disciplines" variant="outline" size="md">
               Explore disciplines
             </LinkButton>
           </>

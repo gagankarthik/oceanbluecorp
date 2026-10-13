@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/site/select";
+import { Button } from "@/components/site/button";
+import { inputClass, LABEL } from "@/components/site/input";
 import { IconArrowLeft, IconArrowRight, IconAlert, IconCheck } from "@/components/site/icons";
 import { AuthShell, IconEye, IconEyeOff } from "../auth-shell";
 
@@ -55,16 +57,9 @@ const PASSWORD_RULES: { label: string; test: (v: string) => boolean }[] = [
   { label: "a symbol", test: (v) => /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]/.test(v) },
 ];
 
-const inputCls =
-  "h-12 w-full rounded-xl border border-line-input bg-white px-4 type-body text-ink placeholder:text-ink-subtle transition-colors duration-150 hover:border-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none aria-[invalid=true]:border-danger";
-const labelCls = "mb-1.5 block type-label text-ink";
-const submitCls =
-  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep disabled:cursor-not-allowed disabled:opacity-60";
+const inputCls = inputClass();
+const labelCls = LABEL;
 const quietBtnCls = "inline-flex items-center gap-1.5 type-label font-medium text-ink-muted transition-colors duration-150 hover:text-ink";
-
-function Spinner() {
-  return <span aria-hidden className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />;
-}
 
 function PasswordField({
   id,
@@ -109,7 +104,7 @@ function PasswordField({
           onClick={() => setShow((v) => !v)}
           aria-label={show ? "Hide password" : "Show password"}
           aria-pressed={show}
-          className="absolute top-1/2 right-1.5 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-ink-subtle transition-colors duration-150 hover:bg-paper hover:text-ink"
+          className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-ink-subtle transition-colors duration-150 hover:bg-paper hover:text-ink"
         >
           {show ? <IconEyeOff /> : <IconEye />}
         </button>
@@ -386,11 +381,10 @@ export default function SignInPage() {
                   </button>
                 </div>
               </div>
-              <button type="submit" disabled={isSubmitting} className={submitCls}>
-                {isSubmitting ? <Spinner /> : null}
+              <Button type="submit" size="md" loading={isSubmitting} className="w-full">
                 {isSubmitting ? "Signing in…" : "Sign in"}
                 {!isSubmitting && <IconArrowRight size={16} />}
-              </button>
+              </Button>
             </form>
 
             <p className="mt-6 type-caption text-ink-subtle">
@@ -428,11 +422,10 @@ export default function SignInPage() {
                   className={inputCls}
                 />
               </div>
-              <button type="submit" disabled={isSubmitting} className={submitCls}>
-                {isSubmitting ? <Spinner /> : null}
+              <Button type="submit" size="md" loading={isSubmitting} className="w-full">
                 {isSubmitting ? "Sending…" : "Send code"}
                 {!isSubmitting && <IconArrowRight size={16} />}
-              </button>
+              </Button>
             </form>
             <button type="button" onClick={() => go("signin")} className={cn(quietBtnCls, "mt-6")}>
               <IconArrowLeft size={15} /> Back to sign in
@@ -492,10 +485,9 @@ export default function SignInPage() {
                   {confirmPassword && passwordsMatch && <span className="text-success">Passwords match.</span>}
                 </p>
               </div>
-              <button type="submit" disabled={isSubmitting} className={submitCls}>
-                {isSubmitting ? <Spinner /> : null}
+              <Button type="submit" size="md" loading={isSubmitting} className="w-full">
                 {isSubmitting ? "Resetting…" : "Reset password and sign in"}
-              </button>
+              </Button>
             </form>
             <button
               type="button"
@@ -575,11 +567,10 @@ export default function SignInPage() {
                   {confirmPassword && passwordsMatch && <span className="text-success">Passwords match.</span>}
                 </p>
               </div>
-              <button type="submit" disabled={isSubmitting} className={submitCls}>
-                {isSubmitting ? <Spinner /> : null}
+              <Button type="submit" size="md" loading={isSubmitting} className="w-full">
                 {isSubmitting ? "Setting up…" : "Complete setup"}
                 {!isSubmitting && <IconArrowRight size={16} />}
-              </button>
+              </Button>
             </form>
             {/* An invite session is single-use and short-lived; without this an
                 expired one strands the user on a form that cannot submit. */}

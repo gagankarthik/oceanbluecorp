@@ -239,11 +239,11 @@ export function ClosingCta({
           </h2>
           <p className="mt-5 max-w-[540px] type-body-lg text-ink-muted">{sub}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <LinkButton href={primary.href} variant="primary" size="lg">
+            <LinkButton href={primary.href} variant="primary" size="md">
               {primary.label}
               <IconArrowRight size={16} />
             </LinkButton>
-            <LinkButton href={secondary.href} variant="outline" size="lg">
+            <LinkButton href={secondary.href} variant="outline" size="md">
               {secondary.label}
             </LinkButton>
           </div>

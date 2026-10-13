@@ -24,6 +24,7 @@
   --p-slate-100:   #e7edf6;
   --p-slate-200:   #e2e8f1;
   --p-slate-300:   #cbd5e3;
+  --p-slate-450:   #828b9c;
   --p-slate-600:   #56637b;
   --p-slate-700:   #3a4a66;
   --p-slate-900:   #0b1a33;
@@ -75,6 +76,19 @@
   --p-space-20: 5rem;      /* 80 */
   --p-space-24: 6rem;      /* 96 */
 
+  /* Site type: one ratio, 1.2 (minor third) from a 16px body. The step
+     number is the power: --p-text-2 = 16 × 1.2², rounded to the pixel. */
+  --p-text-n2: 0.6875rem;  /* 11 */
+  --p-text-n1: 0.8125rem;  /* 13 */
+  --p-text-0:  1rem;       /* 16 */
+  --p-text-1:  1.1875rem;  /* 19 */
+  --p-text-2:  1.4375rem;  /* 23 */
+  --p-text-3:  1.75rem;    /* 28 */
+  --p-text-4:  2.125rem;   /* 34 */
+  --p-text-5:  2.5rem;     /* 40 */
+  --p-text-6:  3rem;       /* 48 */
+  --p-text-7:  3.5rem;     /* 56 */
+
   /* ── Tier 2: semantic ───────────────────────────────────── */
 
   /* Colour, public site (light only; the console themes --adm-*). */
@@ -94,6 +108,8 @@
 
   --color-border-default:       var(--p-slate-200);
   --color-border-strong:        var(--p-slate-300);
+  /* Control edges (inputs, outline buttons, toggles): 3.4:1 on white (1.4.11). */
+  --color-border-control:       var(--p-slate-450);
   --color-border-interactive:   var(--p-blue-700);
   --color-border-focus:         var(--p-blue-700);
   --color-border-focus-inverse: var(--p-neutral-0);
@@ -104,7 +120,7 @@
   --color-action-primary-hover:    var(--p-blue-800);
   --color-action-primary-pressed:  var(--p-blue-900);
   --color-action-on-primary:       var(--p-neutral-0);
-  --opacity-disabled:              0.4;
+  --opacity-disabled:              0.45;
 
   /* Feedback. Text shades pass AA on white and on their own container. */
   --color-text-success:         var(--p-green-700);
@@ -125,10 +141,31 @@
 
   /* Content column. */
   --grid-max:     77.5rem;   /* 1240 */
+  --measure-prose: 65ch;
+
+  /* Site type roles. Fluid roles run 375 → 1280px between two scale steps;
+     leading tightens as size grows. */
+  --type-size-display:     clamp(var(--p-text-5), 2.086rem + 1.768vw, var(--p-text-7));
+  --type-size-headline-lg: clamp(var(--p-text-4), 1.763rem + 1.547vw, var(--p-text-6));
+  --type-size-headline:    clamp(var(--p-text-3), 1.439rem + 1.326vw, var(--p-text-5));
+  --type-size-headline-sm: clamp(var(--p-text-2), 1.308rem + 0.552vw, var(--p-text-3));
+  --type-size-title-lg:    clamp(var(--p-text-1), 1.084rem + 0.442vw, var(--p-text-2));
+  --type-size-title:       var(--p-text-1);
+  --type-size-body-lg:     clamp(var(--p-text-0), 0.922rem + 0.331vw, var(--p-text-1));
+  --type-size-body:        var(--p-text-0);
+  --type-size-small:       var(--p-text-n1);
+  --type-size-overline:    var(--p-text-n2);
+  --type-leading-display:  1.1;
+  --type-leading-headline: 1.15;
+  --type-leading-title:    1.25;
+  --type-leading-body:     1.55;
+  --type-leading-small:    1.45;
 
   /* Control heights sit on the 4px unit so stacked controls keep the beat. */
   --size-control-lg: 2.5rem;    /* 40 */
   --size-control-xl: 3rem;      /* 48 */
+  --size-control-2xl: 3.5rem;   /* 56 */
+  --size-control-touch: 2.75rem; /* 44, coarse pointers */
 
   /* ── Tier 3: component ──────────────────────────────────── */
 
@@ -136,8 +173,14 @@
   --button-primary-background-hover:   var(--color-action-primary-hover);
   --button-primary-background-pressed: var(--color-action-primary-pressed);
   --button-primary-text:               var(--color-action-on-primary);
-  --button-height-md:                  var(--size-control-lg);
-  --button-height-lg:                  var(--size-control-xl);
+  --button-height-sm:                  var(--size-control-lg);
+  --button-height-md:                  var(--size-control-xl);
+  --button-height-lg:                  var(--size-control-2xl);
+  --input-height:                      var(--size-control-xl);
+  --input-border:                      var(--color-border-control);
+  --input-border-hover:                var(--color-text-tertiary);
+  --input-border-focus:                var(--color-border-focus);
+  --input-border-invalid:              var(--color-text-danger);
 
   --skeleton-background: var(--color-background-tertiary);
   --skeleton-radius:     6px;
@@ -195,7 +238,7 @@
   --color-paper-deep: var(--color-background-tertiary);
   --color-line: var(--color-border-default);
   --color-line-strong: var(--color-border-strong);
-  --color-line-input: #828b9c; /* form-control edge: 3.4:1 on white (WCAG 1.4.11); hairlines keep line / line-strong */
+  --color-line-input: var(--color-border-control); /* control edge, 3.4:1; hairlines keep line / line-strong */
   --color-cobalt: var(--color-action-primary);
   --color-cobalt-deep: var(--color-action-primary-hover);
   --color-cobalt-tint: var(--color-background-selected);
@@ -558,7 +601,7 @@
    reserved for what is actionable. */
 .hz-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: var(--type-size-overline);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
@@ -601,7 +644,7 @@
 .hz-word-clip { display: inline-block; overflow: hidden; vertical-align: top; }
 .hz-word {
   display: inline-block;
-  animation: hz-word 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hz-word 400ms var(--ease-emphasized-in) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1210,7 +1253,7 @@ html.lenis body {
   --shadow-modal: 0 40px 100px -30px rgb(11 26 51 / 0.5);
   --dur-short: 150ms;
   --dur-medium: 250ms;
-  --dur-long: 400ms;
+  --dur-long: 300ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized-in: cubic-bezier(0.05, 0.7, 0.1, 1);
   --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
@@ -1255,14 +1298,14 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
-.rise { animation: site-rise 600ms var(--ease-emphasized-in) both; }
+.rise { animation: site-rise 400ms var(--ease-emphasized-in) both; }
 
 /* Hero headline: each word rises in sequence */
 @keyframes site-word {
   from { opacity: 0; transform: translateY(0.45em); }
   to { opacity: 1; transform: none; }
 }
-.word { display: inline-block; animation: site-word 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.word { display: inline-block; animation: site-word 400ms var(--ease-emphasized-in) both; }
 
 /* Mega menu: wiped down from the bar, opaque at every frame, so the hero
    never shows through a half-faded sheet. */
@@ -1270,7 +1313,7 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   from { clip-path: inset(0 0 100% 0); }
   to { clip-path: inset(0 0 0 0); }
 }
-.menu-in { animation: site-menu 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.menu-in { animation: site-menu 200ms var(--ease-emphasized-in); }
 
 /* Side sheet (components/site/side-sheet): up from the bottom on phones, in
    from the right from sm. Radix holds the element until the exit animation
@@ -1281,13 +1324,13 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 @keyframes site-sheet-out-right { from { transform: none; } to { transform: translateX(100%); } }
 @keyframes site-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes site-overlay-out { from { opacity: 1; } to { opacity: 0; } }
-.side-sheet[data-state="open"] { animation: site-sheet-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.side-sheet[data-state="closed"] { animation: site-sheet-down 240ms cubic-bezier(0.4, 0, 1, 1) both; }
+.side-sheet[data-state="open"] { animation: site-sheet-up 280ms var(--ease-emphasized-in) both; }
+.side-sheet[data-state="closed"] { animation: site-sheet-down 200ms var(--ease-emphasized-out) both; }
 @media (min-width: 640px) {
   .side-sheet[data-state="open"] { animation-name: site-sheet-in-right; }
   .side-sheet[data-state="closed"] { animation-name: site-sheet-out-right; }
 }
-.sheet-overlay[data-state="open"] { animation: site-overlay-in 240ms ease-out both; }
+.sheet-overlay[data-state="open"] { animation: site-overlay-in 250ms ease-out both; }
 .sheet-overlay[data-state="closed"] { animation: site-overlay-out 200ms ease-in both; }
 
 /* Route enter (app/template.tsx), client navigations only. Opacity alone: a
@@ -1360,65 +1403,75 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
    grows; tracking tightens on large type and opens on labels.
    ============================================================ */
 @utility type-display {
-  font-size: clamp(2.625rem, 1.9rem + 3.1vw, 5rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-@utility type-headline-lg {
-  font-size: clamp(2.25rem, 1.85rem + 1.75vw, 3.5rem);
-  line-height: 1.05;
+  font-size: var(--type-size-display);
+  line-height: var(--type-leading-display);
   letter-spacing: -0.035em;
   font-weight: 600;
   text-wrap: balance;
 }
-@utility type-headline {
-  font-size: clamp(1.875rem, 1.55rem + 1.4vw, 3rem);
-  line-height: 1.08;
+@utility type-headline-lg {
+  font-size: var(--type-size-headline-lg);
+  line-height: var(--type-leading-headline);
   letter-spacing: -0.03em;
   font-weight: 600;
   text-wrap: balance;
 }
+@utility type-headline {
+  font-size: var(--type-size-headline);
+  line-height: var(--type-leading-headline);
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  text-wrap: balance;
+}
 @utility type-headline-sm {
-  font-size: clamp(1.5rem, 1.35rem + 0.65vw, 2rem);
-  line-height: 1.15;
+  font-size: var(--type-size-headline-sm);
+  line-height: 1.2;
   letter-spacing: -0.02em;
   font-weight: 600;
   text-wrap: balance;
 }
 @utility type-title-lg {
-  font-size: clamp(1.25rem, 1.18rem + 0.3vw, 1.5rem);
-  line-height: 1.25;
+  font-size: var(--type-size-title-lg);
+  line-height: var(--type-leading-title);
   letter-spacing: -0.015em;
   font-weight: 600;
 }
 @utility type-title {
-  font-size: 1.0625rem;
-  line-height: 1.35;
+  font-size: var(--type-size-title);
+  line-height: var(--type-leading-title);
   letter-spacing: -0.01em;
   font-weight: 600;
 }
 @utility type-body-lg {
-  font-size: clamp(1.0625rem, 1.02rem + 0.2vw, 1.1875rem);
-  line-height: 1.6;
+  font-size: var(--type-size-body-lg);
+  line-height: var(--type-leading-body);
 }
 @utility type-body {
-  font-size: 1rem;
-  line-height: 1.65;
+  font-size: var(--type-size-body);
+  line-height: var(--type-leading-body);
 }
+/* body-sm, label and caption share the 13px step; weight and leading tell them apart. */
 @utility type-body-sm {
-  font-size: 0.90625rem;
-  line-height: 1.55;
+  font-size: var(--type-size-small);
+  line-height: var(--type-leading-body);
 }
 @utility type-label {
-  font-size: 0.875rem;
+  font-size: var(--type-size-small);
   line-height: 1.35;
   font-weight: 600;
 }
 @utility type-caption {
-  font-size: 0.8125rem;
+  font-size: var(--type-size-small);
+  line-height: var(--type-leading-small);
+}
+/* Mono kickers, badges and dense mock UI only. */
+@utility type-overline {
+  font-size: var(--type-size-overline);
   line-height: 1.4;
+}
+/* Running prose: 45–75 characters a line. */
+@utility measure {
+  max-width: var(--measure-prose);
 }
 
 /* Dark bands, shaped as on clerk.com: the top corners are cut, and at the
@@ -1452,8 +1505,8 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 @keyframes logo-in { from { opacity: 0; transform: rotateX(-80deg) scale(0.92); } to { opacity: 1; transform: none; } }
 @keyframes logo-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: rotateX(80deg) scale(0.92); } }
 .logo-in, .logo-out { backface-visibility: hidden; transform-origin: 50% 50%; will-change: transform, opacity; }
-.logo-in { animation: logo-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.logo-out { animation: logo-out 650ms cubic-bezier(0.55, 0, 0.45, 1) both; }
+.logo-in { animation: logo-in 300ms var(--ease-emphasized-in) both; }
+.logo-out { animation: logo-out 250ms var(--ease-emphasized-out) both; }
 @media (prefers-reduced-motion: reduce) { .logo-in, .logo-out { animation: none; } .logo-out { display: none; } }
 
 /* Solutions showcase demos, played on the card the canvas centres on. They
@@ -1503,13 +1556,13 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 /* 404 (components/site/missing-page): the window rises in, the skeleton
    shimmers as if loading, the magnifier sweeps the hole, the scrap flutters. */
 .nf-rise, .nf-sweep, .nf-scrap, .nf-digits { transform-box: fill-box; transform-origin: 50% 50%; }
-.nf-rise { animation: nf-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nf-rise { animation: nf-rise 400ms var(--ease-emphasized-in) both; }
 @keyframes nf-rise { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
 
 .nf-shimmer { animation: nf-shimmer 1.8s ease-in-out 2 both; }
 @keyframes nf-shimmer { 50% { opacity: .45; } }
 
-.nf-digits { animation: nf-digits 1s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms both; }
+.nf-digits { animation: nf-digits 400ms var(--ease-emphasized-in) 300ms both; }
 @keyframes nf-digits { from { opacity: 0; transform: translateY(26px) scale(.9); } to { opacity: 1; transform: none; } }
 
 .nf-blink { animation: nf-blink 2.4s steps(1) 2 both; }

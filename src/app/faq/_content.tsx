@@ -205,7 +205,7 @@ export default function FaqPage() {
                   </a>
                 </div>
               </div>
-              <LinkButton href="/contact" variant="primary" size="lg">
+              <LinkButton href="/contact" variant="primary" size="md">
                 Send a message
               </LinkButton>
             </div>

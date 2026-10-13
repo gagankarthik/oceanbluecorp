@@ -110,11 +110,11 @@ export default async function Home() {
             {content.heroSubtitle || HERO.sub}
           </p>
           <div className="rise mt-9 flex flex-wrap justify-center gap-3" style={{ animationDelay: "640ms" }}>
-            <LinkButton href="/contact" variant="inverse" size="lg">
+            <LinkButton href="/contact" variant="inverse" size="md">
               {content.heroCtaText || "Talk to us"}
               <IconArrowRight size={16} />
             </LinkButton>
-            <LinkButton href="/solutions" variant="outline-dark" size="lg">
+            <LinkButton href="/solutions" variant="outline-dark" size="md">
               Explore solutions
             </LinkButton>
           </div>

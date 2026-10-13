@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { buttonClass } from "@/components/site/button";
 import { getUserManager } from "@/lib/auth/AuthContext";
 import { UserRole, highestStaffRole, landingRouteFor } from "@/lib/auth/config";
 import Link from "next/link";
@@ -106,8 +107,7 @@ export default function CallbackPage() {
     { label: "Setting up session", completed: status === "success" },
   ];
 
-  const primaryCls =
-    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt px-6 type-label text-white transition-colors duration-150 hover:bg-cobalt-deep";
+  const primaryCls = buttonClass("primary", "md", "w-full");
   const quietCls = "inline-flex h-11 items-center justify-center type-label font-medium text-ink-muted transition-colors duration-150 hover:text-ink";
 
   const panel =

@@ -50,11 +50,11 @@ export default function Error({
           </p>
 
           <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: "440ms" }}>
-            <button type="button" onClick={reset} className={buttonClass("primary", "lg")}>
+            <button type="button" onClick={reset} className={buttonClass("primary", "md")}>
               <IconRefresh size={16} />
               Try again
             </button>
-            <LinkButton href="/" variant="outline" size="lg" className="group">
+            <LinkButton href="/" variant="outline" size="md" className="group">
               Back to home
               <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </LinkButton>

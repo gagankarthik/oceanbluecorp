@@ -71,11 +71,11 @@ export default function CareersPage() {
         image={IMG.heroSlides[1]}
         actions={
           <>
-            <LinkButton href="/careers/search" variant="primary" size="lg">
+            <LinkButton href="/careers/search" variant="primary" size="md">
               View open positions
               <IconArrowRight size={16} />
             </LinkButton>
-            <LinkButton href="#life" variant="outline" size="lg">
+            <LinkButton href="#life" variant="outline" size="md">
               What it is like here
             </LinkButton>
           </>

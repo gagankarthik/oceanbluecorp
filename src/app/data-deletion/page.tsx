@@ -51,7 +51,7 @@ export default function DataDeletionPage() {
               from the email address associated with your data. Include your full name and the email
               (and phone, if any) you used, so we can locate and verify your records.
             </p>
-            <a href={`mailto:${DELETE_EMAIL}?subject=${SUBJECT}&body=${BODY}`} className={buttonClass("accent", "lg", "mt-8 max-w-full whitespace-normal")}>
+            <a href={`mailto:${DELETE_EMAIL}?subject=${SUBJECT}&body=${BODY}`} className={buttonClass("accent", "md", "mt-8 max-w-full whitespace-normal")}>
               <IconMail size={16} /> Email {DELETE_EMAIL}
             </a>
           </div>

@@ -150,7 +150,7 @@ function ProductBlock({ p, index }: { p: Product; index: number }) {
                 <IconExternal size={16} />
               </a>
             ) : (
-              <LinkButton href="/contact" variant="outline" size="lg">
+              <LinkButton href="/contact" variant="outline" size="md">
                 Talk to us about {p.name}
               </LinkButton>
             )}

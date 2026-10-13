@@ -38,10 +38,10 @@ export default function NotFoundContent() {
               or the page may have moved. Nothing is broken on your end.
             </p>
             <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: "440ms" }}>
-              <LinkButton href="/" variant="primary" size="lg">
+              <LinkButton href="/" variant="primary" size="md">
                 Back to home <IconArrowRight size={16} />
               </LinkButton>
-              <LinkButton href="/contact" variant="outline" size="lg">
+              <LinkButton href="/contact" variant="outline" size="md">
                 Contact us
               </LinkButton>
           </div>

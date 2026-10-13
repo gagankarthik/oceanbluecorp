@@ -114,10 +114,10 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         image={IMG.servicesHero}
         actions={
           <>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
-            <LinkButton href="#practices" variant="outline" size="lg">
+            <LinkButton href="#practices" variant="outline" size="md">
               Browse practices
             </LinkButton>
           </>

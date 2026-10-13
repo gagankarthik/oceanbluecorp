@@ -30,10 +30,10 @@ export default function ServiceDetail({ slug }: { slug: string }) {
         image={data.image}
         actions={
           <>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
-            <LinkButton href="/solutions" variant="outline" size="lg">
+            <LinkButton href="/solutions" variant="outline" size="md">
               All solutions
             </LinkButton>
           </>

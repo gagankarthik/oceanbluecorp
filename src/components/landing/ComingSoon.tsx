@@ -40,11 +40,11 @@ export default function ComingSoon({
               <h2 className="type-headline-sm font-semibold text-ink">{title}</h2>
               <p className="mt-4 max-w-[560px] type-body-lg text-ink-muted">{note}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <LinkButton href="/contact" variant="primary" size="lg">
+                <LinkButton href="/contact" variant="primary" size="md">
                   Talk to us
                   <IconArrowRight size={16} />
                 </LinkButton>
-                <LinkButton href="/solutions" variant="outline" size="lg">
+                <LinkButton href="/solutions" variant="outline" size="md">
                   See what we do
                 </LinkButton>
               </div>

@@ -406,15 +406,15 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
             </details>
           ))}
           <div className="grid gap-2 pt-5">
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
             <div className={cn("grid gap-2", isAuthenticated && "grid-cols-2")}>
-              <LinkButton href="/careers/search" variant="outline" size="lg">
+              <LinkButton href="/careers/search" variant="outline" size="md">
                 Find a job
               </LinkButton>
               {isAuthenticated && (
-                <LinkButton href={dashboard} variant="outline" size="lg">
+                <LinkButton href={dashboard} variant="outline" size="md">
                   Dashboard
                 </LinkButton>
               )}

@@ -136,10 +136,10 @@ export default function Legal() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <LinkButton href="mailto:hr@oceanbluecorp.com" variant="outline" size="lg">
+            <LinkButton href="mailto:hr@oceanbluecorp.com" variant="outline" size="md">
               <IconMail size={16} /> Email us
             </LinkButton>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Contact us
             </LinkButton>
           </div>

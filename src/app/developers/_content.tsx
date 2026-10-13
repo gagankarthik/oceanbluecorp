@@ -167,11 +167,11 @@ export default function DevelopersContent() {
               Real-time REST API, authenticated with API keys, versioned, and ready to integrate.
             </p>
             <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
-              <LinkButton href="#quickstart" variant="primary" size="lg">
+              <LinkButton href="#quickstart" variant="primary" size="md">
                 Quickstart
                 <IconArrowRight size={16} />
               </LinkButton>
-              <LinkButton href="#get-access" variant="outline" size="lg">
+              <LinkButton href="#get-access" variant="outline" size="md">
                 Request an API key
               </LinkButton>
             </div>
@@ -657,7 +657,7 @@ def get_job(job_id: str):
                     Request API access
                     <IconArrowRight size={16} />
                   </a>
-                  <LinkButton href="/careers" variant="outline" size="lg">
+                  <LinkButton href="/careers" variant="outline" size="md">
                     View open positions
                   </LinkButton>
                 </div>
