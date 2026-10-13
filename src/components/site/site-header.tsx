@@ -8,29 +8,23 @@ import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/auth/config";
 import { useStaffSession, signOutStaff } from "./use-staff-session";
 import { LinkButton } from "./button";
-import { GeoStack, GeoBooks, GeoLattice } from "./geo-art";
 import {
   IconMenu, IconX, IconChevronDown, IconArrowRight, IconTalent, IconHardHat, IconCloudUp, IconShieldLock,
   IconLayers, IconCrm, IconChip, IconServer, IconGraduation, IconTransform, IconCaseStudy, IconStory,
-  IconPencil, IconNewspaper, IconDocsCode, IconPackage, IconSwatches, IconBuilding, IconTeam, IconBriefcase, IconMail,
+  IconPencil, IconNewspaper, IconDocsCode, IconPackage, IconBuilding, IconTeam, IconBriefcase, IconMail,
   IconUser, IconSettings, IconLogout, IconOverview, IconKey, type Icon,
 } from "./icons";
 
-/** `external` opens in a new tab. */
-type Item = { href: string; label: string; desc: string; icon: Icon; external?: boolean };
+type Item = { href: string; label: string; icon: Icon };
 type Group = {
   key: string;
   label: string;
   title: string;
   intro: string;
   items: Item[];
-  /** Split the items into labelled columns; used where a flat grid runs long. */
-  columns?: { heading: string; hrefs: string[] }[];
-  feature: { title: string; body: string; href: string; cta: string; art: "stack" | "books" | "lattice" };
+  feature: { title: string; body: string; href: string; cta: string };
 };
 
-/* Descriptions are lifted from each destination's own copy, so the menu never
-   promises something the page does not. */
 const MENUS: Group[] = [
   {
     key: "solutions",
@@ -38,31 +32,22 @@ const MENUS: Group[] = [
     title: "Solutions",
     intro: "Talent, engineering, platforms, operations and training from one accountable partner.",
     items: [
-      { href: "/solutions/staffing", label: "IT Staffing & Talent", desc: "Specialists who deliver from the first sprint", icon: IconTalent },
-      { href: "/solutions/engineering", label: "Engineering Talent", desc: "Mechanical, electrical, aerospace and controls", icon: IconHardHat },
-      { href: "/solutions/cloud", label: "Cloud Engineering", desc: "Migrate and modernize without downtime", icon: IconCloudUp },
-      { href: "/solutions/cybersecurity", label: "Cybersecurity", desc: "Protect cloud, identity and applications", icon: IconShieldLock },
-      { href: "/solutions/erp", label: "ERP Solutions", desc: "SAP, Oracle and Dynamics that fit how you work", icon: IconLayers },
-      { href: "/solutions/salesforce", label: "Salesforce Services", desc: "Salesforce that works the way your teams do", icon: IconCrm },
-      { href: "/solutions/ai", label: "AI & Data Intelligence", desc: "Practical AI, secure and built for the business", icon: IconChip },
-      { href: "/solutions/managed", label: "Managed Services", desc: "Run and optimize, 24/7, on one SLA", icon: IconServer },
-      { href: "/solutions/training", label: "Training & Upskilling", desc: "Instructor-led training on the stack you run", icon: IconGraduation },
-      { href: "/solutions/transformation", label: "Digital Transformation", desc: "A roadmap with measurable outcomes", icon: IconTransform },
-    ],
-    // Two groups of at most seven (Hick): who you hire, and what we build and run.
-    columns: [
-      { heading: "Talent", hrefs: ["/solutions/staffing", "/solutions/engineering", "/solutions/training"] },
-      {
-        heading: "Technology",
-        hrefs: ["/solutions/cloud", "/solutions/cybersecurity", "/solutions/erp", "/solutions/salesforce", "/solutions/ai", "/solutions/managed", "/solutions/transformation"],
-      },
+      { href: "/solutions/staffing", label: "IT Staffing & Talent", icon: IconTalent },
+      { href: "/solutions/engineering", label: "Engineering Talent", icon: IconHardHat },
+      { href: "/solutions/cloud", label: "Cloud Engineering", icon: IconCloudUp },
+      { href: "/solutions/cybersecurity", label: "Cybersecurity", icon: IconShieldLock },
+      { href: "/solutions/erp", label: "ERP Solutions", icon: IconLayers },
+      { href: "/solutions/salesforce", label: "Salesforce Services", icon: IconCrm },
+      { href: "/solutions/ai", label: "AI & Data Intelligence", icon: IconChip },
+      { href: "/solutions/managed", label: "Managed Services", icon: IconServer },
+      { href: "/solutions/training", label: "Training & Upskilling", icon: IconGraduation },
+      { href: "/solutions/transformation", label: "Digital Transformation", icon: IconTransform },
     ],
     feature: {
       title: "Not sure where it fits?",
-      body: "Tell us the problem. We will route it to the right practice and come back with a plan.",
+      body: "Tell us the problem and we will route it to the right practice.",
       href: "/contact",
       cta: "Talk to us",
-      art: "stack",
     },
   },
   {
@@ -71,20 +56,18 @@ const MENUS: Group[] = [
     title: "Resources",
     intro: "Case studies, writing and tools from the people doing the work.",
     items: [
-      { href: "/case-studies", label: "Case studies", desc: "The problem, the team, what changed", icon: IconCaseStudy },
-      { href: "/customer-stories", label: "Customer stories", desc: "Working with us, in their words", icon: IconStory },
-      { href: "/blog", label: "Blog", desc: "Notes from the people doing the work", icon: IconPencil },
-      { href: "/news", label: "News", desc: "Announcements, certifications, milestones", icon: IconNewspaper },
-      { href: "/developers", label: "Developer docs", desc: "The Job Feed API: auth, endpoints, schemas", icon: IconDocsCode },
-      { href: "/products", label: "Products", desc: "Software we own end to end", icon: IconPackage },
-      { href: "/brand-kit", label: "Media kit", desc: "Logos, colours and how to use them", icon: IconSwatches },
+      { href: "/case-studies", label: "Case studies", icon: IconCaseStudy },
+      { href: "/customer-stories", label: "Customer stories", icon: IconStory },
+      { href: "/blog", label: "Blog", icon: IconPencil },
+      { href: "/news", label: "News", icon: IconNewspaper },
+      { href: "/developers", label: "Developer docs", icon: IconDocsCode },
+      { href: "/products", label: "Products", icon: IconPackage },
     ],
     feature: {
-      title: "Notes from the people doing the work",
+      title: "From the blog",
       body: "What our engineers and recruiters are learning on hiring, delivery and the platforms we run.",
       href: "/blog",
       cta: "Read the blog",
-      art: "books",
     },
   },
   {
@@ -93,19 +76,18 @@ const MENUS: Group[] = [
     title: "Company",
     intro: "Who we are, the people behind the work, and how to reach us.",
     items: [
-      { href: "/about", label: "About us", desc: "Our story, our standard and our certifications", icon: IconBuilding },
-      { href: "/team", label: "Our team", desc: "The people who lead the engagements", icon: IconTeam },
-      { href: "/careers", label: "Careers", desc: "What the work is like, and how we hire", icon: IconBriefcase },
-      { href: "/contact", label: "Contact us", desc: "Sales, partnerships and general enquiries", icon: IconMail },
-      { href: "https://hr.oceanbluecorp.com", label: "HR platform", desc: "Leave, attendance, documents and the handbook", icon: IconUser, external: true },
-      { href: "/auth/signin", label: "Staff sign in", desc: "The recruiting and publishing console, for staff", icon: IconKey },
+      { href: "/about", label: "About us", icon: IconBuilding },
+      { href: "/team", label: "Our team", icon: IconTeam },
+      { href: "/careers", label: "Careers", icon: IconBriefcase },
+      { href: "/contact", label: "Contact us", icon: IconMail },
+      { href: "https://hr.oceanbluecorp.com", label: "HR portal", icon: IconUser },
+      { href: "/auth/signin", label: "Staff sign in", icon: IconKey },
     ],
     feature: {
       title: "A certified diverse supplier",
       body: "NMSDC, Ohio MBE and WBE, and City of Columbus MBE certified.",
       href: "/about",
       cta: "About Oceanblue",
-      art: "lattice",
     },
   },
 ];
@@ -220,8 +202,9 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
               aria-expanded={menu === m.key}
               aria-controls="site-mega-menu"
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-full px-4 type-body font-medium transition-colors duration-[var(--dur-short)]",
-                menu === m.key ? "bg-paper text-ink" : "text-ink-muted hover:text-ink",
+                "relative inline-flex h-10 items-center gap-1.5 px-4 text-[0.9375rem] font-medium transition-colors duration-[var(--dur-short)]",
+                "after:absolute after:inset-x-4 after:bottom-0.5 after:h-0.5 after:origin-center after:rounded-full after:bg-cobalt after:transition-transform after:duration-200 after:ease-out",
+                menu === m.key ? "text-ink after:scale-x-100" : "text-ink-muted after:scale-x-0 hover:text-ink hover:after:scale-x-100",
               )}
             >
               {m.label}
@@ -252,7 +235,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                     <IconOverview size={16} /> Dashboard
                   </Link>
                   <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
-                    <IconBriefcase size={16} /> HR platform
+                    <IconBriefcase size={16} /> HR portal
                   </a>
                   {user?.role === UserRole.ADMIN && (
                     <Link href="/admin/settings" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
@@ -325,39 +308,18 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
           className="menu-in absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[var(--shadow-overlay)] lg:block"
           onMouseEnter={() => openMenu(current.key)}
         >
-          <div className="mx-auto grid max-w-[1440px] grid-cols-[220px_minmax(0,1fr)_260px] gap-10 px-8 py-6">
-            <div className="border-r border-line pr-8">
-              <p className="type-title-lg text-ink">{current.title}</p>
-              <p className="mt-2 type-body-sm text-ink-subtle">{current.intro}</p>
+          <div className="mx-auto grid max-w-[var(--grid-max)] grid-cols-[220px_minmax(0,1fr)_280px] gap-10 px-6 py-8">
+            <div className="self-start">
+              <p className="type-title-lg leading-none text-ink">{current.title}</p>
+              <p className="mt-3 type-body-sm text-ink-subtle">{current.intro}</p>
             </div>
-            {current.columns ? (
-              // A long group flows into two sub-columns so the panel stays short.
-              <div className="grid grid-cols-[1fr_2fr] gap-x-6 self-start">
-                {current.columns.map((col) => (
-                  <div key={col.heading}>
-                    <p className="px-3 pb-1 type-label text-ink-subtle">{col.heading}</p>
-                    <ul className={cn(col.hrefs.length > 4 && "grid grid-cols-2 gap-x-2")}>
-                      {col.hrefs.map((h) => {
-                        const i = current.items.find((it) => it.href === h)!;
-                        return (
-                          <li key={h}>
-                            <MenuItem i={i} compact />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 self-start">
-                {current.items.map((i) => (
-                  <li key={i.href}>
-                    <MenuItem i={i} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="grid min-h-[236px] grid-cols-2 content-start gap-x-6 gap-y-1 border-l border-line pl-8">
+              {current.items.map((i) => (
+                <li key={i.href}>
+                  <MenuItem i={i} />
+                </li>
+              ))}
+            </ul>
             <FeatureCard f={current.feature} />
           </div>
         </div>
@@ -392,18 +354,13 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                   <li key={i.href}>
                     <Link
                       href={i.href}
-                      {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : i.href.startsWith("/auth") ? { rel: "nofollow" } : {})}
-                      className="flex min-h-11 items-start gap-3 rounded-lg py-2"
+                      rel={i.href.startsWith("/auth") ? "nofollow" : undefined}
+                      className="flex min-h-11 items-center gap-3 rounded-lg py-2"
                     >
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
                         <i.icon size={16} />
                       </span>
-                      <span className="min-w-0">
-                        <span className="flex items-center gap-1.5 type-body font-medium text-ink">
-                          {i.label}
-                        </span>
-                        <span className="block type-caption text-ink-subtle">{i.desc}</span>
-                      </span>
+                      <span className="type-body font-medium text-ink">{i.label}</span>
                     </Link>
                   </li>
                 ))}
@@ -436,48 +393,23 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   );
 }
 
-/** `compact` drops the description, for the grouped Solutions sheet. */
-function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
-  if (compact) {
-    return (
-      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-paper">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
-          <i.icon size={16} />
-        </span>
-        <span className="type-body-sm leading-snug font-semibold text-ink">{i.label}</span>
-      </Link>
-    );
-  }
+function MenuItem({ i }: { i: Item }) {
   return (
-    <Link
-      href={i.href}
-      {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="group flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-paper"
-    >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
-        <i.icon size={18} />
+    <Link href={i.href} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-paper">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
+        <i.icon size={16} />
       </span>
-      <span className="min-w-0">
-        <span className="flex items-center gap-1.5 type-body font-semibold text-ink">
-          {i.label}
-          <IconArrowRight size={14} className="-translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-        </span>
-        <span className="mt-1 block type-caption leading-snug text-ink-subtle">{i.desc}</span>
-      </span>
+      <span className="type-body-sm leading-snug font-semibold text-ink">{i.label}</span>
     </Link>
   );
 }
 
 function FeatureCard({ f }: { f: Group["feature"] }) {
-  const Art = f.art === "stack" ? GeoStack : f.art === "books" ? GeoBooks : GeoLattice;
   return (
-    <Link href={f.href} className="group block rounded-2xl bg-paper p-5 text-left transition-colors hover:bg-paper-deep">
-      <div className="flex h-20 items-center justify-center overflow-hidden">
-        <Art className="h-24 w-auto" />
-      </div>
-      <p className="mt-3 type-body font-semibold text-ink">{f.title}</p>
-      <p className="mt-1 type-body-sm text-ink-subtle">{f.body}</p>
-      <span className="mt-3 inline-flex items-center gap-1.5 type-label text-ink">
+    <Link href={f.href} className="group flex flex-col rounded-2xl bg-paper px-5 pt-4 pb-5 transition-colors hover:bg-paper-deep">
+      <p className="type-body leading-none font-semibold text-ink">{f.title}</p>
+      <p className="mt-2 type-body-sm text-ink-subtle">{f.body}</p>
+      <span className="mt-auto inline-flex items-center gap-1.5 pt-4 type-label text-cobalt">
         {f.cta} <IconArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
       </span>
     </Link>

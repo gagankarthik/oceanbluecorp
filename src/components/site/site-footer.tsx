@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUp, ArrowUpRight } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { SOCIAL_LINKS } from "@/components/layout/social";
 import { OPEN_COOKIE_SETTINGS } from "@/components/layout/CookieConsent";
 import { CONTACT_EMAIL, CONTACT_PHONE, HQ_ADDRESS, LEGAL_NAME } from "@/lib/company";
@@ -30,6 +30,7 @@ const FOOTER_COLS: { h: string; l: FooterLink[] }[] = [
       ["Blog", "/blog"],
       ["News", "/news"],
       ["Developer docs", "/developers"],
+      ["Media kit", "/brand-kit"],
     ],
   },
   {
@@ -47,7 +48,7 @@ const FOOTER_COLS: { h: string; l: FooterLink[] }[] = [
     l: [
       ["Working here", "/careers"],
       ["Open positions", "/careers/search"],
-      ["Employee HR portal", "https://hr.oceanbluecorp.com"],
+      ["HR portal", "https://hr.oceanbluecorp.com"],
       ["Staff sign in", "/auth/signin"],
     ],
   },
@@ -76,13 +77,7 @@ function FooterLink({ label, href }: { label: string; href: string }) {
     );
   }
   if (/^https?:/.test(href)) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1 ${LINK}`}>
-        {label}
-        <ArrowUpRight className="size-3.5 flex-none" aria-hidden="true" />
-        <span className="sr-only">(opens in a new tab)</span>
-      </a>
-    );
+    return <a href={href} className={LINK}>{label}</a>;
   }
   // Sign-in is noindex; nofollow keeps crawl budget off it.
   return <Link href={href} rel={href.startsWith("/auth") ? "nofollow" : undefined} className={LINK}>{label}</Link>;
