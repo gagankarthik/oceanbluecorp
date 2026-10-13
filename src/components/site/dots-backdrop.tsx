@@ -30,6 +30,8 @@ export function DotsBackdrop({
       flickerChance={0.12}
       maxOpacity={maxOpacity}
       color={color}
+      // Settles after five seconds; looping decoration needs a stop (WCAG 2.2.2).
+      stopAfterMs={5000}
     />
   );
 }

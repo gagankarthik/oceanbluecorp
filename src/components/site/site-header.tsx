@@ -110,7 +110,7 @@ const MENUS: Group[] = [
 export function Wordmark({ className }: { className?: string }) {
   return (
     <Link href="/" aria-label="Oceanblue Solutions, Inc., home" className={cn("flex items-center", className)}>
-      <Image src="/brand/oceanblue-logo-small.svg" alt="Oceanblue Solutions, Inc." width={162} height={48} priority className="h-11 w-auto md:h-12" />
+      <Image src="/brand/oceanblue-logo-small.svg" alt="Oceanblue Solutions, Inc." width={135} height={40} priority className="h-9 w-auto md:h-10" />
     </Link>
   );
 }
@@ -123,6 +123,11 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   const accountRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const mobileRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  // Set when a menu is opened by click/Enter (not hover): focus then moves
+  // into the panel so Tab reaches its links next (WCAG 2.4.3).
+  const focusPanel = useRef(false);
   const path = usePathname();
   const { user, isAuthenticated, isLoading } = useStaffSession();
 
@@ -135,7 +140,13 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setMenu(null);
+        // Return focus to the trigger rather than letting it fall to <body>
+        // when the panel it was in unmounts.
+        const inPanel = panelRef.current?.contains(document.activeElement);
+        setMenu((open) => {
+          if (open && inPanel) triggerRefs.current[open]?.focus();
+          return null;
+        });
         setAccount(false);
         // The panel only exists while open.
         if (mobileRef.current) toggleRef.current?.focus();
@@ -165,6 +176,11 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
     };
   }, [mobile]);
 
+  useEffect(() => {
+    if (menu && focusPanel.current) panelRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    focusPanel.current = false;
+  }, [menu]);
+
   const openMenu = (k: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setMenu(k);
@@ -188,11 +204,18 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
           {MENUS.map((m) => (
             <button
               key={m.key}
+              ref={(el) => {
+                triggerRefs.current[m.key] = el;
+              }}
               type="button"
               onMouseEnter={() => openMenu(m.key)}
-              onClick={() => setMenu(menu === m.key ? null : m.key)}
+              onClick={() => {
+                const opening = menu !== m.key;
+                focusPanel.current = opening;
+                setMenu(opening ? m.key : null);
+              }}
               aria-expanded={menu === m.key}
-              aria-haspopup="true"
+              aria-controls="site-mega-menu"
               className={cn(
                 "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14.5px] font-medium transition-colors",
                 menu === m.key ? "bg-paper text-ink" : "text-ink-muted hover:text-ink",
@@ -204,7 +227,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
           ))}
         </nav>
 
-        <div className="ml-auto hidden items-center gap-2 justify-self-end md:flex lg:ml-0">
+        <div data-header-actions className="ml-auto hidden items-center gap-2 justify-self-end md:flex lg:ml-0">
           {/* Visitors cannot have accounts, so signed-out readers get no sign-in
               here; staff use "Staff sign in" in the Company menu or the footer. */}
           {!isLoading && isAuthenticated && (
@@ -270,6 +293,31 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
       {current && (
         <div
           key={current.key}
+          ref={panelRef}
+          id="site-mega-menu"
+          onKeyDown={(e) => {
+            // The panel sits at the end of <header>; send Tab back to the nav so
+            // the order reads trigger -> panel -> next trigger.
+            if (e.key !== "Tab" || !panelRef.current) return;
+            const items = panelRef.current.querySelectorAll<HTMLElement>("a, button");
+            const first = items[0];
+            const last = items[items.length - 1];
+            const keys = MENUS.map((m) => m.key);
+            const idx = keys.indexOf(current.key);
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              triggerRefs.current[current.key]?.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              const next = triggerRefs.current[keys[idx + 1]];
+              // After the last menu, continue to the header actions.
+              const after = next ?? panelRef.current.closest("header")?.querySelector<HTMLElement>("[data-header-actions] a, [data-header-actions] button");
+              if (after) {
+                e.preventDefault();
+                setMenu(null);
+                after.focus();
+              }
+            }
+          }}
           className="menu-in absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[var(--shadow-overlay)] lg:block"
           onMouseEnter={() => openMenu(current.key)}
         >

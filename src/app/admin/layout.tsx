@@ -180,7 +180,7 @@ function Sidebar({
         {rail ? <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />}
       </button>
 
-      <div className={cn("flex h-[56px] flex-none items-center gap-2 border-b border-[var(--adm-line)] px-4", rail && "lg:justify-center lg:px-0")}>
+      <div className={cn("flex h-[56px] flex-none items-center gap-2 px-4", rail && "lg:justify-center lg:px-0")}>
         <Link
           href="/admin"
           aria-label="Oceanblue, dashboard"
@@ -194,7 +194,7 @@ function Sidebar({
             width={256}
             height={76}
             priority
-            className={cn("h-11 w-auto max-w-full object-contain", rail && "lg:hidden")}
+            className={cn("h-10 w-auto max-w-full object-contain", rail && "lg:hidden")}
           />
           <Image
             src="/brand/oceanblue-mark.svg"

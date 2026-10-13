@@ -52,8 +52,9 @@ export default function AnnouncementBar({
 
   // ── Scrolling / marquee mode ──
   const marquee = (extra = "") => {
+    // Only the first copy is read; the rest exist for the visual loop (WCAG 2.4.4).
     const item = (key: number) => (
-      <span key={key} className="mx-10 inline-flex items-center gap-2 whitespace-nowrap">
+      <span key={key} aria-hidden={key > 0 || undefined} className="mx-10 inline-flex items-center gap-2 whitespace-nowrap">
         {text}
         {href && <IconArrowRight size={14} className="flex-none text-cobalt-light" />}
       </span>

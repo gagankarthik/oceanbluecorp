@@ -15,6 +15,8 @@ const CSP_REPORT_ONLY = [
     "https://images.unsplash.com https://www.satyawholesalers.com https://upload.wikimedia.org",
     "https://cdn-icons-png.flaticon.com https://cdn.inytes.com https://www.gstatic.com",
     "https://api.dicebear.com https://i.ytimg.com https://tile.openstreetmap.org",
+    // Client logos served from the clients' own sites (customer-marquee, client-voices).
+    "https://www.dieboldnixdorf.com https://pivotpoint.us https://www.mapsysinc.com",
     "https://*.amazonaws.com",
   ].join(" "),
   "connect-src 'self' https://cognito-idp.us-east-2.amazonaws.com https://*.amazoncognito.com",

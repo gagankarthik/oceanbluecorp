@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
@@ -68,6 +68,14 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [manage, setManage] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({ preferences: false });
+  const regionRef = useRef<HTMLDivElement>(null);
+  const reopened = useRef(false);
+
+  // Reopened from "Cookie settings": take focus there, as the visitor asked for it.
+  useEffect(() => {
+    if (visible && reopened.current) regionRef.current?.focus();
+    reopened.current = false;
+  }, [visible]);
 
   useEffect(() => {
     try {
@@ -79,6 +87,7 @@ export default function CookieConsent() {
       setVisible(true);
     }
     const reopen = () => {
+      reopened.current = true;
       setManage(true);
       setVisible(true);
     };
@@ -107,10 +116,14 @@ export default function CookieConsent() {
 
   return (
     <div
-      role="dialog"
-      aria-modal="false"
+      // A non-modal banner, not a dialog: the page stays usable. It is first in
+      // the DOM (see layout.tsx) so keyboard and screen-reader users reach it
+      // before the page rather than after it (WCAG 2.4.3).
+      ref={regionRef}
+      role="region"
       aria-labelledby="cookie-title"
       aria-describedby="cookie-desc"
+      tabIndex={-1}
       data-lenis-prevent
       className="site rise fixed inset-x-0 bottom-0 z-[10000] max-h-[85dvh] overflow-y-auto overscroll-contain border-t border-line bg-white shadow-[0_-8px_32px_rgb(11_26_51/0.12)]"
     >

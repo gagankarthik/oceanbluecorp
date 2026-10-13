@@ -616,7 +616,7 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="type-title font-semibold break-words text-ink transition-colors group-hover:text-cobalt">{job.title}</h3>
+          <h2 className="type-title font-semibold break-words text-ink transition-colors group-hover:text-cobalt">{job.title}</h2>
           {mode && <span className="rounded-full bg-paper px-2.5 py-0.5 type-caption font-semibold text-ink-muted">{mode}</span>}
           {applied && (
             <span className="inline-flex items-center gap-1 rounded-full bg-success-container px-2 py-0.5 type-caption font-semibold text-success">

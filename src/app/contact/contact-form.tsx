@@ -118,6 +118,10 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
   const copy = COPY[path];
   const [formData, setFormData] = useState(EMPTY);
   const [submitted, setSubmitted] = useState<ContactPath | null>(null);
+  const doneRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (submitted) doneRef.current?.focus();
+  }, [submitted]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
@@ -250,11 +254,13 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
       {/* ── Form side ── */}
       <div className="px-6 py-10 sm:px-10 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 lg:px-14 lg:py-14">
         {submitted ? (
-          <div className="flex h-full flex-col items-start justify-center py-6" role="status">
+          <div className="flex h-full flex-col items-start justify-center py-6">
             <span className="flex size-12 items-center justify-center rounded-full bg-success-container text-success">
               <IconCheck size={24} />
             </span>
-            <h2 className="mt-6 max-w-[22ch] type-headline-sm text-ink">{COPY[submitted].done.title}</h2>
+            {/* The form unmounts on success; focus moves here so it is not
+                dropped to <body>, and the heading is read out (WCAG 2.4.3, 4.1.3). */}
+            <h2 ref={doneRef} tabIndex={-1} className="mt-6 max-w-[22ch] type-headline-sm text-ink outline-none">{COPY[submitted].done.title}</h2>
             <p className="mt-3 max-w-[52ch] type-body text-ink-muted">{COPY[submitted].done.body}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               {submitted === "work" && (
@@ -403,16 +409,18 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
 
         <dl className="mt-10 grid gap-5 border-t border-white/15 pt-8 sm:grid-cols-2 lg:grid-cols-1">
           {directRows(details).map((row) => (
-            <div key={row.label} className="flex gap-3">
-              <row.icon size={18} className="mt-0.5 shrink-0 text-white/70" aria-hidden="true" />
-              <div className="min-w-0">
-                <dt className="type-caption text-white/70">{row.label}</dt>
-                <dd className="mt-0.5 type-body-sm font-semibold text-white">
-                  {row.href ? (
-                    <a href={row.href} className={cn("underline-offset-4 hover:underline", onNavyFocus)}>{row.value}</a>
-                  ) : row.value}
-                </dd>
-              </div>
+            // One div per dt/dd pair, as a <dl> allows (WCAG 1.3.1); the icon
+            // hangs in the left padding instead of a wrapper.
+            <div key={row.label} className="relative min-w-0 pl-[30px]">
+              <dt className="type-caption text-white/70">
+                <row.icon size={18} className="absolute top-0.5 left-0 text-white/70" aria-hidden="true" />
+                {row.label}
+              </dt>
+              <dd className="mt-0.5 type-body-sm font-semibold text-white">
+                {row.href ? (
+                  <a href={row.href} className={cn("underline-offset-4 hover:underline", onNavyFocus)}>{row.value}</a>
+                ) : row.value}
+              </dd>
             </div>
           ))}
         </dl>

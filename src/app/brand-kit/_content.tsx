@@ -33,7 +33,7 @@ const COLOR_GROUPS: { group: string; body: string; colors: Swatch[] }[] = [
     body: "The two blues of the Oceanblue mark. The logo blue can carry text; aqua is for fills and marks only (2.7:1 on white).",
     colors: [
       { name: "Brand blue", hex: "#0975c1", token: "brand", note: "Brand moments, illustration", dark: true },
-      { name: "Aqua", hex: "#0cacCF", token: "aqua", note: "Fills and marks, never text", dark: true },
+      { name: "Aqua", hex: "#0cacCF", token: "aqua", note: "Fills and marks, never text", dark: false },
     ],
   },
   {
@@ -157,8 +157,9 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ size?: n
     <button
       type="button"
       onClick={copy}
-      title={`Copy ${name} SVG`}
-      aria-label={copied ? `${name} SVG copied` : `Copy ${name} SVG`}
+      // The accessible name starts with the visible label (WCAG 2.5.3).
+      title={`Copy ${name.replace(/^Icon/, "")} SVG`}
+      aria-label={copied ? `${name.replace(/^Icon/, "")} SVG copied` : `${name.replace(/^Icon/, "")}, copy SVG`}
       className="group relative flex flex-col items-center gap-3 bg-white px-3 py-5 transition-colors hover:bg-paper"
     >
       <span ref={ref} className="text-ink">

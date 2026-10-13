@@ -40,7 +40,7 @@ export default function Maintenance({
           alt="Oceanblue Solutions, Inc."
           width={135}
           height={40}
-          className="mx-auto h-11 w-auto lg:mx-0"
+          className="mx-auto h-10 w-auto lg:mx-0"
           priority
         />
       </div>

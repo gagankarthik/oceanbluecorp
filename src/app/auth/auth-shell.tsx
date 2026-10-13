@@ -40,7 +40,7 @@ export function AuthShell({
         <DotsBackdrop color="rgb(29, 78, 216)" maxOpacity={0.24} mask="[mask-image:radial-gradient(90%_70%_at_40%_55%,black,transparent_80%)]" />
         <div className="flex items-center justify-between gap-6">
           <Link href="/" aria-label="Oceanblue Solutions, Inc., home">
-            <Image src="/brand/oceanblue-logo-small.svg" alt="Oceanblue Solutions, Inc." width={162} height={48} className="h-12 w-auto" priority />
+            <Image src="/brand/oceanblue-logo-small.svg" alt="Oceanblue Solutions, Inc." width={135} height={40} className="h-10 w-auto" priority />
           </Link>
           <Link href="/" className="group inline-flex items-center gap-2 type-label font-medium text-ink-muted hover:text-ink">
             <IconArrowLeft size={16} className="transition-transform duration-150 group-hover:-translate-x-0.5" />

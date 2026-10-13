@@ -1,5 +1,6 @@
 "use client";
 
+import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
@@ -44,24 +45,35 @@ const STAGGER = 110; // ms between boxes, left to right
 export function CustomerMarquee({ label }: { label: string }) {
   // `set` counts rotations; box i shows client (set * CELLS + i) mod the list.
   const [set, setSet] = useState(0);
+  // WCAG 2.2.2: a rotation that runs past five seconds needs a way to stop it.
+  const [paused, setPaused] = useState(false);
   const hover = useRef(false);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (!hover.current) setSet((n) => n + 1);
     }, 3600);
     return () => window.clearInterval(id);
-  }, []);
+  }, [paused]);
 
   const at = (n: number, i: number) => (n * CELLS + i) % LOGOS.length;
 
   return (
     <div data-tone="white" className="border-b border-line bg-white">
       <div className="mx-auto flex max-w-[1240px] flex-col sm:px-6 lg:flex-row">
-        <p className="border-b border-line px-4 py-5 text-[15px] leading-snug text-ink sm:px-0 lg:flex lg:w-[250px] lg:shrink-0 lg:items-center lg:border-r lg:border-b-0 lg:pr-8">
-          {label}
-        </p>
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-5 sm:px-0 lg:w-[250px] lg:shrink-0 lg:border-r lg:border-b-0 lg:pr-6">
+          <p className="text-[15px] leading-snug text-ink">{label}</p>
+          <button
+            type="button"
+            onClick={() => setPaused((p) => !p)}
+            aria-pressed={paused}
+            aria-label={paused ? "Resume client logos" : "Pause client logos"}
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-line text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
+          >
+            {paused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}
+          </button>
+        </div>
         <ul
           aria-label="Clients"
           onMouseEnter={() => (hover.current = true)}

@@ -351,6 +351,11 @@ export const CloudShader = ({
       gl.uniform3f(loc.skyTop, skyTop[0], skyTop[1], skyTop[2]);
       gl.uniform3f(loc.skyBottom, skyBottom[0], skyBottom[1], skyBottom[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      // Drift for five seconds, then hold the frame (WCAG 2.2.2).
+      if (now - start > 5000) {
+        canvas.style.opacity = "1";
+        return;
+      }
       // An opaque WebGL canvas is black until its first frame; it stays
       // invisible over the sky gradient below until then.
       canvas.style.opacity = "1";

@@ -233,7 +233,7 @@ export function ClosingCta({
         <Image src={IMG.ctaColumbus} alt="" width={2400} height={1601} sizes="100vw" className="absolute inset-x-0 top-[-19.3%] h-auto w-full max-w-none" />
       </div>
       <div className={cn(CONTAINER, "grid gap-10 pt-16 pb-[max(10rem,33vw)] sm:pt-20 lg:grid-cols-12 lg:items-end lg:gap-12 lg:pt-24")}>
-        <div className="reveal lg:col-span-7">
+        <div className="reveal min-w-0 lg:col-span-7">
           <h2 id="cta-heading" className="max-w-[640px] type-headline-lg text-balance text-ink">
             {title}
           </h2>
@@ -249,7 +249,7 @@ export function ClosingCta({
           </div>
         </div>
 
-        <div className="reveal lg:col-span-5">
+        <div className="reveal min-w-0 lg:col-span-5">
           <p className="type-label text-ink">Prefer to talk to a person?</p>
           <ul className="mt-3 divide-y divide-line border-y border-line">
             {DIRECT.map((d) => {

@@ -86,6 +86,10 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   // The upload that already succeeded for this file, so a retry does not repeat it.
   const uploadedResume = useRef<{ file: File; resumeId: string } | null>(null);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const appliedRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (applicationSubmitted) appliedRef.current?.focus();
+  }, [applicationSubmitted]);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
@@ -560,11 +564,12 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
         }
       >
               {applicationSubmitted ? (
-                <div className="py-10 text-center" role="status">
+                <div className="py-10 text-center">
                   <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-success-container text-success">
                     <IconCheckCircle size={30} />
                   </span>
-                  <h3 className="mt-5 type-title-lg font-semibold text-ink">Application submitted</h3>
+                  {/* The form and its submit button unmount; focus lands here (WCAG 2.4.3, 4.1.3). */}
+                  <h3 ref={appliedRef} tabIndex={-1} className="mt-5 type-title-lg font-semibold text-ink outline-none">Application submitted</h3>
                   <p className="mt-2 type-body text-ink-muted">Thank you for applying. We will get back to you soon.</p>
                   <button
                     type="button"

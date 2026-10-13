@@ -86,10 +86,17 @@ export default function VideoBackdrop({
         }}
       />
 
+      {/* An <img>, not a CSS background: it is often the page's largest
+          paint, and the browser finds an <img> in the HTML immediately. */}
       {poster && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${poster})`, opacity: playing ? 0 : intensity / 100 }}
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={poster}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity: playing ? 0 : intensity / 100 }}
         />
       )}
 

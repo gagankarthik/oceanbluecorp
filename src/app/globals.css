@@ -1299,13 +1299,29 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 .marquee-wrap:hover .marquee,
 [data-motion="paused"] .marquee { animation-play-state: paused; }
 
+/* Rainbow beams on LineGrid. Each line is 2400 units long; the 280-unit dash
+   starts just before it and ends just past it, so the beam glides through once
+   and leaves nothing behind. One slow, eased pass that ends inside five
+   seconds (WCAG 2.2.2); none under reduced motion. */
+@keyframes grid-beam { from { stroke-dashoffset: 280; } to { stroke-dashoffset: -2400; } }
+.grid-beam {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 280 4000;
+  stroke-dashoffset: 280;
+  animation: grid-beam 4.6s cubic-bezier(0.65, 0, 0.35, 1) 1 both;
+}
+@media (prefers-reduced-motion: reduce) { .grid-beam { display: none; } }
+
 /* Wireframe art: flowing dashed edges, breathing accent plane, slow drift */
 @keyframes site-dash { to { stroke-dashoffset: -20; } }
-.geo-art line[stroke-dasharray] { animation: site-dash 1.6s linear infinite; }
+/* Finite runs: looping decoration has to stop within five seconds (WCAG 2.2.2). */
+.geo-art line[stroke-dasharray] { animation: site-dash 1.6s linear 3; }
 @keyframes site-plane { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.6; } }
-.geo-art .geo-plane { animation: site-plane 4.2s ease-in-out infinite; }
+.geo-art .geo-plane { animation: site-plane 4.2s ease-in-out 1; }
 @keyframes site-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.geo-art { animation: site-drift 7s ease-in-out infinite; }
+.geo-art { animation: site-drift 4.8s ease-in-out 1; }
 
 /* Scroll-linked reveals and the timeline fill. Pure CSS: where unsupported,
    content is simply visible and the rail simply full. */

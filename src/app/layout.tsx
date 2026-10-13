@@ -270,6 +270,10 @@ export default async function RootLayout({
       >
         {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
             and the admin layout (→ #adm-main), so none is needed here. */}
+        {/* GDPR / CCPA cookie consent, outside Providers so it always shows, and
+            first in the DOM so it is reached before the page (it is fixed to
+            the bottom visually). */}
+        <CookieConsent />
         <Providers>
           <LayoutWrapper
             announcement={announcement.text}
@@ -281,8 +285,6 @@ export default async function RootLayout({
           </LayoutWrapper>
         </Providers>
 
-        {/* GDPR / CCPA cookie consent, rendered outside Providers so it always shows */}
-        <CookieConsent />
       </body>
     </html>
   );

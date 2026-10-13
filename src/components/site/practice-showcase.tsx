@@ -1,5 +1,6 @@
 "use client";
 
+import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Photo from "@/components/landing/Photo";
@@ -123,7 +124,14 @@ export function PracticeShowcase() {
 
   return (
     <>
-      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-10" onMouseEnter={() => (hover.current = true)} onMouseLeave={() => (hover.current = false)}>
+      {/* WCAG 2.2.2: rotation stops for good once a keyboard user is inside,
+          and the button below stops it for everyone else. */}
+      <div
+        className="hidden lg:grid lg:grid-cols-12 lg:gap-10"
+        onMouseEnter={() => (hover.current = true)}
+        onMouseLeave={() => (hover.current = false)}
+        onFocusCapture={() => setAuto(false)}
+      >
         <div className="lg:col-span-5">
           <ul className="border-t border-line">
             {PRACTICES.map((p, i) => {
@@ -151,6 +159,9 @@ export function PracticeShowcase() {
                   </button>
                   <div
                     id={`practice-${i}`}
+                    // Collapsed panels are only visually hidden; inert keeps
+                    // their links out of the tab order (WCAG 2.4.3).
+                    inert={!on}
                     className={cn(
                       "grid transition-[grid-template-rows,opacity] duration-500 ease-[var(--ease-standard)]",
                       on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
@@ -189,6 +200,15 @@ export function PracticeShowcase() {
               );
             })}
           </ul>
+          <button
+            type="button"
+            onClick={() => setAuto((a) => !a)}
+            aria-pressed={!auto}
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
+          >
+            {auto ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
+            {auto ? "Pause rotation" : "Resume rotation"}
+          </button>
         </div>
 
         {/* The canvas. Decorative: the accordion carries the same content. */}

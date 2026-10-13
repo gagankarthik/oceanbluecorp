@@ -13,6 +13,8 @@ interface FlickeringGridProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: number
   className?: string
   maxOpacity?: number
+  /** Stop flickering after this many ms of animation (WCAG 2.2.2). */
+  stopAfterMs?: number
 }
 
 export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
@@ -24,6 +26,7 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
   height,
   className,
   maxOpacity = 0.3,
+  stopAfterMs,
   ...props
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -129,8 +132,11 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
       updateCanvasSize()
 
       let lastTime = 0
+      let firstTime = 0
       const animate = (time: number) => {
         if (!isInView || !gridParams) return
+        firstTime ||= time
+        if (stopAfterMs && time - firstTime > stopAfterMs) return
 
         const deltaTime = (time - lastTime) / 1000
         lastTime = time
@@ -177,7 +183,7 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
         intersectionObserver.disconnect()
       }
     }
-  }, [setupCanvas, updateSquares, drawGrid, width, height, isInView])
+  }, [setupCanvas, updateSquares, drawGrid, width, height, isInView, stopAfterMs])
 
   return (
     <div
