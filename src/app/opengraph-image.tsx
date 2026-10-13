@@ -43,7 +43,7 @@ export default async function OpengraphImage() {
 
         <div style={{ display: "flex", position: "relative" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt="Oceanblue Solutions" height={72} width={Math.round((72 * OG_LOGO.width) / OG_LOGO.height)} />
+          <img src={logo} alt="Oceanblue Solutions" height={104} width={Math.round((104 * OG_LOGO.width) / OG_LOGO.height)} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", position: "relative" }}>

@@ -194,14 +194,14 @@ function Sidebar({
             width={256}
             height={76}
             priority
-            className={cn("h-9 w-auto max-w-full object-contain", rail && "lg:hidden")}
+            className={cn("h-11 w-auto max-w-full object-contain", rail && "lg:hidden")}
           />
           <Image
             src="/brand/oceanblue-mark.svg"
             alt="Oceanblue"
             width={76}
             height={76}
-            className={cn("hidden h-8 w-auto object-contain", rail && "lg:block")}
+            className={cn("hidden h-9 w-auto object-contain", rail && "lg:block")}
           />
         </Link>
         <button onClick={onClose} aria-label="Close navigation" className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-nav-mute)] transition-colors hover:bg-[var(--adm-nav-hover)] hover:text-[var(--adm-nav-ink)] lg:hidden">

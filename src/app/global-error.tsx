@@ -59,7 +59,7 @@ export default function GlobalError({
             alt="Oceanblue Solutions, Inc."
             width={135}
             height={40}
-            style={{ height: 32, width: "auto" }}
+            style={{ height: 44, width: "auto" }}
           />
 
           <p

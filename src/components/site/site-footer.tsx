@@ -84,7 +84,8 @@ function FooterLink({ label, href }: { label: string; href: string }) {
       </a>
     );
   }
-  return <Link href={href} className={LINK}>{label}</Link>;
+  // Sign-in is noindex; nofollow keeps crawl budget off it.
+  return <Link href={href} rel={href.startsWith("/auth") ? "nofollow" : undefined} className={LINK}>{label}</Link>;
 }
 
 const CONTACT_LINK = `block ${LINK}`;
@@ -121,7 +122,7 @@ export function SiteFooter() {
         <div className="mx-auto max-w-[1240px] px-4 pt-6 pb-5 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" aria-label={`${LEGAL_NAME}, home`} className="inline-flex flex-none rounded-sm">
-              <Image src="/brand/oceanblue-logo.svg" alt="" width={202} height={60} className="h-9 w-auto" />
+              <Image src="/brand/oceanblue-logo.svg" alt="" width={162} height={48} className="h-12 w-auto" />
             </Link>
             <a
               href="#top"

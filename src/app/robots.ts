@@ -8,16 +8,15 @@ export default function robots(): MetadataRoute.Robots {
       // Main crawler rules, allow all public pages, block private areas
       {
         userAgent: "*",
-        // Everything public is crawlable; only the private areas are listed.
+        // Everything is crawlable except the API. /admin, /auth and
+        // /maintenance are NOT blocked on purpose: they send noindex (header
+        // or meta), and a robots.txt block hides that from Google, which then
+        // reports the linked sign-in page as "Blocked by robots.txt" instead
+        // of quietly dropping it. /_next/ stays open too: Google renders pages
+        // with the JS/CSS under it and indexes images through /_next/image.
         allow: "/",
-        // No trailing slash on /admin and /auth, so the bare paths are covered
-        // too. /_next/ is deliberately NOT blocked: Google renders pages with
-        // the JS/CSS under it and indexes images through /_next/image.
         disallow: [
-          "/admin",       // Private HR/admin panel
-          "/api/",        // API routes, never index
-          "/auth",        // Auth flows
-          "/maintenance", // Shown only while the site is down
+          "/api/", // API routes, JSON only, never index
         ],
       },
 

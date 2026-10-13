@@ -92,7 +92,7 @@ export default async function OGImage({
         {/* Top: brand */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt="Oceanblue Solutions" height={56} width={Math.round((56 * OG_LOGO.width) / OG_LOGO.height)} />
+          <img src={logo} alt="Oceanblue Solutions" height={80} width={Math.round((80 * OG_LOGO.width) / OG_LOGO.height)} />
           <div style={{
             marginLeft: "auto",
             background: "rgba(59,130,246,0.15)",

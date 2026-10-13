@@ -26,7 +26,6 @@ const STATIC: Entry[] = [
   { url: `${BASE}/contact`, changefreq: "monthly", priority: 0.75 },
   { url: `${BASE}/faq`, changefreq: "monthly", priority: 0.6 },
   { url: `${BASE}/sitemap`, changefreq: "yearly", priority: 0.3 },
-  { url: `${BASE}/status`, changefreq: "daily", priority: 0.3 },
   // Security sits above the legal block: procurement reads it, and it is a
   // page we want indexed rather than merely available.
   { url: `${BASE}/security`, changefreq: "yearly", priority: 0.5 },

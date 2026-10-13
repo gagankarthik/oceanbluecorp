@@ -110,7 +110,7 @@ const MENUS: Group[] = [
 export function Wordmark({ className }: { className?: string }) {
   return (
     <Link href="/" aria-label="Oceanblue Solutions, Inc., home" className={cn("flex items-center", className)}>
-      <Image src="/brand/oceanblue-logo.svg" alt="Oceanblue Solutions, Inc." width={135} height={40} priority className="h-8 w-auto" />
+      <Image src="/brand/oceanblue-logo.svg" alt="Oceanblue Solutions, Inc." width={148} height={44} priority className="h-10 w-auto md:h-11" />
     </Link>
   );
 }
@@ -339,7 +339,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                   <li key={i.href}>
                     <Link
                       href={i.href}
-                      {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : i.href.startsWith("/auth") ? { rel: "nofollow" } : {})}
                       className="flex items-start gap-3 rounded-lg py-2.5"
                     >
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
@@ -387,7 +387,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
 function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
   if (compact) {
     return (
-      <Link href={i.href} title={i.desc} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-paper">
+      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-paper">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
           <i.icon size={17} />
         </span>
