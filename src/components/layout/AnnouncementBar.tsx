@@ -44,7 +44,7 @@ export default function AnnouncementBar({
         onClick={onDismiss}
         aria-label="Dismiss announcement"
         title="Dismiss"
-        className={`${pinned ? "absolute right-2 top-1/2 -translate-y-1/2" : "mx-1.5 flex-none"} z-[2] grid h-7 w-7 place-items-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60`}
+        className={`${pinned ? "absolute right-2 top-1/2 -translate-y-1/2" : "mx-1.5 flex-none"} z-[2] grid size-10 place-items-center rounded-full text-white/70 transition-colors duration-[var(--dur-short)] hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white`}
       >
         <IconX size={16} />
       </button>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
@@ -39,41 +38,32 @@ function Mark({ l, hidden }: { l: Logo; hidden: boolean }) {
 const CELLS = 4;
 const STAGGER = 110; // ms between boxes, left to right
 
-/** The client strip: a label on the left, then four fixed boxes. Every few
- *  seconds all four move to the next set of clients together, the change
- *  sweeping left to right. Holds still on hover and under reduced motion. */
+/** The client strip: a label on the left, then four fixed boxes. Once, after a
+ *  few seconds, all four move to the next set of clients together, sweeping
+ *  left to right, then hold. Waits while hovered; still under reduced motion. */
 export function CustomerMarquee({ label }: { label: string }) {
   // `set` counts rotations; box i shows client (set * CELLS + i) mod the list.
   const [set, setSet] = useState(0);
-  // WCAG 2.2.2: a rotation that runs past five seconds needs a way to stop it.
-  const [paused, setPaused] = useState(false);
   const hover = useRef(false);
 
+  // One change, then hold: the auto-update ends inside five seconds (WCAG 2.2.2),
+  // so the strip needs no pause control. A hover defers it to the next tick.
   useEffect(() => {
-    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (set > 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
-      if (!hover.current) setSet((n) => n + 1);
+      if (!hover.current) setSet(1);
     }, 3600);
     return () => window.clearInterval(id);
-  }, [paused]);
+  }, [set]);
 
   const at = (n: number, i: number) => (n * CELLS + i) % LOGOS.length;
 
   return (
     <div data-tone="white" className="border-b border-line bg-white">
       <div className="mx-auto flex max-w-[1240px] flex-col sm:px-6 lg:flex-row">
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-5 sm:px-0 lg:w-[250px] lg:shrink-0 lg:border-r lg:border-b-0 lg:pr-6">
-          <p className="type-body leading-snug text-ink">{label}</p>
-          <button
-            type="button"
-            onClick={() => setPaused((p) => !p)}
-            aria-pressed={paused}
-            aria-label={paused ? "Resume client logos" : "Pause client logos"}
-            className="grid size-10 pointer-coarse:size-11 shrink-0 place-items-center rounded-full border border-line-input text-ink-muted transition-colors duration-[var(--dur-short)] hover:border-cobalt hover:text-cobalt"
-          >
-            {paused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}
-          </button>
-        </div>
+        <p className="flex items-center border-b border-line px-4 py-5 type-body leading-snug text-ink sm:px-0 lg:w-[250px] lg:shrink-0 lg:border-r lg:border-b-0 lg:pr-6">
+          {label}
+        </p>
         <ul
           aria-label="Clients"
           onMouseEnter={() => (hover.current = true)}
