@@ -321,16 +321,16 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                 </div>
 
                 <Facet title="Department">
-                  <FacetOption label="All departments" count={deptPool.length} on={dept === ALL_DEPTS} onClick={() => setDept(ALL_DEPTS)} />
+                  <FacetOption name="job-dept" label="All departments" count={deptPool.length} on={dept === ALL_DEPTS} onClick={() => setDept(ALL_DEPTS)} />
                   {deptList.map((d) => (
-                    <FacetOption key={d} label={d} count={deptCounts[d] || 0} on={dept === d} onClick={() => setDept(dept === d ? ALL_DEPTS : d)} />
+                    <FacetOption key={d} name="job-dept" label={d} count={deptCounts[d] || 0} on={dept === d} onClick={() => setDept(dept === d ? ALL_DEPTS : d)} />
                   ))}
                 </Facet>
 
                 <Facet title="Job type">
-                  <FacetOption label="All types" count={typePool.length} on={type === ALL_TYPES} onClick={() => setType(ALL_TYPES)} />
+                  <FacetOption name="job-type" label="All types" count={typePool.length} on={type === ALL_TYPES} onClick={() => setType(ALL_TYPES)} />
                   {typeList.map((t) => (
-                    <FacetOption key={t} label={formatJobType(t)} count={typeCounts[t] || 0} on={type === t} onClick={() => setType(type === t ? ALL_TYPES : t)} />
+                    <FacetOption key={t} name="job-type" label={formatJobType(t)} count={typeCounts[t] || 0} on={type === t} onClick={() => setType(type === t ? ALL_TYPES : t)} />
                   ))}
                 </Facet>
 
@@ -380,23 +380,30 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                       <span className="flex size-5 items-center justify-center rounded-full bg-cobalt type-caption font-semibold text-white">{facetCount}</span>
                     )}
                   </button>
-                  <div role="radiogroup" aria-label="Sort positions" className="inline-flex h-10 items-center rounded-full border border-line bg-white p-1">
+                  {/* Native radios: arrow keys move between them and assistive tech
+                      reads a real radio group (WCAG 4.1.2). */}
+                  <fieldset className="inline-flex h-10 items-center rounded-full border border-line bg-white p-1">
+                    <legend className="sr-only">Sort positions</legend>
                     {([["newest", "Newest"], ["closing", "Closing soon"]] as const).map(([v, label]) => (
-                      <button
+                      <label
                         key={v}
-                        type="button"
-                        role="radio"
-                        aria-checked={sort === v}
-                        onClick={() => setSort(v)}
                         className={cn(
-                          "h-8 rounded-full px-3.5 type-body-sm font-medium transition-colors",
+                          "inline-flex h-8 cursor-pointer items-center rounded-full px-3.5 type-body-sm font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cobalt",
                           sort === v ? "bg-ink text-white" : "text-ink-muted hover:text-ink",
                         )}
                       >
+                        <input
+                          type="radio"
+                          name="job-sort"
+                          value={v}
+                          checked={sort === v}
+                          onChange={() => setSort(v)}
+                          className="sr-only"
+                        />
                         {label}
-                      </button>
+                      </label>
                     ))}
-                  </div>
+                  </fieldset>
                 </div>
               </div>
 
@@ -562,19 +569,19 @@ function Facet({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function FacetOption({ label, count, on, onClick }: { label: string; count: number; on: boolean; onClick: () => void }) {
+function FacetOption({ name, label, count, on, onClick }: { name: string; label: string; count: number; on: boolean; onClick: () => void }) {
+  const empty = !on && count === 0;
+  // A native radio in a label: arrow keys, one tab stop per group, and the
+  // group name from the fieldset legend (WCAG 4.1.2).
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={on}
-      onClick={onClick}
-      disabled={!on && count === 0}
+    <label
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left type-body-sm transition-colors disabled:opacity-40",
+        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left type-body-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-1 has-[:focus-visible]:outline-cobalt",
+        empty ? "cursor-not-allowed opacity-40" : "cursor-pointer",
         on ? "bg-cobalt-tint font-semibold text-cobalt-deep" : "text-ink-muted hover:bg-paper hover:text-ink",
       )}
     >
+      <input type="radio" name={name} checked={on} onChange={onClick} disabled={empty} className="sr-only" />
       <span
         aria-hidden
         className={cn(
@@ -585,8 +592,11 @@ function FacetOption({ label, count, on, onClick }: { label: string; count: numb
         {on && <span className="size-1.5 rounded-full bg-white" />}
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className={cn("tabular-nums type-caption", on ? "text-cobalt-deep" : "text-ink-subtle")}>{count}</span>
-    </button>
+      <span className={cn("tabular-nums type-caption", on ? "text-cobalt-deep" : "text-ink-subtle")}>
+        {count}
+        <span className="sr-only"> {count === 1 ? "position" : "positions"}</span>
+      </span>
+    </label>
   );
 }
 

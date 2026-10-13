@@ -30,6 +30,17 @@ export function useFormErrors<K extends string>(
 
   const idFor = React.useCallback((field: K) => idsRef.current[field] ?? field, []);
 
+  // Focus waits for the render that attaches aria-describedby and the message,
+  // so a screen reader reads the error with the field (WCAG 3.3.1, 4.1.3).
+  const pendingFocus = React.useRef<HTMLElement | null>(null);
+  React.useEffect(() => {
+    const el = pendingFocus.current;
+    if (!el) return;
+    pendingFocus.current = null;
+    el.focus({ preventScroll: true });
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [errors]);
+
   /** Run on submit. Returns true when the form may be sent; otherwise focuses the first invalid control. */
   const validateAll = React.useCallback((): boolean => {
     const next = validateRef.current();
@@ -43,11 +54,7 @@ export function useFormErrors<K extends string>(
       .filter((el): el is HTMLElement => !!el);
     // First in document order, not in the order the checks were written.
     els.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
-    const first = els[0];
-    if (first) {
-      first.focus({ preventScroll: true });
-      first.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+    pendingFocus.current = els[0] ?? null;
     return false;
   }, [idFor]);
 

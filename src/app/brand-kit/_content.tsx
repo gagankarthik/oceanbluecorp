@@ -1,5 +1,6 @@
 "use client";
 
+import { announce } from "@/lib/announce";
 import { useState, useRef, type ComponentType } from "react";
 import Image from "next/image";
 import * as SiteIcons from "@/components/site/icons";
@@ -119,12 +120,14 @@ function CopyChip({ value }: { value: string }) {
           ?.writeText(value)
           .then(() => {
             setCopied(true);
+            announce(`Copied ${value}`);
             setTimeout(() => setCopied(false), 1200);
           })
           .catch(() => {});
       }}
       className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono text-[12px] text-ink-muted transition-colors hover:border-ink hover:text-ink"
-      title="Copy"
+      title={`Copy ${value}`}
+      aria-label={`${value}, copy`}
     >
       {value}
       {copied ? <IconCheck size={12} className="text-success" /> : <IconCopy size={12} />}
@@ -147,6 +150,7 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ size?: n
     try {
       await navigator.clipboard.writeText(clone.outerHTML);
       setCopied(true);
+      announce(`Copied ${name.replace(/^Icon/, "")} SVG`);
       setTimeout(() => setCopied(false), 1200);
     } catch {
       // clipboard is permission-gated / unavailable on plain http, no-op
