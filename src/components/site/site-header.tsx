@@ -325,17 +325,18 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
           className="menu-in absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[var(--shadow-overlay)] lg:block"
           onMouseEnter={() => openMenu(current.key)}
         >
-          <div className="mx-auto grid max-w-[1440px] grid-cols-[220px_minmax(0,1fr)_280px] gap-10 px-8 py-8">
+          <div className="mx-auto grid max-w-[1440px] grid-cols-[220px_minmax(0,1fr)_260px] gap-10 px-8 py-6">
             <div className="border-r border-line pr-8">
               <p className="type-title-lg text-ink">{current.title}</p>
               <p className="mt-2 type-body-sm text-ink-subtle">{current.intro}</p>
             </div>
             {current.columns ? (
-              <div className="grid grid-cols-2 gap-x-6 self-start">
+              // A long group flows into two sub-columns so the panel stays short.
+              <div className="grid grid-cols-[1fr_2fr] gap-x-6 self-start">
                 {current.columns.map((col) => (
                   <div key={col.heading}>
-                    <p className="px-3 pb-2 type-label text-ink-subtle">{col.heading}</p>
-                    <ul>
+                    <p className="px-3 pb-1 type-label text-ink-subtle">{col.heading}</p>
+                    <ul className={cn(col.hrefs.length > 4 && "grid grid-cols-2 gap-x-2")}>
                       {col.hrefs.map((h) => {
                         const i = current.items.find((it) => it.href === h)!;
                         return (
@@ -439,11 +440,11 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
 function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
   if (compact) {
     return (
-      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-paper">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
-          <i.icon size={17} />
+      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-paper">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
+          <i.icon size={16} />
         </span>
-        <span className="type-body leading-snug font-semibold text-ink">{i.label}</span>
+        <span className="type-body-sm leading-snug font-semibold text-ink">{i.label}</span>
       </Link>
     );
   }
@@ -471,8 +472,8 @@ function FeatureCard({ f }: { f: Group["feature"] }) {
   const Art = f.art === "stack" ? GeoStack : f.art === "books" ? GeoBooks : GeoLattice;
   return (
     <Link href={f.href} className="group block rounded-2xl bg-paper p-5 text-left transition-colors hover:bg-paper-deep">
-      <div className="flex h-28 items-center justify-center overflow-hidden">
-        <Art className="h-32 w-auto" />
+      <div className="flex h-20 items-center justify-center overflow-hidden">
+        <Art className="h-24 w-auto" />
       </div>
       <p className="mt-3 type-body font-semibold text-ink">{f.title}</p>
       <p className="mt-1 type-body-sm text-ink-subtle">{f.body}</p>

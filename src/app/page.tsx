@@ -161,13 +161,17 @@ export default async function Home() {
       </Section>
 
       <Section
+        tone="blue"
+        notched
+        ground="paper"
+        below="none"
         title="Why clients keep working with us"
         sub="In their own words, from the people who have hired our teams."
       >
         <ClientVoices />
       </Section>
 
-      <ClosingCta />
+      <ClosingCta tuck />
     </div>
   );
 }
