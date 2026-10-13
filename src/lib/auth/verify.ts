@@ -69,7 +69,8 @@ export async function verifyCognitoJwt(token: string): Promise<Claims | null> {
 
     // ID tokens carry `aud` = app client id; access tokens carry `client_id`.
     const aud = (payload.aud as string | undefined) ?? (payload.client_id as string | undefined);
-    if (CLIENT_ID && aud !== CLIENT_ID) return null;
+    // Fail closed: a missing client id must not turn the audience check off.
+    if (!CLIENT_ID || aud !== CLIENT_ID) return null;
 
     // A key rotation shows up as an unknown kid before the hourly cache expires.
     const jwk = (await getJwks()).find((k) => k.kid === header.kid)

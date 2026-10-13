@@ -34,6 +34,11 @@ import { serverError } from "@/lib/api-errors";
  * stripped of the internal fields. Drafts and the client-approval trail must
  * never leave the admin, which is why that is decided here rather than in a page.
  */
+// Anonymous reads are the same for everyone; hold them per instance for a
+// minute so a flood of public requests is not a flood of table scans.
+const PUBLIC_TTL_MS = 60_000;
+const publicCache = new Map<string, { at: number; articles: unknown[] }>();
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -43,17 +48,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Unknown section: ${kindParam}` }, { status: 400 });
     }
 
+    const claims = await getClaims(request);
+    const isStaff = !!claims && hasPublishingAccess(claims.groups);
+    const cacheKey = kindParam || "*";
+    if (!isStaff) {
+      const hit = publicCache.get(cacheKey);
+      if (hit && Date.now() - hit.at < PUBLIC_TTL_MS) return NextResponse.json({ articles: hit.articles });
+    }
+
     const result = await getAllArticles((kindParam as ArticleKind) || undefined);
     if (!result.success) {
       return serverError("Error fetching articles", result.error, "Couldn't load the articles. Please try again.");
     }
 
     const articles = (result.data || []).sort(byNewest);
+    if (isStaff) return NextResponse.json({ articles });
 
-    const claims = await getClaims(request);
-    const isStaff = !!claims && hasPublishingAccess(claims.groups);
-    const payload = isStaff ? articles : articles.filter((a) => isLive(a)).map(toPublicArticle);
-
+    const payload = articles.filter((a) => isLive(a)).map(toPublicArticle);
+    publicCache.set(cacheKey, { at: Date.now(), articles: payload });
     return NextResponse.json({ articles: payload });
   } catch (error) {
     return serverError("Error fetching articles", error, "Couldn't load the articles. Please try again.");

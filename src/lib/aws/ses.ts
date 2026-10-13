@@ -147,6 +147,17 @@ async function sendEmail(
 
 // Email Templates
 
+/**
+ * HTML-escaped copy of an email payload's string fields. Templates read `h.*`
+ * inside HTML so a name like `<a href=...>` arrives as text, not a link.
+ * Rich-text fields still go through renderRichText/renderListField from `data`.
+ */
+function escapeFields<T extends object>(data: T): { [K in keyof T]: T[K] } {
+  const out = { ...data } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(out)) if (typeof v === "string") out[k] = escapeHtml(v);
+  return out as { [K in keyof T]: T[K] };
+}
+
 function getEmailHeader(): string {
   return `
     <div style="background-color: #f8fafc; padding: 40px 20px;">
@@ -180,8 +191,10 @@ function getEmailFooter(): string {
 export async function sendApplicationConfirmation(
   data: ApplicationConfirmationEmail
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `Application Received - ${data.jobTitle}`;
+  const subject = `Application Received - ${data.jobTitle}`.replace(/[\r\n]+/g, " ");
   const companyName = data.companyName || "Oceanblue Solutions, Inc.";
+
+  const h = escapeFields(data);
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -189,10 +202,10 @@ export async function sendApplicationConfirmation(
       Thank You for Your Application
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Dear ${data.candidateName},
+      Dear ${h.candidateName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Thank you for applying to the <strong>${data.jobTitle}</strong> position at ${companyName}.
+      Thank you for applying to the <strong>${h.jobTitle}</strong> position at ${escapeHtml(companyName)}.
       We have received your application and our team will review it carefully.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
@@ -202,15 +215,15 @@ export async function sendApplicationConfirmation(
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Position:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobTitle}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobTitle}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Department:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobDepartment}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobDepartment}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobLocation}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobLocation}</td>
         </tr>
       </table>
     </div>
@@ -225,7 +238,7 @@ export async function sendApplicationConfirmation(
     <p style="color: #475569; line-height: 1.6; margin: 0;">
       Best regards,<br>
       <strong>The Recruiting Team</strong><br>
-      ${companyName}
+      ${escapeHtml(companyName)}
     </p>
     ${getEmailFooter()}
   `;
@@ -259,7 +272,7 @@ ${companyName}
 export async function sendNewApplicationNotification(
   data: NewApplicationNotificationEmail
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `New Application - ${data.jobTitle}`;
+  const subject = `New Application - ${data.jobTitle}`.replace(/[\r\n]+/g, " ");
   const appliedDate = new Date(data.appliedAt).toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -269,16 +282,18 @@ export async function sendNewApplicationNotification(
     minute: "2-digit",
   });
 
+  const h = escapeFields(data);
+
   const htmlBody = `
     ${getEmailHeader()}
     <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
       New Application Received
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Hi ${data.recruiterName},
+      Hi ${h.recruiterName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      A new candidate has applied for the <strong>${data.jobTitle}</strong> position that you posted.
+      A new candidate has applied for the <strong>${h.jobTitle}</strong> position that you posted.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
@@ -287,18 +302,18 @@ export async function sendNewApplicationNotification(
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Name:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.candidateName}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.candidateName}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Email:</td>
           <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">
-            <a href="mailto:${data.candidateEmail}" style="color: #2563eb; text-decoration: none;">${data.candidateEmail}</a>
+            <a href="mailto:${h.candidateEmail}" style="color: #2563eb; text-decoration: none;">${h.candidateEmail}</a>
           </td>
         </tr>
-        ${data.candidatePhone ? `
+        ${h.candidatePhone ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Phone:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.candidatePhone}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.candidatePhone}</td>
         </tr>
         ` : ""}
         <tr>
@@ -357,16 +372,18 @@ export async function sendJobPostedNotification(
 
   const dueDate = formatDueDate(data.submissionDueDate);
 
+  const h = escapeFields(data);
+
   const htmlBody = `
     ${getEmailHeader()}
     <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
       New Job Posting Published
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Hi ${data.recipientName},
+      Hi ${h.recipientName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      A new job has been posted by <strong>${data.postedByName}</strong>. Please review the complete details below:
+      A new job has been posted by <strong>${h.postedByName}</strong>. Please review the complete details below:
     </p>
 
     <!-- Basic Job Information -->
@@ -375,38 +392,38 @@ export async function sendJobPostedNotification(
         Basic Information
       </h3>
       <table style="width: 100%; border-collapse: collapse;">
-        ${data.postingId ? `
+        ${h.postingId ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Job ID:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.postingId}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.postingId}</td>
         </tr>
         ` : ""}
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Position:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobTitle}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobTitle}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Department:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobDepartment}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobDepartment}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobLocation}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobLocation}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job Type:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500; text-transform: capitalize;">${data.jobType.replace(/-/g, " ")}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500; text-transform: capitalize;">${h.jobType.replace(/-/g, " ")}</td>
         </tr>
-        ${data.clientName ? `
+        ${h.clientName ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.clientName}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.clientName}</td>
         </tr>
         ` : ""}
-        ${data.vendorName ? `
+        ${h.vendorName ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Vendor:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.vendorName}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.vendorName}</td>
         </tr>
         ` : ""}
         ${dueDate ? `
@@ -419,28 +436,28 @@ export async function sendJobPostedNotification(
     </div>
 
     <!-- Compensation Details -->
-    ${data.salary || data.payRate || data.clientBillRate ? `
+    ${h.salary || h.payRate || h.clientBillRate ? `
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #10b981;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
         Compensation Details
       </h3>
       <table style="width: 100%; border-collapse: collapse;">
-        ${data.salary ? `
+        ${h.salary ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 35%;">Salary Range:</td>
-          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.salary.min.toLocaleString()} - $${data.salary.max.toLocaleString()} ${data.salary.currency || "USD"}</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${h.salary.min.toLocaleString()} - $${h.salary.max.toLocaleString()} ${h.salary.currency || "USD"}</td>
         </tr>
         ` : ""}
-        ${data.payRate ? `
+        ${h.payRate ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Pay Rate:</td>
-          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.payRate}/hour</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${h.payRate}/hour</td>
         </tr>
         ` : ""}
-        ${data.clientBillRate ? `
+        ${h.clientBillRate ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client Bill Rate:</td>
-          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${data.clientBillRate}/hour</td>
+          <td style="color: #059669; padding: 8px 0; font-size: 14px; font-weight: 600;">$${h.clientBillRate}/hour</td>
         </tr>
         ` : ""}
       </table>
@@ -448,7 +465,7 @@ export async function sendJobPostedNotification(
     ` : ""}
 
     <!-- Job Description -->
-    ${data.description ? `
+    ${h.description ? `
     <div style="margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 12px; font-size: 16px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
         Job Description
@@ -479,18 +496,18 @@ export async function sendJobPostedNotification(
 
     <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${h.jobId}"
          style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px;">
         View in Admin Panel
       </a>
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${data.jobId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${h.jobId}"
          style="display: inline-block; background: #f1f5f9; color: #475569; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px; border: 1px solid #cbd5e1;">
         View Public Posting
       </a>
     </div>
 
     <p style="color: #64748b; line-height: 1.6; margin: 20px 0 0; font-size: 13px; text-align: center;">
-      Posted by <strong>${data.postedByName}</strong>
+      Posted by <strong>${h.postedByName}</strong>
     </p>
     ${getEmailFooter()}
   `;
@@ -549,9 +566,11 @@ export async function sendJobUpdatedNotification(
 
   const changesHtml = data.changes.length > 0
     ? `<ul style="color: #475569; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
-        ${data.changes.map(change => `<li>${change}</li>`).join("")}
+        ${data.changes.map(change => `<li>${escapeHtml(change)}</li>`).join("")}
        </ul>`
     : `<p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">General updates were made to this job posting.</p>`;
+
+  const h = escapeFields(data);
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -559,10 +578,10 @@ export async function sendJobUpdatedNotification(
       Job Posting Updated
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Hi ${data.recipientName},
+      Hi ${h.recipientName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      The job posting <strong>${data.jobTitle}</strong>${data.postingId ? ` (${data.postingId})` : ""} has been updated by <strong>${data.updatedByName}</strong>.
+      The job posting <strong>${h.jobTitle}</strong>${h.postingId ? ` (${h.postingId})` : ""} has been updated by <strong>${h.updatedByName}</strong>.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
@@ -571,7 +590,7 @@ export async function sendJobUpdatedNotification(
       ${changesHtml}
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${h.jobId}"
          style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
         View Job Posting
       </a>
@@ -638,7 +657,9 @@ export async function sendJobUpdatedNotifications(
 export async function sendInterviewInvite(
   data: InterviewInviteEmail
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `Interview Invitation - ${data.jobTitle}`;
+  const subject = `Interview Invitation - ${data.jobTitle}`.replace(/[\r\n]+/g, " ");
+
+  const h = escapeFields(data);
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -646,10 +667,10 @@ export async function sendInterviewInvite(
       Interview Invitation
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Dear ${data.candidateName},
+      Dear ${h.candidateName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      We are pleased to invite you for an interview for the <strong>${data.jobTitle}</strong> position at Oceanblue Solutions, Inc.
+      We are pleased to invite you for an interview for the <strong>${h.jobTitle}</strong> position at Oceanblue Solutions, Inc.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">
@@ -658,42 +679,42 @@ export async function sendInterviewInvite(
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Date:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.interviewDate}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.interviewDate}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Time:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.interviewTime}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.interviewTime}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Type:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.interviewType}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.interviewType}</td>
         </tr>
-        ${data.interviewerName ? `
+        ${h.interviewerName ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Interviewer:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.interviewerName}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.interviewerName}</td>
         </tr>
         ` : ""}
-        ${data.location ? `
+        ${h.location ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.location}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.location}</td>
         </tr>
         ` : ""}
-        ${data.meetingLink ? `
+        ${h.meetingLink ? `
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Meeting Link:</td>
           <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">
-            <a href="${data.meetingLink}" style="color: #2563eb;">${data.meetingLink}</a>
+            <a href="${h.meetingLink}" style="color: #2563eb;">${h.meetingLink}</a>
           </td>
         </tr>
         ` : ""}
       </table>
     </div>
-    ${data.notes ? `
+    ${h.notes ? `
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
       <strong>Additional Notes:</strong><br>
-      ${data.notes}
+      ${h.notes}
     </p>
     ` : ""}
     <p style="color: #475569; line-height: 1.6; margin: 0;">
@@ -736,7 +757,7 @@ Oceanblue Solutions, Inc.
 export async function sendStatusUpdate(
   data: StatusUpdateEmail
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `Application Update - ${data.jobTitle}`;
+  const subject = `Application Update - ${data.jobTitle}`.replace(/[\r\n]+/g, " ");
 
   const statusMessages: Record<string, string> = {
     reviewing: "Your application is currently under review by our hiring team.",
@@ -749,20 +770,22 @@ export async function sendStatusUpdate(
 
   const message = data.message || statusMessages[data.newStatus] || "Your application status has been updated.";
 
+  const h = escapeFields(data);
+
   const htmlBody = `
     ${getEmailHeader()}
     <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
       Application Status Update
     </h2>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Dear ${data.candidateName},
+      Dear ${h.candidateName},
     </p>
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      We wanted to update you regarding your application for the <strong>${data.jobTitle}</strong> position.
+      We wanted to update you regarding your application for the <strong>${h.jobTitle}</strong> position.
     </p>
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <p style="color: #475569; line-height: 1.6; margin: 0;">
-        ${message}
+        ${escapeHtml(message)}
       </p>
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
@@ -795,13 +818,14 @@ The Recruiting Team
 export async function sendCustomEmail(
   data: CustomEmail
 ): Promise<{ success: boolean; error?: string }> {
+  const h = escapeFields(data);
   const htmlBody = `
     ${getEmailHeader()}
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      Dear ${data.recipientName},
+      Dear ${h.recipientName},
     </p>
     <div style="color: #475569; line-height: 1.6; margin: 0 0 20px;">
-      ${data.body.replace(/\n/g, "<br>")}
+      ${h.body.replace(/\n/g, "<br>")}
     </div>
     <p style="color: #475569; line-height: 1.6; margin: 0;">
       Best regards,<br>
@@ -834,6 +858,7 @@ export async function sendCandidateEmail(data: {
   senderName?: string;
   ics?: string;
 }): Promise<{ success: boolean; error?: string }> {
+  const h = escapeFields(data);
   const htmlBody = `
     ${getEmailHeader()}
     <div style="color: #475569; line-height: 1.6; margin: 0; white-space: normal;">
@@ -868,13 +893,15 @@ export async function sendJobPostingNotificationToHR(
   let sent = 0;
   let failed = 0;
 
-  const subject = `New Job Posting - ${jobPosting.title} (${jobPosting.postingId})`;
+  const subject = `New Job Posting - ${jobPosting.title} (${jobPosting.postingId})`.replace(/[\r\n]+/g, " ");
 
   const excludedText = excludedDepartments && excludedDepartments.length > 0
     ? `<p style="color: #64748b; font-size: 12px; margin-top: 20px;">
-        <strong>Note:</strong> This posting excludes the following departments: ${excludedDepartments.join(", ")}
+        <strong>Note:</strong> This posting excludes the following departments: ${escapeHtml(excludedDepartments.join(", "))}
        </p>`
     : "";
+
+  const h = escapeFields(jobPosting);
 
   const htmlBody = `
     ${getEmailHeader()}
@@ -891,29 +918,29 @@ export async function sendJobPostingNotificationToHR(
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job ID:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.postingId}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.postingId}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Title:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.title}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.title}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Client:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.clientName}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.clientName}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${jobPosting.location}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.location}</td>
         </tr>
         <tr>
           <td style="color: #64748b; padding: 8px 0; font-size: 14px;">Pay Rate:</td>
-          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">$${jobPosting.payRate.toLocaleString()}</td>
+          <td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">$${h.payRate.toLocaleString()}</td>
         </tr>
       </table>
     </div>
     <div style="margin: 20px 0;">
       <h4 style="color: #1e293b; margin: 0 0 10px; font-size: 14px; font-weight: 600;">Description:</h4>
-      <p style="color: #475569; line-height: 1.6; margin: 0; white-space: pre-wrap;">${jobPosting.description.slice(0, 500)}${jobPosting.description.length > 500 ? "..." : ""}</p>
+      <p style="color: #475569; line-height: 1.6; margin: 0; white-space: pre-wrap;">${h.description.slice(0, 500)}${h.description.length > 500 ? "..." : ""}</p>
     </div>
     ${excludedText}
     <div style="text-align: center; margin: 30px 0;">
@@ -940,7 +967,7 @@ Job Details:
 Description:
 ${jobPosting.description.slice(0, 500)}${jobPosting.description.length > 500 ? "..." : ""}
 
-${excludedDepartments && excludedDepartments.length > 0 ? `Note: This posting excludes: ${excludedDepartments.join(", ")}` : ""}
+${excludedDepartments && excludedDepartments.length > 0 ? `Note: This posting excludes: ${escapeHtml(excludedDepartments.join(", "))}` : ""}
 
 View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs
   `;
@@ -979,6 +1006,7 @@ export async function sendContactNotificationEmail(data: {
   contactId?: string;
 }): Promise<{ success: boolean; error?: string }> {
   const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts${data.contactId ? `/${encodeURIComponent(data.contactId)}` : ""}`;
+  const h = escapeFields(data);
   const htmlBody = `
     ${getEmailHeader()}
     <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 20px; font-weight: 600;">
@@ -990,17 +1018,17 @@ export async function sendContactNotificationEmail(data: {
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0;">
       <h3 style="color: #1e293b; margin: 0 0 15px; font-size: 16px; font-weight: 600;">Contact Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 40%;">Name:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.firstName} ${data.lastName}</td></tr>
-        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Email:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.email}</td></tr>
-        ${data.phone ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Phone:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.phone}</td></tr>` : ""}
-        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Company:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.company}</td></tr>
-        ${data.jobTitle ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job Title:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.jobTitle}</td></tr>` : ""}
-        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Inquiry Type:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${data.inquiryType}</td></tr>
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px; width: 40%;">Name:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.firstName} ${h.lastName}</td></tr>
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Email:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.email}</td></tr>
+        ${h.phone ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Phone:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.phone}</td></tr>` : ""}
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Company:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.company}</td></tr>
+        ${h.jobTitle ? `<tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Job Title:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.jobTitle}</td></tr>` : ""}
+        <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Inquiry Type:</td><td style="color: #1e293b; padding: 8px 0; font-size: 14px; font-weight: 500;">${h.inquiryType}</td></tr>
       </table>
     </div>
     <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 4px; padding: 16px; margin: 20px 0;">
       <h4 style="color: #0369a1; margin: 0 0 8px; font-size: 14px; font-weight: 600;">Message</h4>
-      <p style="color: #1e293b; margin: 0; line-height: 1.6; font-size: 14px;">${data.message.replace(/\n/g, "<br>")}</p>
+      <p style="color: #1e293b; margin: 0; line-height: 1.6; font-size: 14px;">${h.message.replace(/\n/g, "<br>")}</p>
     </div>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${adminUrl}"

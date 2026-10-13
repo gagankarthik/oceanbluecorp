@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
     const isStaff = hasRecruitingAccess(claims?.groups);
     const isEditor = hasJobEditAccess(claims?.groups);
 
-    // Anonymous callers only ever see live postings, so query those instead of scanning.
-    const result = !isStaff && !isEditor && !status
+    // Anonymous callers only ever see live postings, so query those instead of
+    // scanning, whatever ?status they send (it used to force the full query).
+    const result = !isStaff && !isEditor
       ? await getPublicJobs()
       : await getAllJobs(status || undefined);
 
