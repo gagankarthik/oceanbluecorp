@@ -104,7 +104,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
           <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span className="min-w-0 flex-1">The saved fit score couldn&apos;t be loaded.</span>
-            <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
+            <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
           </div>
         )}
 
@@ -126,7 +126,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <VerdictBadge verdict={fit.verdict} />
               <p className="tabular-nums">
-                <span className={cn("text-adm-2xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
+                <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
                   {fit.fitScore}
                 </span>
                 <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">/100</span>

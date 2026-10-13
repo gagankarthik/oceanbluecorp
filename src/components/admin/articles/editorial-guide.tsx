@@ -94,7 +94,7 @@ export function EditorialGuide({
             <ol className="space-y-2.5">
               {guide.structure.map((step, i) => (
                 <li key={step.name} className="flex gap-2.5">
-                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
+                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-adm-xs font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
                     {i + 1}
                   </span>
                   <span className="min-w-0">

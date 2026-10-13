@@ -109,7 +109,7 @@ export function WorkspaceTitle({
     <div className={cn("mb-4 flex flex-none flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
-          <h1 className="truncate text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+          <h1 className="truncate text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
             {title}
           </h1>
           {info && <InfoTip label={title}>{info}</InfoTip>}
@@ -157,7 +157,7 @@ export function WorkspaceButton({
       {...props}
       className={cn(
         "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
-        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-xs" : "h-9 rounded-[var(--adm-radius-control)] px-3.5 text-adm-base",
+        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-base" : "h-9 rounded-[var(--adm-radius-control)] px-3.5 text-adm-base",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] active:scale-[0.98]",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:flex-none",
         variant === "primary" && (onBand
@@ -204,7 +204,7 @@ export function BackLink({
   className?: string;
 }) {
   const cls = cn(
-    "-ml-2 mb-2 inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+    "-ml-2 mb-2 inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
     className,
   );
   const body = (
@@ -253,7 +253,7 @@ export function RecordHeader({
       <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h1 className="min-w-0 break-words text-adm-xl font-semibold leading-7 tracking-[-0.02em]">
+            <h1 className="min-w-0 break-words text-adm-lg font-semibold leading-7 tracking-[-0.02em]">
               {title}
             </h1>
             {status && <span className="inline-flex rounded-[var(--adm-radius-control)] bg-white p-0.5">{status}</span>}
@@ -433,7 +433,7 @@ export function BrandBand({
     <section className={cn("adm-on-band @container flex-none overflow-hidden rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] text-white", className)}>
       <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
         <div className="min-w-0">
-          <h1 className="truncate text-adm-xl font-semibold leading-7 tracking-[-0.02em] sm:text-adm-xl">{title}</h1>
+          <h1 className="truncate text-adm-lg font-semibold leading-7 tracking-[-0.02em] sm:text-adm-lg">{title}</h1>
           {meta && <div className="mt-0.5 text-adm-xs text-white/90">{meta}</div>}
         </div>
         {actions && (
@@ -465,7 +465,7 @@ export function BrandBand({
                 <span
                   className={cn(
                     "block font-semibold leading-none tracking-[-0.025em] tabular-nums",
-                    sm ? "mt-1.5 text-adm-xl" : "mt-2 text-adm-2xl sm:text-adm-4xl",
+                    sm ? "mt-1.5 text-adm-lg" : "mt-2 text-adm-xl sm:text-adm-2xl",
                   )}
                 >
                   {s.value}
@@ -566,7 +566,7 @@ export function StageStrip({
               aria-pressed={selected}
               onClick={() => onChange(s.key)}
               className={cn(
-                "relative inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3.5 text-adm-xs transition-colors duration-150",
+                "relative inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3.5 text-adm-base transition-colors duration-150",
                 i > 0 && "border-l border-[var(--adm-line-soft)]",
                 selected
                   ? "bg-[var(--adm-accent-tint)] font-medium text-[var(--adm-ink)]"
@@ -610,7 +610,7 @@ export function StageStrip({
           >
             <span
               className={cn(
-                "block text-adm-lg font-semibold leading-6 tracking-[-0.02em] tabular-nums",
+                "block text-adm-md font-semibold leading-6 tracking-[-0.02em] tabular-nums",
                 s.count === 0 ? "text-[var(--adm-ink-subtle)]" : "text-[var(--adm-ink)]",
               )}
             >
@@ -894,7 +894,7 @@ export function FilterMenu({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-xs font-medium transition-colors sm:px-3",
+            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-base font-medium transition-colors sm:px-3",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
@@ -906,7 +906,7 @@ export function FilterMenu({
           </svg>
           <span className="hidden sm:inline">Filters</span>
           {active && (
-            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-adm-micro font-semibold tabular-nums text-white">
+            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-adm-xs font-semibold tabular-nums text-white">
               {activeCount}
             </span>
           )}
@@ -983,7 +983,7 @@ export function FilterPill<V extends string>({
   return (
     <div
       className={cn(
-        "inline-flex h-9 max-w-[260px] flex-none items-stretch rounded-[var(--adm-radius-control)] border text-adm-xs transition-colors",
+        "inline-flex h-9 max-w-[260px] flex-none items-stretch rounded-[var(--adm-radius-control)] border text-adm-base transition-colors",
         active
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:border-[var(--adm-ink-mute)]",
@@ -1021,7 +1021,7 @@ export function FilterPill<V extends string>({
                   onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation(); }}
                   placeholder={`Search ${label.toLowerCase()}…`}
                   aria-label={`Search ${label.toLowerCase()} options`}
-                  className="h-8 w-full rounded-[var(--adm-radius-xs)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-8 pr-2 text-adm-xs text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none"
+                  className="h-8 w-full rounded-[var(--adm-radius-xs)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-8 pr-2 text-adm-base text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none"
                 />
               </div>
             </div>
@@ -1034,7 +1034,7 @@ export function FilterPill<V extends string>({
                   key={o.value}
                   onClick={() => onChange(o.value)}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs",
+                    "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-base",
                     selected && "font-semibold text-[var(--adm-accent)]",
                   )}
                 >
@@ -1132,7 +1132,7 @@ export function MenuSelect<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-control)] px-2 py-1.5 text-adm-xs",
+                "flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-control)] px-2 py-1.5 text-adm-base",
                 selected ? "font-medium text-[var(--adm-ink)]" : "text-[var(--adm-ink-mute)]",
               )}
             >
@@ -1330,7 +1330,7 @@ export function DisplayMenu({
                 <DropdownMenuItem
                   key={c.key}
                   onSelect={(e) => { e.preventDefault(); toggle(c.key); }}
-                  className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs"
+                  className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-base"
                 >
                   <span className="flex-1 truncate">{c.label}</span>
                   {/* Mini switch, like the reference, reads as on/off at a glance. */}
@@ -1386,7 +1386,7 @@ export function DisplayMenu({
             <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
             <DropdownMenuItem
               onClick={onReset}
-              className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--adm-radius-xs)] px-2 py-1.5 text-adm-base font-medium text-[var(--adm-ink-mute)]"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset to default

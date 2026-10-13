@@ -29,7 +29,7 @@ export default function AdminError({
           <span className="size-1.5 rounded-full bg-[var(--adm-danger)]" aria-hidden />
           Something went wrong
         </p>
-        <h1 className="mt-3 text-adm-2xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
+        <h1 className="mt-3 text-adm-xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
           This page didn&rsquo;t load
         </h1>
         <p className="mt-2 max-w-[46ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">

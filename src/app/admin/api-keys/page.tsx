@@ -302,7 +302,7 @@ export default function ApiKeysPage() {
             disabled={scopingId === k.id}
             onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
             onClick={(e) => e.stopPropagation()}
-            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-xs font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-base font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
           >
             {API_ACCESS_LEVELS.map((level) => (
               <option key={level.id} value={level.id}>{level.label}</option>
@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -427,7 +427,7 @@ export default function ApiKeysPage() {
                 <span className="font-medium text-[var(--adm-ink)]">{accessLevelMeta(newKey.accessLevel).label}</span>
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-adm-xs text-[var(--adm-ink)]">
+                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-adm-base text-[var(--adm-ink)]">
                   <span className="truncate">
                     {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
                   </span>

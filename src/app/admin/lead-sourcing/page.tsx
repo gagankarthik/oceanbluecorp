@@ -264,7 +264,7 @@ export default function LeadSourcingPage() {
                     <div className="flex flex-none items-center gap-3 sm:gap-4">
                       <VerdictBadge verdict={c.verdict} className="hidden sm:inline" />
                       <span className="text-right">
-                        <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
+                        <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
                           {c.fit_score}
                         </span>
                         <span className="ml-0.5 text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">/100</span>

@@ -163,18 +163,20 @@
 }
 
 @theme inline {
-  /* Console type scale: one ratio (1.125, major second) from a 14px body,
-     rounded to the half pixel. F(n+1) = F(n) × 1.125. Font size only; line
-     height comes from the surrounding block so rows keep their rhythm. */
-  --text-adm-micro: 11px;
-  --text-adm-xs:    12.5px;
-  --text-adm-base:  14px;
-  --text-adm-md:    16px;
-  --text-adm-lg:    18px;
-  --text-adm-xl:    20px;
-  --text-adm-2xl:   22.5px;
-  --text-adm-3xl:   25px;
-  --text-adm-4xl:   28px;
+  /* Console type scale: ratio 1.2 (minor third) from a 14px body, F(n) = 14 × 1.2^n
+     rounded to the half pixel. Body leading 1.4–1.5, headings 1.15–1.25. */
+  --text-adm-xs:   11.5px;
+  --text-adm-xs--line-height: 1.45;
+  --text-adm-base: 14px;
+  --text-adm-base--line-height: 1.5;
+  --text-adm-md:   17px;
+  --text-adm-md--line-height: 1.4;
+  --text-adm-lg:   20px;
+  --text-adm-lg--line-height: 1.25;
+  --text-adm-xl:   24px;
+  --text-adm-xl--line-height: 1.2;
+  --text-adm-2xl:  29px;
+  --text-adm-2xl--line-height: 1.15;
 
   /* Breakpoints, named once and shared with design. */
   --breakpoint-sm: 40rem;
@@ -252,51 +254,6 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
 
-  /* ── Type scale ───────────────────────────────────────────
-     Named steps, so a size is chosen by role rather than by
-     typing a pixel value. These are not invented: they are the
-     sizes already in use across the site, collected into a
-     scale. The counts behind each are why the steps sit where
-     they do (text-[13px] appeared 197 times, text-[11px] 142).
-
-     Every step ships its line-height and tracking with it, so
-     `text-body` sets all three and a heading can never end up
-     with body leading by omission. Use these in new work;
-     arbitrary values are the thing being replaced.            */
-  --text-micro:      0.6875rem;  /* 11px  · dense admin meta   */
-  --text-micro--line-height: 1.45;
-  --text-micro--letter-spacing: 0.01em;
-
-  --text-caption:    0.75rem;    /* 12px  · captions, hints    */
-  --text-caption--line-height: 1.5;
-
-  --text-fine:       0.8125rem;  /* 13px  · table + UI text    */
-  --text-fine--line-height: 1.5;
-
-  --text-small:      0.875rem;   /* 14px  · secondary body     */
-  --text-small--line-height: 1.6;
-
-  --text-body:       0.9375rem;  /* 15px  · default body       */
-  --text-body--line-height: 1.65;
-
-  --text-lead:       1.0625rem;  /* 17px  · section intros     */
-  --text-lead--line-height: 1.65;
-
-  --text-subhead:    1.1875rem;  /* 19px  · card headings      */
-  --text-subhead--line-height: 1.35;
-  --text-subhead--letter-spacing: -0.01em;
-
-  --text-title:      1.5rem;     /* 24px  · panel titles       */
-  --text-title--line-height: 1.25;
-  --text-title--letter-spacing: -0.02em;
-
-  --text-headline:   2rem;       /* 32px  · sub-section heads  */
-  --text-headline--line-height: 1.12;
-  --text-headline--letter-spacing: -0.03em;
-
-  --text-display:    2.75rem;    /* 44px  · section heads      */
-  --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.035em;
 
 }
 
@@ -306,29 +263,9 @@
   /* Oceanblue Premium Color Palette */
   --background: #ffffff;
   --foreground: #1e293b;
-  --card: #ffffff;
-  --card-foreground: #1e293b;
-
-  /* Primary - Deep Ocean Blue to Cyan Gradient */
-  --primary: #0a192f;
-  --primary-foreground: #ffffff;
-
-  /* Secondary - Light Blue Gray */
-  --secondary: #f8fafc;
-  --secondary-foreground: #1e293b;
-
-  /* Muted - Soft Gray with warm undertones */
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-
-  /* Accent - Cyan */
-  --accent: #0891b2;
-  --accent-foreground: #ffffff;
-
-  --destructive: #dc2626;
   --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #0891b2;
+  /* --primary, --accent, --ring and the other shadcn roles alias the console
+     tokens in the ADMIN block below. */
 
   --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: hsl(240 5.3% 26.1%);
@@ -340,32 +277,6 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-.dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --primary: #60a5fa;
-  --primary-foreground: #0f172a;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #22d3ee;
-  --accent-foreground: #0f172a;
-  --destructive: #f87171;
-  --border: #334155;
-  --input: #334155;
-  --ring: #60a5fa;
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
 
 @layer base {
   * {
@@ -385,7 +296,7 @@
 
   /* ADA / WCAG 2.1 AA, visible focus ring for keyboard navigation */
   :focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--color-border-focus);
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -610,107 +521,136 @@
 }
 
 /* ============================================================
-   ADMIN, semantic design tokens (the only values admin UI may
-   reference). Components consume these; pages consume components.
-   Aliases the brand --hz-* primitives so the brand can be retuned
-   in one place without touching admin code. See DESIGN_SYSTEM.md.
+   ADMIN, console tokens. The only definition of --adm-*; light only.
+   Declared on :root, not .adm-scope, so portalled dialogs, sheets
+   and menus resolve them. Primitives first (OKLCH ramps), then the
+   semantic roles components read. Contrast: tests/contrast.test.mjs.
    ============================================================ */
-
 :root {
-  /* Accent (single brand accent, cobalt; never introduce a second) */
-  --adm-accent:        var(--hz-cobalt);      /* primary actions, active nav, links */
-  --adm-accent-strong: var(--hz-cobalt-600);  /* hover/pressed on primary */
-  --adm-accent-soft:   var(--hz-cobalt-100);  /* tinted chips, icon wells, selected pills */
-  --adm-accent-tint:   #eef3fe;               /* row hover / selected-row wash */
-  --adm-focus-ring:    rgba(29, 78, 216, 0.2);/* 2px ring on every focusable control */
+  /* ── Primitives ── */
 
-  /* Surfaces & lines (one neutral family: slate)
+  /* Neutral: one family, tinted toward the navy brand hue (255). */
+  --p-navy-50:  oklch(0.984 0.003 255);  /* #f8fafc */
+  --p-navy-100: oklch(0.967 0.006 255);  /* #f1f4f8 */
+  --p-navy-200: oklch(0.929 0.011 255);  /* #e3e8ef */
+  --p-navy-300: oklch(0.872 0.016 255);  /* #ced6e0 */
+  --p-navy-400: oklch(0.71 0.022 255);   /* #99a2af */
+  --p-navy-500: oklch(0.6 0.026 255);    /* #768190, 3.9:1 white */
+  --p-navy-600: oklch(0.51 0.03 255);    /* #5b6777, 5.7:1 white */
+  --p-navy-700: oklch(0.42 0.032 255);   /* #414e5f, 8.5:1 white */
+  --p-navy-800: oklch(0.33 0.03 255);    /* #2b3645 */
+  --p-navy-900: oklch(0.235 0.03 255);   /* #141f2c, 16.7:1 white */
+  --p-navy-950: oklch(0.17 0.025 255);   /* #08101a */
 
-     Retuned for the operations-workspace direction. The old canvas (#eef2f7)
-     was a heavy blue-grey that made white panels read as paper on a desk, correct for a document system, wrong for a workspace where the grid IS
-     the screen. The canvas is now barely tinted, so the eye goes to the data
-     rather than to the frame around it, and the borders lightened to match:
-     at 40px row height a #dbe3ec rule between every row is a visible ladder. */
-  --adm-canvas:    #f7f8fa;                   /* page background */
-  --adm-surface:   #ffffff;                   /* cards, panels, popovers */
-  --adm-surface-sunken: #f8fafc;              /* toolbars, filter bars, footers */
-  --adm-line:      #e3e8ef;                   /* panel borders */
-  --adm-line-strong: #cbd5e1;                 /* emphasis edges, pinned-column seam */
-  --adm-line-soft: #eef1f6;                   /* row dividers inside a grid */
-  --adm-line-rule: #edf0f5;                   /* column rules inside data grids */
+  /* Cobalt tints for washes, categorical marks and chart ramps; 700+ are --p-blue-*. */
+  --p-cobalt-50:  oklch(0.97 0.016 264);  /* #f0f5ff */
+  --p-cobalt-100: oklch(0.935 0.034 264); /* #deeaff */
+  --p-cobalt-200: oklch(0.88 0.065 264);  /* #c2d8ff */
+  --p-cobalt-300: oklch(0.8 0.105 264);   /* #9bbdff */
+  --p-cobalt-400: oklch(0.69 0.15 264);   /* #6b98f8 */
+  --p-cobalt-500: oklch(0.59 0.19 264);   /* #4174ec */
 
-  /* Table chrome. The header band is now near-white rather than a filled grey
-     strip: in a dense grid a saturated header competes with the first rows. */
-  --adm-head:      #fbfcfd;                   /* sticky data-grid header band */
-  --adm-head-ink:  #64748b;                   /* header label ink */
-  --adm-zebra:     #fcfcfd;                   /* alternating row wash */
-  --adm-row-hover: #f5f8ff;                   /* row hover wash (quieter than accent-tint) */
+  /* Status tints and edges (fills and inks are --p-green/amber/red/rose-*). */
+  --p-green-tint:  oklch(0.97 0.025 163);
+  --p-green-edge:  oklch(0.87 0.08 163);
+  --p-amber-tint:  oklch(0.975 0.03 85);
+  --p-amber-edge:  oklch(0.88 0.1 80);
+  --p-rose-tint:   oklch(0.965 0.018 12);
+  --p-rose-edge:   oklch(0.86 0.07 12);
+  --p-rose-600:    #d91a43;
 
-  /* Ink */
-  --adm-ink:        #0f172a;                  /* headings, primary values (slate-900) */
-  --adm-ink-mute:   #64748b;                  /* labels, secondary text (slate-500) */
-  /* Was #94a3b8 (slate-400), which is 2.56:1 on white, a clear WCAG 1.4.3
-     failure for the labels, hints and timestamps this token colours. It reads
-     as "quiet" on a designer's monitor and as "unreadable" on a laptop at an
-     angle. #6b7280 is the lightest step that clears 4.5:1 (4.83). Measured by
-     tests/contrast.test.mjs, which fails if this is lightened again. */
-  --adm-ink-subtle: #6b7280;                  /* hints, timestamps */
+  /* ── Semantic ── */
 
-  /* Status (match tones in components/admin/theme.ts) */
-  --adm-success: var(--p-green-600);
-  --adm-warning: var(--p-amber-600);
-  /* Text-weight variants. The base tokens above are tuned as FILLS, dots,
-     switch tracks, tinted chips, where they read correctly, but as TEXT they
-     are 3.77:1 (success) and 3.19:1 (warning) on white and fail 1.4.3. Two
-     tokens rather than darkening the base, because darkening the base would
-     also darken every dot and fill that is currently right. */
-  --adm-success-ink: var(--p-green-700);                 /* 5.48:1 on white */
-  --adm-warning-ink: #a84d08;                            /* 5.6:1 white, 5.0:1 on its tint */
-  /* --adm-danger is 4.70:1 on white and passes there, but only 4.01:1 on its
-     own 10% tint, which is exactly where it is used, in the unclaimed claim
-     button. Tinted backgrounds eat contrast, so the tint case needs its own
-     value even when the plain case is fine. */
-  --adm-danger-ink:  var(--p-rose-700);                 /* 6.29:1 white, 5.37:1 on tint */
-  --adm-danger:  #e11d48;
-  --adm-info:    var(--p-indigo-600);
+  /* Action: cobalt, the single accent. */
+  --adm-accent:        var(--p-blue-700);        /* action-primary, 6.7:1 under white */
+  --adm-accent-strong: var(--p-blue-800);        /* action-primary-hover */
+  --adm-accent-press:  var(--p-blue-900);        /* action-primary-active */
+  --adm-accent-soft:   var(--p-cobalt-100);      /* selected pill, active nav, chips */
+  --adm-accent-tint:   var(--p-cobalt-50);       /* selected-row wash */
+  --adm-focus:         var(--p-blue-700);        /* border-focus: 2px ring, 2px offset */
+  --adm-focus-ring:    rgb(29 78 216 / 0.28);    /* input glow beside the focus edge */
+  --adm-opacity-disabled: 0.45;
 
-  /* Elevation. Still border-led, but with a hairline lift restored: against the
-     lighter canvas a pure-border panel had no edge definition at all, so the
-     whole screen flattened into one sheet.
+  /* Data marks: the accent, so a chart and its button share one blue. */
+  --adm-data:          var(--p-blue-700);
+  --adm-data-soft:     var(--p-cobalt-100);
 
-     Layered rather than single-stop: a real edge needs a tight contact shadow
-     AND a wider ambient one. A lone `0 1px 2px` reads as a printed outline;
-     two stops read as a surface sitting on another surface, which is most of
-     what separates a polished panel from a boxed one. */
-  --adm-shadow-sm:
-    0 1px 2px -1px rgba(16, 24, 40, 0.06),
-    0 1px 3px 0 rgba(16, 24, 40, 0.04);
+  /* Surfaces */
+  --adm-canvas:         var(--p-navy-50);        /* surface-canvas */
+  --adm-surface:        var(--p-neutral-0);      /* surface-container */
+  --adm-surface-sunken: var(--p-navy-50);        /* toolbars, footers */
+  --adm-surface-2:      var(--p-navy-100);       /* wells, chips, segmented tracks */
+  --adm-seg-track:      var(--p-navy-100);
+  --adm-seg-active:     var(--p-neutral-0);
+  --adm-head:           var(--p-navy-50);        /* grid header band */
+  --adm-row-hover:      var(--p-navy-100);
+  --adm-row-press:      var(--p-navy-200);
+  --adm-scrim:          rgb(8 16 26 / 0.45);     /* every overlay */
+
+  /* Lines */
+  --adm-line:          var(--p-navy-200);        /* border-subtle: panels, decorative */
+  --adm-line-soft:     var(--p-navy-100);        /* row dividers */
+  --adm-line-rule:     var(--p-navy-100);        /* column rules */
+  --adm-line-strong:   var(--p-navy-300);        /* pinned seam, emphasis */
+  --adm-line-input:    var(--p-navy-500);        /* form control edge, 3:1+ */
+  --adm-line-control:  var(--p-navy-500);        /* button, pill, toggle, checkbox edge */
+
+  /* Text */
+  --adm-ink:        var(--p-navy-900);           /* text-primary */
+  --adm-ink-mute:   var(--p-navy-700);           /* text-secondary */
+  --adm-ink-subtle: var(--p-navy-600);           /* hints, timestamps; 5.2:1 on surface-2 */
+  --adm-head-ink:   var(--p-navy-700);
+
+  /* Navigation */
+  --adm-nav-bg:          var(--p-neutral-0);
+  --adm-nav-line:        var(--p-navy-200);
+  --adm-nav-ink:         var(--p-navy-900);
+  --adm-nav-mute:        var(--p-navy-700);
+  --adm-nav-subtle:      var(--p-navy-600);
+  --adm-nav-hover:       var(--p-navy-100);
+  --adm-nav-active:      var(--p-cobalt-100);
+  --adm-nav-active-ink:  var(--p-blue-800);
+  --adm-nav-active-icon: var(--p-blue-700);
+
+  /* Feedback quartet: fill (dots, tracks), soft (surface), line (border), ink (text, AA on soft). */
+  --adm-info:         var(--p-blue-700);
+  --adm-info-soft:    var(--p-cobalt-50);
+  --adm-info-line:    var(--p-cobalt-200);
+  --adm-info-ink:     var(--p-blue-800);
+  --adm-success:      var(--p-green-600);
+  --adm-success-soft: var(--p-green-tint);
+  --adm-success-line: var(--p-green-edge);
+  --adm-success-ink:  var(--p-green-700);
+  --adm-warning:      var(--p-amber-600);
+  --adm-warning-soft: var(--p-amber-tint);
+  --adm-warning-line: var(--p-amber-edge);
+  --adm-warning-ink:  var(--p-amber-800);
+  --adm-danger:       var(--p-rose-600);         /* also the destructive button fill, 5.0:1 under white */
+  --adm-danger-soft:  var(--p-rose-tint);
+  --adm-danger-line:  var(--p-rose-edge);
+  --adm-danger-ink:   var(--p-rose-700);
+
+  /* Elevation: resting panels are flat; lift only for overlays. */
+  --adm-shadow-sm: 0 1px 2px rgb(8 16 26 / 0.05);
   --adm-shadow-md:
-    0 4px 12px -2px rgba(16, 24, 40, 0.08),
-    0 2px 4px -2px rgba(16, 24, 40, 0.04);
+    0 12px 24px -8px rgb(8 16 26 / 0.12),
+    0 2px 6px -2px rgb(8 16 26 / 0.06);
   --adm-shadow-lg:
-    0 20px 48px -12px rgba(15, 23, 42, 0.24),
-    0 4px 12px -4px rgba(15, 23, 42, 0.10);
-  /* Overlay chrome that must clear the sticky grid header. */
+    0 20px 48px -12px rgb(8 16 26 / 0.24),
+    0 4px 12px -4px rgb(8 16 26 / 0.1);
   --adm-shadow-pop:
-    0 12px 32px -8px rgba(16, 24, 40, 0.16),
-    0 2px 8px -3px rgba(16, 24, 40, 0.08);
-  /* Primary action: an inner top highlight plus a tinted contact shadow, so the
-     button reads as lit rather than as a flat fill of the accent colour. */
-  --adm-shadow-accent:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-    0 1px 2px 0 rgba(29, 78, 216, 0.32),
-    0 4px 10px -3px rgba(29, 78, 216, 0.28);
+    0 12px 32px -8px rgb(8 16 26 / 0.16),
+    0 2px 8px -3px rgb(8 16 26 / 0.08);
+  --adm-shadow-accent: 0 1px 2px rgb(29 78 216 / 0.24);
 
-  /* Motion (one easing, three speeds) */
-  --adm-ease:        cubic-bezier(0.22, 1, 0.36, 1);
-  --adm-ease-in:     cubic-bezier(0.4, 0, 1, 1);   /* exits: quiet start, quick finish */
-  --adm-duration-fast:   150ms;   /* hovers, toggles */
-  --adm-duration-base:   300ms;   /* lifts, reveals */
-  --adm-duration-slow:   700ms;   /* progress bars, chart draws */
+  /* Motion: ease-out to enter, ease-in to leave, 150–300ms. */
+  --adm-ease:          cubic-bezier(0.16, 1, 0.3, 1);
+  --adm-ease-in:       cubic-bezier(0.4, 0, 1, 1);
+  --adm-duration-fast: 150ms;   /* hovers, toggles */
+  --adm-duration-base: 200ms;   /* reveals, panels */
+  --adm-duration-slow: 300ms;   /* progress bars, chart draws */
 
-  /* Radius scale: 4 hairline affordances, 6 buttons and chips, 8 inputs,
-     cards, panels and popovers, 12 dialogs. */
+  /* Radius: 4 hairline, 6 controls and chips, 8 inputs and cards, 12 dialogs. */
   --adm-radius-xs:      4px;
   --adm-radius-control: 6px;
   --adm-radius-chip:    6px;
@@ -718,192 +658,37 @@
   --adm-radius-card:    8px;
   --adm-radius-dialog:  12px;
 
-  /* Row density for data grids, now a user-facing setting, not a constant.
-     `--adm-row-h` is overridden per-grid by the density toggle.
-
-     THREE separate passes have now been rejected for being too tight: 34px
-     ("very compact, this is very bad"), then 48px, then 40px ("too compacted
-     and clumsy"). Do not propose a tighter default again. 56px is the settled
-     value, it clears a 32px avatar with real padding either side, and lets a
-     name sit on a line with air above and below it rather than wedged between
-     two rules.
-
-     The lesson underneath the three rejections: this screen is read for
-     minutes at a time, and what makes it feel productive is being able to land
-     on a row without aiming. Records-per-screen was never the goal. Anyone who
-     genuinely wants tighter rows has the density control. */
+  /* Grid row density; 56 is the settled default (three tighter passes were rejected). */
   --adm-row-h-compact:  44px;
   --adm-row-h-default:  56px;
   --adm-row-h-relaxed:  68px;
   --adm-row-h:          var(--adm-row-h-default);
 
-  /* Spacing comes from the shared --space-* tier at the top of this file. */
-
-  /* ── Type scale ──
-     Five sizes only. A back-office screen that invents a size per
-     component loses its hierarchy; "Contrast" comes from a small
-     number of clearly-separated steps. Sizes were nudged up a step from the
-     first pass: 11/12/13 across the board made every screen read as fine
-     print. */
-  --adm-font-xs: 11.5px; /* uppercase micro-labels, table headers */
-  --adm-font-sm: 13px;   /* secondary/meta text */
-  --adm-font-md: 14px;   /* data-grid cells, body */
-  --adm-font-lg: 15px;   /* emphasis body, form labels */
-  --adm-font-xl: 20px;   /* screen title */
-  --adm-leading:  1.5715; /* Ant's body line-height */
+  /* Legacy shadcn roles, read by components/ui primitives; they follow the console. */
+  --primary:            var(--adm-accent);
+  --primary-foreground: var(--p-neutral-0);
+  --accent:             var(--adm-accent-soft);
+  --accent-foreground:  var(--adm-ink);
+  --ring:               var(--adm-focus);
+  --muted:              var(--adm-surface-2);
+  --muted-foreground:   var(--adm-ink-mute);
+  --secondary:          var(--adm-surface-2);
+  --secondary-foreground: var(--adm-ink);
+  --destructive:        var(--adm-danger);
+  --input:              var(--adm-line-control);
+  --card:               var(--adm-surface);
+  --card-foreground:    var(--adm-ink);
 }
 
-/* ============================================================
-   ADMIN, console tokens (light only). Declared on :root, not
-   .adm-scope, so portalled dialogs, sheets and menus resolve them.
-   Later values override the :root block above.
-   ============================================================ */
-:root {
-  /* Oceanblue brand cobalt, matches the marketing site (--hz-cobalt). Green
-     is reserved for the "healthy/success" semantic only, so accent ≠ success. */
-  --adm-accent:        var(--p-blue-700);        /* primary/brand */
-  --adm-accent-strong: #1e40af;                  /* cobalt-800, hover/pressed */
-  --adm-accent-soft:   rgba(29, 78, 216, 0.10);  /* tinted chips, active nav pill */
-  --adm-accent-tint:   rgba(29, 78, 216, 0.07);  /* row hover / selected wash */
-  --adm-focus-ring:    rgba(29, 78, 216, 0.28);
-
-  --adm-data:          #2563eb;                  /* blue, graphs, data series, sparklines */
-  --adm-data-soft:     rgba(37, 99, 235, 0.10);
-
-  /* Chrome (sidebar + top bar) is a cool grey sheet; the content pane is an
-     inset white panel on it. Cards sit on a barely-tinted canvas so they keep
-     an edge without needing heavy shadows. */
-  --adm-canvas:        var(--p-gray-75);
-  --adm-chrome:        #f1f4f9;
-  --adm-chrome-hover:  rgba(16, 24, 40, 0.05);
-  --adm-line:          var(--p-gray-200);
-  --adm-line-soft:     var(--p-gray-150);
-  --adm-line-strong:   var(--p-gray-300);
-  --adm-line-input:    #828b9c;  /* form control edge, 3.4:1 on white (1.4.11) */
-  --adm-line-control:  #828b9c;  /* edge of any control (button, pill, toggle, checkbox): 3:1 on white and canvas */
-  --adm-row-hover:     #f7f9fc;
-  --adm-head:          var(--p-gray-50);
-  --adm-head-ink:      var(--p-gray-500);
-
-  /* Ink ramp, one cool grey family, AA on both white and the canvas. */
-  --adm-ink:        var(--p-gray-900);
-  --adm-ink-mute:   var(--p-gray-600);
-  --adm-ink-subtle: #606a7e;  /* 4.9:1 on surface-2; gray-500 sat at 4.51 */
-  --adm-danger:     #d91a43;
-
-  /* Navigation recedes: white frame with the top bar, brand only on the
-     logo and the active item. Ratios on white: mute 7.7, subtle 5.0,
-     accent on active tint 6.1. */
-  --adm-scrim:           rgba(16, 24, 40, 0.45);
-  --adm-nav-bg:          #ffffff;
-  --adm-nav-line:        #e4e7ec;
-  --adm-nav-ink:         #101828;
-  --adm-nav-mute:        #475467;
-  --adm-nav-subtle:      #667085;
-  --adm-nav-hover:       #f2f4f7;
-  --adm-nav-active:      #eef4ff;
-  --adm-nav-active-ink:  #1d4ed8;
-  --adm-nav-active-icon: #1d4ed8;
-
-  --adm-surface-2:    var(--p-gray-100);
-  --adm-seg-track:    #f2f4f7;
-  --adm-seg-active:   #ffffff;
-
-  --adm-success-soft: rgba(5, 150, 105, 0.10);
-  --adm-warning-soft: rgba(217, 119, 6, 0.10);
-  --adm-danger-soft:  rgba(225, 29, 72, 0.10);
-  --adm-glow:         rgba(22, 163, 74, 0.16);
-
-  /* Resting panels are flat: structure comes from hairlines, not lift. */
-  --adm-shadow-sm: none;
-  --adm-shadow-md:
-    0 12px 24px -8px rgba(16, 24, 40, 0.12),
-    0 2px 6px -2px rgba(16, 24, 40, 0.06);
-  --adm-shadow-accent:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    0 1px 2px 0 rgba(29, 78, 216, 0.24);
-}
-
-/* ============================================================
-   ENTERPRISE SPEC (Oct 2026), semantic tier. The owner's spec:
-   60% white/slate-tint surfaces, 30% slate structure, 10% ocean
-   accent. Ocean is #0369A1, not the spec's #0284C7: white on
-   #0284C7 is 4.1:1 and fails AA for button labels; #0369A1 is
-   5.9:1. Declared after the console block so the --adm-* tokens
-   below re-point here and every screen follows from one place.
-   ============================================================ */
-:root {
-  --surface-canvas:      #f8fafc;
-  --surface-card:        #ffffff;
-  --border-subtle:       #e2e8f0;
-  --text-primary:        #0f172a;
-  --text-secondary:      #334155;
-  --text-muted:          #5c6b80;  /* metadata text: the spec's #64748B is 4.3:1 on slate tints, this is 4.9+ */
-  --icon-rest:           #64748b;  /* resting icons (non-text, 3:1 rule) */
-  --accent-ocean:        #0369a1;
-  --accent-ocean-hover:  #075985;
-  --accent-ocean-bright: #0284c7;  /* charts and data marks only, never text on white */
-  --row-hover:           #f1f5f9;
-
-  /* 4/8 baseline. */
-  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
-  --space-4: 16px; --space-6: 24px; --space-8: 32px;
-
-  /* Motion: micro-interactions linear and quick; panels ease out. */
-  --motion-micro: 120ms;
-  --motion-panel: 200ms;
-  --ease-panel:   cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Console tokens, re-pointed. */
-  --adm-accent:        var(--accent-ocean);
-  --adm-accent-strong: var(--accent-ocean-hover);
-  --adm-accent-soft:   rgba(3, 105, 161, 0.10);
-  --adm-accent-tint:   rgba(3, 105, 161, 0.06);
-  --adm-focus-ring:    rgba(3, 105, 161, 0.30);
-  --adm-data:          var(--accent-ocean-bright);
-  --adm-data-soft:     rgba(2, 132, 199, 0.12);
-
-  --adm-canvas:        var(--surface-canvas);
-  --adm-surface:       var(--surface-card);
-  --adm-surface-sunken: var(--surface-canvas);
-  --adm-line:          var(--border-subtle);
-  --adm-row-hover:     var(--row-hover);
-  --adm-head:          #f8fafc;
-  --adm-head-ink:      var(--text-secondary);
-
-  --adm-ink:           var(--text-primary);
-  --adm-ink-mute:      var(--text-secondary);
-  --adm-ink-subtle:    var(--text-muted);
-
-  --adm-nav-ink:         var(--text-primary);
-  --adm-nav-mute:        var(--text-secondary);
-  --adm-nav-subtle:      var(--text-muted);
-  --adm-nav-hover:       var(--row-hover);
-  --adm-nav-active:      #e0f2fe;
-  --adm-nav-active-ink:  var(--accent-ocean);
-  --adm-nav-active-icon: var(--accent-ocean);
-
-  /* Status tints from the spec; their text stays on the darker -ink tokens (AA). */
-  --adm-success-soft: #ecfdf5;
-  --adm-warning-soft: #fffbeb;
-  --adm-danger-soft:  #fff1f2;
-
-  /* Crisp borders with a faint resting lift, no blur. */
-  --adm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --adm-shadow-accent: 0 1px 2px rgba(3, 105, 161, 0.24);
-  --adm-duration-fast: var(--motion-micro);
-  --adm-duration-base: var(--motion-panel);
-  --adm-ease: var(--ease-panel);
-}
 
 .adm-scope {
-  --input: var(--adm-line-control); /* shadcn checkbox edge, 3:1 like every console control */
   --skeleton-background: color-mix(in srgb, var(--adm-line-soft) 70%, transparent);
   background: var(--adm-canvas);
   color: var(--adm-ink);
   color-scheme: light;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 14px;
+  line-height: 1.5;
   letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased;
 }
@@ -911,30 +696,30 @@
 /* Quiet scrollbars inside the console: thin thumb, no track, no arrows. */
 .adm-scope * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.28) transparent;
+  scrollbar-color: var(--p-navy-300) transparent;
 }
 .adm-scope *::-webkit-scrollbar { width: 8px; height: 8px; }
 .adm-scope *::-webkit-scrollbar-button { display: none; }
 .adm-scope *::-webkit-scrollbar-track { background: transparent; }
 .adm-scope *::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.28);
+  background: var(--p-navy-300);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-.adm-scope *::-webkit-scrollbar-thumb:hover { background-color: rgba(100, 116, 139, 0.45); }
+.adm-scope *::-webkit-scrollbar-thumb:hover { background-color: var(--p-navy-400); }
 .adm-scroll-hidden { scrollbar-width: none; }
 
 @keyframes adm-rise {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: none; }
 }
-.adm-stagger > * { animation: adm-rise 480ms var(--adm-ease) both; }
-.adm-stagger > :nth-child(2) { animation-delay: 50ms; }
-.adm-stagger > :nth-child(3) { animation-delay: 100ms; }
-.adm-stagger > :nth-child(4) { animation-delay: 150ms; }
-.adm-stagger > :nth-child(5) { animation-delay: 200ms; }
-.adm-stagger > :nth-child(n+6) { animation-delay: 250ms; }
+.adm-stagger > * { animation: adm-rise var(--adm-duration-slow) var(--adm-ease) both; }
+.adm-stagger > :nth-child(2) { animation-delay: 30ms; }
+.adm-stagger > :nth-child(3) { animation-delay: 60ms; }
+.adm-stagger > :nth-child(4) { animation-delay: 90ms; }
+.adm-stagger > :nth-child(5) { animation-delay: 120ms; }
+.adm-stagger > :nth-child(n+6) { animation-delay: 150ms; }
 
 .adm-scroll-hidden::-webkit-scrollbar { display: none; }
 
@@ -1030,11 +815,11 @@
 .adm-grid--actions thead th:last-child { z-index: 3; background: var(--adm-head); }
 .adm-grid--actions.has-overflow-right thead th:last-child,
 .adm-grid--actions.has-overflow-right tbody td:last-child {
-  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgba(16, 24, 40, 0.1);
+  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgb(8 16 26 / 0.1);
 }
 .adm-grid--pinned.is-scrolled thead th:first-child,
 .adm-grid--pinned.is-scrolled tbody td:first-child {
-  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgba(16, 24, 40, 0.1);
+  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgb(8 16 26 / 0.1);
 }
 
 /* ── Hit targets (Fitts's Law).
@@ -1084,20 +869,19 @@
    focus-visible (not :focus) so pointer users never see a ring, which is
    what lets a dense screen stay quiet while remaining operable. */
 .adm-scope :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--adm-accent);
-  outline-offset: 1px;
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
 }
 /* Menus, popovers and drawers portal into <body>, outside .adm-scope. While
    the console is open the body carries .adm-portals so they keep the console's
    font, ink, control edge and focus ring instead of the public site's. */
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"], [role="dialog"]) {
-  --input: var(--adm-line-control);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   color: var(--adm-ink);
 }
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"]) :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--adm-accent);
-  outline-offset: 1px;
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
 }
 /* Cobalt on cobalt is invisible; white inside the brand band. */
 .adm-scope .adm-on-band :is(a, button, [role="button"], [tabindex]):focus-visible {
@@ -1120,10 +904,10 @@
 @keyframes adm-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes adm-pulse-once { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
 @keyframes adm-rise-in { from { opacity: 0; transform: translateY(6px); } }
-.adm-success-ring { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 520ms var(--adm-ease) 120ms forwards; }
-.adm-success-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 320ms var(--adm-ease) 560ms forwards; }
-.adm-success-pulse { opacity: 0; animation: adm-pulse-once 700ms ease-out 760ms; }
-.adm-success-text { animation: adm-rise-in 320ms var(--adm-ease) 420ms backwards; }
+.adm-success-ring { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 300ms var(--adm-ease) 80ms forwards; }
+.adm-success-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: adm-draw 200ms var(--adm-ease) 380ms forwards; }
+.adm-success-pulse { opacity: 0; animation: adm-pulse-once 300ms var(--adm-ease) 580ms; }
+.adm-success-text { animation: adm-rise-in 240ms var(--adm-ease) 300ms backwards; }
 .adm-step-tick { animation: adm-fade-in 200ms var(--adm-ease); }
 
 /* ── "Use Transition": one duration, one curve, and only on properties the

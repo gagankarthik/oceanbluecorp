@@ -149,7 +149,7 @@ const HIDE = {
 const ALIGN = { left: "text-left", right: "text-right", center: "text-center" } as const;
 
 const PAGER_BTN =
-  "inline-flex h-8 items-center rounded-[6px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-8 items-center rounded-[6px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)] disabled:cursor-not-allowed disabled:opacity-40";
 
 /** Zero-based pages to show: both ends, the current page and its neighbours; null is a gap. */
 function pageList(current: number, count: number): (number | null)[] {
@@ -583,7 +583,7 @@ export function DataTable<T>({
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 aria-label="Rows per page"
-                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
               >
                 {pageSizeOptions.map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -623,7 +623,7 @@ export function DataTable<T>({
                     aria-label={`Page ${n + 1}`}
                     aria-current={n === safePage ? "page" : undefined}
                     className={cn(
-                      "h-8 min-w-8 rounded-[6px] px-2 text-adm-xs font-medium tabular-nums transition-colors",
+                      "h-8 min-w-8 rounded-[6px] px-2 text-adm-base font-medium tabular-nums transition-colors",
                       n === safePage
                         ? "bg-[var(--adm-accent)] text-white"
                         : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",

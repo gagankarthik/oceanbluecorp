@@ -384,7 +384,7 @@ function NewApplicationInner() {
                 Couldn&apos;t read the resume, enter the details below instead. {parseError}
               </p>
               {form.resumeFile && (
-                <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => void parseResumeFile(form.resumeFile!)}>
+                <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => void parseResumeFile(form.resumeFile!)}>
                   Try again
                 </WorkspaceButton>
               )}
@@ -403,7 +403,7 @@ function NewApplicationInner() {
         onResumeFileChange={(file) => (file ? setParseError(null) : forgetPrefill())}
         resumeFileActions={form.resumeFile && parsedFile.current !== form.resumeFile ? (
           // A resume attached late in a manual entry can still fill the blanks.
-          <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
+          <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => void parseResumeFile(form.resumeFile!)} disabled={parsing}>
             {parsing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
             {parsing ? "Reading…" : "Fill form from resume"}
           </WorkspaceButton>

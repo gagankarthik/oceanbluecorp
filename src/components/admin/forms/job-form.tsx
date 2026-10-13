@@ -428,7 +428,7 @@ export function JobForm({
 
       <header className="mx-auto mb-5 flex max-w-6xl flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+          <h1 className="text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
             {mode === "create" ? "New" : "Edit"} {data.category === "open" ? "open" : "state"} role
           </h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
@@ -975,7 +975,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
       bodyClassName="space-y-4 bg-[var(--adm-surface-sunken)] sm:p-4"
     >
       <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-        <h1 className="mb-3 text-adm-2xl font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
+        <h1 className="mb-3 text-adm-xl font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
           <span className="inline-flex items-center gap-1.5">
             <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{typeLabel}
@@ -992,7 +992,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
           )}
         </div>
         {data.salaryMin && data.salaryMax && (
-          <p className="text-adm-lg font-semibold tabular-nums text-[var(--adm-ink)]">
+          <p className="text-adm-md font-semibold tabular-nums text-[var(--adm-ink)]">
             ${Number(data.salaryMin).toLocaleString()} – ${Number(data.salaryMax).toLocaleString()}
             <span className="ml-1 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               {SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}

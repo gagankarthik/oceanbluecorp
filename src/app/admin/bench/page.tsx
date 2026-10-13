@@ -735,39 +735,39 @@ export default function TalentBenchPage() {
         >
           <FilterMenu activeCount={activeFilterCount} onClearAll={clearFilters}>
             <FilterField label="Stage" htmlFor="bench-filter-stage">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 {STATUS_TABS.map((t) => (
                   <option key={t.key} value={t.key}>{t.label} ({statusCounts[t.key] || 0})</option>
                 ))}
               </FormSelect>
             </FilterField>
             <FilterField label="Skill" htmlFor="bench-filter-skill">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
                 <option value="all">All skills</option>
                 {allSkills.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Work authorization" htmlFor="bench-filter-auth">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
                 <option value="all">All</option>
                 {workAuthorizations.map((auth) => <option key={auth} value={auth}>{auth}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Hire type" htmlFor="bench-filter-hire">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
                 <option value="all">All hire types</option>
                 {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Location" htmlFor="bench-filter-location">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                 <option value="all">All locations ({pooledApplications.length})</option>
                 {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
               </FormSelect>
             </FilterField>
             {canFilterByAdder && (
               <FilterField label="Added by" htmlFor="bench-filter-owner">
-                <FormSelect className="h-8 text-adm-xs" id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
+                <FormSelect className="h-8 text-adm-base" id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
                   <option value="all">Everyone</option>
                   {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
                 </FormSelect>

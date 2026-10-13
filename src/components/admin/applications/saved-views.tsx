@@ -51,7 +51,7 @@ export function SavedViewsMenu<S>({
           aria-label="My views"
           className={cn(
             // Same size and edge as Filters, so the toolbar's controls read as one set.
-            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-xs font-medium transition-colors sm:px-3",
+            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-base font-medium transition-colors sm:px-3",
             activeId
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
@@ -118,7 +118,7 @@ export function SavedViewsMenu<S>({
             onChange={(e) => setName(e.target.value)}
             placeholder={full ? `Limit of ${MAX_SAVED} reached` : "Name the current view"}
             disabled={full}
-            className="h-8 text-adm-xs"
+            className="h-8 text-adm-base"
           />
           <WorkspaceButton type="submit" size="sm" disabled={!trimmed || full}>Save</WorkspaceButton>
         </form>

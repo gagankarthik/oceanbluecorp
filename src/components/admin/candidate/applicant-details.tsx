@@ -68,7 +68,7 @@ export function ApplicantDetails({
         title="Applicant details"
         count={filled.length}
         action={
-          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-adm-xs">
+          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-adm-base">
             <IconEdit aria-hidden="true" /> Edit
           </WorkspaceButton>
         }

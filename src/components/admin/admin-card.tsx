@@ -65,7 +65,7 @@ export function AdminCardHeader({
             <h3 className="truncate text-adm-base font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">{title}</h3>
             {subtitle && <InfoTip label={title}>{subtitle}</InfoTip>}
             {count !== undefined && count > 0 && (
-              <span className="flex-none rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-micro font-medium tabular-nums text-[var(--adm-ink-mute)]">
+              <span className="flex-none rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]">
                 {count}
               </span>
             )}

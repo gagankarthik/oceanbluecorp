@@ -647,7 +647,7 @@ export default function AdminDashboard() {
                     </span>
                     <span className="flex flex-none flex-col items-end gap-1">
                       <StatusBadge status={a.status} />
-                      <span className="text-adm-micro text-[var(--adm-ink-subtle)]">{ago(new Date(a.appliedAt).getTime())}</span>
+                      <span className="text-adm-xs text-[var(--adm-ink-subtle)]">{ago(new Date(a.appliedAt).getTime())}</span>
                     </span>
                   </Link>
                 </li>

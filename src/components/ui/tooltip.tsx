@@ -85,14 +85,14 @@ export function Tooltip({
           id={id}
           className={cn(
             "pointer-events-none absolute z-50 w-max max-w-[16rem] rounded-lg px-2.5 py-1.5 text-left leading-snug",
-            "bg-[var(--hz-ink)] text-caption font-medium text-white shadow-[var(--hz-shadow-md)]",
+            "bg-[var(--adm-ink)] text-adm-xs font-medium text-white shadow-[var(--adm-shadow-pop)]",
             align === "start" && START[side] ? START[side]!.box : SIDE[side]
           )}
         >
           {content}
           <span
             aria-hidden
-            className={cn("absolute h-2 w-2 rotate-45 bg-[var(--hz-ink)]", align === "start" && START[side] ? START[side]!.arrow : ARROW[side])}
+            className={cn("absolute h-2 w-2 rotate-45 bg-[var(--adm-ink)]", align === "start" && START[side] ? START[side]!.arrow : ARROW[side])}
           />
         </span>
       )}

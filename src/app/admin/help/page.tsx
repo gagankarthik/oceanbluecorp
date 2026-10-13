@@ -120,7 +120,7 @@ function ContactRow({
 }) {
   if (!value) {
     return (
-      <div className="flex h-9 items-center gap-2.5 text-adm-xs">
+      <div className="flex h-9 items-center gap-2.5 text-adm-base">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="select-none text-[var(--adm-ink-subtle)]">Not on record</span>
       </div>

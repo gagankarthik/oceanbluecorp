@@ -138,7 +138,7 @@ export function DonutChart({
           })()}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+          <span className="text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
             {(active ? active.value : total).toLocaleString()}
           </span>
           <span className="mt-1 max-w-[7rem] truncate text-adm-xs text-[var(--adm-ink-subtle)]">
@@ -228,7 +228,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                 <div className="pointer-events-none relative z-20 -my-1 flex justify-center">
                   <span
                     className={cn(
-                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
+                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-adm-xs font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
                       "transition-colors duration-200",
                       interactive && "group-hover/band:bg-[var(--adm-accent)] group-hover/band:text-white group-hover/band:ring-[var(--adm-accent)]",
                     )}
@@ -260,7 +260,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                   <span className="text-adm-xs font-semibold">{st.label}</span>
                   <span className="text-adm-base font-semibold tabular-nums">{st.value.toLocaleString()}</span>
                   {st.meta && (
-                    <span className="text-adm-micro font-medium tabular-nums text-white">{st.meta}</span>
+                    <span className="text-adm-xs font-medium tabular-nums text-white">{st.meta}</span>
                   )}
                   {interactive && (
                     <ArrowRight

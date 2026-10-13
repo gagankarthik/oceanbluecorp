@@ -120,7 +120,7 @@ const ROUTE_ROWS = Object.entries(routeAccess)
 // ── Primitives ─────────────────────────────────────────────────────────────────
 
 /** Key caps in prose sit a size up from the toolbar default. */
-const KBD = "h-6 px-1.5 text-adm-micro";
+const KBD = "h-6 px-1.5 text-adm-xs";
 
 /** Inline code span. */
 const CODE = "rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-adm-xs text-[var(--adm-ink-mute)]";
@@ -228,7 +228,7 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
           onClick={() => { void navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           aria-label={copied ? "Copied" : "Copy code"}
           className={cn(
-            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-adm-xs font-medium transition-colors duration-150",
+            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-adm-base font-medium transition-colors duration-150",
             copied
               ? "text-[var(--adm-success-ink)]"
               : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -253,7 +253,7 @@ function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PA
     PATCH:  "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
   };
   return (
-    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-adm-micro font-semibold", colors[method])}>
+    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-adm-xs font-semibold", colors[method])}>
       {method}
     </span>
   );

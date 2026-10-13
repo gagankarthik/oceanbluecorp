@@ -590,7 +590,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                     value={postedFrom}
                     max={postedTo || undefined}
                     onChange={(e) => setPostedFrom(e.target.value)}
-                    className="h-8 px-2 text-adm-xs"
+                    className="h-8 px-2 text-adm-base"
                   />
                 </FilterField>
                 <FilterField label="To" htmlFor="filter-posted-to">
@@ -600,7 +600,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                     value={postedTo}
                     min={postedFrom || undefined}
                     onChange={(e) => setPostedTo(e.target.value)}
-                    className="h-8 px-2 text-adm-xs"
+                    className="h-8 px-2 text-adm-base"
                   />
                 </FilterField>
               </div>

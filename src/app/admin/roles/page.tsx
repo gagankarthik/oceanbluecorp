@@ -163,7 +163,7 @@ export default function RolesPage() {
                 <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-adm-2xl font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
+                <span className="text-adm-xl font-semibold leading-none tracking-[-0.025em] tabular-nums text-[var(--adm-ink)]">
                   {grantedCount(role)}
                 </span>
                 <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">of {routes.length} screens</span>

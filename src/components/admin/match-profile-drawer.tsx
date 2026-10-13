@@ -94,7 +94,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
                   <div>
                     <h3 className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">Fit for this job</h3>
                     <p className="mt-1 tabular-nums">
-                      <span className={cn("text-adm-3xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(c.fit_score))}>{c.fit_score}</span>
+                      <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(c.fit_score))}>{c.fit_score}</span>
                       <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">/100</span>
                     </p>
                   </div>

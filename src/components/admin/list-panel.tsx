@@ -58,7 +58,7 @@ export function ListToolbar({
                   type="button"
                   onClick={() => onSegmentChange?.(s.key)}
                   className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-xs font-medium transition-colors duration-150",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium transition-colors duration-150",
                     active
                       ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -67,7 +67,7 @@ export function ListToolbar({
                   {s.label}
                   <span
                     className={cn(
-                      "rounded-full px-1.5 text-adm-micro font-medium tabular-nums",
+                      "rounded-full px-1.5 text-adm-xs font-medium tabular-nums",
                       active ? "bg-[var(--adm-surface)] text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
                     )}
                   >
@@ -249,7 +249,7 @@ export function InlineSelect({
         autoComplete="off"
         aria-label={ariaLabel}
         className={cn(
-          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-adm-xs font-medium",
+          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-adm-base font-medium",
           "transition-colors duration-150",
           className,
         )}

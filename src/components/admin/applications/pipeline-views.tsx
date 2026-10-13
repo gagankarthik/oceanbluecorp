@@ -30,7 +30,7 @@ export interface SharedProps extends RowActions {
 
 const menuCls =
   "w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
+const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 /** View / edit / move / delete, shared by the grid, the board and the list. */
 export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, className }: {
@@ -97,12 +97,12 @@ function SkillChips({ skills, max }: { skills?: string[]; max: number }) {
   return (
     <div className="flex flex-wrap gap-1">
       {all.slice(0, max).map((s) => (
-        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-ink-mute)]">
+        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
           {s}
         </span>
       ))}
       {all.length > max && (
-        <span className="px-1 py-0.5 text-adm-micro font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+        <span className="px-1 py-0.5 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">
           +{all.length - max}
         </span>
       )}

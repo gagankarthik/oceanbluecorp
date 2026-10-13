@@ -315,7 +315,7 @@ function UserMenu({
               <p className="truncate text-adm-xs font-semibold text-[var(--adm-ink)]">{user?.name}</p>
               <p className="truncate text-adm-xs text-[var(--adm-ink-subtle)]">{user?.email}</p>
             </div>
-            <span className="flex-none rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-accent)]">
+            <span className="flex-none rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-accent)]">
               {role}
             </span>
           </div>
@@ -400,7 +400,7 @@ function NotificationsPanel() {
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--adm-danger)] px-1 text-adm-micro font-semibold tabular-nums text-white ring-2 ring-[var(--adm-surface)]"
+            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--adm-danger)] px-1 text-adm-xs font-semibold tabular-nums text-white ring-2 ring-[var(--adm-surface)]"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
@@ -425,7 +425,7 @@ function NotificationsPanel() {
                 <button
                   type="button"
                   onClick={markAllAsRead}
-                  className="h-8 rounded-[var(--adm-radius-control)] px-2 text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
+                  className="h-8 rounded-[var(--adm-radius-control)] px-2 text-adm-base font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-accent-tint)]"
                 >
                   Mark all read
                 </button>
@@ -470,7 +470,7 @@ function NotificationsPanel() {
             ) : (
               groups.map(({ g, items }) => (
                 <section key={g} aria-labelledby={`notif-${g}`}>
-                  <h3 id={`notif-${g}`} className="sticky top-0 z-[1] bg-[var(--adm-surface-sunken)] px-4 py-1.5 text-adm-micro font-semibold uppercase tracking-[0.05em] text-[var(--adm-ink-mute)]">
+                  <h3 id={`notif-${g}`} className="sticky top-0 z-[1] bg-[var(--adm-surface-sunken)] px-4 py-1.5 text-adm-xs font-semibold uppercase tracking-[0.05em] text-[var(--adm-ink-mute)]">
                     {g}
                   </h3>
                   <ul>
@@ -514,7 +514,7 @@ function NotificationsPanel() {
             <Link
               href="/admin/notifications"
               onClick={() => setOpen(false)}
-              className="flex h-11 flex-none items-center justify-center gap-1 border-t border-[var(--adm-line)] text-adm-xs font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
+              className="flex h-11 flex-none items-center justify-center gap-1 border-t border-[var(--adm-line)] text-adm-base font-medium text-[var(--adm-accent)] transition-colors hover:bg-[var(--adm-row-hover)]"
             >
               View all notifications
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -539,7 +539,7 @@ function AccessDenied({ userRole }: { userRole: string | null | undefined }) {
         </p>
         <Link
           href={home}
-          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-adm-xs font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
+          className="mt-5 inline-flex h-8 items-center rounded-[var(--adm-radius-control)] bg-[var(--adm-accent)] px-3 text-adm-base font-medium text-white transition-colors hover:bg-[var(--adm-accent-strong)]"
         >
           {home === "/admin" ? "Back to dashboard" : "Go to your workspace"}
         </Link>

@@ -211,7 +211,7 @@ export function JobTeamCard({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search staff…"
-                    className="h-8 w-full bg-transparent pl-8 pr-2 text-adm-xs text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
+                    className="h-8 w-full bg-transparent pl-8 pr-2 text-adm-base text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
                   />
                 </div>
 
@@ -293,7 +293,7 @@ export function JobTeamCard({
                       ) : assigned ? (
                         <Check className="h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-hidden="true" />
                       ) : (
-                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium capitalize text-[var(--adm-ink-mute)]">
+                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium capitalize text-[var(--adm-ink-mute)]">
                           {u.role}
                         </span>
                       )}

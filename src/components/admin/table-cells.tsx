@@ -60,7 +60,7 @@ export interface RowMenuItem {
   disabled?: boolean;
 }
 
-const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
+const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 /** The one actions control per row: a ⋮ button that opens a short menu. */
 export function RowMenu({ label, items, busy = false }: { label: string; items: RowMenuItem[]; busy?: boolean }) {

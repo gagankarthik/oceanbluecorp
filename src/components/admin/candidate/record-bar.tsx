@@ -39,7 +39,7 @@ const ON_COBALT = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--ad
 
 const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const MENU_LABEL = "px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]";
-const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
+const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 export function RecordBar({
   candidate,
@@ -63,7 +63,7 @@ export function RecordBar({
           <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h1 className="truncate text-adm-2xl font-semibold leading-8 tracking-[-0.02em] text-white">
+              <h1 className="truncate text-adm-xl font-semibold leading-8 tracking-[-0.02em] text-white">
                 {candidate.name || "Unnamed candidate"}
               </h1>
               {/* Chips are tinted for a white surface, so each sits on a white tab. */}

@@ -172,7 +172,7 @@ export function StepRail({
                 <StepBadge step={i + 1} state={s.state} />
                 <span className="min-w-0 flex-1 truncate">{s.title}</span>
                 {s.state !== "done" && (
-                  <span className="flex-none text-adm-micro text-[var(--adm-ink-subtle)]">{s.required ? "Required" : "Optional"}</span>
+                  <span className="flex-none text-adm-xs text-[var(--adm-ink-subtle)]">{s.required ? "Required" : "Optional"}</span>
                 )}
               </button>
             </li>

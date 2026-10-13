@@ -176,7 +176,7 @@ export function LineChart({
               )}
               style={{ left: `${pctX(active)}%` }}
             >
-              <p className="text-adm-micro text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
+              <p className="text-adm-xs text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
               <p className="mt-1 flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label ?? dataKey}
@@ -193,7 +193,7 @@ export function LineChart({
           </>
         )}
       </div>
-      <div className="mt-1.5 flex justify-between text-adm-micro tabular-nums text-[var(--adm-ink-subtle)]">
+      <div className="mt-1.5 flex justify-between text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
         {ticks.map((ti, i) => <span key={i}>{xFmt(String(data[ti]?.[xKey] ?? ""))}</span>)}
       </div>
     </div>
@@ -244,7 +244,7 @@ export function TrendPanel({
         <div className="min-w-0">
           <h3 className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{title}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+            <span className="text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
               {value.toLocaleString()}
             </span>
             <DeltaChip delta={delta} />
@@ -306,7 +306,7 @@ export function AttentionPanel({
             </p>
           </div>
           <span className={cn(
-            "text-adm-3xl font-semibold leading-none tracking-[-0.025em] tabular-nums",
+            "text-adm-xl font-semibold leading-none tracking-[-0.025em] tabular-nums",
             healthy ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-ink)]",
           )}>
             {total.toLocaleString()}
@@ -341,7 +341,7 @@ export function AttentionPanel({
                   tone.edge,
                 )}
               >
-                <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
+                <span className={cn("text-adm-md font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
                   {it.value.toLocaleString()}
                 </span>
                 <span className="min-w-0">

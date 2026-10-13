@@ -329,7 +329,7 @@ function PanelAction({
   icon: Icon, label, onClick,
 }: { icon: typeof IconSend; label: string; onClick: () => void }) {
   return (
-    <WorkspaceButton onClick={onClick} className="h-8 gap-1.5 px-2.5 text-adm-xs font-medium [&_svg]:h-3.5 [&_svg]:w-3.5">
+    <WorkspaceButton onClick={onClick} className="h-8 gap-1.5 px-2.5 text-adm-base font-medium [&_svg]:h-3.5 [&_svg]:w-3.5">
       <Icon aria-hidden="true" />
       {label}
     </WorkspaceButton>
@@ -348,7 +348,7 @@ function RowActions({
       <button
         type="button"
         onClick={() => onEdit(record)}
-        className="h-8 rounded-[var(--adm-radius-control)] px-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        className="h-8 rounded-[var(--adm-radius-control)] px-2.5 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         Edit
       </button>
