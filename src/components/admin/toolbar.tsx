@@ -110,7 +110,7 @@ export function FilterMenu<V extends string>({
           {current?.count !== undefined && (
             <span
               className={cn(
-                "rounded-[6px] px-1 text-adm-micro font-bold tabular-nums",
+                "rounded-[6px] px-1 text-adm-micro font-semibold tabular-nums",
                 active ? "bg-[var(--adm-accent)]/12 text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
               )}
             >

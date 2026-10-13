@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
@@ -14,19 +14,17 @@ import { jsonLdString } from "@/lib/seo";
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
 export const revalidate = 60;
 
-// Fallback face outside the .site and .adm-scope scopes; no page leads with
-// it, so it is not preloaded.
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  preload: false,
-});
-
-// The public site's typeface (.site scope in globals.css). Admin stays on Geist.
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
+// Two families per surface: the public site is IBM Plex Sans (.site scope in
+// globals.css), the admin console Geist; Geist Mono serves both for figures.
+// Self-hosted variable file (latin, OFL), used at 400/500/600 only.
+// next/font/google fails on this family now that Google serves it as one
+// variable file for every weight.
+const plexSans = localFont({
+  src: "../fonts/ibm-plex-sans-latin-var.woff2",
   variable: "--font-plex-sans",
-  weight: ["400", "500", "600", "700"],
+  weight: "400 600",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const viewport: Viewport = {
@@ -266,7 +264,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} font-sans antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} font-sans antialiased`}
       >
         {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
             and the admin layout (→ #adm-main), so none is needed here. */}

@@ -906,7 +906,7 @@ export function FilterMenu({
           </svg>
           <span className="hidden sm:inline">Filters</span>
           {active && (
-            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-adm-micro font-bold tabular-nums text-white">
+            <span className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--adm-accent)] px-1 text-adm-micro font-semibold tabular-nums text-white">
               {activeCount}
             </span>
           )}

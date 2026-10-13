@@ -223,7 +223,7 @@
   --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -577,14 +577,15 @@
   50%  { transform: translate3d(2%, -2%, 0) scale(1.08); }
   100% { transform: translate3d(0,0,0) scale(1); }
 }
-.hz-aurora { animation: hz-aurora 18s ease-in-out infinite; will-change: transform; }
+.hz-aurora { animation: hz-aurora 4.8s ease-in-out 1 both; will-change: transform; }
 
 /* Logo marquee */
 @keyframes hz-marquee {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.hz-marquee { animation: hz-marquee 50s linear infinite; }
+/* One pass, then the text holds (no perpetual loops); hover still pauses it. */
+.hz-marquee { animation: hz-marquee 50s linear 1 both; }
 .hz-marquee:hover { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -901,7 +902,7 @@
   background: var(--adm-canvas);
   color: var(--adm-ink);
   color-scheme: light;
-  font-family: var(--font-geist-sans), var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 14px;
   letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased;
@@ -1091,7 +1092,7 @@
    font, ink, control edge and focus ring instead of the public site's. */
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"], [role="dialog"]) {
   --input: var(--adm-line-control);
-  font-family: var(--font-geist-sans), var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
   color: var(--adm-ink);
 }
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"]) :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
@@ -1295,11 +1296,11 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 
 /* Logo marquee */
 @keyframes site-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.marquee { animation: site-marquee 38s linear infinite; }
+.marquee { animation: site-marquee 38s linear 1 both; }
 .marquee-wrap:hover .marquee,
 [data-motion="paused"] .marquee { animation-play-state: paused; }
 
-/* Rainbow beams on LineGrid. Each line is 2400 units long; the 280-unit dash
+/* Brand-blue beams on LineGrid. Each line is 2400 units long; the 280-unit dash
    starts just before it and ends just past it, so the beam glides through once
    and leaves nothing behind. One slow, eased pass that ends inside five
    seconds (WCAG 2.2.2); none under reduced motion. */
@@ -1479,11 +1480,11 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 @keyframes demo-ring { from { stroke-dashoffset: 94.2; } }
 .demo-draw { stroke-dasharray: 1; animation: demo-draw 1.2s ease 600ms both; }
 @keyframes demo-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.demo-flow { animation: demo-flow 1.6s ease-in-out infinite; }
+.demo-flow { animation: demo-flow 1.6s ease-in-out 3 both; }
 @keyframes demo-flow { from { left: 0; } to { left: calc(100% - 8px); } }
-.demo-pulse { animation: demo-pulse 1.4s ease-in-out infinite; }
+.demo-pulse { animation: demo-pulse 1.4s ease-in-out 3 both; }
 @keyframes demo-pulse { 50% { opacity: 0.35; } }
-.demo-caret { animation: demo-pulse 1s steps(1) infinite; }
+.demo-caret { animation: demo-pulse 1s steps(1) 4 both; }
 @media (prefers-reduced-motion: reduce) {
   .demo-cursor { display: none; }
   .demo-press, .demo-grow, .demo-rise, .demo-ring, .demo-draw, .demo-flow, .demo-pulse, .demo-caret { animation: none; }
@@ -1505,16 +1506,16 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 .nf-rise { animation: nf-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes nf-rise { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
 
-.nf-shimmer { animation: nf-shimmer 1.8s ease-in-out infinite; }
+.nf-shimmer { animation: nf-shimmer 1.8s ease-in-out 2 both; }
 @keyframes nf-shimmer { 50% { opacity: .45; } }
 
 .nf-digits { animation: nf-digits 1s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms both; }
 @keyframes nf-digits { from { opacity: 0; transform: translateY(26px) scale(.9); } to { opacity: 1; transform: none; } }
 
-.nf-blink { animation: nf-blink 2.4s steps(1) infinite; }
+.nf-blink { animation: nf-blink 2.4s steps(1) 2 both; }
 @keyframes nf-blink { 50% { opacity: .35; } }
 
-.nf-sweep { animation: nf-sweep 7s ease-in-out 900ms infinite both; }
+.nf-sweep { animation: nf-sweep 4s ease-in-out 900ms 1 both; }
 @keyframes nf-sweep {
   0%, 100% { transform: translate(-130px, 10px) rotate(-8deg); }
   30% { transform: translate(-20px, -24px) rotate(4deg); }
@@ -1522,7 +1523,7 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
   80% { transform: translate(30px, 30px) rotate(-2deg); }
 }
 
-.nf-scrap { animation: nf-scrap 5.5s ease-in-out infinite; transform-origin: 50% 20%; }
+.nf-scrap { animation: nf-scrap 4.8s ease-in-out 1 both; transform-origin: 50% 20%; }
 @keyframes nf-scrap {
   0%, 100% { transform: translate(0, 0) rotate(-14deg); }
   25% { transform: translate(-10px, -12px) rotate(-4deg); }
@@ -1533,18 +1534,18 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 /* Maintenance (components/site/maintenance-art): gears turn in mesh, a card
    drops into its slot, the bar fills. It shares nf-rise/shimmer/blink. */
 .mt-spin, .mt-spin-rev, .mt-drop { transform-box: fill-box; transform-origin: 50% 50%; }
-.mt-spin { animation: mt-spin 12s linear infinite; }
-.mt-spin-rev { animation: mt-spin 8s linear infinite reverse; }
+.mt-spin { animation: mt-spin 4.8s ease-out 1 both; }
+.mt-spin-rev { animation: mt-spin 4.8s ease-out 1 reverse both; }
 @keyframes mt-spin { to { transform: rotate(360deg); } }
 
-.mt-drop { animation: mt-drop 5s cubic-bezier(0.22, 1, 0.36, 1) 600ms infinite both; }
+.mt-drop { animation: mt-drop 4.2s cubic-bezier(0.22, 1, 0.36, 1) 600ms 1 both; }
 @keyframes mt-drop {
   0% { opacity: 0; transform: translateY(-34px) rotate(-7deg); }
   22%, 86% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: none; }
 }
 
-.mt-fill { transform-box: fill-box; transform-origin: 0 50%; animation: mt-fill 5s cubic-bezier(0.4, 0, 0.2, 1) 600ms infinite both; }
+.mt-fill { transform-box: fill-box; transform-origin: 0 50%; animation: mt-fill 4.2s cubic-bezier(0.4, 0, 0.2, 1) 600ms 1 both; }
 @keyframes mt-fill {
   0% { opacity: 1; transform: scaleX(0.03); }
   86% { opacity: 1; transform: scaleX(1); }
@@ -1552,7 +1553,7 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 }
 
 /* Load error (components/site/load-error-art): the plug nudges at the socket. */
-.er-nudge { animation: er-nudge 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.er-nudge { animation: er-nudge 2.4s cubic-bezier(0.4, 0, 0.2, 1) 2 both; }
 @keyframes er-nudge {
   0%, 100% { transform: translateX(-6px); }
   45%, 60% { transform: translateX(14px); }

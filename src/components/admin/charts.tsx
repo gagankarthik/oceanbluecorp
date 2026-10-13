@@ -258,7 +258,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                   style={{ clipPath: clip, background: FUNNEL_RAMP[Math.min(i, FUNNEL_RAMP.length - 1)] }}
                 >
                   <span className="text-adm-xs font-semibold">{st.label}</span>
-                  <span className="text-adm-base font-bold tabular-nums">{st.value.toLocaleString()}</span>
+                  <span className="text-adm-base font-semibold tabular-nums">{st.value.toLocaleString()}</span>
                   {st.meta && (
                     <span className="text-adm-micro font-medium tabular-nums text-white">{st.meta}</span>
                   )}

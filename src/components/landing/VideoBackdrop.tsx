@@ -5,7 +5,8 @@ import { Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/components/site/use-reduced-motion";
 
 /**
- * A looping film behind a section, deferred until after `load`.
+ * A film behind a section, deferred until after `load`. It plays through
+ * once and holds on its last frame, so nothing loops for good.
  *
  * The film is not attached until the page has loaded; until then the section
  * shows `poster`, the film's own first frame, over the gradient ground.
@@ -44,6 +45,8 @@ export default function VideoBackdrop({
   const [playing, setPlaying] = useState(false);
   // WCAG 2.2.2: a looping film needs a way to stop it.
   const [paused, setPaused] = useState(false);
+  // Plays through once and holds its last frame: no perpetual ambient loop.
+  const [ended, setEnded] = useState(false);
   const togglePause = () => {
     const v = ref.current;
     if (!v) return;
@@ -108,12 +111,12 @@ export default function VideoBackdrop({
           // rendered <source> needs a manual load() call.
           src={armed ? src : undefined}
           muted
-          loop
           playsInline
           preload="none"
           onCanPlay={start}
           onLoadedData={start}
           onPlaying={() => setPlaying(true)}
+          onEnded={() => setEnded(true)}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-out"
           // Faded up only once frames are arriving, so the swap is a dissolve
           // rather than a black rectangle while the first frame decodes.
@@ -122,7 +125,7 @@ export default function VideoBackdrop({
       )}
     </div>
     {/* Outside the aria-hidden backdrop so it stays operable. */}
-    {!reduce && playing && (
+    {!reduce && playing && !ended && (
       <button
         type="button"
         onClick={togglePause}

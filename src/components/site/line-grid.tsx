@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Vertical lines fall at 50% ± n·96px and horizontal ones at n·96px, which
  * HeroBackdrop relies on to run its beams along them.
  *
- * Rainbow beams glide along a few of those lines on load (`.grid-beam` in
+ * Brand-blue beams glide along a few of those lines on load (`.grid-beam` in
  * globals.css): one slow pass, finished inside five seconds (WCAG 2.2.2), and
  * not at all under reduced motion.
  */
@@ -21,7 +21,9 @@ export function LineGrid({ className, dark, beams = true }: { className?: string
   const id = useId();
   const stroke = dark ? "rgb(255 255 255 / 0.07)" : "rgb(11 26 51 / 0.07)";
   const mark = dark ? "rgb(255 255 255 / 0.2)" : "rgb(11 26 51 / 0.2)";
-  const rainbow = ["#3b82f6", "#06b6d4", "#22c55e", "#eab308", "#f97316", "#ec4899", "#8b5cf6"];
+  // The two blues of the mark (cobalt, logo blue, aqua): decoration stays in
+  // the brand hue, never the semantic success/warning/danger colours.
+  const beam = ["#1d4ed8", "#0975c1", "#0cacCF", "#0975c1", "#1d4ed8"];
   return (
     <svg
       aria-hidden
@@ -38,10 +40,10 @@ export function LineGrid({ className, dark, beams = true }: { className?: string
         {beams && (
           <>
             <linearGradient id={`${id}-h`} gradientUnits="userSpaceOnUse" x1={-SPAN} y1="0" x2={SPAN} y2="0">
-              {rainbow.map((c, i) => <stop key={c} offset={i / (rainbow.length - 1)} stopColor={c} />)}
+              {beam.map((c, i) => <stop key={i} offset={i / (beam.length - 1)} stopColor={c} />)}
             </linearGradient>
             <linearGradient id={`${id}-v`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={SPAN * 2}>
-              {rainbow.map((c, i) => <stop key={c} offset={i / (rainbow.length - 1)} stopColor={c} />)}
+              {beam.map((c, i) => <stop key={i} offset={i / (beam.length - 1)} stopColor={c} />)}
             </linearGradient>
           </>
         )}

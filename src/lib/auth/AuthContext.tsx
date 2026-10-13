@@ -436,7 +436,7 @@ export function withAuth<P extends object>(
       return (
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
+            <h1 className="text-2xl font-semibold text-red-600">Access Denied</h1>
             <p className="mt-2 text-gray-600">You don&apos;t have permission to access this page.</p>
           </div>
         </div>
