@@ -73,7 +73,7 @@ export default function AccessibilityPage() {
         <ul className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
           {MEASURES.map((m) => (
             <li key={m} className="flex items-start gap-3 bg-white p-4">
-              <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-cobalt-tint text-cobalt">
+              <span className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-cobalt-tint text-cobalt">
                 <IconCheck size={14} />
               </span>
               <span className="type-body text-ink">{m}</span>

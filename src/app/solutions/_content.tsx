@@ -89,7 +89,7 @@ function PracticeRow({ p, flip }: { p: Practice; flip: boolean }) {
         <ul className={`mt-7 border-t border-line ${p.services.length > 3 ? "grid gap-x-8 sm:grid-cols-2" : ""}`}>
           {p.services.map((s) => (
             <li key={s.href}>
-              <Link href={s.href} className="group flex items-center justify-between gap-4 border-b border-line py-3.5 text-[15.5px] font-semibold text-ink transition-colors hover:text-cobalt">
+              <Link href={s.href} className="group flex items-center justify-between gap-4 border-b border-line py-4 type-body font-semibold text-ink transition-colors hover:text-cobalt">
                 {s.title}
                 <IconArrowRight size={16} className="flex-none text-ink-subtle transition-all group-hover:translate-x-1 group-hover:text-cobalt" />
               </Link>
@@ -114,10 +114,10 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
         image={IMG.servicesHero}
         actions={
           <>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
-            <LinkButton href="#practices" variant="outline" size="lg">
+            <LinkButton href="#practices" variant="outline" size="md">
               Browse practices
             </LinkButton>
           </>
@@ -138,7 +138,7 @@ export default function ServicesPage({ content = {} }: { content?: Record<string
       </Section>
 
       <Section tone="white" title="A method you can hold us to" sub="The same four steps on every engagement, whichever practice leads it.">
-        <ol className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((st) => (
             <li key={st.no} className="bg-white p-7 sm:p-8">
               <h3 className="type-title-lg text-ink">{st.title}</h3>

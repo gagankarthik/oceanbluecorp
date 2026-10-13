@@ -5,7 +5,8 @@ import Link from "next/link";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { CONTAINER, SECTION_Y } from "@/components/site/sections";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
+import { inputClass } from "@/components/site/input";
 import { IconArrowRight, IconX, IconMail, type IconProps } from "@/components/site/icons";
 import { IconPhone } from "@/components/site/legal/doc";
 import { cn } from "@/lib/utils";
@@ -90,14 +91,14 @@ export default function FaqPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="shortlist, security, benefits…"
-                  className="h-12 w-full rounded-xl border border-line-input bg-white pr-11 pl-10 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt-tint focus:outline-none"
+                  className={inputClass("pr-12 pl-10")}
                 />
                 {query && (
                   <button
                     type="button"
                     onClick={() => setQuery("")}
                     aria-label="Clear search"
-                    className="absolute top-1/2 right-1.5 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-ink-subtle hover:bg-paper hover:text-ink"
+                    className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-ink-subtle hover:bg-paper hover:text-ink"
                   >
                     <IconX size={15} />
                   </button>
@@ -116,7 +117,7 @@ export default function FaqPage() {
                         aria-pressed={active}
                         className={cn(
                           "flex min-h-11 items-center justify-between gap-3 rounded-full border px-4 type-body-sm font-medium transition-colors lg:w-full lg:rounded-xl lg:border-transparent lg:px-3",
-                          active ? "border-cobalt bg-cobalt text-white lg:border-transparent lg:bg-paper lg:text-ink" : "border-line-strong text-ink-muted hover:text-ink lg:hover:bg-paper",
+                          active ? "border-cobalt bg-cobalt text-white lg:border-transparent lg:bg-paper lg:text-ink" : "border-line-input text-ink-muted hover:text-ink lg:hover:bg-paper",
                         )}
                       >
                         {t}
@@ -152,7 +153,7 @@ export default function FaqPage() {
                       setQuery("");
                       setTopic("All");
                     }}
-                    className="inline-flex h-11 items-center rounded-full bg-cobalt px-5 type-label font-semibold text-white hover:bg-cobalt-deep"
+                    className={buttonClass("primary")}
                   >
                     Clear filters
                   </button>
@@ -196,7 +197,7 @@ export default function FaqPage() {
                   Call and someone picks up, or send a message and we will come back
                   to you. No switchboard and no ticket number.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[15px] font-semibold">
+                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 type-body font-semibold">
                   <a href="tel:+16148446925" className="inline-flex min-h-11 items-center gap-2 text-cobalt hover:underline">
                     <IconPhone size={16} /> +1 (614) 844-6925
                   </a>
@@ -205,7 +206,7 @@ export default function FaqPage() {
                   </a>
                 </div>
               </div>
-              <LinkButton href="/contact" variant="primary" size="lg">
+              <LinkButton href="/contact" variant="primary" size="md">
                 Send a message
               </LinkButton>
             </div>

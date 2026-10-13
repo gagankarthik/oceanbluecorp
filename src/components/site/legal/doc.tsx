@@ -34,7 +34,7 @@ const PROSE =
 
 function Contents({ toc }: { toc: DocToc }) {
   return (
-    <ul className="space-y-0.5 border-l border-line">
+    <ul className="space-y-1 border-l border-line">
       {toc.map((s) => (
         <li key={s.id}>
           <a href={`#${s.id}`} className="-ml-px block border-l border-transparent py-1.5 pl-4 type-body-sm text-ink-muted transition-colors hover:border-ink hover:text-ink">
@@ -71,10 +71,10 @@ export function DocPage({
       <section data-opener className="border-b border-line bg-paper">
         <div className={cn(CONTAINER, OPENER_Y, "lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12")}>
           <div className="hidden lg:block" />
-          <div className="max-w-[760px]">
+          <div className="measure">
             <h1 className="rise type-headline-lg font-semibold text-ink">{title}</h1>
             {lede && (
-              <p className="rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
+              <p className="measure rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
                 {lede}
               </p>
             )}
@@ -110,7 +110,7 @@ export function DocPage({
           </div>
           {aside && <div className="mt-8">{aside}</div>}
         </nav>
-        <div className="min-w-0 max-w-[760px]">
+        <div className="measure min-w-0">
           {children}
           {history && history.length > 0 && (
             <DocSection id="version-history" title="Version history">
@@ -135,8 +135,8 @@ export function DocPage({
 export function DocSection({ id, number, title, children }: { id: string; number?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-28 border-t border-line py-10 first:border-t-0 first:pt-0">
-      {number && <p className="font-mono text-[13px] font-medium text-ink-subtle">{number}</p>}
-      <h2 className={cn("type-title-lg font-semibold text-ink", number && "mt-1.5")}>{title}</h2>
+      {number && <p className="font-mono type-caption font-medium text-ink-subtle">{number}</p>}
+      <h2 className={cn("type-title-lg font-semibold text-ink", number && "mt-2")}>{title}</h2>
       <div className={cn("mt-4", PROSE)}>{children}</div>
     </section>
   );
@@ -152,10 +152,10 @@ export function SubHead({ children }: { children: React.ReactNode }) {
 
 export function UL({ items }: { items: (string | React.ReactNode)[] }) {
   return (
-    <ul className="space-y-2.5">
+    <ul className="space-y-3">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span aria-hidden className="mt-[0.7em] size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
+          <span aria-hidden className="mt-3 size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
           <span>{item}</span>
         </li>
       ))}
@@ -168,7 +168,7 @@ export function Callout({ title, children }: { title: string; children: React.Re
   return (
     <div className="rounded-r-xl border-l-2 border-cobalt bg-paper px-5 py-4">
       <p className="type-label font-semibold text-ink">{title}</p>
-      <div className="mt-1.5 type-body">{children}</div>
+      <div className="mt-2 type-body">{children}</div>
     </div>
   );
 }
@@ -187,7 +187,7 @@ export function ContactCard({
 }) {
   return (
     <div className="rounded-2xl border border-line bg-white p-6">
-      <p className="text-[15px] font-semibold text-ink">{title}</p>
+      <p className="type-body font-semibold text-ink">{title}</p>
       <ul className="mt-4 space-y-3 type-body text-ink-muted">
         {email && (
           <li>
@@ -222,7 +222,7 @@ export function RelatedLinks({ links }: { links: { href: string; label: string }
         <Link
           key={l.href}
           href={l.href}
-          className="plain group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 text-[15px] font-semibold text-ink transition-colors hover:border-ink"
+          className="plain group flex items-center justify-between rounded-xl border border-line bg-white px-5 py-4 type-body font-semibold text-ink transition-colors hover:border-ink"
         >
           {l.label}
           <IconArrowRight size={16} className="text-ink-subtle transition-transform group-hover:translate-x-1 group-hover:text-ink" />

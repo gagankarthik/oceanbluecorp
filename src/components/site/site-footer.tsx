@@ -128,9 +128,9 @@ export function SiteFooter() {
               href="#top"
               aria-label="Back to top"
               title="Back to top"
-              className="flex size-10 items-center justify-center rounded-full border border-line-input bg-white text-ink transition-colors duration-150 hover:border-cobalt hover:bg-cobalt hover:text-white"
+              className="flex size-10 items-center justify-center rounded-full border border-line-input bg-white text-ink transition-colors duration-[var(--dur-short)] hover:border-cobalt hover:text-cobalt"
             >
-              <ArrowUp className="size-[18px]" aria-hidden="true" />
+              <ArrowUp className="size-4" aria-hidden="true" />
             </a>
           </div>
           <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -145,7 +145,7 @@ export function SiteFooter() {
                     aria-label={s.name}
                     className="flex size-10 items-center justify-center rounded-full text-ink-subtle transition-colors duration-150 hover:bg-white hover:text-cobalt"
                   >
-                    <s.icon className="size-[18px]" />
+                    <s.icon className="size-4.5" />
                   </a>
                 </li>
               ))}

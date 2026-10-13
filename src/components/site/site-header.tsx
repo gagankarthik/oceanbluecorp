@@ -49,10 +49,13 @@ const MENUS: Group[] = [
       { href: "/solutions/training", label: "Training & Upskilling", desc: "Instructor-led training on the stack you run", icon: IconGraduation },
       { href: "/solutions/transformation", label: "Digital Transformation", desc: "A roadmap with measurable outcomes", icon: IconTransform },
     ],
+    // Two groups of at most seven (Hick): who you hire, and what we build and run.
     columns: [
-      { heading: "Practices", hrefs: ["/solutions/staffing", "/solutions/engineering", "/solutions/managed", "/solutions/training"] },
-      { heading: "Platforms & cloud", hrefs: ["/solutions/cloud", "/solutions/cybersecurity", "/solutions/erp", "/solutions/salesforce"] },
-      { heading: "Data & change", hrefs: ["/solutions/ai", "/solutions/transformation"] },
+      { heading: "Talent", hrefs: ["/solutions/staffing", "/solutions/engineering", "/solutions/training"] },
+      {
+        heading: "Technology",
+        hrefs: ["/solutions/cloud", "/solutions/cybersecurity", "/solutions/erp", "/solutions/salesforce", "/solutions/ai", "/solutions/managed", "/solutions/transformation"],
+      },
     ],
     feature: {
       title: "Not sure where it fits?",
@@ -217,7 +220,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
               aria-expanded={menu === m.key}
               aria-controls="site-mega-menu"
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14.5px] font-medium transition-colors",
+                "inline-flex h-10 items-center gap-1.5 rounded-full px-4 type-body font-medium transition-colors duration-[var(--dur-short)]",
                 menu === m.key ? "bg-paper text-ink" : "text-ink-muted hover:text-ink",
               )}
             >
@@ -236,30 +239,30 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                 type="button"
                 onClick={() => setAccount((a) => !a)}
                 aria-expanded={account}
-                className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-[14.5px] font-medium text-ink-muted hover:bg-paper hover:text-ink"
+                className="inline-flex h-10 items-center gap-2 rounded-full px-3 type-body font-medium text-ink-muted transition-colors duration-[var(--dur-short)] hover:bg-paper hover:text-ink"
               >
                 <IconUser size={16} />
                 {user?.name?.split(" ")[0] || "Account"}
                 <IconChevronDown size={14} className={cn("transition-transform", account && "rotate-180")} />
               </button>
               {account && (
-                <div className="menu-in absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-white p-1.5 shadow-[var(--shadow-overlay)]">
-                  <p className="truncate px-3 pt-2 pb-2.5 text-[12.5px] text-ink-subtle">{user?.email}</p>
-                  <Link href={dashboard} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium text-ink hover:bg-paper">
+                <div className="menu-in absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-white p-2 shadow-[var(--shadow-overlay)]">
+                  <p className="truncate px-3 pt-2 pb-3 type-caption text-ink-subtle">{user?.email}</p>
+                  <Link href={dashboard} className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                     <IconOverview size={16} /> Dashboard
                   </Link>
-                  <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium text-ink hover:bg-paper">
+                  <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                     <IconBriefcase size={16} /> HR platform
                   </a>
                   {user?.role === UserRole.ADMIN && (
-                    <Link href="/admin/settings" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium text-ink hover:bg-paper">
+                    <Link href="/admin/settings" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                       <IconSettings size={16} /> Settings
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={() => void signOutStaff()}
-                    className="mt-1 flex w-full items-center gap-2.5 rounded-xl border-t border-line px-3 py-2 text-[14px] font-medium text-danger hover:bg-danger-container"
+                    className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-xl border-t border-line px-3 type-body font-medium text-danger hover:bg-danger-container"
                   >
                     <IconLogout size={16} /> Sign out
                   </button>
@@ -268,10 +271,11 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
             </div>
           )}
           {/* Candidates go straight to the job board; Careers sits in the Company menu. */}
-          <LinkButton href="/careers/search" variant="outline" className="hidden lg:inline-flex">
+          {/* Outline, so the page's own hero action is the one filled button in view. */}
+          <LinkButton href="/careers/search" variant="ghost" className="hidden lg:inline-flex">
             Find a job
           </LinkButton>
-          <LinkButton href="/contact" variant="primary">
+          <LinkButton href="/contact" variant="outline">
             Talk to us
           </LinkButton>
         </div>
@@ -279,7 +283,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
         <button
           ref={toggleRef}
           type="button"
-          className="ml-auto rounded-full p-2 text-ink hover:bg-paper md:ml-0 lg:hidden"
+          className="ml-auto grid size-11 place-items-center rounded-full text-ink hover:bg-paper md:ml-0 lg:hidden"
           onClick={() => setMobile((o) => !o)}
           aria-label={mobile ? "Close menu" : "Open menu"}
           aria-expanded={mobile}
@@ -324,13 +328,13 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
           <div className="mx-auto grid max-w-[1440px] grid-cols-[220px_minmax(0,1fr)_280px] gap-10 px-8 py-8">
             <div className="border-r border-line pr-8">
               <p className="type-title-lg text-ink">{current.title}</p>
-              <p className="mt-2 text-[14px] leading-relaxed text-ink-subtle">{current.intro}</p>
+              <p className="mt-2 type-body-sm text-ink-subtle">{current.intro}</p>
             </div>
             {current.columns ? (
-              <div className="grid grid-cols-3 gap-x-4 self-start">
+              <div className="grid grid-cols-2 gap-x-6 self-start">
                 {current.columns.map((col) => (
                   <div key={col.heading}>
-                    <p className="px-3 pb-1 text-[13px] font-medium text-ink-subtle">{col.heading}</p>
+                    <p className="px-3 pb-2 type-label text-ink-subtle">{col.heading}</p>
                     <ul>
                       {col.hrefs.map((h) => {
                         const i = current.items.find((it) => it.href === h)!;
@@ -345,7 +349,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                 ))}
               </div>
             ) : (
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5 self-start">
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 self-start">
                 {current.items.map((i) => (
                   <li key={i.href}>
                     <MenuItem i={i} />
@@ -378,7 +382,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
         >
           {MENUS.map((m) => (
             <details key={m.key} className="group border-b border-line">
-              <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[16px] font-semibold text-ink">
+              <summary className="flex cursor-pointer list-none items-center justify-between py-4 type-body font-semibold text-ink">
                 {m.label}
                 <IconChevronDown size={16} className="text-ink-subtle transition-transform group-open:rotate-180" />
               </summary>
@@ -388,16 +392,16 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                     <Link
                       href={i.href}
                       {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : i.href.startsWith("/auth") ? { rel: "nofollow" } : {})}
-                      className="flex items-start gap-3 rounded-lg py-2.5"
+                      className="flex min-h-11 items-start gap-3 rounded-lg py-2"
                     >
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
                         <i.icon size={16} />
                       </span>
                       <span className="min-w-0">
-                        <span className="flex items-center gap-1.5 text-[14.5px] font-medium text-ink">
+                        <span className="flex items-center gap-1.5 type-body font-medium text-ink">
                           {i.label}
                         </span>
-                        <span className="block text-[13px] text-ink-subtle">{i.desc}</span>
+                        <span className="block type-caption text-ink-subtle">{i.desc}</span>
                       </span>
                     </Link>
                   </li>
@@ -406,21 +410,21 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
             </details>
           ))}
           <div className="grid gap-2 pt-5">
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
             <div className={cn("grid gap-2", isAuthenticated && "grid-cols-2")}>
-              <LinkButton href="/careers/search" variant="outline" size="lg">
+              <LinkButton href="/careers/search" variant="outline" size="md">
                 Find a job
               </LinkButton>
               {isAuthenticated && (
-                <LinkButton href={dashboard} variant="outline" size="lg">
+                <LinkButton href={dashboard} variant="outline" size="md">
                   Dashboard
                 </LinkButton>
               )}
             </div>
             {isAuthenticated && (
-              <button type="button" onClick={() => void signOutStaff()} className="mt-1 py-2 text-[14px] font-medium text-danger">
+              <button type="button" onClick={() => void signOutStaff()} className="mt-1 min-h-11 type-body font-medium text-danger">
                 Sign out
               </button>
             )}
@@ -431,15 +435,15 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
   );
 }
 
-/** `compact` drops the description, for the three-column Solutions sheet. */
+/** `compact` drops the description, for the grouped Solutions sheet. */
 function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
   if (compact) {
     return (
-      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-paper">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-paper">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
           <i.icon size={17} />
         </span>
-        <span className="text-[14.5px] leading-snug font-semibold text-ink">{i.label}</span>
+        <span className="type-body leading-snug font-semibold text-ink">{i.label}</span>
       </Link>
     );
   }
@@ -447,17 +451,17 @@ function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
     <Link
       href={i.href}
       {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="group flex items-start gap-3.5 rounded-xl p-3 transition-colors hover:bg-paper"
+      className="group flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-paper"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
         <i.icon size={18} />
       </span>
       <span className="min-w-0">
-        <span className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+        <span className="flex items-center gap-1.5 type-body font-semibold text-ink">
           {i.label}
           <IconArrowRight size={14} className="-translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
         </span>
-        <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-subtle">{i.desc}</span>
+        <span className="mt-1 block type-caption leading-snug text-ink-subtle">{i.desc}</span>
       </span>
     </Link>
   );
@@ -467,12 +471,12 @@ function FeatureCard({ f }: { f: Group["feature"] }) {
   const Art = f.art === "stack" ? GeoStack : f.art === "books" ? GeoBooks : GeoLattice;
   return (
     <Link href={f.href} className="group block rounded-2xl bg-paper p-5 text-left transition-colors hover:bg-paper-deep">
-      <div className="flex h-[118px] items-center justify-center overflow-hidden">
-        <Art className="h-[128px] w-auto" />
+      <div className="flex h-28 items-center justify-center overflow-hidden">
+        <Art className="h-32 w-auto" />
       </div>
-      <p className="mt-3 text-[16px] font-semibold text-ink">{f.title}</p>
-      <p className="mt-1 text-[13.5px] leading-relaxed text-ink-subtle">{f.body}</p>
-      <span className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink">
+      <p className="mt-3 type-body font-semibold text-ink">{f.title}</p>
+      <p className="mt-1 type-body-sm text-ink-subtle">{f.body}</p>
+      <span className="mt-3 inline-flex items-center gap-1.5 type-label text-ink">
         {f.cta} <IconArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
       </span>
     </Link>

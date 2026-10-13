@@ -4,18 +4,17 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CONTAINER } from "@/components/site/sections";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
 import { LineGrid } from "@/components/site/line-grid";
 import {
   IconArrowRight, IconChevronDown, IconX, IconPin, IconSearch, IconCalendar, IconRefresh, IconMail, IconGlobe,
 } from "@/components/site/icons";
-import { IconFilter, IconMoney, IconCheckCircle } from "@/components/site/careers/careers-icons";
+import { IconFilter, IconCheckCircle } from "@/components/site/careers/careers-icons";
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
 import type { PublicJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
-import { formatSalary } from "@/lib/salary";
 import { SideSheet } from "@/components/site/side-sheet";
 import { toBoardJob, type BoardJob } from "./board-job";
 import { useStaffSession } from "@/components/site/use-staff-session";
@@ -267,7 +266,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
           <form
             role="search"
             onSubmit={(e) => { e.preventDefault(); scrollToResults(); }}
-            className="rise mx-auto mt-9 flex max-w-[860px] flex-col gap-2 rounded-[28px] border border-line bg-white p-2 shadow-overlay sm:flex-row sm:items-center sm:rounded-full"
+            className="rise mx-auto mt-9 flex max-w-[860px] flex-col gap-2 rounded-[28px] border border-line-input bg-white p-2 shadow-overlay has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-cobalt sm:flex-row sm:items-center sm:rounded-full"
             style={{ animationDelay: "240ms" }}
           >
             <div className="relative min-w-0 flex-1">
@@ -295,7 +294,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
             />
             <button
               type="submit"
-              className="inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-cobalt px-7 text-[16px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+              className={buttonClass("primary", "lg")}
             >
               Search <IconArrowRight size={16} />
             </button>
@@ -310,7 +309,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
             <aside className="hidden lg:block lg:sticky lg:top-[96px] lg:self-start" aria-label="Filter positions">
               <div className="rounded-2xl border border-line bg-white">
                 <div className="flex items-center justify-between border-b border-line px-5 py-4">
-                  <p className="inline-flex items-center gap-2 text-[15px] font-semibold text-ink">
+                  <p className="inline-flex items-center gap-2 type-body font-semibold text-ink">
                     <IconFilter size={16} /> Filters
                   </p>
                   {facetCount > 0 && (
@@ -347,10 +346,10 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   <IconMail size={18} />
                 </span>
                 <h2 className="mt-4 type-title font-semibold">Don&rsquo;t see the right role?</h2>
-                <p className="mt-1.5 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
+                <p className="mt-2 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
                 <a
                   href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
-                  className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-full bg-white type-label font-semibold text-ink transition-colors hover:bg-cobalt-tint"
+                  className={buttonClass("inverse", "sm", "mt-5 w-full")}
                 >
                   Email your resume
                 </a>
@@ -372,7 +371,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
-                    className="relative inline-flex h-10 items-center gap-2 rounded-full border border-line-strong bg-white px-4 type-body-sm font-semibold text-ink lg:hidden"
+                    className={buttonClass("outline", "sm", "relative lg:hidden")}
                     aria-haspopup="dialog"
                   >
                     <IconFilter size={16} /> Filters
@@ -382,13 +381,13 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   </button>
                   {/* Native radios: arrow keys move between them and assistive tech
                       reads a real radio group (WCAG 4.1.2). */}
-                  <fieldset className="inline-flex h-10 items-center rounded-full border border-line bg-white p-1">
+                  <fieldset className="inline-flex h-10 pointer-coarse:h-11 items-center rounded-full border border-line-input bg-white p-1">
                     <legend className="sr-only">Sort positions</legend>
                     {([["newest", "Newest"], ["closing", "Closing soon"]] as const).map(([v, label]) => (
                       <label
                         key={v}
                         className={cn(
-                          "inline-flex h-8 cursor-pointer items-center rounded-full px-3.5 type-body-sm font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cobalt",
+                          "inline-flex h-8 pointer-coarse:h-9 cursor-pointer items-center rounded-full px-4 type-body-sm font-medium transition-colors duration-[var(--dur-short)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cobalt",
                           sort === v ? "bg-ink text-white" : "text-ink-muted hover:text-ink",
                         )}
                       >
@@ -414,7 +413,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                       <button
                         type="button"
                         onClick={c.clear}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-cobalt-tint pr-2.5 pl-3 type-caption font-medium text-cobalt-deep hover:bg-cobalt/15"
+                        className="inline-flex h-8 pointer-coarse:h-11 items-center gap-1.5 rounded-full bg-cobalt-tint pr-3 pl-3 type-caption font-medium text-cobalt-deep hover:bg-paper-deep"
                       >
                         {c.label}
                         <IconX size={12} />
@@ -423,7 +422,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                     </li>
                   ))}
                   <li>
-                    <button type="button" onClick={clearAll} className="h-8 px-2 type-caption font-semibold text-ink underline-offset-4 hover:underline">
+                    <button type="button" onClick={clearAll} className="h-8 pointer-coarse:h-11 px-2 type-caption font-semibold text-ink underline-offset-4 hover:underline">
                       Clear all
                     </button>
                   </li>
@@ -450,7 +449,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-cobalt px-5 type-label font-semibold text-white hover:bg-cobalt-deep"
+                    className={buttonClass("primary", "sm", "mt-7")}
                   >
                     <IconRefresh size={16} />
                     Try again
@@ -468,7 +467,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   </ul>
                   <div className="mt-8 flex flex-col items-center gap-3">
                     <div className="h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
-                      <div className="h-full rounded-full bg-ink transition-[width] duration-500" style={{ width: `${(Math.min(visible, results.length) / results.length) * 100}%` }} />
+                      <div className="h-full rounded-full bg-ink transition-[width] duration-[var(--dur-long)] ease-out" style={{ width: `${(Math.min(visible, results.length) / results.length) * 100}%` }} />
                     </div>
                     <p className="type-body-sm text-ink-subtle">
                       Showing {Math.min(visible, results.length)} of {results.length}
@@ -477,7 +476,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                       <button
                         type="button"
                         onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                        className="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong bg-white px-6 text-[15px] font-semibold text-ink hover:border-cobalt"
+                        className={buttonClass("outline", "md")}
                       >
                         Show more positions
                         <IconChevronDown size={16} />
@@ -496,13 +495,13 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                     <button
                       type="button"
                       onClick={clearAll}
-                      className="inline-flex h-11 items-center rounded-full bg-cobalt px-5 type-label font-semibold text-white hover:bg-cobalt-deep"
+                      className={buttonClass("primary", "sm")}
                     >
                       Clear filters
                     </button>
                     <a
                       href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
-                      className="inline-flex h-11 items-center rounded-full border border-line-strong px-5 type-label font-semibold text-ink hover:border-ink"
+                      className={buttonClass("outline", "sm")}
                     >
                       Email your resume
                     </a>
@@ -536,10 +535,10 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
         title="Filters"
         footer={
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={resetFacets} className="h-12 rounded-full border border-line-strong text-[15px] font-semibold text-ink">
+            <button type="button" onClick={resetFacets} className={buttonClass("outline", "md")}>
               Reset
             </button>
-            <button type="button" onClick={() => setSheetOpen(false)} className="h-12 rounded-full bg-cobalt text-[15px] font-semibold text-white">
+            <button type="button" onClick={() => setSheetOpen(false)} className={buttonClass("primary", "md")}>
               Show {results.length}
             </button>
           </div>
@@ -564,7 +563,7 @@ function Facet({ title, children }: { title: string; children: React.ReactNode }
     <fieldset className="border-b border-line px-3 py-4">
       <legend className="sr-only">{title}</legend>
       <p aria-hidden className="mb-2 px-2 type-caption font-semibold tracking-wide text-ink-subtle uppercase">{title}</p>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-1">{children}</div>
     </fieldset>
   );
 }
@@ -576,8 +575,8 @@ function FacetOption({ name, label, count, on, onClick }: { name: string; label:
   return (
     <label
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left type-body-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-1 has-[:focus-visible]:outline-cobalt",
-        empty ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+        "flex min-h-9 pointer-coarse:min-h-11 w-full items-center gap-3 rounded-lg px-2 py-2 text-left type-body-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-1 has-[:focus-visible]:outline-cobalt",
+        empty ? "cursor-not-allowed opacity-[var(--opacity-disabled)]" : "cursor-pointer",
         on ? "bg-cobalt-tint font-semibold text-cobalt-deep" : "text-ink-muted hover:bg-paper hover:text-ink",
       )}
     >
@@ -608,9 +607,12 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors duration-150", on ? "bg-cobalt" : "bg-line-input")}
+      className="group relative -my-2.5 grid h-11 w-14 shrink-0 place-items-center rounded-full"
     >
-      <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-150", on ? "translate-x-6" : "translate-x-1")} />
+      {/* The track is 24px; the button around it is the 44px hit area. */}
+      <span aria-hidden className={cn("relative h-6 w-11 rounded-full transition-colors duration-[var(--dur-short)]", on ? "bg-cobalt" : "bg-line-input")}>
+        <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-[var(--dur-short)] ease-out", on ? "translate-x-6" : "translate-x-1")} />
+      </span>
     </button>
   );
 }
@@ -618,11 +620,10 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
   const due = dueLabel(job.submissionDueDate);
   const mode = workMode(job);
-  const salary = formatSalary(job.salary);
   return (
     <Link
       href={`/careers/search/${job.id}`}
-      className="group grid gap-4 rounded-2xl border border-line bg-white p-5 transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-raised sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:p-6"
+      className="group grid gap-4 rounded-2xl border border-line bg-white p-5 transition-[border-color,box-shadow] duration-[var(--dur-short)] hover:border-line-input hover:shadow-raised sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:p-6"
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -635,19 +636,13 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
             </span>
           )}
         </div>
-        <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 type-body-sm text-ink-muted">
+        <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 type-body-sm text-ink-muted">
           <li>{job.department}</li>
           <li className="inline-flex items-center gap-1.5">
             <IconPin size={14} className="text-ink-subtle" />
             {jobPlace(job)}
           </li>
           <li>{formatJobType(job.type)}</li>
-          {salary && (
-            <li className="inline-flex items-center gap-1.5">
-              <IconMoney size={14} className="text-ink-subtle" />
-              {salary}
-            </li>
-          )}
         </ul>
       </div>
 
@@ -661,7 +656,7 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
             </span>
           )}
         </span>
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt group-hover:text-cobalt">
           <IconArrowRight size={16} />
         </span>
       </div>

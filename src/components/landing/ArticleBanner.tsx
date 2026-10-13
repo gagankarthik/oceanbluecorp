@@ -74,7 +74,7 @@ export default function ArticleBanner({
           {title}
         </h1>
         {subtitle && (
-          <p className="rise mt-5 type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
+          <p className="measure rise mt-5 type-body-lg text-ink-muted" style={{ animationDelay: "160ms" }}>
             {subtitle}
           </p>
         )}

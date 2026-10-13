@@ -145,7 +145,7 @@ export default function SitemapPage() {
             <div className="min-w-0 p-5">
               <dt className="type-caption text-ink-subtle">For crawlers</dt>
               <dd className="mt-2">
-                <a href="/sitemap.xml" className="font-mono text-[14px] font-semibold break-all text-cobalt underline underline-offset-4">
+                <a href="/sitemap.xml" className="font-mono type-label break-all text-cobalt underline underline-offset-4">
                   /sitemap.xml
                 </a>
               </dd>
@@ -174,7 +174,7 @@ export default function SitemapPage() {
                       <Link href={l.href} className="group flex min-h-11 items-center justify-between gap-4 py-2 type-body text-ink transition-colors hover:text-cobalt">
                         <span>{l.name}</span>
                         {/* The path is why someone is here rather than in the nav, so it shows. */}
-                        <span className="flex items-center gap-2 font-mono text-[12.5px] text-ink-subtle group-hover:text-cobalt">
+                        <span className="flex items-center gap-2 font-mono type-caption text-ink-subtle group-hover:text-cobalt">
                           <span className="hidden sm:inline">{l.href}</span>
                           <IconArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
                         </span>

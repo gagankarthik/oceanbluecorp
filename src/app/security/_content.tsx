@@ -96,9 +96,9 @@ const accessControls: { title: string; body: string; icon: Icon }[] = [
 
 const certifications = [
   { name: "NMSDC", logo: "/logos/certifications/NMSDC.png", w: 340, h: 340, cls: "h-[56px]" },
-  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-[36px]" },
-  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-[36px]" },
-  { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-[46px]" },
+  { name: "Ohio WBE", logo: "/logos/certifications/wbe.png", w: 845, h: 202, cls: "h-9" },
+  { name: "Ohio MBE", logo: "/logos/certifications/ohiombe.png", w: 734, h: 202, cls: "h-9" },
+  { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-12" },
 ];
 
 const H2 = "type-headline font-semibold text-ink";
@@ -118,13 +118,13 @@ export default function SecurityPage() {
         <div className={`${CONTAINER} reveal grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16`}>
           <h2 className={H2}>Our position</h2>
           <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-            <p className="type-body-lg text-ink">
+            <p className="measure type-body-lg text-ink">
               We place engineers inside client systems and we run managed
               services on client infrastructure, so the honest answer to most
               security questions is that your controls govern your estate and
               ours govern ours. This page covers ours.
             </p>
-            <p className="type-body text-ink-muted">
+            <p className="measure type-body text-ink-muted">
               Where we hold a certification we say so. Where we do not, we say
               that too, further down this page. A security page that only lists
               strengths is not useful to anyone evaluating a supplier, and the
@@ -226,7 +226,7 @@ export default function SecurityPage() {
 
             {/* The absences, stated rather than omitted. */}
             <div className="mt-8 rounded-r-xl border-l-2 border-cobalt bg-paper px-6 py-5">
-              <p className="text-[15px] font-semibold text-ink">What we do not hold</p>
+              <p className="type-body font-semibold text-ink">What we do not hold</p>
               <p className="mt-2 max-w-[58ch] type-body text-ink-muted">
                 Oceanblue is not SOC 2 audited and does not hold ISO 27001. We
                 have not commissioned a third-party penetration test. If your

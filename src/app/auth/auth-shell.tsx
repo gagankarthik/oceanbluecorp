@@ -57,7 +57,7 @@ export function AuthShell({
 
           <ul aria-hidden className="mt-8 grid grid-cols-3 gap-3">
             {PILLARS.map(({ Art, label }) => (
-              <li key={label} className="rounded-2xl border border-line bg-white/85 px-3 pt-3 pb-2.5 text-center backdrop-blur-sm">
+              <li key={label} className="rounded-2xl border border-line bg-white/85 px-3 pt-3 pb-3 text-center backdrop-blur-sm">
                 <Art className="mx-auto h-16 w-auto" />
                 <p className="mt-2 type-caption font-semibold text-ink-muted">{label}</p>
               </li>

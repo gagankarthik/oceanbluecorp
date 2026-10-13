@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IconCheck, IconChevronRight, IconArrowRight, IconLock, IconMail, IconKey, IconTerminal, IconClock } from "@/components/site/icons";
 import { IconCopy, IconGlobe, IconBracesDoc, IconAlert } from "@/components/site/resources/icons";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
 import { GeoStack } from "@/components/site/geo-art";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 
@@ -19,7 +19,7 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
           <span aria-hidden className="size-2.5 rounded-full bg-white/25" />
-          <span className="ml-2 font-mono text-[11.5px] text-white/70">{lang}</span>
+          <span className="ml-2 font-mono type-overline text-white/70">{lang}</span>
         </span>
         <button
           type="button"
@@ -34,14 +34,14 @@ function CodeBlock({ lang = "bash", children }: { lang?: string; children: strin
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="max-w-full overflow-x-auto p-4 font-mono text-[13px] leading-relaxed whitespace-pre text-white/90">{children}</pre>
+      <pre className="max-w-full overflow-x-auto p-4 font-mono type-body-sm whitespace-pre text-white/90">{children}</pre>
     </div>
   );
 }
 
 function Badge({ label, color }: { label: string; color: string }) {
   return (
-    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold ${color}`}>
+    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono type-overline font-semibold ${color}`}>
       {label}
     </span>
   );
@@ -82,18 +82,18 @@ function EndpointCard({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex min-h-14 w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper sm:px-5"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-paper sm:px-5"
       >
-        <span className={`flex-none rounded-md border px-2 py-0.5 font-mono text-[12px] font-semibold ${methodColors[method]}`}>
+        <span className={`flex-none rounded-md border px-2 py-0.5 font-mono type-label ${methodColors[method]}`}>
           {method}
         </span>
-        <code className="min-w-0 flex-1 font-mono text-[14px] break-all text-ink">{path}</code>
+        <code className="min-w-0 flex-1 font-mono type-body-sm break-all text-ink">{path}</code>
         <span className="hidden max-w-[22rem] truncate type-body-sm text-ink-subtle md:block">{description}</span>
         <IconChevronRight size={16} className={`flex-shrink-0 text-ink-subtle transition-transform ${open ? "rotate-90" : ""}`} />
       </button>
       {open && (
         <div className="min-w-0 space-y-5 border-t border-line bg-paper px-4 py-5 sm:px-5">
-          <p className="type-body text-ink-muted">{description}</p>
+          <p className="measure type-body text-ink-muted">{description}</p>
           {params && params.length > 0 && (
             <div>
               <p className="mb-3 type-label font-semibold text-ink">Parameters</p>
@@ -101,23 +101,23 @@ function EndpointCard({
                 <table className="w-full min-w-[560px] type-body-sm">
                   <thead>
                     <tr className="bg-paper border-b border-line">
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Name</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Type</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Required</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Description</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Name</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Type</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Required</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Description</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
                     {params.map((p) => (
                       <tr key={p.name}>
-                        <td className="py-2.5 px-4"><code className="text-xs font-mono text-cobalt">{p.name}</code></td>
-                        <td className="py-2.5 px-4"><code className="text-xs font-mono text-ink-subtle">{p.type}</code></td>
-                        <td className="py-2.5 px-4">
+                        <td className="py-3 px-4"><code className="text-xs font-mono text-cobalt">{p.name}</code></td>
+                        <td className="py-3 px-4"><code className="text-xs font-mono text-ink-subtle">{p.type}</code></td>
+                        <td className="py-3 px-4">
                           {p.required
                             ? <span className="rounded-md bg-danger-container px-1.5 py-0.5 type-caption font-semibold text-danger">required</span>
                             : <span className="type-caption text-ink-subtle">optional</span>}
                         </td>
-                        <td className="py-2.5 px-4 text-sm text-ink-muted">{p.description}</td>
+                        <td className="py-3 px-4 text-sm text-ink-muted">{p.description}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -167,11 +167,11 @@ export default function DevelopersContent() {
               Real-time REST API, authenticated with API keys, versioned, and ready to integrate.
             </p>
             <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
-              <LinkButton href="#quickstart" variant="primary" size="lg">
+              <LinkButton href="#quickstart" variant="primary" size="md">
                 Quickstart
                 <IconArrowRight size={16} />
               </LinkButton>
-              <LinkButton href="#get-access" variant="outline" size="lg">
+              <LinkButton href="#get-access" variant="outline" size="md">
                 Request an API key
               </LinkButton>
             </div>
@@ -180,7 +180,7 @@ export default function DevelopersContent() {
           <div className="rise min-w-0 lg:col-span-5" style={{ animationDelay: "300ms" }}>
             <CodeBlock lang="bash">{`curl https://oceanbluecorp.com/api/v1/jobs \\
   -H "X-API-Key: obk_live_your_key_here"`}</CodeBlock>
-            <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5">
+            <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
               {[
                 { Icon: IconClock, label: "Real-time data" },
                 { Icon: IconLock, label: "API key auth" },
@@ -205,7 +205,7 @@ export default function DevelopersContent() {
         <aside className="hidden w-56 flex-shrink-0 lg:block">
           <div className="sticky top-28 max-h-[calc(100vh-9rem)] overflow-y-auto pr-1">
             <p className="mb-3 type-label font-semibold text-ink">On this page</p>
-            <nav className="space-y-0.5 border-l border-line">
+            <nav className="space-y-1 border-l border-line">
               {NAV.map((item) => (
                 <a
                   key={item.id}
@@ -229,11 +229,11 @@ export default function DevelopersContent() {
 
         {/* Content */}
         <div className="min-w-0 max-w-3xl flex-1">
-          <nav aria-label="On this page" className="-mx-4 mb-12 overflow-x-auto px-4 lg:hidden">
-            <ul className="flex w-max gap-2">
+          <nav aria-label="On this page" className="scrollbar-none -mx-4 mb-12 overflow-x-auto px-4 [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)] lg:hidden">
+            <ul className="flex w-max gap-2 pr-12">
               {NAV.map((item) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="inline-flex h-11 items-center rounded-full border border-line-strong bg-white px-4 type-body-sm font-medium whitespace-nowrap text-ink">
+                  <a href={`#${item.id}`} className="inline-flex h-11 items-center rounded-full border border-line-input bg-white px-4 type-body-sm font-medium whitespace-nowrap text-ink transition-colors duration-[var(--dur-short)] hover:border-cobalt hover:text-cobalt">
                     {item.label}
                   </a>
                 </li>
@@ -243,7 +243,7 @@ export default function DevelopersContent() {
 
           {/* Overview */}
           <Section id="overview" title="Overview">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               The Oceanblue Solutions, Inc. Job Feed API lets external platforms pull our live job listings.
               It&apos;s a versioned REST API hosted at <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono text-cobalt">/api/v1</code> and returns JSON.
             </p>
@@ -260,7 +260,7 @@ export default function DevelopersContent() {
                   </span>
                   <div className="min-w-0">
                     <p className="type-label font-semibold text-ink-subtle">{item.title}</p>
-                    <p className="mt-0.5 font-mono text-[13.5px] break-all text-ink">{item.desc}</p>
+                    <p className="mt-1 font-mono type-caption break-all text-ink">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -269,12 +269,12 @@ export default function DevelopersContent() {
 
           {/* Authentication */}
           <Section id="authentication" title="Authentication">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               Every request must include your API key in the <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">X-API-Key</code> request header.
               You can alternatively pass it as a query parameter <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">?api_key=</code> for quick testing.
             </p>
             <div className="mb-5 flex gap-3 rounded-xl border border-warning/25 bg-warning-container p-4">
-              <IconAlert size={18} className="mt-0.5 flex-shrink-0 text-warning" />
+              <IconAlert size={18} className="mt-1 flex-shrink-0 text-warning" />
               <p className="type-body-sm text-warning">
                 Keep your API key secret. Do not expose it in client-side code or public repositories.
                 Contact us immediately if a key is compromised, we can disable it instantly.
@@ -463,7 +463,7 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
 
           {/* Filtering & Pagination */}
           <Section id="filtering" title="Filtering & Pagination">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               By default the list endpoint returns only <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">active</code> and <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">open</code> jobs.
               You can combine any query params.
             </p>
@@ -508,7 +508,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
 
           {/* Response Schema */}
           <Section id="response-schema" title="Response Schema">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               All job objects returned by the API contain these fields. Internal fields (pay rates, recruiter details, billing data) are never included.
             </p>
             <div className="overflow-x-auto rounded-xl border border-line">
@@ -555,7 +555,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
 
           {/* Errors */}
           <Section id="errors" title="Errors">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               All errors return a JSON body with an <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">error</code> field.
             </p>
             <CodeBlock lang="json">{`{
@@ -651,13 +651,13 @@ def get_job(job_id: str):
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <a
                     href="mailto:hr@oceanbluecorp.com?subject=Job Feed API Access Request"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-cobalt bg-cobalt px-6 text-[15px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+                    className={buttonClass("primary", "md")}
                   >
                     <IconMail size={16} />
                     Request API access
                     <IconArrowRight size={16} />
                   </a>
-                  <LinkButton href="/careers" variant="outline" size="lg">
+                  <LinkButton href="/careers" variant="outline" size="md">
                     View open positions
                   </LinkButton>
                 </div>

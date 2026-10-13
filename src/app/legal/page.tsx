@@ -90,7 +90,7 @@ export default function Legal() {
               Everything governing how we handle your data and how this site may
               be used. Each one states when it was last effective.
             </p>
-            <p className="mt-5 font-mono text-[13px] text-ink-subtle">{documents.length} documents</p>
+            <p className="mt-5 font-mono type-caption text-ink-subtle">{documents.length} documents</p>
           </div>
         </div>
       </header>
@@ -103,7 +103,7 @@ export default function Legal() {
             {documents.map((d) => (
               <li key={d.href} className="bg-white">
                 <Link href={d.href} className="group flex h-full min-h-[240px] flex-col p-7 transition-colors hover:bg-paper sm:p-8">
-                  <span className="flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink transition-colors group-hover:border-cobalt group-hover:bg-cobalt group-hover:text-white">
+                  <span className="flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
                     <d.icon size={20} />
                   </span>
                   <h2 className="mt-6 type-title-lg font-semibold text-ink">{d.name}</h2>
@@ -136,10 +136,10 @@ export default function Legal() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <LinkButton href="mailto:hr@oceanbluecorp.com" variant="outline" size="lg">
+            <LinkButton href="mailto:hr@oceanbluecorp.com" variant="outline" size="md">
               <IconMail size={16} /> Email us
             </LinkButton>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Contact us
             </LinkButton>
           </div>

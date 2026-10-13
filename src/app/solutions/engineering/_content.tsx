@@ -69,10 +69,10 @@ export default function EngineeringContent() {
         image={IMG.serviceEngineering}
         actions={
           <>
-            <LinkButton href="/contact" variant="primary" size="lg">
+            <LinkButton href="/contact" variant="primary" size="md">
               Talk to us
             </LinkButton>
-            <LinkButton href="#disciplines" variant="outline" size="lg">
+            <LinkButton href="#disciplines" variant="outline" size="md">
               Explore disciplines
             </LinkButton>
           </>
@@ -85,7 +85,7 @@ export default function EngineeringContent() {
         title="Nine disciplines"
         sub="One partner across the engineering disciplines your program actually touches, rather than a separate vendor for each."
       >
-        <dl className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-3">
           {disciplines.map((d) => (
             <div key={d.title} className="bg-white p-7">
               <dt className="type-title text-ink">{d.title}</dt>
@@ -99,28 +99,28 @@ export default function EngineeringContent() {
         <div className="mx-auto max-w-[880px] overflow-hidden rounded-2xl border border-line bg-white">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-line bg-paper text-[13.5px] text-ink-subtle">
-                <th scope="col" className="px-6 py-3.5 font-medium">Industry</th>
-                <th scope="col" className="px-6 py-3.5 font-medium">Standards</th>
+              <tr className="border-b border-line bg-paper type-caption text-ink-subtle">
+                <th scope="col" className="px-6 py-4 font-medium">Industry</th>
+                <th scope="col" className="px-6 py-4 font-medium">Standards</th>
               </tr>
             </thead>
             <tbody>
               {industries.map((i) => (
                 <tr key={i.name} className="border-b border-line last:border-b-0">
-                  <th scope="row" className="px-6 py-4 text-[15.5px] font-semibold text-ink">{i.name}</th>
-                  <td className="px-6 py-4 text-[15px] text-ink-muted">{i.standards}</td>
+                  <th scope="row" className="px-6 py-4 type-body font-semibold text-ink">{i.name}</th>
+                  <td className="px-6 py-4 type-body text-ink-muted">{i.standards}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="mx-auto mt-4 max-w-[880px] text-[13.5px] text-ink-subtle">
+        <p className="mx-auto mt-4 max-w-[880px] type-caption text-ink-subtle">
           Standards are the ones our clients&apos; programs work to. They are market context, not Oceanblue certifications.
         </p>
       </Section>
 
       <Section tone="white" title="Four ways to engage" sub="Pick the model that matches the work, not the one that suits a vendor.">
-        <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-4">
           {models.map((m) => (
             <li key={m.title} className="flex flex-col bg-white p-7">
               <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink">
@@ -128,7 +128,7 @@ export default function EngineeringContent() {
               </span>
               <h3 className="mt-6 type-title text-ink">{m.title}</h3>
               <p className="mt-2 type-body-sm text-ink-muted">{m.desc}</p>
-              <p className="mt-auto pt-5 text-[13.5px] font-semibold text-cobalt">Best for {m.best.toLowerCase()}</p>
+              <p className="mt-auto pt-5 type-label text-cobalt">Best for {m.best.toLowerCase()}</p>
             </li>
           ))}
         </ul>
@@ -139,12 +139,12 @@ export default function EngineeringContent() {
           <span aria-hidden className="absolute top-5 right-[12.5%] left-[12.5%] hidden h-px bg-line-strong md:block" />
           {steps.map((st, i) => (
             <li key={st.title} className="relative flex gap-4 md:flex-col md:items-center md:text-center">
-              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white text-[14px] font-semibold text-ink tabular-nums">
+              <span className="relative flex size-10 flex-none items-center justify-center rounded-full border border-line-strong bg-white type-label text-ink tabular-nums">
                 {i + 1}
               </span>
               <div>
                 <h3 className="type-title text-ink md:mt-5">{st.title}</h3>
-                <p className="mt-1.5 type-body-sm text-ink-muted">{st.desc}</p>
+                <p className="mt-2 type-body-sm text-ink-muted">{st.desc}</p>
               </div>
             </li>
           ))}
@@ -152,7 +152,7 @@ export default function EngineeringContent() {
       </Section>
 
       <Section tone="white" title="Why teams bring engineering to Oceanblue">
-        <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-3">
           {why.map((w) => (
             <li key={w.title} className="bg-white p-7">
               <w.icon size={22} className="text-cobalt" />

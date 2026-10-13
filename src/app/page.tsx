@@ -110,11 +110,11 @@ export default async function Home() {
             {content.heroSubtitle || HERO.sub}
           </p>
           <div className="rise mt-9 flex flex-wrap justify-center gap-3" style={{ animationDelay: "640ms" }}>
-            <LinkButton href="/contact" variant="inverse" size="lg">
+            <LinkButton href="/contact" variant="inverse" size="md">
               {content.heroCtaText || "Talk to us"}
               <IconArrowRight size={16} />
             </LinkButton>
-            <LinkButton href="/solutions" variant="outline-dark" size="lg">
+            <LinkButton href="/solutions" variant="outline-dark" size="md">
               Explore solutions
             </LinkButton>
           </div>
@@ -147,11 +147,11 @@ export default async function Home() {
               key={ind.name}
               className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition-shadow hover:shadow-[var(--shadow-raised)]"
             >
-              <div className="relative isolate flex h-56 items-center justify-center overflow-hidden border-b border-line bg-cobalt-tint">
+              <div className="relative isolate flex h-56 items-center justify-center overflow-hidden border-b border-line bg-paper">
                 <LineGrid />
                 <ind.Art className="h-44 w-auto" />
               </div>
-              <div className="p-6 sm:p-7">
+              <div className="p-5 sm:p-6">
                 <h3 className="type-title-lg text-ink">{ind.name}</h3>
                 <p className="mt-2 max-w-[52ch] type-body-sm text-ink-muted">{ind.body}</p>
               </div>
@@ -161,17 +161,13 @@ export default async function Home() {
       </Section>
 
       <Section
-        tone="blue"
-        notched
-        ground="paper"
-        below="none"
         title="Why clients keep working with us"
         sub="In their own words, from the people who have hired our teams."
       >
         <ClientVoices />
       </Section>
 
-      <ClosingCta tuck />
+      <ClosingCta />
     </div>
   );
 }

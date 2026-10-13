@@ -25,9 +25,9 @@ const GEAR_LG = gear(12, 62, 49);
 const GEAR_SM = gear(8, 38, 27);
 
 const LINES = [
-  [96, 92, 150, "#cbd5e3"], [96, 108, 104, "#cbd5e3"],
-  [96, 150, 84, "#e2e8f1"], [96, 166, 66, "#e2e8f1"], [96, 182, 76, "#e2e8f1"],
-  [96, 250, 70, "#e2e8f1"], [96, 266, 88, "#e2e8f1"], [96, 282, 58, "#e2e8f1"],
+  [96, 92, 150, "var(--color-border-strong)"], [96, 108, 104, "var(--color-border-strong)"],
+  [96, 150, 84, "var(--color-border-default)"], [96, 166, 66, "var(--color-border-default)"], [96, 182, 76, "var(--color-border-default)"],
+  [96, 250, 70, "var(--color-border-default)"], [96, 266, 88, "var(--color-border-default)"], [96, 282, 58, "var(--color-border-default)"],
 ] as const;
 
 export function MaintenanceArt({ id = "mt", className }: { id?: string; className?: string }) {
@@ -36,14 +36,14 @@ export function MaintenanceArt({ id = "mt", className }: { id?: string; classNam
       <defs>
         <ArtShadows id={id} />
         <linearGradient id={`${id}-gear`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3b6cf0" />
-          <stop offset="1" stopColor="#1740ad" />
+          <stop offset="0" stopColor="var(--p-blue-500)" />
+          <stop offset="1" stopColor="var(--color-action-primary-hover)" />
         </linearGradient>
       </defs>
 
       <g className="nf-rise">
         <ArtWindow id={id}>
-          oceanbluecorp.com <tspan fill="#1d4ed8" className="nf-blink">· updating</tspan>
+          oceanbluecorp.com <tspan fill="var(--color-action-primary)" className="nf-blink">· updating</tspan>
         </ArtWindow>
 
         {LINES.map(([x, y, w, fill], i) => (
@@ -51,35 +51,35 @@ export function MaintenanceArt({ id = "mt", className }: { id?: string; classNam
         ))}
 
         {/* The slot, and the card that drops into it. */}
-        <rect x="452.5" y="140.5" width="92" height="120" rx="10" fill="#f3f6fb" stroke="#cbd5e3" strokeDasharray="5 5" />
+        <rect x="452.5" y="140.5" width="92" height="120" rx="10" fill="var(--color-background-secondary)" stroke="var(--color-border-strong)" strokeDasharray="5 5" />
         <g className="mt-drop">
           <g filter={`url(#${id}-soft)`}>
-            <rect x="452" y="140" width="93" height="121" rx="10" fill="#fff" stroke="#e2e8f1" />
+            <rect x="452" y="140" width="93" height="121" rx="10" fill="var(--color-background-primary)" stroke="var(--color-border-default)" />
           </g>
-          <rect x="466" y="156" width="34" height="34" rx="8" fill="#eef2ff" />
-          <rect x="466" y="204" width="64" height="7" rx="3.5" fill="#cbd5e3" />
-          <rect x="466" y="220" width="48" height="7" rx="3.5" fill="#e2e8f1" />
-          <rect x="466" y="236" width="56" height="7" rx="3.5" fill="#e2e8f1" />
+          <rect x="466" y="156" width="34" height="34" rx="8" fill="var(--color-background-selected)" />
+          <rect x="466" y="204" width="64" height="7" rx="3.5" fill="var(--color-border-strong)" />
+          <rect x="466" y="220" width="48" height="7" rx="3.5" fill="var(--color-border-default)" />
+          <rect x="466" y="236" width="56" height="7" rx="3.5" fill="var(--color-border-default)" />
         </g>
 
         {/* Gears. */}
         <g transform="translate(296 222)" filter={`url(#${id}-soft)`}>
           <g className="mt-spin">
-            <path d={GEAR_LG} fill={`url(#${id}-gear)`} strokeLinejoin="round" stroke="#1740ad" strokeWidth="3" />
-            <circle r="22" fill="#fff" />
-            <circle r="22" fill="none" stroke="#1740ad" strokeOpacity=".25" strokeWidth="3" />
+            <path d={GEAR_LG} fill={`url(#${id}-gear)`} strokeLinejoin="round" stroke="var(--color-action-primary-hover)" strokeWidth="3" />
+            <circle r="22" fill="var(--color-background-primary)" />
+            <circle r="22" fill="none" stroke="var(--color-action-primary-hover)" strokeOpacity=".25" strokeWidth="3" />
           </g>
         </g>
         <g transform="translate(361 161)" filter={`url(#${id}-soft)`}>
           <g className="mt-spin-rev">
-            <path d={GEAR_SM} fill="#0b1a33" strokeLinejoin="round" stroke="#0b1a33" strokeWidth="3" />
-            <circle r="12" fill="#fff" />
+            <path d={GEAR_SM} fill="var(--color-text-primary)" strokeLinejoin="round" stroke="var(--color-text-primary)" strokeWidth="3" />
+            <circle r="12" fill="var(--color-background-primary)" />
           </g>
         </g>
 
         {/* Progress. */}
-        <rect x="96" y="336" width="448" height="10" rx="5" fill="#e7edf6" />
-        <rect x="96" y="336" width="448" height="10" rx="5" fill="#1d4ed8" className="mt-fill" />
+        <rect x="96" y="336" width="448" height="10" rx="5" fill="var(--color-background-tertiary)" />
+        <rect x="96" y="336" width="448" height="10" rx="5" fill="var(--color-action-primary)" className="mt-fill" />
       </g>
     </svg>
   );

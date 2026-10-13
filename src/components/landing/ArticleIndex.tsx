@@ -5,6 +5,7 @@ import ArticleBanner from "./ArticleBanner";
 import Photo from "./Photo";
 import { IconArrowRight } from "@/components/site/icons";
 import { CONTAINER, SECTION_Y } from "@/components/site/sections";
+import { buttonClass } from "@/components/site/button";
 
 /**
  * The index for one public content section, in the site system.
@@ -32,7 +33,7 @@ const hrefFor = (kind: ArticleKind, slug: string) => `${ARTICLE_KIND_CONFIG[kind
 /** The one "read on" control, the same everywhere in Resources. */
 function ReadLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="group inline-flex items-center gap-2 text-[15px] font-semibold text-ink transition-colors hover:text-cobalt">
+    <Link href={href} className="group inline-flex items-center gap-2 type-body font-semibold text-ink transition-colors hover:text-cobalt">
       {label}
       <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
     </Link>
@@ -113,12 +114,12 @@ function BlogLayout({ articles, subtitle }: { articles: Article[]; subtitle: str
       {/* "Recent" is the only list worth standing beside the feed. */}
       <aside>
         <div className="rounded-2xl border border-line bg-paper p-6 lg:sticky lg:top-28">
-          <p className="type-body text-ink-muted">{subtitle}</p>
+          <p className="measure type-body text-ink-muted">{subtitle}</p>
           <h2 className="mt-6 type-label font-semibold text-ink">Recent</h2>
           <ul className="mt-2 divide-y divide-line">
             {articles.slice(0, 5).map((a) => (
               <li key={a.id} className="py-3">
-                <Link href={hrefFor("blog", a.slug)} className="text-[15px] leading-snug font-semibold text-ink transition-colors hover:text-cobalt">
+                <Link href={hrefFor("blog", a.slug)} className="type-body leading-snug font-semibold text-ink transition-colors hover:text-cobalt">
                   {a.title}
                 </Link>
               </li>
@@ -140,11 +141,11 @@ function NewsLayout({ articles }: { articles: Article[] }) {
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-paper px-6 py-5 sm:px-8">
         <div>
           <h2 className="type-title font-semibold text-ink">Media inquiries</h2>
-          <p className="mt-0.5 type-body text-ink-muted">Contact our press team and we will come straight back to you.</p>
+          <p className="mt-1 type-body text-ink-muted">Contact our press team and we will come straight back to you.</p>
         </div>
         <Link
           href="/contact"
-          className="inline-flex h-11 flex-none items-center rounded-full border border-line-strong bg-white px-5 type-label font-semibold text-ink transition-colors hover:border-cobalt"
+          className={buttonClass("outline", "sm", "flex-none px-5")}
         >
           Get in touch
         </Link>

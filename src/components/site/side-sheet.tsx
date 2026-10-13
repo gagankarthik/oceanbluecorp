@@ -56,13 +56,13 @@ export function SideSheet({
             className,
           )}
         >
-          <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
+          <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
 
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 pt-4 pb-5 sm:px-8 sm:pt-7">
             <div className="min-w-0">
               <D.Title className="type-title-lg text-ink">{title}</D.Title>
               {description ? (
-                <D.Description className="mt-1 text-[14.5px] text-ink-subtle">{description}</D.Description>
+                <D.Description className="mt-1 type-body-sm text-ink-subtle">{description}</D.Description>
               ) : (
                 <D.Description className="sr-only">{typeof title === "string" ? title : "Dialog"}</D.Description>
               )}

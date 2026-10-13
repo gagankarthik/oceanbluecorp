@@ -6,15 +6,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CONTAINER } from "@/components/site/sections";
 import { IconArrowRight, IconChevronRight, IconX } from "@/components/site/icons";
-import { IconBookmark, IconCheckCircle, IconFile, IconShare, IconSpinner, IconUpload } from "@/components/site/careers/careers-icons";
+import { IconBookmark, IconCheckCircle, IconFile, IconShare, IconUpload } from "@/components/site/careers/careers-icons";
 import type { PublicJob } from "@/lib/aws/dynamodb";
 import { useStaffSession } from "@/components/site/use-staff-session";
 import { renderRichText } from "@/lib/rich-text";
 import { SideSheet } from "@/components/site/side-sheet";
+import { Button, buttonClass } from "@/components/site/button";
+import { FieldError, Input, LABEL, Textarea } from "@/components/site/input";
 import { CAREER_BENEFITS, EEO_STATEMENT, HR_EMAIL, workMode } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
 import { isAcceptingApplications } from "@/lib/job-status";
-import { formatSalary } from "@/lib/salary";
 import { normalizeWebsite, website } from "@/lib/form-validation";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -247,14 +248,12 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   const postedAt = publishedAt ?? job.createdAt;
   const postedDate = new Date(postedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const statusLabel = applicationStatus ? applicationStatus.replace("-", " ") : null;
-  const salary = formatSalary(job.salary);
 
   const mode = workMode(job);
   const facts = [
     { k: "Employment type", v: formatJobType(job.type) },
     { k: "Location", v: jobPlace(job) },
     mode ? { k: "Work arrangement", v: mode } : null,
-    salary ? { k: "Compensation", v: salary } : null,
     { k: "Posted", v: postedDate },
     due ? { k: "Applications close", v: due.text, urgent: due.urgent } : null,
   ].filter(Boolean) as { k: string; v: string; urgent?: boolean }[];
@@ -262,17 +261,14 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
   const hasContent = (v: string | string[] | undefined): v is string | string[] => Boolean(v && (typeof v === "string" ? v : v.length > 0));
 
   const proseCls =
-    "type-body-lg break-words text-ink-muted [&_a]:font-medium [&_a]:text-cobalt [&_a]:underline [&_h2]:mt-8 [&_h2]:type-title-lg [&_h2]:text-ink [&_h3]:mt-6 [&_h3]:font-semibold [&_h3]:text-ink [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:mb-4 [&_strong]:text-ink [&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_li]:marker:text-cobalt";
+    "measure type-body-lg break-words text-ink-muted [&_a]:font-medium [&_a]:text-cobalt [&_a]:underline [&_h2]:mt-8 [&_h2]:type-title-lg [&_h2]:text-ink [&_h3]:mt-6 [&_h3]:font-semibold [&_h3]:text-ink [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:mb-4 [&_strong]:text-ink [&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_li]:marker:text-cobalt";
 
   const saveBtn = (
     <button
       type="button"
       onClick={toggleSaved}
       aria-pressed={saved}
-      className={cn(
-        "inline-flex h-12 items-center justify-center gap-2 rounded-full border px-5 text-[15px] font-semibold transition-colors",
-        saved ? "border-cobalt bg-cobalt text-white" : "border-line-strong bg-white text-ink hover:border-ink",
-      )}
+      className={buttonClass("outline", "md", cn("px-5", saved && "border-cobalt bg-cobalt-tint text-cobalt-deep"))}
     >
       <IconBookmark size={16} />
       {saved ? "Saved" : "Save"}
@@ -282,7 +278,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
     <button
       type="button"
       onClick={handleShare}
-      className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line-strong bg-white px-5 text-[15px] font-semibold text-ink hover:border-cobalt"
+      className={buttonClass("outline", "md", "px-5")}
     >
       <IconShare size={16} />
       Share
@@ -292,23 +288,20 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
     <button
       type="button"
       onClick={() => setShowApply(true)}
-      className={cn(
-        "group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-cobalt px-6 text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep",
-        cls,
-      )}
+      className={buttonClass("primary", "md", cn("group", cls))}
     >
       Apply now
       <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
     </button>
   );
   const closedBadge = (cls?: string) => (
-    <div className={cn("inline-flex h-12 items-center justify-center rounded-full bg-paper px-5 text-[15px] font-semibold text-ink-muted", cls)}>
+    <div className={cn("inline-flex h-12 items-center justify-center rounded-full bg-paper px-5 type-body font-semibold text-ink-muted", cls)}>
       Applications closed
     </div>
   );
   const applyAction = (cls?: string) => (hasApplied ? appliedBadge(cls) : accepting ? applyBtn(cls) : closedBadge(cls));
   const appliedBadge = (cls?: string) => (
-    <div className={cn("inline-flex h-12 items-center justify-center gap-2 rounded-full bg-success-container px-5 text-[15px] font-semibold text-success", cls)}>
+    <div className={cn("inline-flex h-12 items-center justify-center gap-2 rounded-full bg-success-container px-5 type-body font-semibold text-success", cls)}>
       <IconCheckCircle size={18} />
       Applied{statusLabel ? <span className="font-normal capitalize">· {statusLabel}</span> : null}
     </div>
@@ -321,10 +314,10 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
         {typeof value === "string" ? (
           <div className={proseCls} dangerouslySetInnerHTML={renderRichText(value)} />
         ) : (
-          <ul className="space-y-3">
+          <ul className="measure space-y-3">
             {value.map((item, i) => (
               <li key={i} className="flex gap-4 type-body-lg break-words text-ink-muted">
-                <span aria-hidden className="mt-[11px] size-1.5 shrink-0 rounded-full bg-cobalt" />
+                <span aria-hidden className="mt-3 size-1.5 shrink-0 rounded-full bg-cobalt" />
                 <span className="min-w-0">{item}</span>
               </li>
             ))}
@@ -334,9 +327,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
     </section>
   );
 
-  const inputCls =
-    "h-12 w-full rounded-xl border border-line-input bg-white px-4 type-body text-ink placeholder:text-ink-subtle focus:border-cobalt focus:ring-4 focus:ring-cobalt/15 focus:outline-none";
-  const labelCls = "mb-1.5 block type-body-sm font-medium text-ink";
+  const labelCls = LABEL;
 
   return (
     <>
@@ -375,7 +366,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               )}
             </div>
             {/* Actions in the header from tablet up; phones get the fixed bar at the bottom. */}
-            <div className="rise hidden shrink-0 flex-wrap items-center gap-2.5 sm:flex" style={{ animationDelay: "120ms" }}>
+            <div className="rise hidden shrink-0 flex-wrap items-center gap-3 sm:flex" style={{ animationDelay: "120ms" }}>
               {applyAction()}
               {saveBtn}
               {shareBtn}
@@ -387,7 +378,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
             {facts.map((f) => (
               <div key={f.k} className="bg-white px-5 py-4">
                 <dt className="type-caption text-ink-subtle">{f.k}</dt>
-                <dd className={cn("mt-1 text-[15.5px] font-semibold break-words tabular-nums", f.urgent ? "text-warning" : "text-ink")}>{f.v}</dd>
+                <dd className={cn("mt-1 type-body font-semibold break-words tabular-nums", f.urgent ? "text-warning" : "text-ink")}>{f.v}</dd>
               </div>
             ))}
           </dl>
@@ -412,8 +403,8 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               <ul className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
                 {CAREER_BENEFITS.map((b) => (
                   <li key={b.title} className="bg-white p-5">
-                    <p className="text-[15.5px] font-semibold text-ink">{b.title}</p>
-                    <p className="mt-1.5 type-body-sm text-ink-muted">{b.desc}</p>
+                    <p className="type-body font-semibold text-ink">{b.title}</p>
+                    <p className="mt-2 type-body-sm text-ink-muted">{b.desc}</p>
                   </li>
                 ))}
               </ul>
@@ -433,7 +424,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                   </p>
                   <Link
                     href="/careers/search"
-                    className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-ink hover:bg-cobalt-tint"
+                    className={buttonClass("inverse", "md", "mt-6")}
                   >
                     Browse more openings
                     <IconArrowRight size={16} />
@@ -442,7 +433,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               ) : (
                 <div>
                   <p className="type-title-lg font-semibold">Not quite the right role?</p>
-                  <p className="mt-1.5 max-w-[52ch] type-body text-white/80">
+                  <p className="mt-2 max-w-[52ch] type-body text-white/80">
                     Send us your resume and tell us the role you are looking for. We will keep it on file and reach out when something fits.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-3">
@@ -450,14 +441,14 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                       href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}&body=${encodeURIComponent(
                         "Hello Oceanblue team,\n\nThe role I'm looking for:\nPreferred location / work arrangement:\n\nMy resume is attached.\n\nThank you,\n",
                       )}`}
-                      className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15.5px] font-semibold text-ink hover:bg-cobalt-tint"
+                      className={buttonClass("inverse", "md", "group")}
                     >
                       Email HR your resume
                       <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
                     </a>
                     <Link
                       href="/contact"
-                      className="inline-flex h-12 items-center justify-center rounded-full border border-white/45 px-6 text-[15.5px] font-semibold text-white hover:border-white hover:bg-white/10"
+                      className={buttonClass("outline-dark", "md")}
                     >
                       Contact us
                     </Link>
@@ -474,7 +465,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
           <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-2xl border border-line bg-white p-6">
               <p className="type-caption font-semibold text-cobalt">{job.department}</p>
-              <p className="mt-1.5 type-title-lg font-semibold break-words text-ink">{job.title}</p>
+              <p className="mt-2 type-title-lg font-semibold break-words text-ink">{job.title}</p>
               <p className="mt-2 type-body-sm text-ink-muted">
                 {[formatJobType(job.type), mode, jobPlace(job)].filter((v, i, all) => v && all.indexOf(v) === i).join(" · ")}
               </p>
@@ -483,9 +474,9 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                   {due.text === "Closed" ? "Applications have closed" : `Applications close: ${due.text}`}
                 </p>
               )}
-              <div className="mt-5 grid gap-2.5">
+              <div className="mt-5 grid gap-3">
                 {applyAction("w-full")}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-3">
                   {saveBtn}
                   {shareBtn}
                 </div>
@@ -519,7 +510,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               Applied
             </span>
           ) : accepting ? (
-            <button type="button" onClick={() => setShowApply(true)} className="h-11 shrink-0 rounded-full bg-cobalt px-5 text-[15px] font-semibold text-white">
+            <button type="button" onClick={() => setShowApply(true)} className={buttonClass("primary", "sm", "h-11 px-5")}>
               Apply now
             </button>
           ) : (
@@ -540,24 +531,14 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
         footer={
           applicationSubmitted ? undefined : (
             <div className="space-y-3">
-              <button
-            type="submit"
-            form="apply-form"
-            disabled={submitting}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cobalt text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep disabled:opacity-60"
-          >
-            {submitting ? (
-              <>
-                <IconSpinner size={18} className="animate-spin" />
-                Submitting…
-              </>
-            ) : (
-              <>
-                Submit application
-                <IconArrowRight size={16} />
-              </>
-            )}
-          </button>
+              <Button type="submit" form="apply-form" size="md" loading={submitting} className="w-full">
+                {submitting ? "Submitting…" : (
+                  <>
+                    Submit application
+                    <IconArrowRight size={16} />
+                  </>
+                )}
+              </Button>
               <p className="text-center type-caption text-ink-subtle">Fields marked * are required.</p>
             </div>
           )
@@ -577,7 +558,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                       setShowApply(false);
                       setApplicationSubmitted(false);
                     }}
-                    className="mt-7 inline-flex h-11 items-center rounded-full border border-line-strong px-5 type-label font-semibold text-ink hover:border-cobalt"
+                    className={buttonClass("outline", "sm", "mt-7")}
                   >
                     Close
                   </button>
@@ -586,7 +567,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                 <form id="apply-form" onSubmit={handleApply} className="space-y-6">
                   <div className="rounded-2xl bg-paper p-4">
                     <p className="type-caption font-semibold text-cobalt">{job.department}</p>
-                    <p className="mt-1 text-[15.5px] leading-snug font-semibold text-ink">{job.title}</p>
+                    <p className="mt-1 type-body leading-snug font-semibold text-ink">{job.title}</p>
                     <p className="mt-1 type-body-sm text-ink-muted">{[formatJobType(job.type), mode, jobPlace(job)].filter((v, i, all) => v && all.indexOf(v) === i).join(" · ")}</p>
                   </div>
                   <fieldset className="space-y-4">
@@ -596,26 +577,26 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         <label htmlFor="apply-first" className={labelCls}>
                           First name <span className="text-danger">*</span>
                         </label>
-                        <input id="apply-first" type="text" autoComplete="given-name" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className={inputCls} />
+                        <Input id="apply-first" type="text" autoComplete="given-name" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
                       </div>
                       <div>
                         <label htmlFor="apply-last" className={labelCls}>
                           Last name <span className="text-danger">*</span>
                         </label>
-                        <input id="apply-last" type="text" autoComplete="family-name" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className={inputCls} />
+                        <Input id="apply-last" type="text" autoComplete="family-name" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
                       </div>
                     </div>
                     <div>
                       <label htmlFor="apply-email" className={labelCls}>
                         Email <span className="text-danger">*</span>
                       </label>
-                      <input id="apply-email" type="email" autoComplete="email" inputMode="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className={inputCls} />
+                      <Input id="apply-email" type="email" autoComplete="email" inputMode="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                     </div>
                     <div>
                       <label htmlFor="apply-phone" className={labelCls}>
                         Phone
                       </label>
-                      <input id="apply-phone" type="tel" autoComplete="tel" inputMode="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={inputCls} />
+                      <Input id="apply-phone" type="tel" autoComplete="tel" inputMode="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                     </div>
                   </fieldset>
 
@@ -629,7 +610,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         Resume
                       </p>
                       {resumeFile ? (
-                        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success-container p-3.5">
+                        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success-container p-4">
                           <IconFile size={22} className="shrink-0 text-success" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate type-body-sm font-medium text-ink">{resumeFile.name}</p>
@@ -639,7 +620,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                             type="button"
                             onClick={() => setResumeFile(null)}
                             aria-label="Remove resume"
-                            className="flex size-9 items-center justify-center rounded-full text-ink-muted hover:bg-white hover:text-ink"
+                            className="flex size-10 items-center justify-center rounded-full text-ink-muted hover:bg-white hover:text-ink"
                           >
                             <IconX size={16} />
                           </button>
@@ -679,7 +660,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         </label>
                       )}
                       {resumeError && (
-                        <p id="apply-resume-error" role="alert" className="mt-1.5 type-caption text-danger">
+                        <p id="apply-resume-error" role="alert" className="mt-2 type-caption text-danger">
                           {resumeError}
                         </p>
                       )}
@@ -688,7 +669,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                       <label htmlFor="apply-linkedin" className={labelCls}>
                         LinkedIn profile
                       </label>
-                      <input
+                      <Input
                         id="apply-linkedin"
                         type="text"
                         inputMode="url"
@@ -702,25 +683,19 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         onBlur={(e) => setLinkedinError(linkedinRule(e.target.value) ?? null)}
                         aria-invalid={Boolean(linkedinError)}
                         aria-describedby={linkedinError ? "apply-linkedin-error" : "apply-materials-hint"}
-                        className={cn(inputCls, linkedinError && "border-danger")}
                       />
-                      {linkedinError && (
-                        <p id="apply-linkedin-error" className="mt-1.5 type-caption text-danger">
-                          {linkedinError}
-                        </p>
-                      )}
+                      <FieldError id="apply-linkedin" message={linkedinError ?? undefined} />
                     </div>
                     <div>
                       <label htmlFor="apply-cover" className={labelCls}>
                         Cover letter <span className="font-normal text-ink-subtle">(optional)</span>
                       </label>
-                      <textarea
+                      <Textarea
                         id="apply-cover"
                         rows={5}
                         autoComplete="off"
                         value={formData.coverLetter}
                         onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-                        className={cn(inputCls, "h-auto resize-none py-3")}
                         placeholder="Tell us why you're interested"
                       />
                     </div>

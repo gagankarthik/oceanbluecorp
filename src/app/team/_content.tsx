@@ -40,13 +40,13 @@ export default function TeamPage() {
             <li key={l.name} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
               <span
                 aria-hidden
-                className="grid aspect-[4/3] w-full place-items-center border-b border-line bg-paper text-[64px] leading-none font-semibold tracking-[-0.04em] text-brand [background-image:linear-gradient(to_right,rgb(11_26_51/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(11_26_51/0.05)_1px,transparent_1px)] [background-size:28px_28px]"
+                className="grid aspect-[4/3] w-full place-items-center border-b border-line bg-paper type-display leading-none font-semibold tracking-[-0.04em] text-brand [background-image:linear-gradient(to_right,rgb(11_26_51/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(11_26_51/0.05)_1px,transparent_1px)] [background-size:28px_28px]"
               >
                 {l.initials}
               </span>
               <div className="flex flex-1 flex-col p-6">
                 <h3 className="type-title text-ink">{l.name}</h3>
-                <p className="mt-1 text-[15px] text-ink-muted">{l.role}</p>
+                <p className="mt-1 type-body text-ink-muted">{l.role}</p>
                 {/* Only where a profile exists: a LinkedIn mark that goes nowhere is worse than none. */}
                 {l.linkedin && (
                   <a
@@ -78,7 +78,7 @@ export default function TeamPage() {
                 <IconCheck size={20} className="mt-1 text-brand" />
                 <div>
                   <h3 className="type-title-lg text-ink">{o.title}</h3>
-                  <p className="mt-1.5 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>
+                  <p className="mt-2 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>
                 </div>
               </li>
             ))}

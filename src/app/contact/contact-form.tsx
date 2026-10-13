@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { buttonClass } from "@/components/site/button";
+import { Button, buttonClass } from "@/components/site/button";
+import { FieldError, Input, LABEL, Textarea } from "@/components/site/input";
 import { IconArrowRight, IconCheck, IconClock, IconMail } from "@/components/site/icons";
 import { IconPhone, IconPin } from "@/components/site/company/icons";
 import { Select } from "@/components/site/select";
@@ -86,16 +87,9 @@ const EMPTY = {
 };
 type Field = keyof typeof EMPTY;
 
-const inputClass =
-  "w-full rounded-xl border border-line-input bg-white px-4 py-3 text-[15px] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-subtle hover:border-ink-subtle focus:border-cobalt focus:outline-none focus:ring-4 focus:ring-cobalt-tint aria-[invalid=true]:border-danger";
-const labelClass = "mb-1.5 block type-label text-ink";
+const labelClass = LABEL;
 // Focus on navy needs a white ring; the site default is cobalt.
 const onNavyFocus = "outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-night";
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return <p id={`${id}-error`} className="mt-2 type-body-sm text-danger">{message}</p>;
-}
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -197,7 +191,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
   const field = (id: Field, label: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div>
       <label htmlFor={id} className={labelClass}>{label}</label>
-      <input id={id} name={id} value={formData[id]} onChange={onChange} className={inputClass} {...invalidProps(id)} {...props} />
+      <Input id={id} name={id} value={formData[id]} onChange={onChange} {...invalidProps(id)} {...props} />
       <FieldError id={id} message={errors[id]} />
     </div>
   );
@@ -264,12 +258,12 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
             <p className="mt-3 max-w-[52ch] type-body text-ink-muted">{COPY[submitted].done.body}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               {submitted === "work" && (
-                <Link href="/careers/search" className={buttonClass("primary", "lg")}>
+                <Link href="/careers/search" className={buttonClass("primary", "md")}>
                   Browse open roles
                   <IconArrowRight size={16} />
                 </Link>
               )}
-              <button type="button" onClick={() => setSubmitted(null)} className={buttonClass("outline", "lg")}>
+              <button type="button" onClick={() => setSubmitted(null)} className={buttonClass("outline", "md")}>
                 Send another message
               </button>
             </div>
@@ -353,7 +347,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
 
               <div className="border-t border-line pt-7">
                 <label htmlFor="message" className={labelClass}>Message</label>
-                <textarea
+                <Textarea
                   id="message"
                   name="message"
                   maxLength={4000}
@@ -361,7 +355,6 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                   value={formData.message}
                   onChange={onChange}
                   {...invalidProps("message")}
-                  className={`${inputClass} resize-y`}
                   placeholder={copy.messageHint}
                 />
                 <FieldError id="message" message={errors.message} />
@@ -372,19 +365,14 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                   We use your details only to reply. See our{" "}
                   <Link href="/privacy" className="font-medium text-cobalt underline-offset-4 hover:underline">privacy policy</Link>.
                 </p>
-                <button type="submit" disabled={loading} aria-busy={loading} className={buttonClass("primary", "lg", "w-full sm:w-auto")}>
-                  {loading ? (
-                    <>
-                      <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />
-                      Sending…
-                    </>
-                  ) : (
+                <Button type="submit" size="md" loading={loading} className="w-full sm:w-auto">
+                  {loading ? "Sending…" : (
                     <>
                       Send message
                       <IconArrowRight size={16} />
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </>
@@ -401,7 +389,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full ring-1 ring-white/35 type-caption font-semibold tabular-nums text-white">
                   {i + 1}
                 </span>
-                <span className="pt-0.5 type-body-sm text-white/85">{s}</span>
+                <span className="pt-1 type-body-sm text-white/85">{s}</span>
               </li>
             ))}
           </ol>
@@ -411,12 +399,12 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
           {directRows(details).map((row) => (
             // One div per dt/dd pair, as a <dl> allows (WCAG 1.3.1); the icon
             // hangs in the left padding instead of a wrapper.
-            <div key={row.label} className="relative min-w-0 pl-[30px]">
+            <div key={row.label} className="relative min-w-0 pl-8">
               <dt className="type-caption text-white/70">
                 <row.icon size={18} className="absolute top-0.5 left-0 text-white/70" aria-hidden="true" />
                 {row.label}
               </dt>
-              <dd className="mt-0.5 type-body-sm font-semibold text-white">
+              <dd className="mt-1 type-body-sm font-semibold text-white">
                 {row.href ? (
                   <a href={row.href} className={cn("underline-offset-4 hover:underline", onNavyFocus)}>{row.value}</a>
                 ) : row.value}

@@ -101,14 +101,14 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:hidden">
           {OFFICES.map((o) => (
             <li key={o.city} className="rounded-2xl border border-line bg-white p-5">
-              <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+              <p className="flex items-center gap-2 type-body font-semibold text-ink">
                 {o.city}
-                {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 text-[11px] font-semibold text-cobalt">HQ</span>}
+                {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 type-overline font-semibold text-cobalt">HQ</span>}
               </p>
-              <p className="mt-0.5 text-[13px] text-ink-subtle">{o.country}</p>
-              <address className="mt-2.5 text-[14px] leading-relaxed text-ink-muted not-italic">{o.address}</address>
+              <p className="mt-1 type-caption text-ink-subtle">{o.country}</p>
+              <address className="mt-3 type-body-sm text-ink-muted not-italic">{o.address}</address>
               {o.phone && (
-                <a href={telHref(o.phone)} className="mt-2.5 inline-block text-[14px] font-medium text-cobalt">
+                <a href={telHref(o.phone)} className="mt-3 inline-block type-body-sm font-medium text-cobalt">
                   {o.phone}
                 </a>
               )}
@@ -116,7 +116,7 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
           ))}
         </ul>
 
-        <p className="mt-10 text-center text-[15px] text-ink-muted">
+        <p className="measure mx-auto mt-10 text-center type-body text-ink-muted">
           Or email{" "}
           <a href="mailto:hr@oceanbluecorp.com" className="font-semibold text-cobalt underline-offset-4 hover:underline">
             hr@oceanbluecorp.com

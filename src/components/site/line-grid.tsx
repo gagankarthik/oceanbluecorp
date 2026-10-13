@@ -23,7 +23,7 @@ export function LineGrid({ className, dark, beams = true }: { className?: string
   const mark = dark ? "rgb(255 255 255 / 0.2)" : "rgb(11 26 51 / 0.2)";
   // The two blues of the mark (cobalt, logo blue, aqua): decoration stays in
   // the brand hue, never the semantic success/warning/danger colours.
-  const beam = ["#1d4ed8", "#0975c1", "#0cacCF", "#0975c1", "#1d4ed8"];
+  const beam = ["var(--color-action-primary)", "var(--color-text-brand)", "var(--p-brand-aqua)", "var(--color-text-brand)", "var(--color-action-primary)"];
   return (
     <svg
       aria-hidden

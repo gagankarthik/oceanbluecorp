@@ -38,7 +38,7 @@ export default function PageHero({
         }`}
       >
         <div>
-          {eyebrow && <p className="rise text-[14px] font-semibold text-cobalt">{eyebrow}</p>}
+          {eyebrow && <p className="rise type-label text-cobalt">{eyebrow}</p>}
           <h1
             className={`rise max-w-[20ch] type-headline-lg text-ink ${eyebrow ? "mt-3" : ""}`}
             style={{ animationDelay: "80ms" }}

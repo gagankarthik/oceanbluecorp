@@ -104,7 +104,7 @@ export default function Maintenance({
             </Link>
           </div>
 
-          <div className="mt-8 flex items-center gap-2.5">
+          <div className="mt-8 flex items-center gap-3">
             {SOCIAL_LINKS.map((s) => (
               <a
                 key={s.name}
@@ -112,7 +112,7 @@ export default function Maintenance({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.name}
-                className="flex size-10 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-ink hover:text-ink"
+                className="flex size-10 pointer-coarse:size-11 items-center justify-center rounded-full border border-line-input text-ink-muted transition-colors duration-[var(--dur-short)] hover:border-ink hover:text-ink"
               >
                 <s.icon className="size-4" strokeWidth={1.5} />
               </a>

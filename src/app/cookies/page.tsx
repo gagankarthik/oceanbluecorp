@@ -42,7 +42,7 @@ function CookieCard({ icon: Glyph, title, status, tone, children }: {
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
           <Glyph size={17} />
         </span>
-        <p className="text-[15.5px] font-semibold text-ink">{title}</p>
+        <p className="type-body font-semibold text-ink">{title}</p>
       </div>
       <div className="mt-3 type-body">{children}</div>
       <p className={cn("mt-4 self-start rounded-full px-2.5 py-0.5 type-caption font-medium", TONES[tone])}>{status}</p>
@@ -141,7 +141,7 @@ export default function CookiesPage() {
                   rows={COOKIE_TABLE.map((row) => ({
                     key: row.name,
                     cells: [
-                      { node: row.name, className: "font-mono text-[12.5px] text-ink" },
+                      { node: row.name, className: "font-mono type-caption text-ink" },
                       { node: row.provider },
                       { node: row.purpose, className: "hidden lg:table-cell" },
                       { node: row.duration, className: "whitespace-nowrap" },
@@ -197,7 +197,7 @@ export default function CookiesPage() {
                       href={b.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="plain inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 py-2 type-body-sm font-medium text-ink transition-colors hover:border-cobalt"
+                      className="plain inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-input bg-white px-4 py-2 type-body-sm font-medium text-ink transition-colors duration-[var(--dur-short)] hover:border-cobalt"
                     >
                       {b.name}
                       <IconExternal size={13} className="text-ink-subtle" />

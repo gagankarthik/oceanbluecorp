@@ -125,7 +125,7 @@ function CopyChip({ value }: { value: string }) {
           })
           .catch(() => {});
       }}
-      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono text-[12px] text-ink-muted transition-colors hover:border-ink hover:text-ink"
+      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-white px-2 font-mono type-caption text-ink-muted transition-colors hover:border-ink hover:text-ink"
       title={`Copy ${value}`}
       aria-label={`${value}, copy`}
     >
@@ -169,7 +169,7 @@ function IconCell({ name, Icon }: { name: string; Icon: ComponentType<{ size?: n
       <span ref={ref} className="text-ink">
         <Icon size={24} />
       </span>
-      <span className="w-full truncate text-center font-mono text-[11px] text-ink-subtle">{name.replace(/^Icon/, "")}</span>
+      <span className="w-full truncate text-center font-mono type-overline text-ink-subtle">{name.replace(/^Icon/, "")}</span>
       <span aria-hidden className={cn("absolute top-2 right-2", copied ? "text-success" : "text-line-strong group-hover:text-ink-subtle")}>
         {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
       </span>
@@ -184,7 +184,7 @@ function KitSection({ id, n, title, sub, children }: { id: string; n: string; ti
       <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-28">
-            <p className="font-mono text-[13px] font-medium text-cobalt">{n}</p>
+            <p className="font-mono type-caption font-medium text-cobalt">{n}</p>
             <h2 className="mt-2 type-headline font-semibold text-ink">{title}</h2>
             <p className="mt-3 max-w-[40ch] type-body text-ink-muted">{sub}</p>
           </div>
@@ -209,11 +209,11 @@ export default function BrandKitContent() {
               The logo, colour, type, icons and drawings behind Oceanblue Solutions, Inc., the single source of truth for a consistent brand.
             </p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "240ms" }}>
-              <a href="/brand/oceanblue-logo.svg" download className={buttonClass("primary", "lg")}>
+              <a href="/brand/oceanblue-logo.svg" download className={buttonClass("primary", "md")}>
                 <IconDownload size={16} />
                 Download logo
               </a>
-              <LinkButton href="/contact" variant="outline" size="lg">
+              <LinkButton href="/contact" variant="outline" size="md">
                 Press and partnership requests
               </LinkButton>
             </div>
@@ -224,7 +224,7 @@ export default function BrandKitContent() {
                 <li key={s.id}>
                   <a href={`#${s.id}`} className="group flex min-h-14 items-center justify-between gap-2 bg-white px-4 py-3 type-body-sm font-medium text-ink hover:bg-paper">
                     <span>
-                      <span className="mr-2 font-mono text-[12px] text-ink-subtle">0{i + 1}</span>
+                      <span className="mr-2 font-mono type-caption text-ink-subtle">0{i + 1}</span>
                       {s.label}
                     </span>
                     <IconArrowRight size={14} className="text-ink-subtle transition-transform group-hover:translate-x-0.5" />
@@ -266,7 +266,7 @@ export default function BrandKitContent() {
             <div className="space-y-10">
               {COLOR_GROUPS.map((g) => (
                 <div key={g.group}>
-                  <p className="text-[16px] font-semibold text-ink">{g.group}</p>
+                  <p className="type-body font-semibold text-ink">{g.group}</p>
                   <p className="mt-1 max-w-[60ch] type-body-sm text-ink-muted">{g.body}</p>
                   <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
                     {g.colors.map((c) => (
@@ -275,8 +275,8 @@ export default function BrandKitContent() {
                           <span className={cn("type-caption font-medium", c.dark ? "text-white" : "text-ink")}>Aa</span>
                         </div>
                         <div className="p-4">
-                          <p className="text-[15px] font-semibold text-ink">{c.name}</p>
-                          <p className="mt-0.5 type-body-sm text-ink-muted">{c.note}</p>
+                          <p className="type-body font-semibold text-ink">{c.name}</p>
+                          <p className="mt-1 type-body-sm text-ink-muted">{c.note}</p>
                           <div className="mt-3 flex flex-wrap items-center gap-1.5">
                             <CopyChip value={c.hex} />
                             <CopyChip value={c.token} />
@@ -296,7 +296,7 @@ export default function BrandKitContent() {
                 <div key={t.label} className="grid gap-2 bg-white px-5 py-6 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-baseline sm:gap-6">
                   <span>
                     <span className="block type-label font-semibold text-ink">{t.label}</span>
-                    <span className="mt-0.5 block type-caption text-ink-subtle">{t.note}</span>
+                    <span className="mt-1 block type-caption text-ink-subtle">{t.note}</span>
                   </span>
                   <p className={cn("min-w-0 break-words text-ink", t.cls)}>{t.sample}</p>
                 </div>
@@ -309,13 +309,13 @@ export default function BrandKitContent() {
               <div className="bg-white p-6">
                 <p className="type-label font-semibold text-ink">Buttons</p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <span className={buttonClass("primary", "md")}>Primary</span>
-                  <span className={buttonClass("outline", "md")}>Outline</span>
-                  <span className={buttonClass("dark", "md")}>Dark</span>
+                  <span className={buttonClass("primary", "sm")}>Primary</span>
+                  <span className={buttonClass("outline", "sm")}>Outline</span>
+                  <span className={buttonClass("dark", "sm")}>Dark</span>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-ink p-4">
-                  <span className={buttonClass("inverse", "md")}>Inverse</span>
-                  <span className={buttonClass("outline-dark", "md")}>Outline on dark</span>
+                  <span className={buttonClass("inverse", "sm")}>Inverse</span>
+                  <span className={buttonClass("outline-dark", "sm")}>Outline on dark</span>
                 </div>
               </div>
               <div className="bg-white p-6">
@@ -326,7 +326,7 @@ export default function BrandKitContent() {
                   <span className="rounded-full bg-paper px-3 py-1 type-caption text-ink-muted">Paper</span>
                 </div>
                 <div className="mt-4 rounded-2xl border border-line p-5">
-                  <p className="text-[16px] font-semibold text-ink">Card title</p>
+                  <p className="type-body font-semibold text-ink">Card title</p>
                   <p className="mt-1 type-body-sm text-ink-muted">rounded-2xl, 1px line border, no shadow at rest.</p>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function BrandKitContent() {
               {DRAWINGS.map(([name, Art]) => (
                 <figure key={name} className="flex flex-col items-center gap-3 bg-paper px-4 pt-6 pb-4">
                   <Art className="h-28 w-auto" />
-                  <figcaption className="font-mono text-[11.5px] text-ink-subtle">{name}</figcaption>
+                  <figcaption className="font-mono type-overline text-ink-subtle">{name}</figcaption>
                 </figure>
               ))}
             </div>

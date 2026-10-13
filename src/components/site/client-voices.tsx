@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Client voices, all visible at once: three cards in one row, the middle one
- * on navy, the outer two on white, all over the striped cobalt section. No carousel, so nobody waits to see who vouches
- * for us. White on cobalt and ink on white are both well above AA.
+ * on navy, the outer two outlined on white. No carousel, so nobody waits to see
+ * who vouches for us.
  */
 
 type Story = {
@@ -71,7 +71,7 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
     <figure
       className={cn(
         "relative flex h-full flex-col overflow-hidden rounded-2xl p-8",
-        featured ? "on-dark bg-ink text-white" : "bg-white text-ink",
+        featured ? "on-dark bg-ink text-white" : "border border-line bg-white text-ink",
       )}
     >
       <div className="relative flex items-start justify-between gap-6">
@@ -90,19 +90,19 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
         {s.quote}
       </blockquote>
 
-      <figcaption className={cn("relative mt-auto flex items-center gap-3.5 border-t pt-6", featured ? "border-white/25" : "border-line")}>
+      <figcaption className={cn("relative mt-auto flex items-center gap-4 border-t pt-6", featured ? "border-white/25" : "border-line")}>
         <span
           aria-hidden
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold",
-            featured ? "bg-cobalt text-white" : "bg-cobalt-tint text-cobalt",
+            "flex size-11 shrink-0 items-center justify-center rounded-full type-label",
+            featured ? "bg-white/15 text-white" : "bg-paper text-ink",
           )}
         >
           {initials(s.author)}
         </span>
         <span>
-          <span className="block text-[15.5px] font-semibold">{s.author}</span>
-          <span className={cn("block text-[14px]", featured ? "text-white/85" : "text-ink-subtle")}>
+          <span className="block type-body font-semibold">{s.author}</span>
+          <span className={cn("block type-body-sm", featured ? "text-white/85" : "text-ink-subtle")}>
             {s.role}, {s.company}
           </span>
         </span>

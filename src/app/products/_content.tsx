@@ -2,7 +2,7 @@ import Image from "next/image";
 import PageHero from "@/components/landing/PageHero";
 import { IMG } from "@/components/landing/media";
 import { Band, SectionTitle, ClosingCta, CONTAINER, SECTION_Y } from "@/components/site/sections";
-import { LinkButton } from "@/components/site/button";
+import { buttonClass, LinkButton } from "@/components/site/button";
 import { IconArrowRight, IconExternal } from "@/components/site/icons";
 import { GeoStack } from "@/components/site/geo-art";
 import { cn } from "@/lib/utils";
@@ -144,13 +144,13 @@ function ProductBlock({ p, index }: { p: Product; index: number }) {
                 href={p.site}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-cobalt bg-cobalt px-6 text-[15.5px] font-semibold text-white transition-colors hover:bg-cobalt-deep"
+                className={buttonClass("primary", "md")}
               >
                 Visit {p.name}
                 <IconExternal size={16} />
               </a>
             ) : (
-              <LinkButton href="/contact" variant="outline" size="lg">
+              <LinkButton href="/contact" variant="outline" size="md">
                 Talk to us about {p.name}
               </LinkButton>
             )}
@@ -175,7 +175,7 @@ export default function ProductsPage() {
               <a
                 key={p.id}
                 href={`#${p.id}`}
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong bg-white px-4 type-label font-semibold text-ink transition-colors hover:border-cobalt"
+                className={buttonClass("outline", "sm", "pointer-coarse:h-11")}
               >
                 {p.name}
                 <IconArrowRight size={14} className="rotate-90" />
@@ -190,11 +190,11 @@ export default function ProductsPage() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
           <div className="reveal">
             <h2 className="type-headline font-semibold text-ink">The portfolio</h2>
-            <p className="mt-6 type-body-lg text-ink">
+            <p className="measure mt-6 type-body-lg text-ink">
               Two platforms in production, and they have almost nothing in common. One reads contracts and invoices for enterprise teams. The other
               sends wedding invitations.
             </p>
-            <p className="mt-5 type-body-lg text-ink-muted">
+            <p className="measure mt-5 type-body-lg text-ink-muted">
               That gap is the point. A company that only staffs projects never has to live with its own decisions. Owning two products, in two
               markets, on two very different footings, is how we find out whether the way we build actually holds up.
             </p>
@@ -212,7 +212,7 @@ export default function ProductsPage() {
       {/* What is true of both, which is the argument for owning them. */}
       <Band>
         <SectionTitle title="How both are run" sub="The people who build our products are the people we would put on yours." />
-        <ul className="reveal mt-10 grid gap-[3px] sm:mt-12 md:grid-cols-3">
+        <ul className="reveal mt-10 grid gap-1 sm:mt-12 md:grid-cols-3">
           {operating.map((o) => (
             <li key={o.title} className="bg-paper p-8">
               <h3 className="type-title-lg font-semibold text-ink">{o.title}</h3>

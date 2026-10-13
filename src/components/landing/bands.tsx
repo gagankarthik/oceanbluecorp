@@ -63,7 +63,7 @@ export function SplitBand({
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-paper-deep">
             <ParallaxPhoto image={image} alt={alt} />
           </div>
-          {caption && <figcaption className="mt-3 text-[14px] leading-relaxed text-ink-subtle">{caption}</figcaption>}
+          {caption && <figcaption className="mt-3 type-body-sm text-ink-subtle">{caption}</figcaption>}
         </figure>
         <Reveal className={`w-full ${side === "right" ? "lg:order-1" : ""}`}>{children}</Reveal>
       </div>
@@ -79,7 +79,7 @@ export function ArrowRows({ rows, className = "" }: { rows: ArrowRow[]; classNam
       {rows.map((r) => (
         <li key={r.href + r.title}>
           <Link href={r.href} className="group flex items-center justify-between gap-6 py-5">
-            <span className="max-w-[46ch] text-[16px] leading-snug font-semibold text-ink transition-colors group-hover:text-cobalt">{r.title}</span>
+            <span className="max-w-[46ch] type-body leading-snug font-semibold text-ink transition-colors group-hover:text-cobalt">{r.title}</span>
             <IconArrowRight size={18} className="flex-none text-ink-subtle transition-all duration-200 group-hover:translate-x-1 group-hover:text-cobalt" />
           </Link>
         </li>

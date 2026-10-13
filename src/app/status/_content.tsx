@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/site/button";
 import {
   IconServer, IconLayers, IconShieldLock, IconMail, IconCloudUp, IconClock, IconChevronDown, type IconProps,
 } from "@/components/site/icons";
@@ -150,8 +151,8 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
           <Icon size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15.5px] font-semibold text-ink">{svc.label}</p>
-          <p className="mt-0.5 type-caption text-ink-subtle">{svc.category} · US East (Ohio)</p>
+          <p className="truncate type-body font-semibold text-ink">{svc.label}</p>
+          <p className="mt-1 type-caption text-ink-subtle">{svc.category} · US East (Ohio)</p>
         </div>
         <Dot status={svc.status} pulse />
       </div>
@@ -177,7 +178,7 @@ function ServiceCard({ svc }: { svc: ServiceItem }) {
       {open && svc.recentLogs.length > 0 && (
         <div className="mt-2 space-y-2">
           {svc.recentLogs.map((l, i) => (
-            <div key={i} className="rounded-lg bg-paper px-3 py-2.5 type-caption">
+            <div key={i} className="rounded-lg bg-paper px-3 py-3 type-caption">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <StatusBadge status={l.status} />
                 <span className="text-ink-subtle">{relTime(l.time)}</span>
@@ -200,7 +201,7 @@ function IncidentCard({ inc }: { inc: Incident }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-start gap-3 px-5 py-4 text-left">
-        <span className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-line", cfg.text)}>
+        <span className={cn("mt-1 flex size-9 shrink-0 items-center justify-center rounded-lg border border-line", cfg.text)}>
           <IconWarn size={17} />
         </span>
         <div className="min-w-0 flex-1">
@@ -208,7 +209,7 @@ function IncidentCard({ inc }: { inc: Incident }) {
             <StatusBadge status={inc.status} />
             <span className="type-caption text-ink-subtle">{inc.regionName} · {inc.serviceName}</span>
           </div>
-          <p className="text-[15px] font-semibold text-ink">{inc.summary}</p>
+          <p className="type-body font-semibold text-ink">{inc.summary}</p>
           <p className="mt-1 flex items-center gap-1 type-caption text-ink-subtle">
             <IconClock size={13} /> Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
           </p>
@@ -220,12 +221,12 @@ function IncidentCard({ inc }: { inc: Incident }) {
         <div className="border-t border-line px-5 pt-3 pb-4">
           {inc.log.map((entry, i) => (
             <div key={i} className="relative flex gap-4 pb-4 last:pb-0">
-              {i < inc.log.length - 1 && <div className="absolute top-5 bottom-0 left-[11px] w-px bg-line" />}
-              <div className={cn("relative z-10 mt-0.5 flex size-[22px] shrink-0 items-center justify-center rounded-full border-2 border-white ring-2", ST[entry.status].ring, ST[entry.status].bg)}>
+              {i < inc.log.length - 1 && <div className="absolute top-6 bottom-0 left-3 w-px -translate-x-1/2 bg-line" />}
+              <div className={cn("relative z-10 mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-white ring-2", ST[entry.status].ring, ST[entry.status].bg)}>
                 <Dot status={entry.status} />
               </div>
-              <div className="flex-1 pt-0.5">
-                <div className="mb-0.5 flex items-center justify-between gap-2">
+              <div className="flex-1 pt-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
                   <span className="type-label font-semibold text-ink">{entry.summary}</span>
                   <span className="type-caption whitespace-nowrap text-ink-subtle">{relTime(entry.time)}</span>
                 </div>
@@ -338,7 +339,7 @@ export default function StatusContent() {
                 type="button"
                 onClick={() => void load(true)}
                 disabled={refreshing}
-                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 font-semibold text-ink transition-colors hover:border-cobalt disabled:opacity-50"
+                className={buttonClass("outline", "sm", "pointer-coarse:h-11")}
               >
                 <IconRefresh size={14} className={refreshing ? "animate-spin motion-reduce:animate-none" : undefined} />
                 Refresh
@@ -366,7 +367,7 @@ export default function StatusContent() {
                 ) : !data?.ok ? (
                   <div className="rounded-2xl border border-line bg-paper p-8 text-center">
                     <IconStop size={30} className="mx-auto text-danger" />
-                    <p className="mt-3 text-[16px] font-semibold text-ink">Could not load status data</p>
+                    <p className="mt-3 type-body font-semibold text-ink">Could not load status data</p>
                     <p className="mt-1 type-body-sm text-ink-muted">The status feed may be temporarily unavailable.</p>
                     <button type="button" onClick={() => void load(true)} className="mt-4 min-h-11 type-label font-semibold text-cobalt underline underline-offset-4">
                       Try again
@@ -403,8 +404,8 @@ export default function StatusContent() {
                   <IconOk size={20} />
                 </span>
                 <div>
-                  <p className="text-[15px] font-semibold text-ink">No active incidents</p>
-                  <p className="mt-0.5 type-body-sm text-ink-muted">No active events reported for the US East (Ohio) region.</p>
+                  <p className="type-body font-semibold text-ink">No active incidents</p>
+                  <p className="mt-1 type-body-sm text-ink-muted">No active events reported for the US East (Ohio) region.</p>
                 </div>
               </div>
             )}

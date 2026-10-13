@@ -70,7 +70,7 @@ export function SectionLink({ href, children, className, dark }: { href: string;
     <Link
       href={href}
       className={cn(
-        "group inline-flex items-center gap-1.5 text-[15px] font-semibold transition-colors",
+        "group inline-flex items-center gap-1.5 type-body font-semibold transition-colors",
         dark ? "text-white hover:text-cobalt-light" : "text-ink hover:text-cobalt",
         className,
       )}
@@ -82,7 +82,7 @@ export function SectionLink({ href, children, className, dark }: { href: string;
 }
 
 type Ground = "white" | "paper";
-const GROUND: Record<Ground | "none", string> = { white: "#fff", paper: "var(--color-paper)", none: "transparent" };
+const GROUND: Record<Ground | "none", string> = { white: "var(--color-background-primary)", paper: "var(--color-paper)", none: "transparent" };
 
 /** Wraps a dark band so its cut corners show the section above (`ground`) at
  *  the top and the section below (`below`, default the same) at the bottom.
@@ -96,7 +96,7 @@ export function ChamferGround({ ground = "white", below, children }: { ground?: 
   );
 }
 
-/** Every section: same padding, header, then content. Dark and blue tones get chamfered corners. */
+/** Every section: same padding, header, then content. The dark tone gets chamfered corners. */
 export function Section({
   tone = "white",
   title,
@@ -109,8 +109,8 @@ export function Section({
   below,
   notched,
 }: {
-  /** `dark` is navy with the dot grid, `blue` cobalt with diagonal stripes: at most one of either per page (60-30-10). */
-  tone?: "white" | "paper" | "dark" | "blue";
+  /** `dark` is navy with the dot grid: at most one per page (60-30-10). Cobalt is for actions, never a ground. */
+  tone?: "white" | "paper" | "dark";
   title: string;
   sub?: string;
   kicker?: string;
@@ -124,22 +124,19 @@ export function Section({
   /** Dark tones only: notch the top edge to mirror the bottom one. */
   notched?: boolean;
 }) {
-  const dark = tone === "dark" || tone === "blue";
+  const dark = tone === "dark";
   const section = (
     <section
       id={id}
       data-tone={tone}
       className={cn(
-        tone === "paper" ? "bg-paper" : tone === "blue" ? "on-dark chamfer relative isolate overflow-hidden bg-cobalt text-white" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
+        tone === "paper" ? "bg-paper" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
         SECTION_Y,
         dark && notched && "chamfer-notched",
         id && "scroll-mt-28",
       )}
     >
       {tone === "dark" && <DotsBackdrop />}
-      {tone === "blue" && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[repeating-linear-gradient(115deg,rgb(255_255_255/0.09)_0_1px,transparent_1px_72px)]" />
-      )}
       <div className={CONTAINER}>
         <SectionTitle title={title} sub={sub} kicker={kicker} link={link} dark={dark} />
         <div className={cn("reveal", STACK_LG)}>{children}</div>
@@ -165,7 +162,7 @@ export function PageIntro({
     <section data-opener className="relative isolate overflow-hidden border-b border-line bg-white">
       <LineGrid />
       <div className={cn(CONTAINER, OPENER_Y)}>
-        {kicker && <p className="rise text-[14px] font-semibold text-cobalt">{kicker}</p>}
+        {kicker && <p className="rise type-label text-cobalt">{kicker}</p>}
         <h1 className="rise mt-3 max-w-[900px] type-headline-lg text-ink" style={{ animationDelay: "80ms" }}>
           {title}
         </h1>
@@ -239,11 +236,11 @@ export function ClosingCta({
           </h2>
           <p className="mt-5 max-w-[540px] type-body-lg text-ink-muted">{sub}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <LinkButton href={primary.href} variant="primary" size="lg">
+            <LinkButton href={primary.href} variant="primary" size="md">
               {primary.label}
               <IconArrowRight size={16} />
             </LinkButton>
-            <LinkButton href={secondary.href} variant="outline" size="lg">
+            <LinkButton href={secondary.href} variant="outline" size="md">
               {secondary.label}
             </LinkButton>
           </div>
@@ -264,11 +261,11 @@ export function ClosingCta({
               return (
                 <li key={d.label}>
                   {d.href ? (
-                    <a href={d.href} className="group flex items-center gap-3.5 py-3.5">
+                    <a href={d.href} className="group flex items-center gap-4 py-4">
                       {body}
                     </a>
                   ) : (
-                    <div className="flex items-center gap-3.5 py-3.5">{body}</div>
+                    <div className="flex items-center gap-4 py-4">{body}</div>
                   )}
                 </li>
               );
@@ -300,12 +297,12 @@ export function DocHero({ title, lede, updated }: { title: string; lede?: string
         <div className="max-w-[760px]">
           <h1 className="rise type-headline-lg text-ink">{title}</h1>
           {lede && (
-            <p className="rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
+            <p className="rise measure mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
               {lede}
             </p>
           )}
           {updated && (
-            <p className="rise mt-6 text-[14px] text-ink-subtle" style={{ animationDelay: "180ms" }}>
+            <p className="rise mt-6 type-body-sm text-ink-subtle" style={{ animationDelay: "180ms" }}>
               Last updated {updated}
             </p>
           )}
@@ -320,18 +317,18 @@ export function PolicyBody({ sections }: { sections: { id: string; h: string; bo
   return (
     <div className={cn(CONTAINER, SECTION_Y, "grid gap-12 lg:grid-cols-[240px_minmax(0,1fr)]")}>
       <nav aria-label="On this page" className="lg:sticky lg:top-28 lg:self-start">
-        <p className="text-[13.5px] font-semibold text-ink">On this page</p>
+        <p className="type-label text-ink">On this page</p>
         <ul className="mt-3 space-y-2 border-l border-line">
           {sections.map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="-ml-px block border-l border-transparent pl-4 text-[14px] text-ink-muted hover:border-ink hover:text-ink">
+              <a href={`#${s.id}`} className="-ml-px block border-l border-transparent pl-4 type-body-sm text-ink-muted hover:border-ink hover:text-ink">
                 {s.h}
               </a>
             </li>
           ))}
         </ul>
       </nav>
-      <div className="max-w-[760px] space-y-12">
+      <div className="measure space-y-12">
         {sections.map((s) => (
           <section key={s.id} id={s.id} className="scroll-mt-28">
             <h2 className="type-headline-sm text-ink">{s.h}</h2>

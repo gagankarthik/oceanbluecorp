@@ -148,14 +148,14 @@ export function PracticeShowcase() {
                     <span
                       aria-hidden
                       className={cn(
-                        "size-3 shrink-0 rounded-full border-2 transition-colors duration-300",
+                        "size-3 shrink-0 rounded-full border-2 transition-colors duration-[var(--dur-medium)]",
                         on ? "border-cobalt bg-cobalt" : "border-line-strong bg-transparent",
                       )}
                     />
-                    <span className={cn("flex-1 text-[14px] font-semibold tracking-[0.08em] uppercase transition-colors", on ? "text-ink" : "text-ink-muted")}>
+                    <span className={cn("flex-1 type-label tracking-[0.08em] uppercase transition-colors", on ? "text-ink" : "text-ink-muted")}>
                       {p.name}
                     </span>
-                    <IconChevronDown size={16} className={cn("text-ink-subtle transition-transform duration-300", on && "rotate-180")} />
+                    <IconChevronDown size={16} className={cn("text-ink-subtle transition-transform duration-[var(--dur-medium)]", on && "rotate-180")} />
                   </button>
                   <div
                     id={`practice-${i}`}
@@ -163,7 +163,7 @@ export function PracticeShowcase() {
                     // their links out of the tab order (WCAG 2.4.3).
                     inert={!on}
                     className={cn(
-                      "grid transition-[grid-template-rows,opacity] duration-500 ease-[var(--ease-standard)]",
+                      "grid transition-[grid-template-rows,opacity] duration-[var(--dur-long)] ease-out",
                       on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                     )}
                   >
@@ -181,7 +181,7 @@ export function PracticeShowcase() {
                                   setPos({ active: i, offer: j });
                                 }}
                                 className={cn(
-                                  "py-1.5 text-left text-[14.5px] font-medium transition-colors",
+                                  "py-1.5 text-left type-body-sm font-medium transition-colors",
                                   on && j === offer ? "text-cobalt" : "text-ink hover:text-cobalt",
                                 )}
                               >
@@ -204,7 +204,7 @@ export function PracticeShowcase() {
             type="button"
             onClick={() => setAuto((a) => !a)}
             aria-pressed={!auto}
-            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line-input px-4 type-caption font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
           >
             {auto ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
             {auto ? "Pause rotation" : "Resume rotation"}
@@ -218,7 +218,7 @@ export function PracticeShowcase() {
         >
           <div
             ref={canvas}
-            className="absolute top-1/2 left-1/2 flex items-start transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="absolute top-1/2 left-1/2 flex items-start transition-transform duration-[var(--dur-long)] ease-out"
             style={{ gap: COL_GAP }}
           >
             {PRACTICE_CARDS.map((col, i) => (
@@ -232,8 +232,8 @@ export function PracticeShowcase() {
                         cards.current[i * 4 + j] = el;
                       }}
                       className={cn(
-                        "transition-[opacity,box-shadow] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        on ? "opacity-100 shadow-[var(--shadow-modal)] delay-300" : "opacity-30",
+                        "transition-[opacity,box-shadow] duration-[var(--dur-long)] ease-out",
+                        on ? "opacity-100 shadow-[var(--shadow-modal)] delay-150" : "opacity-30",
                       )}
                     >
                       <Card on={on} />
@@ -255,7 +255,7 @@ export function PracticeShowcase() {
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-cobalt-tint text-cobalt">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-paper text-ink">
                     <p.icon size={18} />
                   </span>
                   <h3 className="type-title text-ink">{p.name}</h3>
@@ -263,12 +263,12 @@ export function PracticeShowcase() {
                 <p className="mt-3 type-body-sm text-ink-muted">{p.body}</p>
                 <ul className="mt-5 flex flex-wrap gap-1.5">
                   {p.offers.map((o) => (
-                    <li key={o} className="rounded-full bg-paper px-3 py-1 text-[12.5px] text-ink-muted">
+                    <li key={o} className="rounded-full bg-paper px-3 py-1 type-caption text-ink-muted">
                       {o}
                     </li>
                   ))}
                 </ul>
-                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[15px] font-semibold text-ink group-hover:text-cobalt">
+                <span className="mt-auto inline-flex items-center gap-2 pt-6 type-body font-semibold text-ink group-hover:text-cobalt">
                   Learn more
                   <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </span>
