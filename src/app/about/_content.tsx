@@ -97,11 +97,11 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
           sub={`${years} years of growth, delivery and client partnership, from a single office in Ohio to four across three countries.`}
         />
         <ol ref={rail} className="relative mx-auto mt-12 max-w-5xl sm:mt-16">
-          <span aria-hidden className="absolute top-3 bottom-3 left-[7px] w-px bg-line-strong lg:left-1/2" />
+          <span aria-hidden className="absolute top-3 bottom-3 left-2 w-px -translate-x-1/2 bg-line-strong lg:left-1/2" />
           <motion.span
             aria-hidden
             style={{ scaleY: fill }}
-            className="absolute top-3 bottom-3 left-[6px] w-[3px] origin-top rounded-full bg-cobalt lg:left-[calc(50%-1px)]"
+            className="absolute top-3 bottom-3 left-1.5 w-1 origin-top rounded-full bg-cobalt lg:left-[calc(50%-2px)]"
           />
           {MILESTONES.map((m, i) => {
             const cardLeft = i % 2 === 0;
@@ -112,7 +112,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
               >
                 <span
                   aria-hidden
-                  className={`absolute top-7 left-0 size-[15px] rounded-full border-2 border-cobalt lg:static lg:col-start-2 lg:row-start-1 lg:justify-self-center ${
+                  className={`absolute top-7 left-0 size-4 rounded-full border-2 border-cobalt lg:static lg:col-start-2 lg:row-start-1 lg:justify-self-center ${
                     i === MILESTONES.length - 1 ? "bg-cobalt" : "bg-paper"
                   }`}
                 />
@@ -140,7 +140,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
 
       {/* The standard: what we hold ourselves to, each line leading somewhere. */}
       <Section tone="white" title="What we hold ourselves to" sub="Four commitments, each backed by a page that shows how we keep it.">
-        <ul className="grid gap-[3px] bg-paper-deep sm:grid-cols-2">
+        <ul className="grid gap-1 bg-paper-deep sm:grid-cols-2">
           {VALUES.map((v) => (
             <li key={v.title}>
               <Link href={v.href} className="group flex h-full flex-col bg-white p-8 transition-colors hover:bg-paper">
@@ -174,7 +174,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
                 </span>
                 <div>
                   <h3 className="type-title-lg text-ink">{st.title}</h3>
-                  <p className="mt-1.5 max-w-[56ch] type-body-sm text-ink-muted">{st.body}</p>
+                  <p className="mt-2 max-w-[56ch] type-body-sm text-ink-muted">{st.body}</p>
                 </div>
               </li>
             ))}
@@ -185,7 +185,7 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
       {/* Where the work is delivered from. Full addresses and the map live on Contact. */}
       <Band>
         <SectionTitle title="Where we deliver from" sub="Four offices across the United States, India and the United Kingdom." />
-        <ul className="reveal mt-10 grid gap-[3px] sm:mt-12 bg-paper-deep sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="reveal mt-10 grid gap-1 sm:mt-12 bg-paper-deep sm:grid-cols-2 lg:grid-cols-4">
           {OFFICES.map((o) => (
             <li key={o.city} className="bg-white p-7">
               <IconPin size={22} className="text-cobalt" />

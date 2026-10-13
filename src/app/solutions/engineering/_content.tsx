@@ -85,7 +85,7 @@ export default function EngineeringContent() {
         title="Nine disciplines"
         sub="One partner across the engineering disciplines your program actually touches, rather than a separate vendor for each."
       >
-        <dl className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-3">
           {disciplines.map((d) => (
             <div key={d.title} className="bg-white p-7">
               <dt className="type-title text-ink">{d.title}</dt>
@@ -100,8 +100,8 @@ export default function EngineeringContent() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-line bg-paper type-caption text-ink-subtle">
-                <th scope="col" className="px-6 py-3.5 font-medium">Industry</th>
-                <th scope="col" className="px-6 py-3.5 font-medium">Standards</th>
+                <th scope="col" className="px-6 py-4 font-medium">Industry</th>
+                <th scope="col" className="px-6 py-4 font-medium">Standards</th>
               </tr>
             </thead>
             <tbody>
@@ -120,7 +120,7 @@ export default function EngineeringContent() {
       </Section>
 
       <Section tone="white" title="Four ways to engage" sub="Pick the model that matches the work, not the one that suits a vendor.">
-        <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-4">
           {models.map((m) => (
             <li key={m.title} className="flex flex-col bg-white p-7">
               <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink">
@@ -144,7 +144,7 @@ export default function EngineeringContent() {
               </span>
               <div>
                 <h3 className="type-title text-ink md:mt-5">{st.title}</h3>
-                <p className="mt-1.5 type-body-sm text-ink-muted">{st.desc}</p>
+                <p className="mt-2 type-body-sm text-ink-muted">{st.desc}</p>
               </div>
             </li>
           ))}
@@ -152,7 +152,7 @@ export default function EngineeringContent() {
       </Section>
 
       <Section tone="white" title="Why teams bring engineering to Oceanblue">
-        <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-3">
           {why.map((w) => (
             <li key={w.title} className="bg-white p-7">
               <w.icon size={22} className="text-cobalt" />

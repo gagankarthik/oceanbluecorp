@@ -111,18 +111,18 @@ export default function CareersPage() {
         sub="Eight practices. Pick the one that matches what you do and see what is open in it right now."
         link={{ href: "/careers/search", label: "Browse every role" }}
       >
-        <ul className="grid gap-[3px] sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
           {DEPARTMENTS.map((d) => (
             <li key={d.name}>
               <Link
                 href={d.q ? `/careers/search?q=${encodeURIComponent(d.q)}` : "/careers/search"}
-                className="group flex h-full min-h-[210px] flex-col bg-white p-7 transition-colors hover:bg-paper-deep/40"
+                className="group flex h-full min-h-52 flex-col bg-white p-7 transition-colors hover:bg-paper-deep/40"
               >
                 <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
                   <d.icon size={18} />
                 </span>
                 <h3 className="mt-5 type-title-lg font-semibold text-ink">{d.name}</h3>
-                <p className="mt-1.5 type-body-sm text-ink-muted">{d.blurb}</p>
+                <p className="mt-2 type-body-sm text-ink-muted">{d.blurb}</p>
                 <span className="mt-auto inline-flex items-center gap-1.5 pt-6 type-label font-semibold text-ink transition-colors group-hover:text-cobalt">
                   See open roles
                   <IconArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
@@ -165,7 +165,7 @@ export default function CareersPage() {
 
       <Section tone="paper" title="What we offer" sub="The benefits and the places you could be doing the work.">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <ul className="grid gap-[3px]">
+          <ul className="grid gap-1">
             {BENEFITS.map((b) => (
               <li key={b.title} className="flex gap-5 bg-white p-7">
                 <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-cobalt-tint text-cobalt">
@@ -173,7 +173,7 @@ export default function CareersPage() {
                 </span>
                 <div>
                   <h3 className="type-title-lg font-semibold text-ink">{b.title}</h3>
-                  <p className="mt-1.5 max-w-[52ch] type-body text-ink-muted">{b.desc}</p>
+                  <p className="mt-2 max-w-[52ch] type-body text-ink-muted">{b.desc}</p>
                 </div>
               </li>
             ))}
@@ -182,11 +182,11 @@ export default function CareersPage() {
           <div className="flex flex-col gap-5">
             <div className="rounded-2xl border border-line bg-white p-7">
               <h3 className="type-title-lg font-semibold text-ink">Where we work</h3>
-              <p className="mt-1.5 type-body text-ink-muted">Four offices across three countries, and roles in all of them.</p>
+              <p className="mt-2 type-body text-ink-muted">Four offices across three countries, and roles in all of them.</p>
               <ul className="mt-5 divide-y divide-line border-y border-line">
                 {OFFICES.map((o) => (
                   <li key={o.city} className="flex items-center justify-between gap-4 py-3">
-                    <span className="flex items-center gap-2.5 type-body font-semibold text-ink">
+                    <span className="flex items-center gap-3 type-body font-semibold text-ink">
                       <IconPin size={16} className="text-ink-subtle" />
                       {o.city}
                     </span>

@@ -246,23 +246,23 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                 <IconChevronDown size={14} className={cn("transition-transform", account && "rotate-180")} />
               </button>
               {account && (
-                <div className="menu-in absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-white p-1.5 shadow-[var(--shadow-overlay)]">
-                  <p className="truncate px-3 pt-2 pb-2.5 type-caption text-ink-subtle">{user?.email}</p>
-                  <Link href={dashboard} className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
+                <div className="menu-in absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-white p-2 shadow-[var(--shadow-overlay)]">
+                  <p className="truncate px-3 pt-2 pb-3 type-caption text-ink-subtle">{user?.email}</p>
+                  <Link href={dashboard} className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                     <IconOverview size={16} /> Dashboard
                   </Link>
-                  <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
+                  <a href="https://hr.oceanbluecorp.com/" rel="noopener noreferrer" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                     <IconBriefcase size={16} /> HR platform
                   </a>
                   {user?.role === UserRole.ADMIN && (
-                    <Link href="/admin/settings" className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
+                    <Link href="/admin/settings" className="flex min-h-10 items-center gap-3 rounded-xl px-3 type-body font-medium text-ink hover:bg-paper">
                       <IconSettings size={16} /> Settings
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={() => void signOutStaff()}
-                    className="mt-1 flex min-h-10 w-full items-center gap-2.5 rounded-xl border-t border-line px-3 type-body font-medium text-danger hover:bg-danger-container"
+                    className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-xl border-t border-line px-3 type-body font-medium text-danger hover:bg-danger-container"
                   >
                     <IconLogout size={16} /> Sign out
                   </button>
@@ -349,7 +349,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
                 ))}
               </div>
             ) : (
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5 self-start">
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 self-start">
                 {current.items.map((i) => (
                   <li key={i.href}>
                     <MenuItem i={i} />
@@ -439,7 +439,7 @@ export function SiteHeader({ topOffset = "top-0" }: { topOffset?: string }) {
 function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
   if (compact) {
     return (
-      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-paper">
+      <Link href={i.href} title={i.desc} rel={i.href.startsWith("/auth") ? "nofollow" : undefined} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-paper">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
           <i.icon size={17} />
         </span>
@@ -451,7 +451,7 @@ function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
     <Link
       href={i.href}
       {...(i.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="group flex items-start gap-3.5 rounded-xl p-3 transition-colors hover:bg-paper"
+      className="group flex items-start gap-4 rounded-xl p-3 transition-colors hover:bg-paper"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors duration-[var(--dur-short)] group-hover:border-cobalt-tint group-hover:bg-cobalt-tint group-hover:text-cobalt">
         <i.icon size={18} />
@@ -461,7 +461,7 @@ function MenuItem({ i, compact }: { i: Item; compact?: boolean }) {
           {i.label}
           <IconArrowRight size={14} className="-translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
         </span>
-        <span className="mt-0.5 block type-caption leading-snug text-ink-subtle">{i.desc}</span>
+        <span className="mt-1 block type-caption leading-snug text-ink-subtle">{i.desc}</span>
       </span>
     </Link>
   );

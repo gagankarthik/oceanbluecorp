@@ -65,10 +65,10 @@ export default function ServiceDetail({ slug }: { slug: string }) {
 
       {/* The scope sheet: the question this page exists to answer. */}
       <Section tone="paper" title="What we cover" sub={`The ${data.capabilities.length} capabilities this practice delivers.`}>
-        <ul className="grid gap-[3px] bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-1 bg-line sm:grid-cols-2 lg:grid-cols-3">
           {data.capabilities.map((c) => (
             <li key={c} className="flex items-start gap-4 bg-white p-6 sm:p-7">
-              <IconCheck size={18} className="mt-0.5 shrink-0 text-cobalt" />
+              <IconCheck size={18} className="mt-1 shrink-0 text-cobalt" />
               <span className="type-body font-medium text-ink">{c}</span>
             </li>
           ))}
@@ -76,7 +76,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
       </Section>
 
       <Section tone="white" title="What you get">
-        <ul className="grid gap-[3px] bg-line md:grid-cols-3">
+        <ul className="grid gap-1 bg-line md:grid-cols-3">
           {data.highlights.map((h) => (
             <li key={h.title} className="bg-white p-8">
               <span className="flex size-10 items-center justify-center rounded-lg border border-line text-ink">
@@ -100,7 +100,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
               </span>
               <div>
                 <h3 className="type-title text-ink md:mt-5">{st.title}</h3>
-                <p className="mt-1.5 type-body-sm text-ink-muted">{st.desc}</p>
+                <p className="mt-2 type-body-sm text-ink-muted">{st.desc}</p>
               </div>
             </li>
           ))}
@@ -114,7 +114,7 @@ export default function ServiceDetail({ slug }: { slug: string }) {
           <ul className="mt-5 grid gap-x-8 border-t border-line sm:grid-cols-2 lg:grid-cols-3">
             {relatedLinks(data.slug).map((r) => (
               <li key={r.href}>
-                <Link href={r.href} className="group flex items-center justify-between gap-4 border-b border-line py-3.5 type-body font-medium text-ink-muted transition-colors hover:text-cobalt">
+                <Link href={r.href} className="group flex items-center justify-between gap-4 border-b border-line py-4 type-body font-medium text-ink-muted transition-colors hover:text-cobalt">
                   {r.title}
                   <IconArrowRight size={15} className="flex-none text-ink-subtle transition-all group-hover:translate-x-1 group-hover:text-cobalt" />
                 </Link>

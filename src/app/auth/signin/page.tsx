@@ -116,7 +116,7 @@ function PasswordField({
 /** Live checklist of the password policy: each rule ticks as it is met. */
 function PasswordRules({ value, id }: { value: string; id: string }) {
   return (
-    <ul id={id} className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2" aria-label="Password requirements">
+    <ul id={id} className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2" aria-label="Password requirements">
       {PASSWORD_RULES.map((r) => {
         const ok = r.test(value);
         return (
@@ -331,7 +331,7 @@ export default function SignInPage() {
   const [errorHeadline, ...errorDetail] = (error ?? "").split("\n");
   const errorBanner = error && (
     <div role="alert" className="flex items-start gap-3 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-danger">
-      <IconAlert size={18} className="mt-0.5 shrink-0" />
+      <IconAlert size={18} className="mt-1 shrink-0" />
       <span className="type-body-sm">
         {errorHeadline}
         {errorDetail.length > 0 && <span className="mt-1 block type-caption text-danger/85">{errorDetail.join(" ")}</span>}

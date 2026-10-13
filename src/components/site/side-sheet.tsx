@@ -56,7 +56,7 @@ export function SideSheet({
             className,
           )}
         >
-          <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
+          <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
 
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 pt-4 pb-5 sm:px-8 sm:pt-7">
             <div className="min-w-0">

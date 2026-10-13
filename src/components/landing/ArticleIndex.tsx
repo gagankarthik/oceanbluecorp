@@ -141,7 +141,7 @@ function NewsLayout({ articles }: { articles: Article[] }) {
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-paper px-6 py-5 sm:px-8">
         <div>
           <h2 className="type-title font-semibold text-ink">Media inquiries</h2>
-          <p className="mt-0.5 type-body text-ink-muted">Contact our press team and we will come straight back to you.</p>
+          <p className="mt-1 type-body text-ink-muted">Contact our press team and we will come straight back to you.</p>
         </div>
         <Link
           href="/contact"

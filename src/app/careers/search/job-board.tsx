@@ -346,7 +346,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                   <IconMail size={18} />
                 </span>
                 <h2 className="mt-4 type-title font-semibold">Don&rsquo;t see the right role?</h2>
-                <p className="mt-1.5 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
+                <p className="mt-2 type-body-sm text-white/80">Send your resume and we&rsquo;ll match you when one opens.</p>
                 <a
                   href={`mailto:${HR_EMAIL}?subject=${encodeURIComponent("Resume: role I'm looking for")}`}
                   className={buttonClass("inverse", "sm", "mt-5 w-full")}
@@ -387,7 +387,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                       <label
                         key={v}
                         className={cn(
-                          "inline-flex h-8 pointer-coarse:h-9 cursor-pointer items-center rounded-full px-3.5 type-body-sm font-medium transition-colors duration-[var(--dur-short)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cobalt",
+                          "inline-flex h-8 pointer-coarse:h-9 cursor-pointer items-center rounded-full px-4 type-body-sm font-medium transition-colors duration-[var(--dur-short)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cobalt",
                           sort === v ? "bg-ink text-white" : "text-ink-muted hover:text-ink",
                         )}
                       >
@@ -413,7 +413,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
                       <button
                         type="button"
                         onClick={c.clear}
-                        className="inline-flex h-8 pointer-coarse:h-11 items-center gap-1.5 rounded-full bg-cobalt-tint pr-2.5 pl-3 type-caption font-medium text-cobalt-deep hover:bg-paper-deep"
+                        className="inline-flex h-8 pointer-coarse:h-11 items-center gap-1.5 rounded-full bg-cobalt-tint pr-3 pl-3 type-caption font-medium text-cobalt-deep hover:bg-paper-deep"
                       >
                         {c.label}
                         <IconX size={12} />
@@ -563,7 +563,7 @@ function Facet({ title, children }: { title: string; children: React.ReactNode }
     <fieldset className="border-b border-line px-3 py-4">
       <legend className="sr-only">{title}</legend>
       <p aria-hidden className="mb-2 px-2 type-caption font-semibold tracking-wide text-ink-subtle uppercase">{title}</p>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-1">{children}</div>
     </fieldset>
   );
 }
@@ -636,7 +636,7 @@ function JobRow({ job, applied }: { job: BoardJob; applied: boolean }) {
             </span>
           )}
         </div>
-        <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 type-body-sm text-ink-muted">
+        <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 type-body-sm text-ink-muted">
           <li>{job.department}</li>
           <li className="inline-flex items-center gap-1.5">
             <IconPin size={14} className="text-ink-subtle" />

@@ -43,7 +43,7 @@ function Shell({
           </svg>
         </span>
       </div>
-      <div className="border-t border-line bg-paper py-2.5 text-center type-overline text-ink-subtle">
+      <div className="border-t border-line bg-paper py-3 text-center type-overline text-ink-subtle">
         Delivered by <span className="font-semibold text-ink">Oceanblue</span>
       </div>
       {on && <Cursor />}
@@ -76,7 +76,7 @@ function Bar({ on, label, value, tone = "bg-cobalt" }: { on: boolean; label: str
 
 function Row({ icon: I = IconCheck, children, right, tone = "text-success" }: { icon?: Icon; children: React.ReactNode; right?: React.ReactNode; tone?: string }) {
   return (
-    <li className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 type-caption text-ink">
+    <li className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 type-caption text-ink">
       <I size={14} className={cn("shrink-0", tone)} />
       <span className="min-w-0 flex-1 truncate">{children}</span>
       {right && <span className="shrink-0 type-overline text-ink-subtle">{right}</span>}
@@ -125,7 +125,7 @@ function Shortlist({ on }: CardProps) {
     <Shell on={on} title="Your shortlist" sub="Matched to the role and the team" cta="Review shortlist">
       <ul className="space-y-2">
         {rows.map(([r, s, m]) => (
-          <li key={r} className="flex items-center gap-2.5 rounded-lg border border-line px-2.5 py-2">
+          <li key={r} className="flex items-center gap-3 rounded-lg border border-line px-2.5 py-2">
             <Avatar />
             <span className="min-w-0 flex-1">
               <span className="block truncate type-caption font-medium text-ink">{r}</span>
@@ -147,7 +147,7 @@ function ErpProfile({ on }: CardProps) {
         <div className="mt-3">
           <Chips items={["Sales Cloud", "CPQ", "Apex", "Integration"]} />
         </div>
-        <ul className="mt-3 w-full space-y-1.5">
+        <ul className="mt-3 w-full space-y-2">
           <Row right="Verified">Technical screening passed</Row>
           <Row right="Verified">References checked</Row>
         </ul>
@@ -159,7 +159,7 @@ function ErpProfile({ on }: CardProps) {
 function AiMatch({ on }: CardProps) {
   return (
     <Shell on={on} title="Skills match" sub="Machine learning engineer" cta="Add to shortlist">
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <Bar on={on} label="Python" value={95} />
         <Bar on={on} label="Model deployment" value={88} />
         <Bar on={on} label="Data pipelines" value={82} />
@@ -196,7 +196,7 @@ function PmOnboard({ on }: CardProps) {
 function MechReq({ on }: CardProps) {
   return (
     <Shell on={on} title="Engineering requisition" sub="Mechanical design" cta="Submit requisition">
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <Field label="Discipline" value="Mechanical design engineer" />
         <Field label="Tools" value="SolidWorks, GD&T, FEA" />
         <Field label="Engagement" value="Contract, on-site" />
@@ -208,7 +208,7 @@ function MechReq({ on }: CardProps) {
 function Electrical({ on }: CardProps) {
   return (
     <Shell on={on} title="Board design review" sub="Electrical & electronics" cta="Approve review">
-      <svg viewBox="0 0 240 90" className="h-[90px] w-full rounded-lg border border-line bg-paper">
+      <svg viewBox="0 0 240 90" className="h-22 w-full rounded-lg border border-line bg-paper">
         <g fill="none" stroke="#1d4ed8" strokeWidth="1.5">
           <path d="M20 45h40l10-15 10 30 10-30 10 15h40" />
           <rect x="150" y="30" width="30" height="30" rx="3" />
@@ -219,7 +219,7 @@ function Electrical({ on }: CardProps) {
           <circle cx="220" cy="45" r="3" />
         </g>
       </svg>
-      <ul className="mt-3 space-y-1.5">
+      <ul className="mt-3 space-y-2">
         <Row>Schematic checked</Row>
         <Row icon={IconClock} tone="text-warning" right="In review">
           Layout sign-off
@@ -232,7 +232,7 @@ function Electrical({ on }: CardProps) {
 function Aerospace({ on }: CardProps) {
   return (
     <Shell on={on} title="Program team" sub="Aerospace engineering" cta="Staff the program">
-      <ul className="space-y-1.5">
+      <ul className="space-y-2">
         <Row right="Filled">Structures engineer</Row>
         <Row right="Filled">Propulsion engineer</Row>
         <Row icon={IconClock} tone="text-cobalt" right="Sourcing">
@@ -254,9 +254,9 @@ function Controls({ on }: CardProps) {
   ];
   return (
     <Shell on={on} title="Plant controls" sub="Controls & automation" cta="Open commissioning">
-      <ul className="space-y-1.5">
+      <ul className="space-y-2">
         {lines.map(([l, s, d]) => (
-          <li key={l} className="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 type-caption">
+          <li key={l} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 type-caption">
             <span className={cn("size-2 rounded-full", d, on && "demo-pulse")} />
             <span className="flex-1 text-ink">{l}</span>
             <span className="type-overline text-ink-subtle">{s}</span>
@@ -272,7 +272,7 @@ function Controls({ on }: CardProps) {
 function CloudMigration({ on }: CardProps) {
   return (
     <Shell on={on} title="Cloud migration" sub="Wave 2 of 3, no planned downtime" cta="Promote to production">
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <Bar on={on} label="Workloads migrated" value={72} />
         <Bar on={on} label="Tests passing" value={98} tone="bg-success" />
       </div>
@@ -302,7 +302,7 @@ function Security({ on }: CardProps) {
             className={cn(on && "demo-ring")}
           />
         </svg>
-        <ul className="flex-1 space-y-1.5 type-caption">
+        <ul className="flex-1 space-y-2 type-caption">
           <li className="flex justify-between text-ink-muted">
             Critical <span className="font-semibold text-ink">0</span>
           </li>
@@ -328,7 +328,7 @@ function ErpSync({ on }: CardProps) {
         </span>
         <span className="rounded-md bg-white px-2 py-1 shadow-sm">Salesforce</span>
       </div>
-      <ul className="mt-3 space-y-1.5">
+      <ul className="mt-3 space-y-2">
         <Row right="Synced">Accounts</Row>
         <Row right="Synced">Sales orders</Row>
       </ul>
@@ -370,7 +370,7 @@ function ProductionAi({ on }: CardProps) {
 function Monitoring({ on }: CardProps) {
   return (
     <Shell on={on} title="24/7 monitoring" sub="Last 30 days, all services" cta="Open dashboard">
-      <div className="flex h-10 items-end gap-[3px]">
+      <div className="flex h-10 items-end gap-1">
         {Array.from({ length: 30 }, (_, i) => (
           <span
             key={i}
@@ -379,7 +379,7 @@ function Monitoring({ on }: CardProps) {
           />
         ))}
       </div>
-      <ul className="mt-3 space-y-1.5">
+      <ul className="mt-3 space-y-2">
         <Row right="Operational">API gateway</Row>
         <Row right="Operational">Databases</Row>
       </ul>
@@ -390,7 +390,7 @@ function Monitoring({ on }: CardProps) {
 function Helpdesk({ on }: CardProps) {
   return (
     <Shell on={on} title="Support queue" sub="Helpdesk & application support" cta="Assign ticket">
-      <ul className="space-y-1.5">
+      <ul className="space-y-2">
         <Row icon={IconClock} tone="text-warning" right="P2 · 12m">
           Password reset for finance team
         </Row>
@@ -406,7 +406,7 @@ function Helpdesk({ on }: CardProps) {
 function Infra({ on }: CardProps) {
   return (
     <Shell on={on} title="Infrastructure" sub="Cloud & infrastructure management" cta="Apply patches">
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <Bar on={on} label="Servers patched" value={96} tone="bg-success" />
         <Bar on={on} label="Reserved capacity used" value={81} />
         <Bar on={on} label="Backups verified" value={100} tone="bg-success" />
@@ -438,7 +438,7 @@ function Qbr({ on }: CardProps) {
 function DevOpsCourse({ on }: CardProps) {
   return (
     <Shell on={on} title="Cloud & DevOps" sub="Instructor-led, six modules" cta="Continue module 4">
-      <ul className="space-y-1.5">
+      <ul className="space-y-2">
         <Row right="Done">Infrastructure as code</Row>
         <Row right="Done">CI/CD pipelines</Row>
         <Row icon={IconArrowRight} tone="text-cobalt" right="Next">
@@ -455,7 +455,7 @@ function DevOpsCourse({ on }: CardProps) {
 function DataLab({ on }: CardProps) {
   return (
     <Shell on={on} title="Hands-on lab" sub="Data, analytics & AI" cta="Run lab">
-      <pre className="overflow-hidden rounded-lg bg-night px-3 py-2.5 font-mono type-overline leading-relaxed text-white/80">
+      <pre className="overflow-hidden rounded-lg bg-night px-3 py-3 font-mono type-overline leading-relaxed text-white/80">
         <span className="text-cobalt-light">$</span> dbt run --select sales{"\n"}
         <span className="text-success">✓</span> 12 models built{"\n"}
         <span className={cn("text-cobalt-light", on && "demo-caret")}>$</span>
@@ -472,7 +472,7 @@ function ErpSessions({ on }: CardProps) {
         {days.map((d, i) => (
           <div key={d} className={cn("rounded-lg border py-2 type-overline", i === 1 || i === 3 ? "border-cobalt bg-cobalt-tint text-cobalt" : "border-line text-ink-subtle")}>
             <p className="font-semibold">{d}</p>
-            <p className="mt-0.5">{i === 1 || i === 3 ? "10:00" : "—"}</p>
+            <p className="mt-1">{i === 1 || i === 3 ? "10:00" : "—"}</p>
           </div>
         ))}
       </div>
@@ -484,7 +484,7 @@ function ErpSessions({ on }: CardProps) {
 function CertPrep({ on }: CardProps) {
   return (
     <Shell on={on} title="Certification prep" sub="Practice assessment results" cta="Schedule exam">
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <Bar on={on} label="Before training" value={54} tone="bg-line-strong" />
         <Bar on={on} label="After training" value={86} />
       </div>

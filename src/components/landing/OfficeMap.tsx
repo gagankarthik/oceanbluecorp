@@ -199,14 +199,14 @@ export default function OfficeMap({
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block type-overline text-ink-subtle">
+              <span className="mt-1 block type-overline text-ink-subtle">
                 {p.country}
               </span>
-              <span className="mt-1.5 block type-overline leading-snug text-ink-muted">
+              <span className="mt-2 block type-overline leading-snug text-ink-muted">
                 {p.address}
               </span>
               {p.phone && (
-                <span className="mt-1.5 block type-overline font-medium text-cobalt">
+                <span className="mt-2 block type-overline font-medium text-cobalt">
                   {p.phone}
                 </span>
               )}

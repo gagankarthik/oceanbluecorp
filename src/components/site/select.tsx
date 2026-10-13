@@ -26,7 +26,7 @@ type Size = "md" | "lg";
 
 const triggerSize: Record<Size, string> = {
   md: "h-10 pointer-coarse:h-11 pl-4 pr-3 type-body-sm",
-  lg: "h-[var(--input-height)] pl-4 pr-3.5 type-body",
+  lg: "h-[var(--input-height)] pl-4 pr-4 type-body",
 };
 
 export function Select({
@@ -110,7 +110,7 @@ export function Select({
             <S.ScrollUpButton className="flex h-8 pointer-coarse:h-11 items-center justify-center text-ink-subtle">
               <IconChevronDown size={14} className="rotate-180" />
             </S.ScrollUpButton>
-            <S.Viewport className="p-1.5">
+            <S.Viewport className="p-2">
               {options.map((o) => (
                 <S.Item
                   key={o.value}

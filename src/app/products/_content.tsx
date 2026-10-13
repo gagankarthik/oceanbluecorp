@@ -212,7 +212,7 @@ export default function ProductsPage() {
       {/* What is true of both, which is the argument for owning them. */}
       <Band>
         <SectionTitle title="How both are run" sub="The people who build our products are the people we would put on yours." />
-        <ul className="reveal mt-10 grid gap-[3px] sm:mt-12 md:grid-cols-3">
+        <ul className="reveal mt-10 grid gap-1 sm:mt-12 md:grid-cols-3">
           {operating.map((o) => (
             <li key={o.title} className="bg-paper p-8">
               <h3 className="type-title-lg font-semibold text-ink">{o.title}</h3>

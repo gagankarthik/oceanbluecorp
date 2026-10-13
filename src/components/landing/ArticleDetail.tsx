@@ -97,7 +97,7 @@ function Byline({ name, role, date, iso }: { name?: string; role?: string; date?
     .join("");
 
   return (
-    <div className="flex items-center gap-3.5 border-t border-line pt-6">
+    <div className="flex items-center gap-4 border-t border-line pt-6">
       {name && (
         <span aria-hidden className="grid size-12 flex-none place-items-center rounded-full bg-cobalt-tint type-body font-semibold text-cobalt">
           {initials}

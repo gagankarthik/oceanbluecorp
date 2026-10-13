@@ -90,7 +90,7 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
         {s.quote}
       </blockquote>
 
-      <figcaption className={cn("relative mt-auto flex items-center gap-3.5 border-t pt-6", featured ? "border-white/25" : "border-line")}>
+      <figcaption className={cn("relative mt-auto flex items-center gap-4 border-t pt-6", featured ? "border-white/25" : "border-line")}>
         <span
           aria-hidden
           className={cn(

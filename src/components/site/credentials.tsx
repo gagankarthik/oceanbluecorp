@@ -117,7 +117,7 @@ export function CredentialsBand({ ground = "paper", below }: { ground?: "white" 
               link={{ href: "/about", label: "About Oceanblue" }}
             />
             <div className="reveal mt-4 sm:mt-6">
-              <MarkGrid marks={CERTS} cols={2} cellClass="h-32 sm:h-[120px]" boxClass="h-12 w-[132px] sm:h-14 sm:w-[150px]" />
+              <MarkGrid marks={CERTS} cols={2} cellClass="h-32 sm:h-30" boxClass="h-12 w-[132px] sm:h-14 sm:w-38" />
             </div>
           </div>
         </div>

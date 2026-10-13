@@ -276,7 +276,7 @@ export default function BrandKitContent() {
                         </div>
                         <div className="p-4">
                           <p className="type-body font-semibold text-ink">{c.name}</p>
-                          <p className="mt-0.5 type-body-sm text-ink-muted">{c.note}</p>
+                          <p className="mt-1 type-body-sm text-ink-muted">{c.note}</p>
                           <div className="mt-3 flex flex-wrap items-center gap-1.5">
                             <CopyChip value={c.hex} />
                             <CopyChip value={c.token} />
@@ -296,7 +296,7 @@ export default function BrandKitContent() {
                 <div key={t.label} className="grid gap-2 bg-white px-5 py-6 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-baseline sm:gap-6">
                   <span>
                     <span className="block type-label font-semibold text-ink">{t.label}</span>
-                    <span className="mt-0.5 block type-caption text-ink-subtle">{t.note}</span>
+                    <span className="mt-1 block type-caption text-ink-subtle">{t.note}</span>
                   </span>
                   <p className={cn("min-w-0 break-words text-ink", t.cls)}>{t.sample}</p>
                 </div>

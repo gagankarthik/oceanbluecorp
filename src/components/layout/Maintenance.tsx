@@ -104,7 +104,7 @@ export default function Maintenance({
             </Link>
           </div>
 
-          <div className="mt-8 flex items-center gap-2.5">
+          <div className="mt-8 flex items-center gap-3">
             {SOCIAL_LINKS.map((s) => (
               <a
                 key={s.name}

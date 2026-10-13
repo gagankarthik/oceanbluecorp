@@ -34,7 +34,7 @@ const PROSE =
 
 function Contents({ toc }: { toc: DocToc }) {
   return (
-    <ul className="space-y-0.5 border-l border-line">
+    <ul className="space-y-1 border-l border-line">
       {toc.map((s) => (
         <li key={s.id}>
           <a href={`#${s.id}`} className="-ml-px block border-l border-transparent py-1.5 pl-4 type-body-sm text-ink-muted transition-colors hover:border-ink hover:text-ink">
@@ -136,7 +136,7 @@ export function DocSection({ id, number, title, children }: { id: string; number
   return (
     <section id={id} className="scroll-mt-28 border-t border-line py-10 first:border-t-0 first:pt-0">
       {number && <p className="font-mono type-caption font-medium text-ink-subtle">{number}</p>}
-      <h2 className={cn("type-title-lg font-semibold text-ink", number && "mt-1.5")}>{title}</h2>
+      <h2 className={cn("type-title-lg font-semibold text-ink", number && "mt-2")}>{title}</h2>
       <div className={cn("mt-4", PROSE)}>{children}</div>
     </section>
   );
@@ -152,10 +152,10 @@ export function SubHead({ children }: { children: React.ReactNode }) {
 
 export function UL({ items }: { items: (string | React.ReactNode)[] }) {
   return (
-    <ul className="space-y-2.5">
+    <ul className="space-y-3">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
+          <span aria-hidden className="mt-3 size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
           <span>{item}</span>
         </li>
       ))}
@@ -168,7 +168,7 @@ export function Callout({ title, children }: { title: string; children: React.Re
   return (
     <div className="rounded-r-xl border-l-2 border-cobalt bg-paper px-5 py-4">
       <p className="type-label font-semibold text-ink">{title}</p>
-      <div className="mt-1.5 type-body">{children}</div>
+      <div className="mt-2 type-body">{children}</div>
     </div>
   );
 }

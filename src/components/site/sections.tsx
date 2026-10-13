@@ -261,11 +261,11 @@ export function ClosingCta({
               return (
                 <li key={d.label}>
                   {d.href ? (
-                    <a href={d.href} className="group flex items-center gap-3.5 py-3.5">
+                    <a href={d.href} className="group flex items-center gap-4 py-4">
                       {body}
                     </a>
                   ) : (
-                    <div className="flex items-center gap-3.5 py-3.5">{body}</div>
+                    <div className="flex items-center gap-4 py-4">{body}</div>
                   )}
                 </li>
               );

@@ -82,7 +82,7 @@ function EndpointCard({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex min-h-14 w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper sm:px-5"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-paper sm:px-5"
       >
         <span className={`flex-none rounded-md border px-2 py-0.5 font-mono type-label ${methodColors[method]}`}>
           {method}
@@ -101,23 +101,23 @@ function EndpointCard({
                 <table className="w-full min-w-[560px] type-body-sm">
                   <thead>
                     <tr className="bg-paper border-b border-line">
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Name</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Type</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Required</th>
-                      <th className="py-2.5 px-4 text-left type-caption font-semibold text-ink-subtle">Description</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Name</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Type</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Required</th>
+                      <th className="py-3 px-4 text-left type-caption font-semibold text-ink-subtle">Description</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
                     {params.map((p) => (
                       <tr key={p.name}>
-                        <td className="py-2.5 px-4"><code className="text-xs font-mono text-cobalt">{p.name}</code></td>
-                        <td className="py-2.5 px-4"><code className="text-xs font-mono text-ink-subtle">{p.type}</code></td>
-                        <td className="py-2.5 px-4">
+                        <td className="py-3 px-4"><code className="text-xs font-mono text-cobalt">{p.name}</code></td>
+                        <td className="py-3 px-4"><code className="text-xs font-mono text-ink-subtle">{p.type}</code></td>
+                        <td className="py-3 px-4">
                           {p.required
                             ? <span className="rounded-md bg-danger-container px-1.5 py-0.5 type-caption font-semibold text-danger">required</span>
                             : <span className="type-caption text-ink-subtle">optional</span>}
                         </td>
-                        <td className="py-2.5 px-4 text-sm text-ink-muted">{p.description}</td>
+                        <td className="py-3 px-4 text-sm text-ink-muted">{p.description}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -180,7 +180,7 @@ export default function DevelopersContent() {
           <div className="rise min-w-0 lg:col-span-5" style={{ animationDelay: "300ms" }}>
             <CodeBlock lang="bash">{`curl https://oceanbluecorp.com/api/v1/jobs \\
   -H "X-API-Key: obk_live_your_key_here"`}</CodeBlock>
-            <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5">
+            <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
               {[
                 { Icon: IconClock, label: "Real-time data" },
                 { Icon: IconLock, label: "API key auth" },
@@ -205,7 +205,7 @@ export default function DevelopersContent() {
         <aside className="hidden w-56 flex-shrink-0 lg:block">
           <div className="sticky top-28 max-h-[calc(100vh-9rem)] overflow-y-auto pr-1">
             <p className="mb-3 type-label font-semibold text-ink">On this page</p>
-            <nav className="space-y-0.5 border-l border-line">
+            <nav className="space-y-1 border-l border-line">
               {NAV.map((item) => (
                 <a
                   key={item.id}
@@ -260,7 +260,7 @@ export default function DevelopersContent() {
                   </span>
                   <div className="min-w-0">
                     <p className="type-label font-semibold text-ink-subtle">{item.title}</p>
-                    <p className="mt-0.5 font-mono type-caption break-all text-ink">{item.desc}</p>
+                    <p className="mt-1 font-mono type-caption break-all text-ink">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -274,7 +274,7 @@ export default function DevelopersContent() {
               You can alternatively pass it as a query parameter <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">?api_key=</code> for quick testing.
             </p>
             <div className="mb-5 flex gap-3 rounded-xl border border-warning/25 bg-warning-container p-4">
-              <IconAlert size={18} className="mt-0.5 flex-shrink-0 text-warning" />
+              <IconAlert size={18} className="mt-1 flex-shrink-0 text-warning" />
               <p className="type-body-sm text-warning">
                 Keep your API key secret. Do not expose it in client-side code or public repositories.
                 Contact us immediately if a key is compromised, we can disable it instantly.

@@ -190,7 +190,7 @@ export default function CookieConsent() {
                   const locked = c.key === "essential";
                   const on = locked ? true : prefs[c.key as keyof Prefs];
                   return (
-                    <li key={c.key} className="flex items-start justify-between gap-4 rounded-xl border border-line px-4 py-3.5">
+                    <li key={c.key} className="flex items-start justify-between gap-4 rounded-xl border border-line px-4 py-4">
                       <span className="min-w-0">
                         <span className="flex items-center gap-2 type-label text-ink">
                           {c.name}
@@ -200,7 +200,7 @@ export default function CookieConsent() {
                             </span>
                           )}
                         </span>
-                        <span className="mt-0.5 block type-caption text-ink-subtle">{c.desc}</span>
+                        <span className="mt-1 block type-caption text-ink-subtle">{c.desc}</span>
                       </span>
                       <Switch
                         on={on}

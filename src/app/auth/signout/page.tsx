@@ -68,7 +68,7 @@ export default function SignOutPage() {
 
         {error && (
           <p className="mt-6 flex items-start gap-3 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-left type-body-sm text-danger">
-            <IconAlert size={18} className="mt-0.5 shrink-0" />
+            <IconAlert size={18} className="mt-1 shrink-0" />
             {error}
           </p>
         )}

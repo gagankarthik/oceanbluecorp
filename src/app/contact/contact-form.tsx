@@ -389,7 +389,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full ring-1 ring-white/35 type-caption font-semibold tabular-nums text-white">
                   {i + 1}
                 </span>
-                <span className="pt-0.5 type-body-sm text-white/85">{s}</span>
+                <span className="pt-1 type-body-sm text-white/85">{s}</span>
               </li>
             ))}
           </ol>
@@ -404,7 +404,7 @@ export function ContactSheet({ initialPath, details }: { initialPath: ContactPat
                 <row.icon size={18} className="absolute top-0.5 left-0 text-white/70" aria-hidden="true" />
                 {row.label}
               </dt>
-              <dd className="mt-0.5 type-body-sm font-semibold text-white">
+              <dd className="mt-1 type-body-sm font-semibold text-white">
                 {row.href ? (
                   <a href={row.href} className={cn("underline-offset-4 hover:underline", onNavyFocus)}>{row.value}</a>
                 ) : row.value}

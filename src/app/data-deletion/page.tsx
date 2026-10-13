@@ -62,7 +62,7 @@ export default function DataDeletionPage() {
                 <IconShieldLock size={18} />
               </span>
               <h3 className="mt-4 type-title font-semibold text-ink">What we delete</h3>
-              <p className="measure mt-1.5 type-body text-ink-muted">
+              <p className="measure mt-2 type-body text-ink-muted">
                 Your contact submissions, job applications, uploaded resumes, candidate profile, and any
                 account credentials, across our database and file storage.
               </p>
@@ -72,7 +72,7 @@ export default function DataDeletionPage() {
                 <IconClock size={18} />
               </span>
               <h3 className="mt-4 type-title font-semibold text-ink">How long it takes</h3>
-              <p className="measure mt-1.5 type-body text-ink-muted">
+              <p className="measure mt-2 type-body text-ink-muted">
                 We confirm receipt within 3-5 business days and complete deletion within 30 days. Some
                 records may be retained where required by law (e.g. tax or contractual obligations).
               </p>

@@ -105,10 +105,10 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
                 {o.city}
                 {o.hq && <span className="rounded-full bg-cobalt-tint px-2 py-0.5 type-overline font-semibold text-cobalt">HQ</span>}
               </p>
-              <p className="mt-0.5 type-caption text-ink-subtle">{o.country}</p>
-              <address className="mt-2.5 type-body-sm text-ink-muted not-italic">{o.address}</address>
+              <p className="mt-1 type-caption text-ink-subtle">{o.country}</p>
+              <address className="mt-3 type-body-sm text-ink-muted not-italic">{o.address}</address>
               {o.phone && (
-                <a href={telHref(o.phone)} className="mt-2.5 inline-block type-body-sm font-medium text-cobalt">
+                <a href={telHref(o.phone)} className="mt-3 inline-block type-body-sm font-medium text-cobalt">
                   {o.phone}
                 </a>
               )}

@@ -366,7 +366,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               )}
             </div>
             {/* Actions in the header from tablet up; phones get the fixed bar at the bottom. */}
-            <div className="rise hidden shrink-0 flex-wrap items-center gap-2.5 sm:flex" style={{ animationDelay: "120ms" }}>
+            <div className="rise hidden shrink-0 flex-wrap items-center gap-3 sm:flex" style={{ animationDelay: "120ms" }}>
               {applyAction()}
               {saveBtn}
               {shareBtn}
@@ -404,7 +404,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                 {CAREER_BENEFITS.map((b) => (
                   <li key={b.title} className="bg-white p-5">
                     <p className="type-body font-semibold text-ink">{b.title}</p>
-                    <p className="mt-1.5 type-body-sm text-ink-muted">{b.desc}</p>
+                    <p className="mt-2 type-body-sm text-ink-muted">{b.desc}</p>
                   </li>
                 ))}
               </ul>
@@ -433,7 +433,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
               ) : (
                 <div>
                   <p className="type-title-lg font-semibold">Not quite the right role?</p>
-                  <p className="mt-1.5 max-w-[52ch] type-body text-white/80">
+                  <p className="mt-2 max-w-[52ch] type-body text-white/80">
                     Send us your resume and tell us the role you are looking for. We will keep it on file and reach out when something fits.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-3">
@@ -465,7 +465,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
           <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-2xl border border-line bg-white p-6">
               <p className="type-caption font-semibold text-cobalt">{job.department}</p>
-              <p className="mt-1.5 type-title-lg font-semibold break-words text-ink">{job.title}</p>
+              <p className="mt-2 type-title-lg font-semibold break-words text-ink">{job.title}</p>
               <p className="mt-2 type-body-sm text-ink-muted">
                 {[formatJobType(job.type), mode, jobPlace(job)].filter((v, i, all) => v && all.indexOf(v) === i).join(" · ")}
               </p>
@@ -474,9 +474,9 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                   {due.text === "Closed" ? "Applications have closed" : `Applications close: ${due.text}`}
                 </p>
               )}
-              <div className="mt-5 grid gap-2.5">
+              <div className="mt-5 grid gap-3">
                 {applyAction("w-full")}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-3">
                   {saveBtn}
                   {shareBtn}
                 </div>
@@ -610,7 +610,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         Resume
                       </p>
                       {resumeFile ? (
-                        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success-container p-3.5">
+                        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success-container p-4">
                           <IconFile size={22} className="shrink-0 text-success" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate type-body-sm font-medium text-ink">{resumeFile.name}</p>
@@ -660,7 +660,7 @@ export default function JobDetailsClient({ job, jobId, publishedAt }: JobDetails
                         </label>
                       )}
                       {resumeError && (
-                        <p id="apply-resume-error" role="alert" className="mt-1.5 type-caption text-danger">
+                        <p id="apply-resume-error" role="alert" className="mt-2 type-caption text-danger">
                           {resumeError}
                         </p>
                       )}

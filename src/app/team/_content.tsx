@@ -78,7 +78,7 @@ export default function TeamPage() {
                 <IconCheck size={20} className="mt-1 text-brand" />
                 <div>
                   <h3 className="type-title-lg text-ink">{o.title}</h3>
-                  <p className="mt-1.5 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>
+                  <p className="mt-2 max-w-[56ch] type-body-sm text-ink-muted">{o.desc}</p>
                 </div>
               </li>
             ))}

@@ -145,7 +145,7 @@ export function SiteFooter() {
                     aria-label={s.name}
                     className="flex size-10 items-center justify-center rounded-full text-ink-subtle transition-colors duration-150 hover:bg-white hover:text-cobalt"
                   >
-                    <s.icon className="size-[18px]" />
+                    <s.icon className="size-4.5" />
                   </a>
                 </li>
               ))}
