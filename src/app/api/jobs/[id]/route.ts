@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getJob, updateJob, deleteJob, toPublicJob, getApplicationsByJob, updateApplication, Job } from "@/lib/aws/dynamodb";
+import { getJob, updateJob, deleteJob, toPublicJob, toCandidateJob, getApplicationsByJob, updateApplication, Job } from "@/lib/aws/dynamodb";
 import { requireStaff, requireJobEditor, getClaims } from "@/lib/auth/verify";
 import { hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess } from "@/lib/auth/config";
 import { sanitizeRichText } from "@/lib/sanitize-server";
@@ -60,7 +60,7 @@ export async function GET(
     if (!isPubliclyOpen(status)) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
-    return NextResponse.json({ job: toPublicJob(result.data) });
+    return NextResponse.json({ job: toCandidateJob(result.data) });
   } catch (error) {
     return serverError("Error fetching job", error, "Couldn't load the job. Please try again.");
   }

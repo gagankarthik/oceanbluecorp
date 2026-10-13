@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { breadcrumbJsonLd, jsonLdString, OG_IMAGES } from "@/lib/seo";
 import { workMode } from "@/lib/careers";
 import { jobLocationLabel } from "@/lib/workplace";
-import { currencyCode, salaryUnitText } from "@/lib/salary";
 import { notFound } from "next/navigation";
 import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -90,20 +89,7 @@ function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
     ...(remote
       ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "US" } }
       : { jobLocation: { "@type": "Place", address: postalAddress(job.location || "", job.state) } }),
-    ...(job.salary
-      ? {
-          baseSalary: {
-            "@type": "MonetaryAmount",
-            currency: currencyCode(job.salary.currency),
-            value: {
-              "@type": "QuantitativeValue",
-              minValue: job.salary.min,
-              maxValue: job.salary.max,
-              unitText: salaryUnitText(job.salary),
-            },
-          },
-        }
-      : {}),
+    // No baseSalary: compensation is never published (Google Jobs would show it).
     ...(richTextToPlain(job.responsibilities) ? { responsibilities: richTextToPlain(job.responsibilities) } : {}),
     ...(richTextToPlain(job.requirements) ? { qualifications: richTextToPlain(job.requirements) } : {}),
     directApply: true,

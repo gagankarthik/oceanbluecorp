@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getAllJobs, getPublicJobs, updateJob, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob } from "@/lib/aws/dynamodb";
+import { getAllJobs, getPublicJobs, updateJob, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob, toCandidateJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
 import { v4 as uuidv4 } from "uuid";
 import { requireJobEditor, getClaims } from "@/lib/auth/verify";
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
         ? counted.map(toPublicJob)
         : jobs
             .filter((j) => isAcceptingApplications(j))
-            .map(toPublicJob);
+            .map(toCandidateJob);
 
     // Saved rankings belong to the job page, not the list: ten scored
     // candidates per job made every list response heavy for no reader.

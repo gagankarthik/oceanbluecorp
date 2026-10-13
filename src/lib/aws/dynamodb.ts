@@ -795,6 +795,17 @@ export function toPublicJob(job: Job): PublicJob {
   };
 }
 
+/**
+ * What a job seeker may see: the public projection without salary. The owner
+ * publishes no pay or compensation on the careers pages, the anonymous API or
+ * Google Jobs. Media and staff still read it through toPublicJob / the record.
+ */
+export type CandidateJob = Omit<PublicJob, "salary">;
+export function toCandidateJob(job: Job): CandidateJob {
+  const { salary: _salary, ...rest } = toPublicJob(job);
+  return rest;
+}
+
 // Partner-feed projection, served by the key-authenticated /api/v1 routes.
 //
 // Wider than PublicJob by three fields the feed contract documents on
