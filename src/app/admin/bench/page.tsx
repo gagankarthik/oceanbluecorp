@@ -81,10 +81,10 @@ type PoolKey = "all" | BenchType;
 // Location filters on state, not city spelling; cities stay searchable.
 
 const skillChip =
-  "inline-flex h-[22px] items-center gap-1 rounded-[6px] bg-[var(--adm-accent-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-accent)]";
+  "inline-flex h-6 items-center gap-1 rounded-[var(--adm-radius-chip)] bg-[var(--adm-accent-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-accent)]";
 
 const countChip =
-  "inline-flex h-[22px] flex-none items-center rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]";
+  "inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]";
 
 /** How long a record has been sitting on the bench, in whole days. */
 function daysOnBench(app: Application): number | null {
@@ -107,7 +107,7 @@ function PoolBadge({ pool }: { pool: BenchType }) {
     <span
       title={POOL_META[pool].hint}
       className={cn(
-        "inline-flex h-[22px] items-center whitespace-nowrap rounded-[6px] px-1.5 text-adm-xs font-medium",
+        "inline-flex h-6 items-center whitespace-nowrap rounded-[var(--adm-radius-chip)] px-1.5 text-adm-xs font-medium",
         shared
           ? "bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
@@ -466,7 +466,7 @@ export default function TalentBenchPage() {
     width: "200px",
     sortValue: (a) => a.name || a.email,
     cell: (a) => (
-      <span className="inline-flex max-w-[176px] items-center gap-2.5 align-middle">
+      <span className="inline-flex max-w-[176px] items-center gap-3 align-middle">
         <Avatar name={a.name} email={a.email} size="sm" />
         <span title={a.name || undefined} className="min-w-0 truncate font-semibold text-[var(--adm-ink)]">{a.name || "Unknown"}</span>
       </span>
@@ -484,7 +484,7 @@ export default function TalentBenchPage() {
       return (
         <span className="inline-flex max-w-full items-center gap-2 align-middle">
           <Avatar name={adder.name} size="xs" />
-          <span className="block min-w-0 max-w-[110px] truncate text-adm-xs text-[var(--adm-ink-mute)]">{adder.name}</span>
+          <span className="block min-w-0 max-w-28 truncate text-adm-xs text-[var(--adm-ink-mute)]">{adder.name}</span>
         </span>
       );
     },
@@ -735,39 +735,39 @@ export default function TalentBenchPage() {
         >
           <FilterMenu activeCount={activeFilterCount} onClearAll={clearFilters}>
             <FilterField label="Stage" htmlFor="bench-filter-stage">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-stage" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 {STATUS_TABS.map((t) => (
                   <option key={t.key} value={t.key}>{t.label} ({statusCounts[t.key] || 0})</option>
                 ))}
               </FormSelect>
             </FilterField>
             <FilterField label="Skill" htmlFor="bench-filter-skill">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-skill" value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}>
                 <option value="all">All skills</option>
                 {allSkills.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Work authorization" htmlFor="bench-filter-auth">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-auth" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
                 <option value="all">All</option>
                 {workAuthorizations.map((auth) => <option key={auth} value={auth}>{auth}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Hire type" htmlFor="bench-filter-hire">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-hire" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
                 <option value="all">All hire types</option>
                 {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
               </FormSelect>
             </FilterField>
             <FilterField label="Location" htmlFor="bench-filter-location">
-              <FormSelect className="h-8 text-adm-xs" id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+              <FormSelect className="h-8 text-adm-base" id="bench-filter-location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                 <option value="all">All locations ({pooledApplications.length})</option>
                 {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
               </FormSelect>
             </FilterField>
             {canFilterByAdder && (
               <FilterField label="Added by" htmlFor="bench-filter-owner">
-                <FormSelect className="h-8 text-adm-xs" id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
+                <FormSelect className="h-8 text-adm-base" id="bench-filter-owner" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
                   <option value="all">Everyone</option>
                   {adderNames.map((n) => <option key={n} value={n}>{n}</option>)}
                 </FormSelect>
@@ -830,7 +830,7 @@ export default function TalentBenchPage() {
                       <button
                         type="button"
                         onClick={() => handleViewApplication(app)}
-                        className="block max-w-full truncate rounded-[6px] text-left text-adm-md font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
+                        className="block max-w-full truncate rounded-[var(--adm-radius-chip)] text-left text-adm-md font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                       >
                         {app.name || "Unknown"}
                       </button>
@@ -855,7 +855,7 @@ export default function TalentBenchPage() {
                       <button
                         type="button"
                         onClick={() => void handleDownloadResume(app.resumeId!)}
-                        className="rounded-[6px] font-medium text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
+                        className="rounded-[var(--adm-radius-chip)] font-medium text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
                       >
                         Resume on file
                       </button>
@@ -883,7 +883,7 @@ export default function TalentBenchPage() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-between gap-2 border-t border-[var(--adm-line-soft)] pt-3">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     <StarRating rating={app.rating || 0} onRate={(n) => void handleRatingChange(app.id, n)} />
                     {age !== null && (
                       <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]" title="Days on bench">{age}d</span>
@@ -939,7 +939,7 @@ function RowAction({
   children: React.ReactNode;
 }) {
   const cls = cn(
-    "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors",
+    "adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-input)] text-[var(--adm-ink-subtle)] transition-colors",
     danger
       ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
       : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",

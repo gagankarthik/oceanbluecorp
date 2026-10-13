@@ -30,7 +30,7 @@ export interface SharedProps extends RowActions {
 
 const menuCls =
   "w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
-const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
+const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 /** View / edit / move / delete, shared by the grid, the board and the list. */
 export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, className }: {
@@ -97,12 +97,12 @@ function SkillChips({ skills, max }: { skills?: string[]; max: number }) {
   return (
     <div className="flex flex-wrap gap-1">
       {all.slice(0, max).map((s) => (
-        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-ink-mute)]">
+        <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
           {s}
         </span>
       ))}
       {all.length > max && (
-        <span className="px-1 py-0.5 text-adm-micro font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+        <span className="px-1 py-0.5 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">
           +{all.length - max}
         </span>
       )}
@@ -238,7 +238,7 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
         isDragging && "opacity-40",
       )}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-3">
         <Avatar name={app.name} email={app.email} size="sm" />
         <div className="min-w-0 flex-1">
           <button
@@ -256,17 +256,17 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
           onEdit={onEdit}
           onDelete={onDelete}
           onStatusChange={onStatusChange}
-          className="-mr-1.5 -mt-1.5 lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
+          className="-mr-1.5 -mt-1.5 lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 lg:data-[state=open]:opacity-100"
         />
       </div>
 
       {(app.skills || []).length > 0 && (
-        <div className="mt-2.5">
+        <div className="mt-3">
           <SkillChips skills={app.skills} max={3} />
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-2.5">
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-3">
         <StarRating rating={app.rating || 0} onRate={(r) => onRating(app.id, r === app.rating ? 0 : r)} />
         <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -291,7 +291,7 @@ export function ListView({ apps, empty, onAdd, onClear, ...shared }: SharedProps
         icon={IconGroup}
         title="No applicants yet"
         description="Add your first candidate to start tracking the pipeline."
-        action={<WorkspaceButton variant="primary" onClick={onAdd}><Plus />Add applicant</WorkspaceButton>}
+        action={<WorkspaceButton onClick={onAdd}><Plus />Add applicant</WorkspaceButton>}
       />
     ) : (
       <EmptyState
@@ -374,7 +374,7 @@ const ListRow = React.memo(function ListRow({ app, ...shared }: RowActions & { a
         onEdit={shared.onEdit}
         onDelete={shared.onDelete}
         onStatusChange={shared.onStatusChange}
-        className="lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:data-[state=open]:opacity-100"
+        className="lg:opacity-0 lg:focus-visible:opacity-100 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 lg:data-[state=open]:opacity-100"
       />
     </li>
   );

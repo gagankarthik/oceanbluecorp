@@ -92,7 +92,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
   if (error) {
     return (
       <div className="p-4">
-        <p role="alert" className="flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+        <p role="alert" className="flex items-start gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
           <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
           {error}
         </p>
@@ -115,12 +115,12 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
       <table className="adm-grid w-full text-adm-base">
         <thead>
           <tr>
-            <th className="px-4 py-2.5 text-left">Candidate</th>
-            <th className="px-3 py-2.5 text-left">Submitted to</th>
-            <th className="hidden px-3 py-2.5 text-right sm:table-cell">Rate</th>
-            <th className="hidden px-3 py-2.5 text-left md:table-cell">Sent</th>
-            <th className="px-3 py-2.5 text-left">Status</th>
-            <th className="hidden px-4 py-2.5 text-left lg:table-cell">Interviews</th>
+            <th className="px-4 py-3 text-left">Candidate</th>
+            <th className="px-3 py-3 text-left">Submitted to</th>
+            <th className="hidden px-3 py-3 text-right sm:table-cell">Rate</th>
+            <th className="hidden px-3 py-3 text-left md:table-cell">Sent</th>
+            <th className="px-3 py-3 text-left">Status</th>
+            <th className="hidden px-4 py-3 text-left lg:table-cell">Interviews</th>
           </tr>
         </thead>
         <tbody>

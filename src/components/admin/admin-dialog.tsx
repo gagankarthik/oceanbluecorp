@@ -95,7 +95,7 @@ export function AdminDialog({
             <div
               className={cn(
                 "flex flex-none items-start gap-3 px-4 sm:px-5",
-                children != null ? "border-b border-[var(--adm-line-soft)] py-3.5" : "py-5",
+                children != null ? "border-b border-[var(--adm-line-soft)] py-4" : "py-5",
               )}
             >
               {icon && <span className="mt-0.5 flex-none" aria-hidden="true">{icon}</span>}
@@ -114,9 +114,9 @@ export function AdminDialog({
                 <D.Close
                   disabled={busy}
                   aria-label="Close"
-                  className="-mr-1.5 -mt-1 grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+                  className="-mr-1.5 -mt-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
                 >
-                  <X className="h-[18px] w-[18px]" aria-hidden="true" />
+                  <X className="size-5" aria-hidden="true" />
                 </D.Close>
               )}
             </div>

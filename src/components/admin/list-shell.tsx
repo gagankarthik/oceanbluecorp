@@ -24,7 +24,7 @@ export function ListHeader({
   return (
     <header className={cn("mb-4 flex flex-wrap items-center justify-between gap-3", className)}>
       <div className="min-w-0">
-        <h1 className="text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">{title}</h1>
+        <h1 className="text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">{title}</h1>
         {meta && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{meta}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -178,7 +178,7 @@ export function FilterSet({ filters, children }: { filters: ListFilter[]; childr
             id={`filter-${f.key}`}
             value={f.value}
             onChange={(e) => f.onChange(e.target.value)}
-            className={cn("h-8 text-adm-xs", isSet(f) && "border-[var(--adm-accent)]")}
+            className={cn("h-8 text-adm-base", isSet(f) && "border-[var(--adm-accent)]")}
           >
             {f.options.map((o) => (
               <option key={o.value} value={o.value}>

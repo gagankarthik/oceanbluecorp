@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { TaskEntry } from "@/lib/aws/dynamodb";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -107,8 +107,8 @@ export function TasksTab({
             ))}
           </FormSelect>
         </label>
-        <WorkspaceButton type="submit" disabled={!text.trim() || adding}>
-          {adding ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+        <WorkspaceButton loading={adding} type="submit" disabled={!text.trim() || adding}>
+          <Plus aria-hidden="true" />
           Add task
         </WorkspaceButton>
       </form>
@@ -145,7 +145,7 @@ export function TasksTab({
                 type="button"
                 onClick={() => setShowDone((v) => !v)}
                 aria-expanded={showDone}
-                className="w-full px-4 py-2.5 text-left text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+                className="w-full px-4 py-3 text-left text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
               >
                 {showDone ? "Hide" : "Show"} completed ({done.length})
               </button>
@@ -183,7 +183,7 @@ function TaskRow({
   const state = task.done ? "none" : dueState(task.dueAt);
   const assignee = task.assigneeId === meId ? "You" : task.assigneeName || "Unassigned";
   return (
-    <li className="flex items-start gap-3 px-4 py-2.5">
+    <li className="flex items-start gap-3 px-4 py-3">
       <TaskCheck done={task.done} busy={busy} label={task.text} onToggle={onToggle} />
       <div className="min-w-0 flex-1">
         <p className={cn(
@@ -214,7 +214,7 @@ function TaskRow({
         disabled={busy}
         aria-label={`Delete task: ${task.text}`}
         title="Delete task"
-        className="-my-1 grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-50"
+        className="-my-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
       >
         <IconTrash className="h-4 w-4" aria-hidden="true" />
       </button>

@@ -14,15 +14,14 @@ interface AvatarProps {
   onError?: () => void;
 }
 
-// Flat fills, all >= 4.5:1 against white initials.
+// Identity, not status: cobalt and navy steps only, all >= 5.5:1 under white initials.
 const PALETTE = [
-  "bg-[#0369a1]",
-  "bg-[#6d28d9]",
-  "bg-[#047857]",
-  "bg-[#b45309]",
-  "bg-[#be123c]",
-  "bg-[#0e7490]",
-  "bg-[#475569]",
+  "bg-[var(--adm-seq-3)]",
+  "bg-[var(--adm-seq-4)]",
+  "bg-[var(--adm-seq-5)]",
+  "bg-[var(--adm-ink-subtle)]",
+  "bg-[var(--adm-ink-mute)]",
+  "bg-[var(--adm-ink)]",
 ];
 
 function hash(str: string): number {
@@ -45,9 +44,9 @@ export function Avatar({ name, email, size = "md", className, src, onLoad, onErr
     .toUpperCase() || "?";
   const fill = PALETTE[hash(display) % PALETTE.length];
   const sz = {
-    xs: "w-6 h-6 text-adm-micro",
-    sm: "w-7 h-7 text-adm-micro",
-    md: "w-8 h-8 text-adm-micro",
+    xs: "w-6 h-6 text-adm-xs",
+    sm: "w-7 h-7 text-adm-xs",
+    md: "w-8 h-8 text-adm-xs",
     lg: "w-11 h-11 text-sm",
     xl: "w-16 h-16 text-lg",
   }[size];

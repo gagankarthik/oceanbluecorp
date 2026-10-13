@@ -44,7 +44,7 @@ export function PeriodSwitcher<P extends string>({
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
           className={cn(
-            "flex h-full items-center whitespace-nowrap rounded-[7px] px-2.5 text-adm-xs font-medium transition-colors",
+            "flex h-full items-center whitespace-nowrap rounded-[7px] px-3 text-adm-xs font-medium transition-colors",
             value === o.value
               ? "bg-[var(--adm-seg-active)] text-[var(--adm-ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08),0_0_0_1px_var(--adm-line)]"
               : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",
@@ -138,7 +138,7 @@ export function DonutChart({
           })()}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+          <span className="text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
             {(active ? active.value : total).toLocaleString()}
           </span>
           <span className="mt-1 max-w-[7rem] truncate text-adm-xs text-[var(--adm-ink-subtle)]">
@@ -202,9 +202,8 @@ export interface FunnelStage {
  * bands. Feed cohort counts, not occupancy. The hovered band zooms forward and
  * its siblings recede, so the eye lands on one stage at a time.
  */
-// Light to deep cobalt; every step keeps white labels at 4.6:1 or better.
-// Every stop carries white labels at 4.5:1 or better (lightest #0277b6 is 4.9:1).
-const FUNNEL_RAMP = ["#0277b6", "#0369a1", "#075985", "#0b5079", "#0c4a6e", "#082f49"];
+// Light to deep cobalt (--p-cobalt-600 … oklch 0.26); white labels clear 5.5:1 on every stop.
+const FUNNEL_RAMP = ["#295ee3", "#1d4ed8", "#1740ad", "#12348c", "#112c6f", "#0c204f"];
 const FUNNEL_FLOOR = 32; // keeps a near-zero stage wide enough to read its label
 
 export function FunnelChart({ stages, className }: { stages: FunnelStage[]; className?: string }) {
@@ -228,7 +227,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                 <div className="pointer-events-none relative z-20 -my-1 flex justify-center">
                   <span
                     className={cn(
-                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
+                      "rounded-full bg-[var(--adm-surface)] px-1.5 py-px text-adm-xs font-semibold tabular-nums text-[var(--adm-ink-mute)] ring-1 ring-[var(--adm-line)]",
                       "transition-colors duration-200",
                       interactive && "group-hover/band:bg-[var(--adm-accent)] group-hover/band:text-white group-hover/band:ring-[var(--adm-accent)]",
                     )}
@@ -260,7 +259,7 @@ export function FunnelChart({ stages, className }: { stages: FunnelStage[]; clas
                   <span className="text-adm-xs font-semibold">{st.label}</span>
                   <span className="text-adm-base font-semibold tabular-nums">{st.value.toLocaleString()}</span>
                   {st.meta && (
-                    <span className="text-adm-micro font-medium tabular-nums text-white">{st.meta}</span>
+                    <span className="text-adm-xs font-medium tabular-nums text-white">{st.meta}</span>
                   )}
                   {interactive && (
                     <ArrowRight

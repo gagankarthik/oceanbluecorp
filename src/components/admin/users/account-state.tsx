@@ -52,7 +52,7 @@ export function AccountState({
       <span
         aria-hidden
         className={cn(
-          "relative inline-flex h-[18px] w-8 flex-none items-center rounded-full border transition-colors duration-200",
+          "relative inline-flex h-5 w-9 flex-none items-center rounded-full border transition-colors duration-200",
           // Off track needs the border: no light fill reaches 3:1 non-text contrast on white.
           on
             ? "border-[var(--adm-success)] bg-[var(--adm-success)]"
@@ -62,8 +62,8 @@ export function AccountState({
       >
         <span
           className={cn(
-            "grid h-[14px] w-[14px] place-items-center rounded-full bg-white shadow-[var(--adm-shadow-sm)] transition-transform duration-200",
-            on ? "translate-x-[16px]" : "translate-x-[2px]",
+            "grid size-4 place-items-center rounded-full bg-white shadow-[var(--adm-shadow-sm)] transition-transform duration-200",
+            on ? "translate-x-4" : "translate-x-0.5",
           )}
         >
           {busy && <Loader2 className="h-2.5 w-2.5 animate-spin text-[var(--adm-ink-subtle)]" />}

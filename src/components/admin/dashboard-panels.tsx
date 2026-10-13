@@ -7,8 +7,8 @@ import { AdminCard } from "@/components/admin/admin-card";
 import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 
-/** Sequential blue ramp, ordered stages of one process. */
-export const STAGE_RAMP = ["#0284c7", "#0277b6", "#0369a1", "#075985", "#0c4a6e"];
+/** Sequential cobalt ramp (--p-cobalt-500 … --p-blue-900), ordered stages of one process. */
+export const STAGE_RAMP = ["#4174ec", "#295ee3", "#1d4ed8", "#1740ad", "#12348c"];
 
 export type BarItem = {
   label: string;
@@ -171,12 +171,12 @@ export function LineChart({
               role="status"
               aria-live="polite"
               className={cn(
-                "pointer-events-none absolute top-0 z-10 min-w-[8rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2.5 py-2 shadow-[var(--adm-shadow-md)]",
-                pctX(active) > 55 ? "-translate-x-[calc(100%+10px)]" : "translate-x-[10px]",
+                "pointer-events-none absolute top-0 z-10 min-w-[8rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 py-2 shadow-[var(--adm-shadow-md)]",
+                pctX(active) > 55 ? "-translate-x-[calc(100%+12px)]" : "translate-x-3",
               )}
               style={{ left: `${pctX(active)}%` }}
             >
-              <p className="text-adm-micro text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
+              <p className="text-adm-xs text-[var(--adm-ink-subtle)]">{xFmt(String(point[xKey] ?? ""))}</p>
               <p className="mt-1 flex items-center gap-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 {label ?? dataKey}
@@ -193,7 +193,7 @@ export function LineChart({
           </>
         )}
       </div>
-      <div className="mt-1.5 flex justify-between text-adm-micro tabular-nums text-[var(--adm-ink-subtle)]">
+      <div className="mt-1.5 flex justify-between text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
         {ticks.map((ti, i) => <span key={i}>{xFmt(String(data[ti]?.[xKey] ?? ""))}</span>)}
       </div>
     </div>
@@ -244,7 +244,7 @@ export function TrendPanel({
         <div className="min-w-0">
           <h3 className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{title}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-adm-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
+            <span className="text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-[var(--adm-ink)]">
               {value.toLocaleString()}
             </span>
             <DeltaChip delta={delta} />
@@ -297,7 +297,7 @@ export function AttentionPanel({
 
   return (
     <AdminCard className="flex flex-col overflow-hidden">
-      <div className="px-4 pb-3.5 pt-4">
+      <div className="px-4 pb-4 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-adm-base font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">Needs attention</h3>
@@ -306,13 +306,13 @@ export function AttentionPanel({
             </p>
           </div>
           <span className={cn(
-            "text-adm-3xl font-semibold leading-none tracking-[-0.025em] tabular-nums",
+            "text-adm-xl font-semibold leading-none tracking-[-0.025em] tabular-nums",
             healthy ? "text-[var(--adm-success-ink)]" : "text-[var(--adm-ink)]",
           )}>
             {total.toLocaleString()}
           </span>
         </div>
-        <div className="mt-4 flex h-1.5 gap-[3px] overflow-hidden rounded-full bg-[var(--adm-surface-2)]" aria-hidden="true">
+        <div className="mt-4 flex h-1.5 gap-1 overflow-hidden rounded-full bg-[var(--adm-surface-2)]" aria-hidden="true">
           {total === 0 ? (
             <span className={cn("h-full w-full", SEVERITY.clear.bar)} />
           ) : (
@@ -336,12 +336,12 @@ export function AttentionPanel({
               <Link
                 href={it.href}
                 className={cn(
-                  "group relative grid w-full grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--adm-row-hover)]",
+                  "group relative grid w-full grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--adm-row-hover)]",
                   "before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-r-full",
                   tone.edge,
                 )}
               >
-                <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
+                <span className={cn("text-adm-md font-semibold leading-none tracking-[-0.02em] tabular-nums", tone.ink)}>
                   {it.value.toLocaleString()}
                 </span>
                 <span className="min-w-0">
@@ -358,7 +358,7 @@ export function AttentionPanel({
         })}
       </ul>
 
-      <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
         <span className="text-adm-xs text-[var(--adm-ink-mute)]">
           <span className="font-semibold tabular-nums text-[var(--adm-ink)]">{inPlay}</span> candidates in play
         </span>

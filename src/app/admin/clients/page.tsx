@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   IconBuilding, IconDownload, IconEdit,
   IconGlobe, IconMail, IconTrash,
@@ -299,7 +299,7 @@ export default function ClientsPage() {
       width: "250px",
       sortValue: (c) => c.name,
       cell: (c) => (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
           <Avatar name={c.name} size="sm" />
           <StackCell
             primary={<span className="font-semibold">{c.name}</span>}
@@ -451,7 +451,7 @@ export default function ClientsPage() {
               ? "Add your first client to start tracking accounts."
               : "Try adjusting your search or status filter.",
             action: clients.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={openCreate}><Plus className="h-4 w-4" />Add client</WorkspaceButton>
+              <WorkspaceButton onClick={openCreate}><Plus className="h-4 w-4" />Add client</WorkspaceButton>
             ) : hasActiveFilters ? (
               <WorkspaceButton onClick={clearFilters}><X className="h-4 w-4" />Clear filters</WorkspaceButton>
             ) : undefined,
@@ -479,8 +479,7 @@ export default function ClientsPage() {
             <WorkspaceButton type="button" onClick={requestClose} className="w-full sm:w-auto">
               Cancel
             </WorkspaceButton>
-            <WorkspaceButton type="submit" form="client-form" variant="primary" disabled={submitting} className="w-full sm:w-auto">
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            <WorkspaceButton loading={submitting} type="submit" form="client-form" variant="primary" disabled={submitting} className="w-full sm:w-auto">
               {editingClient ? "Update client" : "Add client"}
             </WorkspaceButton>
           </>

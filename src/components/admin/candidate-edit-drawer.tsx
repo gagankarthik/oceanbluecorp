@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { WorkspaceButton } from "./workspace";
@@ -55,7 +55,7 @@ export function CandidateEditDrawer({
     <Sheet open={open} onOpenChange={(next) => (next ? onOpenChange(true) : requestClose())}>
       <SheetContent
         side="right"
-        onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }} showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[560px]">
+        onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }} showCloseButton={false} className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[560px]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
             <SheetTitle className="truncate text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
@@ -69,7 +69,7 @@ export function CandidateEditDrawer({
             type="button"
             onClick={requestClose}
             aria-label="Close"
-            className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+            className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -84,8 +84,7 @@ export function CandidateEditDrawer({
           <WorkspaceButton variant="ghost" onClick={requestClose} className="flex-1 sm:flex-none">
             Cancel
           </WorkspaceButton>
-          <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={form.busy} className="flex-1 sm:flex-none">
-            {form.busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+          <WorkspaceButton loading={form.busy} type="submit" form={FORM_ID} variant="primary" disabled={form.busy} className="flex-1 sm:flex-none">
             {form.uploading ? "Uploading resume…" : mode === "create" ? "Add applicant" : "Save changes"}
           </WorkspaceButton>
         </div>

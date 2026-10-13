@@ -97,7 +97,7 @@ export function FilterMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-2.5 text-adm-xs font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3 text-adm-base font-medium transition-colors",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
@@ -110,7 +110,7 @@ export function FilterMenu<V extends string>({
           {current?.count !== undefined && (
             <span
               className={cn(
-                "rounded-[6px] px-1 text-adm-micro font-semibold tabular-nums",
+                "rounded-[6px] px-1 text-adm-xs font-semibold tabular-nums",
                 active ? "bg-[var(--adm-accent)]/12 text-[var(--adm-accent)]" : "bg-[var(--adm-surface-2)] text-[var(--adm-ink-subtle)]",
               )}
             >
@@ -126,7 +126,7 @@ export function FilterMenu<V extends string>({
       <DropdownMenuContent
         align="start"
         sideOffset={4}
-        className="min-w-[190px] rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="min-w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -135,7 +135,7 @@ export function FilterMenu<V extends string>({
               key={o.value}
               onClick={() => onChange(o.value)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs",
+                "flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-base",
                 selected && "font-semibold text-[var(--adm-accent)]",
               )}
             >

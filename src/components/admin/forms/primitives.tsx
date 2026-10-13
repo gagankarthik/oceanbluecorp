@@ -40,10 +40,10 @@ export function FormSection({
       )}
     >
       <header className="flex items-start justify-between gap-4 border-b border-[var(--adm-line-soft)] px-4 py-3 sm:px-5">
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
           {/* A plain muted glyph, not a tinted tile. The chip was decoration, it coloured every section header the same accent regardless of
               what the section was, so it identified nothing. */}
-          <Icon className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
+          <Icon className="size-5 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
           <div className="min-w-0">
             <h3 className="text-adm-md font-semibold text-[var(--adm-ink)]">{title}</h3>
             {description && (
@@ -153,10 +153,11 @@ export function MoneyInput({
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--adm-ink-subtle)]">$</span>
+      {/* Text, not type=number, so "$75" and "1,200" can be typed; toNumber() parses them. */}
       <FormInput
-        type="number"
-        step="0.01"
-        min="0"
+        type="text"
+        inputMode="decimal"
+        autoComplete="off"
         className={cn("pl-7 tabular-nums", className)}
         {...props}
       />
@@ -262,7 +263,7 @@ export function SegmentedChoice<V extends string>({
               if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); move(i, -1); }
             }}
             className={cn(
-              "flex-1 whitespace-nowrap rounded-[calc(var(--adm-radius-input)-2px)] px-2.5 text-adm-xs transition-colors",
+              "flex-1 whitespace-nowrap rounded-[calc(var(--adm-radius-input)-2px)] px-3 text-adm-xs transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)]",
               on
                 ? "bg-[var(--adm-surface)] font-semibold text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]"
@@ -344,7 +345,7 @@ function PeopleSearch({
       {open && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-60 overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-1 shadow-[var(--adm-shadow-pop)]">
           {filtered.length === 0 ? (
-            <p className="px-3 py-2.5 text-adm-xs text-[var(--adm-ink-subtle)]">
+            <p className="px-3 py-3 text-adm-xs text-[var(--adm-ink-subtle)]">
               {users.length === 0 ? "No team members to choose from." : "No one matches that search."}
             </p>
           ) : filtered.map((u) => (

@@ -109,7 +109,7 @@ const ROLE_ORDER = [UserRole.ADMIN, UserRole.HR, UserRole.RECRUITER, UserRole.SA
 
 function accessBadge(roles: UserRole[]): { label: string; tone: Tone } {
   if (roles.length === ROLE_ORDER.length) return { label: "All roles", tone: "blue" };
-  if (roles.length === 1) return { label: `${ROLE_SHORT[roles[0]]} only`, tone: "rose" };
+  if (roles.length === 1) return { label: `${ROLE_SHORT[roles[0]]} only`, tone: "indigo" };
   return { label: ROLE_ORDER.filter((r) => roles.includes(r)).map((r) => ROLE_SHORT[r]).join(" · "), tone: "slate" };
 }
 
@@ -120,7 +120,7 @@ const ROUTE_ROWS = Object.entries(routeAccess)
 // ── Primitives ─────────────────────────────────────────────────────────────────
 
 /** Key caps in prose sit a size up from the toolbar default. */
-const KBD = "h-6 px-1.5 text-adm-micro";
+const KBD = "h-6 px-1.5 text-adm-xs";
 
 /** Inline code span. */
 const CODE = "rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 font-mono text-adm-xs text-[var(--adm-ink-mute)]";
@@ -140,7 +140,7 @@ function SectionHeader({
   return (
     <div id={id} className="scroll-mt-6 border-b border-[var(--adm-line)] pb-4">
       <div className="flex items-center gap-2">
-        <Icon className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
+        <Icon className="size-5 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
         <h2 className="text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">{title}</h2>
       </div>
       {description && <p className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{description}</p>}
@@ -161,8 +161,8 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 function InfoCard({ children, variant = "info" }: { children: React.ReactNode; variant?: "info" | "warning" | "tip" }) {
   const styles = {
     info:    "border-[var(--adm-line)] bg-[var(--adm-accent-tint)] text-[var(--adm-ink-mute)] [&_strong]:text-[var(--adm-ink)]",
-    warning: "border-[var(--adm-warning)]/30 bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
-    tip:     "border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
+    warning: "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",
+    tip:     "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]",
   };
   const iconInk = {
     info:    "text-[var(--adm-accent)]",
@@ -172,7 +172,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
   const icons = { info: IconInfo, warning: IconAlert, tip: IconSuccess };
   const Icon = icons[variant];
   return (
-    <div className={cn("flex items-start gap-2.5 rounded-[12px] border p-3.5 text-adm-xs leading-relaxed", styles[variant])}>
+    <div className={cn("flex items-start gap-3 rounded-[12px] border p-4 text-adm-xs leading-relaxed", styles[variant])}>
       <Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", iconInk[variant])} />
       <div className="min-w-0 [&_code]:break-words">{children}</div>
     </div>
@@ -207,7 +207,7 @@ function DocTable({
           {rows.map((row, i) => (
             <tr key={i} className="transition-colors duration-150 hover:bg-[var(--adm-row-hover)]">
               {row.map((cell, j) => (
-                <td key={j} className="px-4 py-2.5 align-top text-[var(--adm-ink-mute)] first:pl-5 last:pr-5">{cell}</td>
+                <td key={j} className="px-4 py-3 align-top text-[var(--adm-ink-mute)] first:pl-5 last:pr-5">{cell}</td>
               ))}
             </tr>
           ))}
@@ -228,7 +228,7 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
           onClick={() => { void navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           aria-label={copied ? "Copied" : "Copy code"}
           className={cn(
-            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-adm-xs font-medium transition-colors duration-150",
+            "inline-flex h-8 flex-none items-center gap-1.5 rounded-[8px] px-2 text-adm-base font-medium transition-colors duration-150",
             copied
               ? "text-[var(--adm-success-ink)]"
               : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -253,7 +253,7 @@ function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PA
     PATCH:  "bg-[var(--adm-surface-2)] text-[var(--adm-ink-mute)]",
   };
   return (
-    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-adm-micro font-semibold", colors[method])}>
+    <span className={cn("inline-flex items-center rounded-[6px] px-1.5 py-0.5 font-mono text-adm-xs font-semibold", colors[method])}>
       {method}
     </span>
   );
@@ -329,7 +329,7 @@ export default function AdminDocsPage() {
     <nav aria-label="Documentation contents" className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-2 lg:grid-cols-1">
       {CATEGORIES.map((cat) => (
         <div key={cat.id}>
-          <p className="mb-1 px-2.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
+          <p className="mb-1 px-3 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">
             {cat.label}
           </p>
           <div className="space-y-px">
@@ -343,7 +343,7 @@ export default function AdminDocsPage() {
                   onClick={() => scrollTo(item.id)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-adm-xs transition-colors duration-150 lg:py-1.5",
+                    "flex w-full items-center gap-3 rounded-[8px] px-3 py-2 text-left text-adm-xs transition-colors duration-150 lg:py-1.5",
                     isActive
                       ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -391,7 +391,7 @@ export default function AdminDocsPage() {
               onClick={() => setSidebarOpen((v) => !v)}
               aria-expanded={sidebarOpen}
               aria-controls="docs-contents"
-              className="flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)] lg:pointer-events-none lg:border-b lg:border-[var(--adm-line-soft)]"
+              className="flex min-h-11 w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)] lg:pointer-events-none lg:border-b lg:border-[var(--adm-line-soft)]"
             >
               <span className="inline-flex min-w-0 items-center gap-2 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                 <ListTree className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
@@ -438,7 +438,7 @@ export default function AdminDocsPage() {
               ].map((f) => (
                 <div key={f.label} className="bg-[var(--adm-surface)] p-4">
                   <div className="mb-1 flex items-center gap-2">
-                    <f.icon className="h-[18px] w-[18px] text-[var(--adm-ink-mute)]" />
+                    <f.icon className="size-5 text-[var(--adm-ink-mute)]" />
                     <span className="text-adm-base font-semibold text-[var(--adm-ink)]">{f.label}</span>
                   </div>
                   <p className="text-adm-xs text-[var(--adm-ink-mute)]">{f.desc}</p>
@@ -497,7 +497,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Keyboard shortcuts">
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
                   { keys: "Ctrl K", desc: "Open the command palette (⌘ K on a Mac)" },
                   { keys: "Esc", desc: "Close modals, drawers, dropdowns" },
@@ -505,7 +505,7 @@ export default function AdminDocsPage() {
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
                   { keys: "Tab", desc: "Cycle through form fields" },
                 ].map((s) => (
-                  <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
+                  <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-[12px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3">
                     <Kbd className={KBD}>{s.keys}</Kbd>
                     <span className="text-adm-base text-[var(--adm-ink-mute)]">{s.desc}</span>
                   </div>
@@ -627,7 +627,7 @@ export default function AdminDocsPage() {
             </SubSection>
 
             <SubSection title="Adding applicants">
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <Well title="From the job detail page">
                   Open a job → click the <strong>Add Applicant</strong> floating button (bottom-right corner). The form opens with that job pre-selected.
                 </Well>
@@ -1176,7 +1176,7 @@ RESUME_MATCH_API_KEY=your_key`}</CodeBlock>
             </SubSection>
 
             <SubSection title="Data security">
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <InfoCard variant="tip">
                   AWS credentials are <strong>never exposed to the browser</strong>. All DynamoDB and S3 operations run server-side in Next.js API routes or server components.
                 </InfoCard>

@@ -60,7 +60,7 @@ export function JobCreatedDialog({
             {job && (
               <>
                 <SuccessMark />
-                <D.Title className="adm-success-text mt-5 text-adm-lg font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
+                <D.Title className="adm-success-text mt-5 text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
                   Job created successfully
                 </D.Title>
                 <D.Description className="adm-success-text mt-1.5 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">

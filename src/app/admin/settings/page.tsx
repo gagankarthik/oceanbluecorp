@@ -61,7 +61,7 @@ function RecordRow({
   value: string;
 }) {
   return (
-    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-2.5 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
+    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-3 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
       <span className="flex items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
@@ -379,13 +379,13 @@ export default function SettingsPage() {
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); profileCheck.reset(); passwordCheck.reset(); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-9 flex-none items-center gap-2.5 rounded-[8px] px-3 text-left text-adm-base transition-colors duration-150 lg:w-full",
+                    "flex h-9 flex-none items-center gap-3 rounded-[8px] px-3 text-left text-adm-base transition-colors duration-150 lg:w-full",
                     active
                       ? "bg-[var(--adm-accent-tint)] font-semibold text-[var(--adm-accent)]"
                       : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
-                  <tab.icon className={cn("h-[18px] w-[18px] flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")} />
+                  <tab.icon className={cn("size-5 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")} />
                   <span className="whitespace-nowrap">{tab.name}</span>
                 </button>
               );
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
                       aria-label="Change profile photo"
-                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] disabled:opacity-60"
+                      className="absolute -bottom-1 -right-1 adm-hit grid h-7 w-7 place-items-center rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] shadow-[var(--adm-shadow-sm)] transition-colors duration-150 hover:border-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
                     >
                       {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <IconCamera className="h-3.5 w-3.5" />}
                     </button>
@@ -505,7 +505,7 @@ export default function SettingsPage() {
             <AdminCard>
               <AdminCardHeader title="Change password" />
               <div className="space-y-4 p-4">
-                <NotePanel className="flex items-start gap-2.5">
+                <NotePanel className="flex items-start gap-3">
                   <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
                   Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
                 </NotePanel>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                           type="button"
                           onClick={field.toggle}
                           aria-label={`${field.show ? "Hide" : "Show"} ${field.label.toLowerCase()}`}
-                          className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                          className="absolute right-1 top-1/2 adm-hit grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                         >
                           {field.show
                             ? <IconEyeOff className="h-4 w-4" aria-hidden="true" />
@@ -593,21 +593,21 @@ export default function SettingsPage() {
 
                   <div className="flex flex-wrap items-center gap-2 border-t border-[var(--adm-line-soft)] pt-4">
                     {maint.enabled ? (
-                      <WorkspaceButton
+                      <WorkspaceButton loading={maintSaving}
                         variant="primary"
                         disabled={!maintLoaded || maintSaving}
                         onClick={() => void saveMaintenance({ ...maint, enabled: false })}
                       >
-                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><Check />Bring the site back online</>}
+                        {maintSaving ? "Saving…" : <><Check />Bring the site back online</>}
                       </WorkspaceButton>
                     ) : (
                       // Taking the site down is confirmed; bringing it back is not.
-                      <WorkspaceButton
+                      <WorkspaceButton loading={maintSaving}
                         disabled={!maintLoaded || maintSaving}
                         onClick={() => setConfirmOffline(true)}
                         className="border-transparent bg-[var(--adm-danger)] text-white hover:border-transparent hover:bg-[var(--adm-danger-ink)]"
                       >
-                        {maintSaving ? <><Loader2 className="animate-spin" />Saving…</> : <><IconAlert />Take the site offline</>}
+                        {maintSaving ? "Saving…" : <><IconAlert />Take the site offline</>}
                       </WorkspaceButton>
                     )}
 

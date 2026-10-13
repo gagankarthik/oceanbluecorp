@@ -19,7 +19,7 @@ export default function ApiKeysLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className={cn("flex h-9 items-center gap-2 px-3.5", i > 0 && "border-l border-[var(--adm-line-soft)]", i > 1 && "hidden sm:flex")}
+            className={cn("flex h-9 items-center gap-2 px-4", i > 0 && "border-l border-[var(--adm-line-soft)]", i > 1 && "hidden sm:flex")}
           >
             <Skel className="h-3 w-16" />
             <Skel className="h-3.5 w-6" />

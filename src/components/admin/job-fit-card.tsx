@@ -3,7 +3,6 @@
 // "Job fit" card for an application detail screen. Reads the cached verdict from
 // /api/applications/[id]/job-fit (GET) and lets staff (re)score on demand (POST).
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconConversion, IconRefresh, IconWarning } from "@/components/admin/icons";
@@ -81,8 +80,8 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         subtitle={at && fit ? `Scored ${fmtDate(at)}` : undefined}
         action={
           // Secondary: the record's one filled action is "Edit profile" in the pinned header.
-          <WorkspaceButton onClick={score} disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
+          <WorkspaceButton loading={loading} onClick={score} disabled={loading}>
+            <IconRefresh aria-hidden="true" />
             {loading ? "Scoring…" : fit ? "Re-score" : "Score fit"}
           </WorkspaceButton>
         }
@@ -91,7 +90,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       <div className="p-4">
         {/* The previous verdict belongs to a different requisition, so it is withheld. */}
         {staleForJobChange && !fit && !error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-warning-ink)]">
+          <div className="mb-4 flex items-start gap-3 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-warning-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>
               This candidate moved to a different job, so the previous fit score no longer
@@ -101,15 +100,15 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         )}
 
         {loadError && !fit && !error && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span className="min-w-0 flex-1">The saved fit score couldn&apos;t be loaded.</span>
-            <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
+            <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
           </div>
         )}
 
         {error && (
-          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex items-start gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>{error}</span>
           </div>
@@ -126,7 +125,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <VerdictBadge verdict={fit.verdict} />
               <p className="tabular-nums">
-                <span className={cn("text-adm-2xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
+                <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(fit.fitScore))}>
                   {fit.fitScore}
                 </span>
                 <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">/100</span>

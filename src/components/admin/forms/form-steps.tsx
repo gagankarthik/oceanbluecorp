@@ -145,7 +145,7 @@ export function StepRail({
         >
           <div
             className={cn(
-              "h-full rounded-full transition-[width] duration-500 ease-[var(--adm-ease)]",
+              "h-full rounded-full transition-[width] duration-300 ease-[var(--adm-ease)]",
               pct === 100 ? "bg-[var(--adm-success)]" : "bg-[var(--adm-accent)]",
             )}
             style={{ width: `${pct}%` }}
@@ -163,7 +163,7 @@ export function StepRail({
                 onClick={() => jumpToStep(s.id)}
                 aria-current={active === s.id ? "step" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-left text-adm-xs transition-colors",
+                  "flex w-full items-center gap-3 rounded-[6px] px-2 py-1.5 text-left text-adm-xs transition-colors",
                   active === s.id
                     ? "bg-[var(--adm-accent-tint)] font-medium text-[var(--adm-ink)]"
                     : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
@@ -172,7 +172,7 @@ export function StepRail({
                 <StepBadge step={i + 1} state={s.state} />
                 <span className="min-w-0 flex-1 truncate">{s.title}</span>
                 {s.state !== "done" && (
-                  <span className="flex-none text-adm-micro text-[var(--adm-ink-subtle)]">{s.required ? "Required" : "Optional"}</span>
+                  <span className="flex-none text-adm-xs text-[var(--adm-ink-subtle)]">{s.required ? "Required" : "Optional"}</span>
                 )}
               </button>
             </li>

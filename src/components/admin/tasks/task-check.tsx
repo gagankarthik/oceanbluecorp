@@ -21,7 +21,7 @@ export function TaskCheck({
       onClick={onToggle}
       disabled={busy}
       className={cn(
-        "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center rounded-[4px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] disabled:opacity-60",
+        "mt-0.5 grid size-5 flex-none place-items-center rounded-[4px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--adm-focus-ring)] disabled:opacity-[var(--adm-opacity-disabled)]",
         done
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent)] text-white"
           : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] hover:border-[var(--adm-accent)]",

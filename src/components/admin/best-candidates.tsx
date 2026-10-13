@@ -154,8 +154,8 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
 
   // Secondary: the job page's one filled action is "Add applicant" in its header.
   const actionButton = (
-    <WorkspaceButton onClick={run} disabled={busy || loadingSaved}>
-      {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSource aria-hidden="true" />}
+    <WorkspaceButton loading={busy} onClick={run} disabled={busy || loadingSaved}>
+      <IconSource aria-hidden="true" />
       {busy ? "Ranking…" : ran ? "Re-run" : "Find candidates"}
     </WorkspaceButton>
   );
@@ -169,7 +169,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
       )}
 
       {!busy && stale && candidates.length > 0 && (
-        <div role="status" className="mb-3 flex flex-wrap items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-4 py-2.5 text-adm-xs text-[var(--adm-warning-ink)]">
+        <div role="status" className="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
           <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
           <span className="min-w-0 flex-1">
             This job was edited after the ranking{matchedAt ? ` on ${fmtDate(matchedAt)}` : ""}. Re-run for a shortlist that matches the current posting.
@@ -218,18 +218,18 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
       )}
 
       {!busy && !error && loadError && !ran && (
-        <div role="alert" className="mb-3 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+        <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
           <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
           <span className="min-w-0 flex-1">The saved ranking couldn&apos;t be loaded.</span>
-          <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
+          <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
         </div>
       )}
 
       {!busy && error && (
-        <div role="alert" className="flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+        <div role="alert" className="flex items-start gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
           <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
           <span className="min-w-0 flex-1">{error}</span>
-          <WorkspaceButton className="h-8 px-3 text-adm-xs" onClick={run}>Try again</WorkspaceButton>
+          <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={run}>Try again</WorkspaceButton>
         </div>
       )}
 
@@ -287,7 +287,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
                 <div className="flex flex-none items-center gap-3">
                   <VerdictBadge verdict={c.verdict} className="hidden sm:inline" />
                   <p className="tabular-nums">
-                    <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.01em]", fitScoreColor(c.fit_score))}>
+                    <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.01em]", fitScoreColor(c.fit_score))}>
                       {c.fit_score}
                     </span>
                     <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">/100</span>
@@ -296,7 +296,7 @@ export function BestCandidates({ jobId, bare = false }: { jobId: string; bare?: 
               </div>
 
               <div className="pl-8">
-                {c.rationale && <p className="mt-2.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>}
+                {c.rationale && <p className="mt-3 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">{c.rationale}</p>}
 
                 <div className="mt-3">
                   <SkillChips matched={c.matched_skills} missing={c.missing_skills} />

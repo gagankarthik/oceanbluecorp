@@ -37,7 +37,7 @@ export default function ContentLoading() {
           </div>
           <div className="divide-y divide-[var(--adm-line-soft)]">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="space-y-2.5 px-4 py-3">
+              <div key={i} className="space-y-3 px-4 py-3">
                 <Skel className="h-3.5 w-40" />
                 <Skel className="h-4 w-3/4" />
               </div>

@@ -51,7 +51,7 @@ export function SavedViewsMenu<S>({
           aria-label="My views"
           className={cn(
             // Same size and edge as Filters, so the toolbar's controls read as one set.
-            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-xs font-medium transition-colors sm:px-3",
+            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-adm-base font-medium transition-colors sm:px-3",
             activeId
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
@@ -70,7 +70,7 @@ export function SavedViewsMenu<S>({
         sideOffset={6}
         className="w-[20rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
-        <div className="border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+        <div className="border-b border-[var(--adm-line-soft)] px-4 py-3">
           <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">My views</span>
           <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">Search, filters and layout, saved in this browser.</p>
         </div>
@@ -94,7 +94,7 @@ export function SavedViewsMenu<S>({
                   onClick={() => onDelete(item.id)}
                   aria-label={`Delete saved view ${item.name}`}
                   title="Delete"
-                  className="grid h-7 w-7 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+                  className="adm-hit grid h-7 w-7 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
@@ -109,7 +109,7 @@ export function SavedViewsMenu<S>({
         <form
           onSubmit={save}
           onKeyDown={(e) => e.stopPropagation()}
-          className="flex items-center gap-2 border-t border-[var(--adm-line-soft)] px-3 py-2.5"
+          className="flex items-center gap-2 border-t border-[var(--adm-line-soft)] px-3 py-3"
         >
           <FormInput
             aria-label="Name for the current view"
@@ -118,7 +118,7 @@ export function SavedViewsMenu<S>({
             onChange={(e) => setName(e.target.value)}
             placeholder={full ? `Limit of ${MAX_SAVED} reached` : "Name the current view"}
             disabled={full}
-            className="h-8 text-adm-xs"
+            className="h-8 text-adm-base"
           />
           <WorkspaceButton type="submit" size="sm" disabled={!trimmed || full}>Save</WorkspaceButton>
         </form>

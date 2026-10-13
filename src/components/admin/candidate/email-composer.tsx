@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { Field, FormInput, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
@@ -116,7 +116,7 @@ export function EmailComposer({
 
   return (
     <Sheet open={open} onOpenChange={(next) => { if (!sending) onOpenChange(next); }}>
-      <SheetContent side="right" showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[600px]">
+      <SheetContent side="right" showCloseButton={false} className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[600px]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
             <SheetTitle className="truncate text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">
@@ -131,7 +131,7 @@ export function EmailComposer({
             onClick={() => onOpenChange(false)}
             disabled={sending}
             aria-label="Close"
-            className="grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+            className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[6px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -160,7 +160,7 @@ export function EmailComposer({
           </Field>
 
           {unfilled.length > 0 && (
-            <div role="alert" className="flex gap-2.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-2.5 text-adm-xs text-[var(--adm-warning-ink)]">
+            <div role="alert" className="flex gap-3 rounded-[6px] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] px-3 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <p>
                 Fill in or remove {unfilled.map((p) => `{{${p}}}`).join(", ")} before sending.
@@ -170,7 +170,7 @@ export function EmailComposer({
           )}
 
           <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-            <label className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5">
+            <label className="flex cursor-pointer items-center gap-3 px-3 py-3">
               <input
                 type="checkbox"
                 checked={invite}
@@ -210,8 +210,8 @@ export function EmailComposer({
           </a>
           <div className="flex items-center gap-2">
             <WorkspaceButton variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>Cancel</WorkspaceButton>
-            <WorkspaceButton type="submit" form="email-composer" variant="primary" disabled={!canSend}>
-              {sending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSend aria-hidden="true" />}
+            <WorkspaceButton loading={sending} type="submit" form="email-composer" variant="primary" disabled={!canSend}>
+              <IconSend aria-hidden="true" />
               {sending ? "Sending…" : "Send"}
             </WorkspaceButton>
           </div>

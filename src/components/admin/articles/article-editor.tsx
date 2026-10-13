@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, SearchX, X } from "lucide-react";
+import { Plus, SearchX, X } from "lucide-react";
 import type { Article, ArticleKind, ArticleMetric } from "@/lib/aws/dynamodb";
 import {
   ARTICLE_KIND_CONFIG,
@@ -610,11 +610,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   className={cn(
                     "rounded-[12px] border p-4",
                     form.approvalOnFile
-                      ? "border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)]"
-                      : "border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)]",
+                      ? "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)]"
+                      : "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]",
                   )}
                 >
-                  <label className="flex items-start gap-2.5">
+                  <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={!!form.approvalOnFile}
@@ -789,7 +789,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 </FieldWarning>
               </Field>
 
-              <label className="flex items-center gap-2.5">
+              <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={!!form.featured}
@@ -807,7 +807,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               {blockers.length > 0 && (
                 <div
                   role={publishIntent ? "alert" : undefined}
-                  className="rounded-[12px] border border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)] p-3"
+                  className="rounded-[12px] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] p-3"
                 >
                   <p className="text-adm-xs font-medium text-[var(--adm-warning-ink)]">
                     Before it can go out
@@ -840,7 +840,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
               )}
 
               {blockers.length === 0 && warnings.length === 0 && (
-                <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
+                <p className="rounded-[12px] border border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
                   Nothing outstanding. Ready to publish.
                 </p>
               )}
@@ -965,7 +965,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   onChange={(e) => set("canonicalUrl", e.target.value)}
                 />
               </Field>
-              <label className="flex items-start gap-2.5">
+              <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   checked={!!form.noIndex}
@@ -1001,12 +1001,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         }
       >
         <WorkspaceButton onClick={() => (dirty ? setConfirmLeave(true) : router.push(config.adminPath))}>Cancel</WorkspaceButton>
-        <WorkspaceButton
+        <WorkspaceButton loading={saving}
           variant="primary"
           onClick={save}
           disabled={saving || blockedFromPublishing}
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           {isNew ? `Create ${config.noun}` : publishIntent ? "Save and publish" : "Save"}
         </WorkspaceButton>
       </FormActionBar>

@@ -94,7 +94,7 @@ export function MyTasksPanel() {
                 ) : (
                   <ul className="pb-1.5">
                     {list.slice(0, PER_GROUP).map((t) => (
-                      <li key={t.id} className="flex items-start gap-2.5 px-4 py-1.5">
+                      <li key={t.id} className="flex items-start gap-3 px-4 py-1.5">
                         <TaskCheck done={false} busy={pending === t.id} label={t.text} onToggle={() => void complete(t)} />
                         <Link
                           href={`/admin/candidates/${t.applicationId}`}

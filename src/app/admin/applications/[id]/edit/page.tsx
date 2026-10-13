@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { Loader2, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { IconSave } from "@/components/admin/icons";
 import type { Job } from "@/lib/aws/dynamodb";
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const FORM_ID = "applicant-edit-form";
 
 /** Bleeds to the edges of main's `p-4 sm:p-5 lg:p-6` so it spans the pane. */
-const actionBarCls = "sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:px-5 lg:-mx-6 lg:-mb-6 lg:px-6";
+const actionBarCls = "sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8";
 
 function EditApplicationInner() {
   const router = useRouter();
@@ -103,8 +103,8 @@ function EditApplicationInner() {
           <WorkspaceButton onClick={() => router.push(returnTo ?? `/admin/candidates/${id}`)}>
             Cancel
           </WorkspaceButton>
-          <WorkspaceButton type="submit" form={FORM_ID} variant="primary" disabled={form.busy}>
-            {form.busy ? <Loader2 className="animate-spin" /> : <IconSave />}
+          <WorkspaceButton loading={form.busy} type="submit" form={FORM_ID} variant="primary" disabled={form.busy}>
+            <IconSave />
             {form.uploading ? "Uploading resume…" : "Save changes"}
           </WorkspaceButton>
         </div>

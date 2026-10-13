@@ -4,7 +4,7 @@ import * as React from "react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminDialog } from "@/components/admin/admin-dialog";
 import Link from "next/link";
-import { Check, ChevronRight, X, Plus, Loader2 } from "lucide-react";
+import { Check, ChevronRight, X, Plus } from "lucide-react";
 import {
   IconCopy, IconInfo, IconMail, IconPhone, IconEdit, IconTrash,
 } from "@/components/admin/icons";
@@ -93,7 +93,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         }
       }}
       className={cn(
-        "grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150",
+        "adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors duration-150",
         copied
           ? "text-[var(--adm-success-ink)]"
           : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -120,14 +120,14 @@ function ContactRow({
 }) {
   if (!value) {
     return (
-      <div className="flex h-9 items-center gap-2.5 text-adm-xs">
+      <div className="flex h-9 items-center gap-3 text-adm-base">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="select-none text-[var(--adm-ink-subtle)]">Not on record</span>
       </div>
     );
   }
   return (
-    <div className="group/row flex items-center gap-2.5">
+    <div className="group/row flex items-center gap-3">
       <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
       <a
         href={href}
@@ -256,8 +256,8 @@ function DirectoryEditor({
         footer={
           <>
             <WorkspaceButton onClick={requestClose}>Cancel</WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save directory
+            <WorkspaceButton loading={saving} variant="primary" onClick={save} disabled={saving}>
+              <Check className="h-4 w-4" /> Save directory
             </WorkspaceButton>
           </>
         }
@@ -302,7 +302,7 @@ function DirectoryEditor({
                 type="button"
                 onClick={() => remove(i)}
                 aria-label={`Remove ${m.name || "person"}`}
-                className="grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center justify-self-end rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
               >
                 <IconTrash className="h-4 w-4" />
               </button>
@@ -398,7 +398,7 @@ export default function HelpPage() {
         {/* Directory: the main thing people look up here. */}
         <section aria-labelledby="directory-title" className="min-w-0 space-y-3">
           {loadFailed && (
-            <NotePanel className="flex items-start gap-2.5">
+            <NotePanel className="flex items-start gap-3">
               <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
               The saved directory could not be loaded, so this is the built-in list and may be out of date. Refresh to try again.
             </NotePanel>
@@ -437,7 +437,7 @@ export default function HelpPage() {
               />
             ) : (
               <div>
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line)] bg-[var(--adm-head)] px-4 py-2.5 text-adm-xs font-semibold uppercase tracking-[0.05em] text-[var(--adm-head-ink)] md:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)] gap-x-4 border-b border-[var(--adm-line)] bg-[var(--adm-head)] px-4 py-3 text-adm-xs font-semibold uppercase tracking-[0.05em] text-[var(--adm-head-ink)] md:grid">
                   <span>Person</span>
                   <span>Email</span>
                   <span>Phone</span>
@@ -528,4 +528,4 @@ export default function HelpPage() {
 
 /** A full-width row link in a rail card: one 48px target per action. */
 const RAIL_LINK =
-  "flex min-h-12 items-center gap-3 px-4 py-2.5 text-adm-base transition-colors duration-150 hover:bg-[var(--adm-row-hover)]";
+  "flex min-h-12 items-center gap-3 px-4 py-3 text-adm-base transition-colors duration-150 hover:bg-[var(--adm-row-hover)]";

@@ -110,7 +110,7 @@ export function RichTextEditor({
             // Keep the selection in the editor when the button is pressed.
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => exec(c.command)}
-            className="grid h-8 w-8 place-items-center rounded-[6px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+            className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
           >
             <c.icon className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -130,7 +130,7 @@ export function RichTextEditor({
         data-placeholder={placeholder}
         onInput={(e) => onChange(sanitizeHtml((e.currentTarget as HTMLDivElement).innerHTML))}
         className={cn(
-          "min-h-[160px] w-full px-3.5 py-2.5 text-adm-base leading-relaxed text-[var(--adm-ink)] outline-none",
+          "min-h-[160px] w-full px-4 py-3 text-adm-base leading-relaxed text-[var(--adm-ink)] outline-none",
           "[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5",
           "[&_a]:text-[var(--adm-accent)] [&_a]:underline",
           "empty:before:pointer-events-none empty:before:text-[var(--adm-ink-subtle)] empty:before:content-[attr(data-placeholder)]",

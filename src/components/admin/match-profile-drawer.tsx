@@ -61,7 +61,6 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
       <SheetContent
         side="right"
         showCloseButton={false}
-        overlayClassName="bg-[var(--adm-scrim)]"
         className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[640px]"
       >
         {c && (
@@ -81,7 +80,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
                 type="button"
                 onClick={onClose}
                 aria-label="Close profile"
-                className="grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -94,7 +93,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
                   <div>
                     <h3 className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">Fit for this job</h3>
                     <p className="mt-1 tabular-nums">
-                      <span className={cn("text-adm-3xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(c.fit_score))}>{c.fit_score}</span>
+                      <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em]", fitScoreColor(c.fit_score))}>{c.fit_score}</span>
                       <span className="ml-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">/100</span>
                     </p>
                   </div>
@@ -134,7 +133,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
 
               {/* Resume */}
               <section className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-                <h3 className="border-b border-[var(--adm-line-soft)] px-4 py-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">Resume</h3>
+                <h3 className="border-b border-[var(--adm-line-soft)] px-4 py-3 text-adm-xs font-medium text-[var(--adm-ink-mute)]">Resume</h3>
                 {fileError ? (
                   <p role="alert" className="px-4 py-6 text-center text-adm-base text-[var(--adm-danger-ink)]">{fileError}</p>
                 ) : !url ? (

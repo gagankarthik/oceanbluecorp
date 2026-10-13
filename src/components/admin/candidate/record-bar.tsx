@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, MoreVertical } from "lucide-react";
+import { Check, MoreVertical } from "lucide-react";
 import type { Application, BenchType } from "@/lib/aws/dynamodb";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -39,7 +39,7 @@ const ON_COBALT = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--ad
 
 const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const MENU_LABEL = "px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]";
-const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-xs";
+const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 export function RecordBar({
   candidate,
@@ -62,8 +62,8 @@ export function RecordBar({
         <div className="flex min-w-0 items-start gap-3">
           <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h1 className="truncate text-adm-2xl font-semibold leading-8 tracking-[-0.02em] text-white">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="truncate text-adm-xl font-semibold leading-8 tracking-[-0.02em] text-white">
                 {candidate.name || "Unnamed candidate"}
               </h1>
               {/* Chips are tinted for a white surface, so each sits on a white tab. */}
@@ -130,8 +130,8 @@ export function RecordBar({
           </WorkspaceButton>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <WorkspaceButton aria-label="More actions" title="More actions" className="max-sm:flex-none">
-                {benchSaving || ownerSaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <MoreVertical aria-hidden="true" />}
+              <WorkspaceButton loading={benchSaving || ownerSaving} aria-label="More actions" title="More actions" className="max-sm:flex-none">
+                <MoreVertical aria-hidden="true" />
               </WorkspaceButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className={cn("w-64", MENU)}>
@@ -189,7 +189,7 @@ export function RecordBar({
                 type="button"
                 onClick={onClaim}
                 disabled={ownerSaving}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-white px-2.5 font-medium text-[var(--adm-danger-ink)] hover:bg-white/90"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-white px-3 font-medium text-[var(--adm-danger-ink)] hover:bg-white/90"
               >
                 <IconUserCheck className="h-3.5 w-3.5" aria-hidden="true" />Unclaimed, claim
               </button>

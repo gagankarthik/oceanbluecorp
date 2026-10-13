@@ -117,7 +117,7 @@ function StageSelect({ app, onChange }: {
   onChange: (id: string, s: Application["status"]) => void;
 }) {
   return (
-    <span className="relative inline-flex w-[142px] items-center" onClick={(e) => e.stopPropagation()}>
+    <span className="relative inline-flex w-36 items-center" onClick={(e) => e.stopPropagation()}>
       <span
         aria-hidden
         className="pointer-events-none absolute left-3 h-2 w-2 flex-none rounded-full"
@@ -698,7 +698,7 @@ export default function ApplicationsPage() {
 
           <FilterMenu activeCount={totalActiveFilters} onClearAll={clearFilters}>
             <FilterField label="Stage" htmlFor="filter-stage">
-              <FormSelect id="filter-stage" className="h-8 text-adm-xs" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <FormSelect id="filter-stage" className="h-8 text-adm-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">All stages ({inView.length})</option>
                 {ALL_STATUSES.map((st) => (
                   <option key={st} value={st}>{sLabel(st)} ({statusCounts[st] || 0})</option>
@@ -707,35 +707,35 @@ export default function ApplicationsPage() {
             </FilterField>
 
             <FilterField label="Position" htmlFor="filter-position">
-              <FormSelect id="filter-position" className="h-8 text-adm-xs" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
+              <FormSelect id="filter-position" className="h-8 text-adm-base" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
                 <option value="all">All positions</option>
                 {positions.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
               </FormSelect>
             </FilterField>
 
             <FilterField label="Location" htmlFor="filter-location">
-              <FormSelect id="filter-location" className="h-8 text-adm-xs" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+              <FormSelect id="filter-location" className="h-8 text-adm-base" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
                 <option value="all">All locations ({inView.length})</option>
                 {locations.map((l) => <option key={l.value} value={l.value}>{l.label} ({l.count})</option>)}
               </FormSelect>
             </FilterField>
 
             <FilterField label="Source" htmlFor="filter-source">
-              <FormSelect id="filter-source" className="h-8 text-adm-xs" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+              <FormSelect id="filter-source" className="h-8 text-adm-base" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
                 <option value="all">All sources</option>
                 {SOURCE_OPTIONS.map((src) => <option key={src} value={src}>{src}</option>)}
               </FormSelect>
             </FilterField>
 
             <FilterField label="Type of hire" htmlFor="filter-hire">
-              <FormSelect id="filter-hire" className="h-8 text-adm-xs" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
+              <FormSelect id="filter-hire" className="h-8 text-adm-base" value={hireFilter} onChange={(e) => setHireFilter(e.target.value)}>
                 <option value="all">All hire types</option>
                 {hireTypes.map((h) => <option key={h} value={h}>{hireTypeLabel(h)}</option>)}
               </FormSelect>
             </FilterField>
 
             <FilterField label="Work authorization" htmlFor="filter-auth">
-              <FormSelect id="filter-auth" className="h-8 text-adm-xs" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
+              <FormSelect id="filter-auth" className="h-8 text-adm-base" value={authFilter} onChange={(e) => setAuthFilter(e.target.value)}>
                 <option value="all">All</option>
                 {WORK_AUTH_GROUPS.map((g) => (
                   <optgroup key={g.label} label={g.label}>
@@ -759,7 +759,7 @@ export default function ApplicationsPage() {
                     <IconStar
                       aria-hidden
                       className={cn(
-                        "h-[18px] w-[18px] transition-colors",
+                        "size-5 transition-colors",
                         n <= minRating
                           ? "fill-[var(--adm-warning)] text-[var(--adm-warning)]"
                           : "text-[var(--adm-ink-subtle)] group-hover/star:text-[var(--adm-warning)]",
@@ -814,7 +814,7 @@ export default function ApplicationsPage() {
                 ? "Try a different search, or clear the filters."
                 : "This view is clear.",
               action: applications.length === 0
-                ? <WorkspaceButton variant="primary" onClick={() => openCandidateEditor({ mode: "create" })}><Plus />Add applicant</WorkspaceButton>
+                ? <WorkspaceButton onClick={() => openCandidateEditor({ mode: "create" })}><Plus />Add applicant</WorkspaceButton>
                 : hasActiveFilters
                 ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton>
                 : undefined,
@@ -845,7 +845,7 @@ export default function ApplicationsPage() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-xs font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
               >
                 Move to stage
               </button>
@@ -858,7 +858,7 @@ export default function ApplicationsPage() {
                 <DropdownMenuItem
                   key={s}
                   onClick={() => bulkStage(s as Application["status"])}
-                  className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs"
+                  className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-adm-base"
                 >
                   <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: stageColor(s) }} />
                   {sLabel(s)}
@@ -869,7 +869,7 @@ export default function ApplicationsPage() {
           <button
             type="button"
             onClick={() => setBulkDeleteOpen(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-xs font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
           >
             <IconTrash className="h-3.5 w-3.5" />Delete
           </button>

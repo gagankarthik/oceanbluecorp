@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { AdminDialog } from "@/components/admin/admin-dialog";
 import { IconClock, IconEye, IconHash, IconJob, IconLocation, IconSave } from "../icons";
 import type { Job, Client, Vendor, SalaryPeriod } from "@/lib/aws/dynamodb";
@@ -20,7 +19,7 @@ import { useFormErrors } from "@/hooks/use-form-errors";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
-  payOverBillWarning, phone, rangeInverted, required, website,
+  payOverBillWarning, phone, rangeInverted, required, toNumber, website,
 } from "@/lib/form-validation";
 import { FieldWarning, FormErrorBanner } from "./form-alert";
 import { StepCard, StepRail, useActiveStep, type StepInfo, type StepState } from "./form-steps";
@@ -173,11 +172,11 @@ export function formDataToPayload(data: JobFormData) {
     responsibilities: data.responsibilities?.trim() ? data.responsibilities : undefined,
     // null, not undefined, so clearing the range clears it on the record.
     salary: data.salaryMin && data.salaryMax
-      ? { min: parseFloat(data.salaryMin), max: parseFloat(data.salaryMax), currency: "$", period: data.salaryPeriod }
+      ? { min: toNumber(data.salaryMin), max: toNumber(data.salaryMax), currency: "$", period: data.salaryPeriod }
       : null,
     // Bill and pay rates are hourly; an annual role leaves the stored ones alone.
-    clientBillRate: data.salaryPeriod === "hour" && data.clientBillRate ? parseFloat(data.clientBillRate) : undefined,
-    payRate: data.salaryPeriod === "hour" && data.payRate ? parseFloat(data.payRate) : undefined,
+    clientBillRate: data.salaryPeriod === "hour" && data.clientBillRate ? toNumber(data.clientBillRate) : undefined,
+    payRate: data.salaryPeriod === "hour" && data.payRate ? toNumber(data.payRate) : undefined,
     status: data.status,
     submissionDueDate: data.submissionDueDate || undefined,
     clientId: data.clientId || undefined,
@@ -380,7 +379,7 @@ export function JobForm({
 
   const statusColor: Record<string, string> = {
     draft: "text-[var(--adm-ink-mute)]", open: "text-[var(--adm-success-ink)]", active: "text-[var(--adm-accent)]",
-    "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-danger-ink)]",
+    "on-hold": "text-[var(--adm-warning-ink)]", paused: "text-[var(--adm-warning-ink)]", closed: "text-[var(--adm-ink-mute)]",
   };
 
   const isRemote = data.workplace === "remote";
@@ -411,7 +410,7 @@ export function JobForm({
   const requiredLeft = steps.filter((s) => s.required && s.state !== "done").length;
 
   const payLine = !isBlank(data.salaryMin) && !isBlank(data.salaryMax)
-    ? `$${Number(data.salaryMin).toLocaleString()} – $${Number(data.salaryMax).toLocaleString()}${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`
+    ? `$${toNumber(data.salaryMin).toLocaleString()} – $${toNumber(data.salaryMax).toLocaleString()}${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`
     : "";
   const summary: { k: string; v: string }[] = [
     { k: "Title", v: data.title.trim() },
@@ -428,7 +427,7 @@ export function JobForm({
 
       <header className="mx-auto mb-5 flex max-w-6xl flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-adm-xl font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+          <h1 className="text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
             {mode === "create" ? "New" : "Edit"} {data.category === "open" ? "open" : "state"} role
           </h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
@@ -719,7 +718,7 @@ export function JobForm({
           steps={steps}
           active={activeStep}
           // The main pane is the scroller; keep the rail inside it.
-          className="sticky top-0 hidden max-h-[calc(100dvh-56px-48px)] lg:flex"
+          className="sticky top-0 hidden max-h-[calc(100dvh-56px-64px)] lg:flex"
           summary={
             <dl className="space-y-2 text-adm-xs">
               {summary.map((row) => (
@@ -734,8 +733,8 @@ export function JobForm({
           }
           footer={
             <>
-              <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting} className="w-full">
-                {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+              <WorkspaceButton loading={submitting} type="submit" form={formId} variant="primary" disabled={submitting} className="w-full">
+                <IconSave aria-hidden="true" />
                 {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
               </WorkspaceButton>
               {requiredLeft > 0 && (
@@ -749,14 +748,14 @@ export function JobForm({
       </div>
 
       {/* Narrow screens: the primary action stays in reach at the bottom. */}
-      <div className="sticky -bottom-4 z-20 -mx-4 -mb-4 mt-4 flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:-bottom-5 sm:-mx-5 sm:-mb-5 lg:hidden">
+      <div className="sticky -bottom-5 z-20 -mx-5 -mb-5 mt-4 flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 lg:hidden">
         <p className="min-w-0 text-adm-xs text-[var(--adm-ink-mute)]">
           {requiredLeft > 0
             ? <>{requiredLeft} required step{requiredLeft === 1 ? "" : "s"} left</>
             : <span className="font-medium text-[var(--adm-success-ink)]">Ready to save</span>}
         </p>
-        <WorkspaceButton type="submit" form={formId} variant="primary" disabled={submitting}>
-          {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSave aria-hidden="true" />}
+        <WorkspaceButton loading={submitting} type="submit" form={formId} variant="primary" disabled={submitting}>
+          <IconSave aria-hidden="true" />
           {submitting ? (mode === "create" ? "Creating…" : "Saving…") : submitLabel}
         </WorkspaceButton>
       </div>
@@ -839,8 +838,8 @@ function AddClientModal({
       footer={
         <>
           <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
-          <WorkspaceButton type="submit" form="add-client-form" variant="primary" disabled={submitting}>
-            {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add client
+          <WorkspaceButton loading={submitting} type="submit" form="add-client-form" variant="primary" disabled={submitting}>
+            Add client
           </WorkspaceButton>
         </>
       }
@@ -929,8 +928,8 @@ function AddVendorModal({
       footer={
         <>
           <WorkspaceButton onClick={onClose}>Cancel</WorkspaceButton>
-          <WorkspaceButton type="submit" form="add-vendor-form" variant="primary" disabled={submitting}>
-            {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}Add vendor
+          <WorkspaceButton loading={submitting} type="submit" form="add-vendor-form" variant="primary" disabled={submitting}>
+            Add vendor
           </WorkspaceButton>
         </>
       }
@@ -975,7 +974,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
       bodyClassName="space-y-4 bg-[var(--adm-surface-sunken)] sm:p-4"
     >
       <div className="rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
-        <h1 className="mb-3 text-adm-2xl font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
+        <h1 className="mb-3 text-adm-xl font-semibold leading-8 tracking-[-0.025em] text-[var(--adm-ink)]">{data.title || "–"}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs text-[var(--adm-ink-mute)]">
           <span className="inline-flex items-center gap-1.5">
             <IconJob className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />{typeLabel}
@@ -992,8 +991,8 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
           )}
         </div>
         {data.salaryMin && data.salaryMax && (
-          <p className="text-adm-lg font-semibold tabular-nums text-[var(--adm-ink)]">
-            ${Number(data.salaryMin).toLocaleString()} – ${Number(data.salaryMax).toLocaleString()}
+          <p className="text-adm-md font-semibold tabular-nums text-[var(--adm-ink)]">
+            ${toNumber(data.salaryMin).toLocaleString()} – ${toNumber(data.salaryMax).toLocaleString()}
             <span className="ml-1 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               {SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}
             </span>

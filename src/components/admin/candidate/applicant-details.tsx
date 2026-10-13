@@ -68,7 +68,7 @@ export function ApplicantDetails({
         title="Applicant details"
         count={filled.length}
         action={
-          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-2.5 text-adm-xs">
+          <WorkspaceButton variant="ghost" onClick={onEdit} className="h-8 px-3 text-adm-base">
             <IconEdit aria-hidden="true" /> Edit
           </WorkspaceButton>
         }
@@ -83,7 +83,7 @@ export function ApplicantDetails({
       )}
 
       {blanks.length > 0 && (
-        <div className="border-t border-[var(--adm-line-soft)] px-4 py-2.5">
+        <div className="border-t border-[var(--adm-line-soft)] px-4 py-3">
           <button
             type="button"
             onClick={() => setShowEmpty((v) => !v)}

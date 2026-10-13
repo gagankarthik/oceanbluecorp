@@ -42,7 +42,7 @@ export function EditorialGuide({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className={cn(
-          "flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)]",
+          "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)]",
           open ? "rounded-t-[8px]" : "rounded-[8px]",
         )}
       >
@@ -75,7 +75,7 @@ export function EditorialGuide({
             <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               Headline
             </p>
-            <p className="rounded-[12px] border border-[var(--adm-success)]/30 bg-[var(--adm-success-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-ink)]">
+            <p className="rounded-[12px] border border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-ink)]">
               {guide.headline.good}
             </p>
             <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs text-[var(--adm-ink-subtle)] line-through decoration-[var(--adm-danger)]/50">
@@ -87,14 +87,14 @@ export function EditorialGuide({
           </div>
 
           {/* Structure */}
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               The shape of a finished one
             </p>
-            <ol className="space-y-2.5">
+            <ol className="space-y-3">
               {guide.structure.map((step, i) => (
-                <li key={step.name} className="flex gap-2.5">
-                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-adm-micro font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
+                <li key={step.name} className="flex gap-3">
+                  <span className="mt-px grid h-5 w-5 flex-none place-items-center rounded-full bg-[var(--adm-surface-2)] text-adm-xs font-semibold tabular-nums text-[var(--adm-ink-subtle)]">
                     {i + 1}
                   </span>
                   <span className="min-w-0">
@@ -128,7 +128,7 @@ export function EditorialGuide({
             </ul>
           </div>
 
-          <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-2.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-3 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             <strong className="font-semibold text-[var(--adm-ink)]">Sign-off. </strong>
             {guide.signoff}
           </p>

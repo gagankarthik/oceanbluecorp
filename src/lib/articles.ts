@@ -154,10 +154,10 @@ export interface ArticleStatusConfig {
 
 export const ARTICLE_STATUSES: ArticleStatusConfig[] = [
   { key: "draft",     label: "Draft",     tone: "slate",   hint: "Being written. Not on the site." },
-  { key: "in-review", label: "In review", tone: "amber",   hint: "Written, waiting on a second reader." },
+  { key: "in-review", label: "In review", tone: "sky",     hint: "Written, waiting on a second reader." },
   { key: "scheduled", label: "Scheduled", tone: "violet",  hint: "Approved. Goes live on its publish date." },
   { key: "published", label: "Published", tone: "emerald", hint: "Live on the site now." },
-  { key: "archived",  label: "Archived",  tone: "rose",    hint: "Retired. The URL still resolves." },
+  { key: "archived",  label: "Archived",  tone: "slate",   hint: "Retired. The URL still resolves." },
 ];
 
 export const ARTICLE_STATUS_META = Object.fromEntries(

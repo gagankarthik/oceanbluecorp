@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  ChevronDown, X, Loader2, Check,
+  ChevronDown, X, Check,
 } from "lucide-react";
 import type { IconComponent } from "@/components/admin/icons";
 import {
@@ -303,7 +303,7 @@ export default function UsersPage() {
       header: "Staff member",
       sortValue: u => u.name || u.email,
       cell: u => (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <Avatar name={u.name} email={u.email} size="sm" />
           <span className="truncate font-semibold text-[var(--adm-ink)]">{u.name || "Unnamed"}</span>
         </div>
@@ -500,7 +500,7 @@ export default function UsersPage() {
               ? "Invite a teammate to give them access to the console."
               : "Try adjusting your search, role, or status filter.",
             action: users.length === 0 ? (
-              <WorkspaceButton variant="primary" onClick={openInvite}>
+              <WorkspaceButton onClick={openInvite}>
                 <IconUserPlus className="h-4 w-4" />Invite user
               </WorkspaceButton>
             ) : hasActiveFilters ? (
@@ -523,8 +523,8 @@ export default function UsersPage() {
             <WorkspaceButton onClick={closeInvite} className="w-full sm:w-auto">
               Cancel
             </WorkspaceButton>
-            <WorkspaceButton type="submit" form="invite-form" variant="primary" disabled={inviting} className="w-full sm:w-auto">
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconSend className="h-4 w-4" aria-hidden="true" />}
+            <WorkspaceButton loading={inviting} type="submit" form="invite-form" variant="primary" disabled={inviting} className="w-full sm:w-auto">
+              <IconSend className="h-4 w-4" aria-hidden="true" />
               {inviting ? "Sending invite" : "Send invite"}
             </WorkspaceButton>
           </>
@@ -593,13 +593,13 @@ export default function UsersPage() {
               <WorkspaceButton onClick={() => { setShowRoleModal(false); setUserToEdit(null); setNewRole(""); }} className="w-full sm:w-auto">
                 Cancel
               </WorkspaceButton>
-              <WorkspaceButton
+              <WorkspaceButton loading={updating}
                 variant="primary"
                 onClick={handleUpdateRole}
                 disabled={updating || newRole === userToEdit.role || !newRole}
                 className="w-full sm:w-auto"
               >
-                {updating && <Loader2 className="h-4 w-4 animate-spin" />}Save role
+                Save role
               </WorkspaceButton>
             </>
           }

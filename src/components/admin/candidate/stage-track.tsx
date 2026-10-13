@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import type { Application } from "@/lib/aws/dynamodb";
 import { WorkspaceButton } from "@/components/admin/workspace";
 import { IconError } from "@/components/admin/icons";
@@ -41,7 +41,7 @@ export function StageTrack({
                   aria-current={isActive ? "step" : undefined}
                   title={isActive ? stage.label : `Move to ${stage.label}`}
                   className={cn(
-                    "relative flex h-8 w-full items-center justify-center gap-1.5 border px-2 text-adm-xs font-medium transition-colors duration-150 disabled:cursor-default",
+                    "relative flex h-8 w-full items-center justify-center gap-1.5 border px-2 text-adm-base font-medium transition-colors duration-150 disabled:cursor-default",
                     i === 0 && "rounded-l-[6px]",
                     i === PIPELINE_STAGES.length - 1 && "rounded-r-[6px]",
                     isActive
@@ -62,7 +62,7 @@ export function StageTrack({
 
       <div className="flex flex-none flex-wrap items-center gap-2">
         {isRejected ? (
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-2.5 text-adm-xs font-medium text-[var(--adm-danger-ink)]">
+          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-3 text-adm-base font-medium text-[var(--adm-danger-ink)]">
             <IconError className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
             Rejected, pick a stage to reopen
           </span>
@@ -84,8 +84,7 @@ export function StageTrack({
             </WorkspaceButton>
             {/* The record's one filled action. */}
             {next && (
-              <WorkspaceButton size="sm" variant="primary" onClick={() => onStage(next.key)} disabled={saving}>
-                {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              <WorkspaceButton loading={saving} size="sm" variant="primary" onClick={() => onStage(next.key)} disabled={saving}>
                 Move to {next.label}
                 <ArrowRight aria-hidden="true" />
               </WorkspaceButton>

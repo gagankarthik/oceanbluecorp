@@ -453,8 +453,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
               : "Extract structured experience, education, skills and more from the attached resume. This can take up to a minute."
           }
           action={
-            <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
-              {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconSparkles aria-hidden="true" />}
+            <WorkspaceButton loading={analyzing} onClick={() => void handleAnalyze()} disabled={analyzing}>
+              <IconSparkles aria-hidden="true" />
               {analyzing ? "Analyzing…" : candidate.resumeAnalysisStatus === "failed" ? "Retry analysis" : "Analyze resume"}
             </WorkspaceButton>
           }
@@ -500,7 +500,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
           edge; the band sits above it so that padding never covers the band. */}
       <div
         ref={headerRef}
-        className="sticky -top-4 z-20 -mx-4 -mt-2 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-4 pt-4 sm:-top-5 sm:-mx-5 sm:-mt-3 sm:px-5 sm:pt-5 lg:-top-6 lg:-mx-6 lg:-mt-4 lg:px-6 lg:pt-6"
+        className="sticky -top-5 z-20 -mx-5 -mt-2 border-b border-[var(--adm-line)] bg-[var(--adm-canvas)] px-5 pt-5 sm:-top-6 sm:-mx-6 sm:-mt-3 sm:px-6 sm:pt-6 lg:-top-8 lg:-mx-8 lg:-mt-4 lg:px-8 lg:pt-8"
       >
         <StageTrack
           candidate={candidate}
@@ -599,8 +599,8 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                       <WorkspaceButton onClick={() => setAnalysisEditOpen(true)}>
                         <IconEdit aria-hidden="true" /> Edit
                       </WorkspaceButton>
-                      <WorkspaceButton onClick={() => void handleAnalyze()} disabled={analyzing}>
-                        {analyzing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <IconRefresh aria-hidden="true" />}
+                      <WorkspaceButton loading={analyzing} onClick={() => void handleAnalyze()} disabled={analyzing}>
+                        <IconRefresh aria-hidden="true" />
                         Re-analyze
                       </WorkspaceButton>
                     </div>

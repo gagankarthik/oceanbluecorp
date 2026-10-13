@@ -110,7 +110,7 @@ export function HeaderSearch({ className }: { className?: string }) {
           className,
         )}
       >
-        <IconSearch className="h-[18px] w-[18px]" aria-hidden="true" />
+        <IconSearch className="size-5" aria-hidden="true" />
       </button>
     );
   }
@@ -148,7 +148,7 @@ export function HeaderSearch({ className }: { className?: string }) {
         type="button"
         onClick={collapse}
         aria-label={q ? "Clear and close search" : "Close search"}
-        className="absolute right-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        className="absolute right-1.5 top-1/2 adm-hit grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[var(--adm-ink-subtle)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         <X className="h-3.5 w-3.5" aria-hidden="true" />
       </button>

@@ -82,7 +82,7 @@ export function ContactDetail({
           <AdminCardHeader title="Contact details" />
           <dl className="divide-y divide-[var(--adm-line-soft)]">
             {facts.map(({ label, value, href, numeric }) => (
-              <div key={label} className="flex min-w-0 items-baseline justify-between gap-4 px-4 py-2.5">
+              <div key={label} className="flex min-w-0 items-baseline justify-between gap-4 px-4 py-3">
                 <dt className="flex-none text-adm-xs text-[var(--adm-ink-subtle)]">{label}</dt>
                 <dd className={cn("min-w-0 truncate text-right text-adm-base text-[var(--adm-ink)]", numeric && "tabular-nums")}>
                   {!value ? (

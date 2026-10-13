@@ -210,7 +210,7 @@ export default function LeadSourcingPage() {
       )}
 
       {!loading && error && (
-        <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+        <div role="alert" className="flex items-start gap-3 rounded-[12px] border border-[var(--adm-danger-line)] bg-[var(--adm-danger-soft)] px-4 py-3">
           <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
           <p className="text-adm-base leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
         </div>
@@ -264,7 +264,7 @@ export default function LeadSourcingPage() {
                     <div className="flex flex-none items-center gap-3 sm:gap-4">
                       <VerdictBadge verdict={c.verdict} className="hidden sm:inline" />
                       <span className="text-right">
-                        <span className={cn("text-adm-xl font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
+                        <span className={cn("text-adm-lg font-semibold leading-none tracking-[-0.02em] tabular-nums", fitScoreColor(c.fit_score))}>
                           {c.fit_score}
                         </span>
                         <span className="ml-0.5 text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">/100</span>

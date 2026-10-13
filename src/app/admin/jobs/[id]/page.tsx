@@ -240,12 +240,12 @@ export default function JobDetailPage({
         return (
           <div className="flex max-w-[200px] flex-wrap items-center gap-1">
             {skills.slice(0, 2).map((s) => (
-              <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium text-[var(--adm-ink-mute)]">
+              <span key={s} className="rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
                 {s}
               </span>
             ))}
             {skills.length > 2 && (
-              <span className="px-1 text-adm-micro font-medium tabular-nums text-[var(--adm-ink-subtle)]">
+              <span className="px-1 text-adm-xs font-medium tabular-nums text-[var(--adm-ink-subtle)]">
                 +{skills.length - 2}
               </span>
             )}
@@ -280,7 +280,7 @@ export default function JobDetailPage({
               <button
                 type="button"
                 aria-label={`Actions for ${a.name || a.email}`}
-                className="grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]"
               >
                 <MoreVertical className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -290,10 +290,10 @@ export default function JobDetailPage({
               sideOffset={6}
               className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
             >
-              <DropdownMenuItem onClick={() => router.push(`/admin/candidates/${a.id}`)} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
+              <DropdownMenuItem onClick={() => router.push(`/admin/candidates/${a.id}`)} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink)]">
                 <IconEye className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />View profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setEditingApp(a); setDrawerOpen(true); }} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
+              <DropdownMenuItem onClick={() => { setEditingApp(a); setDrawerOpen(true); }} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink)]">
                 <IconEdit className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />Edit applicant
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1 bg-[var(--adm-line-soft)]" />
@@ -304,7 +304,7 @@ export default function JobDetailPage({
                 <DropdownMenuItem
                   key={s.value}
                   onClick={() => handleStatusChange(a.id, s.value)}
-                  className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink-mute)]"
+                  className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink-mute)]"
                 >
                   <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: statusColor(s.value) }} />
                   {s.label}
@@ -379,7 +379,7 @@ export default function JobDetailPage({
           <>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <WorkspaceButton aria-label="More actions" className="px-2.5">
+                <WorkspaceButton aria-label="More actions" className="px-3">
                   <MoreVertical aria-hidden="true" />
                 </WorkspaceButton>
               </DropdownMenuTrigger>
@@ -390,7 +390,7 @@ export default function JobDetailPage({
               >
                 {isPubliclyOpen(job.status) ? (
                   <>
-                    <DropdownMenuItem onClick={shareLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
+                    <DropdownMenuItem onClick={shareLink} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink)]">
                       {copied
                         ? <Check className="h-4 w-4 text-[var(--adm-success-ink)]" aria-hidden="true" />
                         : <IconLink className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />}
@@ -398,7 +398,7 @@ export default function JobDetailPage({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => window.open(publicUrl(), "_blank", "noopener")}
-                      className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]"
+                      className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink)]"
                     >
                       <IconEye className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                       View public posting
@@ -406,13 +406,13 @@ export default function JobDetailPage({
                   </>
                 ) : (
                   // A draft, on-hold or closed posting has no public page to share.
-                  <DropdownMenuItem disabled className="gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink-subtle)]">
+                  <DropdownMenuItem disabled className="gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink-subtle)]">
                     <IconLink className="h-4 w-4" aria-hidden="true" />
                     Share link (set the role to Active first)
                   </DropdownMenuItem>
                 )}
                 {canManageApplicants && filteredApps.length > 0 && (
-                  <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-xs text-[var(--adm-ink)]">
+                  <DropdownMenuItem onClick={handleExport} className="cursor-pointer gap-2 rounded-[6px] px-2 py-1.5 text-adm-base text-[var(--adm-ink)]">
                     <IconDownload className="h-4 w-4 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
                     Export {filteredApps.length} applicant{filteredApps.length === 1 ? "" : "s"}
                   </DropdownMenuItem>
@@ -461,7 +461,7 @@ export default function JobDetailPage({
             ))}
           </dl>
           {missingDetails.length > 0 && (
-            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-2.5 text-adm-xs text-[var(--adm-ink-subtle)]">
+            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-3 text-adm-xs text-[var(--adm-ink-subtle)]">
               Not recorded: {missingDetails.join(", ").toLowerCase()}.
               {canEdit && (
                 <>
@@ -503,7 +503,7 @@ export default function JobDetailPage({
                   />
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className="rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-micro font-medium tabular-nums text-[var(--adm-ink-mute)]">
+                    <span className="rounded-full bg-[var(--adm-surface-2)] px-1.5 py-px text-adm-xs font-medium tabular-nums text-[var(--adm-ink-mute)]">
                       {tab.count}
                     </span>
                   )}

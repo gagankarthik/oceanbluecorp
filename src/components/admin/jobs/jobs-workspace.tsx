@@ -392,7 +392,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     // Hidden only when the table holds no pricing columns to make room for.
     hideBelow: canPrice ? "xl" : "lg",
     cell: (j) => (
-      <span title={jobLocationLabel(j) || undefined} className="inline-flex max-w-[130px] items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+      <span title={jobLocationLabel(j) || undefined} className="inline-flex max-w-32 items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
         <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="min-w-0 truncate">{jobLocationLabel(j) || "–"}</span>
       </span>
@@ -529,7 +529,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
   );
 
   const emptyAction = jobs.length === 0
-    ? (canEdit ? <WorkspaceButton variant="primary" onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
+    ? (canEdit ? <WorkspaceButton onClick={() => router.push(copy.newHref)}><Plus />{copy.post}</WorkspaceButton> : undefined)
     : (hasActiveFilters ? <WorkspaceButton onClick={clearFilters}><X />Clear filters</WorkspaceButton> : undefined);
 
   const listFilters: ListFilter[] = [
@@ -590,7 +590,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                     value={postedFrom}
                     max={postedTo || undefined}
                     onChange={(e) => setPostedFrom(e.target.value)}
-                    className="h-8 px-2 text-adm-xs"
+                    className="h-8 px-2 text-adm-base"
                   />
                 </FilterField>
                 <FilterField label="To" htmlFor="filter-posted-to">
@@ -600,7 +600,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                     value={postedTo}
                     min={postedFrom || undefined}
                     onChange={(e) => setPostedTo(e.target.value)}
-                    className="h-8 px-2 text-adm-xs"
+                    className="h-8 px-2 text-adm-base"
                   />
                 </FilterField>
               </div>

@@ -21,18 +21,17 @@ test("admin code sizes text only from the type scale", () => {
   assert.deepEqual(offenders, [], `use text-adm-* instead:\n${offenders.join("\n")}`);
 });
 
-test("the scale keeps one ratio", () => {
+test("the scale keeps one ratio, 1.2 from a 14px body", () => {
   const css = readFileSync("src/app/globals.css", "utf8");
-  const steps = ["micro", "xs", "base", "md", "lg", "xl", "2xl", "3xl", "4xl"].map((k) => {
+  const keys = ["xs", "base", "md", "lg", "xl", "2xl"];
+  keys.forEach((k, i) => {
     const m = css.match(new RegExp(`--text-adm-${k}:\\s*([\\d.]+)px`));
     assert.ok(m, `--text-adm-${k} missing`);
-    return Number(m[1]);
+    const ideal = 14 * 1.2 ** (i - 1);
+    // Half-pixel rounding moves a step by under 2% off the ideal.
+    assert.ok(Math.abs(Number(m[1]) / ideal - 1) < 0.02, `--text-adm-${k} ${m[1]}px is off 14 × 1.2^${i - 1} = ${ideal.toFixed(2)}`);
   });
-  for (let i = 1; i < steps.length; i++) {
-    const ratio = steps[i] / steps[i - 1];
-    // Half-pixel rounding moves a step by at most ~0.06 off 1.125.
-    assert.ok(Math.abs(ratio - 1.125) < 0.07, `step ${i} ratio ${ratio.toFixed(3)} is off 1.125`);
-  }
+  for (const gone of ["micro", "3xl", "4xl"]) assert.ok(!css.includes(`--text-adm-${gone}:`), `--text-adm-${gone} is retired`);
 });
 
 test("cn() keeps a scale size beside a text colour", async () => {

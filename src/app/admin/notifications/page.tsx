@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  Loader2,
   ChevronRight,
   X,
 } from "lucide-react";
@@ -35,12 +34,12 @@ const NOTIFICATION_TYPES: {
   tone: Tone;
 }[] = [
   { key: "job_posted",           label: "Job posted",       short: "Jobs",         tone: "blue"    },
-  { key: "application_received", label: "New application",  short: "Applications", tone: "emerald" },
+  { key: "application_received", label: "New application",  short: "Applications", tone: "sky"     },
   { key: "contact_received",     label: "Contact received", short: "Contacts",     tone: "violet"  },
 ];
 
 const ICON_BTN =
-  "grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+  "adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 
 const OTHER_TYPE: { label: string; short: string; tone: Tone } = { label: "Other", short: "Other", tone: "slate" };
 
@@ -239,8 +238,8 @@ export default function NotificationsPage() {
         </>}
         actions={
           unreadCount > 0 ? (
-            <WorkspaceButton variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
-              {markingAllRead ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconSuccess className="h-4 w-4" />}
+            <WorkspaceButton loading={markingAllRead} variant="primary" onClick={handleMarkAllAsRead} disabled={markingAllRead}>
+              <IconSuccess className="h-4 w-4" />
               Mark all as read
             </WorkspaceButton>
           ) : undefined

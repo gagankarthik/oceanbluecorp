@@ -75,7 +75,6 @@ export function JobPreviewDrawer({
       <SheetContent
         side="right"
         showCloseButton={false}
-        overlayClassName="bg-[var(--adm-scrim)]"
         className="flex w-full flex-col gap-0 bg-[var(--adm-surface)] p-0 sm:max-w-[480px]"
       >
         {job && (
@@ -94,7 +93,7 @@ export function JobPreviewDrawer({
                 type="button"
                 onClick={onClose}
                 aria-label="Close preview"
-                className="grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                className="adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>

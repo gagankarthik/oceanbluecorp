@@ -6,7 +6,7 @@ import { extendTailwindMerge } from "tailwind-merge"
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ["adm-micro", "adm-xs", "adm-base", "adm-md", "adm-lg", "adm-xl", "adm-2xl", "adm-3xl", "adm-4xl"],
+      text: ["adm-xs", "adm-base", "adm-md", "adm-lg", "adm-xl", "adm-2xl"],
     },
   },
 })

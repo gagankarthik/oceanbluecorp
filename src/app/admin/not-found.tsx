@@ -21,7 +21,7 @@ export default function AdminNotFound() {
           <span className="size-1.5 rounded-full bg-[var(--adm-accent)]" aria-hidden />
           Error 404
         </p>
-        <h1 className="mt-3 text-adm-2xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
+        <h1 className="mt-3 text-adm-xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
           This page doesn&rsquo;t exist
         </h1>
         <p className="mt-2 max-w-[46ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">

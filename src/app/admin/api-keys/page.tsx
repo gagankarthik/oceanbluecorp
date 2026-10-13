@@ -302,7 +302,7 @@ export default function ApiKeysPage() {
             disabled={scopingId === k.id}
             onChange={(e) => handleAccessChange(k.id, e.target.value as ApiAccessLevel)}
             onClick={(e) => e.stopPropagation()}
-            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-xs font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-50"
+            className="h-8 cursor-pointer appearance-none rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] py-0 pl-3 pr-8 text-adm-base font-medium text-[var(--adm-ink)] transition-colors duration-150 hover:border-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {API_ACCESS_LEVELS.map((level) => (
               <option key={level.id} value={level.id}>{level.label}</option>
@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -384,7 +384,7 @@ export default function ApiKeysPage() {
             disabled={deletingId === k.id}
             aria-label={`Revoke ${k.name}`}
             title="Revoke key permanently"
-            className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-50"
+            className="grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             {deletingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -419,7 +419,7 @@ export default function ApiKeysPage() {
           className="rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-warning)_35%,transparent)] bg-[var(--adm-warning-soft)] p-4"
         >
           <div className="flex items-start gap-3">
-            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-warning-ink)]" />
+            <IconWarning className="mt-0.5 size-5 flex-none text-[var(--adm-warning-ink)]" />
             <div className="min-w-0 flex-1">
               <p className="text-adm-base font-semibold text-[var(--adm-warning-ink)]">Copy your API key now, it won&apos;t be shown again</p>
               <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
@@ -427,7 +427,7 @@ export default function ApiKeysPage() {
                 <span className="font-medium text-[var(--adm-ink)]">{accessLevelMeta(newKey.accessLevel).label}</span>
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-adm-xs text-[var(--adm-ink)]">
+                <div className="flex h-9 min-w-0 flex-1 select-all items-center truncate rounded-[var(--adm-radius-input)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 font-mono text-adm-base text-[var(--adm-ink)]">
                   <span className="truncate">
                     {showKey ? newKey.key : newKey.key.slice(0, 16) + "•".repeat(newKey.key.length - 16)}
                   </span>
@@ -464,7 +464,7 @@ export default function ApiKeysPage() {
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-adm-base text-[var(--adm-danger-ink)]"
+          className="flex items-center gap-3 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-adm-base text-[var(--adm-danger-ink)]"
         >
           <IconError className="h-4 w-4 flex-none" />
           <span className="min-w-0 flex-1">{error}</span>
@@ -515,7 +515,7 @@ export default function ApiKeysPage() {
               { route: "GET /api/v1/jobs/:id", scope: "jobs:read" },
               { route: "POST /api/v1/jobs", scope: "jobs:write" },
             ].map(({ route, scope }) => (
-              <li key={route} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
+              <li key={route} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <span className="min-w-0 break-all font-mono text-adm-xs text-[var(--adm-ink)]">{route}</span>
                 <span className={codeChip}>{scope}</span>
               </li>
@@ -549,8 +549,8 @@ export default function ApiKeysPage() {
             <WorkspaceButton onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
               Cancel
             </WorkspaceButton>
-            <WorkspaceButton type="submit" form="apikey-form" variant="primary" disabled={creating} className="w-full sm:w-auto">
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <IconKey className="h-4 w-4" aria-hidden="true" />}
+            <WorkspaceButton loading={creating} type="submit" form="apikey-form" variant="primary" disabled={creating} className="w-full sm:w-auto">
+              <IconKey className="h-4 w-4" aria-hidden="true" />
               {creating ? "Generating…" : "Generate key"}
             </WorkspaceButton>
           </>

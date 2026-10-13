@@ -15,7 +15,7 @@ export default function SettingsLoading() {
       <div className="grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-[208px_minmax(0,1fr)] lg:gap-5">
         <div className={`${CARD} flex gap-1 overflow-hidden p-1.5 lg:flex-col`}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-none items-start gap-2.5 px-3 py-2 lg:py-2.5">
+            <div key={i} className="flex flex-none items-start gap-3 px-3 py-2 lg:py-3">
               <Skel className="h-4 w-4 flex-none" />
               <div className="space-y-1.5">
                 <Skel className="h-3.5 w-20" />

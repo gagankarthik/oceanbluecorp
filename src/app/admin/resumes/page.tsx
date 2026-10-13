@@ -99,7 +99,7 @@ function fmtSize(bytes: number) {
 /** Format mark: a small text chip, not a tinted tile. */
 function FileTypeTag({ type }: { type: string }) {
   return (
-    <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
+    <span className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
       {formatLabel(type)}
     </span>
   );
@@ -124,7 +124,7 @@ function IconAction({
       title={label}
       aria-label={label}
       className={cn(
-        "grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors",
+        "adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors",
         danger
           ? "hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
           : "hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
@@ -600,7 +600,7 @@ export default function ResumeBankPage() {
             onClick={(e) => { e.stopPropagation(); void indexKeys([r]); }}
             disabled={bulkRunning || jobBusy}
             title={serverFailures.get(r.fileKey) || "The last attempt failed"}
-            className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
+            className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-[var(--adm-opacity-disabled)]"
           >
             Failed · Retry
           </button>
@@ -676,7 +676,7 @@ export default function ResumeBankPage() {
             <WorkspaceButton onClick={exportCSV} disabled={filtered.length === 0}>
               <IconDownload className="h-4 w-4" /><span className="hidden sm:inline">Export</span>
             </WorkspaceButton>
-            <WorkspaceButton variant="primary" onClick={() => fileInputRef.current?.click()}>
+            <WorkspaceButton variant={pendingCount > 0 ? "secondary" : "primary"} onClick={() => fileInputRef.current?.click()}>
               <IconUpload className="h-4 w-4" />Upload
             </WorkspaceButton>
           </>
@@ -699,7 +699,7 @@ export default function ResumeBankPage() {
                   type="button"
                   onClick={() => setPanelOpen(false)}
                   aria-label="Close upload queue"
-                  className="grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+                  className="adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -731,8 +731,8 @@ export default function ResumeBankPage() {
                   )}
 
                   {item.status === "uploading" && (
-                    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
-                      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
+                      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-300 ease-[var(--adm-ease)]" style={{ width: `${item.progress}%` }} />
                     </div>
                   )}
 
@@ -754,8 +754,7 @@ export default function ResumeBankPage() {
               <p className="text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                 {pendingCount > 0 ? `${pendingCount} file${pendingCount > 1 ? "s" : ""} ready to upload` : "Uploading…"}
               </p>
-              <WorkspaceButton variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
-                {anyUploading && <Loader2 className="animate-spin" aria-hidden="true" />}
+              <WorkspaceButton loading={anyUploading} variant="primary" onClick={uploadAll} disabled={anyUploading || pendingCount === 0}>
                 {anyUploading ? "Uploading…" : `Upload ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
               </WorkspaceButton>
             </div>
@@ -791,8 +790,8 @@ export default function ResumeBankPage() {
           tone="warning"
           icon={<IconWarning className="h-4 w-4 text-[var(--adm-warning-ink)]" aria-hidden="true" />}
           action={
-            <WorkspaceButton onClick={() => startIndexing()} disabled={jobAction !== null}>
-              {jobAction === "start" && <Loader2 className="animate-spin" aria-hidden="true" />}Resume indexing
+            <WorkspaceButton loading={jobAction === "start"} onClick={() => startIndexing()} disabled={jobAction !== null}>
+              Resume indexing
             </WorkspaceButton>
           }
         >
@@ -822,8 +821,8 @@ export default function ResumeBankPage() {
                 <WorkspaceButton variant="ghost" onClick={() => setStatusFilter("failed")}>Show failed</WorkspaceButton>
               )}
               {(job?.failed.length ?? 0) > 0 && (
-                <WorkspaceButton onClick={() => startIndexing(true)} disabled={jobAction !== null}>
-                  {jobAction === "retry" && <Loader2 className="animate-spin" aria-hidden="true" />}Retry failed
+                <WorkspaceButton loading={jobAction === "retry"} onClick={() => startIndexing(true)} disabled={jobAction !== null}>
+                  Retry failed
                 </WorkspaceButton>
               )}
             </>
@@ -843,8 +842,8 @@ export default function ResumeBankPage() {
         <Notice
           tone="accent"
           action={
-            <WorkspaceButton onClick={() => startIndexing()} disabled={jobAction !== null}>
-              {jobAction === "start" && <Loader2 className="animate-spin" aria-hidden="true" />}Index all
+            <WorkspaceButton loading={jobAction === "start"} onClick={() => startIndexing()} disabled={jobAction !== null}>
+              Index all
             </WorkspaceButton>
           }
         >
@@ -1021,14 +1020,14 @@ function DupChip({ role }: { role?: "keeper" | "extra" }) {
   return role === "extra" ? (
     <span
       title="Same file name and size as a kept copy. Safe to delete."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-warning-ink)]"
+      className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-warning-ink)]"
     >
       Extra copy
     </span>
   ) : (
     <span
       title="Other copies of this file exist. This is the one kept and indexed."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
+      className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
     >
       Kept copy
     </span>
@@ -1039,7 +1038,7 @@ function Progress({ value }: { value: number }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <div className="mt-2 h-1.5 w-full max-w-[420px] overflow-hidden rounded-full bg-[var(--adm-surface-2)]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-300 ease-[var(--adm-ease)]" style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -1098,8 +1097,8 @@ function DuplicatesDialog({
               This permanently deletes <span className="font-semibold tabular-nums">{toDelete.length}</span> {toDelete.length === 1 ? "file" : "files"}. It can’t be undone.
             </p>
             <WorkspaceButton variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>Back</WorkspaceButton>
-            <WorkspaceButton variant="danger" onClick={run} disabled={busy}>
-              {busy && <Loader2 className="animate-spin" aria-hidden="true" />}Delete {toDelete.length} {toDelete.length === 1 ? "file" : "files"}
+            <WorkspaceButton loading={busy} variant="danger" onClick={run} disabled={busy}>
+              Delete {toDelete.length} {toDelete.length === 1 ? "file" : "files"}
             </WorkspaceButton>
           </>
         ) : (
@@ -1119,7 +1118,7 @@ function DuplicatesDialog({
           const losesIndexed = !keptFile?.indexed && g.files.some((f) => f.indexed);
           return (
             <li key={g.groupKey} className="overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)]">
-              <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-2)] px-4 py-2.5">
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-2)] px-4 py-3">
                 <p className="min-w-0 truncate text-adm-base font-semibold text-[var(--adm-ink)]" title={g.keeper.fileName}>{g.keeper.fileName}</p>
                 <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                   {fmtSize(g.keeper.size)} · {g.files.length} copies
@@ -1190,8 +1189,8 @@ function Notice({
     <div
       className={cn(
         "mb-3 flex flex-col gap-3 rounded-[var(--adm-radius-card)] border px-4 py-3 text-adm-base sm:flex-row sm:items-center sm:justify-between",
-        tone === "accent" && "border-[var(--adm-line)] bg-[var(--adm-accent-tint)]",
-        tone === "warning" && "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]",
+        tone === "accent" && "border-[var(--adm-info-line)] bg-[var(--adm-info-soft)]",
+        tone === "warning" && "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]",
         tone === "neutral" && "border-[var(--adm-line)] bg-[var(--adm-surface)]",
       )}
     >

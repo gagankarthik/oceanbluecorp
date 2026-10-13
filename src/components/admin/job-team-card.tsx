@@ -211,7 +211,7 @@ export function JobTeamCard({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search staff…"
-                    className="h-8 w-full bg-transparent pl-8 pr-2 text-adm-xs text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
+                    className="h-8 w-full bg-transparent pl-8 pr-2 text-adm-base text-[var(--adm-ink)] outline-none placeholder:text-[var(--adm-ink-subtle)]"
                   />
                 </div>
 
@@ -226,7 +226,7 @@ export function JobTeamCard({
                   aria-expanded={open}
                   title={open ? "Close" : "Add a recruiter"}
                   className={cn(
-                    "grid h-8 w-8 flex-none place-items-center rounded-[8px] transition-colors",
+                    "adm-hit grid h-8 w-8 flex-none place-items-center rounded-[var(--adm-radius-input)] transition-colors",
                     MOTION,
                     open
                       ? "bg-[var(--adm-surface-2)] text-[var(--adm-ink)]"
@@ -274,8 +274,8 @@ export function JobTeamCard({
                       disabled={!!savingId}
                       aria-pressed={assigned}
                       className={cn(
-                        "flex w-full items-center gap-2.5 border-b border-[var(--adm-line-soft)] px-4 py-2.5 text-left transition-colors last:border-0",
-                        "hover:bg-[var(--adm-row-hover)] disabled:opacity-60",
+                        "flex w-full items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 text-left transition-colors last:border-0",
+                        "hover:bg-[var(--adm-row-hover)] disabled:opacity-[var(--adm-opacity-disabled)]",
                         assigned && "bg-[var(--adm-surface)]",
                       )}
                     >
@@ -293,7 +293,7 @@ export function JobTeamCard({
                       ) : assigned ? (
                         <Check className="h-4 w-4 flex-none text-[var(--adm-success-ink)]" aria-hidden="true" />
                       ) : (
-                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-micro font-medium capitalize text-[var(--adm-ink-mute)]">
+                        <span className="flex-none rounded-[6px] bg-[var(--adm-surface-2)] px-1.5 py-0.5 text-adm-xs font-medium capitalize text-[var(--adm-ink-mute)]">
                           {u.role}
                         </span>
                       )}
@@ -317,7 +317,7 @@ export function JobTeamCard({
           <ul className="flex max-h-[168px] flex-wrap gap-1.5 overflow-y-auto p-3">
             {job.recruitmentManagerName && (
               <li
-                className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] pl-1 pr-2.5"
+                className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] pl-1 pr-3"
                 title={`${job.recruitmentManagerName}, recruitment manager`}
               >
                 <Avatar name={job.recruitmentManagerName} size="xs" />
@@ -331,7 +331,7 @@ export function JobTeamCard({
                 key={ids[i] ?? i}
                 className={cn(
                   "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-1",
-                  canEdit ? "pr-1" : "pr-2.5",
+                  canEdit ? "pr-1" : "pr-3",
                 )}
                 title={`${name}, assignee`}
               >
@@ -344,7 +344,7 @@ export function JobTeamCard({
                     disabled={!!savingId}
                     aria-label={`Remove ${name} from the team`}
                     title="Remove from the team"
-                    className="grid h-6 w-6 flex-none place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:pointer-events-none"
+                    className="adm-hit grid h-6 w-6 flex-none place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] disabled:cursor-not-allowed"
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, X, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { IconTrash, IconWarning } from "./icons";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import type {
@@ -62,14 +62,14 @@ function Section({
 /** One repeatable entry (a role, a degree, a certificate) inside a section. */
 function Entry({ label, onRemove, children }: { label: string; onRemove: () => void; children: React.ReactNode }) {
   return (
-    <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3.5">
+    <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{label}</p>
         <button
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${label.toLowerCase()}`}
-          className="-my-1 grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
+          className="-my-1 adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]"
         >
           <IconTrash className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -186,12 +186,11 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        overlayClassName="bg-[var(--adm-scrim)]"
         side="right"
         showCloseButton={false}
         className="flex w-full flex-col gap-0 bg-[var(--adm-canvas)] p-0 sm:max-w-[640px]"
       >
-        <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5">
+        <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
             <SheetTitle className="text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
               Edit resume analysis
@@ -204,7 +203,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="-mr-1 grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+            className="-mr-1 adm-hit grid h-8 w-8 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -212,7 +211,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {error && (
-            <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+            <div role="alert" className="flex items-start gap-3 rounded-[12px] border border-[var(--adm-danger-line)] bg-[var(--adm-danger-soft)] px-4 py-3">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
               <p className="text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
             </div>
@@ -327,8 +326,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
         <div className="flex flex-none flex-wrap items-center justify-end gap-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
           <WorkspaceButton onClick={() => onOpenChange(false)}>Cancel</WorkspaceButton>
-          <WorkspaceButton variant="primary" onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
+          <WorkspaceButton loading={saving} variant="primary" onClick={handleSave} disabled={saving}>
             Save changes
           </WorkspaceButton>
         </div>

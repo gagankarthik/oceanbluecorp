@@ -9,7 +9,7 @@ export default function JobDetailLoading() {
         <Skel className="mb-3 h-3.5 w-14" />
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0 space-y-3">
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               <Skel className="h-7 w-64 max-w-[60vw]" />
               <Skel className="h-6 w-16 rounded-full" />
             </div>

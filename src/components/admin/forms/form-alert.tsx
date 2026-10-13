@@ -20,7 +20,7 @@ export function FormErrorBanner({
     <div
       role="alert"
       className={cn(
-        "flex items-start gap-2.5 rounded-[10px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-adm-xs leading-snug text-[var(--adm-danger-ink)]",
+        "flex items-start gap-3 rounded-[var(--adm-radius-card)] border border-[var(--adm-danger-line)] bg-[var(--adm-danger-soft)] px-3 py-3 text-adm-xs leading-snug text-[var(--adm-danger-ink)]",
         className,
       )}
     >
@@ -31,7 +31,7 @@ export function FormErrorBanner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss error"
-          className="-my-0.5 grid h-6 w-6 flex-none place-items-center rounded-[6px] transition-colors hover:bg-[var(--adm-surface)]"
+          className="-my-0.5 adm-hit grid h-6 w-6 flex-none place-items-center rounded-[var(--adm-radius-control)] transition-colors hover:bg-[var(--adm-surface)]"
         >
           <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
