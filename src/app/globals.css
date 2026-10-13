@@ -1510,7 +1510,7 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 @media (prefers-reduced-motion: reduce) { .logo-in, .logo-out { animation: none; } .logo-out { display: none; } }
 
 /* Solutions showcase demos, played on the card the canvas centres on. They
-   start after the canvas has settled (it glides for 1s). */
+   start once the canvas has settled. */
 .demo-cursor { left: 56%; bottom: 58px; animation: demo-cursor 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both; }
 @keyframes demo-cursor {
   0% { opacity: 0; transform: translate(70px, -110px); }

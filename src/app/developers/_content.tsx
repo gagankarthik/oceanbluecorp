@@ -93,7 +93,7 @@ function EndpointCard({
       </button>
       {open && (
         <div className="min-w-0 space-y-5 border-t border-line bg-paper px-4 py-5 sm:px-5">
-          <p className="type-body text-ink-muted">{description}</p>
+          <p className="measure type-body text-ink-muted">{description}</p>
           {params && params.length > 0 && (
             <div>
               <p className="mb-3 type-label font-semibold text-ink">Parameters</p>
@@ -243,7 +243,7 @@ export default function DevelopersContent() {
 
           {/* Overview */}
           <Section id="overview" title="Overview">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               The Oceanblue Solutions, Inc. Job Feed API lets external platforms pull our live job listings.
               It&apos;s a versioned REST API hosted at <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono text-cobalt">/api/v1</code> and returns JSON.
             </p>
@@ -269,7 +269,7 @@ export default function DevelopersContent() {
 
           {/* Authentication */}
           <Section id="authentication" title="Authentication">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               Every request must include your API key in the <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">X-API-Key</code> request header.
               You can alternatively pass it as a query parameter <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">?api_key=</code> for quick testing.
             </p>
@@ -463,7 +463,7 @@ curl "https://oceanbluecorp.com/api/v1/jobs?api_key=obk_live_your_api_key_here"`
 
           {/* Filtering & Pagination */}
           <Section id="filtering" title="Filtering & Pagination">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               By default the list endpoint returns only <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">active</code> and <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">open</code> jobs.
               You can combine any query params.
             </p>
@@ -508,7 +508,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
 
           {/* Response Schema */}
           <Section id="response-schema" title="Response Schema">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               All job objects returned by the API contain these fields. Internal fields (pay rates, recruiter details, billing data) are never included.
             </p>
             <div className="overflow-x-auto rounded-xl border border-line">
@@ -555,7 +555,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
 
           {/* Errors */}
           <Section id="errors" title="Errors">
-            <p className="mb-4 type-body text-ink-muted">
+            <p className="measure mb-4 type-body text-ink-muted">
               All errors return a JSON body with an <code className="bg-paper px-1.5 py-0.5 rounded text-sm font-mono">error</code> field.
             </p>
             <CodeBlock lang="json">{`{

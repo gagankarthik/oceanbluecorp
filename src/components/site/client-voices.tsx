@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Client voices, all visible at once: three cards in one row, the middle one
- * on navy, the outer two on white, all over the striped cobalt section. No carousel, so nobody waits to see who vouches
- * for us. White on cobalt and ink on white are both well above AA.
+ * on navy, the outer two outlined on white. No carousel, so nobody waits to see
+ * who vouches for us.
  */
 
 type Story = {
@@ -71,7 +71,7 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
     <figure
       className={cn(
         "relative flex h-full flex-col overflow-hidden rounded-2xl p-8",
-        featured ? "on-dark bg-ink text-white" : "bg-white text-ink",
+        featured ? "on-dark bg-ink text-white" : "border border-line bg-white text-ink",
       )}
     >
       <div className="relative flex items-start justify-between gap-6">
@@ -95,7 +95,7 @@ function Voice({ s, featured }: { s: Story; featured?: boolean }) {
           aria-hidden
           className={cn(
             "flex size-11 shrink-0 items-center justify-center rounded-full type-label",
-            featured ? "bg-cobalt text-white" : "bg-cobalt-tint text-cobalt",
+            featured ? "bg-white/15 text-white" : "bg-paper text-ink",
           )}
         >
           {initials(s.author)}

@@ -116,7 +116,7 @@ export default function Locations({ tone = "paper" }: { tone?: "white" | "paper"
           ))}
         </ul>
 
-        <p className="mt-10 text-center type-body text-ink-muted">
+        <p className="measure mx-auto mt-10 text-center type-body text-ink-muted">
           Or email{" "}
           <a href="mailto:hr@oceanbluecorp.com" className="font-semibold text-cobalt underline-offset-4 hover:underline">
             hr@oceanbluecorp.com

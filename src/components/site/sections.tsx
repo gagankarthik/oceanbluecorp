@@ -96,7 +96,7 @@ export function ChamferGround({ ground = "white", below, children }: { ground?: 
   );
 }
 
-/** Every section: same padding, header, then content. Dark and blue tones get chamfered corners. */
+/** Every section: same padding, header, then content. The dark tone gets chamfered corners. */
 export function Section({
   tone = "white",
   title,
@@ -109,8 +109,8 @@ export function Section({
   below,
   notched,
 }: {
-  /** `dark` is navy with the dot grid, `blue` cobalt with diagonal stripes: at most one of either per page (60-30-10). */
-  tone?: "white" | "paper" | "dark" | "blue";
+  /** `dark` is navy with the dot grid: at most one per page (60-30-10). Cobalt is for actions, never a ground. */
+  tone?: "white" | "paper" | "dark";
   title: string;
   sub?: string;
   kicker?: string;
@@ -124,22 +124,19 @@ export function Section({
   /** Dark tones only: notch the top edge to mirror the bottom one. */
   notched?: boolean;
 }) {
-  const dark = tone === "dark" || tone === "blue";
+  const dark = tone === "dark";
   const section = (
     <section
       id={id}
       data-tone={tone}
       className={cn(
-        tone === "paper" ? "bg-paper" : tone === "blue" ? "on-dark chamfer relative isolate overflow-hidden bg-cobalt text-white" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
+        tone === "paper" ? "bg-paper" : dark ? "on-dark chamfer relative isolate overflow-hidden bg-night text-white" : "bg-white",
         SECTION_Y,
         dark && notched && "chamfer-notched",
         id && "scroll-mt-28",
       )}
     >
       {tone === "dark" && <DotsBackdrop />}
-      {tone === "blue" && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[repeating-linear-gradient(115deg,rgb(255_255_255/0.09)_0_1px,transparent_1px_72px)]" />
-      )}
       <div className={CONTAINER}>
         <SectionTitle title={title} sub={sub} kicker={kicker} link={link} dark={dark} />
         <div className={cn("reveal", STACK_LG)}>{children}</div>
@@ -300,7 +297,7 @@ export function DocHero({ title, lede, updated }: { title: string; lede?: string
         <div className="max-w-[760px]">
           <h1 className="rise type-headline-lg text-ink">{title}</h1>
           {lede && (
-            <p className="rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
+            <p className="rise measure mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
               {lede}
             </p>
           )}
@@ -331,7 +328,7 @@ export function PolicyBody({ sections }: { sections: { id: string; h: string; bo
           ))}
         </ul>
       </nav>
-      <div className="max-w-[760px] space-y-12">
+      <div className="measure space-y-12">
         {sections.map((s) => (
           <section key={s.id} id={s.id} className="scroll-mt-28">
             <h2 className="type-headline-sm text-ink">{s.h}</h2>

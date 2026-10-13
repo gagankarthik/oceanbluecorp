@@ -74,12 +74,12 @@ export default function AboutPage({ content = {} }: { content?: Record<string, s
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
           <h2 className="reveal type-headline text-ink">Our purpose</h2>
           <div className="reveal space-y-5">
-            <p className="type-body-lg text-ink">
+            <p className="measure type-body-lg text-ink">
               Technology should make people&apos;s work simpler, not give them a second job managing it. We help organizations
               modernize the systems they already run, strengthen the teams around them, and adopt what actually changes how the
               business performs.
             </p>
-            <p className="type-body text-ink-muted">
+            <p className="measure type-body text-ink-muted">
               {years} years of doing that has left us with a bias toward clarity and very little patience for complexity that
               serves the vendor rather than the client. We exist to give organizations the technology, talent and support to
               operate faster and more securely, with deep technical expertise and a genuine commitment to service behind it.

@@ -71,10 +71,10 @@ export function DocPage({
       <section data-opener className="border-b border-line bg-paper">
         <div className={cn(CONTAINER, OPENER_Y, "lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12")}>
           <div className="hidden lg:block" />
-          <div className="max-w-[760px]">
+          <div className="measure">
             <h1 className="rise type-headline-lg font-semibold text-ink">{title}</h1>
             {lede && (
-              <p className="rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
+              <p className="measure rise mt-4 type-body-lg text-ink-muted" style={{ animationDelay: "100ms" }}>
                 {lede}
               </p>
             )}
@@ -110,7 +110,7 @@ export function DocPage({
           </div>
           {aside && <div className="mt-8">{aside}</div>}
         </nav>
-        <div className="min-w-0 max-w-[760px]">
+        <div className="measure min-w-0">
           {children}
           {history && history.length > 0 && (
             <DocSection id="version-history" title="Version history">
@@ -155,7 +155,7 @@ export function UL({ items }: { items: (string | React.ReactNode)[] }) {
     <ul className="space-y-2.5">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span aria-hidden className="mt-[0.7em] size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
+          <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-[1px] bg-cobalt" />
           <span>{item}</span>
         </li>
       ))}

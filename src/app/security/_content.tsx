@@ -118,13 +118,13 @@ export default function SecurityPage() {
         <div className={`${CONTAINER} reveal grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16`}>
           <h2 className={H2}>Our position</h2>
           <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-            <p className="type-body-lg text-ink">
+            <p className="measure type-body-lg text-ink">
               We place engineers inside client systems and we run managed
               services on client infrastructure, so the honest answer to most
               security questions is that your controls govern your estate and
               ours govern ours. This page covers ours.
             </p>
-            <p className="type-body text-ink-muted">
+            <p className="measure type-body text-ink-muted">
               Where we hold a certification we say so. Where we do not, we say
               that too, further down this page. A security page that only lists
               strengths is not useful to anyone evaluating a supplier, and the

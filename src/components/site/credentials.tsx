@@ -75,7 +75,7 @@ function ColumnHead({ id, kicker, title, sub, link }: { id: string; kicker: stri
       <h2 id={id} className="mt-3 type-headline-sm text-white">
         {title}
       </h2>
-      <p className="mt-4 type-body text-white/70">{sub}</p>
+      <p className="measure mt-4 type-body text-white/70">{sub}</p>
       <SectionLink href={link.href} dark className="mt-6">
         {link.label}
       </SectionLink>

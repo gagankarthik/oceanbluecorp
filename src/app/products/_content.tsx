@@ -190,11 +190,11 @@ export default function ProductsPage() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
           <div className="reveal">
             <h2 className="type-headline font-semibold text-ink">The portfolio</h2>
-            <p className="mt-6 type-body-lg text-ink">
+            <p className="measure mt-6 type-body-lg text-ink">
               Two platforms in production, and they have almost nothing in common. One reads contracts and invoices for enterprise teams. The other
               sends wedding invitations.
             </p>
-            <p className="mt-5 type-body-lg text-ink-muted">
+            <p className="measure mt-5 type-body-lg text-ink-muted">
               That gap is the point. A company that only staffs projects never has to live with its own decisions. Owning two products, in two
               markets, on two very different footings, is how we find out whether the way we build actually holds up.
             </p>

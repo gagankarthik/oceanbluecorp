@@ -25,7 +25,7 @@ const newsTypeLabel = (value?: string) => NEWS_TYPES.find((t) => t.value === val
 
 /** Shared prose styling for every rich-text field on the page. */
 const PROSE =
-  "type-body-lg text-ink-muted" +
+  "measure type-body-lg text-ink-muted " +
   "[&_p]:mb-5 [&_strong]:font-semibold [&_strong]:text-ink " +
   "[&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:type-headline-sm [&_h2]:text-ink " +
   "[&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:type-title-lg [&_h3]:text-ink " +
@@ -233,7 +233,7 @@ export default function ArticleDetail({ article, related }: { article: Article; 
 
             {kind === "news" && (article.pressContactEmail || article.pressContactName) && (
               <Part title="Media contact">
-                <p className="type-body text-ink-muted">
+                <p className="measure type-body text-ink-muted">
                   {article.pressContactName && <span className="block font-semibold text-ink">{article.pressContactName}</span>}
                   {article.pressContactEmail && (
                     <a href={`mailto:${article.pressContactEmail}`} className="text-cobalt underline underline-offset-4">

@@ -114,7 +114,7 @@ function BlogLayout({ articles, subtitle }: { articles: Article[]; subtitle: str
       {/* "Recent" is the only list worth standing beside the feed. */}
       <aside>
         <div className="rounded-2xl border border-line bg-paper p-6 lg:sticky lg:top-28">
-          <p className="type-body text-ink-muted">{subtitle}</p>
+          <p className="measure type-body text-ink-muted">{subtitle}</p>
           <h2 className="mt-6 type-label font-semibold text-ink">Recent</h2>
           <ul className="mt-2 divide-y divide-line">
             {articles.slice(0, 5).map((a) => (
