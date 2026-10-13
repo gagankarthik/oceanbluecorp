@@ -1,6 +1,5 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Photo from "@/components/landing/Photo";
@@ -103,9 +102,11 @@ export function PracticeShowcase() {
 
   useEffect(() => {
     if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // One change, then it holds: no pause control, and the auto-update ends
+    // inside five seconds (WCAG 2.2.2). Hover defers the change to the next tick.
     const id = window.setInterval(() => {
       if (hover.current) return;
-      // A random card each step, never the one already showing.
+      // A random card, never the one already showing.
       setPos((cur) => {
         let next = cur;
         while (next.active === cur.active && next.offer === cur.offer) {
@@ -113,6 +114,7 @@ export function PracticeShowcase() {
         }
         return next;
       });
+      setAuto(false);
     }, STEP_MS);
     return () => window.clearInterval(id);
   }, [auto]);
@@ -124,8 +126,7 @@ export function PracticeShowcase() {
 
   return (
     <>
-      {/* WCAG 2.2.2: rotation stops for good once a keyboard user is inside,
-          and the button below stops it for everyone else. */}
+      {/* Focus inside stops the one-off change too, so nothing moves under a keyboard user. */}
       <div
         className="hidden lg:grid lg:grid-cols-12 lg:gap-10"
         onMouseEnter={() => (hover.current = true)}
@@ -200,15 +201,6 @@ export function PracticeShowcase() {
               );
             })}
           </ul>
-          <button
-            type="button"
-            onClick={() => setAuto((a) => !a)}
-            aria-pressed={!auto}
-            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-line-input px-4 type-caption font-medium text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
-          >
-            {auto ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
-            {auto ? "Pause rotation" : "Resume rotation"}
-          </button>
         </div>
 
         {/* The canvas. Decorative: the accordion carries the same content. */}

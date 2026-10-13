@@ -1,4 +1,4 @@
-import { getPublicJobs, toPublicJob } from "@/lib/aws/dynamodb";
+import { getPublicJobs, toCandidateJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import JobBoard from "./job-board";
 import { toBoardJob, type BoardJob } from "./board-job";
@@ -19,7 +19,7 @@ async function loadOpenJobs(): Promise<BoardJob[] | null> {
     return (result.data || [])
       .filter((j) => isAcceptingApplications(j))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map((j) => toBoardJob(toPublicJob(j)));
+      .map((j) => toBoardJob(toCandidateJob(j)));
   } catch {
     return null;
   }

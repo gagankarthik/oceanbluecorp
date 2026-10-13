@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/components/site/use-reduced-motion";
 
 /**
- * A film behind a section, deferred until after `load`. It plays through
- * once and holds on its last frame, so nothing loops for good.
+ * A film behind a section, deferred until after `load`. It plays its first
+ * few seconds once and holds that frame: no loop and no pause control needed.
  *
  * The film is not attached until the page has loaded; until then the section
  * shows `poster`, the film's own first frame, over the gradient ground.
@@ -22,6 +21,8 @@ import { useReducedMotion } from "@/components/site/use-reduced-motion";
  * audio, and iOS takes non-inline video fullscreen. A rejected `play()` is
  * swallowed, leaving the gradient in place. Reduced motion gets no film.
  */
+
+const PLAY_SECONDS = 4.8;
 
 export default function VideoBackdrop({
   src,
@@ -43,16 +44,9 @@ export default function VideoBackdrop({
   const reduce = useReducedMotion();
   const [armed, setArmed] = useState(false);
   const [playing, setPlaying] = useState(false);
-  // WCAG 2.2.2: a looping film needs a way to stop it.
-  const [paused, setPaused] = useState(false);
-  // Plays through once and holds its last frame: no perpetual ambient loop.
-  const [ended, setEnded] = useState(false);
-  const togglePause = () => {
-    const v = ref.current;
-    if (!v) return;
-    if (paused) { void v.play().catch(() => {}); setPaused(false); }
-    else { v.pause(); setPaused(true); }
-  };
+  // No pause control: the film runs at most PLAY_SECONDS, then holds that
+  // frame, so the motion ends inside the five seconds WCAG 2.2.2 allows.
+  const hold = () => ref.current?.pause();
 
   useEffect(() => {
     if (reduce) return;
@@ -116,7 +110,9 @@ export default function VideoBackdrop({
           onCanPlay={start}
           onLoadedData={start}
           onPlaying={() => setPlaying(true)}
-          onEnded={() => setEnded(true)}
+          onTimeUpdate={(e) => {
+            if (e.currentTarget.currentTime >= PLAY_SECONDS) hold();
+          }}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[var(--dur-long)] ease-out"
           // Faded up only once frames are arriving, so the swap is a dissolve
           // rather than a black rectangle while the first frame decodes.
@@ -124,17 +120,6 @@ export default function VideoBackdrop({
         />
       )}
     </div>
-    {/* Outside the aria-hidden backdrop so it stays operable. */}
-    {!reduce && playing && !ended && (
-      <button
-        type="button"
-        onClick={togglePause}
-        aria-label={paused ? "Play background video" : "Pause background video"}
-        className="absolute bottom-4 right-4 z-20 grid size-10 pointer-coarse:size-11 place-items-center rounded-full border border-white/60 bg-black/40 text-white transition-colors duration-[var(--dur-short)] hover:bg-black/60"
-      >
-        {paused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
-      </button>
-    )}
     </>
   );
 }

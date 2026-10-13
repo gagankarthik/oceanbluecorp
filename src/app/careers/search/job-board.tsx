@@ -13,7 +13,7 @@ import { IconFilter, IconCheckCircle } from "@/components/site/careers/careers-i
 import { Select, type SelectOption } from "@/components/site/select";
 import { workMode, EEO_STATEMENT, HR_EMAIL } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
-import type { PublicJob } from "@/lib/aws/dynamodb";
+import type { CandidateJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { SideSheet } from "@/components/site/side-sheet";
 import { toBoardJob, type BoardJob } from "./board-job";
@@ -131,7 +131,7 @@ export default function JobBoard({ initialJobs }: { initialJobs: BoardJob[] | nu
         const res = await fetch("/api/jobs");
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
-        setJobs((data.jobs || []).filter((j: PublicJob) => isAcceptingApplications(j)).map(toBoardJob));
+        setJobs((data.jobs || []).filter((j: CandidateJob) => isAcceptingApplications(j)).map(toBoardJob));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch jobs");
       } finally {

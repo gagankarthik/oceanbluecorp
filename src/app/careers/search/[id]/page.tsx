@@ -3,7 +3,7 @@ import { breadcrumbJsonLd, jsonLdString, OG_IMAGES } from "@/lib/seo";
 import { workMode } from "@/lib/careers";
 import { jobLocationLabel } from "@/lib/workplace";
 import { notFound } from "next/navigation";
-import { toPublicJob, type PublicJob } from "@/lib/aws/dynamodb";
+import { toCandidateJob, type CandidateJob } from "@/lib/aws/dynamodb";
 import { richTextToPlain } from "@/lib/rich-text";
 import JobDetailsClient from "./JobDetailsClient";
 import { loadJob } from "./job";
@@ -63,7 +63,7 @@ function endOfDay(date: string) {
  * board. Only fields we genuinely hold are emitted; Google penalises padded
  * or invented values.
  */
-function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
+function jobPostingLd(job: CandidateJob, id: string, publishedAt?: string) {
   const remote = workMode(job) === "Remote";
   return {
     "@context": "https://schema.org",
@@ -189,7 +189,8 @@ export default async function JobDetailsPage({ params }: Props) {
 
   // Strip internal fields (rates, client/recruiter info) before sending to the
   // public client component.
-  const job = toPublicJob(result.data);
+  // No salary reaches the page or its JSON-LD (careers publish no compensation).
+  const job = toCandidateJob(result.data);
   return (
     <>
       <script

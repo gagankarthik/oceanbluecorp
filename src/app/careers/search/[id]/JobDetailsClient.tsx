@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { CONTAINER } from "@/components/site/sections";
 import { IconArrowRight, IconChevronRight, IconX } from "@/components/site/icons";
 import { IconBookmark, IconCheckCircle, IconFile, IconShare, IconUpload } from "@/components/site/careers/careers-icons";
-import type { PublicJob } from "@/lib/aws/dynamodb";
+import type { CandidateJob } from "@/lib/aws/dynamodb";
 import { useStaffSession } from "@/components/site/use-staff-session";
 import { renderRichText } from "@/lib/rich-text";
 import { SideSheet } from "@/components/site/side-sheet";
@@ -73,7 +73,7 @@ const readSaved = (): string[] => {
 };
 
 interface JobDetailsClientProps {
-  job: PublicJob;
+  job: CandidateJob;
   jobId: string;
   /** When the posting first went live; falls back to createdAt. */
   publishedAt?: string;
